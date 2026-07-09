@@ -995,13 +995,28 @@ def multi_scale_template_match(
 	# gate, so it is honestly 'ambiguous' rather than forced onto a single false point.
 	# (peak_sharpness is also exposed for inspection but is not a decision gate: it
 	# conflates flat pieces sitting in small regions with genuine detail.)
-	# The gap is now measured on the COMBINED cost (colour + texture + border prior),
-	# so its scale differs from the colour-only gap _CONF_GAP_HIGH was tuned on -- see
-	# the recalibration note in the eval report; the threshold itself is left unchanged.
+	# The gap is measured on the DIFFERENTIAL of the combined cost: both top
+	# candidates pay a shared texture baseline (d_grad ~0.15-0.20 even for correct
+	# matches), so when texture does NOT discriminate between them the gap reduces
+	# EXACTLY to the colour-only gap _CONF_GAP_HIGH was tuned on -- see the note
+	# below. The threshold itself is left unchanged.
 	if len(candidates) >= 2:
 		comb1 = candidates[0]["cost_comb"]
 		comb2 = candidates[1]["cost_comb"]
-		gap = (comb2 - comb1) / comb2 if comb2 > 1e-6 else 0.0
+		# Differential gap: both top candidates pay a shared texture baseline
+		# (d_grad ~0.15-0.20 even for correct matches) that would inflate the
+		# denominator and compress the relative gap. Subtract the shared baseline
+		# = _TEXTURE_LAMBDA * min(d_grad) of the two, so texture moves confidence
+		# only when it DISCRIMINATES between the candidates. When their d_grad is
+		# equal the gap reduces EXACTLY to the colour-only gap _CONF_GAP_HIGH was
+		# tuned on, so the threshold stays valid. The baseline cancels in the
+		# numerator (comb2 - comb1 unchanged); only the denominator shrinks. The
+		# edge_penalty stays inside cost_comb -- it is a genuine discriminator and
+		# must remain in numerator/denominator; only the d_grad baseline is removed.
+		# With use_texture=False both d_grad are 0 -> baseline 0 -> no-op.
+		baseline = _TEXTURE_LAMBDA * min(candidates[0]["d_grad"], candidates[1]["d_grad"])
+		denom = comb2 - baseline
+		gap = (comb2 - comb1) / denom if denom > 1e-6 else 0.0
 	else:
 		comb1 = candidates[0]["cost_comb"]
 		comb2 = None

@@ -27,7 +27,12 @@ from PIL import Image
 # Import src/ as a package (src has __init__.py; modules use relative imports).
 from src.segmentation import segment_pieces
 from src.edges import classify_pieces
-from src.matching import multi_scale_template_match
+from src.matching import (
+	multi_scale_template_match,
+	_CONF_GAP_HIGH,
+	_CONF_STRUCT_HIGH,
+	_TEXTURE_LAMBDA,
+)
 
 
 # ----- Paths -----
@@ -43,7 +48,12 @@ SCRATCH = (
 
 NUM_PIECES = 3000
 N_HIGH_IMAGES = 5
-BASELINE_TXT = "5/64 (colour-only)"
+# Pieces under scrutiny for the differential-gap fix: 39 should recover to 'high'
+# (colour winner, neutral texture); 51/61/36 are shadow false-highs that must stay
+# ambiguous; 8/25/41 are watched for regressions (41 is a mis-segmentation false-high
+# not fixed here, only checked it did not worsen).
+INDICES_OF_INTEREST = (39, 51, 61, 36, 8, 25, 41)
+BASELINE_TXT = "colour-only 7/64  |  texture pre-fix (raw combined) 3/64"
 
 
 def log(msg: str) -> None:
@@ -151,6 +161,28 @@ def main() -> int:
 		conf_A[ca] = conf_A.get(ca, 0) + 1
 		conf_B[cb] = conf_B.get(cb, 0) + 1
 
+		# Top-2 candidate diagnostics (already exposed by the engine). From these we
+		# reconstruct the PRE-FIX gap (raw combined cost, no baseline removed) and the
+		# label it would have produced, so the colour / texture-prefix / texture-postfix
+		# comparison is shown WITHOUT a second engine run. gap_B (post-fix) uses the
+		# new differential formula; here we recompute the old one for the before/after.
+		cands_b = res_b.get("candidates") or []
+		d1_b = cands_b[0]["d_grad"] if len(cands_b) >= 1 else None
+		d2_b = cands_b[1]["d_grad"] if len(cands_b) >= 2 else None
+		cc1_b = cands_b[0]["cost_comb"] if len(cands_b) >= 1 else None
+		cc2_b = cands_b[1]["cost_comb"] if len(cands_b) >= 2 else None
+		struct_b = res_b.get("piece_structure")
+		if cc2_b is not None and cc2_b > 1e-6:
+			gap_prefix_b = (cc2_b - cc1_b) / cc2_b
+			baseline_b = _TEXTURE_LAMBDA * min(d1_b, d2_b)
+		else:
+			gap_prefix_b = 1.0
+			baseline_b = 0.0
+		prefix_high = (gap_prefix_b >= _CONF_GAP_HIGH) and (
+			struct_b is not None and struct_b >= _CONF_STRUCT_HIGH
+		)
+		conf_b_prefix = "high" if prefix_high else "ambiguous"
+
 		rec = {
 			"index": idx,
 			"piece_type": piece.get("piece_type"),
@@ -161,8 +193,15 @@ def main() -> int:
 			"sim_B": res_b.get("refined_similarity"),
 			"gap_A": res_a.get("confidence_gap"),
 			"gap_B": res_b.get("confidence_gap"),
+			"gap_B_prefix": gap_prefix_b,
+			"conf_B_prefix": conf_b_prefix,
 			"struct_B": res_b.get("piece_structure"),
 			"d_grad_B": res_b.get("d_grad"),
+			"d1_B": d1_b,
+			"d2_B": d2_b,
+			"cc1_B": cc1_b,
+			"cc2_B": cc2_b,
+			"baseline_B": baseline_b,
 			"cost_comb_B": res_b.get("cost_comb"),
 			"pos_A": res_a.get("best_position"),
 			"pos_B": res_b.get("best_position"),
@@ -187,15 +226,24 @@ def main() -> int:
 	def dist_str(counts: dict[str, int]) -> str:
 		return ", ".join(f"{k}={counts[k]}" for k in sorted(counts, key=lambda k: (-counts[k], k)))
 
+	# Reconstructed texture PRE-FIX distribution (raw combined-cost gap, no baseline
+	# removed) -- this reproduces the 3/64 anchor and isolates what the fix changed.
+	conf_B_prefix: dict[str, int] = {}
+	for r in records:
+		k = r["conf_B_prefix"]
+		conf_B_prefix[k] = conf_B_prefix.get(k, 0) + 1
+
 	high_A = conf_A.get("high", 0)
 	high_B = conf_B.get("high", 0)
+	high_Bpre = conf_B_prefix.get("high", 0)
 	log("")
 	log("=" * 64)
 	log("A/B CONFIDENCE DISTRIBUTION (non-cluster)")
 	log("=" * 64)
-	log(f"total non-cluster : {total_nc}   frozen baseline: {BASELINE_TXT}")
-	log(f"A (texture OFF)   : {dist_str(conf_A)}   -> high {high_A}/{total_nc}")
-	log(f"B (texture ON)    : {dist_str(conf_B)}   -> high {high_B}/{total_nc}")
+	log(f"total non-cluster : {total_nc}   anchors: {BASELINE_TXT}")
+	log(f"A colour-only     : {dist_str(conf_A)}   -> high {high_A}/{total_nc}")
+	log(f"B txt pre-fix     : {dist_str(conf_B_prefix)}   -> high {high_Bpre}/{total_nc}  (raw combined gap)")
+	log(f"B txt POST-fix    : {dist_str(conf_B)}   -> high {high_B}/{total_nc}  (differential gap)")
 
 	# Which pieces changed label between A and B.
 	promoted = [r["index"] for r in records if r["conf_A"] != "high" and r["conf_B"] == "high"]
@@ -209,27 +257,53 @@ def main() -> int:
 		f"(prev colour-only ~2.46s); total wall={total_secs:.1f}s"
 	)
 
-	# Save side-by-side crops for the B 'high' pieces.
-	high_recs = [r for r in records if r["conf_B"] == "high" and r.get("pos_B")]
-	saved_paths: list[str] = []
-	log(f"[viz] saving up to {N_HIGH_IMAGES} side-by-side images for B-high pieces ({len(high_recs)} available)...")
-	for i, r in enumerate(high_recs[:N_HIGH_IMAGES], start=1):
-		x, y = r["pos_B"]
-		w, h = r["size_B"]
+	# ---- Targeted differential-gap verification (idx of interest) ----
+	# For each watched piece save a piece | ref@posB crop so the match can be eyeballed
+	# regardless of confidence label, and print the full before/after so the verdict is
+	# auditable: colour-only (A) vs texture pre-fix (raw gap) vs texture post-fix (diff gap).
+	def _crop_ref_at(pos, size):
+		x, y = pos
+		w, h = size
 		x0 = max(0, min(int(x), W0 - 1))
 		y0 = max(0, min(int(y), H0 - 1))
 		x1 = max(x0 + 1, min(int(x) + int(w), W0))
 		y1 = max(y0 + 1, min(int(y) + int(h), H0))
-		ref_crop = ref_img.crop((x0, y0, x1, y1))
-		combo = side_by_side(r["_piece_pil"], ref_crop)
-		out_path = os.path.join(SCRATCH, f"match_texture_{i}.png")
-		combo.save(out_path)
-		saved_paths.append(out_path)
-		log(
-			f"[viz] saved {out_path} (idx={r['index']} pt={r['piece_type']} "
-			f"sim={r['sim_B']:.3f} d_grad={r['d_grad_B']:.3f} gapB={r['gap_B']:.3f} "
-			f"was_A={r['conf_A']} pos=({x0},{y0}) size=({w},{h}))"
+		return ref_img.crop((x0, y0, x1, y1)), (x0, y0)
+
+	def _fmt(v, spec="{:.3f}"):
+		return "n/a" if v is None else spec.format(v)
+
+	by_index = {r["index"]: r for r in records}
+	saved_paths: list[str] = []
+	target_lines: list[str] = []
+	log("")
+	log("=" * 64)
+	log("TARGETED DIFFERENTIAL-GAP VERIFICATION")
+	log("=" * 64)
+	for idx in INDICES_OF_INTEREST:
+		r = by_index.get(idx)
+		if r is None:
+			log(f"[viz] idx={idx}: NOT FOUND in this run's segmentation")
+			target_lines.append(f"  idx={idx:>3}: NOT FOUND")
+			continue
+		same_pos = r["pos_A"] == r["pos_B"]
+		line = (
+			f"idx={idx:>3} pt={str(r['piece_type']):<8} "
+			f"colour(A)={r['conf_A']:<9} txt-prefix={r['conf_B_prefix']:<9} txt-postfix(B)={r['conf_B']:<9} | "
+			f"gapA={_fmt(r['gap_A'])} gap_prefix={_fmt(r['gap_B_prefix'])} gap_postfix={_fmt(r['gap_B'])} "
+			f"(thr {_CONF_GAP_HIGH}) struct={_fmt(r['struct_B'],'{:.2f}')} (thr {_CONF_STRUCT_HIGH}) "
+			f"d_grad[1st,2nd]=[{_fmt(r['d1_B'])},{_fmt(r['d2_B'])}] baseline={_fmt(r['baseline_B'])} "
+			f"posA={r['pos_A']} posB={r['pos_B']} same_pos={same_pos}"
 		)
+		log(f"[chk] {line}")
+		target_lines.append("  " + line)
+		if r.get("pos_B") and r.get("size_B"):
+			ref_crop, (x0, y0) = _crop_ref_at(r["pos_B"], r["size_B"])
+			combo = side_by_side(r["_piece_pil"], ref_crop)
+			out_path = os.path.join(SCRATCH, f"match_gapfix_idx{idx:02d}_{r['conf_B']}.png")
+			combo.save(out_path)
+			saved_paths.append(out_path)
+			log(f"[viz] saved {out_path} (ref crop at ({x0},{y0}) size={r['size_B']})")
 
 	# ---- Write eval_summary.txt ----
 	summary_path = os.path.join(SCRATCH, "eval_summary.txt")
@@ -245,14 +319,21 @@ def main() -> int:
 		fh.write("\n")
 		fh.write("A/B confidence distribution (non-cluster)\n")
 		fh.write("-" * 64 + "\n")
-		fh.write(f"  frozen baseline : {BASELINE_TXT}\n")
-		fh.write(f"  A (texture OFF) : {dist_str(conf_A)}  -> high {high_A}/{total_nc}\n")
-		fh.write(f"  B (texture ON)  : {dist_str(conf_B)}  -> high {high_B}/{total_nc}\n")
-		fh.write(f"  stayed high     : {stayed_high}\n")
-		fh.write(f"  promoted A->B   : {promoted}\n")
-		fh.write(f"  demoted  A->B   : {demoted}\n")
+		fh.write(f"  anchors           : {BASELINE_TXT}\n")
+		fh.write(f"  A colour-only     : {dist_str(conf_A)}  -> high {high_A}/{total_nc}\n")
+		fh.write(f"  B txt pre-fix     : {dist_str(conf_B_prefix)}  -> high {high_Bpre}/{total_nc}  (raw combined gap)\n")
+		fh.write(f"  B txt POST-fix    : {dist_str(conf_B)}  -> high {high_B}/{total_nc}  (differential gap)\n")
+		fh.write(f"  stayed high (A&B) : {stayed_high}\n")
+		fh.write(f"  promoted A->B     : {promoted}\n")
+		fh.write(f"  demoted  A->B     : {demoted}\n")
 		fh.write(f"  timing: A avg={np.mean(times_A):.2f}s B avg={np.mean(times_B):.2f}s "
 				 f"(prev colour-only ~2.46s) total={total_secs:.1f}s\n")
+		fh.write("\n")
+		fh.write("Targeted differential-gap verification (idx of interest)\n")
+		fh.write("-" * 64 + "\n")
+		fh.write("  colour(A) / txt-prefix (raw gap) / txt-postfix(B, differential gap)\n")
+		for tl in target_lines:
+			fh.write(tl + "\n")
 		fh.write("\n")
 		fh.write("Per-piece A/B results\n")
 		fh.write("-" * 64 + "\n")
@@ -265,7 +346,7 @@ def main() -> int:
 			)
 			fh.write(f"       reasonB: {r['reason_B']}\n")
 		fh.write("\n")
-		fh.write("Saved B-high side-by-side images:\n")
+		fh.write("Saved differential-gap side-by-side images (piece | ref@posB):\n")
 		for p in saved_paths:
 			fh.write(f"  {p}\n")
 
