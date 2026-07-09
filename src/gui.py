@@ -283,7 +283,9 @@ class PuzzleGUI(tk.Tk):
             try:
                 img = Image.open(path)
                 img_ = self._annotate_piece_number(img, idx + 1)
-                self.pieces_imgs.append({'img': img, 'img_annotated': img_, 'id': idx+1, 'path': path})
+                # Se o PNG tiver canal alfa, usa-o como máscara (opaco = peça, transparente = fundo).
+                mask = img.getchannel('A') if 'A' in img.getbands() else None
+                self.pieces_imgs.append({'img': img, 'img_annotated': img_, 'id': idx+1, 'path': path, 'mask': mask})
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load piece: {path}\n{e}")
         if self.pieces_imgs:
@@ -472,12 +474,11 @@ class PuzzleGUI(tk.Tk):
             self.match_current_piece()
             return
             
-        # Obter parâmetros
-        try:
-            num_pieces = int(self.pieces_entry.get()) if self.pieces_entry.get().strip() else len(self.pieces_imgs)
-        except ValueError:
-            num_pieces = len(self.pieces_imgs)
-        
+        # num_pieces = total de peças do puzzle (obrigatório, sem fallback silencioso)
+        num_pieces = self._require_num_pieces()
+        if num_pieces is None:
+            return
+
         self._show_progress(f"Matching {len(self.pieces_imgs)} peças...")
         self._disable_buttons()
         
@@ -527,7 +528,7 @@ class PuzzleGUI(tk.Tk):
             
             try:
                 # Usar o método otimizado
-                result = self._perform_optimized_matching(piece_img, piece_id, num_pieces)
+                result = self._perform_optimized_matching(piece_img, piece_id, num_pieces, piece_mask=piece_data.get('mask'))
                 
                 if "error" not in result:
                     # Extrair informações do resultado
@@ -668,6 +669,23 @@ class PuzzleGUI(tk.Tk):
         if real_height:
             return puzzle_h / real_height
         return None
+
+    def _require_num_pieces(self):
+        """Ler o número TOTAL de peças do puzzle a partir de `pieces_entry`.
+
+        Este campo é o total do puzzle (ex.: 3000), NÃO o número de peças soltas
+        na foto. Devolve um int > 1, ou None (com log de erro) se estiver vazio,
+        for inválido ou <= 1.
+        """
+        raw = self.pieces_entry.get().strip()
+        try:
+            num = int(raw) if raw else None
+        except ValueError:
+            num = None
+        if num is None or num <= 1:
+            self._log("❌ Indica o número TOTAL de peças do puzzle (ex.: 3000) antes de fazer matching.")
+            return None
+        return num
 
     def export_results(self):
         """Exportar resultados reais do matching para arquivo JSON."""
@@ -848,6 +866,11 @@ class PuzzleGUI(tk.Tk):
             self._log(f"⚠️ Peça {piece_id} é um cluster (não é uma peça única) — não é localizável.")
             return
 
+        # num_pieces = total de peças do puzzle (obrigatório, sem fallback silencioso)
+        num_pieces = self._require_num_pieces()
+        if num_pieces is None:
+            return
+
         # Executar em thread para não travar a GUI
         self._show_progress(f"Matching peça {piece_id}...")
         self._disable_buttons()
@@ -858,7 +881,7 @@ class PuzzleGUI(tk.Tk):
                 import time
                 start_time = time.time()
                 
-                result = self._perform_optimized_matching(piece_img, piece_id)
+                result = self._perform_optimized_matching(piece_img, piece_id, num_pieces, piece_mask=current_piece_data.get('mask'))
                 
                 elapsed_time = time.time() - start_time
                 self.after(0, lambda: self._log(f"⏱️ Matching completado em {elapsed_time:.1f}s"))
@@ -872,15 +895,11 @@ class PuzzleGUI(tk.Tk):
         thread = threading.Thread(target=matching_thread, daemon=True)
         thread.start()
 
-    def _perform_optimized_matching(self, piece_img, piece_id, num_pieces=None):
+    def _perform_optimized_matching(self, piece_img, piece_id, num_pieces=None, piece_mask=None):
         """Executar matching otimizado com configurações de performance."""
-        # Obter parâmetros
-        try:
-            if num_pieces is None:
-                num_pieces = int(self.pieces_entry.get()) if self.pieces_entry.get().strip() else None
-        except ValueError:
-            num_pieces = None
-            
+        # num_pieces é fornecido pelos callers (validado via _require_num_pieces).
+        # Se vier None aqui, é bug do caller — não voltamos a ler do entry com
+        # fallback silencioso.
         use_downscale = self.downscale_var.get()
         use_gpu = self.gpu_var.get()
         
@@ -901,23 +920,12 @@ class PuzzleGUI(tk.Tk):
             'puzzle_img': self.puzzle_img,
             'piece_img': piece_img,
             'num_pieces': num_pieces,
-            'use_downscale': True,  # Sempre usar downscale para velocidade
+            'use_downscale': use_downscale,  # Reflete o checkbox: downscale coarse é feito pelo motor
             'use_gpu': use_gpu,  # Usar a opção escolhida pelo usuário
-            'method': 'SQDIFF_NORMED'  # Método mais rápido
+            'method': 'SQDIFF_NORMED',  # Método mais rápido
+            'piece_mask': piece_mask,  # Máscara alfa/segmentação (não-zero = peça)
+            'pixels_per_cm': self._puzzle_pixels_per_cm(),  # Escala real do puzzle, se fornecida
         }
-        
-        # Se a imagem for grande, fazer downscale mais agressivo para evitar travamentos
-        puzzle_w, puzzle_h = self.puzzle_img.size
-        scale_factor_applied = None
-        if puzzle_w * puzzle_h > 1500 * 1500:  # Limite menor para evitar travamentos
-            # Para puzzles grandes, reduzir significativamente
-            scale_factor = min(1200 / puzzle_w, 1200 / puzzle_h, 1.0)
-            if scale_factor < 1.0:
-                new_w = int(puzzle_w * scale_factor)
-                new_h = int(puzzle_h * scale_factor)
-                puzzle_resized = self.puzzle_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-                optimized_params['puzzle_img'] = puzzle_resized
-                scale_factor_applied = scale_factor  # Guardar separadamente
         
         # Adicionar controle de erro para GPU
         try:
@@ -944,26 +952,6 @@ class PuzzleGUI(tk.Tk):
                     raise cpu_error
             else:
                 raise e
-        
-        # Ajustar posições se houve downscale
-        if scale_factor_applied is not None:
-            if 'best_position' in result:
-                pos_x, pos_y = result['best_position']
-                result['best_position'] = (int(pos_x / scale_factor_applied), int(pos_y / scale_factor_applied))
-            if 'piece_size_final' in result:
-                size_w, size_h = result['piece_size_final']
-                result['piece_size_final'] = (int(size_w / scale_factor_applied), int(size_h / scale_factor_applied))
-            # A mesma escala TEM de ser aplicada a cada candidato da shortlist,
-            # senão os marcadores de "zonas prováveis" ficam desalinhados do puzzle
-            # a full-res (o downscale acima só afetou a busca, não os resultados).
-            if 'candidates' in result:
-                for cand in result['candidates']:
-                    if 'position' in cand:
-                        cx, cy = cand['position']
-                        cand['position'] = (int(cx / scale_factor_applied), int(cy / scale_factor_applied))
-                    if 'size' in cand:
-                        cw, ch = cand['size']
-                        cand['size'] = (int(cw / scale_factor_applied), int(ch / scale_factor_applied))
 
         return result
 
