@@ -44,6 +44,19 @@ _SEAM_KERNEL_FRAC = 0.012
 _SEAM_MIN_RESPONSE = 12.0
 
 
+# ===== Non-piece component rejection tunables (step 7) =====
+# A component whose bounding box reaches within this fraction of the working long
+# side of the image frame is the photo margin or a crease/fold between backing
+# sheets, not a piece: real pieces sit inset on the surface. Such components are
+# rejected outright (see :func:`_extract_components`). At 1600 px this is ~6 px.
+_FRAME_MARGIN_FRAC = 0.004
+# Jigsaw pieces are near-square: even a rotated piece with tabs rarely exceeds a
+# ~2:1 bounding box. A component whose bbox long/short side ratio exceeds this is
+# a thin sliver (border strip, seam/crease shadow), not a piece. Kept deliberately
+# loose (4:1) so irregular or rotated real pieces are never dropped.
+_MAX_BBOX_ASPECT = 4.0
+
+
 # ===== Pure detection helpers (no I/O) =====
 def _to_working(bgr: np.ndarray, max_working_dim: int) -> tuple[np.ndarray, float]:
 	"""Downscale ``bgr`` so its longest side is <= ``max_working_dim``.
@@ -357,19 +370,39 @@ def _extract_components(
 
 	Returns a list of ``((x, y, w, h), mask_crop, is_cluster)`` in working coords,
 	where ``mask_crop`` is a 0/255 uint8 array of the bbox region and
-	``is_cluster`` marks a component that stayed too large to be a single piece
-	yet could not be confidently split (see :func:`_is_cluster_blob`).
+	``is_cluster`` marks a component that triggered a split, could not be
+	separated, and stayed larger than ``cluster_ratio`` * median -- i.e. a genuine
+	touching/assembled cluster the splitter could not resolve into single pieces.
 	"""
 	h, w = binary.shape[:2]
 	working_area = h * w
 	working_dim = max(h, w)
 	num, labels, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
 
+	# Reject dust, frame-touching margins/creases and extreme-aspect slivers
+	# BEFORE the median so the surviving-piece median is not polluted by non-pieces.
 	dust = 0.0005 * working_area
+	frame_margin = max(1, int(round(_FRAME_MARGIN_FRAC * working_dim)))
 	kept: list[int] = []
 	for lab in range(1, num):
-		if stats[lab, cv2.CC_STAT_AREA] >= dust:
-			kept.append(lab)
+		if stats[lab, cv2.CC_STAT_AREA] < dust:
+			continue
+		x0 = int(stats[lab, cv2.CC_STAT_LEFT])
+		y0 = int(stats[lab, cv2.CC_STAT_TOP])
+		ww = int(stats[lab, cv2.CC_STAT_WIDTH])
+		hh = int(stats[lab, cv2.CC_STAT_HEIGHT])
+		# Touches the image frame -> photo border / crease between backing sheets.
+		if (
+			x0 <= frame_margin
+			or y0 <= frame_margin
+			or x0 + ww >= w - frame_margin
+			or y0 + hh >= h - frame_margin
+		):
+			continue
+		# Extreme-aspect sliver -> thin border strip / seam shadow, not a piece.
+		if max(ww, hh) / max(1, min(ww, hh)) > _MAX_BBOX_ASPECT:
+			continue
+		kept.append(lab)
 	if not kept:
 		return []
 
@@ -399,10 +432,20 @@ def _extract_components(
 					flag = _is_cluster_blob(sub_crop, median_area, marker_ratio, cluster_ratio)
 					out.append(((x + sx, y + sy, sw, sh), sub_crop, flag))
 				continue
-		# Kept whole (split not triggered, or split declined): flag it if it is an
-		# irrecoverable cluster. Sub-median blobs early-return False cheaply.
-		flag = _is_cluster_blob(comp_mask, median_area, marker_ratio, cluster_ratio) if split_touching else False
-		out.append(((x, y, ww, hh), comp_mask, flag))
+			# Split was TRIGGERED but could not separate this component. If it is
+			# still much larger than a single piece it is a genuine touching /
+			# assembled cluster of pieces, so flag it rather than emit it as one
+			# deceptive over-sized "piece" (whose crop would contain several pieces
+			# glued together). The split outcome is used directly because the plain
+			# peak-count test alone is unreliable here: a multi-piece blob can show
+			# several distance peaks yet still resist a clean watershed split.
+			flag = area > cluster_ratio * median_area
+			out.append(((x, y, ww, hh), comp_mask, flag))
+			continue
+		# Split not triggered (or disabled): the component is close to a single
+		# piece (area <= split_trigger * median < cluster_ratio * median), so it is
+		# never a cluster.
+		out.append(((x, y, ww, hh), comp_mask, False))
 	return out
 
 
@@ -524,7 +567,7 @@ def segment_pieces(
 	*,
 	expected_pieces: int | None = None,
 	max_working_dim: int = 1600,
-	luma_weight: float = 0.4,
+	luma_weight: float = 0.075,
 	chroma_weight: float = 1.0,
 	min_area_ratio: float = 0.25,
 	split_touching: bool = True,
@@ -538,7 +581,16 @@ def segment_pieces(
 		photo: PIL image of many pieces on a roughly uniform surface.
 		expected_pieces: optional hint (currently informational only).
 		max_working_dim: longest side of the internal working copy.
-		luma_weight, chroma_weight: weights of the Lab distance to background.
+		luma_weight, chroma_weight: weights of the (squared) Lab lightness and
+			chroma distance to the background. The detection is deliberately
+			chroma-dominated (default luma_weight 0.075 vs chroma_weight 1.0): a
+			cast shadow differs from the neutral surface almost only in lightness
+			(high dL, near-zero dChroma), so a low luma_weight drops shadow below
+			the Otsu threshold and keeps it out of the mask -- removing the grey
+			halo around crops and the shadow bridges that merge neighbouring
+			pieces. luma_weight is kept non-zero (not purely chroma) so genuinely
+			neutral/grey pieces, which differ from a white surface mainly in
+			lightness, are still detected.
 		min_area_ratio: drop components smaller than this * median area.
 		split_touching: watershed-split large touching clusters.
 		normalize_rotation: rotate each crop to axis-align its min-area rect.

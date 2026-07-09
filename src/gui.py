@@ -140,6 +140,8 @@ class PuzzleGUI(tk.Tk):
         ttk.Button(nav_frame, text=">", width=2, command=self.next_piece).pack(side=tk.LEFT, padx=(2,2))
         self.piece_canvas = ttk.Label(piece_panel, text="Piece Image", relief=tk.SUNKEN)
         self.piece_canvas.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+        self.piece_confidence_label = ttk.Label(piece_panel, text="", font=("Arial", 8), wraplength=220, justify='left')
+        self.piece_confidence_label.pack(fill=tk.X, padx=2, pady=(0, 2))
 
         # Logs
         ttk.Label(logs, text="Logs").pack(anchor='w')
@@ -231,6 +233,35 @@ class PuzzleGUI(tk.Tk):
             self._log(f"⚠️ Peça {piece['id']}: CLUSTER (não é uma peça única).")
         elif piece_type:
             self._log(f"Peça {piece['id']}: tipo={piece_type}.")
+
+        # Mostrar a confiança do último matching desta peça (se existir).
+        match = next((r for r in self.last_results if r.get('piece_id') == piece['id']), None)
+        if match:
+            self._update_piece_confidence_label(piece['id'], match.get('confidence'), match.get('confidence_reason'))
+        else:
+            self._update_piece_confidence_label(piece['id'], None, None)
+
+    def _update_piece_confidence_label(self, piece_id, confidence, reason):
+        """Atualizar o rótulo de confiança junto ao painel da peça atual."""
+        if not hasattr(self, 'piece_confidence_label'):
+            return
+        if confidence == 'high':
+            text = f"Peça {piece_id}: 🟢 alta confiança"
+        elif confidence == 'ambiguous':
+            text = f"Peça {piece_id}: 🟡 ambígua"
+            if reason:
+                text += f" — {reason}"
+        else:
+            text = ""
+        self.piece_confidence_label.config(text=text)
+
+    def _confidence_color(self, confidence):
+        """Cor associada ao nível de confiança do matching ('high'/'ambiguous'/desconhecido)."""
+        if confidence == 'high':
+            return "#00CC00"
+        if confidence == 'ambiguous':
+            return "#FFCC00"
+        return "#0066FF"
 
     def load_puzzle(self):
         path = filedialog.askopenfilename(title="Select Puzzle Image", initialdir=self._default_puzzle_dir())
@@ -504,20 +535,29 @@ class PuzzleGUI(tk.Tk):
                     scale = result.get("scale", 1.0)
                     similarity = result.get("refined_similarity", 0.0)
                     piece_size = result.get("piece_size_final", piece_img.size)
-                    
+                    confidence = result.get("confidence")
+                    confidence_reason = result.get("confidence_reason")
+                    confidence_gap = result.get("confidence_gap")
+                    candidates = result.get("candidates", [])
+
                     results.append({
                         'piece_id': piece_id,
                         'position': best_pos,
                         'size': piece_size,
                         'similarity': similarity,
                         'scale': scale,
-                        'color': "#0066FF",
-                        'path': piece_data.get('path')
+                        'color': self._confidence_color(confidence),
+                        'path': piece_data.get('path'),
+                        'confidence': confidence,
+                        'confidence_reason': confidence_reason,
+                        'confidence_gap': confidence_gap,
+                        'candidates': candidates,
                     })
-                    
+
                     # Log no thread principal
-                    self.after(0, lambda pid=piece_id, pos=best_pos, sim=similarity, sc=scale: 
-                              self._log(f"     ✅ Peça {pid}: pos=({pos[0]}, {pos[1]}), sim={sim:.1%}, escala={sc:.2f}"))
+                    conf_icon = "🟢" if confidence == 'high' else ("🟡" if confidence == 'ambiguous' else "")
+                    self.after(0, lambda pid=piece_id, pos=best_pos, sim=similarity, sc=scale, ci=conf_icon:
+                              self._log(f"     ✅ Peça {pid}: pos=({pos[0]}, {pos[1]}), sim={sim:.1%}, escala={sc:.2f} {ci}"))
                 else:
                     self.after(0, lambda pid=piece_id, err=result['error']: 
                               self._log(f"     ❌ Peça {pid}: {err}"))
@@ -677,6 +717,20 @@ class PuzzleGUI(tk.Tk):
                 }
                 if r.get('path'):
                     piece_entry["path"] = r['path']
+
+                # Confiança do engine (shortlist + confidence) para esta peça.
+                piece_entry["confidence"] = r.get('confidence')
+                piece_entry["confidence_reason"] = r.get('confidence_reason')
+                piece_entry["candidates"] = [
+                    {
+                        "position": {"x": int(c['position'][0]), "y": int(c['position'][1])},
+                        "scale": float(c['scale']) if c.get('scale') is not None else None,
+                        "rotation": c.get('rotation'),
+                        "similarity": float(c['similarity']) if c.get('similarity') is not None else None,
+                    }
+                    for c in r.get('candidates', [])
+                ]
+
                 export_data["pieces"].append(piece_entry)
 
             # Salvar arquivo
@@ -899,7 +953,18 @@ class PuzzleGUI(tk.Tk):
             if 'piece_size_final' in result:
                 size_w, size_h = result['piece_size_final']
                 result['piece_size_final'] = (int(size_w / scale_factor_applied), int(size_h / scale_factor_applied))
-        
+            # A mesma escala TEM de ser aplicada a cada candidato da shortlist,
+            # senão os marcadores de "zonas prováveis" ficam desalinhados do puzzle
+            # a full-res (o downscale acima só afetou a busca, não os resultados).
+            if 'candidates' in result:
+                for cand in result['candidates']:
+                    if 'position' in cand:
+                        cx, cy = cand['position']
+                        cand['position'] = (int(cx / scale_factor_applied), int(cy / scale_factor_applied))
+                    if 'size' in cand:
+                        cw, ch = cand['size']
+                        cand['size'] = (int(cw / scale_factor_applied), int(ch / scale_factor_applied))
+
         return result
 
     def _handle_single_match_result(self, result, piece_id):
@@ -916,10 +981,14 @@ class PuzzleGUI(tk.Tk):
         scale = result.get("scale", 1.0)
         similarity = result.get("refined_similarity", 0.0)
         piece_size = result.get("piece_size_final", self.pieces_imgs[self.current_piece_idx]['img'].size)
-        
+        confidence = result.get("confidence")
+        confidence_reason = result.get("confidence_reason")
+        confidence_gap = result.get("confidence_gap")
+        candidates = result.get("candidates", [])
+
         # Limpar overlays anteriores e desenhar novo
         self.puzzle_canvas.delete("overlay")
-        
+
         current_piece = self.pieces_imgs[self.current_piece_idx]
         result_data = [{
             'piece_id': piece_id,
@@ -927,16 +996,28 @@ class PuzzleGUI(tk.Tk):
             'size': piece_size,
             'similarity': similarity,
             'scale': scale,
-            'color': "#0066FF",
-            'path': current_piece.get('path')
+            'color': self._confidence_color(confidence),
+            'path': current_piece.get('path'),
+            'confidence': confidence,
+            'confidence_reason': confidence_reason,
+            'confidence_gap': confidence_gap,
+            'candidates': candidates,
         }]
 
         # Reter resultados como dados (para export/visualização)
         self.last_results = result_data
         self._draw_piece_overlays(result_data)
-        
-        self._log(f"✅ Peça {piece_id}: pos=({best_pos[0]}, {best_pos[1]}), "
-                 f"similaridade={similarity:.1%}, escala={scale:.2f}")
+        self._update_piece_confidence_label(piece_id, confidence, confidence_reason)
+
+        if confidence == 'high':
+            self._log(f"✅ Peça {piece_id}: pos=({best_pos[0]}, {best_pos[1]}), "
+                     f"similaridade={similarity:.1%}, escala={scale:.2f} — 🟢 alta confiança.")
+        elif confidence == 'ambiguous':
+            self._log(f"⚠️ Peça {piece_id}: {len(candidates)} zona(s) prováveis, "
+                     f"escala={scale:.2f} — 🟡 ambígua ({confidence_reason}).")
+        else:
+            self._log(f"✅ Peça {piece_id}: pos=({best_pos[0]}, {best_pos[1]}), "
+                     f"similaridade={similarity:.1%}, escala={scale:.2f}")
 
     def _handle_match_error(self, error, piece_id):
         """Processar erro de matching."""
@@ -945,78 +1026,187 @@ class PuzzleGUI(tk.Tk):
         self._log(f"❌ Erro processando peça {piece_id}: {str(error)}")
 
     def _draw_piece_overlays(self, results):
-        """Desenhar retângulos e identificadores para cada peça no puzzle canvas."""
+        """Desenhar overlays de matching para cada peça no puzzle canvas.
+
+        O tratamento visual depende da confiança do engine para essa peça:
+        - 'high': retângulo + ponto verde numa única posição fiável.
+        - 'ambiguous': marcadores amarelos para cada zona provável da shortlist
+          (candidates), sem apontar uma única localização como se fosse certa.
+        - sem informação de confiança (resultados antigos/sintéticos): mantém o
+          comportamento legado (retângulo azul simples).
+        """
         # Obter dimensões do canvas e da imagem
         self.puzzle_canvas.update_idletasks()
         canvas_w = self.puzzle_canvas.winfo_width()
         canvas_h = self.puzzle_canvas.winfo_height()
-        
+
         if not hasattr(self, 'puzzle_img'):
             return
-            
+
         img_w, img_h = self.puzzle_img.size
-        
+
         # Calcular escala de exibição (mesmo cálculo usado em _display_image)
         max_w, max_h = canvas_w, canvas_h
         if max_w < 50 or max_h < 50:
             max_w, max_h = 600, 400
-            
+
         scale = min(max_w / img_w, max_h / img_h, 1.0)
         display_w = int(img_w * scale)
         display_h = int(img_h * scale)
-        
+
         # Posição da imagem no canvas (centralizada)
         offset_x = (canvas_w - display_w) // 2
         offset_y = (canvas_h - display_h) // 2
-        
-        # Desenhar overlay para cada peça
+
+        def to_canvas(x, y):
+            return offset_x + int(x * scale), offset_y + int(y * scale)
+
+        # Desenhar overlay para cada peça, consoante a sua confiança.
         for result in results:
-            piece_id = result['piece_id']
-            pos_x, pos_y = result['position']
-            piece_w, piece_h = result['size']
-            color = result['color']
-            similarity = result['similarity']
-            
-            # Converter coordenadas da imagem para coordenadas do canvas
-            canvas_x1 = offset_x + int(pos_x * scale)
-            canvas_y1 = offset_y + int(pos_y * scale)
-            canvas_x2 = canvas_x1 + int(piece_w * scale)
-            canvas_y2 = canvas_y1 + int(piece_h * scale)
-            
-            # Desenhar retângulo da peça
-            self.puzzle_canvas.create_rectangle(
-                canvas_x1, canvas_y1, canvas_x2, canvas_y2,
-                outline=color, width=3, tags="overlay"
-            )
-            
-            # Desenhar identificador da peça (número menor e mais legível)
-            text = str(piece_id)
-            text_x = canvas_x1 + 5
-            text_y = canvas_y1 + 5
-            
-            # Fundo branco menor para o número
-            text_width = len(text) * 8
-            text_height = 16
-            self.puzzle_canvas.create_rectangle(
-                text_x - 4, text_y - 4, 
-                text_x + text_width, text_y + text_height,
-                fill="white", outline=color, width=2, tags="overlay"
-            )
-            
-            # Número do identificador (fonte menor e mais legível)
+            confidence = result.get('confidence')
+            if confidence == 'high':
+                self._draw_high_confidence_overlay(result, to_canvas)
+            elif confidence == 'ambiguous':
+                self._draw_ambiguous_overlay(result, to_canvas)
+            else:
+                self._draw_legacy_overlay(result, to_canvas)
+
+    def _draw_high_confidence_overlay(self, result, to_canvas):
+        """Peça de alta confiança: retângulo + ponto verde numa posição fiável."""
+        piece_id = result['piece_id']
+        pos_x, pos_y = result['position']
+        piece_w, piece_h = result['size']
+        similarity = result.get('similarity', 0.0)
+        color = "#00CC00"
+
+        x1, y1 = to_canvas(pos_x, pos_y)
+        x2, y2 = to_canvas(pos_x + piece_w, pos_y + piece_h)
+
+        self.puzzle_canvas.create_rectangle(x1, y1, x2, y2, outline=color, width=3, tags="overlay")
+
+        # Ponto a marcar exatamente onde a peça encaixa na referência.
+        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+        r = 5
+        self.puzzle_canvas.create_oval(
+            cx - r, cy - r, cx + r, cy + r,
+            fill=color, outline="white", width=1, tags="overlay"
+        )
+
+        text = str(piece_id)
+        text_x, text_y = x1 + 5, y1 + 5
+        text_width = len(text) * 8
+        self.puzzle_canvas.create_rectangle(
+            text_x - 4, text_y - 4, text_x + text_width, text_y + 16,
+            fill="white", outline=color, width=2, tags="overlay"
+        )
+        self.puzzle_canvas.create_text(
+            text_x, text_y, anchor="nw",
+            text=text, fill=color, font=("Arial", 12, "bold"), tags="overlay"
+        )
+
+        sim_text = f"({similarity:.0%}) alta confiança"
+        self.puzzle_canvas.create_text(
+            text_x, text_y + 26, anchor="nw",
+            text=sim_text, fill=color, font=("Arial", 10), tags="overlay"
+        )
+
+        reason = result.get('confidence_reason')
+        if reason:
             self.puzzle_canvas.create_text(
-                text_x, text_y, anchor="nw",
-                text=text, fill=color, font=("Arial", 12, "bold"),
-                tags="overlay"
+                text_x, text_y + 42, anchor="nw",
+                text=reason, fill=color, font=("Arial", 8), tags="overlay"
             )
-            
-            # Similaridade em texto menor abaixo
-            sim_text = f"({similarity:.0%})"
+
+    def _draw_ambiguous_overlay(self, result, to_canvas):
+        """Peça ambígua: NÃO apresentar uma localização única e confiante --
+        mostrar pequenos marcadores amarelos para cada zona provável (candidates)
+        e o motivo da ambiguidade em texto legível."""
+        piece_id = result['piece_id']
+        color = "#FFCC00"
+        candidates = result.get('candidates') or []
+
+        label_x = label_y = None
+
+        if candidates:
+            for i, cand in enumerate(candidates):
+                cand_x, cand_y = cand.get('position', result.get('position', (0, 0)))
+                cand_w, cand_h = cand.get('size', result.get('size', (0, 0)))
+                ccx, ccy = to_canvas(cand_x + cand_w / 2, cand_y + cand_h / 2)
+                r = 6
+                self.puzzle_canvas.create_oval(
+                    ccx - r, ccy - r, ccx + r, ccy + r,
+                    outline=color, width=2, tags="overlay"
+                )
+                self.puzzle_canvas.create_text(
+                    ccx, ccy - r - 8, text=str(i + 1),
+                    fill=color, font=("Arial", 8, "bold"), tags="overlay"
+                )
+                if label_x is None:
+                    label_x, label_y = max(0, ccx - 10), max(0, ccy - r - 26)
+        else:
+            # Sem shortlist disponível (resultado antigo): marcar o retângulo
+            # único a tracejado, para deixar claro que não é uma posição fiável.
+            pos_x, pos_y = result.get('position', (0, 0))
+            piece_w, piece_h = result.get('size', (0, 0))
+            x1, y1 = to_canvas(pos_x, pos_y)
+            x2, y2 = to_canvas(pos_x + piece_w, pos_y + piece_h)
+            self.puzzle_canvas.create_rectangle(
+                x1, y1, x2, y2, outline=color, width=2, dash=(4, 2), tags="overlay"
+            )
+            label_x, label_y = x1, y1
+
+        if label_x is None:
+            label_x, label_y = 10, 10
+
+        n = len(candidates) if candidates else 1
+        header = f"Peça {piece_id}: AMBÍGUA ({n} zona(s) provável(eis))"
+        text_width = max(160, len(header) * 6)
+        self.puzzle_canvas.create_rectangle(
+            label_x - 4, label_y - 4, label_x + text_width, label_y + 14,
+            fill="white", outline=color, width=2, tags="overlay"
+        )
+        self.puzzle_canvas.create_text(
+            label_x, label_y, anchor="nw",
+            text=header, fill="#8A6D00", font=("Arial", 11, "bold"), tags="overlay"
+        )
+
+        reason = result.get('confidence_reason')
+        if reason:
             self.puzzle_canvas.create_text(
-                text_x, text_y + 26, anchor="nw",
-                text=sim_text, fill=color, font=("Arial", 10),
-                tags="overlay"
+                label_x, label_y + 18, anchor="nw",
+                text=reason, fill="#8A6D00", font=("Arial", 8), tags="overlay"
             )
+
+    def _draw_legacy_overlay(self, result, to_canvas):
+        """Comportamento antigo (sem campos de confiança): retângulo simples."""
+        piece_id = result['piece_id']
+        pos_x, pos_y = result['position']
+        piece_w, piece_h = result['size']
+        color = result.get('color', "#0066FF")
+        similarity = result.get('similarity', 0.0)
+
+        x1, y1 = to_canvas(pos_x, pos_y)
+        x2, y2 = to_canvas(pos_x + piece_w, pos_y + piece_h)
+
+        self.puzzle_canvas.create_rectangle(x1, y1, x2, y2, outline=color, width=3, tags="overlay")
+
+        text = str(piece_id)
+        text_x, text_y = x1 + 5, y1 + 5
+        text_width = len(text) * 8
+        self.puzzle_canvas.create_rectangle(
+            text_x - 4, text_y - 4, text_x + text_width, text_y + 16,
+            fill="white", outline=color, width=2, tags="overlay"
+        )
+        self.puzzle_canvas.create_text(
+            text_x, text_y, anchor="nw",
+            text=text, fill=color, font=("Arial", 12, "bold"), tags="overlay"
+        )
+
+        sim_text = f"({similarity:.0%})"
+        self.puzzle_canvas.create_text(
+            text_x, text_y + 26, anchor="nw",
+            text=sim_text, fill=color, font=("Arial", 10), tags="overlay"
+        )
 
 def main():
     app = PuzzleGUI()
