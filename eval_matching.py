@@ -231,6 +231,11 @@ def main() -> int:
 				"refined_similarity": res.get("refined_similarity"),
 				"confidence_gap": res.get("confidence_gap"),
 				"piece_structure": res.get("piece_structure"),
+				"search_dims": res.get("search_dims"),
+				"search_piece_px": res.get("search_piece_px"),
+				"integral_mb": res.get("integral_mb"),
+				"search_target_reached": res.get("search_target_reached"),
+				"coarse_scale_factor": res.get("coarse_scale_factor"),
 				"time_s": dt,
 				"piece_px": piece_pil.size,
 			}
@@ -271,17 +276,22 @@ def main() -> int:
 			f"min={np.min(per_piece_times):.2f}s, max={np.max(per_piece_times):.2f}s"
 		)
 
-	# ---- Sanity note: pieces tiny in the search space? ----
-	# Engine downscales the 8064-long reference to 1600 for the search. Report the
-	# expected piece side at num_pieces=3000 in that 1600px search space.
+	# ---- Adaptive search-resolution report (from the engine's own result fields) ----
+	# The engine now picks the search resolution so a piece is ~46px across (was a
+	# fixed 1600px longest-side cap -> ~25px). Report the ACTUAL values it used.
 	W0, H0 = ref_img.size
-	search_long = 1600
-	coarse = search_long / float(max(W0, H0))
 	exp_side_full = float(np.sqrt((W0 * H0) / float(NUM_PIECES)))
-	exp_side_search = exp_side_full * coarse
+	ok_recs = [r for r in results if r.get("search_dims") is not None]
+	search_dims = ok_recs[0]["search_dims"] if ok_recs else None
+	search_piece_px = ok_recs[0].get("search_piece_px") if ok_recs else None
+	coarse_used = ok_recs[0].get("coarse_scale_factor") if ok_recs else None
+	target_reached = ok_recs[0].get("search_target_reached") if ok_recs else None
+	peak_integral_mb = max((r.get("integral_mb") or 0.0) for r in ok_recs) if ok_recs else 0.0
 	log(
-		f"[note] at num_pieces={NUM_PIECES}: expected piece side ~{exp_side_full:.0f}px full-res, "
-		f"~{exp_side_search:.0f}px in the {search_long}px search space (coarse={coarse:.3f})."
+		f"[note] adaptive search: piece ~{exp_side_full:.0f}px full-res -> "
+		f"~{(search_piece_px or 0.0):.1f}px in search space "
+		f"(coarse={coarse_used}, search_dims={search_dims}, "
+		f"peak_integral={peak_integral_mb:.1f}MB, target_reached={target_reached})."
 	)
 
 	# ---- 6. Save up to N side-by-side images for 'high' pieces ----
@@ -298,10 +308,15 @@ def main() -> int:
 		y1 = max(y0 + 1, min(int(y) + int(h), H0))
 		ref_crop = ref_img.crop((x0, y0, x1, y1))
 		combo = side_by_side(r["_piece_pil"], ref_crop)
-		out_path = os.path.join(SCRATCH, f"match_high_{i}.png")
+		# NEW names: do not overwrite the baseline match_high_*.png (kept for compare).
+		out_path = os.path.join(SCRATCH, f"match_adaptive_{i}.png")
 		combo.save(out_path)
 		saved_paths.append(out_path)
-		log(f"[viz] saved {out_path}  (idx={r['index']} sim={r['refined_similarity']:.3f} pos=({x0},{y0}) size=({w},{h}))")
+		log(
+			f"[viz] saved {out_path}  (idx={r['index']} sim={r['refined_similarity']:.3f} "
+			f"gap={r.get('confidence_gap')} struct={r.get('piece_structure')} "
+			f"pos=({x0},{y0}) size=({w},{h}))"
+		)
 
 	if not high_recs:
 		log("[viz] no 'high' pieces to visualize.")
@@ -339,10 +354,16 @@ def main() -> int:
 		fh.write(f"  timing: total={total_secs:.1f}s avg={np.mean(per_piece_times):.2f}s "
 				 f"min={np.min(per_piece_times):.2f}s max={np.max(per_piece_times):.2f}s\n"
 				 if per_piece_times else "  timing: n/a\n")
-		fh.write(
-			f"  note: expected piece side ~{exp_side_full:.0f}px full-res, "
-			f"~{exp_side_search:.0f}px in the {search_long}px search space.\n"
-		)
+		fh.write("\n")
+		fh.write("Adaptive search resolution (engine-reported)\n")
+		fh.write("-" * 60 + "\n")
+		fh.write(f"  target piece side : {46}px (was ~25px at the fixed 1600px cap)\n")
+		fh.write(f"  expected side full: ~{exp_side_full:.0f}px\n")
+		fh.write(f"  search_dims (W,H) : {search_dims}\n")
+		fh.write(f"  search_piece_px   : {search_piece_px}\n")
+		fh.write(f"  coarse_scale      : {coarse_used}\n")
+		fh.write(f"  peak_integral_mb  : {peak_integral_mb:.1f} (budget 256MB)\n")
+		fh.write(f"  target_reached    : {target_reached}\n")
 		fh.write("\n")
 		fh.write("Per-piece results\n")
 		fh.write("-" * 60 + "\n")

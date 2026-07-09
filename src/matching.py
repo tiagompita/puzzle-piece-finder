@@ -1,5 +1,7 @@
 """Image matching & comparison orchestration."""
 
+import warnings
+
 import numpy as np
 from PIL import Image
 from .features import (
@@ -326,8 +328,23 @@ _ZONAL_MIN_VALID_CELLS = 4
 # good in-content match sits well below this; a tan<->blue mismatch is ~50, above.
 _ZONAL_COST_MAX = 40.0
 # Longest side the zonal search runs at (large refs are downscaled for speed and
-# the winning coordinates are mapped back to the passed image's resolution).
+# the winning coordinates are mapped back to the passed image's resolution). Used
+# only as the LEGACY fallback when num_pieces is unknown; otherwise the search
+# resolution is chosen adaptively (see _SEARCH_TARGET_PIECE_PX below).
 _SEARCH_MAX_DIM = 1600
+# Target side (px) of ONE piece in the search space when num_pieces is known. The
+# fixed 1600px cap shrank each piece to ~25px on a 3000-piece 8k reference (cell
+# ~6px), too coarse for the zonal signature. Below ~40px the per-cell colour
+# signature goes poor; much above 46px only spends memory without adding search
+# positions (the sweep stride scales with the piece, so positions are ~invariant).
+_SEARCH_TARGET_PIECE_PX = 46
+# Memory ceiling for the three Lab integral images (L, a, b), which are float64
+# arrays of shape (Hs+1)(Ws+1): 3 channels x 8 bytes x (Hs+1)(Ws+1). If the target
+# resolution would exceed this, the search scale is reduced to fit and a warning is
+# emitted. float64 is kept deliberately (see the integral note in the engine): sums
+# reach ~6e8, above float32's exact-integer range (2**24), so float32 would corrupt
+# cell differences in _zonal_cost near the 0.12 confidence gap.
+_SEARCH_MAX_INTEGRAL_BYTES = 256 * 1024 * 1024
 
 # ---- Shortlist / NMS / confidence tunables ----
 # Default number of DISTINCT candidates returned per piece.
@@ -692,10 +709,37 @@ def multi_scale_template_match(
 			)
 
 	# --- Optional coarse downscale of the reference for the search ---
+	# Choose the search resolution so one piece is ~_SEARCH_TARGET_PIECE_PX across
+	# (enough for the zonal signature) instead of the old fixed longest-side cap that
+	# shrank each piece to ~25px. The sweep stride scales with the piece side, so the
+	# number of evaluated positions is ~invariant to this choice -- only the integral
+	# images grow (~coarse_scale**2), which is bounded by _SEARCH_MAX_INTEGRAL_BYTES.
 	h0, w0 = puzzle_arr.shape[:2]
 	max_dim = max(h0, w0)
 	coarse_scale = 1.0
-	if use_downscale and max_dim > _SEARCH_MAX_DIM:
+	expected_side_full = None
+	search_target_reached = False
+	if use_downscale and num_pieces and num_pieces > 1:
+		expected_side_full = float(np.sqrt((w0 * h0) / float(num_pieces)))
+		# Never upscale beyond full-res; hit the target piece side otherwise.
+		coarse_scale = min(1.0, _SEARCH_TARGET_PIECE_PX / expected_side_full)
+		# Memory cap: the 3 float64 Lab integral images occupy
+		# 3 * 8 * (round(h0*c)+1) * (round(w0*c)+1) bytes. The largest c that fits the
+		# budget is c_max = sqrt(budget / (3*8*h0*w0)); if it is tighter than the
+		# target scale, honour the budget and report the shortfall honestly.
+		c_max = float(np.sqrt(_SEARCH_MAX_INTEGRAL_BYTES / (3.0 * 8.0 * h0 * w0)))
+		if c_max < coarse_scale:
+			coarse_scale = c_max
+			warnings.warn(
+				f"search resolution capped by memory budget "
+				f"({_SEARCH_MAX_INTEGRAL_BYTES / (1024 * 1024):.0f} MB): target "
+				f"{_SEARCH_TARGET_PIECE_PX}px/piece not reached, effective "
+				f"~{expected_side_full * coarse_scale:.1f}px/piece.",
+				stacklevel=2,
+			)
+		search_target_reached = (expected_side_full * coarse_scale) >= (_SEARCH_TARGET_PIECE_PX - 0.5)
+	elif use_downscale and max_dim > _SEARCH_MAX_DIM:
+		# Legacy fallback: fixed longest-side cap when num_pieces is unknown.
 		coarse_scale = _SEARCH_MAX_DIM / float(max_dim)
 	if coarse_scale < 1.0:
 		search_ref = cv2.resize(
@@ -895,6 +939,10 @@ def multi_scale_template_match(
 		"method": f"zonal_lab{grid}x{grid}",
 		"requested_method": method,
 		"coarse_scale_factor": coarse_scale,
+		"search_dims": (Ws, Hs),
+		"search_piece_px": (float(expected_side_full * coarse_scale) if expected_side_full is not None else None),
+		"integral_mb": float(3 * 8 * (Hs + 1) * (Ws + 1) / (1024 * 1024)),
+		"search_target_reached": bool(search_target_reached),
 		"candidates_considered": considered,
 		"scale_candidates": list(scale_candidates),
 		"grid": grid,
