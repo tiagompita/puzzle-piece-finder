@@ -57,6 +57,23 @@ _FRAME_MARGIN_FRAC = 0.004
 _MAX_BBOX_ASPECT = 4.0
 
 
+# ===== Edge-shadow halo removal tunables (step 9, _extract_piece) =====
+# Segmented pieces carry a thin, desaturated blue/grey cast-shadow halo on the
+# INTERIOR rim of the mask (most visible hugging the tabs). Left in place it feeds
+# out-of-artwork colour into the crop and a FALSE border gradient that would
+# contaminate downstream edge/texture (Sobel-on-L) analysis, so the mask is shrunk
+# inward before any colour or fill is derived. This is the fraction of the piece's
+# long side used as the erosion radius bounding the interior rim that may be peeled.
+# 0.0 disables the shrink entirely.
+_EDGE_SHRINK_FRAC = 0.015
+# Never shrink a piece whose long side is below this (px): the rim band would be a
+# large fraction of a tiny piece and risk eating real content.
+_EDGE_SHRINK_MIN_SIDE = 40
+# Back off the whole shrink if peeling the shadow would drop the mask below this
+# fraction of its original area (guard against over-eroding thin/narrow pieces).
+_EDGE_SHRINK_MIN_AREA_KEEP = 0.70
+
+
 # ===== Pure detection helpers (no I/O) =====
 def _to_working(bgr: np.ndarray, max_working_dim: int) -> tuple[np.ndarray, float]:
 	"""Downscale ``bgr`` so its longest side is <= ``max_working_dim``.
@@ -458,6 +475,56 @@ def _normalize_angle(ang: float) -> float:
 	return ang
 
 
+def _shrink_edge_shadow(mask: np.ndarray, rgb_crop: np.ndarray, long_side: int) -> np.ndarray:
+	"""Peel the interior-rim cast-shadow halo off a filled 0/255 piece mask.
+
+	The mask is eroded by ``_EDGE_SHRINK_FRAC * long_side`` to bound the rim that may
+	be peeled (a hard ceiling), then within that rim -- the crown between the
+	original and eroded masks -- only pixels that are BOTH darker AND lower-chroma
+	than the piece interior are dropped. That darker-and-desaturated pair is the
+	signature of a cast shadow, so genuine painted rims (which keep their chroma) and
+	fully neutral/grey pieces (whose rim is not darker than their own interior) are
+	preserved -- the erosion is used only as a maximum, never applied wholesale.
+
+	``rgb_crop`` is the matching RGB crop, ``long_side`` the piece's padded long side.
+	Falls back to the unshrunk ``mask`` when the piece is too small, when the shrink
+	would drop the mask below ``_EDGE_SHRINK_MIN_AREA_KEEP`` of its area, or when the
+	result would be empty (so the mask is never emptied and small pieces are safe).
+	"""
+	if _EDGE_SHRINK_FRAC <= 0.0 or long_side < _EDGE_SHRINK_MIN_SIDE:
+		return mask
+	orig_area = int((mask > 0).sum())
+	if orig_area == 0:
+		return mask
+	r = max(1, int(round(_EDGE_SHRINK_FRAC * long_side)))
+	eroded = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1)))
+	if not (eroded > 0).any():
+		return mask
+	rim = (mask > 0) & (eroded == 0)
+	if not rim.any():
+		return mask
+	# Interior reference from a deeper erosion so a halo thicker than r does not bias
+	# the lightness/chroma medians toward the shadow itself; fall back if it empties.
+	deep = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4 * r + 1, 4 * r + 1)))
+	core = deep if (deep > 0).any() else eroded
+	lab = cv2.cvtColor(rgb_crop, cv2.COLOR_RGB2LAB).astype(np.float32)
+	L = lab[:, :, 0]
+	chroma = np.sqrt((lab[:, :, 1] - 128.0) ** 2 + (lab[:, :, 2] - 128.0) ** 2)
+	core_sel = core > 0
+	L_int = float(np.median(L[core_sel]))
+	C_int = float(np.median(chroma[core_sel]))
+	shadow = rim & (L < L_int) & (chroma < C_int)
+	if not shadow.any():
+		return mask
+	refined = mask.copy()
+	refined[shadow] = 0
+	if int((refined > 0).sum()) < _EDGE_SHRINK_MIN_AREA_KEEP * orig_area:
+		return mask
+	if not (refined > 0).any():
+		return mask
+	return refined
+
+
 def _extract_piece(
 	mask_crop: np.ndarray,
 	bbox_w: tuple[int, int, int, int],
@@ -497,10 +564,14 @@ def _extract_piece(
 	cv2.drawContours(mask_full, [local_cnt.reshape(-1, 1, 2)], -1, 255, thickness=cv2.FILLED)
 	mask_full = cv2.morphologyEx(mask_full, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
 
+	rgb_crop = original_rgb[oy:oy + oh, ox:ox + ow].copy()
+	# Peel the interior-rim cast-shadow halo BEFORE any colour/fill is derived, so the
+	# mean colour, the mean-fill and the rotation branch all inherit the clean mask.
+	mask_full = _shrink_edge_shadow(mask_full, rgb_crop, max(ow, oh))
+
 	m = mask_full > 0
 	if not m.any():
 		return None
-	rgb_crop = original_rgb[oy:oy + oh, ox:ox + ow].copy()
 	mean_color = rgb_crop[m].mean(axis=0)
 	mean_u8 = mean_color.astype(np.uint8)
 	area_px = int(m.sum())
