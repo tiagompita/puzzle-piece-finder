@@ -104,7 +104,7 @@ tkinter                # Graphical interface (included with Python)
 ### Graphical Interface (Recommended)
 
 ```bash
-python src/gui.py
+python -m src.gui
 ```
 
 The graphical interface offers:
@@ -117,7 +117,7 @@ The graphical interface offers:
 ### Command Line Interface
 
 ```bash
-python src/main.py
+python -m src.main
 ```
 
 For programmatic usage:

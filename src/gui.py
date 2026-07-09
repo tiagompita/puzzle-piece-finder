@@ -39,6 +39,7 @@ class PuzzleGUI(tk.Tk):
         self.pieces_imgs = []
         self.current_piece_idx = 0
         self.matching_cancelled = False  # Para controlar cancelamento
+        self.last_results = []  # Resultados do último matching (dados, para export/visualização)
         self._build_widgets()
 
     def _build_widgets(self):
@@ -61,6 +62,9 @@ class PuzzleGUI(tk.Tk):
         row1.pack(fill=tk.X, pady=3)
         ttk.Button(row1, text="Load Puzzle", command=self.load_puzzle).pack(side=tk.LEFT)
         ttk.Button(row1, text="Load Pieces", command=self.load_pieces).pack(side=tk.LEFT, padx=(6, 0))
+        segment_btn = ttk.Button(row1, text="Segment Photo", command=self.segment_pieces_photo)
+        segment_btn.pack(side=tk.LEFT, padx=(6, 0))
+        self._tooltip.bind(segment_btn, "Detetar e recortar peças automaticamente a partir de uma foto do monte.")
         ttk.Label(row1, text="Real puzzle W (cm):").pack(side=tk.LEFT, padx=(12, 4))
         self.width_entry = ttk.Entry(row1, width=8)
         self.width_entry.pack(side=tk.LEFT)
@@ -96,7 +100,9 @@ class PuzzleGUI(tk.Tk):
         clear_btn.pack(side=tk.LEFT, padx=(6, 0))
         export_btn = ttk.Button(row3, text="Export Results", command=self.export_results)
         export_btn.pack(side=tk.LEFT, padx=(6, 0))
-        
+        save_img_btn = ttk.Button(row3, text="Save Annotated Image", command=self.save_annotated_result)
+        save_img_btn.pack(side=tk.LEFT, padx=(6, 0))
+
         # Guardar referência aos botões para controle de estado
         self.compute_btn = compute_btn
         self.match_btn = match_btn
@@ -110,6 +116,7 @@ class PuzzleGUI(tk.Tk):
         self._tooltip.bind(cancel_btn, "Cancelar o processo de matching em andamento.")
         self._tooltip.bind(clear_btn, "Limpar todos os traçados/overlays do puzzle.")
         self._tooltip.bind(export_btn, "Exportar resultados para arquivo JSON.")
+        self._tooltip.bind(save_img_btn, "Guardar imagem do puzzle anotada com marcador vermelho no centro de cada peça.")
 
         # Puzzle + Piece side by side
         center_row = ttk.Frame(main)
@@ -219,6 +226,11 @@ class PuzzleGUI(tk.Tk):
             return
         piece = self.pieces_imgs[idx]
         self._display_image(piece['img_annotated'], self.piece_canvas, 'piece')
+        piece_type = piece.get('piece_type')
+        if piece.get('is_cluster'):
+            self._log(f"⚠️ Peça {piece['id']}: CLUSTER (não é uma peça única).")
+        elif piece_type:
+            self._log(f"Peça {piece['id']}: tipo={piece_type}.")
 
     def load_puzzle(self):
         path = filedialog.askopenfilename(title="Select Puzzle Image", initialdir=self._default_puzzle_dir())
@@ -232,17 +244,6 @@ class PuzzleGUI(tk.Tk):
             messagebox.showerror("Error", f"Failed to load puzzle: {e}")
 
     def load_pieces(self):
-        path = filedialog.askopenfilename(title="Select Piece Image", initialdir=self._default_piece_dir())
-        if not path:
-            return
-        try:
-            self.piece_img = Image.open(path)
-            self._display_image(self.piece_img, self.piece_canvas, 'piece')
-            self._log(f"Loaded piece: {path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load piece: {e}")
-
-    def load_pieces(self):
         paths = filedialog.askopenfilenames(title="Select Piece Images", initialdir=self._default_piece_dir(), filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp")])
         if not paths:
             return
@@ -250,20 +251,129 @@ class PuzzleGUI(tk.Tk):
         for idx, path in enumerate(paths):
             try:
                 img = Image.open(path)
-                img_ = img.copy()
-                draw = ImageDraw.Draw(img_)
-                try:
-                    font = ImageFont.truetype("arial.ttf", 60)
-                except Exception:
-                    font = ImageFont.load_default()
-                draw.rectangle([0,0,70,50], fill=(255,255,255,200))
-                draw.text((8,2), str(idx+1), fill=(0,0,0), font=font)
+                img_ = self._annotate_piece_number(img, idx + 1)
                 self.pieces_imgs.append({'img': img, 'img_annotated': img_, 'id': idx+1, 'path': path})
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load piece: {path}\n{e}")
         if self.pieces_imgs:
             self.current_piece_idx = 0
             self._display_piece_by_idx(0)
+
+    def _annotate_piece_number(self, img, number):
+        """Devolver uma cópia de img com um número (1-based) desenhado no canto superior esquerdo."""
+        img_ = img.copy()
+        draw = ImageDraw.Draw(img_)
+        try:
+            font = ImageFont.truetype("arial.ttf", 60)
+        except Exception:
+            font = ImageFont.load_default()
+        draw.rectangle([0,0,70,50], fill=(255,255,255,200))
+        draw.text((8,2), str(number), fill=(0,0,0), font=font)
+        return img_
+
+    def _annotate_piece_extra(self, img, number, piece_type=None, is_cluster=False):
+        """Como `_annotate_piece_number`, mas também mostra `piece_type` e marca
+        visualmente clusters (borda vermelha + tag "CLUSTER") vindos da segmentação."""
+        img_ = self._annotate_piece_number(img, number)
+        draw = ImageDraw.Draw(img_)
+        try:
+            small_font = ImageFont.truetype("arial.ttf", 28)
+        except Exception:
+            small_font = ImageFont.load_default()
+
+        if is_cluster:
+            w, h = img_.size
+            draw.rectangle([0, 0, w - 1, h - 1], outline=(255, 0, 0), width=8)
+            label = "CLUSTER"
+            draw.rectangle([0, h - 40, 160, h], fill=(255, 0, 0))
+            draw.text((6, h - 36), label, fill=(255, 255, 255), font=small_font)
+        elif piece_type:
+            w, h = img_.size
+            label = str(piece_type)
+            text_w = max(60, len(label) * 16)
+            draw.rectangle([0, h - 34, text_w, h], fill=(255, 255, 255, 200))
+            draw.text((6, h - 30), label, fill=(0, 0, 0), font=small_font)
+
+        return img_
+
+    def segment_pieces_photo(self):
+        """Detetar e recortar automaticamente peças a partir de uma foto do monte."""
+        path = filedialog.askopenfilename(
+            title="Select Pieces Photo",
+            initialdir=self._default_piece_dir(),
+            filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.dng"), ("All files", "*.*")]
+        )
+        if not path:
+            return
+
+        try:
+            expected_pieces = int(self.pieces_entry.get()) if self.pieces_entry.get().strip() else None
+        except ValueError:
+            expected_pieces = None
+
+        self._show_progress("Segmentando foto...")
+        self._disable_buttons()
+
+        def segmentation_thread():
+            from .segmentation import segment_pieces_from_file
+            try:
+                result = segment_pieces_from_file(path, expected_pieces=expected_pieces)
+                self.after(0, lambda: self._handle_segmentation_result(result, path))
+            except Exception as e:
+                error_msg = str(e)
+                self.after(0, lambda: self._handle_segmentation_result({'error': error_msg, 'count': 0}, path))
+
+        thread = threading.Thread(target=segmentation_thread, daemon=True)
+        thread.start()
+
+    def _handle_segmentation_result(self, result, path):
+        """Processar resultado da segmentação automática (thread principal)."""
+        self._hide_progress()
+        self._enable_buttons()
+
+        if 'error' in result:
+            self._log(f"❌ Segmentação falhou ({result['error']}). Tenta uma foto mais próxima ou uma superfície lisa/contrastante.")
+            return
+
+        pieces = result.get('pieces', [])
+        count = result.get('count', len(pieces))
+
+        if pieces:
+            from .edges import classify_pieces
+            classify_pieces(pieces)
+            # classify_pieces overwrites piece_type; is_cluster is the
+            # authoritative flag, so restore piece_type='cluster' for those.
+            for p in pieces:
+                if p.get('is_cluster'):
+                    p['piece_type'] = 'cluster'
+
+        self.pieces_imgs = []
+        for p in pieces:
+            self.pieces_imgs.append({
+                'img': p['image'],
+                'img_annotated': self._annotate_piece_extra(p['image'], p['index'] + 1, p.get('piece_type'), p.get('is_cluster', False)),
+                'id': p['index'] + 1,
+                'path': f"{path}#piece{p['index'] + 1}",
+                'mask': p['mask'],
+                'bbox': p['bbox'],
+                'piece_type': p.get('piece_type'),
+                'is_cluster': p.get('is_cluster', False),
+            })
+
+        self.last_results = []
+
+        if self.pieces_imgs:
+            self.current_piece_idx = 0
+            self._display_piece_by_idx(0)
+
+        self._log(f"✅ Segmentação: {count} peças detetadas.")
+
+        try:
+            expected_pieces = int(self.pieces_entry.get()) if self.pieces_entry.get().strip() else None
+        except ValueError:
+            expected_pieces = None
+        if expected_pieces is not None and expected_pieces != count:
+            self._log(f"⚠️  Número de peças esperado ({expected_pieces}) difere do detetado ({count}).")
 
     def _display_image(self, img, widget, kind):
         if kind == 'piece' and hasattr(self, 'piece_canvas'):
@@ -363,16 +473,23 @@ class PuzzleGUI(tk.Tk):
         """Executar matching de múltiplas peças com otimizações."""
         results = []
         total_pieces = len(self.pieces_imgs)
-        
+        skipped_clusters = 0
+
         for i, piece_data in enumerate(self.pieces_imgs):
             # Verificar se foi cancelado
             if self.matching_cancelled:
                 self.after(0, lambda: self._log("🛑 Matching cancelado pelo usuário."))
                 break
-                
-            piece_img = piece_data['img']
+
             piece_id = piece_data['id']
-            
+
+            if piece_data.get('is_cluster'):
+                skipped_clusters += 1
+                self.after(0, lambda pid=piece_id: self._log(f"⚠️ Peça {pid} é um cluster — ignorada no matching."))
+                continue
+
+            piece_img = piece_data['img']
+
             # Atualizar progresso
             progress_msg = f"Processando peça {piece_id} ({i+1}/{total_pieces})"
             self.after(0, lambda msg=progress_msg: self._show_progress(msg))
@@ -394,7 +511,8 @@ class PuzzleGUI(tk.Tk):
                         'size': piece_size,
                         'similarity': similarity,
                         'scale': scale,
-                        'color': "#0066FF"
+                        'color': "#0066FF",
+                        'path': piece_data.get('path')
                     })
                     
                     # Log no thread principal
@@ -405,10 +523,13 @@ class PuzzleGUI(tk.Tk):
                               self._log(f"     ❌ Peça {pid}: {err}"))
                     
             except Exception as e:
-                self.after(0, lambda pid=piece_id, err=str(e): 
+                self.after(0, lambda pid=piece_id, err=str(e):
                           self._log(f"     ❌ Erro peça {pid}: {err}"))
                 continue
-        
+
+        if skipped_clusters:
+            self.after(0, lambda n=skipped_clusters: self._log(f"⚠️ {n} peça(s) ignorada(s) por serem clusters."))
+
         return results
 
     def _handle_batch_results(self, results):
@@ -417,9 +538,12 @@ class PuzzleGUI(tk.Tk):
         self._enable_buttons()
         
         if results:
+            # Reter resultados como dados (para export/visualização)
+            self.last_results = results
+
             # Limpar overlays anteriores
             self.puzzle_canvas.delete("overlay")
-            
+
             # Analisar e reportar resultados
             self._analyze_multi_piece_results(results)
             self._draw_piece_overlays(results)
@@ -485,56 +609,122 @@ class PuzzleGUI(tk.Tk):
         
         return (intersection_area / min_area) > threshold
 
+    def _puzzle_pixels_per_cm(self):
+        """Derivar pixels/cm do puzzle a partir das dimensões reais (como em compute_metrics).
+
+        Retorna um float (px/cm) ou None se o utilizador não forneceu medidas.
+        Usa a largura primeiro (puzzle_w / real_width), com fallback para a altura.
+        """
+        if not hasattr(self, 'puzzle_img'):
+            return None
+        puzzle_w, puzzle_h = self.puzzle_img.size
+        try:
+            real_width = float(self.width_entry.get()) if self.width_entry.get().strip() else None
+            real_height = float(self.height_entry.get()) if self.height_entry.get().strip() else None
+        except (ValueError, AttributeError):
+            return None
+        if real_width:
+            return puzzle_w / real_width
+        if real_height:
+            return puzzle_h / real_height
+        return None
+
     def export_results(self):
-        """Exportar resultados do matching para arquivo JSON."""
-        if not hasattr(self, 'puzzle_img') or not self.pieces_imgs:
-            self._log("❌ Nenhum resultado para exportar.")
+        """Exportar resultados reais do matching para arquivo JSON."""
+        if not hasattr(self, 'puzzle_img'):
+            self._log("❌ Carregue primeiro uma imagem do puzzle!")
             return
-            
+
+        # Guarda: o matching tem de ter sido executado (baseado nos dados retidos).
+        if not self.last_results:
+            self._log("❌ Execute primeiro o matching das peças.")
+            return
+
         try:
             from tkinter import filedialog
             import json
             from datetime import datetime
-            
-            # Verificar se há overlays (resultados de matching)
-            overlay_items = self.puzzle_canvas.find_withtag("overlay")
-            if not overlay_items:
-                self._log("❌ Execute primeiro o matching das peças.")
-                return
-            
+
             # Preparar dados para exportação
             export_data = {
                 "timestamp": datetime.now().isoformat(),
                 "puzzle_info": {
-                    "size": self.puzzle_img.size,
+                    "size": list(self.puzzle_img.size),
                     "mode": self.puzzle_img.mode
                 },
-                "pieces_count": len(self.pieces_imgs),
+                "matched_pieces_count": len(self.last_results),
+                "total_pieces_loaded": len(self.pieces_imgs),
                 "pieces": []
             }
-            
-            # Adicionar informações das peças (note: isso é uma simplificação)
-            for piece_data in self.pieces_imgs:
-                export_data["pieces"].append({
-                    "id": piece_data['id'],
-                    "path": piece_data['path'],
-                    "size": piece_data['img'].size
-                })
-            
+
+            # Escala px/cm ao nível do puzzle (se o utilizador forneceu medidas reais).
+            px_per_cm = self._puzzle_pixels_per_cm()
+            if px_per_cm is not None:
+                export_data["pixels_per_cm"] = px_per_cm
+
+            # Serializar os resultados reais de cada peça.
+            for r in self.last_results:
+                pos = r.get('position', (0, 0))
+                size = r.get('size', (0, 0))
+                sim = r.get('similarity')
+                sc = r.get('scale')
+                piece_entry = {
+                    "id": r.get('piece_id'),
+                    "position": {"x": int(pos[0]), "y": int(pos[1])},
+                    "size": {"width": int(size[0]), "height": int(size[1])},
+                    "similarity": float(sim) if sim is not None else None,
+                    "scale": float(sc) if sc is not None else None,
+                }
+                if r.get('path'):
+                    piece_entry["path"] = r['path']
+                export_data["pieces"].append(piece_entry)
+
             # Salvar arquivo
             filename = filedialog.asksaveasfilename(
                 title="Salvar resultados",
                 defaultextension=".json",
                 filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
             )
-            
+
             if filename:
                 with open(filename, 'w', encoding='utf-8') as f:
                     json.dump(export_data, f, indent=2, ensure_ascii=False)
-                self._log(f"✅ Resultados exportados para: {filename}")
-            
+                self._log(f"✅ Resultados exportados para: {filename} "
+                          f"({len(self.last_results)}/{len(self.pieces_imgs)} peças).")
+
         except Exception as e:
             self._log(f"❌ Erro ao exportar: {str(e)}")
+
+    def save_annotated_result(self):
+        """Guardar uma imagem do puzzle anotada com um marcador vermelho no centro provável de cada peça.
+
+        Usa src/visualization.py para renderizar os resultados retidos sobre self.puzzle_img
+        e guarda o ficheiro através de um diálogo. Não afeta os overlays interativos do canvas.
+        """
+        if not hasattr(self, 'puzzle_img'):
+            self._log("❌ Carregue primeiro uma imagem do puzzle!")
+            return
+
+        if not self.last_results:
+            self._log("❌ Execute primeiro o matching das peças.")
+            return
+
+        try:
+            from tkinter import filedialog
+            from .visualization import save_annotated_image
+
+            filename = filedialog.asksaveasfilename(
+                title="Guardar imagem anotada",
+                defaultextension=".png",
+                filetypes=[("PNG image", "*.png"), ("JPEG image", "*.jpg;*.jpeg"), ("All files", "*.*")]
+            )
+
+            if filename:
+                save_annotated_image(self.puzzle_img, self.last_results, filename)
+                self._log(f"✅ Imagem anotada guardada em: {filename}")
+
+        except Exception as e:
+            self._log(f"❌ Erro ao guardar imagem anotada: {str(e)}")
 
     def compute_metrics(self):
         """Calcular métricas das imagens carregadas."""
@@ -599,7 +789,11 @@ class PuzzleGUI(tk.Tk):
         current_piece_data = self.pieces_imgs[self.current_piece_idx]
         piece_img = current_piece_data['img']
         piece_id = current_piece_data['id']
-        
+
+        if current_piece_data.get('is_cluster'):
+            self._log(f"⚠️ Peça {piece_id} é um cluster (não é uma peça única) — não é localizável.")
+            return
+
         # Executar em thread para não travar a GUI
         self._show_progress(f"Matching peça {piece_id}...")
         self._disable_buttons()
@@ -726,14 +920,19 @@ class PuzzleGUI(tk.Tk):
         # Limpar overlays anteriores e desenhar novo
         self.puzzle_canvas.delete("overlay")
         
+        current_piece = self.pieces_imgs[self.current_piece_idx]
         result_data = [{
             'piece_id': piece_id,
             'position': best_pos,
             'size': piece_size,
             'similarity': similarity,
-            'color': "#0066FF"
+            'scale': scale,
+            'color': "#0066FF",
+            'path': current_piece.get('path')
         }]
-        
+
+        # Reter resultados como dados (para export/visualização)
+        self.last_results = result_data
         self._draw_piece_overlays(result_data)
         
         self._log(f"✅ Peça {piece_id}: pos=({best_pos[0]}, {best_pos[1]}), "
@@ -744,90 +943,6 @@ class PuzzleGUI(tk.Tk):
         self._hide_progress()
         self._enable_buttons()
         self._log(f"❌ Erro processando peça {piece_id}: {str(error)}")
-        if not hasattr(self, 'puzzle_img'):
-            self._log("❌ Carregue primeiro uma imagem do puzzle!")
-            return
-            
-        if not self.pieces_imgs:
-            self._log("❌ Carregue pelo menos uma peça!")
-            return
-            
-        # Obter parâmetros
-        try:
-            num_pieces = int(self.pieces_entry.get()) if self.pieces_entry.get().strip() else None
-        except ValueError:
-            num_pieces = None
-            
-        use_downscale = self.downscale_var.get()
-        use_gpu = self.gpu_var.get()
-        
-        self._log(f"🔍 Iniciando matching para {len(self.pieces_imgs)} peças...")
-        self._log(f"   Parâmetros: downscale={use_downscale}, gpu={use_gpu}")
-        
-        # Importar módulos necessários
-        try:
-            from .matching import multi_scale_template_match
-        except ImportError:
-            self._log("❌ Erro ao importar módulo de matching!")
-            return
-            
-        # Limpar overlays anteriores
-        self.puzzle_canvas.delete("overlay")
-        
-        # Usar uma única cor para todos os traçados
-        overlay_color = "#0066FF"  # Azul
-        
-        results = []
-        
-        # Processar cada peça
-        for i, piece_data in enumerate(self.pieces_imgs):
-            piece_img = piece_data['img']  # Usar imagem original (sem anotação)
-            piece_id = piece_data['id']
-            
-            self._log(f"   Processando peça {piece_id}...")
-            
-            try:
-                # Executar matching
-                result = multi_scale_template_match(
-                    puzzle_img=self.puzzle_img,
-                    piece_img=piece_img,
-                    num_pieces=num_pieces,
-                    use_downscale=use_downscale,
-                    use_gpu=use_gpu
-                )
-                
-                if "error" in result:
-                    self._log(f"   ❌ Erro na peça {piece_id}: {result['error']}")
-                    continue
-                
-                # Extrair informações do resultado
-                best_pos = result.get("best_position", (0, 0))
-                scale = result.get("scale", 1.0)
-                similarity = result.get("refined_similarity", 0.0)
-                piece_size = result.get("piece_size_final", piece_img.size)
-                
-                # Salvar resultado
-                results.append({
-                    'piece_id': piece_id,
-                    'position': best_pos,
-                    'size': piece_size,
-                    'similarity': similarity,
-                    'color': overlay_color
-                })
-                
-                self._log(f"   ✅ Peça {piece_id}: pos=({best_pos[0]}, {best_pos[1]}), "
-                         f"similaridade={similarity:.1%}, escala={scale:.2f}")
-                
-            except Exception as e:
-                self._log(f"   ❌ Erro processando peça {piece_id}: {str(e)}")
-                continue
-        
-        # Desenhar overlays no puzzle
-        if results:
-            self._draw_piece_overlays(results)
-            self._log(f"✅ Matching concluído! {len(results)} peças processadas.")
-        else:
-            self._log("❌ Nenhuma peça foi processada com sucesso.")
 
     def _draw_piece_overlays(self, results):
         """Desenhar retângulos e identificadores para cada peça no puzzle canvas."""
@@ -902,9 +1017,6 @@ class PuzzleGUI(tk.Tk):
                 text=sim_text, fill=color, font=("Arial", 10),
                 tags="overlay"
             )
-
-    def export_results(self):
-        self._log("Export results: not implemented in this minimal version.")
 
 def main():
     app = PuzzleGUI()

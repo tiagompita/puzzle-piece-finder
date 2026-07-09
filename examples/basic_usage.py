@@ -21,7 +21,7 @@ def example_1_basic_matching():
     print("=== Example 1: Basic Template Matching ===")
     
     # Load example images (adjust paths as needed)
-    puzzle_path = "../images/puzzles/pexels-quang-nguyen-vinh-222549-2162442.jpg"
+    puzzle_path = "../images/puzzles/1186441_1.jpg"
     piece_path = "../images/pieces/piece_0.png"
     
     try:
@@ -90,7 +90,7 @@ def example_3_metrics_analysis():
     print("\n=== Example 3: Metrics Analysis ===")
     
     try:
-        puzzle_path = "../images/puzzles/pexels-quang-nguyen-vinh-222549-2162442.jpg"
+        puzzle_path = "../images/puzzles/1186441_1.jpg"
         piece_path = "../images/pieces/piece_5.png"
         
         puzzle_img = Image.open(puzzle_path)
@@ -126,7 +126,7 @@ def example_4_batch_processing():
     print("\n=== Example 4: Batch Processing ===")
     
     try:
-        puzzle_path = "../images/puzzles/pexels-quang-nguyen-vinh-222549-2162442.jpg"
+        puzzle_path = "../images/puzzles/1186441_1.jpg"
         pieces_dir = "../images/pieces"
         
         puzzle_img = Image.open(puzzle_path)
@@ -179,6 +179,6 @@ if __name__ == "__main__":
     print("\n" + "=" * 50)
     print("Examples completed!")
     print("\nNext steps:")
-    print("1. Try the GUI: python src/gui.py")
+    print("1. Try the GUI: python -m src.gui")
     print("2. Experiment with your own puzzle images")
     print("3. Enable GPU acceleration if available")

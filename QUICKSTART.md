@@ -18,14 +18,14 @@ python -m venv .venv
 pip install -r requirements.txt
 
 # 4. Run the GUI
-python src/gui.py
+python -m src.gui
 ```
 
 ## 🎮 First Use
 
 ### Graphical Interface (Recommended)
 
-1. **Run GUI**: `python src/gui.py`
+1. **Run GUI**: `python -m src.gui`
 2. **Load Puzzle**: Click "Load Puzzle" → select a complete puzzle image
 3. **Load Pieces**: Click "Load Pieces" → select one or more piece images
 4. **Execute Matching**: Click "Match" for one piece or "Match All Pieces" for all
@@ -34,7 +34,7 @@ python src/gui.py
 
 ```bash
 # Run interactive CLI
-python src/main.py
+python -m src.main
 
 # Follow the on-screen instructions to:
 # 1. Select puzzle image

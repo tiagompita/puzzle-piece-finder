@@ -38,7 +38,7 @@ def _select_image_from_directory(directory_path: str, label: str) -> Image.Image
 
 def load_puzzle() -> Image.Image:
 	"""Interactively load the main puzzle image (loops until success)."""
-	default_puzzle_path = r"C:\Users\tiago\Desktop\puzzle_solver\images\puzzles"
+	default_puzzle_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'images', 'puzzles'))
 
 	while True:
 		print("\n" + "=" * 40)
@@ -74,7 +74,7 @@ def load_puzzle() -> Image.Image:
 
 def load_piece() -> Image.Image:
 	"""Interactively load a puzzle piece image (loops until success)."""
-	default_piece_path = r"C:\Users\tiago\Desktop\puzzle_solver\images\pieces"
+	default_piece_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'images', 'pieces'))
 
 	while True:
 		print("\n" + "=" * 40)
