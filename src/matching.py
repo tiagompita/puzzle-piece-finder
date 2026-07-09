@@ -377,6 +377,27 @@ _CONF_GAP_HIGH = 0.12
 # average colour. Calibrated on IMG_2114: flat pieces score < ~3.7, detail pieces > 4.
 _CONF_STRUCT_HIGH = 4.0
 
+# ---- Texture (gradient-orientation) re-rank tunables ----
+# Two pieces can share a zonal COLOUR signature yet differ in fine STRUCTURE (the
+# "colour twins"). After the colour search, each shortlisted candidate is re-scored
+# by how well the piece's per-cell histogram-of-gradient-orientation (see
+# ``texture.gradient_signature``) matches the reference window there. The combined
+# cost adds ``_TEXTURE_LAMBDA`` * texture-distance to the NORMALIZED colour cost
+# (colour cost / _ZONAL_COST_MAX, both in ~[0, 1]); lambda balances the two.
+_TEXTURE_LAMBDA = 0.5
+# Orientation bins over [0, pi) for the gradient signature.
+_TEXTURE_BINS = 8
+# ---- Edge/corner border prior tunables ----
+# A fixed, ~zero-cost prior added to the combined cost when a piece's own edge
+# classification (piece_type from ``edges.classify_piece_edges``) disagrees with
+# whether its placement box touches the reference border. Assumes the puzzle ART
+# FILLS the reference image, so the artwork border == the image border -- true for
+# PuzzleOriginal.jpeg. A wrong border relationship is penalised by this amount.
+_EDGE_PRIOR_PENALTY = 0.10
+# A box side counts as "touching the frame" when it lies within this fraction of the
+# search-space larger dimension from the image edge.
+_EDGE_BORDER_MARGIN_FRAC = 0.02
+
 
 def _cie_lab(rgb: np.ndarray) -> np.ndarray:
 	"""Convert an 8-bit RGB array to CIE-Lab floats.
@@ -600,14 +621,18 @@ def _peak_sharpness(
 	return (ring_min - c0) / ring_min if ring_min > 1e-6 else 0.0
 
 
-def _greedy_nms(cands: list[dict], iou_thr: float, keep: int) -> list[dict]:
+def _greedy_nms(cands: list[dict], iou_thr: float, keep: int, key=None) -> list[dict]:
 	"""Greedy non-maximum suppression on candidate boxes, best (lowest cost) first.
 
-	Each dict must carry ``'cost'`` and ``'box'`` = ``(x, y, w, h)``. A candidate is
-	kept only if it overlaps every already-kept box by less than ``iou_thr``, so the
-	result holds distinct regions (across scales and rotations) ranked by cost.
+	Each dict must carry ``'box'`` = ``(x, y, w, h)`` and the score read by ``key``
+	(default ``c['cost']``, the pure colour cost). A candidate is kept only if it
+	overlaps every already-kept box by less than ``iou_thr``, so the result holds
+	distinct regions (across scales and rotations) ranked by that score. Pass a
+	``key`` such as ``lambda c: c['cost_comb']`` to rank by the combined cost.
 	"""
-	ordered = sorted(cands, key=lambda c: c["cost"])
+	if key is None:
+		key = lambda c: c["cost"]
+	ordered = sorted(cands, key=key)
 	selected: list[dict] = []
 	for c in ordered:
 		if all(_box_iou(c["box"], s["box"]) < iou_thr for s in selected):
@@ -628,6 +653,8 @@ def multi_scale_template_match(
 	piece_mask=None,
 	pixels_per_cm: float | None = None,
 	grid: int = _ZONAL_GRID,
+	use_texture: bool = True,
+	piece_edges: dict | None = None,
 ) -> dict:
 	"""Locate ``piece_img`` inside ``puzzle_img`` with a zonal Lab colour search.
 
@@ -672,6 +699,15 @@ def multi_scale_template_match(
 			all pixels.
 		pixels_per_cm: optional reference px/cm for real-size reporting.
 		grid: signature grid size (default 4 -> 4x4 cells).
+		use_texture: re-rank the colour shortlist by a per-cell gradient-orientation
+			signature (:mod:`texture`) so "colour twins" are separated by fine
+			structure; ``False`` scores by colour alone (the A/B baseline).
+		piece_edges: optional edge/corner classification of this piece (a dict with
+			``piece_type`` as produced by ``edges.classify_piece_edges``). When given,
+			a fixed border prior nudges the combined cost so an 'edge'/'corner' piece is
+			expected to touch the reference frame and an 'interior' piece is not. This
+			ASSUMES the artwork fills the reference image (frame == image border), which
+			holds for PuzzleOriginal.jpeg.
 
 	Returns:
 		On success a dict whose single-best keys mirror the top candidate for GUI
@@ -689,6 +725,7 @@ def multi_scale_template_match(
 		import cv2  # local import
 	except ImportError:
 		return {"error": "opencv_not_available"}
+	from . import texture  # lazy: keeps cv2 optional at module import time
 
 	puzzle_arr = np.asarray(puzzle_img.convert("RGB"))
 	piece_arr = np.asarray(piece_img.convert("RGB"))
@@ -790,6 +827,10 @@ def multi_scale_template_match(
 				continue
 			considered += 1
 			valid_cells = [i for i in range(grid * grid) if valid[i]]
+			# Per-cell gradient-orientation signature of this (rotation, scale), built
+			# once here just like the colour signature; used to re-rank the shortlist.
+			# Skipped entirely when texture is off so the colour path pays nothing.
+			grad_sig = texture.gradient_signature(p_res, m_res, grid, _TEXTURE_BINS) if use_texture else None
 			xe = _cell_edges(sw, grid)
 			ye = _cell_edges(sh, grid)
 
@@ -808,7 +849,7 @@ def multi_scale_template_match(
 				"sig": sig, "valid_cells": valid_cells, "xe": xe, "ye": ye,
 				"stride": stride, "Ny": Ny, "Nx": Nx, "sw": sw, "sh": sh,
 				"scale": float(s), "rotation": rotation_deg,
-				"cells_valid": len(valid_cells),
+				"cells_valid": len(valid_cells), "grad_sig": grad_sig,
 			})
 
 			radius_cells = max(1, round(_NMS_SUPPRESS_FRAC * min(sw, sh) / stride))
@@ -849,8 +890,57 @@ def multi_scale_template_match(
 				c["sx"] = int(rx[jx])
 				c["box"] = (c["sx"], c["sy"], combo["sw"], combo["sh"])
 
-	# Re-establish distinctness after refinement, then keep the ranked top-N.
-	final = _greedy_nms(prelim, _NMS_IOU, keep=_SHORTLIST_N)
+	# --- Combined cost: normalized colour cost + texture re-rank + border prior ---
+	# For each refined candidate compare the piece gradient-orientation signature to
+	# the reference window there (texture term), then add a fixed border prior when
+	# the piece's own edge type disagrees with whether its box touches the frame. The
+	# pure colour ``cost`` is NOT overwritten -- it still drives the output similarity.
+	pt = piece_edges.get("piece_type") if piece_edges else None
+	border_margin = round(_EDGE_BORDER_MARGIN_FRAC * max(Hs, Ws))
+	for c in prelim:
+		combo = combos[c["combo"]]
+		sx, sy, sw, sh = c["sx"], c["sy"], combo["sw"], combo["sh"]
+		d_grad = 0.0
+		if use_texture:
+			window = search_ref[sy:sy + sh, sx:sx + sw]
+			if window.shape[0] == sh and window.shape[1] == sw:
+				ref_grad = texture.gradient_signature(window, None, grid, _TEXTURE_BINS)
+				d_grad = texture.signature_distance(
+					combo["grad_sig"], ref_grad, combo["valid_cells"]
+				)
+		c["d_grad"] = d_grad
+		cost_comb = c["cost"] / _ZONAL_COST_MAX + (_TEXTURE_LAMBDA * d_grad if use_texture else 0.0)
+
+		# Border prior (fixed rule, ~zero cost). Frame == image border (art fills ref).
+		penalized = False
+		if pt in ("edge", "corner", "interior"):
+			left = sx <= border_margin
+			right = sx + sw >= Ws - border_margin
+			top_t = sy <= border_margin
+			bottom = sy + sh >= Hs - border_margin
+			n_touch = int(left) + int(right) + int(top_t) + int(bottom)
+			opposite2 = n_touch == 2 and ((left and right) or (top_t and bottom))
+			if pt == "edge":
+				if n_touch == 0:  # a straight-edged piece must sit on the frame
+					cost_comb += _EDGE_PRIOR_PENALTY
+					penalized = True
+			elif pt == "corner":
+				if n_touch < 2:  # a corner needs two adjacent frame sides
+					cost_comb += _EDGE_PRIOR_PENALTY
+					penalized = True
+				elif opposite2:  # two opposite sides is not a real corner
+					cost_comb += _EDGE_PRIOR_PENALTY / 2.0
+					penalized = True
+			elif pt == "interior":
+				if n_touch >= 1:  # an all-tab/blank piece should sit off the frame
+					cost_comb += _EDGE_PRIOR_PENALTY / 2.0
+					penalized = True
+		c["cost_comb"] = cost_comb
+		c["edge_penalized"] = penalized
+
+	# Re-establish distinctness after refinement, then keep the ranked top-N. Ranking
+	# now uses the combined cost so a texture/border re-rank can promote a candidate.
+	final = _greedy_nms(prelim, _NMS_IOU, keep=_SHORTLIST_N, key=lambda c: c["cost_comb"])
 
 	# Positional sharpness of the winning peak (flat pieces have a broad valley).
 	best_c = final[0]
@@ -887,11 +977,16 @@ def multi_scale_template_match(
 			"size": (pw_passed, ph_passed),
 			"similarity": sim,
 			"score": c["cost"],
+			"cost_comb": c.get("cost_comb", c["cost"] / _ZONAL_COST_MAX),
+			"d_grad": c.get("d_grad", 0.0),
+			"edge_penalized": bool(c.get("edge_penalized", False)),
 			"cells_valid": combo["cells_valid"],
 		}
 
+	# Rank by the combined cost (colour + texture + border prior), best (lowest) first;
+	# the pure-colour ``similarity`` is still reported per candidate for the GUI.
 	candidates = [_to_passed(c) for c in final]
-	candidates.sort(key=lambda d: d["similarity"], reverse=True)
+	candidates.sort(key=lambda d: d["cost_comb"])
 	top = candidates[0]
 
 	# Confidence needs BOTH a distinct winner (normalized cost gap to the 2nd distinct
@@ -900,13 +995,16 @@ def multi_scale_template_match(
 	# gate, so it is honestly 'ambiguous' rather than forced onto a single false point.
 	# (peak_sharpness is also exposed for inspection but is not a decision gate: it
 	# conflates flat pieces sitting in small regions with genuine detail.)
+	# The gap is now measured on the COMBINED cost (colour + texture + border prior),
+	# so its scale differs from the colour-only gap _CONF_GAP_HIGH was tuned on -- see
+	# the recalibration note in the eval report; the threshold itself is left unchanged.
 	if len(candidates) >= 2:
-		cost1 = candidates[0]["score"]
-		cost2 = candidates[1]["score"]
-		gap = (cost2 - cost1) / cost2 if cost2 > 1e-6 else 0.0
+		comb1 = candidates[0]["cost_comb"]
+		comb2 = candidates[1]["cost_comb"]
+		gap = (comb2 - comb1) / comb2 if comb2 > 1e-6 else 0.0
 	else:
-		cost1 = candidates[0]["score"]
-		cost2 = None
+		comb1 = candidates[0]["cost_comb"]
+		comb2 = None
 		gap = 1.0
 	sharp_txt = "n/a" if peak_sharp is None else f"{peak_sharp:.3f}"
 	gap_ok = gap >= _CONF_GAP_HIGH
@@ -918,15 +1016,15 @@ def multi_scale_template_match(
 		why = "too uniform to localize"
 	else:
 		why = "near-equal rival"
-	if cost2 is None:
+	if comb2 is None:
 		reason = (
 			f"only one distinct candidate; struct={piece_structure:.2f} -> {confidence}"
 		)
 	else:
 		reason = (
-			f"rel-cost gap={gap:.3f} (thr {_CONF_GAP_HIGH}), "
+			f"rel-comb-cost gap={gap:.3f} (thr {_CONF_GAP_HIGH}), "
 			f"struct={piece_structure:.2f} (thr {_CONF_STRUCT_HIGH}), "
-			f"sharpness={sharp_txt} -> {confidence} [{why}]"
+			f"d_grad={top['d_grad']:.3f}, sharpness={sharp_txt} -> {confidence} [{why}]"
 		)
 
 	result = {
@@ -956,6 +1054,10 @@ def multi_scale_template_match(
 		"confidence_gap": gap,
 		"peak_sharpness": peak_sharp,
 		"piece_structure": piece_structure,
+		"texture_used": bool(use_texture),
+		"edge_prior_type": pt,
+		"cost_comb": top["cost_comb"],
+		"d_grad": top["d_grad"],
 	}
 	if expected_side_px is not None and pixels_per_cm:
 		result["expected_piece_side_cm"] = expected_side_px / float(pixels_per_cm)

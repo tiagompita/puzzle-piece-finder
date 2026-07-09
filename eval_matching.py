@@ -1,19 +1,18 @@
 """Evaluation harness for the MATCHING ENGINE (not the GUI).
 
-Establishes the first real baseline of ``src.matching.multi_scale_template_match``
-against ``src.segmentation.segment_pieces`` on the real photo IMG_2114, using:
-  - the correct per-piece mask,
-  - num_pieces=3000,
-  - the engine's OWN downscale (use_downscale=True), with NO pre-downscale of the
-    reference (so this measures the engine's native baseline).
+Stage-A "colour-twins" A/B: measures ``src.matching.multi_scale_template_match``
+on the real photo IMG_2114 (num_pieces=3000, engine's own downscale, correct
+per-piece mask) in two configurations, segmenting and edge-classifying ONCE:
 
-It also runs a Laplacian-variance analysis of the reference to decide whether
-PuzzleOriginal.jpeg carries real full-res detail or is "empty" (soft) resolution.
+  A (baseline) : use_texture=False, piece_edges=None   -> colour-only re-rank
+  B (stage A)  : use_texture=True  + edges border prior -> colour + gradient texture
+
+The pieces are edge-classified with ``src.edges.classify_pieces`` so each piece's
+``piece_type`` feeds the engine's border prior in the B run. The confidence
+distribution of each run is reported against the frozen 5/64 colour baseline.
 
 This file lives at the repo root and imports src/ as a package. Run from the repo
-root:  ``python eval_matching.py``
-
-Nothing under src/ is modified. Only this harness is created.
+root:  ``python eval_matching.py``.  Only this harness is modified.
 """
 
 from __future__ import annotations
@@ -22,12 +21,12 @@ import os
 import sys
 import time
 
-import cv2
 import numpy as np
 from PIL import Image
 
 # Import src/ as a package (src has __init__.py; modules use relative imports).
 from src.segmentation import segment_pieces
+from src.edges import classify_pieces
 from src.matching import multi_scale_template_match
 
 
@@ -44,6 +43,7 @@ SCRATCH = (
 
 NUM_PIECES = 3000
 N_HIGH_IMAGES = 5
+BASELINE_TXT = "5/64 (colour-only)"
 
 
 def log(msg: str) -> None:
@@ -52,11 +52,10 @@ def log(msg: str) -> None:
 
 
 def to_pil_rgb(obj) -> Image.Image:
-	"""Coerce a piece['image'] (already a PIL Image here) or ndarray to PIL RGB."""
+	"""Coerce a piece['image'] (PIL Image here) or ndarray to PIL RGB."""
 	if isinstance(obj, Image.Image):
 		return obj.convert("RGB")
-	arr = np.asarray(obj)
-	return Image.fromarray(arr).convert("RGB")
+	return Image.fromarray(np.asarray(obj)).convert("RGB")
 
 
 def side_by_side(piece_pil: Image.Image, ref_crop_pil: Image.Image, height: int = 320) -> Image.Image:
@@ -77,307 +76,196 @@ def side_by_side(piece_pil: Image.Image, ref_crop_pil: Image.Image, height: int 
 	return canvas
 
 
-def laplacian_analysis(ref_gray: np.ndarray) -> tuple[list[dict], float]:
-	"""Compare full-res vs 4x-soft Laplacian variance on representative crops.
-
-	Picks a centre crop plus the most textured crops found on a coarse grid scan,
-	then for each: v_full (full-res) and v_soft (downscale 4x then upscale back with
-	INTER_CUBIC). Returns (per-crop records, median ratio).
-	"""
-	H, W = ref_gray.shape[:2]
-	cs = 512
-	if H < cs or W < cs:
-		cs = min(H, W)
-
-	# Coarse grid of candidate top-left corners; score each by full-res Lap var.
-	step = max(cs, min(H, W) // 4)
-	cands: list[tuple[int, int, float]] = []
-	y = 0
-	while y + cs <= H:
-		x = 0
-		while x + cs <= W:
-			crop = ref_gray[y:y + cs, x:x + cs]
-			v = float(cv2.Laplacian(crop, cv2.CV_64F).var())
-			cands.append((x, y, v))
-			x += step
-		y += step
-
-	# Centre crop always included; then the 3 most textured distinct crops.
-	cx = (W - cs) // 2
-	cy = (H - cs) // 2
-	selected: list[tuple[int, int, str]] = [(cx, cy, "center")]
-	cands.sort(key=lambda t: t[2], reverse=True)
-	for x, y, _ in cands:
-		if len(selected) >= 4:
-			break
-		# skip near-duplicates of already-selected crops
-		if any(abs(x - sx) < cs and abs(y - sy) < cs for sx, sy, _ in selected):
-			continue
-		selected.append((x, y, "textured"))
-
-	records: list[dict] = []
-	ratios: list[float] = []
-	for x, y, kind in selected:
-		crop = ref_gray[y:y + cs, x:x + cs]
-		v_full = float(cv2.Laplacian(crop, cv2.CV_64F).var())
-		small = cv2.resize(crop, (cs // 4, cs // 4), interpolation=cv2.INTER_AREA)
-		soft = cv2.resize(small, (cs, cs), interpolation=cv2.INTER_CUBIC)
-		v_soft = float(cv2.Laplacian(soft, cv2.CV_64F).var())
-		ratio = v_full / v_soft if v_soft > 1e-9 else float("inf")
-		ratios.append(ratio)
-		records.append({
-			"pos": (x, y), "size": cs, "kind": kind,
-			"v_full": v_full, "v_soft": v_soft, "ratio": ratio,
-		})
-	median_ratio = float(np.median(ratios)) if ratios else 0.0
-	return records, median_ratio
+def run_match(ref_img, piece_pil, mask, *, use_texture, piece_edges):
+	"""One engine call; returns (result_dict_or_error, seconds)."""
+	t = time.time()
+	try:
+		res = multi_scale_template_match(
+			puzzle_img=ref_img,
+			piece_img=piece_pil,
+			num_pieces=NUM_PIECES,
+			piece_mask=mask,
+			use_downscale=True,
+			use_texture=use_texture,
+			piece_edges=piece_edges,
+		)
+	except Exception as exc:  # noqa: BLE001
+		res = {"error": f"exception:{exc!r}"}
+	return res, time.time() - t
 
 
 def main() -> int:
 	os.makedirs(SCRATCH, exist_ok=True)
 	t0 = time.time()
 
-	# ---- 1. Load reference (PIL RGB) ----
 	log(f"[load] reference: {REF_PATH}")
 	ref_img = Image.open(REF_PATH).convert("RGB")
+	W0, H0 = ref_img.size
 	log(f"[load] reference size (W,H) = {ref_img.size}")
-	ref_arr = np.asarray(ref_img)  # RGB, (H, W, 3)
-	ref_gray = cv2.cvtColor(ref_arr, cv2.COLOR_RGB2GRAY)
 
-	# ---- 2. Load photo (PIL RGB) ----
 	log(f"[load] photo: {PHOTO_PATH}")
-	try:
-		photo_img = Image.open(PHOTO_PATH).convert("RGB")
-	except Exception as exc:  # noqa: BLE001
-		log(f"[FATAL] could not open photo via PIL: {exc!r}")
-		return 2
+	photo_img = Image.open(PHOTO_PATH).convert("RGB")
 	log(f"[load] photo size (W,H) = {photo_img.size}")
 
-	# ---- Laplacian resolution analysis (independent of matching) ----
-	log("[lap] running Laplacian full-res vs 4x-soft analysis on the reference...")
-	lap_records, lap_median_ratio = laplacian_analysis(ref_gray)
-	for r in lap_records:
-		log(
-			f"[lap] {r['kind']:8s} pos={r['pos']} size={r['size']} "
-			f"v_full={r['v_full']:.1f} v_soft={r['v_soft']:.1f} ratio={r['ratio']:.2f}"
-		)
-	lap_verdict = (
-		"REAL full-res detail (adaptive resolution is worth it)"
-		if lap_median_ratio > 2.0
-		else "EMPTY/soft resolution (adaptive resolution NOT worth it)"
-	)
-	log(f"[lap] median ratio = {lap_median_ratio:.2f} -> {lap_verdict}")
-
-	# ---- 3. Segment the photo into pieces ----
 	log("[seg] segmenting photo (segment_pieces, PIL RGB in)...")
 	t_seg = time.time()
 	seg = segment_pieces(photo_img)
 	seg_secs = time.time() - t_seg
 	if "error" in seg:
-		log(f"[FATAL] segmentation failed: {seg.get('error')!r}  (full: {seg})")
+		log(f"[FATAL] segmentation failed: {seg.get('error')!r}")
 		return 3
 	pieces = seg["pieces"]
+	classify_pieces(pieces)  # enrich each piece with piece_type / edge fields in place
 	clusters = [p for p in pieces if p.get("is_cluster")]
 	non_cluster = [p for p in pieces if not p.get("is_cluster")]
+	pt_counts: dict[str, int] = {}
+	for p in non_cluster:
+		pt_counts[p.get("piece_type", "?")] = pt_counts.get(p.get("piece_type", "?"), 0) + 1
 	log(
-		f"[seg] done in {seg_secs:.1f}s: total={seg['count']} pieces, "
-		f"non-cluster={len(non_cluster)}, clusters(ignored)={len(clusters)}, "
-		f"working_scale={seg.get('working_scale'):.4f}, bg_model={seg.get('background_model')}"
+		f"[seg] done in {seg_secs:.1f}s: total={seg['count']} non-cluster={len(non_cluster)} "
+		f"clusters(ignored)={len(clusters)} working_scale={seg.get('working_scale'):.4f} "
+		f"bg_model={seg.get('background_model')}"
 	)
+	log(f"[edges] piece_type distribution (non-cluster): {pt_counts}")
 
-	# ---- 4. Match every non-cluster piece ----
-	results: list[dict] = []
-	conf_counts: dict[str, int] = {}
-	per_piece_times: list[float] = []
-	log(f"[match] matching {len(non_cluster)} non-cluster pieces (num_pieces={NUM_PIECES}, use_downscale=True)...")
+	total_nc = len(non_cluster)
+	conf_A: dict[str, int] = {}
+	conf_B: dict[str, int] = {}
+	times_A: list[float] = []
+	times_B: list[float] = []
+	records: list[dict] = []
 
+	log(f"[match] A/B over {total_nc} non-cluster pieces (num_pieces={NUM_PIECES})...")
 	for n, piece in enumerate(non_cluster, start=1):
 		idx = piece.get("index", n - 1)
 		piece_pil = to_pil_rgb(piece["image"])
-		mask = piece.get("mask")  # PIL 'L'; engine also accepts ndarray. None -> unmasked.
+		mask = piece.get("mask")
 
-		t_p = time.time()
-		try:
-			res = multi_scale_template_match(
-				puzzle_img=ref_img,
-				piece_img=piece_pil,
-				num_pieces=NUM_PIECES,
-				piece_mask=mask,
-				use_downscale=True,
-			)
-		except Exception as exc:  # noqa: BLE001
-			res = {"error": f"exception:{exc!r}"}
-		dt = time.time() - t_p
-		per_piece_times.append(dt)
+		res_a, dta = run_match(ref_img, piece_pil, mask, use_texture=False, piece_edges=None)
+		res_b, dtb = run_match(ref_img, piece_pil, mask, use_texture=True, piece_edges=piece)
+		times_A.append(dta)
+		times_B.append(dtb)
 
-		if "error" in res:
-			conf = f"error:{res['error']}"
-			rec = {
-				"index": idx, "confidence": conf, "confidence_reason": res.get("error"),
-				"best_position": None, "piece_size_final": None, "scale": None,
-				"rotation": None, "refined_similarity": None, "time_s": dt,
-				"piece_px": piece_pil.size,
-			}
-		else:
-			conf = res.get("confidence", "?")
-			rec = {
-				"index": idx,
-				"confidence": conf,
-				"confidence_reason": res.get("confidence_reason"),
-				"best_position": res.get("best_position"),
-				"piece_size_final": res.get("piece_size_final"),
-				"scale": res.get("scale"),
-				"rotation": res.get("rotation"),
-				"refined_similarity": res.get("refined_similarity"),
-				"confidence_gap": res.get("confidence_gap"),
-				"piece_structure": res.get("piece_structure"),
-				"search_dims": res.get("search_dims"),
-				"search_piece_px": res.get("search_piece_px"),
-				"integral_mb": res.get("integral_mb"),
-				"search_target_reached": res.get("search_target_reached"),
-				"coarse_scale_factor": res.get("coarse_scale_factor"),
-				"time_s": dt,
-				"piece_px": piece_pil.size,
-			}
-			rec["_piece_pil"] = piece_pil  # kept for the side-by-side export
-		conf_counts[conf] = conf_counts.get(conf, 0) + 1
-		results.append(rec)
+		ca = res_a.get("confidence", f"error:{res_a.get('error')}")
+		cb = res_b.get("confidence", f"error:{res_b.get('error')}")
+		conf_A[ca] = conf_A.get(ca, 0) + 1
+		conf_B[cb] = conf_B.get(cb, 0) + 1
 
-		size_final = rec.get("piece_size_final")
+		rec = {
+			"index": idx,
+			"piece_type": piece.get("piece_type"),
+			"piece_px": piece_pil.size,
+			"conf_A": ca,
+			"conf_B": cb,
+			"sim_A": res_a.get("refined_similarity"),
+			"sim_B": res_b.get("refined_similarity"),
+			"gap_A": res_a.get("confidence_gap"),
+			"gap_B": res_b.get("confidence_gap"),
+			"struct_B": res_b.get("piece_structure"),
+			"d_grad_B": res_b.get("d_grad"),
+			"cost_comb_B": res_b.get("cost_comb"),
+			"pos_A": res_a.get("best_position"),
+			"pos_B": res_b.get("best_position"),
+			"size_B": res_b.get("piece_size_final"),
+			"rot_B": res_b.get("rotation"),
+			"edge_type_B": res_b.get("edge_prior_type"),
+			"reason_B": res_b.get("confidence_reason"),
+			"t_A": dta,
+			"t_B": dtb,
+			"_piece_pil": piece_pil,
+		}
+		records.append(rec)
+		moved = "" if ca == cb else f"  [{ca}->{cb}]"
 		log(
-			f"[match] {n}/{len(non_cluster)} idx={idx} conf={conf} "
-			f"sim={rec.get('refined_similarity')} pos={rec.get('best_position')} "
-			f"size_final={size_final} rot={rec.get('rotation')} "
-			f"piece_px={rec['piece_px']} t={dt:.2f}s"
+			f"[match] {n}/{total_nc} idx={idx} pt={rec['piece_type']} "
+			f"A={ca} B={cb}{moved} d_grad={rec['d_grad_B']} "
+			f"gapA={rec['gap_A']} gapB={rec['gap_B']} tA={dta:.2f}s tB={dtb:.2f}s"
 		)
 
 	total_secs = time.time() - t0
 
-	# ---- 5. Distribution ----
-	n_high = conf_counts.get("high", 0)
-	total_nc = len(non_cluster)
+	def dist_str(counts: dict[str, int]) -> str:
+		return ", ".join(f"{k}={counts[k]}" for k in sorted(counts, key=lambda k: (-counts[k], k)))
+
+	high_A = conf_A.get("high", 0)
+	high_B = conf_B.get("high", 0)
 	log("")
 	log("=" * 64)
-	log("CONFIDENCE DISTRIBUTION (non-cluster pieces)")
+	log("A/B CONFIDENCE DISTRIBUTION (non-cluster)")
 	log("=" * 64)
-	log(f"total non-cluster pieces : {total_nc}")
-	log(f"clusters ignored         : {len(clusters)}")
-	for cls in sorted(conf_counts, key=lambda k: (-conf_counts[k], k)):
-		log(f"  {cls:24s}: {conf_counts[cls]}")
-	log("-" * 64)
-	log(f"NEW baseline (high)  : {n_high}/{total_nc}")
-	log(f"OLD baseline (high)  : 9/51")
-	if total_nc:
-		log(f"NEW high rate = {100.0 * n_high / total_nc:.1f}%   OLD high rate = {100.0 * 9 / 51:.1f}%")
+	log(f"total non-cluster : {total_nc}   frozen baseline: {BASELINE_TXT}")
+	log(f"A (texture OFF)   : {dist_str(conf_A)}   -> high {high_A}/{total_nc}")
+	log(f"B (texture ON)    : {dist_str(conf_B)}   -> high {high_B}/{total_nc}")
 
-	if per_piece_times:
-		log(
-			f"timing: total={total_secs:.1f}s, per-piece avg={np.mean(per_piece_times):.2f}s, "
-			f"min={np.min(per_piece_times):.2f}s, max={np.max(per_piece_times):.2f}s"
-		)
-
-	# ---- Adaptive search-resolution report (from the engine's own result fields) ----
-	# The engine now picks the search resolution so a piece is ~46px across (was a
-	# fixed 1600px longest-side cap -> ~25px). Report the ACTUAL values it used.
-	W0, H0 = ref_img.size
-	exp_side_full = float(np.sqrt((W0 * H0) / float(NUM_PIECES)))
-	ok_recs = [r for r in results if r.get("search_dims") is not None]
-	search_dims = ok_recs[0]["search_dims"] if ok_recs else None
-	search_piece_px = ok_recs[0].get("search_piece_px") if ok_recs else None
-	coarse_used = ok_recs[0].get("coarse_scale_factor") if ok_recs else None
-	target_reached = ok_recs[0].get("search_target_reached") if ok_recs else None
-	peak_integral_mb = max((r.get("integral_mb") or 0.0) for r in ok_recs) if ok_recs else 0.0
+	# Which pieces changed label between A and B.
+	promoted = [r["index"] for r in records if r["conf_A"] != "high" and r["conf_B"] == "high"]
+	demoted = [r["index"] for r in records if r["conf_A"] == "high" and r["conf_B"] != "high"]
+	stayed_high = [r["index"] for r in records if r["conf_A"] == "high" and r["conf_B"] == "high"]
+	log(f"stayed high (A&B) : {stayed_high}")
+	log(f"promoted (A->B)   : {promoted}")
+	log(f"demoted  (A->B)   : {demoted}")
 	log(
-		f"[note] adaptive search: piece ~{exp_side_full:.0f}px full-res -> "
-		f"~{(search_piece_px or 0.0):.1f}px in search space "
-		f"(coarse={coarse_used}, search_dims={search_dims}, "
-		f"peak_integral={peak_integral_mb:.1f}MB, target_reached={target_reached})."
+		f"timing: A avg={np.mean(times_A):.2f}s B avg={np.mean(times_B):.2f}s "
+		f"(prev colour-only ~2.46s); total wall={total_secs:.1f}s"
 	)
 
-	# ---- 6. Save up to N side-by-side images for 'high' pieces ----
-	high_recs = [r for r in results if r["confidence"] == "high" and r.get("best_position")]
+	# Save side-by-side crops for the B 'high' pieces.
+	high_recs = [r for r in records if r["conf_B"] == "high" and r.get("pos_B")]
 	saved_paths: list[str] = []
-	log(f"[viz] saving up to {N_HIGH_IMAGES} side-by-side images for 'high' pieces ({len(high_recs)} available)...")
+	log(f"[viz] saving up to {N_HIGH_IMAGES} side-by-side images for B-high pieces ({len(high_recs)} available)...")
 	for i, r in enumerate(high_recs[:N_HIGH_IMAGES], start=1):
-		x, y = r["best_position"]
-		w, h = r["piece_size_final"]
-		# clip to reference bounds
+		x, y = r["pos_B"]
+		w, h = r["size_B"]
 		x0 = max(0, min(int(x), W0 - 1))
 		y0 = max(0, min(int(y), H0 - 1))
 		x1 = max(x0 + 1, min(int(x) + int(w), W0))
 		y1 = max(y0 + 1, min(int(y) + int(h), H0))
 		ref_crop = ref_img.crop((x0, y0, x1, y1))
 		combo = side_by_side(r["_piece_pil"], ref_crop)
-		# NEW names: do not overwrite the baseline match_high_*.png (kept for compare).
-		out_path = os.path.join(SCRATCH, f"match_adaptive_{i}.png")
+		out_path = os.path.join(SCRATCH, f"match_texture_{i}.png")
 		combo.save(out_path)
 		saved_paths.append(out_path)
 		log(
-			f"[viz] saved {out_path}  (idx={r['index']} sim={r['refined_similarity']:.3f} "
-			f"gap={r.get('confidence_gap')} struct={r.get('piece_structure')} "
-			f"pos=({x0},{y0}) size=({w},{h}))"
+			f"[viz] saved {out_path} (idx={r['index']} pt={r['piece_type']} "
+			f"sim={r['sim_B']:.3f} d_grad={r['d_grad_B']:.3f} gapB={r['gap_B']:.3f} "
+			f"was_A={r['conf_A']} pos=({x0},{y0}) size=({w},{h}))"
 		)
 
-	if not high_recs:
-		log("[viz] no 'high' pieces to visualize.")
-
-	# ---- 7. Write eval_summary.txt ----
+	# ---- Write eval_summary.txt ----
 	summary_path = os.path.join(SCRATCH, "eval_summary.txt")
 	with open(summary_path, "w", encoding="utf-8") as fh:
-		fh.write("Puzzle Piece Finder - matching engine baseline\n")
-		fh.write("=" * 60 + "\n")
+		fh.write("Puzzle Piece Finder - matching engine, Stage-A texture A/B\n")
+		fh.write("=" * 64 + "\n")
 		fh.write(f"reference        : {REF_PATH}  size(W,H)={ref_img.size}\n")
 		fh.write(f"photo            : {PHOTO_PATH}  size(W,H)={photo_img.size}\n")
 		fh.write(f"num_pieces       : {NUM_PIECES}\n")
-		fh.write(f"use_downscale    : True (engine's own downscale; no pre-downscale)\n")
 		fh.write(f"segmentation     : total={seg['count']} non-cluster={total_nc} clusters={len(clusters)} "
 				 f"working_scale={seg.get('working_scale')} bg_model={seg.get('background_model')}\n")
-		fh.write(f"segmentation time: {seg_secs:.1f}s\n")
+		fh.write(f"edge piece_types : {pt_counts}\n")
 		fh.write("\n")
-		fh.write("Laplacian resolution analysis (full-res vs 4x-soft)\n")
-		fh.write("-" * 60 + "\n")
-		for r in lap_records:
+		fh.write("A/B confidence distribution (non-cluster)\n")
+		fh.write("-" * 64 + "\n")
+		fh.write(f"  frozen baseline : {BASELINE_TXT}\n")
+		fh.write(f"  A (texture OFF) : {dist_str(conf_A)}  -> high {high_A}/{total_nc}\n")
+		fh.write(f"  B (texture ON)  : {dist_str(conf_B)}  -> high {high_B}/{total_nc}\n")
+		fh.write(f"  stayed high     : {stayed_high}\n")
+		fh.write(f"  promoted A->B   : {promoted}\n")
+		fh.write(f"  demoted  A->B   : {demoted}\n")
+		fh.write(f"  timing: A avg={np.mean(times_A):.2f}s B avg={np.mean(times_B):.2f}s "
+				 f"(prev colour-only ~2.46s) total={total_secs:.1f}s\n")
+		fh.write("\n")
+		fh.write("Per-piece A/B results\n")
+		fh.write("-" * 64 + "\n")
+		for r in records:
 			fh.write(
-				f"  {r['kind']:8s} pos={r['pos']} size={r['size']} "
-				f"v_full={r['v_full']:.1f} v_soft={r['v_soft']:.1f} ratio={r['ratio']:.2f}\n"
+				f"  idx={r['index']:>3} pt={str(r['piece_type']):<8} A={r['conf_A']:<10} B={r['conf_B']:<10} "
+				f"simB={r['sim_B']} gapA={r['gap_A']} gapB={r['gap_B']} structB={r['struct_B']} "
+				f"d_grad={r['d_grad_B']} cost_combB={r['cost_comb_B']} posB={r['pos_B']} "
+				f"sizeB={r['size_B']} rotB={r['rot_B']} tA={r['t_A']:.2f}s tB={r['t_B']:.2f}s\n"
 			)
-		fh.write(f"  median ratio = {lap_median_ratio:.2f} -> {lap_verdict}\n")
+			fh.write(f"       reasonB: {r['reason_B']}\n")
 		fh.write("\n")
-		fh.write("Confidence distribution (non-cluster)\n")
-		fh.write("-" * 60 + "\n")
-		fh.write(f"  total non-cluster : {total_nc}\n")
-		fh.write(f"  clusters ignored  : {len(clusters)}\n")
-		for cls in sorted(conf_counts, key=lambda k: (-conf_counts[k], k)):
-			fh.write(f"  {cls:24s}: {conf_counts[cls]}\n")
-		fh.write(f"  NEW baseline (high): {n_high}/{total_nc}\n")
-		fh.write(f"  OLD baseline (high): 9/51\n")
-		fh.write(f"  timing: total={total_secs:.1f}s avg={np.mean(per_piece_times):.2f}s "
-				 f"min={np.min(per_piece_times):.2f}s max={np.max(per_piece_times):.2f}s\n"
-				 if per_piece_times else "  timing: n/a\n")
-		fh.write("\n")
-		fh.write("Adaptive search resolution (engine-reported)\n")
-		fh.write("-" * 60 + "\n")
-		fh.write(f"  target piece side : {46}px (was ~25px at the fixed 1600px cap)\n")
-		fh.write(f"  expected side full: ~{exp_side_full:.0f}px\n")
-		fh.write(f"  search_dims (W,H) : {search_dims}\n")
-		fh.write(f"  search_piece_px   : {search_piece_px}\n")
-		fh.write(f"  coarse_scale      : {coarse_used}\n")
-		fh.write(f"  peak_integral_mb  : {peak_integral_mb:.1f} (budget 256MB)\n")
-		fh.write(f"  target_reached    : {target_reached}\n")
-		fh.write("\n")
-		fh.write("Per-piece results\n")
-		fh.write("-" * 60 + "\n")
-		for r in results:
-			fh.write(
-				f"  idx={r['index']:>3} conf={r['confidence']:<20} "
-				f"sim={r.get('refined_similarity')} gap={r.get('confidence_gap')} "
-				f"struct={r.get('piece_structure')} pos={r.get('best_position')} "
-				f"size={r.get('piece_size_final')} rot={r.get('rotation')} "
-				f"scale={r.get('scale')} piece_px={r.get('piece_px')} t={r['time_s']:.2f}s\n"
-			)
-			fh.write(f"       reason: {r.get('confidence_reason')}\n")
-		fh.write("\n")
-		fh.write("Saved side-by-side images:\n")
+		fh.write("Saved B-high side-by-side images:\n")
 		for p in saved_paths:
 			fh.write(f"  {p}\n")
 
