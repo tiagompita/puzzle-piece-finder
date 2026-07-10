@@ -266,15 +266,44 @@ class PuzzleGUI(tk.Tk):
         for idx, path in enumerate(paths):
             try:
                 img = Image.open(path)
-                img_ = self._annotate_piece_number(img, idx + 1)
                 # Se o PNG tiver canal alfa, usa-o como máscara (opaco = peça, transparente = fundo).
                 mask = img.getchannel('A') if 'A' in img.getbands() else None
+                clean = self._clean_piece_view(img, mask)
+                img_ = self._annotate_piece_number(clean, idx + 1)
                 self.pieces_imgs.append({'img': img, 'img_annotated': img_, 'id': idx+1, 'path': path, 'mask': mask})
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load piece: {path}\n{e}")
         if self.pieces_imgs:
             self.current_piece_idx = 0
             self._display_piece_by_idx(0)
+
+    def _checkerboard(self, size, cell=10, light=(235, 235, 235), dark=(210, 210, 210)):
+        """Devolver uma imagem RGB com um xadrez leve (lê como "transparência")
+        do tamanho `size`, usada como fundo dos previews de peças recortadas."""
+        w, h = size
+        board = Image.new('RGB', size, light)
+        draw = ImageDraw.Draw(board)
+        for y in range(0, h, cell):
+            for x in range(0, w, cell):
+                if ((x // cell) + (y // cell)) % 2 == 1:
+                    draw.rectangle([x, y, x + cell - 1, y + cell - 1], fill=dark)
+        return board
+
+    def _clean_piece_view(self, img, mask):
+        """Devolver o "recorte limpo" de uma peça: fundo transparente composto sobre
+        um xadrez leve, em vez do retângulo mean-filled usado internamente para o
+        matching. `img`/`mask` não são alterados; isto é só a representação exibida.
+
+        Sem máscara (peça carregada sem canal alfa e sem info de segmentação), a
+        imagem é devolvida tal como está, sem partir a exibição.
+        """
+        if mask is None:
+            return img.convert('RGB') if img.mode not in ('RGB',) else img
+        from .segmentation import piece_to_rgba
+        rgba = piece_to_rgba(img, mask)
+        board = self._checkerboard(rgba.size)
+        board.paste(rgba, (0, 0), rgba)
+        return board
 
     def _annotate_piece_number(self, img, number):
         """Devolver uma cópia de img com um número (1-based) desenhado no canto superior esquerdo."""
@@ -366,9 +395,10 @@ class PuzzleGUI(tk.Tk):
 
         self.pieces_imgs = []
         for p in pieces:
+            clean = self._clean_piece_view(p['image'], p['mask'])
             self.pieces_imgs.append({
                 'img': p['image'],
-                'img_annotated': self._annotate_piece_extra(p['image'], p['index'] + 1, p.get('piece_type'), p.get('is_cluster', False)),
+                'img_annotated': self._annotate_piece_extra(clean, p['index'] + 1, p.get('piece_type'), p.get('is_cluster', False)),
                 'id': p['index'] + 1,
                 'path': f"{path}#piece{p['index'] + 1}",
                 'mask': p['mask'],

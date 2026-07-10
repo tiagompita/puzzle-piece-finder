@@ -28,6 +28,7 @@ __all__ = [
 	"segment_pieces",
 	"segment_pieces_from_file",
 	"save_pieces",
+	"piece_to_rgba",
 ]
 
 
@@ -55,6 +56,19 @@ _FORCE_SPLIT_RATIO = 1.8
 # 3-piece cluster seeding as [pair, single], say). Each over-sized sub is therefore
 # re-split, up to this recursion depth, so those residual pairs are separated too.
 _MAX_SPLIT_DEPTH = 3
+# A component between this and ``cluster_ratio`` * median that the normal split left
+# whole is most often TWO near-but-unconnected pieces the closing bridged across a
+# pale (background-coloured) gap: the colour watershed cannot cut it -- the pieces
+# are often similar-hued so the seam has no colour edge -- and the dark-seam blackhat
+# does not fire on a light gap, so the blob is emitted as one over-sized "piece". Such
+# a mid-sized blob is given a final geometric bisection (:func:`_forced_bisect` on the
+# distance transform, which cuts at the thin waist regardless of colour) even when it
+# sits below ``split_trigger``. The cut is accepted only when BOTH halves look single
+# (each <= ``split_trigger`` * median), so a single piece -- one distance peak, hence
+# no bisection -- and a genuine cluster -- halves stay over-sized, or area exceeds
+# ``cluster_ratio`` and it is flagged instead -- are left untouched. This only ever
+# ADDS 2-piece splits; it never merges or shreds.
+_BISECT_MIN_RATIO = 1.25
 
 
 # ===== Non-piece component rejection tunables (step 7) =====
@@ -598,17 +612,36 @@ def _extract_components(
 		comp_mask = (labels[y:y + hh, x:x + ww] == lab).astype(np.uint8) * 255
 		color_crop = work_bgr[y:y + hh, x:x + ww]
 
+		subs = None
 		if split_touching and area > split_trigger * median_area:
 			subs = _split_component(
 				comp_mask, color_crop, median_area, marker_ratio, working_dim, seam_frac, split_trigger
 			)
-			if subs is not None:
-				for sub in subs:
-					sx, sy, sw, sh = cv2.boundingRect(sub)
-					sub_crop = sub[sy:sy + sh, sx:sx + sw].copy()
-					flag = _is_cluster_blob(sub_crop, median_area, marker_ratio, cluster_ratio)
-					out.append(((x + sx, y + sy, sw, sh), sub_crop, flag))
-				continue
+		# Fallback for a mid-sized blob the colour/seam split left whole: a bounded
+		# geometric bisection catches two near-but-unconnected pieces the closing
+		# bridged across a pale background gap (see _BISECT_MIN_RATIO). Bounded to
+		# (_BISECT_MIN_RATIO, cluster_ratio] * median and accepted only when both
+		# halves look single, so single pieces and genuine clusters are left whole.
+		if (
+			subs is None
+			and split_touching
+			and _BISECT_MIN_RATIO * median_area < area <= cluster_ratio * median_area
+		):
+			halves = _forced_bisect(comp_mask, median_area)
+			if halves is not None and all(
+				int((h > 0).sum()) <= split_trigger * median_area for h in halves
+			):
+				subs = halves
+
+		if subs is not None:
+			for sub in subs:
+				sx, sy, sw, sh = cv2.boundingRect(sub)
+				sub_crop = sub[sy:sy + sh, sx:sx + sw].copy()
+				flag = _is_cluster_blob(sub_crop, median_area, marker_ratio, cluster_ratio)
+				out.append(((x + sx, y + sy, sw, sh), sub_crop, flag))
+			continue
+
+		if split_touching and area > split_trigger * median_area:
 			# Split was TRIGGERED but could not separate this component. If it is
 			# still much larger than a single piece it is a genuine touching /
 			# assembled cluster of pieces, so flag it rather than emit it as one
@@ -1028,8 +1061,39 @@ def segment_pieces_from_file(path: str, **kwargs) -> dict:
 	return result
 
 
+def piece_to_rgba(image, mask) -> Image.Image:
+	"""Compose a clean, transparent-background cutout of one piece.
+
+	``image`` supplies the RGB colour (a piece record's ``image`` already
+	carries the true piece colour wherever ``mask`` is set, so no colour logic
+	is applied here) and ``mask`` supplies the alpha channel: 255 -> opaque
+	piece pixel, 0 -> fully transparent background. Both arguments accept
+	either a PIL Image or a numpy ndarray. This is purely a *display/export*
+	representation -- it does not touch detection, splitting or the
+	mean-filled ``image``/``mask`` pair handed to the matcher.
+
+	Returns a PIL Image in 'RGBA' mode.
+	"""
+	if isinstance(image, np.ndarray):
+		image = Image.fromarray(image)
+	if isinstance(mask, np.ndarray):
+		mask = Image.fromarray(mask)
+	rgb = image.convert("RGB")
+	alpha = mask.convert("L")
+	if alpha.size != rgb.size:
+		alpha = alpha.resize(rgb.size, Image.NEAREST)
+	rgba = rgb.copy()
+	rgba.putalpha(alpha)
+	return rgba
+
+
 def save_pieces(pieces: list[dict], out_dir: str, prefix: str = "piece_") -> list[str]:
-	"""Write each piece as an RGBA PNG (alpha = mask, RGB = mean-filled crop).
+	"""Write each piece as a clean, transparent-background RGBA PNG.
+
+	The RGB channels come from the piece's ``image`` and the alpha channel
+	from its ``mask`` (see :func:`piece_to_rgba`), so the saved PNG shows the
+	piece's true silhouette on a transparent background rather than the
+	mean-filled rectangle used internally for matching.
 
 	Returns the list of written file paths, ordered by piece ``index``.
 	"""
@@ -1037,10 +1101,7 @@ def save_pieces(pieces: list[dict], out_dir: str, prefix: str = "piece_") -> lis
 	paths: list[str] = []
 	ordered = sorted(pieces, key=lambda p: p.get("index", 0))
 	for p in ordered:
-		rgb = p["image"].convert("RGB")
-		alpha = p["mask"].convert("L")
-		rgba = rgb.copy()
-		rgba.putalpha(alpha)
+		rgba = piece_to_rgba(p["image"], p["mask"])
 		out_path = os.path.join(out_dir, f"{prefix}{p.get('index', 0)}.png")
 		rgba.save(out_path)
 		paths.append(out_path)
