@@ -119,6 +119,77 @@ _SHADOW_L_DELTA = 10.0
 _SHADOW_OPEN_FRAC = 0.012
 
 
+# ===== Boundary normal-profile refinement tunables (step 2, _extract_piece) =====
+# Each per-piece mask is seeded from the DOWNSCALED working contour (one full-res pixel
+# is ~inv working px), so its boundary carries a coarse staircase (step ~= inv) dotted
+# with micro-loops. :func:`_refine_boundary_band` re-snaps that boundary to the true
+# colour edge in the full-res crop: it Gaussian-smooths the contour to erase the
+# staircase/loops, then slides each point along its local normal to the 50% crossing of
+# the background-distance profile. These constants tune that snap.
+# Half-width (px) of the normal sampling window on either side of the contour.
+_REFINE_BAND_PX = 8
+# Hard clamp (px) on any single point's offset: the working mask already sits within a
+# quantization step of the truth, so the real edge is never more than a few px away; a
+# larger "crossing" is glare/printed-content noise and is capped.
+_REFINE_CLAMP_PX = 6.0
+# Gaussian sigma (in contour points ~= px at full-res 1px sampling) used to pre-smooth
+# the contour BEFORE normals are taken and as the BASE the offsets are applied to. It
+# must exceed the staircase period (~inv px) to erase it yet stay far below a tab's
+# scale so tab tips are not rounded: 6 clears a ~5px step with sub-px rounding of a
+# >=30px-radius tab tip.
+_REFINE_CONTOUR_SIGMA = 6.0
+# Crossing level between the "outside" and "inside" background-distance medians: 0.5
+# puts the boundary at the half-contrast point, the natural colour edge. Module-level
+# constant (not a caller knob) per the boundary-precision plan.
+_REFINE_EDGE_BIAS = 0.5
+# Contrast gate: a point whose local |inside - outside| background-distance separation
+# falls below this keeps offset 0, so the smoothing still de-staircases it but no colour
+# edge is invented. On the weighted-Lab distance scale (luma_weight ~0.075,
+# chroma_weight ~1.0, CIE Lab units) a coloured piece sits ~10-40 above its surround, so
+# 6 -- about half the smallest genuine gap -- zeroes only near-background-coloured rims
+# (e.g. a pale piece edge on a pale mat), which is what makes the refinement a no-op on
+# low-separation/white backgrounds.
+_REFINE_CONTRAST_FLOOR = 6.0
+# The raw offset function is denoised along the contour before it is applied: a circular
+# median (this window, in points) kills isolated spikes, then a light circular Gaussian
+# (this sigma) removes residual ripple, without distorting the slow variation a tab
+# imposes.
+_REFINE_OFFSET_MEDIAN = 31
+_REFINE_OFFSET_SIGMA = 5.0
+# Too few contour points to smooth/normal reliably -> skip refinement, keep the mask.
+_REFINE_MIN_POINTS = 64
+
+
+# ===== Foreground hysteresis tunables (step 5, _foreground_from_bg) =====
+# A single global Otsu on the background-distance map D carves the low-D reflection
+# blotches out of glossy/metallic pieces (a metallic piece mirrors the surface, so D
+# collapses toward background inside those patches) -- the mask develops bites on the
+# contour that the interior-hole fill downstream cannot repair (they open onto the
+# boundary). Foreground is therefore taken by a two-level hysteresis on D, keeping only
+# the low-level components anchored by a high-level "core" pixel (see
+# :func:`_foreground_from_bg`).
+# HIGH factor multiplies the Otsu threshold to set the core. Held at 1.0 so the core IS
+# the historic Otsu mask: pieces that already segmented well keep their exact body and
+# cannot regress -- the hysteresis only ever ANNEXES weak-contrast pixels onto it.
+_HYST_HIGH_FACTOR = 1.0
+# LOW factor multiplies Otsu to set the candidate (annex) level. Calibrated on the two
+# real photos (IMG_2129 blue background, Otsu t~93 on the 0..255 MINMAX-normalised D;
+# IMG_2114). A metallic piece MIRRORS the blue surface, so D over its body collapses
+# toward background and single-Otsu leaves it ~half-detected with deep boundary bites;
+# the low level reconnects those weak-contrast patches to the core and recovers the whole
+# piece. The value is bounded below by FUSION, not by shadow: because cast shadow is
+# chroma-neutral it stays far under any level tried here (raising thr_low never lets
+# shadow back in), but a fully-recovered metallic piece comes into genuine contact with
+# its neighbours, so too low a level lets adjacent pieces bridge into one blob faster than
+# the watershed splitter re-separates them. Measured on IMG_2114 the piece count collapses
+# 68->63 at 0.80 (new fusions) and holds exactly 68->68 at 0.85; on IMG_2129 the sample
+# metallic piece is only ~14% recovered at 0.95 but fully recovered (+58% area, clean
+# contour) at 0.85 with the touching pair still split. 0.85 is thus the loosest level that
+# recovers the reflective bodies with NO new fusion. Must stay < _HYST_HIGH_FACTOR for the
+# hysteresis to have any effect.
+_HYST_LOW_FACTOR = 0.85
+
+
 # ===== Pure detection helpers (no I/O) =====
 def _to_working(bgr: np.ndarray, max_working_dim: int) -> tuple[np.ndarray, float]:
 	"""Downscale ``bgr`` so its longest side is <= ``max_working_dim``.
@@ -204,13 +275,43 @@ def _weighted_distance(lab: np.ndarray, bg: np.ndarray, luma_weight: float, chro
 def _foreground_from_bg(
 	lab: np.ndarray, bg: np.ndarray, luma_weight: float, chroma_weight: float
 ) -> tuple[np.ndarray, np.ndarray, float]:
-	"""Distance map + Otsu binary for one background estimate.
+	"""Distance map + hysteresis-with-connectivity binary for one background estimate.
 
 	Returns ``(distance_u8, binary_0_255, foreground_fraction)``. Factored out so
 	the border model and the global fallback share identical thresholding.
+
+	The foreground is a two-level (hysteresis) threshold on the background-distance
+	map ``D``, ANCHORED on Otsu so pieces that already segmented cleanly do not move:
+
+	  * HIGH level ``_HYST_HIGH_FACTOR * t_otsu`` -> the high-confidence ``core``.
+	    At factor 1.0 this is exactly the old single-Otsu mask, so the core is the
+	    solid body every piece already had.
+	  * LOW level ``_HYST_LOW_FACTOR * t_otsu`` -> weak-contrast ``candidates`` that
+	    include a piece's low-``D`` blotches (e.g. a metallic piece reflecting the
+	    background, where ``D`` dips far below the body).
+
+	Only the connected components of ``candidates`` that CONTAIN a ``core`` pixel are
+	kept. A reflection blotch is physically continuous with the piece body, so its
+	candidate component reaches a core pixel and is recovered; a background shadow is
+	separated from every core by a moat of sub-low-level pixels, so its component
+	holds no core pixel and is discarded. Because the kept set always contains every
+	core pixel, the result can only GROW versus the old Otsu mask -- high-contrast
+	pieces (whose whole body is already core, with no weak-contrast neighbourhood to
+	annex) are essentially unchanged, bounding regression by construction.
 	"""
 	D = _weighted_distance(lab, bg, luma_weight, chroma_weight)
-	_, binary = cv2.threshold(D, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+	t_otsu, _ = cv2.threshold(D, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+	thr_high = _HYST_HIGH_FACTOR * t_otsu
+	thr_low = _HYST_LOW_FACTOR * t_otsu
+	core = D >= thr_high
+	cand = (D >= thr_low).astype(np.uint8)
+	# Hysteresis by connectivity: keep only candidate components anchored by a core
+	# pixel. core is a subset of cand (thr_low <= thr_high), so every core pixel has a
+	# positive label and ``keep`` is exactly the core-touching components.
+	num, labels = cv2.connectedComponents(cand, connectivity=8)
+	keep = np.unique(labels[core]) if num > 1 else np.array([], dtype=labels.dtype)
+	keep = keep[keep > 0]
+	binary = np.isin(labels, keep).astype(np.uint8) * 255
 	return D, binary, float((binary > 0).mean())
 
 
@@ -741,6 +842,199 @@ def _shrink_edge_shadow(mask: np.ndarray, rgb_crop: np.ndarray, long_side: int) 
 	return refined
 
 
+def _clean_piece_mask(mask: np.ndarray) -> np.ndarray:
+	"""Force the solid, simply-connected invariant on a 0/255 piece mask.
+
+	A jigsaw piece is a SOLID, simply-connected shape: a single blob with no
+	genuine interior holes. Keeping only the largest EXTERNAL contour and drawing
+	it FILLED does all three cleanups in one pass -- it (a) discards isolated
+	specks lying outside the piece, (b) keeps only the largest connected
+	component, and (c) fills every interior hole (glossy highlights, print gaps,
+	pinholes left by the mask pipeline), since ``RETR_EXTERNAL`` ignores hole
+	boundaries and the fill paints the whole outline solid.
+
+	A single ``medianBlur(3)`` then shaves pixel-level boundary jaggies. It is the
+	most tab-safe smoother available: a border pixel flips only when at least 5 of
+	its 3x3 neighbours disagree, so it can erode ONLY 1 px hairs -- any tab neck
+	>=2 px wide (the interlocking geometry ``edges.py`` reads as the fit) is left
+	untouched. A morphological open, by contrast, would erode those necks, so it is
+	deliberately avoided. The largest-contour fill is re-run after the blur to
+	re-establish the invariant in the rare case the median nibbles a 1 px bridge
+	loose or reopens a micro-hole. Returns a fresh uint8 0/255 array.
+	"""
+	def _largest_filled(m: np.ndarray) -> np.ndarray | None:
+		cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		if not cnts:
+			return None
+		cnt = max(cnts, key=cv2.contourArea)
+		filled = np.zeros_like(m)
+		cv2.drawContours(filled, [cnt], -1, 255, thickness=cv2.FILLED)
+		return filled
+
+	filled = _largest_filled(mask)
+	if filled is None:
+		return mask
+	smoothed = cv2.medianBlur(filled, 3)
+	refilled = _largest_filled(smoothed)
+	return refilled if refilled is not None else filled
+
+
+def _circular_gaussian(a: np.ndarray, sigma: float) -> np.ndarray:
+	"""Gaussian-smooth a CLOSED sequence with wrap-around (no seam at the join).
+
+	Accepts a 1-D array or an ``(n, d)`` array (each column smoothed independently);
+	returns the same shape. A no-op when the sequence is too short for the kernel.
+	"""
+	arr = np.asarray(a, dtype=np.float64)
+	one_d = arr.ndim == 1
+	if one_d:
+		arr = arr[:, None]
+	n = len(arr)
+	r = int(round(3 * sigma))
+	if r < 1 or n < 2 * r + 2:
+		return arr[:, 0] if one_d else arr
+	k = np.exp(-0.5 * (np.arange(-r, r + 1) / sigma) ** 2)
+	k /= k.sum()
+	out = np.empty_like(arr)
+	for d in range(arr.shape[1]):
+		col = arr[:, d]
+		ext = np.concatenate([col[-r:], col, col[:r]])
+		out[:, d] = np.convolve(ext, k, mode="valid")
+	return out[:, 0] if one_d else out
+
+
+def _circular_median(a: np.ndarray, win: int) -> np.ndarray:
+	"""Sliding-window median of a 1-D CLOSED sequence with wrap-around."""
+	arr = np.asarray(a, dtype=np.float64)
+	n = len(arr)
+	if win < 3 or n < win:
+		return arr
+	if win % 2 == 0:
+		win += 1
+	r = win // 2
+	ext = np.concatenate([arr[-r:], arr, arr[:r]])
+	windows = np.lib.stride_tricks.sliding_window_view(ext, win)
+	return np.median(windows, axis=1)
+
+
+def _refine_boundary_band(
+	mask: np.ndarray,
+	rgb_crop: np.ndarray,
+	bg_lab: np.ndarray,
+	luma_weight: float,
+	chroma_weight: float,
+) -> np.ndarray:
+	"""Re-snap a piece mask's boundary from the working-grid staircase to the colour edge.
+
+	The mask is seeded from the downscaled working contour, so its boundary is a coarse
+	staircase (step ~= the working->full-res ratio) dotted with micro-loops. This helper
+	(a) Gaussian-smooths the contour (``_REFINE_CONTOUR_SIGMA``) to erase that staircase
+	and the loops, giving a clean base and per-point outward normals, then (b) slides
+	each base point along its normal to the ``_REFINE_EDGE_BIAS`` crossing of the
+	weighted-Lab distance-to-background profile sampled +/-``_REFINE_BAND_PX`` along that
+	normal -- i.e. the true colour edge. Points whose local inside/outside contrast is
+	below ``_REFINE_CONTRAST_FLOOR`` keep offset 0 (only the smoothing applies, so no
+	edge is invented on low-separation/white backgrounds), every offset is clamped to
+	+/-``_REFINE_CLAMP_PX`` and the offset function is denoised along the contour
+	(circular median + Gaussian) to kill spikes without distorting tabs.
+
+	``bg_lab`` is the GLOBAL background in OpenCV 8-bit Lab (``segment_pieces``' scale);
+	it is converted to CIE Lab here to match the float ``RGB2LAB`` crop. Pure; returns a
+	fresh, solid 0/255 mask from a single filled polygon, falling back to the input mask
+	on a degenerate contour or an implausibly-shrunk result. Vectorised (numpy + remap).
+	"""
+	cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	if not cnts:
+		return mask
+	cnt = max(cnts, key=cv2.contourArea).reshape(-1, 2).astype(np.float64)
+	n = len(cnt)
+	if n < _REFINE_MIN_POINTS:
+		return mask
+	orig_area = int((mask > 0).sum())
+	h, w = mask.shape[:2]
+
+	# Background-distance map D over the whole crop, in weighted CIE-Lab units. Convert
+	# the 8-bit-Lab bg (L 0..255, a/b offset 128) to CIE (L 0..100, a/b centred 0) so it
+	# matches the float32 RGB2LAB crop.
+	lab = cv2.cvtColor(np.ascontiguousarray(rgb_crop, np.float32) / 255.0, cv2.COLOR_RGB2LAB)
+	bg_cie = np.array(
+		[bg_lab[0] * 100.0 / 255.0, bg_lab[1] - 128.0, bg_lab[2] - 128.0], dtype=np.float32
+	)
+	diff = lab - bg_cie.reshape(1, 1, 3)
+	D = np.sqrt(
+		luma_weight * diff[:, :, 0] ** 2
+		+ chroma_weight * (diff[:, :, 1] ** 2 + diff[:, :, 2] ** 2)
+	).astype(np.float32)
+
+	# Smoothed base (staircase/loops removed) and its outward unit normals.
+	base = _circular_gaussian(cnt, _REFINE_CONTOUR_SIGMA)
+	tang = np.roll(base, -1, axis=0) - np.roll(base, 1, axis=0)
+	nrm = np.stack([tang[:, 1], -tang[:, 0]], axis=1)
+	nl = np.linalg.norm(nrm, axis=1, keepdims=True)
+	nl[nl < 1e-6] = 1.0
+	nrm = nrm / nl
+	# Orient outward: if a small step along +normal mostly lands inside the mask, flip.
+	probe = base + 3.0 * nrm
+	pxi = np.clip(np.round(probe[:, 0]).astype(np.int64), 0, w - 1)
+	pyi = np.clip(np.round(probe[:, 1]).astype(np.int64), 0, h - 1)
+	if (mask[pyi, pxi] > 0).mean() > 0.5:
+		nrm = -nrm
+
+	# Sample D along each normal at integer offsets s in [-band, +band].
+	ss = np.arange(-_REFINE_BAND_PX, _REFINE_BAND_PX + 1, 1.0, dtype=np.float32)
+	sx = (base[:, 0:1] + nrm[:, 0:1] * ss[None, :]).astype(np.float32)
+	sy = (base[:, 1:2] + nrm[:, 1:2] * ss[None, :]).astype(np.float32)
+	np.clip(sx, 0, w - 1, out=sx)
+	np.clip(sy, 0, h - 1, out=sy)
+	prof = cv2.remap(D, sx, sy, cv2.INTER_LINEAR)  # (n, K)
+
+	# Per-point "inside"/"outside" levels (medians of the deep samples) and target.
+	inside = np.median(prof[:, ss <= -5.0], axis=1)
+	outside = np.median(prof[:, ss >= 5.0], axis=1)
+	target = outside + _REFINE_EDGE_BIAS * (inside - outside)
+
+	# Sub-pixel offset = the descending zero of (prof - target) nearest the current
+	# point (s=0): D falls from inside (high) to outside (low), so the piece edge is the
+	# first + -> - crossing across the window.
+	g = prof - target[:, None]
+	pos = g >= 0.0
+	desc = pos[:, :-1] & (~pos[:, 1:])  # (n, K-1) crossing between slot j and j+1
+	center = int(np.argmin(np.abs(ss)))
+	slot = np.arange(len(ss) - 1)
+	dist_to_center = np.abs(slot - center)
+	sentinel = len(ss) + 1
+	cand = np.where(desc, dist_to_center[None, :], sentinel)
+	best = np.argmin(cand, axis=1)
+	has_cross = desc.any(axis=1)
+	rows = np.arange(n)
+	gj = g[rows, best]
+	gj1 = g[rows, best + 1]
+	denom = gj - gj1
+	t = np.where(np.abs(denom) > 1e-9, gj / denom, 0.0)
+	s_cross = ss[best] + t * (ss[best + 1] - ss[best])
+	offset = np.where(has_cross, s_cross, 0.0)
+
+	# Contrast gate, clamp, then denoise the offset function along the contour.
+	offset[np.abs(inside - outside) < _REFINE_CONTRAST_FLOOR] = 0.0
+	np.clip(offset, -_REFINE_CLAMP_PX, _REFINE_CLAMP_PX, out=offset)
+	offset = _circular_median(offset, _REFINE_OFFSET_MEDIAN)
+	offset = _circular_gaussian(offset, _REFINE_OFFSET_SIGMA)
+
+	# New polygon along the normals -> fresh solid mask.
+	new_pts = base + offset[:, None] * nrm
+	poly = np.round(new_pts).astype(np.int32)
+	poly[:, 0] = np.clip(poly[:, 0], 0, w - 1)
+	poly[:, 1] = np.clip(poly[:, 1], 0, h - 1)
+	refined = np.zeros_like(mask)
+	cv2.drawContours(refined, [poly.reshape(-1, 1, 2)], -1, 255, thickness=cv2.FILLED)
+	new_area = int((refined > 0).sum())
+	# A valid re-snap shifts the boundary a few px, so the area barely changes; a
+	# collapse means the polygon self-destructed -> keep the un-refined mask.
+	if new_area == 0 or new_area < 0.5 * orig_area:
+		return mask
+	return refined
+
+
 def _extract_piece(
 	mask_crop: np.ndarray,
 	bbox_w: tuple[int, int, int, int],
@@ -748,6 +1042,9 @@ def _extract_piece(
 	original_rgb: np.ndarray,
 	normalize_rotation: bool,
 	pad_ratio: float,
+	bg_lab: np.ndarray,
+	luma_weight: float,
+	chroma_weight: float,
 ) -> dict | None:
 	"""Lift one working-resolution mask to a full-res piece record.
 
@@ -781,9 +1078,31 @@ def _extract_piece(
 	mask_full = cv2.morphologyEx(mask_full, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
 
 	rgb_crop = original_rgb[oy:oy + oh, ox:ox + ow].copy()
+	# Re-snap the coarse working-grid boundary (a ~inv-px staircase with micro-loops) to
+	# the true full-res colour edge BEFORE the shadow peel and invariant cleanup consume
+	# it. Uses the GLOBAL background model, not a per-piece estimate.
+	mask_full = _refine_boundary_band(mask_full, rgb_crop, bg_lab, luma_weight, chroma_weight)
 	# Peel the interior-rim cast-shadow halo BEFORE any colour/fill is derived, so the
 	# mean colour, the mean-fill and the rotation branch all inherit the clean mask.
 	mask_full = _shrink_edge_shadow(mask_full, rgb_crop, max(ow, oh))
+	# Enforce the solid, simply-connected piece invariant (single blob, no holes,
+	# no specks) BEFORE the mean-fill so mask and img stay consistent: filled holes
+	# keep their original colour in img, removed specks get mean-filled below.
+	mask_full = _clean_piece_mask(mask_full)
+
+	# Derive the returned contour from the FINAL mask (post shrink/clean/refine) so
+	# edges.py classifies the exact geometry the emitted crop mask carries -- not the
+	# working-resolution contour the mask was seeded from, which drifts after those
+	# steps. Taken here, PRE-rotation, so ``contour`` stays in original image coords
+	# (the rotation branch below reassigns ``mask_full`` to the warped mask; this
+	# contour must not follow it).
+	final_cnts, _ = cv2.findContours(mask_full, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	if not final_cnts:
+		return None
+	final_cnt = max(final_cnts, key=cv2.contourArea).reshape(-1, 2).astype(np.int32)
+	contour_orig = final_cnt + np.array([ox, oy], dtype=np.int32)
+	contour_orig[:, 0] = np.clip(contour_orig[:, 0], 0, W - 1)
+	contour_orig[:, 1] = np.clip(contour_orig[:, 1], 0, H - 1)
 
 	m = mask_full > 0
 	if not m.any():
@@ -816,6 +1135,9 @@ def _extract_piece(
 				img_r = img_r[ty0:ty1, tx0:tx1]
 				mask_r = mask_r[ty0:ty1, tx0:tx1]
 				mask_r = (mask_r > 127).astype(np.uint8) * 255
+				# Same invariant cleanup as the non-rotated path, applied to the
+				# warped mask BEFORE its mean-fill so mask_r and img_r stay in sync.
+				mask_r = _clean_piece_mask(mask_r)
 				rm = mask_r > 0
 				img_r[~rm] = mean_u8
 				img, mask_full = img_r, mask_r
@@ -828,7 +1150,7 @@ def _extract_piece(
 		"bbox": (int(ox), int(oy), int(ow), int(oh)),
 		"area_px": area_px,
 		"angle": float(angle),
-		"contour": cnt_orig,
+		"contour": contour_orig,
 	}
 
 
@@ -995,7 +1317,10 @@ def segment_pieces(
 	# --- Steps 9, 10, 11: full-res extraction, rotation, compose ---
 	pieces: list[dict] = []
 	for bbox_w, mask_crop, is_cluster in components:
-		rec = _extract_piece(mask_crop, bbox_w, inv, original_rgb, normalize_rotation, pad_ratio)
+		rec = _extract_piece(
+			mask_crop, bbox_w, inv, original_rgb, normalize_rotation, pad_ratio,
+			bg, luma_weight, chroma_weight,
+		)
 		if rec is not None:
 			rec["is_cluster"] = bool(is_cluster)
 			if is_cluster:
