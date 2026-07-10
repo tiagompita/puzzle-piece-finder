@@ -21,14 +21,13 @@ An intelligent recognition and localization system for puzzle pieces using advan
 This project implements an automated system for solving physical puzzles through image analysis. The system can:
 - **Locate individual pieces** within the complete puzzle
 - **Calculate similarity** between pieces and puzzle regions
-- **Optimize matching** with multi-scale and GPU acceleration
+- **Optimize matching** with multi-scale search
 - **Intuitive graphical interface** for easy usage
 - **Detailed metrics analysis** for each piece
 
 ### 🎯 Key Features
 
 - **Multi-scale Template Matching**: Optimized algorithms to find pieces at different scales
-- **GPU/CUDA Support**: Hardware acceleration for fast processing
 - **Tkinter Graphical Interface**: Complete GUI with result visualization
 - **Similarity Analysis**: Advanced metrics for color and shape correspondence
 - **Overlap Detection**: Automatic identification of conflicts between pieces
@@ -134,7 +133,6 @@ piece_img = load_piece()
 result = multi_scale_template_match(
     puzzle_img=puzzle_img,
     piece_img=piece_img,
-    use_gpu=True,
     use_downscale=True
 )
 
@@ -144,26 +142,6 @@ print(f"Similarity: {result['refined_similarity']:.2%}")
 
 ## 🔧 Advanced Features
 
-### GPU Acceleration (CUDA)
-
-To enable GPU acceleration, you need OpenCV compiled with CUDA:
-
-#### Check CUDA Support
-```python
-import cv2
-print("CUDA enabled:", cv2.cuda.getCudaEnabledDeviceCount() > 0)
-```
-
-#### OpenCV-CUDA Installation (Windows)
-1. **Install NVIDIA CUDA Toolkit** (12.x recommended)
-2. **Visual Studio Build Tools** with C++
-3. **Compile OpenCV** with CUDA flags enabled
-
-```bash
-# Quick verification
-python -c "import cv2; print('CUDA devices:', cv2.cuda.getCudaEnabledDeviceCount())"
-```
-
 ### Performance Settings
 
 #### For Large Puzzles (>2000px)
@@ -172,8 +150,6 @@ result = multi_scale_template_match(
     puzzle_img=puzzle,
     piece_img=piece,
     use_downscale=True,    # Automatic downscaling
-    use_gpu=True,          # If available
-    method='SQDIFF_NORMED' # Fastest method
 )
 ```
 
@@ -184,7 +160,6 @@ result = multi_scale_template_match(
     piece_img=piece,
     use_downscale=False,   # Full resolution
     num_pieces=24,         # Hint for better scale
-    method='CCORR_NORMED'  # Most accurate method
 )
 ```
 
@@ -206,8 +181,7 @@ result = multi_scale_template_match(
   "scale": 0.85,
   "refined_similarity": 0.847,
   "piece_size_final": [120, 98],
-  "candidates_considered": 6,
-  "gpu_used": true
+  "candidates_considered": 6
 }
 ```
 
@@ -235,7 +209,6 @@ result = multi_scale_template_match(
 
 3. **Optimized Matching**
    - Configurable stride for speed
-   - Hybrid GPU/CPU processing
    - Intermediate result caching
 
 ### Contributing
@@ -262,19 +235,9 @@ result = multi_scale_template_match(
 
 ## ⚡ Performance and Optimization
 
-### Typical Benchmarks
-
-| Configuration | Time (24 pieces) | GPU | Accuracy |
-|---------------|------------------|-----|----------|
-| CPU + Downscale | ~15s | ❌ | 85-90% |
-| CPU Full-Res | ~45s | ❌ | 90-95% |
-| GPU + Downscale | ~8s | ✅ | 85-90% |
-| GPU Full-Res | ~20s | ✅ | 90-95% |
-
 ### Optimization Tips
 
 - **Use downscaling** for puzzles >1500px
-- **GPU recommended** for batches >10 pieces
 - **Reduce scale candidates** for specific cases
 - **Cache results** for repetitive analyses
 
@@ -282,19 +245,12 @@ result = multi_scale_template_match(
 
 ### Common Issues
 
-#### OpenCV/CUDA not working
-```bash
-# Check installation
-python -c "import cv2; print(cv2.getBuildInformation())"
-```
-
 #### Insufficient memory
 - Reduce image sizes
 - Enable `use_downscale=True`
 - Process pieces individually
 
 #### Slow performance
-- Check if GPU is being used
 - Reduce sliding window `stride`
 - Use optimized image format (PNG)
 

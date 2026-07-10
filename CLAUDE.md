@@ -17,17 +17,19 @@ This round of work aims to complete the project as fully as possible, across fou
 
 | Module | Lines | Status | Notes |
 |---|---|---|---|
-| `src/matching.py` | ~476 | Functional (the engine) | Naive pixel diff, sliding-window search, and `multi_scale_template_match` (coarse downscale + full-res refinement, optional CUDA/GPU path). Refinement currently uses grayscale mean-absolute-difference and discards colour; `CCORR_NORMED` maps to `cv2.TM_CCOEFF_NORMED`. |
-| `src/gui.py` | ~913 | Functional but messy | Whole Tkinter interface and orchestration: load puzzle/pieces, compute metrics, match single/all, overlays (rectangle + id + similarity %), progress, cancel, JSON export. Technical debt: `load_pieces` and `export_results` are each defined twice (the real JSON export is shadowed by a stub), plus orphaned/dead code inside `_handle_match_error`. |
-| `src/acquisition.py` | — | Functional | Interactive image loading/selection. Broken default paths point at an old `puzzle_solver` folder. |
+| `src/matching.py` | ~1087 | Functional (the engine) | Naive pixel diff / sliding-window baseline, plus `multi_scale_template_match`: a zonal Lab colour search (NxN per-cell mean-colour signature over the piece mask), swept across a `num_pieces`-derived scale band and all four rotations, re-ranked by a Sobel gradient-orientation texture signature (`src/texture.py`, for "colour twin" pieces) and an edge/corner border prior (`src/edges.py`); returns a ranked shortlist plus a confidence label (`'high'`/`'ambiguous'`) from the differential cost gap between the top two candidates. `use_gpu` is accepted for API stability but currently ignored — the search always runs on CPU. |
+| `src/gui.py` | ~1203 | Functional but messy | Whole Tkinter interface and orchestration: load/segment puzzle/pieces, compute metrics, match single/all, overlays (rectangle + id + similarity %, or per-candidate markers when ambiguous), progress, cancel, JSON export, annotated-image export. |
+| `src/acquisition.py` | — | Functional | Interactive image loading/selection. |
 | `src/features.py` | ~48 | Functional | Pure helpers: image size, area, dominant colour (simple frequency, no k-means), colour distance, scale (px/cm). |
 | `src/main.py` | ~19 | Functional | Minimal CLI orchestration. |
-| `src/segmentation.py` | 0 | **Empty — to implement** | Automatic piece detection/cropping from a puzzle/board photo. |
-| `src/visualization.py` | 0 | **Empty — to implement** | Annotated result image (incl. red-dot marker). (Recovering the JSON export is a separate fix in `src/gui.py`, where the export lives today — not part of this module.) |
+| `src/segmentation.py` | ~1047 | Functional | Automatic piece detection/cropping from a photo of many pieces on a surface: Lab background-distance foreground mask, morphological cleanup, watershed splitting of touching pieces (with a forced-bisection fallback), edge-shadow removal, rotation normalization. |
+| `src/edges.py` | ~194 | Functional | Pure geometry: classifies a segmented piece's own contour/mask into `edge`/`corner`/`interior`/`suspect` by counting flat sides of its `minAreaRect`; feeds `matching.py`'s border prior. |
+| `src/texture.py` | ~233 | Functional | Per-cell Sobel gradient-orientation histogram signature mirroring `matching.py`'s zonal grid; used to re-rank colour-equal shortlist candidates. |
+| `src/visualization.py` | ~185 | Functional | Annotated result image (red-dot marker at each piece's probable centre + label) via `annotate_results`/`save_annotated_image`. (The JSON export lives in `src/gui.py`, not here.) |
 
-Support files: `examples/basic_usage.py`; loose test scripts (`test_scales.py`, `gpu_test.py`, `temp_import_test.py`); docs (`README.md`, `CHANGELOG.md`, `QUICKSTART.md`, `CONTRIBUTING.md`); example data in `images/` (24 example pieces, 1 puzzle image, and `images/pieces/puzzle.json` ~512KB with pieces as base64).
+Support files: `examples/basic_usage.py`; loose test scripts (`test_scales.py`, `gpu_test.py`, `temp_import_test.py`); docs (`README.md`, `CHANGELOG.md`, `QUICKSTART.md`, `CONTRIBUTING.md`); example data in `images/` — real pieces are `.DNG` photos (`images/pieces/*.DNG`, opened directly via PIL; not the older PNG pieces/`puzzle.json` base64 export) and puzzle photos in `images/puzzles/*.jpg`/`*.jpeg`.
 
-Dependencies: Pillow, opencv-python, numpy (see `requirements.txt`). The GPU path needs an OpenCV build compiled with CUDA. Python 3.8+.
+Dependencies: Pillow, opencv-python, numpy (see `requirements.txt`). Python 3.8+. `use_gpu` is accepted by `multi_scale_template_match` for API stability but is currently ignored (CPU only).
 
 ## Subagents & Model Routing
 

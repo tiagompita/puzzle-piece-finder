@@ -197,22 +197,6 @@ class PuzzleGUI(tk.Tk):
         if hasattr(self, 'cancel_btn'):
             self.cancel_btn.configure(state='disabled')  # Desabilitar cancelar
 
-    def _disable_widget_buttons(self, widget, button_texts):
-        """Recursivamente desabilitar botões por texto."""
-        if isinstance(widget, ttk.Button):
-            if widget.cget('text') in button_texts:
-                widget.configure(state='disabled')
-        for child in widget.winfo_children():
-            self._disable_widget_buttons(child, button_texts)
-
-    def _enable_widget_buttons(self, widget, button_texts):
-        """Recursivamente reabilitar botões por texto."""
-        if isinstance(widget, ttk.Button):
-            if widget.cget('text') in button_texts:
-                widget.configure(state='normal')
-        for child in widget.winfo_children():
-            self._enable_widget_buttons(child, button_texts)
-
     def prev_piece(self):
         if self.pieces_imgs:
             self.current_piece_idx = (self.current_piece_idx - 1) % len(self.pieces_imgs)
@@ -878,7 +862,6 @@ class PuzzleGUI(tk.Tk):
         def matching_thread():
             try:
                 # Adicionar timeout para evitar travamentos
-                import time
                 start_time = time.time()
                 
                 result = self._perform_optimized_matching(piece_img, piece_id, num_pieces, piece_mask=current_piece_data.get('mask'))

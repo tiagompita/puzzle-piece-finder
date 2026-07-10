@@ -15,7 +15,7 @@ def compute_area(size: tuple[int, int]) -> int:
 	return w * h
 
 
-def dominant_color(img: Image.Image, k: int = 4) -> tuple[int, int, int]:
+def dominant_color(img: Image.Image) -> tuple[int, int, int]:
 	"""Approximate dominant color by downscaling and taking most common pixel.
 
 	Simple + fast approach (no k-means yet)."""

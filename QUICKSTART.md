@@ -49,7 +49,6 @@ python -m src.main
 - **Position**: Coordinates (x, y) where the piece was found
 - **Similarity**: 0-100% correspondence (>80% is very good)
 - **Scale**: Scaling factor applied to the piece
-- **GPU**: Whether hardware acceleration was used
 
 ### Example Output
 
@@ -66,7 +65,6 @@ This means:
 
 ### For Better Performance
 - ✅ Enable "Downscale" for large puzzles (>1500px)
-- ✅ Use "GPU" if you have OpenCV with CUDA
 - ✅ Set "#Pieces" with the actual number of pieces
 
 ### For Maximum Precision
@@ -75,11 +73,6 @@ This means:
 - ✅ Use high-quality images
 
 ## 🚨 Common Problems
-
-### "GPU not available"
-- Normal if you don't have CUDA installed
-- System uses CPU automatically
-- Performance is still good for most cases
 
 ### "Very low similarity (<50%)"
 - Check if it's the correct piece
@@ -94,9 +87,8 @@ This means:
 ## 📈 Next Steps
 
 1. **Experiment** with your own puzzle images
-2. **Set up GPU** following the guide in main README
-3. **Explore** examples in `examples/basic_usage.py`
-4. **Contribute** improvements following `CONTRIBUTING.md`
+2. **Explore** examples in `examples/basic_usage.py`
+3. **Contribute** improvements following `CONTRIBUTING.md`
 
 ## 🆘 Need Help?
 
