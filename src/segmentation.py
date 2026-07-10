@@ -42,6 +42,19 @@ _SEAM_KERNEL_FRAC = 0.012
 # seam-free, so uniform crops and flush/interlocked sections yield no barrier and
 # their distance transform is left untouched.
 _SEAM_MIN_RESPONSE = 12.0
+# A component above this * median area is almost certainly >=2 pieces, so when both
+# the plain and seam watersheds leave it whole (a seam too weak for either) a third,
+# FORCED bisection is attempted: :func:`_forced_bisect` cuts it at its narrowest
+# distance-transform waist, provided the two peaks are tall and well separated enough
+# to be two piece centres. Set above ``split_trigger`` so only clearly over-sized
+# blobs are ever forced; single pieces never reach it. The bisection is accepted only
+# when BOTH halves look single (each <= split_trigger * median), so a >2-piece cluster
+# -- whose halves stay over-sized -- is left whole and flagged, not shredded.
+_FORCE_SPLIT_RATIO = 1.8
+# A watershed split can hand back a sub that is itself still two fused pieces (a
+# 3-piece cluster seeding as [pair, single], say). Each over-sized sub is therefore
+# re-split, up to this recursion depth, so those residual pairs are separated too.
+_MAX_SPLIT_DEPTH = 3
 
 
 # ===== Non-piece component rejection tunables (step 7) =====
@@ -72,6 +85,24 @@ _EDGE_SHRINK_MIN_SIDE = 40
 # Back off the whole shrink if peeling the shadow would drop the mask below this
 # fraction of its original area (guard against over-eroding thin/narrow pieces).
 _EDGE_SHRINK_MIN_AREA_KEEP = 0.70
+# The thin _EDGE_SHRINK_FRAC rim only reaches shadow within ~r of the edge, but the
+# desaturated navy shadow that pools INSIDE concave tab notches runs deeper and
+# survived. This wider boundary band (fraction of the long side) is scanned for
+# shadow too; removal stays gated on the SAME conjunctive test (clearly darker AND
+# lower-chroma than the interior), so dark-but-saturated artwork and neutral/grey
+# pieces -- whose rim is not both darker and greyer than their core -- are still
+# spared, and the _EDGE_SHRINK_MIN_AREA_KEEP floor still bounds total removal.
+_SHADOW_BAND_FRAC = 0.06
+# A band pixel counts as shadow only when at least this much darker (OpenCV 8-bit L,
+# 0..255) than the interior median -- "clearly darker", not marginally so -- which
+# spares faintly-shaded genuine content the deeper band now reaches.
+_SHADOW_L_DELTA = 10.0
+# The conjunctive test also fires on isolated dark speckle scattered through the deep
+# band, and peeling that speckle moth-eats a ragged mask edge (itself a false border
+# gradient). An opening of this radius (fraction of the long side) is applied to the
+# shadow mask first, so only contiguous crescents -- the real cast shadow -- survive
+# to be peeled and the boundary stays smooth. 0.0 disables the opening.
+_SHADOW_OPEN_FRAC = 0.012
 
 
 # ===== Pure detection helpers (no I/O) =====
@@ -281,6 +312,71 @@ def _seam_seeds(
 	return sure_fg, mk, n - 1
 
 
+def _forced_bisect(comp_mask: np.ndarray, median_area: float) -> list[np.ndarray] | None:
+	"""Geometrically bisect a component at its narrowest waist (last resort).
+
+	For an over-sized component both the plain and seam watersheds left whole (a
+	seam too weak for either), the two piece bodies still show as two distance-
+	transform peaks separated by a thinner neck -- the physical join of two pieces
+	set down interlocked or flush. This cuts there directly: it seeds the two
+	dominant peaks and runs the watershed on the (inverted) distance transform
+	rather than colour, so the basins meet on the neck ridge and cover the whole
+	component -- robust where a colour watershed lets the near-background piece
+	colour bleed the outside marker inward. Accepted ONLY when the second peak is
+	tall (not a rim ripple) AND the two centres are far enough apart to be two
+	pieces; otherwise ``None``. Returns two 0/255 sub-masks, or ``None``.
+	"""
+	dist = cv2.distanceTransform(comp_mask, cv2.DIST_L2, 5)
+	maxd = float(dist.max())
+	if maxd <= 0:
+		return None
+	# Expected single-piece geometry implied by the median area.
+	side = float(np.sqrt(median_area))
+	radius = float(np.sqrt(median_area / np.pi))
+	# Global peak, then blank a piece-radius disc around it and find the next peak.
+	_, _, _, loc1 = cv2.minMaxLoc(dist)
+	p1 = (int(loc1[0]), int(loc1[1]))  # (x, y)
+	dist2 = dist.copy()
+	cv2.circle(dist2, p1, max(1, int(round(radius))), 0.0, -1)
+	if float(dist2.max()) <= 0:
+		return None
+	_, _, _, loc2 = cv2.minMaxLoc(dist2)
+	p2 = (int(loc2[0]), int(loc2[1]))  # (x, y)
+	d1 = float(dist[p1[1], p1[0]])
+	d2 = float(dist[p2[1], p2[0]])
+	# Reject unless the second peak is tall and the two centres well separated: a
+	# single piece has one dominant peak, so a low or nearby second peak is a ripple.
+	if d2 < 0.4 * d1:
+		return None
+	if float(np.hypot(p1[0] - p2[0], p1[1] - p2[1])) < 0.6 * side:
+		return None
+	# Markers: 1 = outside (a background wall on the mask's zero-distance boundary),
+	# 2 and 3 = small discs on the two peaks. The topographic surface is the inverted
+	# distance transform, so both peaks are valleys that flood outward and meet on the
+	# thin-neck ridge; the outside wall (distance 0) keeps marker 1 out of the piece.
+	markers = np.zeros(comp_mask.shape, dtype=np.int32)
+	markers[comp_mask == 0] = 1
+	disc = max(1, int(round(0.20 * radius)))
+	cv2.circle(markers, p1, disc, 2, -1)
+	cv2.circle(markers, p2, disc, 3, -1)
+	dn = cv2.normalize(dist, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+	surf = cv2.cvtColor(255 - dn, cv2.COLOR_GRAY2BGR)
+	cv2.watershed(surf, markers)
+	subs: list[np.ndarray] = []
+	for r in (2, 3):
+		region = ((markers == r) & (comp_mask > 0)).astype(np.uint8) * 255
+		if int((region > 0).sum()) > 0:
+			subs.append(region)
+	if len(subs) != 2:
+		return None
+	# A legitimate bisection of a barely-fused pair can hand one piece a slightly
+	# sub-0.3 basin, so the fragment floor here is relaxed to 0.2*median.
+	for s in subs:
+		if int((s > 0).sum()) < 0.2 * median_area:
+			return None
+	return subs
+
+
 def _watershed_from_seeds(
 	comp_mask: np.ndarray,
 	color_crop: np.ndarray,
@@ -328,6 +424,48 @@ def _watershed_from_seeds(
 	return subs
 
 
+def _resplit_subs(
+	subs: list[np.ndarray],
+	color_crop: np.ndarray,
+	median_area: float,
+	marker_ratio: float,
+	working_dim: int,
+	seam_frac: float,
+	split_trigger: float,
+	depth: int,
+) -> list[np.ndarray]:
+	"""Recursively re-split any sub still large enough to be >1 piece.
+
+	A watershed can leave one sub still fused (e.g. a 3-piece cluster seeds as
+	``[pair, single]``); each sub above ``split_trigger`` * median is fed back
+	through :func:`_split_component` and, if it separates, replaced by its parts.
+	Sub masks share ``comp_mask``'s frame, so each is cropped to its bbox, split,
+	and the results pasted back at the same offset. Depth-bounded by
+	``_MAX_SPLIT_DEPTH``; a sub that does not separate is kept as-is.
+	"""
+	if depth >= _MAX_SPLIT_DEPTH:
+		return subs
+	refined: list[np.ndarray] = []
+	for sub in subs:
+		if int((sub > 0).sum()) <= split_trigger * median_area:
+			refined.append(sub)
+			continue
+		sx, sy, sw, sh = cv2.boundingRect(sub)
+		sub_crop = sub[sy:sy + sh, sx:sx + sw]
+		sub_color = color_crop[sy:sy + sh, sx:sx + sw]
+		parts = _split_component(
+			sub_crop, sub_color, median_area, marker_ratio, working_dim, seam_frac, split_trigger, depth + 1
+		)
+		if parts is None:
+			refined.append(sub)
+			continue
+		for part in parts:
+			full = np.zeros_like(sub)
+			full[sy:sy + sh, sx:sx + sw] = part
+			refined.append(full)
+	return refined
+
+
 def _split_component(
 	comp_mask: np.ndarray,
 	color_crop: np.ndarray,
@@ -335,26 +473,46 @@ def _split_component(
 	marker_ratio: float,
 	working_dim: int,
 	seam_frac: float,
+	split_trigger: float,
+	depth: int = 0,
 ) -> list[np.ndarray] | None:
 	"""Try to watershed-split one large component into touching pieces.
 
 	``comp_mask`` is a 0/255 crop, ``color_crop`` the matching BGR crop. The plain
 	distance-transform split is tried first (identical to the historic behaviour,
 	so cleanly separated pieces are untouched); only if it cannot separate the
-	component is the dark inter-piece seam brought in to *rescue* a split. This
-	ordering guarantees the seam can add splits but never remove one. Returns a
-	list of sub-piece masks, or ``None`` to keep the component whole.
+	component is the dark inter-piece seam brought in to *rescue* a split, and only
+	if that also fails is a geometric bisection FORCED. This ordering guarantees the
+	seam and the forced cut can add splits but never remove one. Any sub that comes
+	back still over-sized is re-split (:func:`_resplit_subs`). Returns a list of
+	sub-piece masks, or ``None`` to keep the component whole.
 	"""
 	plain = _plain_seeds(comp_mask, marker_ratio)
 	if plain is None:
 		return None
 	subs = _watershed_from_seeds(comp_mask, color_crop, median_area, plain)
+	if subs is None:
+		seam = _seam_seeds(comp_mask, color_crop, marker_ratio, working_dim, seam_frac)
+		if seam is not None:
+			subs = _watershed_from_seeds(comp_mask, color_crop, median_area, seam)
 	if subs is not None:
-		return subs
-	seam = _seam_seeds(comp_mask, color_crop, marker_ratio, working_dim, seam_frac)
-	if seam is None:
-		return None
-	return _watershed_from_seeds(comp_mask, color_crop, median_area, seam)
+		return _resplit_subs(
+			subs, color_crop, median_area, marker_ratio, working_dim, seam_frac, split_trigger, depth
+		)
+	# Third, FORCED path: a component well above _FORCE_SPLIT_RATIO * median that both
+	# the plain and seam watersheds left whole is almost certainly >=2 pieces joined
+	# across a seam too weak for either. Bisect it at its narrowest waist, but accept
+	# the cut ONLY when both halves look single (each <= split_trigger * median): a
+	# genuine >2-piece cluster bisects into still-oversized halves and is left whole
+	# (later flagged is_cluster) instead of being emitted as two fused chunks.
+	comp_area = int((comp_mask > 0).sum())
+	if comp_area > _FORCE_SPLIT_RATIO * median_area:
+		halves = _forced_bisect(comp_mask, median_area)
+		if halves is not None and all(
+			int((h > 0).sum()) <= split_trigger * median_area for h in halves
+		):
+			return halves
+	return None
 
 
 def _is_cluster_blob(comp_mask: np.ndarray, median_area: float, marker_ratio: float, cluster_ratio: float) -> bool:
@@ -441,7 +599,9 @@ def _extract_components(
 		color_crop = work_bgr[y:y + hh, x:x + ww]
 
 		if split_touching and area > split_trigger * median_area:
-			subs = _split_component(comp_mask, color_crop, median_area, marker_ratio, working_dim, seam_frac)
+			subs = _split_component(
+				comp_mask, color_crop, median_area, marker_ratio, working_dim, seam_frac, split_trigger
+			)
 			if subs is not None:
 				for sub in subs:
 					sx, sy, sw, sh = cv2.boundingRect(sub)
@@ -478,13 +638,15 @@ def _normalize_angle(ang: float) -> float:
 def _shrink_edge_shadow(mask: np.ndarray, rgb_crop: np.ndarray, long_side: int) -> np.ndarray:
 	"""Peel the interior-rim cast-shadow halo off a filled 0/255 piece mask.
 
-	The mask is eroded by ``_EDGE_SHRINK_FRAC * long_side`` to bound the rim that may
-	be peeled (a hard ceiling), then within that rim -- the crown between the
-	original and eroded masks -- only pixels that are BOTH darker AND lower-chroma
-	than the piece interior are dropped. That darker-and-desaturated pair is the
-	signature of a cast shadow, so genuine painted rims (which keep their chroma) and
-	fully neutral/grey pieces (whose rim is not darker than their own interior) are
-	preserved -- the erosion is used only as a maximum, never applied wholesale.
+	The mask is eroded by ``_SHADOW_BAND_FRAC * long_side`` to bound the boundary band
+	that may be peeled (a hard ceiling, wide enough to reach the shadow that pools
+	inside concave tab notches), then within that band -- the crown between the
+	original and eroded masks -- only pixels that are BOTH clearly darker (by at least
+	``_SHADOW_L_DELTA``) AND lower-chroma than the piece interior are dropped. That
+	darker-and-desaturated pair is the signature of a cast shadow, so genuine painted
+	rims (which keep their chroma) and fully neutral/grey pieces (whose rim is not
+	darker than their own interior) are preserved -- the erosion is used only as a
+	maximum, never applied wholesale.
 
 	``rgb_crop`` is the matching RGB crop, ``long_side`` the piece's padded long side.
 	Falls back to the unshrunk ``mask`` when the piece is too small, when the shrink
@@ -496,16 +658,23 @@ def _shrink_edge_shadow(mask: np.ndarray, rgb_crop: np.ndarray, long_side: int) 
 	orig_area = int((mask > 0).sum())
 	if orig_area == 0:
 		return mask
-	r = max(1, int(round(_EDGE_SHRINK_FRAC * long_side)))
-	eroded = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1)))
+	# Candidate shadow band: deep enough to reach shadow pooled inside concave
+	# notches. Retreat to the thin _EDGE_SHRINK_FRAC rim if the wide erosion would
+	# consume the whole piece (thin/narrow pieces).
+	rb = max(1, int(round(_SHADOW_BAND_FRAC * long_side)))
+	eroded = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * rb + 1, 2 * rb + 1)))
 	if not (eroded > 0).any():
-		return mask
+		rb = max(1, int(round(_EDGE_SHRINK_FRAC * long_side)))
+		eroded = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * rb + 1, 2 * rb + 1)))
+		if not (eroded > 0).any():
+			return mask
 	rim = (mask > 0) & (eroded == 0)
 	if not rim.any():
 		return mask
-	# Interior reference from a deeper erosion so a halo thicker than r does not bias
-	# the lightness/chroma medians toward the shadow itself; fall back if it empties.
-	deep = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4 * r + 1, 4 * r + 1)))
+	# Interior reference from a still-deeper erosion so a deep halo does not bias the
+	# lightness/chroma medians toward the shadow itself; fall back if it empties.
+	rc = rb + rb // 2
+	deep = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * rc + 1, 2 * rc + 1)))
 	core = deep if (deep > 0).any() else eroded
 	lab = cv2.cvtColor(rgb_crop, cv2.COLOR_RGB2LAB).astype(np.float32)
 	L = lab[:, :, 0]
@@ -513,11 +682,25 @@ def _shrink_edge_shadow(mask: np.ndarray, rgb_crop: np.ndarray, long_side: int) 
 	core_sel = core > 0
 	L_int = float(np.median(L[core_sel]))
 	C_int = float(np.median(chroma[core_sel]))
-	shadow = rim & (L < L_int) & (chroma < C_int)
+	# Conjunctive test: clearly darker AND lower-chroma than the interior.
+	shadow = rim & (L < L_int - _SHADOW_L_DELTA) & (chroma < C_int)
 	if not shadow.any():
 		return mask
+	# Drop isolated speckle so only contiguous crescents are peeled (smooth boundary).
+	if _SHADOW_OPEN_FRAC > 0.0:
+		ok = max(1, int(round(_SHADOW_OPEN_FRAC * long_side)))
+		opened = cv2.morphologyEx(
+			shadow.astype(np.uint8), cv2.MORPH_OPEN,
+			cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * ok + 1, 2 * ok + 1)),
+		)
+		shadow = opened > 0
+		if not shadow.any():
+			return mask
 	refined = mask.copy()
 	refined[shadow] = 0
+	# Back off wholesale if peeling would breach the area floor: on a piece ringed by
+	# extensive shadow the survivors are scattered speckle, and removing them moth-eats
+	# the mask -- worse than leaving the halo. Keeping the piece intact is the safe call.
 	if int((refined > 0).sum()) < _EDGE_SHRINK_MIN_AREA_KEEP * orig_area:
 		return mask
 	if not (refined > 0).any():
