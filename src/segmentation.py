@@ -1010,7 +1010,7 @@ def _refine_boundary_band(
 	gj = g[rows, best]
 	gj1 = g[rows, best + 1]
 	denom = gj - gj1
-	t = np.where(np.abs(denom) > 1e-9, gj / denom, 0.0)
+	t = np.divide(gj, denom, out=np.zeros_like(gj), where=np.abs(denom) > 1e-9)
 	s_cross = ss[best] + t * (ss[best + 1] - ss[best])
 	offset = np.where(has_cross, s_cross, 0.0)
 
