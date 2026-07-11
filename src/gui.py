@@ -102,6 +102,8 @@ class PuzzleGUI(tk.Tk):
         export_btn.pack(side=tk.LEFT, padx=(6, 0))
         save_img_btn = ttk.Button(row3, text="Save Annotated Image", command=self.save_annotated_result)
         save_img_btn.pack(side=tk.LEFT, padx=(6, 0))
+        save_pieces_btn = ttk.Button(row3, text="Save Pieces", command=self.save_segmented_pieces)
+        save_pieces_btn.pack(side=tk.LEFT, padx=(6, 0))
 
         # Guardar referência aos botões para controle de estado
         self.compute_btn = compute_btn
@@ -117,6 +119,7 @@ class PuzzleGUI(tk.Tk):
         self._tooltip.bind(clear_btn, "Limpar todos os traçados/overlays do puzzle.")
         self._tooltip.bind(export_btn, "Exportar resultados para arquivo JSON.")
         self._tooltip.bind(save_img_btn, "Guardar imagem do puzzle anotada com marcador vermelho no centro de cada peça.")
+        self._tooltip.bind(save_pieces_btn, "Guardar todas as peças segmentadas como recortes RGBA transparentes, para comparar contornos.")
 
         # Puzzle + Piece side by side
         center_row = ttk.Frame(main)
@@ -811,6 +814,55 @@ class PuzzleGUI(tk.Tk):
 
         except Exception as e:
             self._log(f"❌ Erro ao guardar imagem anotada: {str(e)}")
+
+    def save_segmented_pieces(self):
+        """Guardar TODAS as peças segmentadas de uma vez como recortes RGBA
+        transparentes (cutout), numa pasta nova, para o utilizador comparar contornos.
+
+        Não sobrescreve pastas de runs anteriores: cria `segmented_pieces`, ou
+        `segmented_pieces_2`, `_3`, etc. se já existirem.
+        """
+        if not self.pieces_imgs:
+            self._log("❌ Nenhuma peça segmentada para guardar. Segmenta/carrega peças primeiro.")
+            return
+
+        parent = filedialog.askdirectory(title="Escolhe onde criar a pasta das peças segmentadas")
+        if not parent:
+            return
+
+        try:
+            from .segmentation import piece_to_rgba
+
+            out_dir = os.path.join(parent, "segmented_pieces")
+            counter = 2
+            while True:
+                try:
+                    os.makedirs(out_dir, exist_ok=False)
+                    break
+                except FileExistsError:
+                    out_dir = os.path.join(parent, f"segmented_pieces_{counter}")
+                    counter += 1
+
+            n = 0
+            for piece in self.pieces_imgs:
+                mask = piece.get('mask')
+                if mask is not None:
+                    rgba = piece_to_rgba(piece['img'], mask)
+                else:
+                    rgba = piece['img'].convert('RGBA')
+
+                filename = f"piece_{piece['id']:02d}"
+                if piece.get('is_cluster'):
+                    filename += "_cluster"
+                filename += ".png"
+
+                rgba.save(os.path.join(out_dir, filename))
+                n += 1
+
+            self._log(f"✅ {n} peças guardadas em {out_dir}")
+
+        except Exception as e:
+            self._log(f"❌ Erro a guardar: {e}")
 
     def compute_metrics(self):
         """Calcular métricas das imagens carregadas."""
