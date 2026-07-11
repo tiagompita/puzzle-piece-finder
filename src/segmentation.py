@@ -85,21 +85,6 @@ _SEAM_CARVE_TRIGGER = 3.0
 # well below _seam_barrier's 0.45*peak, so weak sections of the seam are still cut and the
 # two piece bodies separate cleanly into their own carved cores.
 _SEAM_CARVE_THR_FRAC = 0.20
-# A connected component of the carved (seam-removed) mask seeds a piece marker only when
-# its area reaches this fraction of the median piece area, so seam speckle spawns no
-# spurious markers.
-_SEAM_MARKER_MIN_FRAC = 0.25
-# Validation (a): the median black-hat response along an accepted internal boundary must
-# reach this fraction of the carve threshold -- a real inter-piece seam is dark ALL along
-# the cut, unlike a blank (continuous card, no dark line).
-_SEAM_BOUNDARY_SEAM_FRAC = 0.5
-# Validation (b): a boundary endpoint counts as landing on a concavity when a qualifying
-# convexity defect of the component contour lies within this many working px of it. A neck
-# between two pieces ends in two facing concavities; a single piece's own blank does not.
-_SEAM_CONCAVITY_TOL_PX = 6
-# A convexity defect qualifies as a real inter-piece neck (not contour ripple) when its
-# depth reaches this fraction of the median piece side.
-_SEAM_CONCAVITY_DEPTH_FRAC = 0.10
 # Plausibility floor on a split sub's SOLIDITY (area / convex-hull area). Data-grounded on
 # the 11 backgrounds: genuine pieces -- including 4-tab pieces whose hull bridges all four
 # tabs -- measure >=0.62, while leaked multi-piece / background-bled blobs collapse to
@@ -570,21 +555,34 @@ def _forced_bisect(comp_mask: np.ndarray, median_area: float) -> list[np.ndarray
 
 
 def _seam_carve_split(
-	comp_mask: np.ndarray, color_crop: np.ndarray, median_area: float, working_dim: int
+	comp_mask: np.ndarray, color_crop: np.ndarray, binary_raw_crop: np.ndarray,
+	median_area: float, working_dim: int
 ) -> list[np.ndarray] | None:
-	"""Separate ABUTTING pieces by carving the physical dark seam, then assigning every
-	pixel with an inverted-distance-transform watershed (geometric, NEVER colour).
+	"""Separate ABUTTING pieces by REMOVING the inter-piece seam, then assigning each
+	remaining connected body WHOLE to a piece (never a midline colour/DT watershed).
 
-	Cardboard-back pieces set down touching share the SAME colour, so ``cv2.watershed`` on
-	colour leaks basins through the seam and into the background (low-solidity garbage). The
-	robust signal is the physical seam: a thin dark line (gap + cast shadow) where two piece
-	edges meet, isolated by a black-hat (strong here: response ~225 vs a 12 floor). This CARVES
-	that seam out of the mask; the connected remnants are one-per-piece cores; the inverted-DT
-	watershed grows each core back to fill the whole mask, the basins meeting on the seam ridge.
-	A piece's OWN blank has no dark seam through it, so carving can never cut a single piece at
-	its blank. Accepted only when the black-hat peak is strong (``_SEAM_CARVE_TRIGGER``) and every
-	resulting sub is single-piece-plausible (``_solidity`` >= ``_SUB_SOLIDITY_MIN``, ~one median
-	piece); otherwise ``None`` -> the component is left whole (later flagged ``is_cluster``).
+	Cardboard-back pieces set down touching share the SAME colour, so a colour watershed
+	leaks basins through the seam; the earlier inverted-DT watershed, by contrast, redivided
+	the seam at its geometric MIDLINE and so bit into the darker piece / handed a grab to its
+	neighbour. The physical seam is genuinely NOT part of either piece: it is the dark gap +
+	cast shadow, plus the thin background-coloured gap the step-6 CLOSE bridged over (which the
+	pre-close ``binary_raw`` correctly excluded). So the seam is DROPPED, not redistributed:
+
+	  * ``bg_invented`` = component pixels the CLOSE invented (foreground now, background in
+	    ``binary_raw``) -- the background-coloured gap the close ponted across.
+	  * ``barrier`` = the dark seam isolated by a black-hat (strong here, ~225 vs a 12 floor).
+	  * ``remove`` = the barrier, plus every ``bg_invented`` connected component that touches
+	    the seam neighbourhood (``contested``). Restricting to the contact keeps legitimate
+	    interior hole-fills (a piece's own glossy blotch) untouched while opening the gap and
+	    any closed background pocket that reaches the contact (e.g. an interior red sliver).
+
+	The connected components of ``solid = comp - remove`` above ``0.25*median`` are the piece
+	CORES; each is grown back over the dropped seam by NEAREST core (so the boundary sits at
+	the seam, not a midline through it) while the seam pixels themselves stay background. A
+	piece's OWN blank carries no dark seam and no background gap, so it is never cut. Accepted
+	only when the black-hat peak is strong (``_SEAM_CARVE_TRIGGER``), ``solid`` yields >=2 cores
+	(a mated pair in true pixel-to-pixel contact has one core -> ``None`` -> flagged is_cluster)
+	and every sub is single-piece-plausible; otherwise ``None`` -> the component is left whole.
 	"""
 	L = cv2.cvtColor(color_crop, cv2.COLOR_BGR2LAB)[:, :, 0]
 	k = max(9, int(round(_SEAM_KERNEL_FRAC * working_dim)))
@@ -600,51 +598,52 @@ def _seam_carve_split(
 		return None
 	# Relaxed threshold so faint sections of a real seam are still carved through.
 	thr = max(_SEAM_MIN_RESPONSE, _SEAM_CARVE_THR_FRAC * peak)
-	barrier = ((bh >= thr) & inside).astype(np.uint8) * 255
+	barrier = (bh >= thr) & inside
+	# The background-coloured gap the step-6 CLOSE invented (fg now, bg in binary_raw).
+	bg_inv = inside & (binary_raw_crop == 0)
+	# Seam neighbourhood: only bg-invented pockets that reach the dark seam are the contact
+	# gap; deep-interior hole-fills stay (they are a piece's own body, refilled downstream).
+	d = max(3, int(round(0.010 * working_dim)))
+	if d % 2 == 0:
+		d += 1
+	contested = cv2.dilate(barrier.astype(np.uint8) * 255, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (d, d))) > 0
+	nbi, lbi = cv2.connectedComponents((bg_inv).astype(np.uint8), 8)
+	touch = np.unique(lbi[contested & bg_inv])
+	touch = touch[touch > 0]
+	remove = barrier | (np.isin(lbi, touch) if touch.size else np.zeros_like(bg_inv))
 	k3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-	carved = cv2.morphologyEx(cv2.bitwise_and(comp_mask, cv2.bitwise_not(barrier)), cv2.MORPH_OPEN, k3)
-	n, lbl, stats, _ = cv2.connectedComponentsWithStats(carved, 8)
+	solid = cv2.morphologyEx((inside & ~remove).astype(np.uint8) * 255, cv2.MORPH_OPEN, k3)
+	n, lbl, stats, _ = cv2.connectedComponentsWithStats(solid, 8)
 	cores = [l for l in range(1, n) if stats[l, cv2.CC_STAT_AREA] >= 0.25 * median_area]
 	if len(cores) < 2:
-		return None  # the seam did not cut the component into >=2 piece-sized cores
-	# Inverted-DT watershed: seed each carved core, wall off the background at distance 0,
-	# flood so the seam pixels (and any sub-core remnants) fall to the nearest core.
-	dist = cv2.distanceTransform(comp_mask, cv2.DIST_L2, 5)
-	markers = np.zeros(comp_mask.shape, dtype=np.int32)
-	markers[comp_mask == 0] = 1
-	for i, l in enumerate(cores, start=2):
-		markers[lbl == l] = i
-	dn = cv2.normalize(dist, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-	cv2.watershed(cv2.cvtColor(255 - dn, cv2.COLOR_GRAY2BGR), markers)
-	subs = []
-	for r in range(2, 2 + len(cores)):
-		region = ((markers == r) & (comp_mask > 0)).astype(np.uint8) * 255
+		return None  # one body -> a mated pair or a single piece; not a clean seam split
+	# Grow each core over the dropped seam by NEAREST core, so where two cores meet the
+	# boundary sits on the seam; the seam pixels themselves stay background (dropped).
+	core_id = np.zeros(comp_mask.shape, dtype=np.int32)
+	for i, l in enumerate(cores, start=1):
+		core_id[lbl == l] = i
+	_, near = cv2.distanceTransformWithLabels(
+		(core_id == 0).astype(np.uint8), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL
+	)
+	lut = np.zeros(int(near.max()) + 1, dtype=np.int32)
+	cys, cxs = np.where(core_id > 0)
+	lut[near[cys, cxs]] = core_id[cys, cxs]
+	grown = lut[near]
+	assignable = inside & (remove == 0)
+	subs: list[np.ndarray] = []
+	for i in range(1, len(cores) + 1):
+		region = (((grown == i) & assignable) | (core_id == i)).astype(np.uint8) * 255
 		if int((region > 0).sum()) > 0:
 			subs.append(region)
 	if len(subs) < 2:
 		return None
-	# Fold any implausibly small fragment (< 0.4*median) into its largest-border neighbour.
-	floor = 0.4 * median_area
-	keep = [s for s in subs if int((s > 0).sum()) >= floor]
-	if len(keep) < 2:
-		return None
-	for frag in sorted((s for s in subs if int((s > 0).sum()) < floor), key=lambda s: int((s > 0).sum())):
-		dil = cv2.bitwise_and(cv2.dilate(frag, k3), comp_mask)
-		best_i, best_overlap = -1, 0
-		for i, kmask in enumerate(keep):
-			overlap = int(((dil > 0) & (kmask > 0)).sum())
-			if overlap > best_overlap:
-				best_i, best_overlap = i, overlap
-		if best_i < 0:
-			best_i = max(range(len(keep)), key=lambda i: int((keep[i] > 0).sum()))
-		keep[best_i] = cv2.bitwise_or(keep[best_i], cv2.bitwise_or(frag, dil))
 	# Plausibility gate: every sub must look like a single piece, else this was not a clean
 	# inter-piece split -> leave the component whole (honest cluster), never emit garbage.
-	for s in keep:
+	for s in subs:
 		a = int((s > 0).sum())
 		if _solidity(s) < _SUB_SOLIDITY_MIN or not (0.45 * median_area <= a <= 1.7 * median_area):
 			return None
-	return keep
+	return subs
 
 
 def _watershed_from_seeds(
@@ -736,6 +735,7 @@ def _watershed_from_seeds(
 def _resplit_subs(
 	subs: list[np.ndarray],
 	color_crop: np.ndarray,
+	binary_raw_crop: np.ndarray,
 	median_area: float,
 	marker_ratio: float,
 	working_dim: int,
@@ -748,9 +748,10 @@ def _resplit_subs(
 	A watershed can leave one sub still fused (e.g. a 3-piece cluster seeds as
 	``[pair, single]``); each sub above ``split_trigger`` * median is fed back
 	through :func:`_split_component` and, if it separates, replaced by its parts.
-	Sub masks share ``comp_mask``'s frame, so each is cropped to its bbox, split,
-	and the results pasted back at the same offset. Depth-bounded by
-	``_MAX_SPLIT_DEPTH``; a sub that does not separate is kept as-is.
+	Sub masks share ``comp_mask``'s frame, so each is cropped to its bbox (and the
+	matching ``binary_raw`` crop with it), split, and the results pasted back at the
+	same offset. Depth-bounded by ``_MAX_SPLIT_DEPTH``; a sub that does not separate
+	is kept as-is.
 	"""
 	if depth >= _MAX_SPLIT_DEPTH:
 		return subs
@@ -762,8 +763,12 @@ def _resplit_subs(
 		sx, sy, sw, sh = cv2.boundingRect(sub)
 		sub_crop = sub[sy:sy + sh, sx:sx + sw]
 		sub_color = color_crop[sy:sy + sh, sx:sx + sw]
+		# The sub carries only this piece-body's pixels, so intersect binary_raw with it:
+		# a neighbour's foreground leaking into the bbox must not count as this sub's gap.
+		sub_raw = cv2.bitwise_and(binary_raw_crop[sy:sy + sh, sx:sx + sw], sub_crop)
 		parts = _split_component(
-			sub_crop, sub_color, median_area, marker_ratio, working_dim, seam_frac, split_trigger, depth + 1
+			sub_crop, sub_color, sub_raw, median_area, marker_ratio, working_dim, seam_frac,
+			split_trigger, depth + 1,
 		)
 		if parts is None:
 			refined.append(sub)
@@ -778,6 +783,7 @@ def _resplit_subs(
 def _split_component(
 	comp_mask: np.ndarray,
 	color_crop: np.ndarray,
+	binary_raw_crop: np.ndarray,
 	median_area: float,
 	marker_ratio: float,
 	working_dim: int,
@@ -787,22 +793,25 @@ def _split_component(
 ) -> list[np.ndarray] | None:
 	"""Try to watershed-split one large component into touching pieces.
 
-	``comp_mask`` is a 0/255 crop, ``color_crop`` the matching BGR crop. The plain
-	distance-transform split is tried first (identical to the historic behaviour,
-	so cleanly separated pieces are untouched); only if it cannot separate the
-	component is the dark inter-piece seam brought in to *rescue* a split, and only
-	if that also fails is a geometric bisection FORCED. This ordering guarantees the
-	seam and the forced cut can add splits but never remove one. Any sub that comes
-	back still over-sized is re-split (:func:`_resplit_subs`). Returns a list of
-	sub-piece masks, or ``None`` to keep the component whole.
+	``comp_mask`` is a 0/255 crop, ``color_crop`` the matching BGR crop and
+	``binary_raw_crop`` the matching PRE-close foreground (the honest boundary before
+	step-6 morphology bridged inter-piece gaps). The seam-carve split is tried first
+	(it separates ABUTTING same-colour pieces by dropping the physical + invented
+	inter-piece gap); only if it cannot separate the component is the plain colour
+	watershed tried, then the dark-seam-seeded rescue, and only if all fail is a
+	geometric bisection FORCED. This ordering guarantees the later paths can add
+	splits but never remove one. Any sub that comes back still over-sized is re-split
+	(:func:`_resplit_subs`). Returns a list of sub-piece masks, or ``None``.
 	"""
-	# First, carve at the physical dark seam: this separates ABUTTING same-colour pieces that a
-	# colour watershed cannot (it leaks through the seam). Geometric assignment, self-validated
-	# by per-sub solidity, so it only fires when it produces clean single pieces.
-	carve = _seam_carve_split(comp_mask, color_crop, median_area, working_dim)
+	# First, carve at the inter-piece seam: this separates ABUTTING same-colour pieces that a
+	# colour watershed cannot (it leaks through the seam). The seam (dark gap + close-invented
+	# background gap) is DROPPED and each remaining body assigned whole, self-validated by
+	# per-sub solidity, so it only fires when it produces clean single pieces.
+	carve = _seam_carve_split(comp_mask, color_crop, binary_raw_crop, median_area, working_dim)
 	if carve is not None:
 		return _resplit_subs(
-			carve, color_crop, median_area, marker_ratio, working_dim, seam_frac, split_trigger, depth
+			carve, color_crop, binary_raw_crop, median_area, marker_ratio, working_dim, seam_frac,
+			split_trigger, depth,
 		)
 	plain = _plain_seeds(comp_mask, marker_ratio)
 	if plain is None:
@@ -814,7 +823,8 @@ def _split_component(
 			subs = _watershed_from_seeds(comp_mask, color_crop, median_area, seam)
 	if subs is not None:
 		return _resplit_subs(
-			subs, color_crop, median_area, marker_ratio, working_dim, seam_frac, split_trigger, depth
+			subs, color_crop, binary_raw_crop, median_area, marker_ratio, working_dim, seam_frac,
+			split_trigger, depth,
 		)
 	# Third, FORCED path: a component well above _FORCE_SPLIT_RATIO * median that both
 	# the plain and seam watersheds left whole is almost certainly >=2 pieces joined
@@ -850,6 +860,7 @@ def _is_cluster_blob(comp_mask: np.ndarray, median_area: float, marker_ratio: fl
 def _extract_components(
 	binary: np.ndarray,
 	work_bgr: np.ndarray,
+	binary_raw: np.ndarray,
 	*,
 	split_touching: bool,
 	min_area_ratio: float,
@@ -859,6 +870,10 @@ def _extract_components(
 	cluster_ratio: float,
 ) -> list[tuple[tuple[int, int, int, int], np.ndarray, bool]]:
 	"""Label, prune and (optionally) split into per-piece working masks.
+
+	``binary_raw`` is the PRE-close foreground (before step-6 morphology bridged
+	inter-piece gaps); its crop is passed to the splitter so an abutting pair's
+	dropped gap is the honest boundary rather than a bridged-then-halved seam.
 
 	Returns a list of ``((x, y, w, h), mask_crop, is_cluster)`` in working coords,
 	where ``mask_crop`` is a 0/255 uint8 array of the bbox region and
@@ -929,11 +944,15 @@ def _extract_components(
 		area = int(stats[lab, cv2.CC_STAT_AREA])
 		comp_mask = (labels[y:y + hh, x:x + ww] == lab).astype(np.uint8) * 255
 		color_crop = work_bgr[y:y + hh, x:x + ww]
+		# Restrict the pre-close foreground to THIS component so a touching neighbour's
+		# fg in the same bbox is not read as this component's inter-piece gap.
+		raw_crop = cv2.bitwise_and(binary_raw[y:y + hh, x:x + ww], comp_mask)
 
 		subs = None
 		if split_touching and area > split_trigger * median_area:
 			subs = _split_component(
-				comp_mask, color_crop, median_area, marker_ratio, working_dim, seam_frac, split_trigger
+				comp_mask, color_crop, raw_crop, median_area, marker_ratio, working_dim, seam_frac,
+				split_trigger,
 			)
 		# Fallback for a mid-sized blob the colour/seam split left whole: a bounded
 		# geometric bisection catches two near-but-unconnected pieces the closing
@@ -1143,6 +1162,77 @@ def _circular_median(a: np.ndarray, win: int) -> np.ndarray:
 	return np.median(windows, axis=1)
 
 
+# ===== Background-fringe rejection tunables (step, _extract_piece / _reject_bg_fringe) =====
+# Width of the interior boundary band scanned for background-coloured fringe, as a fraction
+# of the piece side (sqrt of mask area). The working->full-res staircase, the dropped-seam
+# edge and a stray background sliver all sit within a few percent of the side; 0.04 reaches
+# them without scooping into piece interior.
+_FRINGE_BAND_FRAC = 0.04
+# Back off the whole fringe removal if it would drop more than this fraction of the mask
+# area: a genuinely background-coloured piece (or a crop with too little background margin to
+# make D bimodal) would otherwise be eaten. A real fringe is a thin rim, well under this.
+_FRINGE_MAX_REMOVE_FRAC = 0.12
+
+
+def _bg_distance_cie(
+	rgb_crop: np.ndarray, bg_lab: np.ndarray, luma_weight: float, chroma_weight: float
+) -> np.ndarray:
+	"""Weighted CIE-Lab distance from each crop pixel to the background, as float32.
+
+	``bg_lab`` is the GLOBAL background on OpenCV's 8-bit Lab scale (L 0..255, a/b offset
+	128); it is converted to CIE (L 0..100, a/b centred 0) to match the float ``RGB2LAB``
+	crop. The same chroma-dominated weighting (``luma_weight``/``chroma_weight``) as the
+	detector, so a cast shadow (near-zero chroma delta) stays low and a coloured piece edge
+	stays high. Shared by :func:`_refine_boundary_band` and :func:`_reject_bg_fringe`.
+	"""
+	lab = cv2.cvtColor(np.ascontiguousarray(rgb_crop, np.float32) / 255.0, cv2.COLOR_RGB2LAB)
+	bg_cie = np.array(
+		[bg_lab[0] * 100.0 / 255.0, bg_lab[1] - 128.0, bg_lab[2] - 128.0], dtype=np.float32
+	)
+	diff = lab - bg_cie.reshape(1, 1, 3)
+	return np.sqrt(
+		luma_weight * diff[:, :, 0] ** 2
+		+ chroma_weight * (diff[:, :, 1] ** 2 + diff[:, :, 2] ** 2)
+	).astype(np.float32)
+
+
+def _reject_bg_fringe(mask: np.ndarray, D: np.ndarray) -> np.ndarray:
+	"""Peel a background-coloured fringe off the INTERIOR rim of a piece mask.
+
+	A refined mask can still carry a thin ring of background-coloured pixels: the residual
+	staircase over-reach, the slightly-inset edge where an abutting-pair seam was dropped, or
+	a stray sliver of the surface the mask enclosed (e.g. a red pocket at a piece corner). All
+	share one signature -- a low background-distance ``D`` (they ARE the surface colour), which
+	sits far below the piece body on the chroma-dominated scale (e.g. a red mat at a*~+50 vs a
+	piece at a*~+5..20). A per-crop Otsu on ``D`` (the padded crop is bimodal: piece body +
+	background margin) sets the cut; only mask pixels BOTH in a thin interior boundary band
+	(``_FRINGE_BAND_FRAC`` of the piece side) AND below that cut are dropped. Band-restricting
+	spares the interior (a genuine interior hole is refilled downstream anyway), and the whole
+	removal is backed off if it would breach ``_FRINGE_MAX_REMOVE_FRAC`` -- so a genuinely
+	background-hued piece, or a crop too piece-filled to be bimodal, is left intact. Pure.
+	"""
+	m = mask > 0
+	area = int(m.sum())
+	if area == 0:
+		return mask
+	Dn = cv2.normalize(D, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+	t, _ = cv2.threshold(Dn, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+	bg_like = Dn < t
+	side = float(np.sqrt(area))
+	rb = max(1, int(round(_FRINGE_BAND_FRAC * side)))
+	eroded = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * rb + 1, 2 * rb + 1)))
+	band = m & (eroded == 0)
+	remove = band & bg_like
+	rc = int(remove.sum())
+	if rc == 0 or rc > _FRINGE_MAX_REMOVE_FRAC * area:
+		return mask
+	out = mask.copy()
+	out[remove] = 0
+	if not (out > 0).any():
+		return mask
+	return out
+
+
 def _refine_boundary_band(
 	mask: np.ndarray,
 	rgb_crop: np.ndarray,
@@ -1179,18 +1269,8 @@ def _refine_boundary_band(
 	orig_area = int((mask > 0).sum())
 	h, w = mask.shape[:2]
 
-	# Background-distance map D over the whole crop, in weighted CIE-Lab units. Convert
-	# the 8-bit-Lab bg (L 0..255, a/b offset 128) to CIE (L 0..100, a/b centred 0) so it
-	# matches the float32 RGB2LAB crop.
-	lab = cv2.cvtColor(np.ascontiguousarray(rgb_crop, np.float32) / 255.0, cv2.COLOR_RGB2LAB)
-	bg_cie = np.array(
-		[bg_lab[0] * 100.0 / 255.0, bg_lab[1] - 128.0, bg_lab[2] - 128.0], dtype=np.float32
-	)
-	diff = lab - bg_cie.reshape(1, 1, 3)
-	D = np.sqrt(
-		luma_weight * diff[:, :, 0] ** 2
-		+ chroma_weight * (diff[:, :, 1] ** 2 + diff[:, :, 2] ** 2)
-	).astype(np.float32)
+	# Background-distance map D over the whole crop, in weighted CIE-Lab units.
+	D = _bg_distance_cie(rgb_crop, bg_lab, luma_weight, chroma_weight)
 
 	# Smoothed base (staircase/loops removed) and its outward unit normals.
 	base = _circular_gaussian(cnt, _REFINE_CONTOUR_SIGMA)
@@ -1308,6 +1388,12 @@ def _extract_piece(
 	# the true full-res colour edge BEFORE the shadow peel and invariant cleanup consume
 	# it. Uses the GLOBAL background model, not a per-piece estimate.
 	mask_full = _refine_boundary_band(mask_full, rgb_crop, bg_lab, luma_weight, chroma_weight)
+	# Drop any background-coloured fringe on the interior rim (staircase over-reach, dropped-
+	# seam edge, or a stray surface sliver) before colour/fill is derived. Reuses the same
+	# weighted-Lab background distance as the refine step (recomputed on the same crop).
+	mask_full = _reject_bg_fringe(
+		mask_full, _bg_distance_cie(rgb_crop, bg_lab, luma_weight, chroma_weight)
+	)
 	# Peel the interior-rim cast-shadow halo BEFORE any colour/fill is derived, so the
 	# mean colour, the mean-fill and the rotation branch all inherit the clean mask.
 	mask_full = _shrink_edge_shadow(mask_full, rgb_crop, max(ow, oh))
@@ -1521,6 +1607,7 @@ def segment_pieces(
 	components = _extract_components(
 		binary,
 		work_bgr,
+		binary_raw,
 		split_touching=split_touching,
 		min_area_ratio=min_area_ratio,
 		marker_ratio=marker_ratio,
