@@ -71,6 +71,48 @@ _MAX_SPLIT_DEPTH = 3
 _BISECT_MIN_RATIO = 1.25
 
 
+# ===== Seam-carve split tunables (abutting pieces joined by a dark physical seam) =====
+# When pieces are set down ABUTTING, the card backs are one uniform colour so a colour
+# watershed leaks basins across the seam and into the background (low-solidity garbage);
+# the reliable signal is instead the dark physical SEAM between them (black-hat peaks far
+# above the seam floor). Seam-carve is attempted FIRST, and only when the in-component
+# black-hat peak reaches this multiple of _SEAM_MIN_RESPONSE -- a strong seam marks >=2
+# abutting pieces, whereas interlocked/flush blobs (handled by the plain/colour path or
+# _forced_bisect) show no such seam. At the floor 12 this fires at a peak >= 36; real
+# seams measure ~200+.
+_SEAM_CARVE_TRIGGER = 3.0
+# The carve barrier uses a RELAXED threshold -- max(_SEAM_MIN_RESPONSE, this * peak) --
+# well below _seam_barrier's 0.45*peak, so weak sections of the seam are still cut and the
+# two piece bodies separate cleanly into their own carved cores.
+_SEAM_CARVE_THR_FRAC = 0.20
+# A connected component of the carved (seam-removed) mask seeds a piece marker only when
+# its area reaches this fraction of the median piece area, so seam speckle spawns no
+# spurious markers.
+_SEAM_MARKER_MIN_FRAC = 0.25
+# Validation (a): the median black-hat response along an accepted internal boundary must
+# reach this fraction of the carve threshold -- a real inter-piece seam is dark ALL along
+# the cut, unlike a blank (continuous card, no dark line).
+_SEAM_BOUNDARY_SEAM_FRAC = 0.5
+# Validation (b): a boundary endpoint counts as landing on a concavity when a qualifying
+# convexity defect of the component contour lies within this many working px of it. A neck
+# between two pieces ends in two facing concavities; a single piece's own blank does not.
+_SEAM_CONCAVITY_TOL_PX = 6
+# A convexity defect qualifies as a real inter-piece neck (not contour ripple) when its
+# depth reaches this fraction of the median piece side.
+_SEAM_CONCAVITY_DEPTH_FRAC = 0.10
+# Plausibility floor on a split sub's SOLIDITY (area / convex-hull area). Data-grounded on
+# the 11 backgrounds: genuine pieces -- including 4-tab pieces whose hull bridges all four
+# tabs -- measure >=0.62, while leaked multi-piece / background-bled blobs collapse to
+# <=0.55. 0.55 therefore accepts every real piece with margin and rejects the leak. NOTE:
+# a jigsaw piece's tabs/blanks bound its solidity well below 1 (a clean 2-tab/2-blank
+# piece tops out ~0.81), so this is a garbage floor, NOT a "near-solid" target.
+_SUB_SOLIDITY_MIN = 0.55
+# A split sub's area must fall in this window (fraction of median) to be a single piece:
+# below is a fragment, above is still >=2 fused pieces.
+_SUB_AREA_LO = 0.5
+_SUB_AREA_HI = 1.6
+
+
 # ===== Non-piece component rejection tunables (step 7) =====
 # A component whose bounding box reaches within this fraction of the working long
 # side of the image frame is the photo margin or a crease/fold between backing
@@ -82,6 +124,19 @@ _FRAME_MARGIN_FRAC = 0.004
 # a thin sliver (border strip, seam/crease shadow), not a piece. Kept deliberately
 # loose (4:1) so irregular or rotated real pieces are never dropped.
 _MAX_BBOX_ASPECT = 4.0
+# The bbox-aspect test above misses a DIAGONAL line (a sheet crease/fold or scanner
+# streak): its bounding box is near-square, so it escapes as a phantom "piece". Such a
+# line is instead caught by its STROKE WIDTH. The distance transform's peak is half the
+# widest local thickness, so ``2 * max(DT)`` is the widest stroke; a real piece's body
+# is ~a piece-side thick (ratio ~1 against ``sqrt(median_area)``) even when a tab neck is
+# thin, whereas a line's stroke is a small fraction of a piece side. A component whose
+# stroke falls below this fraction of the median piece side is rejected as a line/crease.
+# Set well under 1 (a genuine small piece near the min-area floor still strokes ~0.5) yet
+# well above a thin line's ratio, so no real piece is dropped. Measured across the 11
+# backgrounds the thinnest genuine component strokes ~0.23 while a real crease/line
+# strokes ~0.05, so 0.20 sits in the wide gap between them -- it drops any true line
+# without ever reaching a real piece.
+_MIN_STROKE_FRAC = 0.20
 
 
 # ===== Edge-shadow halo removal tunables (step 9, _extract_piece) =====
@@ -357,6 +412,28 @@ def _morph_clean(binary: np.ndarray, working_dim: int, max_hole_frac: float = 0.
 	return m
 
 
+def _solidity(mask: np.ndarray) -> float:
+	"""Filled area / convex-hull area of a 0/255 mask (0.0 if degenerate).
+
+	A jigsaw piece's tabs and blanks bound its solidity well below 1: a clean
+	2-tab/2-blank piece measures ~0.8 and a 4-tab piece ~0.62 (its hull bridges all
+	four tabs), while a leaked multi-piece / background-bled blob collapses to <=0.55.
+	Solidity is thus a reliable single-piece-vs-garbage discriminator (see
+	``_SUB_SOLIDITY_MIN``). Pure; takes only the largest external contour.
+	"""
+	m = (mask > 0).astype(np.uint8)
+	area = int(m.sum())
+	if area == 0:
+		return 0.0
+	cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	if not cnts:
+		return 0.0
+	hull_area = float(cv2.contourArea(cv2.convexHull(max(cnts, key=cv2.contourArea))))
+	if hull_area <= 0.0:
+		return 0.0
+	return area / hull_area
+
+
 def _seam_barrier(color_crop: np.ndarray, comp_mask: np.ndarray, working_dim: int, seam_frac: float) -> np.ndarray:
 	"""Dark inter-piece gap/shadow inside ``comp_mask`` as a 0/255 barrier.
 
@@ -492,6 +569,84 @@ def _forced_bisect(comp_mask: np.ndarray, median_area: float) -> list[np.ndarray
 	return subs
 
 
+def _seam_carve_split(
+	comp_mask: np.ndarray, color_crop: np.ndarray, median_area: float, working_dim: int
+) -> list[np.ndarray] | None:
+	"""Separate ABUTTING pieces by carving the physical dark seam, then assigning every
+	pixel with an inverted-distance-transform watershed (geometric, NEVER colour).
+
+	Cardboard-back pieces set down touching share the SAME colour, so ``cv2.watershed`` on
+	colour leaks basins through the seam and into the background (low-solidity garbage). The
+	robust signal is the physical seam: a thin dark line (gap + cast shadow) where two piece
+	edges meet, isolated by a black-hat (strong here: response ~225 vs a 12 floor). This CARVES
+	that seam out of the mask; the connected remnants are one-per-piece cores; the inverted-DT
+	watershed grows each core back to fill the whole mask, the basins meeting on the seam ridge.
+	A piece's OWN blank has no dark seam through it, so carving can never cut a single piece at
+	its blank. Accepted only when the black-hat peak is strong (``_SEAM_CARVE_TRIGGER``) and every
+	resulting sub is single-piece-plausible (``_solidity`` >= ``_SUB_SOLIDITY_MIN``, ~one median
+	piece); otherwise ``None`` -> the component is left whole (later flagged ``is_cluster``).
+	"""
+	L = cv2.cvtColor(color_crop, cv2.COLOR_BGR2LAB)[:, :, 0]
+	k = max(9, int(round(_SEAM_KERNEL_FRAC * working_dim)))
+	if k % 2 == 0:
+		k += 1
+	bh = cv2.morphologyEx(L, cv2.MORPH_BLACKHAT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+	inside = comp_mask > 0
+	if not inside.any():
+		return None
+	peak = float(bh[inside].max())
+	# Only carve on a STRONG seam; a weak black-hat response is texture, not a piece gap.
+	if peak < _SEAM_CARVE_TRIGGER * _SEAM_MIN_RESPONSE:
+		return None
+	# Relaxed threshold so faint sections of a real seam are still carved through.
+	thr = max(_SEAM_MIN_RESPONSE, _SEAM_CARVE_THR_FRAC * peak)
+	barrier = ((bh >= thr) & inside).astype(np.uint8) * 255
+	k3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+	carved = cv2.morphologyEx(cv2.bitwise_and(comp_mask, cv2.bitwise_not(barrier)), cv2.MORPH_OPEN, k3)
+	n, lbl, stats, _ = cv2.connectedComponentsWithStats(carved, 8)
+	cores = [l for l in range(1, n) if stats[l, cv2.CC_STAT_AREA] >= 0.25 * median_area]
+	if len(cores) < 2:
+		return None  # the seam did not cut the component into >=2 piece-sized cores
+	# Inverted-DT watershed: seed each carved core, wall off the background at distance 0,
+	# flood so the seam pixels (and any sub-core remnants) fall to the nearest core.
+	dist = cv2.distanceTransform(comp_mask, cv2.DIST_L2, 5)
+	markers = np.zeros(comp_mask.shape, dtype=np.int32)
+	markers[comp_mask == 0] = 1
+	for i, l in enumerate(cores, start=2):
+		markers[lbl == l] = i
+	dn = cv2.normalize(dist, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+	cv2.watershed(cv2.cvtColor(255 - dn, cv2.COLOR_GRAY2BGR), markers)
+	subs = []
+	for r in range(2, 2 + len(cores)):
+		region = ((markers == r) & (comp_mask > 0)).astype(np.uint8) * 255
+		if int((region > 0).sum()) > 0:
+			subs.append(region)
+	if len(subs) < 2:
+		return None
+	# Fold any implausibly small fragment (< 0.4*median) into its largest-border neighbour.
+	floor = 0.4 * median_area
+	keep = [s for s in subs if int((s > 0).sum()) >= floor]
+	if len(keep) < 2:
+		return None
+	for frag in sorted((s for s in subs if int((s > 0).sum()) < floor), key=lambda s: int((s > 0).sum())):
+		dil = cv2.bitwise_and(cv2.dilate(frag, k3), comp_mask)
+		best_i, best_overlap = -1, 0
+		for i, kmask in enumerate(keep):
+			overlap = int(((dil > 0) & (kmask > 0)).sum())
+			if overlap > best_overlap:
+				best_i, best_overlap = i, overlap
+		if best_i < 0:
+			best_i = max(range(len(keep)), key=lambda i: int((keep[i] > 0).sum()))
+		keep[best_i] = cv2.bitwise_or(keep[best_i], cv2.bitwise_or(frag, dil))
+	# Plausibility gate: every sub must look like a single piece, else this was not a clean
+	# inter-piece split -> leave the component whole (honest cluster), never emit garbage.
+	for s in keep:
+		a = int((s > 0).sum())
+		if _solidity(s) < _SUB_SOLIDITY_MIN or not (0.45 * median_area <= a <= 1.7 * median_area):
+			return None
+	return keep
+
+
 def _watershed_from_seeds(
 	comp_mask: np.ndarray,
 	color_crop: np.ndarray,
@@ -500,8 +655,11 @@ def _watershed_from_seeds(
 ) -> list[np.ndarray] | None:
 	"""Cap, watershed and validate one set of seeds into sub-piece masks.
 
-	Returns the sub-masks, or ``None`` if the seeds give fewer than two markers,
-	collapse to one region, or yield a fragment below ~0.3*median.
+	Returns the sub-masks, or ``None`` if the seeds give fewer than two markers or
+	collapse to one region. A sub that comes back implausibly small (< 0.3*median) is
+	not a veto: it is merged into its neighbouring keep-sub (partial acceptance), and
+	``None`` is returned only when fewer than two keep-subs remain -- i.e. the split
+	was not real.
 	"""
 	comp_area = int((comp_mask > 0).sum())
 	sure_fg, mk, markers_count = seeds
@@ -532,11 +690,47 @@ def _watershed_from_seeds(
 		subs.append(region)
 	if len(subs) < 2:
 		return None
-	# Revert if watershed produced an implausibly small fragment.
-	for s in subs:
-		if int((s > 0).sum()) < 0.3 * median_area:
-			return None
-	return subs
+	# Partial acceptance instead of a wholesale revert: when the watershed leaves an
+	# implausibly small fragment (< 0.3*median) it is almost always over-seeding -- the
+	# marker cap or extra distance-transform peaks split ONE piece into a body plus a
+	# sliver, while the genuine piece-to-piece separations are correct. Reverting the
+	# whole split (the old behaviour) then re-fused a whole cluster into one blob. So
+	# each tiny fragment is MERGED into its neighbouring keep-sub (largest shared
+	# border) and the good subs are accepted; only if fewer than two keep-subs survive
+	# is it a genuine single piece / inseparable cluster and ``None`` is returned. This
+	# can only REDUCE the sub count, so it never invents spurious pieces.
+	floor = 0.3 * median_area
+	keep = [s for s in subs if int((s > 0).sum()) >= floor]
+	if not keep:
+		return None
+	tiny = [s for s in subs if int((s > 0).sum()) < floor]
+	if tiny:
+		# Settle smallest-first so a chain of fragments resolves deterministically.
+		tiny.sort(key=lambda s: int((s > 0).sum()))
+		k3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+		for frag in tiny:
+			# Dilate across the 1px watershed ridge to find the border shared with each
+			# keep-sub; fold the fragment (bridged so no 1px gap survives, clipped to the
+			# component) into the keep-sub it touches most, or the largest keep if none.
+			dil = cv2.bitwise_and(cv2.dilate(frag, k3), comp_mask)
+			best_i, best_overlap = -1, 0
+			for i, kmask in enumerate(keep):
+				overlap = int(((dil > 0) & (kmask > 0)).sum())
+				if overlap > best_overlap:
+					best_i, best_overlap = i, overlap
+			if best_i < 0:
+				best_i = max(range(len(keep)), key=lambda i: int((keep[i] > 0).sum()))
+			keep[best_i] = cv2.bitwise_or(keep[best_i], cv2.bitwise_or(frag, dil))
+	if len(keep) < 2:
+		return None
+	# Solidity guard: a colour watershed that LEAKED (same-colour pieces, no gradient at the
+	# seam) yields scattered / background-bled subs. Reject the whole split rather than emit
+	# garbage -- the component stays whole (later flagged is_cluster, honest) or is rescued
+	# cleanly by _seam_carve_split. A genuine piece scores solidity >= ~0.62; leaked garbage
+	# <= ~0.55 (see _SUB_SOLIDITY_MIN).
+	if any(_solidity(s) < _SUB_SOLIDITY_MIN for s in keep):
+		return None
+	return keep
 
 
 def _resplit_subs(
@@ -602,6 +796,14 @@ def _split_component(
 	back still over-sized is re-split (:func:`_resplit_subs`). Returns a list of
 	sub-piece masks, or ``None`` to keep the component whole.
 	"""
+	# First, carve at the physical dark seam: this separates ABUTTING same-colour pieces that a
+	# colour watershed cannot (it leaks through the seam). Geometric assignment, self-validated
+	# by per-sub solidity, so it only fires when it produces clean single pieces.
+	carve = _seam_carve_split(comp_mask, color_crop, median_area, working_dim)
+	if carve is not None:
+		return _resplit_subs(
+			carve, color_crop, median_area, marker_ratio, working_dim, seam_frac, split_trigger, depth
+		)
 	plain = _plain_seeds(comp_mask, marker_ratio)
 	if plain is None:
 		return None
@@ -701,7 +903,22 @@ def _extract_components(
 	if median_area <= 0:
 		return []
 
-	survivors = [lab for lab in kept if stats[lab, cv2.CC_STAT_AREA] >= min_area_ratio * median_area]
+	# Drop under-area dust AND thin lines/creases that slipped past the bbox-aspect test.
+	# The stroke gate needs the median piece side, so it runs here, after median_area.
+	median_side = float(np.sqrt(median_area))
+	survivors: list[int] = []
+	for lab in kept:
+		if stats[lab, cv2.CC_STAT_AREA] < min_area_ratio * median_area:
+			continue
+		x0 = int(stats[lab, cv2.CC_STAT_LEFT])
+		y0 = int(stats[lab, cv2.CC_STAT_TOP])
+		ww = int(stats[lab, cv2.CC_STAT_WIDTH])
+		hh = int(stats[lab, cv2.CC_STAT_HEIGHT])
+		comp = (labels[y0:y0 + hh, x0:x0 + ww] == lab).astype(np.uint8) * 255
+		dt = cv2.distanceTransform(comp, cv2.DIST_L2, 5)
+		if 2.0 * float(dt.max()) < _MIN_STROKE_FRAC * median_side:
+			continue
+		survivors.append(lab)
 
 	out: list[tuple[tuple[int, int, int, int], np.ndarray, bool]] = []
 	for lab in survivors:
@@ -738,7 +955,15 @@ def _extract_components(
 			for sub in subs:
 				sx, sy, sw, sh = cv2.boundingRect(sub)
 				sub_crop = sub[sy:sy + sh, sx:sx + sw].copy()
-				flag = _is_cluster_blob(sub_crop, median_area, marker_ratio, cluster_ratio)
+				sub_area = int((sub_crop > 0).sum())
+				# Emission garbage guard: a leaked/merged sub is not a clean single piece.
+				# Flag it is_cluster (honest) rather than emit a deformed "piece".
+				flag = (
+					_is_cluster_blob(sub_crop, median_area, marker_ratio, cluster_ratio)
+					or _solidity(sub_crop) < _SUB_SOLIDITY_MIN
+					or sub_area > 1.6 * median_area
+					or sub_area < 0.4 * median_area
+				)
 				out.append(((x + sx, y + sy, sw, sh), sub_crop, flag))
 			continue
 
@@ -750,13 +975,14 @@ def _extract_components(
 			# glued together). The split outcome is used directly because the plain
 			# peak-count test alone is unreliable here: a multi-piece blob can show
 			# several distance peaks yet still resist a clean watershed split.
-			flag = area > cluster_ratio * median_area
+			flag = area > cluster_ratio * median_area or _solidity(comp_mask) < _SUB_SOLIDITY_MIN
 			out.append(((x, y, ww, hh), comp_mask, flag))
 			continue
-		# Split not triggered (or disabled): the component is close to a single
-		# piece (area <= split_trigger * median < cluster_ratio * median), so it is
-		# never a cluster.
-		out.append(((x, y, ww, hh), comp_mask, False))
+		# Split not triggered (or disabled): the component is close to a single piece
+		# (area <= split_trigger * median). It is a clean piece UNLESS it is a low-solidity
+		# blob (a shred/leak) or a sub-piece fragment -> then flag is_cluster (honest).
+		flag = _solidity(comp_mask) < _SUB_SOLIDITY_MIN or area < 0.4 * median_area
+		out.append(((x, y, ww, hh), comp_mask, flag))
 	return out
 
 
@@ -1322,8 +1548,12 @@ def segment_pieces(
 			bg, luma_weight, chroma_weight,
 		)
 		if rec is not None:
-			rec["is_cluster"] = bool(is_cluster)
-			if is_cluster:
+			# Authoritative garbage guard on the FINAL full-res mask: a leaked/scattered
+			# blob that slipped the working-res emission check is flagged is_cluster here
+			# (never a deformed "piece"). Real pieces score solidity >= ~0.62; garbage <= ~0.55.
+			final_cluster = bool(is_cluster) or _solidity(np.asarray(rec["mask"])) < _SUB_SOLIDITY_MIN
+			rec["is_cluster"] = final_cluster
+			if final_cluster:
 				# Note: edges.classify_pieces (if run downstream) overwrites
 				# piece_type; is_cluster is the reliable cluster flag.
 				rec["piece_type"] = "cluster"
