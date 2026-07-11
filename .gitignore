@@ -85,6 +85,10 @@ logs/
 # Large image files (except examples)
 *.tiff
 *.tif
+# Camera raw originals: too large for git (~60-85MB each, ~900MB total).
+# Use Git LFS or share separately if the matching pipeline needs them elsewhere.
+*.DNG
+*.dng
 # Keep example images
 !images/puzzles/*.jpg
 !images/puzzles/*.png
