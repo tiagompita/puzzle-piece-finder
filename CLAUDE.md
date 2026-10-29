@@ -1,35 +1,43 @@
 # Puzzle Piece Finder
 
-A computer-vision tool that locates individual jigsaw pieces inside the full puzzle image via multi-scale template matching (OpenCV), with a CLI (`src/main.py`) and a Tkinter GUI (`src/gui.py`).
+A computer-vision tool for a physical jigsaw (Clementoni 3000 "The Alps", ref. 33545; grid 64 × 47 = 3008 pieces, 218 border pieces, nominal cell ≈ 18.5 × 17.9 mm). Canonical input is a **flatbed scan at 300 dpi** of loose pieces on saturated-colour paper, spaced ≥ 5 mm (absolute scale: 1 px = 0.0847 mm). CLI (`src/main.py`, naive only) and a Tkinter GUI (`src/gui.py`).
 
-## Current Objective
+**Sources of truth** (read these before planning anything): [`docs/estado-e-plano.md`](docs/estado-e-plano.md) (state with evidence, root cause, milestones, metrics, photos needed, backlog) and [`ARCHITECTURE.md`](ARCHITECTURE.md) (real module map, contracts, entry points, data). `docs/revisao.md` holds the review thread. Diagnostic evidence and reproducible scripts: `docs/diagnostico/` and `tools/diagnostico/`. The README is outdated and only carries a pointer.
 
-This round of work aims to complete the project as fully as possible, across four fronts:
+## Current Objective (decided 2026-10-29)
 
-1. **Automatic segmentation** — give body to `src/segmentation.py` (currently empty): detect and crop pieces from a photo of the puzzle/board, instead of loading pre-cut pieces one by one.
-2. **Visualization & export** — give body to `src/visualization.py` (currently empty): produce an annotated result image (including a "red dot" marker showing where a piece likely goes, per the original `notebooks/TODO`), and recover the JSON export that is currently disabled.
-3. **Improve matching** — raise engine accuracy: colour-aware matching (not only grayscale), edge analysis for corner/border pieces, and better scoring/scale selection.
-4. **Cleanup & fixes** — technical debt: broken default paths in `acquisition.py`, relative-import issues that stop the documented run commands from working, duplicate methods in the GUI, and orphaned/dead code.
+**Primary: assisted assembly by piece fit.** Given an already-assembled section (photo/scan) and a batch of loose pieces (scan), rank which loose pieces attach to each free side of the section's frontier and where (interactive query, O(N) per query; no global 3000-piece solver). The assembled section is the local high-resolution reference.
 
-**Explicitly out of scope** for this round: ML-based piece classification and a REST API (these are "Future" roadmap items).
+**Secondary: locating a loose piece in the box image** (the old primary goal) is kept only as a weak prior for textured pieces, reported with honest confidence. Measured: 72 % top-1 on synthetic self-crops, 0/61 confirmable on real scanned pieces (photometric gap scanner → reference, L\* 86 vs 50; see §3.6 of the plan). It requires photometric normalization (M9) before it is useful.
+
+**Priorities, in order** (acceptance criteria in `docs/estado-e-plano.md` §7):
+1. **M5** — die-repetition test on the frame (20 border pieces from columns c / c+32 / c+16, `tools/diagnostico/forma/shapelib.py` as is). Runs as soon as the scans in §8.1.0 exist; decides whether a "shape catalogue" exists at all.
+2. **M1** — ground-truth dataset (40-piece contiguous block + 20 distant pieces, scanned in known order; §8.1).
+3. **M2–M4** — reference cropped to the artwork with the known cell size; segmentation serving geometry (fringes, mated pairs, side-length repeatability ≤ 0.3 mm); `src/shape.py` (corners, sides, topology, shape ID), replacing the border classification of `edges.py`.
+4. **M6** — fit ranking (geometry + Lab continuity) on the GT block, then M7/M8 (section localisation, GUI).
+
+M0 (measurement base: tests green on OpenCV 4.11 and 5.0, pinned requirements, cleanup) is done (`7c9fa89`).
+
+**Out of scope**: ML classification, REST API, GPU, live camera, perspective correction (the scanner removes it), global solver, more background-colour experiments.
+
+**Rule of evidence**: progress is measured with ground truth (metrics in §6 of the plan), never with the count of `high` labels. Every CV change follows the `cv-visual-verification` skill (look at the images, report before/after numbers, keep `pytest tests/` green).
 
 ## Architecture
 
-| Module | Lines | Status | Notes |
+| Module | Lines | Status (verified 2026-10-29) | Notes |
 |---|---|---|---|
-| `src/matching.py` | ~1087 | Functional (the engine) | Naive pixel diff / sliding-window baseline, plus `multi_scale_template_match`: a zonal Lab colour search (NxN per-cell mean-colour signature over the piece mask), swept across a `num_pieces`-derived scale band and all four rotations, re-ranked by a Sobel gradient-orientation texture signature (`src/texture.py`, for "colour twin" pieces) and an edge/corner border prior (`src/edges.py`); returns a ranked shortlist plus a confidence label (`'high'`/`'ambiguous'`) from the differential cost gap between the top two candidates. `use_gpu` is accepted for API stability but currently ignored — the search always runs on CPU. |
-| `src/gui.py` | ~1203 | Functional but messy | Whole Tkinter interface and orchestration: load/segment puzzle/pieces, compute metrics, match single/all, overlays (rectangle + id + similarity %, or per-candidate markers when ambiguous), progress, cancel, JSON export, annotated-image export. |
-| `src/acquisition.py` | — | Functional | Interactive image loading/selection. |
-| `src/features.py` | ~48 | Functional | Pure helpers: image size, area, dominant colour (simple frequency, no k-means), colour distance, scale (px/cm). |
-| `src/main.py` | ~19 | Functional | Minimal CLI orchestration. |
-| `src/segmentation.py` | ~1047 | Functional | Automatic piece detection/cropping from a photo of many pieces on a surface: Lab background-distance foreground mask, morphological cleanup, watershed splitting of touching pieces (with a forced-bisection fallback), edge-shadow removal, rotation normalization. |
-| `src/edges.py` | ~194 | Functional | Pure geometry: classifies a segmented piece's own contour/mask into `edge`/`corner`/`interior`/`suspect` by counting flat sides of its `minAreaRect`; feeds `matching.py`'s border prior. |
-| `src/texture.py` | ~233 | Functional | Per-cell Sobel gradient-orientation histogram signature mirroring `matching.py`'s zonal grid; used to re-rank colour-equal shortlist candidates. |
-| `src/visualization.py` | ~185 | Functional | Annotated result image (red-dot marker at each piece's probable centre + label) via `annotate_results`/`save_annotated_image`. (The JSON export lives in `src/gui.py`, not here.) |
+| `src/segmentation.py` | ~1790 | Functional on scans | Lab background-distance foreground (plateau-centred Otsu + hysteresis), morphological cleanup, seam-carve / watershed split of touching pieces, forced bisection, edge-shadow shrink, boundary refinement, background-fringe rejection, rotation normalisation; `piece_to_rgba`, `save_pieces`. ≈ 61/64 pieces on saturated backgrounds; fails on pale backgrounds and on phone photos with touching pieces. Known defects: contour fringes on ~15 % of pieces (main source of shape noise), mated pairs come out as one piece, illumination-flattening halo on flat scenes (backlog, M3). |
+| `src/edges.py` | ~194 | **Partially wrong** | Counts flat sides of the whole-piece `minAreaRect` (tabs included). Misses 2 of 3 real border pieces in the green scan; the topology from side profiles (prototype in `tools/diagnostico/forma/shapelib.py`) is stable 147/147 across re-scans. To be replaced by `src/shape.py` in M4. The GUI does not pass its output to the engine. |
+| `src/matching.py` | ~1087 | Functional, limited by the art and by photometry | `multi_scale_template_match`: zonal Lab 4×4 signature at ≈ 46 px/piece, scale band from `num_pieces`, 4 rotations, local minima + NMS, texture re-rank, border prior, differential confidence gap → `high`/`ambiguous`. Assumes the artwork fills the reference (false for `images/puzzles/PuzzleOriginal.jpeg`, a photo of the box). Legacy `compare_images`/`sliding_window_search` only used by the CLI. `use_gpu` accepted and ignored. |
+| `src/texture.py` | ~233 | Functional | Per-cell Sobel gradient-orientation signature used by the engine's re-rank. |
+| `src/visualization.py` | ~185 | Functional | Red-dot annotated result image (`annotate_results`, `save_annotated_image`). JSON export lives in the GUI. |
+| `src/gui.py` | ~1268 | Functional | Load/Segment/Match/Match All/Cancel/Export JSON/Save Annotated/Save Pieces; W/H in cm and piece count; threads. No duplicate methods. |
+| `src/features.py` | ~48 | Functional | Pure helpers (size, area, dominant colour, colour distance, px/cm). No scoring lives here. |
+| `src/acquisition.py`, `src/main.py` | — | Functional (naive CLI) | `python -m src.main` works; the CLI only runs the naive comparator. |
 
-Support files: `examples/basic_usage.py`; loose test scripts (`test_scales.py`, `gpu_test.py`, `temp_import_test.py`); docs (`README.md`, `CHANGELOG.md`, `QUICKSTART.md`, `CONTRIBUTING.md`); example data in `images/` — real pieces are `.DNG` photos (`images/pieces/*.DNG`, opened directly via PIL; not the older PNG pieces/`puzzle.json` base64 export) and puzzle photos in `images/puzzles/*.jpg`/`*.jpeg`.
+Support: `tests/` (6 synthetic tests, green on OpenCV 4.11 and 5.0), `eval_matching.py` (engine A/B harness on `images/pieces/IMG_2114.DNG`, output in `$PPF_SCRATCH`), `tools/diagnostico/` (reproducible diagnosis scripts), `examples/basic_usage.py`. Data: `images/puzzles/PuzzleOriginal.jpeg` (box photo, 8064×6048), `images/puzzles/1186441_1.jpg` (clean artwork 1600×1200), `images/pieces/digitalização_*.jpg` (A4 scans at 300/600 dpi of the same ~64 pieces on 11 backgrounds; `*_grupoN` are other sets, some assembled), `images/pieces/*.DNG` (phone photos, git-ignored), `images/pieces/Phone Link/` (box and mat photos). No ground truth exists yet (M1 creates it).
 
-Dependencies: Pillow, opencv-python, numpy (see `requirements.txt`). Python 3.8+. `use_gpu` is accepted by `multi_scale_template_match` for API stability but is currently ignored (CPU only).
+Dependencies: `opencv-python==4.11.0.86`, `numpy<2.3`, `Pillow<12` (pinned in `requirements.txt`); `pytest` for dev. Python 3.13 on the user's machine.
 
 ## Subagents & Model Routing
 
@@ -37,9 +45,9 @@ Three subagents are defined in `.claude/agents/`:
 
 | Subagent | Model | Role | Limits |
 |---|---|---|---|
-| **planner** | Fable | Architecture and deep-planning specialist. Read-only tools (Read, Grep, Glob, WebSearch, WebFetch). | Never writes or edits code — plans and decisions only. Invoked ONLY for genuinely complex problems the implementer cannot chart alone (e.g. designing the segmentation pipeline from scratch, choosing between fundamentally different algorithmic strategies, cross-module architecture decisions). Expensive and weekly-limited — last resort, used as rarely as possible. |
-| **implementer** | Opus | Primary workhorse. Full editing tools. | Handles complex logic needing real reasoning but with a clear path: image algorithms, template matching, segmentation, scoring/metrics, visualization logic, non-trivial bug fixes. Owns all changes to the critical modules (`src/matching.py`, `src/segmentation.py`, `src/features.py`) and reviews the helper's algorithmic edits. Default tier for substantive coding work. |
-| **helper** | Sonnet | Cheapest, first-choice tier. Full editing tools. | Handles simple, low-risk work: GUI/UI tweaks, mechanical refactors, formatting, renames, documentation, requirements edits, simple tests, small fixes like broken paths. Hard limit: must NOT change algorithmic logic in the critical modules (`src/matching.py`, `src/segmentation.py`, scoring/feature logic in `src/features.py`) without the implementer designing or reviewing the change. Escalates instead of guessing. |
+| **planner** | Fable | Architecture and deep-planning specialist. Read-only tools (Read, Grep, Glob, WebSearch, WebFetch). | Never writes or edits code — plans and decisions only. Invoked ONLY for genuinely complex problems the implementer cannot chart alone (e.g. choosing between fundamentally different algorithmic strategies, cross-module architecture decisions). Expensive and weekly-limited — last resort, used as rarely as possible. None of the current milestones needs it. |
+| **implementer** | Opus | Primary workhorse. Full editing tools. | Handles complex logic needing real reasoning but with a clear path: image algorithms, shape/fit geometry, segmentation, scoring/metrics, non-trivial bug fixes. Owns all changes to the critical modules (`src/matching.py`, `src/segmentation.py`, the future `src/shape.py`/`src/fit.py`) and reviews the helper's algorithmic edits. Default tier for substantive coding work. |
+| **helper** | Sonnet | Cheapest, first-choice tier. Full editing tools. | Handles simple, low-risk work: GUI/UI tweaks, mechanical refactors, formatting, renames, documentation, requirements edits, simple tests, small fixes. Hard limit: must NOT change algorithmic logic in the critical modules without the implementer designing or reviewing the change. Escalates instead of guessing. |
 
 ### Routing chain and rules
 
@@ -47,7 +55,7 @@ Three subagents are defined in `.claude/agents/`:
 - Always start at the cheapest tier that can plausibly do the task. Only escalate to the implementer when the helper is not enough. Only escalate to the planner when the implementer hits a genuine architecture/strategy wall it cannot resolve itself.
 - Subagents cannot spawn other subagents. "Escalation" means the subagent stops and reports clearly what it needs and why, so the main orchestrator routes the work to the right tier.
 - Hand-off pattern: planner produces a plan → implementer executes it → helper does the surrounding simple/mechanical work. The implementer reviews any helper edits that touch critical modules.
-- Concrete mapping for this round's work (illustrative): cleanup/paths/docs/GUI-debt → helper; matching improvements, segmentation algorithm, visualization logic → implementer; only the hardest up-front design (e.g. the segmentation strategy) → planner, once, if needed.
+- Concrete mapping for the current milestones: M5/M1 data wrangling and tooling → helper; M2–M4 and M6 algorithms → implementer; planner not needed.
 
 ## Cost-Saving Principle
 
@@ -60,5 +68,6 @@ The user has a tight **weekly limit on the Fable model**, so Fable must be used 
 
 ## Conventions
 
-- `src/` uses tab indentation, `__all__` exports, and docstrings; pure helpers are kept separate from I/O.
-- Critical modules requiring implementer design/review for any algorithmic change: `src/matching.py`, `src/segmentation.py`, and the scoring/feature logic in `src/features.py`.
+- `src/` uses tab indentation, `__all__` exports, and docstrings; pure helpers are kept separate from I/O; functions return `{'error': str, ...}` on failure (contract of `matching.py`/`segmentation.py`).
+- Critical modules requiring implementer design/review for any algorithmic change: `src/matching.py`, `src/segmentation.py`, and the geometry/fit modules to be created (`src/shape.py`, `src/fit.py`).
+- Reports to the user label every claim as verified (with evidence), not tested, or tested-and-failing; external claims carry a link. Commit messages in Portuguese, no Co-Authored-By line.
