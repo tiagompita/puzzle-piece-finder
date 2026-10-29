@@ -89,7 +89,11 @@ def test_two_adjacent_flat_sides_is_corner():
     # Top and right are flat and share a corner -> adjacent -> 'corner'.
     result = _classify(["flat", "flat", "notch", "notch"])
     assert result["straight_sides"] == 2
-    assert result["sides"][0] and result["sides"][1]
+    # cv2.boxPoints starts the side list at a different corner depending on the
+    # OpenCV version (4.x vs 5.x), so only assert that the two straight sides
+    # are cyclically adjacent, not which indices they land on.
+    straight_idx = [i for i, s in enumerate(result["sides"]) if s]
+    assert (straight_idx[1] - straight_idx[0]) % 4 in (1, 3)
     assert result["piece_type"] == "corner"
 
 

@@ -107,3 +107,6 @@ opencv_contrib/
 # Performance profiling
 *.prof
 *.lprof
+
+# Diagnostic working folder (tools/diagnostico, PPF_SCRATCH default)
+scratch/

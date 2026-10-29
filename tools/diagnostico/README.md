@@ -1,6 +1,6 @@
 # Scripts das experiências de diagnóstico (2026-10-29)
 
-Copiados do scratchpad da sessão para o repositório para ficarem reproduzíveis (nota 1 da `docs/revisao.md`). Vivem em `docs/` porque a regra da sessão só permitia escrever em `docs/`; no M0 devem passar para `tools/diagnostico/`. Nenhum deles altera `src/`.
+Copiados do scratchpad da sessão para o repositório para ficarem reproduzíveis (nota 1 da `docs/revisao.md`). Movidos para `tools/diagnostico/` no M0. Nenhum deles altera `src/`.
 
 Pré-requisitos: `pip install Pillow opencv-python numpy` (os números do relatório foram obtidos com OpenCV 4.11, numpy 2.2, Pillow 11, Python 3.13). Correr sempre **a partir da raiz do repositório**. Os scripts escrevem ficheiros intermédios numa pasta de trabalho dada pela variável de ambiente `PPF_SCRATCH` (por omissão `./scratch`, que deve ficar fora do git):
 

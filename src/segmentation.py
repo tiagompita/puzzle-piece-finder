@@ -312,6 +312,44 @@ def _weighted_distance(lab: np.ndarray, bg: np.ndarray, luma_weight: float, chro
 	return cv2.normalize(D, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
 
+def _otsu_plateau_threshold(img_u8: np.ndarray) -> float:
+	"""Otsu threshold of a uint8 image, centred on the plateau of tied maxima.
+
+	Otsu's between-class variance is CONSTANT across a run of empty histogram bins
+	(no pixel changes class as the threshold slides through them), so on a strongly
+	bimodal image -- two modes separated by an empty gap -- every level in the gap is
+	an equally optimal threshold. ``cv2.threshold(..., THRESH_OTSU)`` breaks that tie
+	by returning the FIRST maximum, i.e. the very top of the lower (background) mode.
+	The partition is the same, but any derived level then lands INSIDE the background
+	mode: ``_foreground_from_bg``'s hysteresis low level (``_HYST_LOW_FACTOR * t``)
+	would annex background pixels touching a piece. This returns the midpoint of the
+	maximal-variance run that contains OpenCV's choice instead -- the same partition
+	(``img > t``) whenever the run is a single bin, which is the usual case for a real
+	photo's continuous histogram, and a threshold safely mid-gap when it is not.
+	"""
+	hist = np.bincount(img_u8.ravel(), minlength=256).astype(np.float64)
+	total = hist.sum()
+	if total <= 0:
+		return 0.0
+	levels = np.arange(256, dtype=np.float64)
+	w0 = np.cumsum(hist) / total
+	mu = np.cumsum(hist * levels) / total
+	mu_t = mu[-1]
+	w1 = 1.0 - w0
+	valid = (w0 > 0) & (w1 > 0)
+	if not valid.any():
+		return 0.0
+	sigma_b = np.zeros(256, dtype=np.float64)
+	sigma_b[valid] = (mu_t * w0[valid] - mu[valid]) ** 2 / (w0[valid] * w1[valid])
+	t0 = int(np.argmax(sigma_b))
+	# Extend over the contiguous run of (numerically) tied maxima -- these are exactly
+	# the empty bins following t0, across which no pixel changes class.
+	t1 = t0
+	while t1 + 1 < 256 and hist[t1 + 1] == 0 and valid[t1 + 1]:
+		t1 += 1
+	return 0.5 * (t0 + t1)
+
+
 def _foreground_from_bg(
 	lab: np.ndarray, bg: np.ndarray, luma_weight: float, chroma_weight: float
 ) -> tuple[np.ndarray, np.ndarray, float]:
@@ -340,7 +378,10 @@ def _foreground_from_bg(
 	annex) are essentially unchanged, bounding regression by construction.
 	"""
 	D = _weighted_distance(lab, bg, luma_weight, chroma_weight)
-	t_otsu, _ = cv2.threshold(D, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+	# Plateau-centred Otsu (see :func:`_otsu_plateau_threshold`): identical to OpenCV's
+	# Otsu on a continuous histogram, but mid-gap on a gapped one, so thr_low below can
+	# never fall inside the background mode.
+	t_otsu = _otsu_plateau_threshold(D)
 	thr_high = _HYST_HIGH_FACTOR * t_otsu
 	thr_low = _HYST_LOW_FACTOR * t_otsu
 	core = D >= thr_high

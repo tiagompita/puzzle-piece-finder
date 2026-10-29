@@ -1,8 +1,6 @@
-Pillow>=8.0.0
-opencv-python>=4.5.0
-numpy>=1.21.0
-
-# Optional dependencies for enhanced features
-# opencv-contrib-python>=4.5.0  # Additional OpenCV modules
-# matplotlib>=3.3.0             # For advanced plotting
-# scikit-image>=0.18.0          # Additional image processing
+# Runtime dependencies. Versions pinned after the 2026-10-29 diagnosis
+# (docs/estado-e-plano.md, M0): the test suite and the diagnostic numbers were
+# produced with this exact OpenCV; OpenCV 5.x changes cv2.boxPoints ordering.
+opencv-python==4.11.0.86
+numpy>=2.0,<2.3
+Pillow>=10.0,<12

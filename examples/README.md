@@ -1,8 +1,3 @@
-# Example usage scripts and demos
+# Example scripts
 
-examples/
-├── basic_usage.py          # Simple CLI usage examples
-├── gui_automation.py       # Automated GUI testing
-├── batch_processing.py     # Process multiple puzzles
-├── performance_test.py     # Benchmark different configurations
-└── README.md              # Examples documentation
+- `basic_usage.py` — programmatic use of the matching engine and feature helpers on the example data. Run from the repo root: `python examples/basic_usage.py`.

@@ -1,5 +1,7 @@
 # 🧩 Puzzle Piece Finder
 
+> **Estado (2026-10-29):** este README está desatualizado (descreve ficheiros e funcionalidades que já não existem). O mapa real do código está em [`ARCHITECTURE.md`](ARCHITECTURE.md) e o estado, diagnóstico e plano em [`docs/estado-e-plano.md`](docs/estado-e-plano.md). Objetivo principal atual: **montagem assistida por encaixe** (scanner a 300 dpi + secção montada como referência local). A reescrita do README está no backlog.
+
 An intelligent recognition and localization system for puzzle pieces using advanced computer vision algorithms.
 
 <div align="center">

@@ -40,11 +40,9 @@ REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 REF_PATH = os.path.join(REPO_ROOT, "images", "puzzles", "PuzzleOriginal.jpeg")
 PHOTO_PATH = os.path.join(REPO_ROOT, "images", "pieces", "IMG_2114.DNG")
 
-SCRATCH = (
-	r"C:\Users\tiago\AppData\Local\Temp\claude"
-	r"\c--Users-tiago-Desktop-puzzle-piece-finder"
-	r"\6b8972e6-01fb-46f6-b86c-c04a96ab0779\scratchpad"
-)
+# Output folder for montages/summary: set PPF_SCRATCH (same convention as
+# tools/diagnostico/); defaults to ./scratch, which is git-ignored.
+SCRATCH = os.path.join(os.environ.get("PPF_SCRATCH", os.path.join(REPO_ROOT, "scratch")), "eval_matching")
 
 NUM_PIECES = 3000
 N_HIGH_IMAGES = 5
