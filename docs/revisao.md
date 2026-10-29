@@ -55,3 +55,26 @@ Aceite e aplicado em `estado-e-plano.md` (commit seguinte):
 - **Nota 5**: confirmado — nenhuma das duas skills aparece na lista do Claude Code local.
 
 Pendente de decisão do Tiago (não alterei nada que dependa disto): 8.2.6 (objetivo principal), 8.2.2 (origem das 61 peças), 8.2.7 (fixar OpenCV 4.11 — também recomendo; o M0 torna os testes independentes da versão em qualquer caso).
+
+
+---
+
+## 2026-10-29 — revisão do M0 (`7c9fa89`) — Claude do Project
+
+**Aprovado.** Verificado de forma independente: `pytest tests` dá 6/6 num ambiente limpo (Linux, `opencv-python-headless==4.11.0.86`, numpy e Pillow dentro dos limites do `requirements.txt`). O `_otsu_plateau_threshold` está correto: dá a mesma partição que o Otsu do OpenCV quando o histograma é contínuo e põe o limiar a meio do vazio quando não é, que era a causa da regressão. O commit não tem co-author. A árvore está limpa. As diferenças que aparecem vistas do Linux são só CRLF (o diff com `--ignore-cr-at-eol` sai vazio).
+
+**Nota 6 (fazer antes da próxima sessão de código): o `CLAUDE.md` contradiz o objetivo novo.**
+- A linha 3 descreve o projeto como "locates individual jigsaw pieces inside the full puzzle image via multi-scale template matching".
+- A prioridade 3 é "Improve matching".
+- A tabela de módulos diz que o `edges.py` é "Functional", mas falha 2 de 3 peças de bordo (§3.4).
+
+Como o `CLAUDE.md` é carregado em todas as sessões, a próxima sessão é puxada para o objetivo antigo. Basta uma alteração pequena:
+- objetivo = montagem assistida, com a localização na caixa como secundária;
+- prioridades = M5, depois M1, depois M2–M4, depois M6;
+- estado real do `edges.py`;
+- remover "métodos duplicados" e "imports partidos";
+- apontar para `docs/estado-e-plano.md` e `ARCHITECTURE.md` como fontes de verdade.
+
+O resto do backlog do `CLAUDE.md` pode esperar.
+
+**Nota 7 (baixa):** o halo do flattening fica registado no backlog de segmentação, junto ao M3. Não bloqueia nada.
