@@ -1,0 +1,10095 @@
+{
+ "summary": {
+  "A": {
+   "deg": {
+    "n": 60,
+    "top1": "43/60 (72%)",
+    "top5": "49/60 (82%)",
+    "rot_ok": "51/60 (85%)",
+    "err_med_sides": 0.06618059767318207,
+    "n_high": 28,
+    "high_precision": "28/28 (100%)",
+    "n_amb": 32,
+    "amb_top1": "15/32 (47%)",
+    "amb_top5": "21/32 (66%)",
+    "t_mean": 9.12514903942744
+   },
+   "deg_ceu": {
+    "n": 27,
+    "top1": "19/27 (70%)",
+    "top5": "22/27 (81%)",
+    "rot_ok": "24/27 (89%)",
+    "err_med_sides": 0.11464739983118927,
+    "n_high": 10,
+    "high_precision": "10/10 (100%)",
+    "n_amb": 17,
+    "amb_top1": "9/17 (53%)",
+    "amb_top5": "12/17 (71%)",
+    "t_mean": 8.98266922986066
+   },
+   "deg_resto": {
+    "n": 33,
+    "top1": "24/33 (73%)",
+    "top5": "27/33 (82%)",
+    "rot_ok": "27/33 (82%)",
+    "err_med_sides": 0.04488879626374559,
+    "n_high": 18,
+    "high_precision": "18/18 (100%)",
+    "n_amb": 15,
+    "amb_top1": "6/15 (40%)",
+    "amb_top5": "9/15 (60%)",
+    "t_mean": 9.241723429072987
+   },
+   "limpo": {
+    "n": 20,
+    "top1": "18/20 (90%)",
+    "top5": "20/20 (100%)",
+    "rot_ok": "19/20 (95%)",
+    "err_med_sides": 0.03210328543215329,
+    "n_high": 7,
+    "high_precision": "7/7 (100%)",
+    "n_amb": 13,
+    "amb_top1": "11/13 (85%)",
+    "amb_top5": "13/13 (100%)",
+    "t_mean": 9.022782814502715
+   },
+   "limpo_ceu": {
+    "n": 7,
+    "top1": "6/7 (86%)",
+    "top5": "7/7 (100%)",
+    "rot_ok": "7/7 (100%)",
+    "err_med_sides": 0.031741172237395865,
+    "n_high": 1,
+    "high_precision": "1/1 (100%)",
+    "n_amb": 6,
+    "amb_top1": "5/6 (83%)",
+    "amb_top5": "6/6 (100%)",
+    "t_mean": 10.058340992246356
+   },
+   "limpo_resto": {
+    "n": 13,
+    "top1": "12/13 (92%)",
+    "top5": "13/13 (100%)",
+    "rot_ok": "12/13 (92%)",
+    "err_med_sides": 0.03246539862691071,
+    "n_high": 6,
+    "high_precision": "6/6 (100%)",
+    "n_amb": 7,
+    "amb_top1": "6/7 (86%)",
+    "amb_top5": "7/7 (100%)",
+    "t_mean": 8.465174564948448
+   },
+   "deg_struct_lt4": "27/60 (45%)",
+   "deg_struct_lt4_top1": "12/27 (44%)",
+   "deg_struct_ge4_top1": "31/33 (94%)",
+   "deg_gap_ge012_top1": "40/51 (78%)",
+   "deg_gap_lt012_top1": "3/9 (33%)",
+   "deg_rank_hist": {
+    "0": 43,
+    "None": 11,
+    "4": 1,
+    "2": 3,
+    "1": 2
+   },
+   "artwork_bbox": [
+    306,
+    274,
+    7645,
+    5306
+   ]
+  },
+  "B": {
+   "n": 61,
+   "conf_orig": {
+    "high": 10,
+    "ambiguous": 51
+   },
+   "conf_clean": {
+    "ambiguous": 41,
+    "high": 20
+   },
+   "t_orig_mean": 8.6025456952267,
+   "t_clean_mean": 7.464348558519707,
+   "t_orig_med": 8.209694385528564,
+   "t_clean_med": 6.969064474105835,
+   "agree_top1": "0/61 (0%)",
+   "agree_shortlist": "15/61 (25%)",
+   "agree_top1_high_both": "0/4 (0%)",
+   "n_high_both": 4,
+   "agree_top1_high_any": "0/26 (0%)",
+   "rot_agree": "27/61 (44%)",
+   "dist_med_sides": 13.7969429091949,
+   "homography": {
+    "n_kp_clean": 8000,
+    "n_kp_orig": 8001,
+    "n_good": 3097,
+    "n_inliers": 2597,
+    "reproj_mean_px_full": 4.451508522033691,
+    "reproj_median_px_full": 4.336146354675293,
+    "reproj_p95_px_full": 8.486089706420898,
+    "clean_corners_in_orig": [
+     [
+      339.3999938964844,
+      103.30000305175781
+     ],
+     [
+      7620.7998046875,
+      39.099998474121094
+     ],
+     [
+      7633.89990234375,
+      5442.0
+     ],
+     [
+      322.70001220703125,
+      5322.89990234375
+     ]
+    ]
+   },
+   "clean_size_px_median": 23.979157616563597,
+   "orig_size_px_median": 121.73742234826561,
+   "chance_agree_offdiag": 0.004371584699453552
+  },
+  "C": {
+   "n_pairs": 22,
+   "agree_top1": "7/22 (32%)",
+   "agree_shortlist": "17/22 (77%)",
+   "n_high_both": 0,
+   "agree_high_both": "0/0",
+   "label_same": "14/22 (64%)",
+   "conf_laranja": {
+    "high": 4,
+    "ambiguous": 18
+   },
+   "t_mean": 8.245155963030728
+  }
+ },
+ "expA": {
+  "artwork_bbox": [
+   306,
+   274,
+   7645,
+   5306
+  ],
+  "side_px": 127.0,
+  "records": [
+   {
+    "tag": "deg",
+    "j": 0,
+    "mask_idx": 0,
+    "rot_applied_k": 2,
+    "true_centre": [
+     815.5,
+     1468.5
+    ],
+    "box": [
+     763,
+     1392,
+     105,
+     153
+    ],
+    "lab_shift": [
+     -3.7875382716159636,
+     -1.944564593489818,
+     1.8725670399346424
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     859.0,
+     1459.5
+    ],
+    "err_px": 44.421278684882544,
+    "err_sides": 0.34977384791246097,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.9556607815599449,
+    "size": [
+     100,
+     147
+    ],
+    "conf": "high",
+    "gap": 0.20119749020736538,
+    "struct": 8.890447388455799,
+    "reason": "rel-comb-cost gap=0.201 (thr 0.12), struct=8.89 (thr 4.0), d_grad=0.083, sharpness=0.286 -> high [distinct + patterned]",
+    "t": 10.207317113876343
+   },
+   {
+    "tag": "deg",
+    "j": 1,
+    "mask_idx": 27,
+    "rot_applied_k": 3,
+    "true_centre": [
+     2395.5,
+     4306.0
+    ],
+    "box": [
+     2338,
+     4236,
+     115,
+     140
+    ],
+    "lab_shift": [
+     4.678712317334231,
+     0.07782273137719109,
+     -1.5302123935872212
+    ],
+    "region": "resto",
+    "pred_centre": [
+     7841.5,
+     5120.0
+    ],
+    "err_px": 5506.4972532454785,
+    "err_sides": 43.35824608854708,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": false,
+    "scale": 1.1053511580528135,
+    "size": [
+     155,
+     128
+    ],
+    "conf": "ambiguous",
+    "gap": 0.15184136779058022,
+    "struct": 2.3420617813890763,
+    "reason": "rel-comb-cost gap=0.152 (thr 0.12), struct=2.34 (thr 4.0), d_grad=0.123, sharpness=0.074 -> ambiguous [too uniform to localize]",
+    "t": 8.103265523910522
+   },
+   {
+    "tag": "deg",
+    "j": 2,
+    "mask_idx": 14,
+    "rot_applied_k": 3,
+    "true_centre": [
+     1961.0,
+     3941.5
+    ],
+    "box": [
+     1887,
+     3887,
+     148,
+     109
+    ],
+    "lab_shift": [
+     1.5592824550761701,
+     2.564443551151002,
+     -1.608550868361487
+    ],
+    "region": "resto",
+    "pred_centre": [
+     1950.0,
+     3956.5
+    ],
+    "err_px": 18.601075237738275,
+    "err_sides": 0.1464651593522699,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 1.104254307216503,
+    "size": [
+     164,
+     119
+    ],
+    "conf": "high",
+    "gap": 0.30329201338329015,
+    "struct": 4.133688965287824,
+    "reason": "rel-comb-cost gap=0.303 (thr 0.12), struct=4.13 (thr 4.0), d_grad=0.104, sharpness=0.483 -> high [distinct + patterned]",
+    "t": 10.006823301315308
+   },
+   {
+    "tag": "deg",
+    "j": 3,
+    "mask_idx": 50,
+    "rot_applied_k": 3,
+    "true_centre": [
+     4103.5,
+     1514.5
+    ],
+    "box": [
+     4041,
+     1450,
+     125,
+     129
+    ],
+    "lab_shift": [
+     -4.009152081111065,
+     -0.01326618901323684,
+     0.49634784369191953
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     4108.0,
+     1515.5
+    ],
+    "err_px": 4.6097722286464435,
+    "err_sides": 0.03629741912320034,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.8032683376839782,
+    "size": [
+     100,
+     103
+    ],
+    "conf": "high",
+    "gap": 0.20030095843570123,
+    "struct": 7.204617464134666,
+    "reason": "rel-comb-cost gap=0.200 (thr 0.12), struct=7.20 (thr 4.0), d_grad=0.086, sharpness=0.547 -> high [distinct + patterned]",
+    "t": 7.1557533740997314
+   },
+   {
+    "tag": "deg",
+    "j": 4,
+    "mask_idx": 25,
+    "rot_applied_k": 0,
+    "true_centre": [
+     539.5,
+     2654.0
+    ],
+    "box": [
+     488,
+     2576,
+     103,
+     156
+    ],
+    "lab_shift": [
+     2.738919938199139,
+     2.51160295064126,
+     0.7532040344127839
+    ],
+    "region": "resto",
+    "pred_centre": [
+     1815.5,
+     2889.5
+    ],
+    "err_px": 1297.5500953720439,
+    "err_sides": 10.216929884819242,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.8046918428267275,
+    "size": [
+     83,
+     125
+    ],
+    "conf": "ambiguous",
+    "gap": 0.010721799692198788,
+    "struct": 7.047517100155547,
+    "reason": "rel-comb-cost gap=0.011 (thr 0.12), struct=7.05 (thr 4.0), d_grad=0.134, sharpness=0.460 -> ambiguous [near-equal rival]",
+    "t": 10.066104412078857
+   },
+   {
+    "tag": "deg",
+    "j": 5,
+    "mask_idx": 31,
+    "rot_applied_k": 3,
+    "true_centre": [
+     6555.0,
+     1455.0
+    ],
+    "box": [
+     6498,
+     1384,
+     114,
+     142
+    ],
+    "lab_shift": [
+     4.393529168858915,
+     1.3845116182275223,
+     -1.3328082582064331
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     7493.5,
+     1266.0
+    ],
+    "err_px": 957.3417623816481,
+    "err_sides": 7.538124113241324,
+    "top1": false,
+    "top5": true,
+    "rank_correct": 4,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.8017037454559708,
+    "size": [
+     91,
+     114
+    ],
+    "conf": "ambiguous",
+    "gap": 0.006347454553861936,
+    "struct": 2.77583123002358,
+    "reason": "rel-comb-cost gap=0.006 (thr 0.12), struct=2.78 (thr 4.0), d_grad=0.102, sharpness=0.345 -> ambiguous [near-equal rival]",
+    "t": 8.062471151351929
+   },
+   {
+    "tag": "deg",
+    "j": 6,
+    "mask_idx": 25,
+    "rot_applied_k": 3,
+    "true_centre": [
+     6562.5,
+     1843.0
+    ],
+    "box": [
+     6511,
+     1765,
+     103,
+     156
+    ],
+    "lab_shift": [
+     0.32450500836356344,
+     -2.5710791602596186,
+     0.499430460906348
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     6404.0,
+     1870.5
+    ],
+    "err_px": 160.86795827634538,
+    "err_sides": 1.2666768368216172,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 1.3076242445934323,
+    "size": [
+     136,
+     205
+    ],
+    "conf": "ambiguous",
+    "gap": 0.09767725825159333,
+    "struct": 11.084304727062655,
+    "reason": "rel-comb-cost gap=0.098 (thr 0.12), struct=11.08 (thr 4.0), d_grad=0.149, sharpness=0.219 -> ambiguous [near-equal rival]",
+    "t": 10.316478252410889
+   },
+   {
+    "tag": "deg",
+    "j": 7,
+    "mask_idx": 56,
+    "rot_applied_k": 0,
+    "true_centre": [
+     5849.5,
+     1244.5
+    ],
+    "box": [
+     5793,
+     1173,
+     113,
+     143
+    ],
+    "lab_shift": [
+     -2.247092924990797,
+     -2.913153139259598,
+     -2.804688470360464
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     4591.5,
+     1277.0
+    ],
+    "err_px": 1258.4197431699806,
+    "err_sides": 9.908816875354178,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": false,
+    "scale": 1.3039370792631804,
+    "size": [
+     147,
+     186
+    ],
+    "conf": "ambiguous",
+    "gap": 0.19224501420858608,
+    "struct": 1.284027701570934,
+    "reason": "rel-comb-cost gap=0.192 (thr 0.12), struct=1.28 (thr 4.0), d_grad=0.075, sharpness=0.134 -> ambiguous [too uniform to localize]",
+    "t": 9.107989311218262
+   },
+   {
+    "tag": "deg",
+    "j": 8,
+    "mask_idx": 22,
+    "rot_applied_k": 1,
+    "true_centre": [
+     3752.0,
+     1018.0
+    ],
+    "box": [
+     3685,
+     958,
+     134,
+     120
+    ],
+    "lab_shift": [
+     -2.909249941085714,
+     -2.9809133442401303,
+     -0.7135935131050855
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     3541.0,
+     1099.5
+    ],
+    "err_px": 226.19294860804126,
+    "err_sides": 1.7810468394333958,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": false,
+    "scale": 0.8043915286371951,
+    "size": [
+     108,
+     97
+    ],
+    "conf": "ambiguous",
+    "gap": 0.01224715697972,
+    "struct": 2.7141754094720882,
+    "reason": "rel-comb-cost gap=0.012 (thr 0.12), struct=2.71 (thr 4.0), d_grad=0.137, sharpness=0.265 -> ambiguous [near-equal rival]",
+    "t": 7.963201284408569
+   },
+   {
+    "tag": "deg",
+    "j": 9,
+    "mask_idx": 35,
+    "rot_applied_k": 2,
+    "true_centre": [
+     3461.5,
+     4376.5
+    ],
+    "box": [
+     3406,
+     4304,
+     111,
+     145
+    ],
+    "lab_shift": [
+     1.397895016922277,
+     -1.4034965279323512,
+     1.8661326679084986
+    ],
+    "region": "resto",
+    "pred_centre": [
+     3459.5,
+     4376.5
+    ],
+    "err_px": 2.0,
+    "err_sides": 0.015748031496062992,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.9547697223624036,
+    "size": [
+     105,
+     139
+    ],
+    "conf": "ambiguous",
+    "gap": 0.44055980031383457,
+    "struct": 3.678169097858158,
+    "reason": "rel-comb-cost gap=0.441 (thr 0.12), struct=3.68 (thr 4.0), d_grad=0.054, sharpness=0.548 -> ambiguous [too uniform to localize]",
+    "t": 12.400927543640137
+   },
+   {
+    "tag": "deg",
+    "j": 10,
+    "mask_idx": 20,
+    "rot_applied_k": 1,
+    "true_centre": [
+     5803.5,
+     3103.5
+    ],
+    "box": [
+     5741,
+     3039,
+     125,
+     129
+    ],
+    "lab_shift": [
+     -0.7507156613128911,
+     -0.6230733334954595,
+     -2.866588272480727
+    ],
+    "region": "resto",
+    "pred_centre": [
+     5805.5,
+     3102.0
+    ],
+    "err_px": 2.5,
+    "err_sides": 0.01968503937007874,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9538811509997239,
+    "size": [
+     119,
+     122
+    ],
+    "conf": "high",
+    "gap": 0.387253697691396,
+    "struct": 7.303071099679923,
+    "reason": "rel-comb-cost gap=0.387 (thr 0.12), struct=7.30 (thr 4.0), d_grad=0.051, sharpness=0.579 -> high [distinct + patterned]",
+    "t": 9.821909189224243
+   },
+   {
+    "tag": "deg",
+    "j": 11,
+    "mask_idx": 32,
+    "rot_applied_k": 1,
+    "true_centre": [
+     4851.5,
+     4893.0
+    ],
+    "box": [
+     4803,
+     4810,
+     97,
+     166
+    ],
+    "lab_shift": [
+     -0.7760870380141585,
+     -0.08615158152001712,
+     0.11469086387697303
+    ],
+    "region": "resto",
+    "pred_centre": [
+     4848.0,
+     4897.5
+    ],
+    "err_px": 5.70087712549569,
+    "err_sides": 0.04488879626374559,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.8038418247979497,
+    "size": [
+     78,
+     133
+    ],
+    "conf": "high",
+    "gap": 0.3156446072512435,
+    "struct": 9.656379339265348,
+    "reason": "rel-comb-cost gap=0.316 (thr 0.12), struct=9.66 (thr 4.0), d_grad=0.090, sharpness=0.429 -> high [distinct + patterned]",
+    "t": 17.435736656188965
+   },
+   {
+    "tag": "deg",
+    "j": 12,
+    "mask_idx": 30,
+    "rot_applied_k": 1,
+    "true_centre": [
+     4531.5,
+     748.5
+    ],
+    "box": [
+     4469,
+     684,
+     125,
+     129
+    ],
+    "lab_shift": [
+     -0.13939402556131242,
+     0.660868969810394,
+     1.4632746439179387
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     4545.5,
+     752.5
+    ],
+    "err_px": 14.560219778561036,
+    "err_sides": 0.11464739983118927,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 1.10449396431547,
+    "size": [
+     139,
+     141
+    ],
+    "conf": "high",
+    "gap": 0.6792270348345792,
+    "struct": 10.457272862941622,
+    "reason": "rel-comb-cost gap=0.679 (thr 0.12), struct=10.46 (thr 4.0), d_grad=0.069, sharpness=0.660 -> high [distinct + patterned]",
+    "t": 10.85409665107727
+   },
+   {
+    "tag": "deg",
+    "j": 13,
+    "mask_idx": 5,
+    "rot_applied_k": 1,
+    "true_centre": [
+     2586.5,
+     435.5
+    ],
+    "box": [
+     2516,
+     378,
+     141,
+     115
+    ],
+    "lab_shift": [
+     3.077747641751486,
+     -2.5345441788085417,
+     -0.06007177404651731
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     2583.5,
+     434.0
+    ],
+    "err_px": 3.3541019662496847,
+    "err_sides": 0.026410251702753424,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9512302487431522,
+    "size": [
+     133,
+     108
+    ],
+    "conf": "ambiguous",
+    "gap": 0.32296803857402273,
+    "struct": 1.0790022723690031,
+    "reason": "rel-comb-cost gap=0.323 (thr 0.12), struct=1.08 (thr 4.0), d_grad=0.067, sharpness=0.085 -> ambiguous [too uniform to localize]",
+    "t": 10.697498559951782
+   },
+   {
+    "tag": "deg",
+    "j": 14,
+    "mask_idx": 52,
+    "rot_applied_k": 1,
+    "true_centre": [
+     6380.5,
+     4932.5
+    ],
+    "box": [
+     6315,
+     4871,
+     131,
+     123
+    ],
+    "lab_shift": [
+     -2.173505055187403,
+     2.3866097335575454,
+     -0.9748256963379465
+    ],
+    "region": "resto",
+    "pred_centre": [
+     6387.5,
+     4923.0
+    ],
+    "err_px": 11.800423721205947,
+    "err_sides": 0.09291672221422005,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9542362817458324,
+    "size": [
+     125,
+     116
+    ],
+    "conf": "ambiguous",
+    "gap": 0.04261576183652394,
+    "struct": 5.383255953905213,
+    "reason": "rel-comb-cost gap=0.043 (thr 0.12), struct=5.38 (thr 4.0), d_grad=0.126, sharpness=0.274 -> ambiguous [near-equal rival]",
+    "t": 12.702214241027832
+   },
+   {
+    "tag": "deg",
+    "j": 15,
+    "mask_idx": 20,
+    "rot_applied_k": 3,
+    "true_centre": [
+     6085.5,
+     3527.5
+    ],
+    "box": [
+     6023,
+     3463,
+     125,
+     129
+    ],
+    "lab_shift": [
+     -3.2555585426927354,
+     -2.1739532115463893,
+     -0.4537731664379323
+    ],
+    "region": "resto",
+    "pred_centre": [
+     6088.5,
+     3526.0
+    ],
+    "err_px": 3.3541019662496847,
+    "err_sides": 0.026410251702753424,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.9538811509997239,
+    "size": [
+     119,
+     122
+    ],
+    "conf": "high",
+    "gap": 0.42836436821231183,
+    "struct": 7.9366603822296256,
+    "reason": "rel-comb-cost gap=0.428 (thr 0.12), struct=7.94 (thr 4.0), d_grad=0.034, sharpness=0.538 -> high [distinct + patterned]",
+    "t": 9.18979024887085
+   },
+   {
+    "tag": "deg",
+    "j": 16,
+    "mask_idx": 17,
+    "rot_applied_k": 0,
+    "true_centre": [
+     6613.5,
+     1268.0
+    ],
+    "box": [
+     6554,
+     1200,
+     119,
+     136
+    ],
+    "lab_shift": [
+     -5.636464060652074,
+     0.3554980628019928,
+     -0.42716247988788325
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     6621.0,
+     1265.0
+    ],
+    "err_px": 8.077747210701755,
+    "err_sides": 0.06360430874568311,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.9521408403859145,
+    "size": [
+     114,
+     130
+    ],
+    "conf": "ambiguous",
+    "gap": 0.7604607881661982,
+    "struct": 2.29691250539197,
+    "reason": "rel-comb-cost gap=0.760 (thr 0.12), struct=2.30 (thr 4.0), d_grad=0.054, sharpness=0.591 -> ambiguous [too uniform to localize]",
+    "t": 7.526153564453125
+   },
+   {
+    "tag": "deg",
+    "j": 17,
+    "mask_idx": 1,
+    "rot_applied_k": 3,
+    "true_centre": [
+     1581.5,
+     2126.5
+    ],
+    "box": [
+     1517,
+     2064,
+     129,
+     125
+    ],
+    "lab_shift": [
+     1.6861192419909647,
+     2.5864760976705607,
+     -1.4291938674574014
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     1581.5,
+     2126.0
+    ],
+    "err_px": 0.5,
+    "err_sides": 0.003937007874015748,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.803268337683978,
+    "size": [
+     103,
+     100
+    ],
+    "conf": "ambiguous",
+    "gap": 0.09957256568088788,
+    "struct": 9.283202183554142,
+    "reason": "rel-comb-cost gap=0.100 (thr 0.12), struct=9.28 (thr 4.0), d_grad=0.097, sharpness=0.617 -> ambiguous [near-equal rival]",
+    "t": 8.829694747924805
+   },
+   {
+    "tag": "deg",
+    "j": 18,
+    "mask_idx": 46,
+    "rot_applied_k": 2,
+    "true_centre": [
+     1497.0,
+     3931.0
+    ],
+    "box": [
+     1435,
+     3866,
+     124,
+     130
+    ],
+    "lab_shift": [
+     -2.4818246037472846,
+     -1.537529372577556,
+     -1.6210713729304977
+    ],
+    "region": "resto",
+    "pred_centre": [
+     1497.0,
+     3927.5
+    ],
+    "err_px": 3.5,
+    "err_sides": 0.027559055118110236,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.8033929043804986,
+    "size": [
+     100,
+     105
+    ],
+    "conf": "high",
+    "gap": 0.5546508162879958,
+    "struct": 8.792285910714183,
+    "reason": "rel-comb-cost gap=0.555 (thr 0.12), struct=8.79 (thr 4.0), d_grad=0.132, sharpness=0.732 -> high [distinct + patterned]",
+    "t": 8.527002096176147
+   },
+   {
+    "tag": "deg",
+    "j": 19,
+    "mask_idx": 37,
+    "rot_applied_k": 1,
+    "true_centre": [
+     2766.5,
+     3326.0
+    ],
+    "box": [
+     2699,
+     3266,
+     135,
+     120
+    ],
+    "lab_shift": [
+     0.5365848022996325,
+     1.497858629345452,
+     -1.2302742874437589
+    ],
+    "region": "resto",
+    "pred_centre": [
+     2769.0,
+     3328.5
+    ],
+    "err_px": 3.5355339059327378,
+    "err_sides": 0.027838849653013684,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 1.1019342993118966,
+    "size": [
+     150,
+     133
+    ],
+    "conf": "high",
+    "gap": 0.4193281877869628,
+    "struct": 5.5660326673911955,
+    "reason": "rel-comb-cost gap=0.419 (thr 0.12), struct=5.57 (thr 4.0), d_grad=0.051, sharpness=0.528 -> high [distinct + patterned]",
+    "t": 8.007519483566284
+   },
+   {
+    "tag": "deg",
+    "j": 20,
+    "mask_idx": 25,
+    "rot_applied_k": 3,
+    "true_centre": [
+     4283.5,
+     3638.0
+    ],
+    "box": [
+     4232,
+     3560,
+     103,
+     156
+    ],
+    "lab_shift": [
+     2.2591109819122277,
+     -2.08621324350399,
+     -2.1298532906919805
+    ],
+    "region": "resto",
+    "pred_centre": [
+     4283.0,
+     3637.0
+    ],
+    "err_px": 1.118033988749895,
+    "err_sides": 0.00880341723425114,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.955571563356739,
+    "size": [
+     100,
+     150
+    ],
+    "conf": "high",
+    "gap": 0.49285128927677935,
+    "struct": 12.979101205808577,
+    "reason": "rel-comb-cost gap=0.493 (thr 0.12), struct=12.98 (thr 4.0), d_grad=0.064, sharpness=0.673 -> high [distinct + patterned]",
+    "t": 9.933937072753906
+   },
+   {
+    "tag": "deg",
+    "j": 21,
+    "mask_idx": 1,
+    "rot_applied_k": 1,
+    "true_centre": [
+     4130.5,
+     1706.5
+    ],
+    "box": [
+     4066,
+     1644,
+     129,
+     125
+    ],
+    "lab_shift": [
+     -3.8385486366713226,
+     0.023526523153383216,
+     0.9578300904521706
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     4130.0,
+     1705.5
+    ],
+    "err_px": 1.118033988749895,
+    "err_sides": 0.00880341723425114,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9538811509997237,
+    "size": [
+     122,
+     119
+    ],
+    "conf": "high",
+    "gap": 0.8345245575476135,
+    "struct": 4.4530080338186995,
+    "reason": "rel-comb-cost gap=0.835 (thr 0.12), struct=4.45 (thr 4.0), d_grad=0.096, sharpness=0.850 -> high [distinct + patterned]",
+    "t": 8.765882730484009
+   },
+   {
+    "tag": "deg",
+    "j": 22,
+    "mask_idx": 16,
+    "rot_applied_k": 0,
+    "true_centre": [
+     1996.5,
+     4963.5
+    ],
+    "box": [
+     1917,
+     4913,
+     159,
+     101
+    ],
+    "lab_shift": [
+     2.698715209970871,
+     -2.7939789104481116,
+     2.8897022051497947
+    ],
+    "region": "resto",
+    "pred_centre": [
+     1996.0,
+     4965.0
+    ],
+    "err_px": 1.5811388300841898,
+    "err_sides": 0.012449912047907005,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.8049172993362629,
+    "size": [
+     128,
+     80
+    ],
+    "conf": "ambiguous",
+    "gap": 0.06617730842911222,
+    "struct": 5.960359015588078,
+    "reason": "rel-comb-cost gap=0.066 (thr 0.12), struct=5.96 (thr 4.0), d_grad=0.102, sharpness=0.483 -> ambiguous [near-equal rival]",
+    "t": 12.195313692092896
+   },
+   {
+    "tag": "deg",
+    "j": 23,
+    "mask_idx": 22,
+    "rot_applied_k": 0,
+    "true_centre": [
+     2318.0,
+     4776.0
+    ],
+    "box": [
+     2251,
+     4716,
+     134,
+     120
+    ],
+    "lab_shift": [
+     -5.035347403322364,
+     2.1282942253219677,
+     -2.13193561577182
+    ],
+    "region": "resto",
+    "pred_centre": [
+     2321.5,
+     4775.5
+    ],
+    "err_px": 3.5355339059327378,
+    "err_sides": 0.027838849653013684,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 1.1060383518761432,
+    "size": [
+     147,
+     133
+    ],
+    "conf": "high",
+    "gap": 0.4133256614778196,
+    "struct": 9.269123732003855,
+    "reason": "rel-comb-cost gap=0.413 (thr 0.12), struct=9.27 (thr 4.0), d_grad=0.066, sharpness=0.733 -> high [distinct + patterned]",
+    "t": 7.848064661026001
+   },
+   {
+    "tag": "deg",
+    "j": 24,
+    "mask_idx": 57,
+    "rot_applied_k": 0,
+    "true_centre": [
+     5993.0,
+     4655.0
+    ],
+    "box": [
+     5943,
+     4574,
+     100,
+     162
+    ],
+    "lab_shift": [
+     -0.47118808713243077,
+     -2.769097906786678,
+     -1.1081684387247719
+    ],
+    "region": "resto",
+    "pred_centre": [
+     5998.0,
+     4662.5
+    ],
+    "err_px": 9.013878188659973,
+    "err_sides": 0.07097541880834625,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.9516705312239104,
+    "size": [
+     94,
+     155
+    ],
+    "conf": "high",
+    "gap": 0.3997100750464459,
+    "struct": 13.356006768008628,
+    "reason": "rel-comb-cost gap=0.400 (thr 0.12), struct=13.36 (thr 4.0), d_grad=0.115, sharpness=0.491 -> high [distinct + patterned]",
+    "t": 12.443817138671875
+   },
+   {
+    "tag": "deg",
+    "j": 25,
+    "mask_idx": 16,
+    "rot_applied_k": 0,
+    "true_centre": [
+     2915.5,
+     3551.5
+    ],
+    "box": [
+     2836,
+     3501,
+     159,
+     101
+    ],
+    "lab_shift": [
+     -2.8174064136797687,
+     0.912113030645668,
+     2.5648811797411444
+    ],
+    "region": "resto",
+    "pred_centre": [
+     3399.5,
+     4107.5
+    ],
+    "err_px": 737.151273484622,
+    "err_sides": 5.804340736099386,
+    "top1": false,
+    "top5": true,
+    "rank_correct": 2,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": false,
+    "scale": 1.1067612865873615,
+    "size": [
+     175,
+     111
+    ],
+    "conf": "ambiguous",
+    "gap": 0.14879420854098466,
+    "struct": 3.280375215103088,
+    "reason": "rel-comb-cost gap=0.149 (thr 0.12), struct=3.28 (thr 4.0), d_grad=0.094, sharpness=0.176 -> ambiguous [too uniform to localize]",
+    "t": 12.157256603240967
+   },
+   {
+    "tag": "deg",
+    "j": 26,
+    "mask_idx": 31,
+    "rot_applied_k": 1,
+    "true_centre": [
+     1904.0,
+     4793.0
+    ],
+    "box": [
+     1847,
+     4722,
+     114,
+     142
+    ],
+    "lab_shift": [
+     5.350279331311182,
+     -2.1905660764860873,
+     2.397831202608492
+    ],
+    "region": "resto",
+    "pred_centre": [
+     1897.0,
+     4797.0
+    ],
+    "err_px": 8.06225774829855,
+    "err_sides": 0.06348234447479173,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9520231977289652,
+    "size": [
+     108,
+     136
+    ],
+    "conf": "high",
+    "gap": 0.32887405493409505,
+    "struct": 6.1900552123101535,
+    "reason": "rel-comb-cost gap=0.329 (thr 0.12), struct=6.19 (thr 4.0), d_grad=0.082, sharpness=0.366 -> high [distinct + patterned]",
+    "t": 8.117154836654663
+   },
+   {
+    "tag": "deg",
+    "j": 27,
+    "mask_idx": 7,
+    "rot_applied_k": 1,
+    "true_centre": [
+     1350.5,
+     974.5
+    ],
+    "box": [
+     1287,
+     911,
+     127,
+     127
+    ],
+    "lab_shift": [
+     3.113400925022166,
+     -2.4693449134869585,
+     1.578910461638026
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     1517.5,
+     955.5
+    ],
+    "err_px": 168.0773631397161,
+    "err_sides": 1.3234438042497332,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.8031687260345768,
+    "size": [
+     103,
+     103
+    ],
+    "conf": "ambiguous",
+    "gap": 0.03482960967764544,
+    "struct": 1.8535830071273127,
+    "reason": "rel-comb-cost gap=0.035 (thr 0.12), struct=1.85 (thr 4.0), d_grad=0.130, sharpness=0.151 -> ambiguous [near-equal rival]",
+    "t": 6.530709981918335
+   },
+   {
+    "tag": "deg",
+    "j": 28,
+    "mask_idx": 54,
+    "rot_applied_k": 0,
+    "true_centre": [
+     3402.5,
+     1092.5
+    ],
+    "box": [
+     3338,
+     1030,
+     129,
+     125
+    ],
+    "lab_shift": [
+     1.832037565469288,
+     -0.253284438873997,
+     -0.6370190919736478
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     3410.5,
+     1089.0
+    ],
+    "err_px": 8.73212459828649,
+    "err_sides": 0.06875688660068102,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.8032683376839782,
+    "size": [
+     103,
+     100
+    ],
+    "conf": "ambiguous",
+    "gap": 0.618000620783673,
+    "struct": 2.8645093144746085,
+    "reason": "rel-comb-cost gap=0.618 (thr 0.12), struct=2.86 (thr 4.0), d_grad=0.101, sharpness=0.682 -> ambiguous [too uniform to localize]",
+    "t": 7.458786725997925
+   },
+   {
+    "tag": "deg",
+    "j": 29,
+    "mask_idx": 37,
+    "rot_applied_k": 3,
+    "true_centre": [
+     3686.5,
+     3702.0
+    ],
+    "box": [
+     3619,
+     3642,
+     135,
+     120
+    ],
+    "lab_shift": [
+     3.383868925118872,
+     0.6892875494493702,
+     2.768345368622594
+    ],
+    "region": "resto",
+    "pred_centre": [
+     3687.0,
+     3705.0
+    ],
+    "err_px": 3.0413812651491097,
+    "err_sides": 0.023947883977552046,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.9516705312239104,
+    "size": [
+     128,
+     114
+    ],
+    "conf": "ambiguous",
+    "gap": 0.25946989934448805,
+    "struct": 3.1240406057739705,
+    "reason": "rel-comb-cost gap=0.259 (thr 0.12), struct=3.12 (thr 4.0), d_grad=0.080, sharpness=0.436 -> ambiguous [too uniform to localize]",
+    "t": 7.680619955062866
+   },
+   {
+    "tag": "deg",
+    "j": 30,
+    "mask_idx": 46,
+    "rot_applied_k": 2,
+    "true_centre": [
+     1991.0,
+     2989.0
+    ],
+    "box": [
+     1929,
+     2924,
+     124,
+     130
+    ],
+    "lab_shift": [
+     -3.0653162300015016,
+     -2.500037896736754,
+     1.5381725504607147
+    ],
+    "region": "resto",
+    "pred_centre": [
+     2001.0,
+     2990.5
+    ],
+    "err_px": 10.111874208078342,
+    "err_sides": 0.07962105675652238,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.8033929043804986,
+    "size": [
+     100,
+     105
+    ],
+    "conf": "high",
+    "gap": 0.1501077853571014,
+    "struct": 14.419362315539827,
+    "reason": "rel-comb-cost gap=0.150 (thr 0.12), struct=14.42 (thr 4.0), d_grad=0.136, sharpness=0.401 -> high [distinct + patterned]",
+    "t": 8.041641473770142
+   },
+   {
+    "tag": "deg",
+    "j": 31,
+    "mask_idx": 41,
+    "rot_applied_k": 1,
+    "true_centre": [
+     2660.0,
+     5110.0
+    ],
+    "box": [
+     2597,
+     5046,
+     126,
+     128
+    ],
+    "lab_shift": [
+     -1.1933060208577757,
+     -0.3521274250399138,
+     2.5235923796267468
+    ],
+    "region": "resto",
+    "pred_centre": [
+     2656.5,
+     5108.0
+    ],
+    "err_px": 4.031128874149275,
+    "err_sides": 0.031741172237395865,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.953792430248846,
+    "size": [
+     119,
+     122
+    ],
+    "conf": "high",
+    "gap": 0.4371344660055221,
+    "struct": 4.743233793385867,
+    "reason": "rel-comb-cost gap=0.437 (thr 0.12), struct=4.74 (thr 4.0), d_grad=0.041, sharpness=0.607 -> high [distinct + patterned]",
+    "t": 8.11422610282898
+   },
+   {
+    "tag": "deg",
+    "j": 32,
+    "mask_idx": 23,
+    "rot_applied_k": 3,
+    "true_centre": [
+     6512.0,
+     2639.0
+    ],
+    "box": [
+     6446,
+     2578,
+     132,
+     122
+    ],
+    "lab_shift": [
+     -3.4499571152636763,
+     -2.6061671009944916,
+     -2.5211158855431277
+    ],
+    "region": "resto",
+    "pred_centre": [
+     7182.0,
+     2734.0
+    ],
+    "err_px": 676.7015590347047,
+    "err_sides": 5.32835873255673,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 1.306161849826953,
+    "size": [
+     172,
+     158
+    ],
+    "conf": "ambiguous",
+    "gap": 0.45199359053212385,
+    "struct": 2.1530076899968167,
+    "reason": "rel-comb-cost gap=0.452 (thr 0.12), struct=2.15 (thr 4.0), d_grad=0.084, sharpness=0.025 -> ambiguous [too uniform to localize]",
+    "t": 7.6277430057525635
+   },
+   {
+    "tag": "deg",
+    "j": 33,
+    "mask_idx": 7,
+    "rot_applied_k": 0,
+    "true_centre": [
+     2347.5,
+     4108.5
+    ],
+    "box": [
+     2284,
+     4045,
+     127,
+     127
+    ],
+    "lab_shift": [
+     -3.24568789444787,
+     -0.46923851117857707,
+     -0.25118079015456374
+    ],
+    "region": "resto",
+    "pred_centre": [
+     2348.0,
+     4111.0
+    ],
+    "err_px": 2.5495097567963922,
+    "err_sides": 0.02007487997477474,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.9537628621660599,
+    "size": [
+     122,
+     122
+    ],
+    "conf": "ambiguous",
+    "gap": 0.6666522114326957,
+    "struct": 3.670110783392347,
+    "reason": "rel-comb-cost gap=0.667 (thr 0.12), struct=3.67 (thr 4.0), d_grad=0.033, sharpness=0.664 -> ambiguous [too uniform to localize]",
+    "t": 6.434176445007324
+   },
+   {
+    "tag": "deg",
+    "j": 34,
+    "mask_idx": 16,
+    "rot_applied_k": 1,
+    "true_centre": [
+     1705.5,
+     1681.5
+    ],
+    "box": [
+     1626,
+     1631,
+     159,
+     101
+    ],
+    "lab_shift": [
+     4.228252574640585,
+     2.9644336482821227,
+     -0.7759545278148958
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     1689.5,
+     1682.5
+    ],
+    "err_px": 16.0312195418814,
+    "err_sides": 0.1262300751329244,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 1.1067612865873615,
+    "size": [
+     175,
+     111
+    ],
+    "conf": "ambiguous",
+    "gap": 0.41992539782554816,
+    "struct": 3.9561142469235215,
+    "reason": "rel-comb-cost gap=0.420 (thr 0.12), struct=3.96 (thr 4.0), d_grad=0.107, sharpness=0.096 -> ambiguous [too uniform to localize]",
+    "t": 12.487799406051636
+   },
+   {
+    "tag": "deg",
+    "j": 35,
+    "mask_idx": 2,
+    "rot_applied_k": 1,
+    "true_centre": [
+     2807.5,
+     2153.0
+    ],
+    "box": [
+     2753,
+     2079,
+     109,
+     148
+    ],
+    "lab_shift": [
+     2.246081933698038,
+     1.411957884245183,
+     -1.097774464138379
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     2806.5,
+     2150.0
+    ],
+    "err_px": 3.1622776601683795,
+    "err_sides": 0.02489982409581401,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 1.1042543072165032,
+    "size": [
+     119,
+     164
+    ],
+    "conf": "high",
+    "gap": 0.7254353832347606,
+    "struct": 11.399362212668917,
+    "reason": "rel-comb-cost gap=0.725 (thr 0.12), struct=11.40 (thr 4.0), d_grad=0.078, sharpness=0.780 -> high [distinct + patterned]",
+    "t": 9.109036922454834
+   },
+   {
+    "tag": "deg",
+    "j": 36,
+    "mask_idx": 13,
+    "rot_applied_k": 0,
+    "true_centre": [
+     5442.0,
+     2502.0
+    ],
+    "box": [
+     5381,
+     2436,
+     122,
+     132
+    ],
+    "lab_shift": [
+     4.995543306907635,
+     -0.5439953452563211,
+     -2.833709958079102
+    ],
+    "region": "resto",
+    "pred_centre": [
+     7876.5,
+     878.0
+    ],
+    "err_px": 2926.459678519422,
+    "err_sides": 23.04298959464112,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": false,
+    "scale": 0.9545028902581578,
+    "size": [
+     125,
+     116
+    ],
+    "conf": "ambiguous",
+    "gap": 0.12397054588145426,
+    "struct": 0.8753569449479223,
+    "reason": "rel-comb-cost gap=0.124 (thr 0.12), struct=0.88 (thr 4.0), d_grad=0.121, sharpness=0.143 -> ambiguous [too uniform to localize]",
+    "t": 6.035698175430298
+   },
+   {
+    "tag": "deg",
+    "j": 37,
+    "mask_idx": 25,
+    "rot_applied_k": 2,
+    "true_centre": [
+     7416.5,
+     2631.0
+    ],
+    "box": [
+     7365,
+     2553,
+     103,
+     156
+    ],
+    "lab_shift": [
+     5.4317926658468,
+     -2.024461749770038,
+     -1.7228418717138723
+    ],
+    "region": "resto",
+    "pred_centre": [
+     3915.5,
+     4274.5
+    ],
+    "err_px": 3867.5694240698513,
+    "err_sides": 30.453302551731113,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": false,
+    "scale": 0.8046918428267275,
+    "size": [
+     125,
+     83
+    ],
+    "conf": "ambiguous",
+    "gap": 0.12196095489491875,
+    "struct": 1.8016523514636582,
+    "reason": "rel-comb-cost gap=0.122 (thr 0.12), struct=1.80 (thr 4.0), d_grad=0.116, sharpness=0.394 -> ambiguous [too uniform to localize]",
+    "t": 9.717895269393921
+   },
+   {
+    "tag": "deg",
+    "j": 38,
+    "mask_idx": 38,
+    "rot_applied_k": 1,
+    "true_centre": [
+     3313.5,
+     4694.5
+    ],
+    "box": [
+     3241,
+     4639,
+     145,
+     111
+    ],
+    "lab_shift": [
+     5.670117239494612,
+     0.061273377451218636,
+     1.1804656641271007
+    ],
+    "region": "resto",
+    "pred_centre": [
+     3312.5,
+     4695.5
+    ],
+    "err_px": 1.4142135623730951,
+    "err_sides": 0.011135539861205473,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9547697223624036,
+    "size": [
+     139,
+     105
+    ],
+    "conf": "high",
+    "gap": 0.7363574652241374,
+    "struct": 13.762279347075182,
+    "reason": "rel-comb-cost gap=0.736 (thr 0.12), struct=13.76 (thr 4.0), d_grad=0.077, sharpness=0.791 -> high [distinct + patterned]",
+    "t": 8.61229681968689
+   },
+   {
+    "tag": "deg",
+    "j": 39,
+    "mask_idx": 13,
+    "rot_applied_k": 2,
+    "true_centre": [
+     6523.0,
+     928.0
+    ],
+    "box": [
+     6462,
+     862,
+     122,
+     132
+    ],
+    "lab_shift": [
+     0.7400979456739991,
+     1.8499764409999635,
+     1.6453627018480326
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     6516.0,
+     918.5
+    ],
+    "err_px": 11.800423721205947,
+    "err_sides": 0.09291672221422005,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.9545028902581578,
+    "size": [
+     116,
+     125
+    ],
+    "conf": "ambiguous",
+    "gap": 0.5691697258845868,
+    "struct": 3.396330480000792,
+    "reason": "rel-comb-cost gap=0.569 (thr 0.12), struct=3.40 (thr 4.0), d_grad=0.069, sharpness=0.443 -> ambiguous [too uniform to localize]",
+    "t": 6.11790657043457
+   },
+   {
+    "tag": "deg",
+    "j": 40,
+    "mask_idx": 22,
+    "rot_applied_k": 3,
+    "true_centre": [
+     7369.0,
+     545.0
+    ],
+    "box": [
+     7302,
+     485,
+     134,
+     120
+    ],
+    "lab_shift": [
+     -4.726827150068841,
+     -2.080024619680028,
+     0.4852908829488678
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     7365.0,
+     545.0
+    ],
+    "err_px": 4.0,
+    "err_sides": 0.031496062992125984,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.9552149402566691,
+    "size": [
+     128,
+     114
+    ],
+    "conf": "high",
+    "gap": 0.37073296332325356,
+    "struct": 4.479790603979368,
+    "reason": "rel-comb-cost gap=0.371 (thr 0.12), struct=4.48 (thr 4.0), d_grad=0.086, sharpness=0.348 -> high [distinct + patterned]",
+    "t": 7.963606119155884
+   },
+   {
+    "tag": "deg",
+    "j": 41,
+    "mask_idx": 35,
+    "rot_applied_k": 1,
+    "true_centre": [
+     891.5,
+     1744.5
+    ],
+    "box": [
+     836,
+     1672,
+     111,
+     145
+    ],
+    "lab_shift": [
+     -1.3108769478542257,
+     0.035227315323479225,
+     1.5344333526600291
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     889.5,
+     1743.5
+    ],
+    "err_px": 2.23606797749979,
+    "err_sides": 0.01760683446850228,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9547697223624036,
+    "size": [
+     105,
+     139
+    ],
+    "conf": "high",
+    "gap": 0.6757347806048584,
+    "struct": 9.921318589537899,
+    "reason": "rel-comb-cost gap=0.676 (thr 0.12), struct=9.92 (thr 4.0), d_grad=0.046, sharpness=0.726 -> high [distinct + patterned]",
+    "t": 8.585317373275757
+   },
+   {
+    "tag": "deg",
+    "j": 42,
+    "mask_idx": 33,
+    "rot_applied_k": 1,
+    "true_centre": [
+     6282.0,
+     2981.0
+    ],
+    "box": [
+     6229,
+     2905,
+     106,
+     152
+    ],
+    "lab_shift": [
+     -1.713801579249992,
+     1.8358648852953312,
+     -1.8817287199056596
+    ],
+    "region": "resto",
+    "pred_centre": [
+     6281.0,
+     2974.0
+    ],
+    "err_px": 7.0710678118654755,
+    "err_sides": 0.05567769930602737,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9542658938820013,
+    "size": [
+     100,
+     144
+    ],
+    "conf": "high",
+    "gap": 0.5590357970687411,
+    "struct": 10.328694120447805,
+    "reason": "rel-comb-cost gap=0.559 (thr 0.12), struct=10.33 (thr 4.0), d_grad=0.079, sharpness=0.646 -> high [distinct + patterned]",
+    "t": 9.521995544433594
+   },
+   {
+    "tag": "deg",
+    "j": 43,
+    "mask_idx": 13,
+    "rot_applied_k": 3,
+    "true_centre": [
+     5201.0,
+     4942.0
+    ],
+    "box": [
+     5140,
+     4876,
+     122,
+     132
+    ],
+    "lab_shift": [
+     -3.481884050338336,
+     -1.6035257755731671,
+     -0.2606473335597119
+    ],
+    "region": "resto",
+    "pred_centre": [
+     5205.0,
+     4940.5
+    ],
+    "err_px": 4.272001872658765,
+    "err_sides": 0.03363781002093516,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.954502890258158,
+    "size": [
+     116,
+     125
+    ],
+    "conf": "high",
+    "gap": 0.2850144456062073,
+    "struct": 5.205206485149692,
+    "reason": "rel-comb-cost gap=0.285 (thr 0.12), struct=5.21 (thr 4.0), d_grad=0.081, sharpness=0.550 -> high [distinct + patterned]",
+    "t": 6.068044662475586
+   },
+   {
+    "tag": "deg",
+    "j": 44,
+    "mask_idx": 34,
+    "rot_applied_k": 0,
+    "true_centre": [
+     724.0,
+     2087.0
+    ],
+    "box": [
+     663,
+     2021,
+     122,
+     132
+    ],
+    "lab_shift": [
+     3.012881243629625,
+     2.3339102032955577,
+     -1.6000141834984367
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     723.0,
+     2091.5
+    ],
+    "err_px": 4.6097722286464435,
+    "err_sides": 0.03629741912320034,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.9545028902581578,
+    "size": [
+     116,
+     125
+    ],
+    "conf": "high",
+    "gap": 0.47895920657463037,
+    "struct": 4.749908292226253,
+    "reason": "rel-comb-cost gap=0.479 (thr 0.12), struct=4.75 (thr 4.0), d_grad=0.082, sharpness=0.425 -> high [distinct + patterned]",
+    "t": 9.149839162826538
+   },
+   {
+    "tag": "deg",
+    "j": 45,
+    "mask_idx": 26,
+    "rot_applied_k": 3,
+    "true_centre": [
+     1002.0,
+     789.5
+    ],
+    "box": [
+     942,
+     722,
+     120,
+     135
+    ],
+    "lab_shift": [
+     2.464567052196692,
+     -2.593182927243795,
+     2.8238843636944795
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     1018.5,
+     802.0
+    ],
+    "err_px": 20.700241544484452,
+    "err_sides": 0.1629940279093264,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.8014067631359247,
+    "size": [
+     97,
+     108
+    ],
+    "conf": "high",
+    "gap": 0.33819959723602244,
+    "struct": 18.7226997643787,
+    "reason": "rel-comb-cost gap=0.338 (thr 0.12), struct=18.72 (thr 4.0), d_grad=0.185, sharpness=0.607 -> high [distinct + patterned]",
+    "t": 9.348197937011719
+   },
+   {
+    "tag": "deg",
+    "j": 46,
+    "mask_idx": 23,
+    "rot_applied_k": 1,
+    "true_centre": [
+     1356.0,
+     4067.0
+    ],
+    "box": [
+     1290,
+     4006,
+     132,
+     122
+    ],
+    "lab_shift": [
+     -0.9305896616748512,
+     2.400452313846424,
+     -0.04524875638503989
+    ],
+    "region": "resto",
+    "pred_centre": [
+     1356.5,
+     4066.0
+    ],
+    "err_px": 1.118033988749895,
+    "err_sides": 0.00880341723425114,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9545028902581578,
+    "size": [
+     125,
+     116
+    ],
+    "conf": "high",
+    "gap": 0.5327080676355418,
+    "struct": 8.802072532361702,
+    "reason": "rel-comb-cost gap=0.533 (thr 0.12), struct=8.80 (thr 4.0), d_grad=0.070, sharpness=0.638 -> high [distinct + patterned]",
+    "t": 8.201212406158447
+   },
+   {
+    "tag": "deg",
+    "j": 47,
+    "mask_idx": 23,
+    "rot_applied_k": 0,
+    "true_centre": [
+     1601.0,
+     884.0
+    ],
+    "box": [
+     1535,
+     823,
+     132,
+     122
+    ],
+    "lab_shift": [
+     -3.823806077514321,
+     -1.3765909826647345,
+     -2.547729397070352
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     2680.5,
+     857.5
+    ],
+    "err_px": 1079.8252173384358,
+    "err_sides": 8.502560766444375,
+    "top1": false,
+    "top5": true,
+    "rank_correct": 2,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.8037919075858174,
+    "size": [
+     105,
+     97
+    ],
+    "conf": "ambiguous",
+    "gap": 0.06675514394960502,
+    "struct": 1.4987966291322155,
+    "reason": "rel-comb-cost gap=0.067 (thr 0.12), struct=1.50 (thr 4.0), d_grad=0.152, sharpness=0.118 -> ambiguous [near-equal rival]",
+    "t": 8.963483572006226
+   },
+   {
+    "tag": "deg",
+    "j": 48,
+    "mask_idx": 28,
+    "rot_applied_k": 3,
+    "true_centre": [
+     5199.5,
+     2523.5
+    ],
+    "box": [
+     5138,
+     2458,
+     123,
+     131
+    ],
+    "lab_shift": [
+     4.78455978360706,
+     0.6700064780129118,
+     1.0903306885481268
+    ],
+    "region": "resto",
+    "pred_centre": [
+     4957.0,
+     2253.0
+    ],
+    "err_px": 363.2857002415592,
+    "err_sides": 2.8605173247366866,
+    "top1": false,
+    "top5": true,
+    "rank_correct": 2,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 1.1049051683372797,
+    "size": [
+     136,
+     144
+    ],
+    "conf": "ambiguous",
+    "gap": 0.43024184065925947,
+    "struct": 1.8027794330486582,
+    "reason": "rel-comb-cost gap=0.430 (thr 0.12), struct=1.80 (thr 4.0), d_grad=0.055, sharpness=0.364 -> ambiguous [too uniform to localize]",
+    "t": 10.138561964035034
+   },
+   {
+    "tag": "deg",
+    "j": 49,
+    "mask_idx": 6,
+    "rot_applied_k": 2,
+    "true_centre": [
+     3551.0,
+     1800.5
+    ],
+    "box": [
+     3468,
+     1752,
+     166,
+     97
+    ],
+    "lab_shift": [
+     4.6411029466048,
+     -0.7854819160455095,
+     -0.3792347088032364
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     3558.5,
+     1780.0
+    ],
+    "err_px": 21.828879952943073,
+    "err_sides": 0.17188094451136277,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.8038418247979497,
+    "size": [
+     133,
+     78
+    ],
+    "conf": "ambiguous",
+    "gap": 0.20954603385646273,
+    "struct": 1.4959114767006527,
+    "reason": "rel-comb-cost gap=0.210 (thr 0.12), struct=1.50 (thr 4.0), d_grad=0.131, sharpness=0.429 -> ambiguous [too uniform to localize]",
+    "t": 15.5187406539917
+   },
+   {
+    "tag": "deg",
+    "j": 50,
+    "mask_idx": 1,
+    "rot_applied_k": 1,
+    "true_centre": [
+     4354.5,
+     2971.5
+    ],
+    "box": [
+     4290,
+     2909,
+     129,
+     125
+    ],
+    "lab_shift": [
+     -0.8191945747194627,
+     -0.8803287198271761,
+     0.2504584672143557
+    ],
+    "region": "resto",
+    "pred_centre": [
+     4355.0,
+     2972.5
+    ],
+    "err_px": 1.118033988749895,
+    "err_sides": 0.00880341723425114,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9538811509997237,
+    "size": [
+     122,
+     119
+    ],
+    "conf": "ambiguous",
+    "gap": 0.6428847651696163,
+    "struct": 3.714770423010584,
+    "reason": "rel-comb-cost gap=0.643 (thr 0.12), struct=3.71 (thr 4.0), d_grad=0.096, sharpness=0.629 -> ambiguous [too uniform to localize]",
+    "t": 7.957536935806274
+   },
+   {
+    "tag": "deg",
+    "j": 51,
+    "mask_idx": 28,
+    "rot_applied_k": 1,
+    "true_centre": [
+     5946.5,
+     1144.5
+    ],
+    "box": [
+     5885,
+     1079,
+     123,
+     131
+    ],
+    "lab_shift": [
+     2.6455414414704173,
+     -1.7479919364575955,
+     2.5921488013052327
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     7496.0,
+     1325.0
+    ],
+    "err_px": 1559.9777241999323,
+    "err_sides": 12.2832891669286,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": false,
+    "scale": 1.1049051683372797,
+    "size": [
+     136,
+     144
+    ],
+    "conf": "ambiguous",
+    "gap": 0.4392119629280004,
+    "struct": 2.7621490383702993,
+    "reason": "rel-comb-cost gap=0.439 (thr 0.12), struct=2.76 (thr 4.0), d_grad=0.084, sharpness=0.381 -> ambiguous [too uniform to localize]",
+    "t": 7.238624572753906
+   },
+   {
+    "tag": "deg",
+    "j": 52,
+    "mask_idx": 42,
+    "rot_applied_k": 1,
+    "true_centre": [
+     2731.5,
+     4696.5
+    ],
+    "box": [
+     2667,
+     4634,
+     129,
+     125
+    ],
+    "lab_shift": [
+     -5.431486884159869,
+     2.8658095391962632,
+     2.5721219044434074
+    ],
+    "region": "resto",
+    "pred_centre": [
+     2733.0,
+     4696.5
+    ],
+    "err_px": 1.5,
+    "err_sides": 0.011811023622047244,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9538811509997237,
+    "size": [
+     122,
+     119
+    ],
+    "conf": "high",
+    "gap": 0.6316085249839491,
+    "struct": 9.04346243827508,
+    "reason": "rel-comb-cost gap=0.632 (thr 0.12), struct=9.04 (thr 4.0), d_grad=0.051, sharpness=0.703 -> high [distinct + patterned]",
+    "t": 7.182184457778931
+   },
+   {
+    "tag": "deg",
+    "j": 53,
+    "mask_idx": 48,
+    "rot_applied_k": 2,
+    "true_centre": [
+     4467.0,
+     2906.0
+    ],
+    "box": [
+     4408,
+     2838,
+     118,
+     136
+    ],
+    "lab_shift": [
+     -4.999002786263539,
+     -2.4553072124272273,
+     1.1438707144462015
+    ],
+    "region": "resto",
+    "pred_centre": [
+     7363.0,
+     2638.0
+    ],
+    "err_px": 2908.3741162374554,
+    "err_sides": 22.900583592420908,
+    "top1": false,
+    "top5": false,
+    "rank_correct": null,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": false,
+    "scale": 0.9561668238414022,
+    "size": [
+     130,
+     114
+    ],
+    "conf": "ambiguous",
+    "gap": 0.22665278305984435,
+    "struct": 2.8973514044272557,
+    "reason": "rel-comb-cost gap=0.227 (thr 0.12), struct=2.90 (thr 4.0), d_grad=0.065, sharpness=0.130 -> ambiguous [too uniform to localize]",
+    "t": 8.382270574569702
+   },
+   {
+    "tag": "deg",
+    "j": 54,
+    "mask_idx": 1,
+    "rot_applied_k": 3,
+    "true_centre": [
+     4047.5,
+     417.5
+    ],
+    "box": [
+     3983,
+     355,
+     129,
+     125
+    ],
+    "lab_shift": [
+     3.946103135471839,
+     1.98316255301917,
+     -0.9809286590727799
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     4599.5,
+     448.0
+    ],
+    "err_px": 552.841975613285,
+    "err_sides": 4.35308642215185,
+    "top1": false,
+    "top5": true,
+    "rank_correct": 1,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 1.3053110487364643,
+    "size": [
+     169,
+     164
+    ],
+    "conf": "ambiguous",
+    "gap": 0.12737542091966642,
+    "struct": 2.595446770625593,
+    "reason": "rel-comb-cost gap=0.127 (thr 0.12), struct=2.60 (thr 4.0), d_grad=0.061, sharpness=0.124 -> ambiguous [too uniform to localize]",
+    "t": 7.951138973236084
+   },
+   {
+    "tag": "deg",
+    "j": 55,
+    "mask_idx": 0,
+    "rot_applied_k": 2,
+    "true_centre": [
+     1437.5,
+     1198.5
+    ],
+    "box": [
+     1385,
+     1122,
+     105,
+     153
+    ],
+    "lab_shift": [
+     2.5371904492419706,
+     0.059563420293584635,
+     0.5335536180935749
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     1436.0,
+     1196.5
+    ],
+    "err_px": 2.5,
+    "err_sides": 0.01968503937007874,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.9556607815599449,
+    "size": [
+     100,
+     147
+    ],
+    "conf": "high",
+    "gap": 0.6491777868812494,
+    "struct": 9.704108343492983,
+    "reason": "rel-comb-cost gap=0.649 (thr 0.12), struct=9.70 (thr 4.0), d_grad=0.084, sharpness=0.759 -> high [distinct + patterned]",
+    "t": 9.229703903198242
+   },
+   {
+    "tag": "deg",
+    "j": 56,
+    "mask_idx": 60,
+    "rot_applied_k": 2,
+    "true_centre": [
+     7074.5,
+     4167.5
+    ],
+    "box": [
+     6999,
+     4114,
+     151,
+     107
+    ],
+    "lab_shift": [
+     4.789480491418622,
+     -1.2503185156991667,
+     2.877663713984008
+    ],
+    "region": "resto",
+    "pred_centre": [
+     7065.0,
+     4170.5
+    ],
+    "err_px": 9.962429422585638,
+    "err_sides": 0.07844432616209164,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.9529360706750416,
+    "size": [
+     144,
+     103
+    ],
+    "conf": "high",
+    "gap": 0.49196165181031243,
+    "struct": 16.58783787688559,
+    "reason": "rel-comb-cost gap=0.492 (thr 0.12), struct=16.59 (thr 4.0), d_grad=0.076, sharpness=0.704 -> high [distinct + patterned]",
+    "t": 8.892472267150879
+   },
+   {
+    "tag": "deg",
+    "j": 57,
+    "mask_idx": 60,
+    "rot_applied_k": 3,
+    "true_centre": [
+     1158.5,
+     819.5
+    ],
+    "box": [
+     1083,
+     766,
+     151,
+     107
+    ],
+    "lab_shift": [
+     -3.701747546057244,
+     -0.9817521586880864,
+     -1.6833735887040795
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     1153.0,
+     794.5
+    ],
+    "err_px": 25.59785147234041,
+    "err_sides": 0.2015578856089796,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 1.103399660781627,
+    "size": [
+     166,
+     119
+    ],
+    "conf": "ambiguous",
+    "gap": 0.4288837238064065,
+    "struct": 2.1963967277252103,
+    "reason": "rel-comb-cost gap=0.429 (thr 0.12), struct=2.20 (thr 4.0), d_grad=0.068, sharpness=0.233 -> ambiguous [too uniform to localize]",
+    "t": 9.186115503311157
+   },
+   {
+    "tag": "deg",
+    "j": 58,
+    "mask_idx": 46,
+    "rot_applied_k": 0,
+    "true_centre": [
+     3587.0,
+     1662.0
+    ],
+    "box": [
+     3525,
+     1597,
+     124,
+     130
+    ],
+    "lab_shift": [
+     -0.44796077610454077,
+     1.700924850510476,
+     -1.0693639675111795
+    ],
+    "region": "ceu",
+    "pred_centre": [
+     3591.0,
+     1663.0
+    ],
+    "err_px": 4.123105625617661,
+    "err_sides": 0.03246539862691071,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 1.1046652435231856,
+    "size": [
+     136,
+     144
+    ],
+    "conf": "ambiguous",
+    "gap": 0.5512023713746005,
+    "struct": 2.8573910387493653,
+    "reason": "rel-comb-cost gap=0.551 (thr 0.12), struct=2.86 (thr 4.0), d_grad=0.089, sharpness=0.570 -> ambiguous [too uniform to localize]",
+    "t": 8.206525087356567
+   },
+   {
+    "tag": "deg",
+    "j": 59,
+    "mask_idx": 23,
+    "rot_applied_k": 0,
+    "true_centre": [
+     6336.0,
+     2744.0
+    ],
+    "box": [
+     6270,
+     2683,
+     132,
+     122
+    ],
+    "lab_shift": [
+     -3.070213698333609,
+     2.569543884287797,
+     1.411170315161046
+    ],
+    "region": "resto",
+    "pred_centre": [
+     6529.5,
+     2596.0
+    ],
+    "err_px": 243.6108577219004,
+    "err_sides": 1.918195730093704,
+    "top1": false,
+    "top5": true,
+    "rank_correct": 1,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": false,
+    "scale": 1.105213872930499,
+    "size": [
+     147,
+     136
+    ],
+    "conf": "ambiguous",
+    "gap": 0.1893862994482914,
+    "struct": 3.480684840142663,
+    "reason": "rel-comb-cost gap=0.189 (thr 0.12), struct=3.48 (thr 4.0), d_grad=0.089, sharpness=0.259 -> ambiguous [too uniform to localize]",
+    "t": 7.4114603996276855
+   },
+   {
+    "tag": "limpo",
+    "j": 0,
+    "mask_idx": 21,
+    "rot_applied_k": 1,
+    "true_centre": [
+     3604.5,
+     1018.0
+    ],
+    "box": [
+     3556,
+     935,
+     97,
+     166
+    ],
+    "lab_shift": null,
+    "region": "ceu",
+    "pred_centre": [
+     3601.5,
+     1016.0
+    ],
+    "err_px": 3.605551275463989,
+    "err_sides": 0.0283901675233385,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 0.9545621669475651,
+    "size": [
+     91,
+     158
+    ],
+    "conf": "ambiguous",
+    "gap": 0.7056380743349491,
+    "struct": 3.320398924208379,
+    "reason": "rel-comb-cost gap=0.706 (thr 0.12), struct=3.32 (thr 4.0), d_grad=0.062, sharpness=0.687 -> ambiguous [too uniform to localize]",
+    "t": 11.917818784713745
+   },
+   {
+    "tag": "limpo",
+    "j": 1,
+    "mask_idx": 50,
+    "rot_applied_k": 3,
+    "true_centre": [
+     7315.5,
+     809.5
+    ],
+    "box": [
+     7253,
+     745,
+     125,
+     129
+    ],
+    "lab_shift": null,
+    "region": "ceu",
+    "pred_centre": [
+     7315.0,
+     819.5
+    ],
+    "err_px": 10.012492197250394,
+    "err_sides": 0.07883852123819207,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.8032683376839782,
+    "size": [
+     100,
+     103
+    ],
+    "conf": "ambiguous",
+    "gap": 0.7414175079142702,
+    "struct": 1.3457392748024912,
+    "reason": "rel-comb-cost gap=0.741 (thr 0.12), struct=1.35 (thr 4.0), d_grad=0.076, sharpness=0.603 -> ambiguous [too uniform to localize]",
+    "t": 6.8692522048950195
+   },
+   {
+    "tag": "limpo",
+    "j": 2,
+    "mask_idx": 19,
+    "rot_applied_k": 1,
+    "true_centre": [
+     6064.5,
+     2319.5
+    ],
+    "box": [
+     6000,
+     2257,
+     129,
+     125
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     6232.5,
+     2391.0
+    ],
+    "err_px": 182.5821732809641,
+    "err_sides": 1.4376549077241267,
+    "top1": false,
+    "top5": true,
+    "rank_correct": 2,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": false,
+    "scale": 1.3053110487364643,
+    "size": [
+     169,
+     164
+    ],
+    "conf": "ambiguous",
+    "gap": 0.42446643885870516,
+    "struct": 2.4274417896407394,
+    "reason": "rel-comb-cost gap=0.424 (thr 0.12), struct=2.43 (thr 4.0), d_grad=0.057, sharpness=0.392 -> ambiguous [too uniform to localize]",
+    "t": 7.897129058837891
+   },
+   {
+    "tag": "limpo",
+    "j": 3,
+    "mask_idx": 31,
+    "rot_applied_k": 3,
+    "true_centre": [
+     2113.0,
+     3062.0
+    ],
+    "box": [
+     2056,
+     2991,
+     114,
+     142
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     2116.0,
+     3064.0
+    ],
+    "err_px": 3.605551275463989,
+    "err_sides": 0.0283901675233385,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.9520231977289652,
+    "size": [
+     108,
+     136
+    ],
+    "conf": "ambiguous",
+    "gap": 0.6341570068472894,
+    "struct": 2.3128626333430233,
+    "reason": "rel-comb-cost gap=0.634 (thr 0.12), struct=2.31 (thr 4.0), d_grad=0.071, sharpness=0.602 -> ambiguous [too uniform to localize]",
+    "t": 8.222174644470215
+   },
+   {
+    "tag": "limpo",
+    "j": 4,
+    "mask_idx": 29,
+    "rot_applied_k": 2,
+    "true_centre": [
+     2695.5,
+     1573.0
+    ],
+    "box": [
+     2645,
+     1493,
+     101,
+     160
+    ],
+    "lab_shift": null,
+    "region": "ceu",
+    "pred_centre": [
+     2829.5,
+     1559.0
+    ],
+    "err_px": 134.72935834479432,
+    "err_sides": 1.060861089329089,
+    "top1": false,
+    "top5": true,
+    "rank_correct": 1,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 1.30389673405117,
+    "size": [
+     133,
+     208
+    ],
+    "conf": "ambiguous",
+    "gap": 0.03870937244170337,
+    "struct": 1.7814561462562084,
+    "reason": "rel-comb-cost gap=0.039 (thr 0.12), struct=1.78 (thr 4.0), d_grad=0.048, sharpness=0.057 -> ambiguous [near-equal rival]",
+    "t": 12.522119760513306
+   },
+   {
+    "tag": "limpo",
+    "j": 5,
+    "mask_idx": 14,
+    "rot_applied_k": 2,
+    "true_centre": [
+     2837.0,
+     4256.5
+    ],
+    "box": [
+     2763,
+     4202,
+     148,
+     109
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     2837.0,
+     4256.5
+    ],
+    "err_px": 0.0,
+    "err_sides": 0.0,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 1.1042543072165032,
+    "size": [
+     164,
+     119
+    ],
+    "conf": "high",
+    "gap": 0.6473149154499056,
+    "struct": 17.613359527776872,
+    "reason": "rel-comb-cost gap=0.647 (thr 0.12), struct=17.61 (thr 4.0), d_grad=0.106, sharpness=0.783 -> high [distinct + patterned]",
+    "t": 8.434294700622559
+   },
+   {
+    "tag": "limpo",
+    "j": 6,
+    "mask_idx": 10,
+    "rot_applied_k": 1,
+    "true_centre": [
+     1691.5,
+     4110.5
+    ],
+    "box": [
+     1627,
+     4048,
+     129,
+     125
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     1692.5,
+     4110.5
+    ],
+    "err_px": 1.0,
+    "err_sides": 0.007874015748031496,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 1.1044939643154699,
+    "size": [
+     141,
+     139
+    ],
+    "conf": "high",
+    "gap": 0.5156639466738242,
+    "struct": 9.837377503940566,
+    "reason": "rel-comb-cost gap=0.516 (thr 0.12), struct=9.84 (thr 4.0), d_grad=0.049, sharpness=0.643 -> high [distinct + patterned]",
+    "t": 6.616086483001709
+   },
+   {
+    "tag": "limpo",
+    "j": 7,
+    "mask_idx": 3,
+    "rot_applied_k": 2,
+    "true_centre": [
+     2486.5,
+     472.5
+    ],
+    "box": [
+     2436,
+     393,
+     101,
+     159
+    ],
+    "lab_shift": null,
+    "region": "ceu",
+    "pred_centre": [
+     2487.5,
+     475.0
+    ],
+    "err_px": 2.692582403567252,
+    "err_sides": 0.021201436248561037,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.955839292961812,
+    "size": [
+     97,
+     152
+    ],
+    "conf": "ambiguous",
+    "gap": 0.7662634114963377,
+    "struct": 1.0382687860031434,
+    "reason": "rel-comb-cost gap=0.766 (thr 0.12), struct=1.04 (thr 4.0), d_grad=0.067, sharpness=0.535 -> ambiguous [too uniform to localize]",
+    "t": 12.389535903930664
+   },
+   {
+    "tag": "limpo",
+    "j": 8,
+    "mask_idx": 10,
+    "rot_applied_k": 3,
+    "true_centre": [
+     4916.5,
+     2822.5
+    ],
+    "box": [
+     4852,
+     2760,
+     129,
+     125
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     4918.5,
+     2822.0
+    ],
+    "err_px": 2.0615528128088303,
+    "err_sides": 0.016232699313455355,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.803268337683978,
+    "size": [
+     103,
+     100
+    ],
+    "conf": "ambiguous",
+    "gap": 0.27607192701628536,
+    "struct": 3.117418147489259,
+    "reason": "rel-comb-cost gap=0.276 (thr 0.12), struct=3.12 (thr 4.0), d_grad=0.090, sharpness=0.740 -> ambiguous [too uniform to localize]",
+    "t": 6.771727561950684
+   },
+   {
+    "tag": "limpo",
+    "j": 9,
+    "mask_idx": 60,
+    "rot_applied_k": 2,
+    "true_centre": [
+     3102.5,
+     2757.5
+    ],
+    "box": [
+     3027,
+     2704,
+     151,
+     107
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     3099.0,
+     2756.5
+    ],
+    "err_px": 3.640054944640259,
+    "err_sides": 0.028661849957797317,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.9529360706750416,
+    "size": [
+     144,
+     103
+    ],
+    "conf": "high",
+    "gap": 0.5395665598774712,
+    "struct": 13.550921638878068,
+    "reason": "rel-comb-cost gap=0.540 (thr 0.12), struct=13.55 (thr 4.0), d_grad=0.100, sharpness=0.730 -> high [distinct + patterned]",
+    "t": 9.289912223815918
+   },
+   {
+    "tag": "limpo",
+    "j": 10,
+    "mask_idx": 52,
+    "rot_applied_k": 2,
+    "true_centre": [
+     7284.5,
+     2098.5
+    ],
+    "box": [
+     7219,
+     2037,
+     131,
+     123
+    ],
+    "lab_shift": null,
+    "region": "ceu",
+    "pred_centre": [
+     7280.5,
+     2098.0
+    ],
+    "err_px": 4.031128874149275,
+    "err_sides": 0.031741172237395865,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.9542362817458322,
+    "size": [
+     125,
+     116
+    ],
+    "conf": "ambiguous",
+    "gap": 0.1541147759782711,
+    "struct": 0.6250100056216257,
+    "reason": "rel-comb-cost gap=0.154 (thr 0.12), struct=0.63 (thr 4.0), d_grad=0.066, sharpness=0.644 -> ambiguous [too uniform to localize]",
+    "t": 8.688603639602661
+   },
+   {
+    "tag": "limpo",
+    "j": 11,
+    "mask_idx": 43,
+    "rot_applied_k": 3,
+    "true_centre": [
+     5661.0,
+     2237.5
+    ],
+    "box": [
+     5607,
+     2163,
+     108,
+     149
+    ],
+    "lab_shift": null,
+    "region": "ceu",
+    "pred_centre": [
+     5661.5,
+     2238.5
+    ],
+    "err_px": 1.118033988749895,
+    "err_sides": 0.00880341723425114,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.9548587161382749,
+    "size": [
+     103,
+     141
+    ],
+    "conf": "ambiguous",
+    "gap": 0.6538896739056611,
+    "struct": 1.0506252378738725,
+    "reason": "rel-comb-cost gap=0.654 (thr 0.12), struct=1.05 (thr 4.0), d_grad=0.059, sharpness=0.641 -> ambiguous [too uniform to localize]",
+    "t": 9.479774475097656
+   },
+   {
+    "tag": "limpo",
+    "j": 12,
+    "mask_idx": 38,
+    "rot_applied_k": 2,
+    "true_centre": [
+     617.5,
+     4975.5
+    ],
+    "box": [
+     545,
+     4920,
+     145,
+     111
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     618.5,
+     4972.5
+    ],
+    "err_px": 3.1622776601683795,
+    "err_sides": 0.02489982409581401,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.9547697223624036,
+    "size": [
+     139,
+     105
+    ],
+    "conf": "high",
+    "gap": 0.7553198703080137,
+    "struct": 9.718634028726985,
+    "reason": "rel-comb-cost gap=0.755 (thr 0.12), struct=9.72 (thr 4.0), d_grad=0.067, sharpness=0.762 -> high [distinct + patterned]",
+    "t": 8.854387760162354
+   },
+   {
+    "tag": "limpo",
+    "j": 13,
+    "mask_idx": 18,
+    "rot_applied_k": 3,
+    "true_centre": [
+     2297.5,
+     2559.5
+    ],
+    "box": [
+     2222,
+     2506,
+     151,
+     107
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     2295.0,
+     2554.0
+    ],
+    "err_px": 6.041522986797286,
+    "err_sides": 0.04757104714013611,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.802472480568456,
+    "size": [
+     122,
+     86
+    ],
+    "conf": "high",
+    "gap": 0.2823710009466627,
+    "struct": 5.418560346898474,
+    "reason": "rel-comb-cost gap=0.282 (thr 0.12), struct=5.42 (thr 4.0), d_grad=0.134, sharpness=0.712 -> high [distinct + patterned]",
+    "t": 9.931366205215454
+   },
+   {
+    "tag": "limpo",
+    "j": 14,
+    "mask_idx": 56,
+    "rot_applied_k": 2,
+    "true_centre": [
+     2383.5,
+     2303.5
+    ],
+    "box": [
+     2327,
+     2232,
+     113,
+     143
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     2387.5,
+     2308.0
+    ],
+    "err_px": 6.020797289396148,
+    "err_sides": 0.047407852672410614,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 1.3039370792631804,
+    "size": [
+     147,
+     186
+    ],
+    "conf": "ambiguous",
+    "gap": 0.6490902523721518,
+    "struct": 2.3440841518061855,
+    "reason": "rel-comb-cost gap=0.649 (thr 0.12), struct=2.34 (thr 4.0), d_grad=0.038, sharpness=0.709 -> ambiguous [too uniform to localize]",
+    "t": 8.297740936279297
+   },
+   {
+    "tag": "limpo",
+    "j": 15,
+    "mask_idx": 40,
+    "rot_applied_k": 2,
+    "true_centre": [
+     5133.5,
+     2880.5
+    ],
+    "box": [
+     5070,
+     2817,
+     127,
+     127
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     5129.5,
+     2881.5
+    ],
+    "err_px": 4.123105625617661,
+    "err_sides": 0.03246539862691071,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 180,
+    "rot_ok": true,
+    "scale": 0.8031687260345768,
+    "size": [
+     103,
+     103
+    ],
+    "conf": "ambiguous",
+    "gap": 0.30531577318315267,
+    "struct": 1.9363504816103692,
+    "reason": "rel-comb-cost gap=0.305 (thr 0.12), struct=1.94 (thr 4.0), d_grad=0.113, sharpness=0.587 -> ambiguous [too uniform to localize]",
+    "t": 8.07229495048523
+   },
+   {
+    "tag": "limpo",
+    "j": 16,
+    "mask_idx": 38,
+    "rot_applied_k": 1,
+    "true_centre": [
+     1501.5,
+     3439.5
+    ],
+    "box": [
+     1429,
+     3384,
+     145,
+     111
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     1496.5,
+     3443.0
+    ],
+    "err_px": 6.103277807866851,
+    "err_sides": 0.04805730557375473,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 1.1055228364196255,
+    "size": [
+     161,
+     122
+    ],
+    "conf": "ambiguous",
+    "gap": 0.7039433828510389,
+    "struct": 1.641245891780316,
+    "reason": "rel-comb-cost gap=0.704 (thr 0.12), struct=1.64 (thr 4.0), d_grad=0.038, sharpness=0.702 -> ambiguous [too uniform to localize]",
+    "t": 8.526042938232422
+   },
+   {
+    "tag": "limpo",
+    "j": 17,
+    "mask_idx": 38,
+    "rot_applied_k": 3,
+    "true_centre": [
+     2401.5,
+     1007.5
+    ],
+    "box": [
+     2329,
+     952,
+     145,
+     111
+    ],
+    "lab_shift": null,
+    "region": "ceu",
+    "pred_centre": [
+     2395.5,
+     1008.5
+    ],
+    "err_px": 6.082762530298219,
+    "err_sides": 0.04789576795510409,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 90,
+    "rot_ok": true,
+    "scale": 0.9547697223624036,
+    "size": [
+     139,
+     105
+    ],
+    "conf": "high",
+    "gap": 0.6575490932149352,
+    "struct": 5.058146916910498,
+    "reason": "rel-comb-cost gap=0.658 (thr 0.12), struct=5.06 (thr 4.0), d_grad=0.094, sharpness=0.548 -> high [distinct + patterned]",
+    "t": 8.541282176971436
+   },
+   {
+    "tag": "limpo",
+    "j": 18,
+    "mask_idx": 47,
+    "rot_applied_k": 0,
+    "true_centre": [
+     5416.0,
+     3692.0
+    ],
+    "box": [
+     5366,
+     3611,
+     100,
+     162
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     5419.0,
+     3680.5
+    ],
+    "err_px": 11.884864324004713,
+    "err_sides": 0.0935816088504308,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 0,
+    "rot_ok": true,
+    "scale": 0.9516705312239104,
+    "size": [
+     94,
+     155
+    ],
+    "conf": "high",
+    "gap": 0.23432549991772905,
+    "struct": 6.705901550746255,
+    "reason": "rel-comb-cost gap=0.234 (thr 0.12), struct=6.71 (thr 4.0), d_grad=0.163, sharpness=0.436 -> high [distinct + patterned]",
+    "t": 10.917222738265991
+   },
+   {
+    "tag": "limpo",
+    "j": 19,
+    "mask_idx": 14,
+    "rot_applied_k": 1,
+    "true_centre": [
+     1329.0,
+     4905.5
+    ],
+    "box": [
+     1255,
+     4851,
+     148,
+     109
+    ],
+    "lab_shift": null,
+    "region": "resto",
+    "pred_centre": [
+     1324.0,
+     4907.5
+    ],
+    "err_px": 5.385164807134504,
+    "err_sides": 0.042402872497122074,
+    "top1": true,
+    "top5": true,
+    "rank_correct": 0,
+    "n_cands": 5,
+    "rot_pred": 270,
+    "rot_ok": true,
+    "scale": 1.104254307216503,
+    "size": [
+     164,
+     119
+    ],
+    "conf": "ambiguous",
+    "gap": 0.5948421676002317,
+    "struct": 3.967592504257667,
+    "reason": "rel-comb-cost gap=0.595 (thr 0.12), struct=3.97 (thr 4.0), d_grad=0.068, sharpness=0.754 -> ambiguous [too uniform to localize]",
+    "t": 8.216889142990112
+   }
+  ]
+ },
+ "expB": {
+  "homography": {
+   "n_kp_clean": 8000,
+   "n_kp_orig": 8001,
+   "n_good": 3097,
+   "n_inliers": 2597,
+   "reproj_mean_px_full": 4.451508522033691,
+   "reproj_median_px_full": 4.336146354675293,
+   "reproj_p95_px_full": 8.486089706420898,
+   "clean_corners_in_orig": [
+    [
+     339.3999938964844,
+     103.30000305175781
+    ],
+    [
+     7620.7998046875,
+     39.099998474121094
+    ],
+    [
+     7633.89990234375,
+     5442.0
+    ],
+    [
+     322.70001220703125,
+     5322.89990234375
+    ]
+   ],
+   "H": [
+    [
+     4.392427514900924,
+     -0.01505412648733573,
+     339.4230030767941
+    ],
+    [
+     -0.041006994331969554,
+     4.335452993892028,
+     103.31246949836039
+    ],
+    [
+     -2.1160184462957242e-05,
+     -3.356892719867218e-06,
+     1.0
+    ]
+   ]
+  },
+  "side_px": 127.50303525798905,
+  "records": [
+   {
+    "idx": 0,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      625.0,
+      2933.0
+     ],
+     "pos": [
+      557,
+      2833
+     ],
+     "size": [
+      136,
+      200
+     ],
+     "rot": 0,
+     "scale": 0.5788308282044182,
+     "conf": "high",
+     "gap": 0.15742997596495656,
+     "struct": 7.777022216267067,
+     "sim": 0.8306751315748939,
+     "cands": [
+      [
+       625.0,
+       2933.0
+      ],
+      [
+       975.5,
+       3046.0
+      ],
+      [
+       6408.5,
+       1278.0
+      ],
+      [
+       6167.5,
+       1494.0
+      ],
+      [
+       6226.0,
+       1484.5
+      ]
+     ],
+     "t": 7.332721471786499
+    },
+    "clean": {
+     "centre": [
+      1453.5,
+      356.0
+     ],
+     "centre_in_orig": [
+      6940.20654296875,
+      1639.514892578125
+     ],
+     "pos": [
+      1445,
+      344
+     ],
+     "size": [
+      17,
+      24
+     ],
+     "rot": 180,
+     "scale": 0.07067531479907427,
+     "conf": "ambiguous",
+     "gap": 0.008674953007453001,
+     "struct": 7.621022977458461,
+     "sim": 0.8380547675406522,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.232136964797974
+    },
+    "dist_top1_px": 6446.311922601752,
+    "dist_top1_sides": 50.55810561339433,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.2610403202381688,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 1,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      5489.5,
+      1477.0
+     ],
+     "pos": [
+      5430,
+      1416
+     ],
+     "size": [
+      119,
+      122
+     ],
+     "rot": 270,
+     "scale": 0.41132916334724,
+     "conf": "ambiguous",
+     "gap": 0.11183893489579134,
+     "struct": 5.141342400453347,
+     "sim": 0.9173102228040924,
+     "cands": [
+      [
+       5489.5,
+       1477.0
+      ],
+      [
+       4389.5,
+       1491.0
+      ],
+      [
+       7499.5,
+       1311.0
+      ],
+      [
+       5827.5,
+       1455.0
+      ],
+      [
+       4998.5,
+       1793.0
+      ]
+     ],
+     "t": 5.720530033111572
+    },
+    "clean": {
+     "centre": [
+      1202.0,
+      303.0
+     ],
+     "centre_in_orig": [
+      5767.109375,
+      1404.8243408203125
+     ],
+     "pos": [
+      1192,
+      293
+     ],
+     "size": [
+      20,
+      20
+     ],
+     "rot": 270,
+     "scale": 0.06872667725100085,
+     "conf": "high",
+     "gap": 0.5762109416433165,
+     "struct": 4.809719276149629,
+     "sim": 0.9017700330285983,
+     "search_piece_px": 25.298221281347036,
+     "t": 4.902597188949585
+    },
+    "dist_top1_px": 286.838440356088,
+    "dist_top1_sides": 2.2496597024196356,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.6157902179310026,
+    "agree_shortlist": true,
+    "rot_agree": true
+   },
+   {
+    "idx": 2,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1174.0,
+      3152.0
+     ],
+     "pos": [
+      1092,
+      3091
+     ],
+     "size": [
+      164,
+      122
+     ],
+     "rot": 90,
+     "scale": 0.5272495620988745,
+     "conf": "high",
+     "gap": 0.25842474691171075,
+     "struct": 7.257244417085431,
+     "sim": 0.9029307701326873,
+     "cands": [
+      [
+       1174.0,
+       3152.0
+      ],
+      [
+       6165.5,
+       1460.5
+      ],
+      [
+       946.5,
+       3420.5
+      ],
+      [
+       441.5,
+       3610.5
+      ],
+      [
+       708.5,
+       3614.5
+      ]
+     ],
+     "t": 6.295032262802124
+    },
+    "clean": {
+     "centre": [
+      1211.0,
+      311.5
+     ],
+     "centre_in_orig": [
+      5808.89013671875,
+      1442.622314453125
+     ],
+     "pos": [
+      1199,
+      303
+     ],
+     "size": [
+      24,
+      17
+     ],
+     "rot": 270,
+     "scale": 0.07608218789305549,
+     "conf": "high",
+     "gap": 0.22786581133009606,
+     "struct": 5.822502224248383,
+     "sim": 0.8536650405843167,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.697069406509399
+    },
+    "dist_top1_px": 4940.058567597994,
+    "dist_top1_sides": 38.744635040274154,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.4961023643373434,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 3,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      4876.5,
+      1418.0
+     ],
+     "pos": [
+      4828,
+      1342
+     ],
+     "size": [
+      97,
+      152
+     ],
+     "rot": 0,
+     "scale": 0.4177220945218821,
+     "conf": "ambiguous",
+     "gap": 0.035074150916185924,
+     "struct": 4.751244349578268,
+     "sim": 0.9176386653630679,
+     "cands": [
+      [
+       4876.5,
+       1418.0
+      ],
+      [
+       6980.5,
+       1232.0
+      ],
+      [
+       7531.5,
+       1266.5
+      ],
+      [
+       5806.5,
+       1407.5
+      ],
+      [
+       6515.5,
+       1703.0
+      ]
+     ],
+     "t": 8.721307277679443
+    },
+    "clean": {
+     "centre": [
+      1382.0,
+      305.5
+     ],
+     "centre_in_orig": [
+      6605.08740234375,
+      1413.91943359375
+     ],
+     "pos": [
+      1367,
+      296
+     ],
+     "size": [
+      30,
+      19
+     ],
+     "rot": 270,
+     "scale": 0.0828813679606909,
+     "conf": "high",
+     "gap": 0.3466699654419159,
+     "struct": 4.520655373878068,
+     "sim": 0.9140825389174387,
+     "search_piece_px": 25.298221281347036,
+     "t": 7.050529718399048
+    },
+    "dist_top1_px": 1728.592218703911,
+    "dist_top1_sides": 13.55726328558599,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.3736230367571416,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 4,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1414.5,
+      3279.5
+     ],
+     "pos": [
+      1344,
+      3210
+     ],
+     "size": [
+      141,
+      139
+     ],
+     "rot": 0,
+     "scale": 0.4659810812337992,
+     "conf": "ambiguous",
+     "gap": 0.3586835695137619,
+     "struct": 2.7908259592706783,
+     "sim": 0.9506722416082709,
+     "cands": [
+      [
+       1414.5,
+       3279.5
+      ],
+      [
+       1329.5,
+       3407.0
+      ],
+      [
+       738.5,
+       5081.0
+      ],
+      [
+       7565.5,
+       3789.0
+      ],
+      [
+       1233.0,
+       3247.5
+      ]
+     ],
+     "t": 6.042435646057129
+    },
+    "clean": {
+     "centre": [
+      846.0,
+      866.0
+     ],
+     "centre_in_orig": [
+      4128.28369140625,
+      3904.3671875
+     ],
+     "pos": [
+      832,
+      852
+     ],
+     "size": [
+      28,
+      28
+     ],
+     "rot": 270,
+     "scale": 0.09245656373686494,
+     "conf": "ambiguous",
+     "gap": 0.0989153285704822,
+     "struct": 2.467458124620685,
+     "sim": 0.8889324148637573,
+     "search_piece_px": 25.298221281347036,
+     "t": 4.868142604827881
+    },
+    "dist_top1_px": 2784.7945930995866,
+    "dist_top1_sides": 21.84100627459453,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 14.702837934129727,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 5,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3353.0,
+      3479.5
+     ],
+     "pos": [
+      3296,
+      3434
+     ],
+     "size": [
+      114,
+      91
+     ],
+     "rot": 0,
+     "scale": 0.3804736658011225,
+     "conf": "ambiguous",
+     "gap": 0.29580422090794506,
+     "struct": 3.7946583575847215,
+     "sim": 0.9203621065259142,
+     "cands": [
+      [
+       3353.0,
+       3479.5
+      ],
+      [
+       3836.5,
+       4700.0
+      ],
+      [
+       2182.5,
+       4068.0
+      ],
+      [
+       3416.0,
+       4438.5
+      ],
+      [
+       1381.5,
+       4703.0
+      ]
+     ],
+     "t": 5.266341209411621
+    },
+    "clean": {
+     "centre": [
+      831.0,
+      215.0
+     ],
+     "centre_in_orig": [
+      4060.626953125,
+      1020.0305786132812
+     ],
+     "pos": [
+      822,
+      204
+     ],
+     "size": [
+      18,
+      22
+     ],
+     "rot": 270,
+     "scale": 0.07549080670657193,
+     "conf": "ambiguous",
+     "gap": 0.36042800550608317,
+     "struct": 3.3485099634420714,
+     "sim": 0.9236988027555081,
+     "search_piece_px": 25.298221281347036,
+     "t": 4.819698810577393
+    },
+    "dist_top1_px": 2559.243196635539,
+    "dist_top1_sides": 20.072017826533916,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.2832636827617288,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 6,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3374.0,
+      5058.0
+     ],
+     "pos": [
+      3310,
+      4950
+     ],
+     "size": [
+      128,
+      216
+     ],
+     "rot": 270,
+     "scale": 0.622994273426999,
+     "conf": "high",
+     "gap": 0.14971332550337815,
+     "struct": 7.599025023156359,
+     "sim": 0.8743881631251651,
+     "cands": [
+      [
+       3374.0,
+       5058.0
+      ],
+      [
+       5023.0,
+       5058.5
+      ],
+      [
+       726.5,
+       3753.0
+      ],
+      [
+       1327.5,
+       3504.0
+      ],
+      [
+       493.5,
+       3781.0
+      ]
+     ],
+     "t": 9.599088191986084
+    },
+    "clean": {
+     "centre": [
+      646.0,
+      733.5
+     ],
+     "centre_in_orig": [
+      3217.797607421875,
+      3310.27734375
+     ],
+     "pos": [
+      637,
+      718
+     ],
+     "size": [
+      18,
+      31
+     ],
+     "rot": 270,
+     "scale": 0.09033036626307218,
+     "conf": "ambiguous",
+     "gap": 0.06560222881046468,
+     "struct": 7.151039763997604,
+     "sim": 0.8810806416942811,
+     "search_piece_px": 25.298221281347036,
+     "t": 7.811157464981079
+    },
+    "dist_top1_px": 1754.6890524012185,
+    "dist_top1_sides": 13.76193946168253,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 6.1487713425717185,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 7,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3951.5,
+      4721.5
+     ],
+     "pos": [
+      3900,
+      4670
+     ],
+     "size": [
+      103,
+      103
+     ],
+     "rot": 0,
+     "scale": 0.34635848970370353,
+     "conf": "ambiguous",
+     "gap": 0.01644025201146335,
+     "struct": 4.110358041117984,
+     "sim": 0.9063558103121027,
+     "cands": [
+      [
+       3951.5,
+       4721.5
+      ],
+      [
+       3886.0,
+       4759.0
+      ],
+      [
+       2260.5,
+       4034.5
+      ],
+      [
+       6082.5,
+       2792.5
+      ],
+      [
+       3854.5,
+       4331.5
+      ]
+     ],
+     "t": 5.961049795150757
+    },
+    "clean": {
+     "centre": [
+      132.5,
+      323.5
+     ],
+     "centre_in_orig": [
+      920.128662109375,
+      1506.2569580078125
+     ],
+     "pos": [
+      116,
+      307
+     ],
+     "size": [
+      33,
+      33
+     ],
+     "rot": 90,
+     "scale": 0.1116731241604203,
+     "conf": "ambiguous",
+     "gap": 0.10995652923926326,
+     "struct": 4.0156111601085485,
+     "sim": 0.9197608367957951,
+     "search_piece_px": 25.298221281347036,
+     "t": 5.365349769592285
+    },
+    "dist_top1_px": 4418.936524466489,
+    "dist_top1_sides": 34.65750062753591,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.5949614612057428,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 8,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      777.5,
+      2956.5
+     ],
+     "pos": [
+      707,
+      2858
+     ],
+     "size": [
+      141,
+      197
+     ],
+     "rot": 0,
+     "scale": 0.5714566213544636,
+     "conf": "ambiguous",
+     "gap": 0.04553005443463467,
+     "struct": 6.832998641554411,
+     "sim": 0.8689759076607675,
+     "cands": [
+      [
+       777.5,
+       2956.5
+      ],
+      [
+       442.0,
+       2806.5
+      ],
+      [
+       977.0,
+       3030.5
+      ],
+      [
+       384.5,
+       2791.0
+      ],
+      [
+       528.0,
+       2828.5
+      ]
+     ],
+     "t": 11.075586080551147
+    },
+    "clean": {
+     "centre": [
+      193.0,
+      706.5
+     ],
+     "centre_in_orig": [
+      1184.1702880859375,
+      3178.917236328125
+     ],
+     "pos": [
+      181,
+      690
+     ],
+     "size": [
+      24,
+      33
+     ],
+     "rot": 180,
+     "scale": 0.09594051945816698,
+     "conf": "high",
+     "gap": 0.32364579559465867,
+     "struct": 6.588896138452509,
+     "sim": 0.888995938174237,
+     "search_piece_px": 25.298221281347036,
+     "t": 9.76593565940857
+    },
+    "dist_top1_px": 463.5193094443212,
+    "dist_top1_sides": 3.63535902111223,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.5121250789698808,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 9,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1174.0,
+      4917.0
+     ],
+     "pos": [
+      1098,
+      4853
+     ],
+     "size": [
+      152,
+      128
+     ],
+     "rot": 270,
+     "scale": 0.5148792656567974,
+     "conf": "ambiguous",
+     "gap": 0.04316710203733083,
+     "struct": 2.844257829577532,
+     "sim": 0.9172245245318343,
+     "cands": [
+      [
+       1174.0,
+       4917.0
+      ],
+      [
+       1494.0,
+       3234.5
+      ],
+      [
+       468.5,
+       3683.5
+      ],
+      [
+       2573.0,
+       5123.0
+      ],
+      [
+       1301.0,
+       3426.0
+      ]
+     ],
+     "t": 7.68757700920105
+    },
+    "clean": {
+     "centre": [
+      666.0,
+      751.0
+     ],
+     "centre_in_orig": [
+      3308.439453125,
+      3388.2177734375
+     ],
+     "pos": [
+      653,
+      740
+     ],
+     "size": [
+      26,
+      22
+     ],
+     "rot": 90,
+     "scale": 0.08822786839357098,
+     "conf": "ambiguous",
+     "gap": 0.17167844630665943,
+     "struct": 2.7385146408820025,
+     "sim": 0.9036323804841215,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.049331426620483
+    },
+    "dist_top1_px": 2625.4536513353164,
+    "dist_top1_sides": 20.591303148375925,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.0570901198102107,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 10,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      7202.5,
+      2224.5
+     ],
+     "pos": [
+      7143,
+      2162
+     ],
+     "size": [
+      119,
+      125
+     ],
+     "rot": 270,
+     "scale": 0.4288525534905662,
+     "conf": "ambiguous",
+     "gap": 0.2325726640399651,
+     "struct": 2.2229735414387393,
+     "sim": 0.9520034070043988,
+     "cands": [
+      [
+       7202.5,
+       2224.5
+      ],
+      [
+       7510.5,
+       2504.5
+      ],
+      [
+       5475.5,
+       2620.5
+      ],
+      [
+       4553.5,
+       2675.0
+      ],
+      [
+       7548.5,
+       2207.5
+      ]
+     ],
+     "t": 6.472295522689819
+    },
+    "clean": {
+     "centre": [
+      477.0,
+      1167.5
+     ],
+     "centre_in_orig": [
+      2451.385498046875,
+      5218.5185546875
+     ],
+     "pos": [
+      467,
+      1157
+     ],
+     "size": [
+      20,
+      21
+     ],
+     "rot": 270,
+     "scale": 0.07165456198672787,
+     "conf": "ambiguous",
+     "gap": 0.022919661408874203,
+     "struct": 1.8903324548086462,
+     "sim": 0.9540716307602618,
+     "search_piece_px": 25.298221281347036,
+     "t": 5.302597761154175
+    },
+    "dist_top1_px": 5615.802357320129,
+    "dist_top1_sides": 44.04446016486698,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 21.12923487250143,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 11,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      7134.5,
+      4829.0
+     ],
+     "pos": [
+      7054,
+      4768
+     ],
+     "size": [
+      161,
+      122
+     ],
+     "rot": 0,
+     "scale": 0.5374519619963671,
+     "conf": "ambiguous",
+     "gap": 0.011903270981184403,
+     "struct": 10.1651039624234,
+     "sim": 0.8967154741287231,
+     "cands": [
+      [
+       7134.5,
+       4829.0
+      ],
+      [
+       6621.5,
+       4820.0
+      ],
+      [
+       7378.5,
+       4831.0
+      ],
+      [
+       6951.0,
+       4825.5
+      ],
+      [
+       2827.0,
+       3958.5
+      ]
+     ],
+     "t": 8.35186219215393
+    },
+    "clean": {
+     "centre": [
+      110.0,
+      1066.5
+     ],
+     "centre_in_orig": [
+      811.3279418945312,
+      4750.6279296875
+     ],
+     "pos": [
+      96,
+      1056
+     ],
+     "size": [
+      28,
+      21
+     ],
+     "rot": 0,
+     "scale": 0.09209584485868484,
+     "conf": "ambiguous",
+     "gap": 0.11187995458284151,
+     "struct": 9.42050343536593,
+     "sim": 0.8618550903312394,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.712334871292114
+    },
+    "dist_top1_px": 6323.657727756208,
+    "dist_top1_sides": 49.596134828954845,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.36558378996909,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 12,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3340.0,
+      3410.5
+     ],
+     "pos": [
+      3279,
+      3351
+     ],
+     "size": [
+      122,
+      119
+     ],
+     "rot": 270,
+     "scale": 0.404479326324262,
+     "conf": "ambiguous",
+     "gap": 0.010104476593514516,
+     "struct": 8.41820579670449,
+     "sim": 0.8436371579233648,
+     "cands": [
+      [
+       3340.0,
+       3410.5
+      ],
+      [
+       1874.0,
+       4729.5
+      ],
+      [
+       1406.5,
+       4662.0
+      ],
+      [
+       2328.0,
+       1245.5
+      ],
+      [
+       7578.0,
+       4203.5
+      ]
+     ],
+     "t": 8.209694385528564
+    },
+    "clean": {
+     "centre": [
+      148.5,
+      1060.0
+     ],
+     "centre_in_orig": [
+      982.3232421875,
+      4724.4599609375
+     ],
+     "pos": [
+      132,
+      1044
+     ],
+     "size": [
+      33,
+      32
+     ],
+     "rot": 270,
+     "scale": 0.10982103680483303,
+     "conf": "high",
+     "gap": 0.16684826863742555,
+     "struct": 8.403798336793454,
+     "sim": 0.8592689409066402,
+     "search_piece_px": 25.298221281347036,
+     "t": 9.76281213760376
+    },
+    "dist_top1_px": 2699.098085152916,
+    "dist_top1_sides": 21.168892800799398,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 3.3626705900827605,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 13,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      411.5,
+      2899.5
+     ],
+     "pos": [
+      363,
+      2847
+     ],
+     "size": [
+      97,
+      105
+     ],
+     "rot": 0,
+     "scale": 0.33802333902996984,
+     "conf": "ambiguous",
+     "gap": 0.04533981243829514,
+     "struct": 5.9088011041879165,
+     "sim": 0.8497425668969596,
+     "cands": [
+      [
+       411.5,
+       2899.5
+      ],
+      [
+       514.5,
+       2924.5
+      ],
+      [
+       766.5,
+       2987.5
+      ],
+      [
+       3123.5,
+       3973.5
+      ],
+      [
+       1875.5,
+       3808.5
+      ]
+     ],
+     "t": 9.910341501235962
+    },
+    "clean": {
+     "centre": [
+      132.5,
+      724.5
+     ],
+     "centre_in_orig": [
+      915.3052978515625,
+      3255.96240234375
+     ],
+     "pos": [
+      123,
+      714
+     ],
+     "size": [
+      19,
+      21
+     ],
+     "rot": 180,
+     "scale": 0.06706812282340673,
+     "conf": "ambiguous",
+     "gap": 0.03636646158956715,
+     "struct": 6.048464857373755,
+     "sim": 0.8524223785713341,
+     "search_piece_px": 25.298221281347036,
+     "t": 7.837131977081299
+    },
+    "dist_top1_px": 617.1589928276012,
+    "dist_top1_sides": 4.840347459798463,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.2480375396958223,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 14,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      527.5,
+      2913.5
+     ],
+     "pos": [
+      468,
+      2869
+     ],
+     "size": [
+      119,
+      89
+     ],
+     "rot": 0,
+     "scale": 0.3992825412678737,
+     "conf": "ambiguous",
+     "gap": 0.033267658777140365,
+     "struct": 3.584893772550086,
+     "sim": 0.9050735303339843,
+     "cands": [
+      [
+       527.5,
+       2913.5
+      ],
+      [
+       633.5,
+       2952.5
+      ],
+      [
+       708.5,
+       2971.5
+      ],
+      [
+       1936.5,
+       3811.5
+      ],
+      [
+       2046.5,
+       3828.5
+      ]
+     ],
+     "t": 14.006831645965576
+    },
+    "clean": {
+     "centre": [
+      170.0,
+      803.5
+     ],
+     "centre_in_orig": [
+      1080.843017578125,
+      3602.553955078125
+     ],
+     "pos": [
+      156,
+      793
+     ],
+     "size": [
+      28,
+      21
+     ],
+     "rot": 180,
+     "scale": 0.09407698764992063,
+     "conf": "ambiguous",
+     "gap": 0.1310457579335656,
+     "struct": 3.3467197491866933,
+     "sim": 0.9088993957708095,
+     "search_piece_px": 25.298221281347036,
+     "t": 11.637236595153809
+    },
+    "dist_top1_px": 883.7329054138879,
+    "dist_top1_sides": 6.931073473080439,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.818628480487584,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 15,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1500.0,
+      3346.0
+     ],
+     "pos": [
+      1439,
+      3285
+     ],
+     "size": [
+      122,
+      122
+     ],
+     "rot": 180,
+     "scale": 0.41624948007729656,
+     "conf": "ambiguous",
+     "gap": 0.29339264915650454,
+     "struct": 2.3436206369067203,
+     "sim": 0.9425930162312108,
+     "cands": [
+      [
+       1500.0,
+       3346.0
+      ],
+      [
+       1660.0,
+       3357.0
+      ],
+      [
+       3914.0,
+       3027.0
+      ],
+      [
+       1348.5,
+       3230.5
+      ],
+      [
+       1562.5,
+       5026.5
+      ]
+     ],
+     "t": 12.496553897857666
+    },
+    "clean": {
+     "centre": [
+      1381.0,
+      1074.0
+     ],
+     "centre_in_orig": [
+      6606.0576171875,
+      4862.5849609375
+     ],
+     "pos": [
+      1371,
+      1064
+     ],
+     "size": [
+      20,
+      20
+     ],
+     "rot": 180,
+     "scale": 0.06954878530948982,
+     "conf": "ambiguous",
+     "gap": 0.18776923259056186,
+     "struct": 2.1371262037954417,
+     "sim": 0.8933952661288891,
+     "search_piece_px": 25.298221281347036,
+     "t": 9.657532215118408
+    },
+    "dist_top1_px": 5326.523663120281,
+    "dist_top1_sides": 41.77566167223092,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 6.7364257232006555,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 16,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1140.0,
+      3529.0
+     ],
+     "pos": [
+      1100,
+      3465
+     ],
+     "size": [
+      80,
+      128
+     ],
+     "rot": 90,
+     "scale": 0.35525607960465627,
+     "conf": "ambiguous",
+     "gap": 0.07329980261375901,
+     "struct": 5.76231135761516,
+     "sim": 0.8698584353612676,
+     "cands": [
+      [
+       1140.0,
+       3529.0
+      ],
+      [
+       1011.5,
+       3680.0
+      ],
+      [
+       6323.0,
+       1520.0
+      ],
+      [
+       661.0,
+       3631.0
+      ],
+      [
+       6861.0,
+       1661.0
+      ]
+     ],
+     "t": 14.689043283462524
+    },
+    "clean": {
+     "centre": [
+      1413.0,
+      362.5
+     ],
+     "centre_in_orig": [
+      6750.5166015625,
+      1668.901123046875
+     ],
+     "pos": [
+      1402,
+      345
+     ],
+     "size": [
+      22,
+      35
+     ],
+     "rot": 270,
+     "scale": 0.09692006140007985,
+     "conf": "high",
+     "gap": 0.17582873096740673,
+     "struct": 5.5875957412448845,
+     "sim": 0.8714233473713342,
+     "search_piece_px": 25.298221281347036,
+     "t": 9.337896585464478
+    },
+    "dist_top1_px": 5910.826030974918,
+    "dist_top1_sides": 46.35831624725623,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.5302323502187603,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 17,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      6782.0,
+      4802.0
+     ],
+     "pos": [
+      6735,
+      4748
+     ],
+     "size": [
+      94,
+      108
+     ],
+     "rot": 0,
+     "scale": 0.3955008744975237,
+     "conf": "high",
+     "gap": 0.13682969634521153,
+     "struct": 6.956565499877471,
+     "sim": 0.8589746064199661,
+     "cands": [
+      [
+       6782.0,
+       4802.0
+      ],
+      [
+       7582.0,
+       679.0
+      ],
+      [
+       7411.0,
+       514.0
+      ],
+      [
+       3337.0,
+       3322.0
+      ],
+      [
+       7323.0,
+       517.0
+      ]
+     ],
+     "t": 7.570549488067627
+    },
+    "clean": {
+     "centre": [
+      864.0,
+      301.5
+     ],
+     "centre_in_orig": [
+      4211.1943359375,
+      1402.0738525390625
+     ],
+     "pos": [
+      853,
+      292
+     ],
+     "size": [
+      22,
+      19
+     ],
+     "rot": 270,
+     "scale": 0.07847239573363565,
+     "conf": "high",
+     "gap": 0.38268252206072667,
+     "struct": 6.287125235899951,
+     "sim": 0.8504803169451048,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.682570695877075
+    },
+    "dist_top1_px": 4262.456987532473,
+    "dist_top1_sides": 33.43023935789323,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 5.877421405932396,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 18,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      863.0,
+      2891.0
+     ],
+     "pos": [
+      820,
+      2830
+     ],
+     "size": [
+      86,
+      122
+     ],
+     "rot": 270,
+     "scale": 0.34791440599149115,
+     "conf": "ambiguous",
+     "gap": 0.10706726962662316,
+     "struct": 2.7830606285913446,
+     "sim": 0.9281166769170242,
+     "cands": [
+      [
+       863.0,
+       2891.0
+      ],
+      [
+       3502.0,
+       4000.0
+      ],
+      [
+       980.0,
+       2885.0
+      ],
+      [
+       757.0,
+       2881.0
+      ],
+      [
+       1197.0,
+       2959.0
+      ]
+     ],
+     "t": 10.050034999847412
+    },
+    "clean": {
+     "centre": [
+      226.5,
+      746.0
+     ],
+     "centre_in_orig": [
+      1332.802978515625,
+      3352.7373046875
+     ],
+     "pos": [
+      212,
+      736
+     ],
+     "size": [
+      29,
+      20
+     ],
+     "rot": 0,
+     "scale": 0.08197388037993962,
+     "conf": "ambiguous",
+     "gap": 0.16034225890061576,
+     "struct": 2.447937392441337,
+     "sim": 0.9471740543842315,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.98700499534607
+    },
+    "dist_top1_px": 658.7231415110828,
+    "dist_top1_sides": 5.166333022411783,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.3093010802583587,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 19,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      449.5,
+      2883.5
+     ],
+     "pos": [
+      380,
+      2813
+     ],
+     "size": [
+      139,
+      141
+     ],
+     "rot": 90,
+     "scale": 0.49304353843838966,
+     "conf": "high",
+     "gap": 0.15403510964865894,
+     "struct": 6.439593674432498,
+     "sim": 0.8524993774782454,
+     "cands": [
+      [
+       449.5,
+       2883.5
+      ],
+      [
+       729.0,
+       2981.5
+      ],
+      [
+       926.0,
+       3036.5
+      ],
+      [
+       649.0,
+       2970.5
+      ],
+      [
+       841.5,
+       3160.0
+      ]
+     ],
+     "t": 8.438854694366455
+    },
+    "clean": {
+     "centre": [
+      139.0,
+      717.5
+     ],
+     "centre_in_orig": [
+      944.2205200195312,
+      3225.55615234375
+     ],
+     "pos": [
+      123,
+      701
+     ],
+     "size": [
+      32,
+      33
+     ],
+     "rot": 90,
+     "scale": 0.11561266233223423,
+     "conf": "high",
+     "gap": 0.18141333371138677,
+     "struct": 6.160677736553892,
+     "sim": 0.8746280845603602,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.816479682922363
+    },
+    "dist_top1_px": 601.4572339614897,
+    "dist_top1_sides": 4.717199341525509,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.7286031193616219,
+    "agree_shortlist": true,
+    "rot_agree": true
+   },
+   {
+    "idx": 20,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1533.0,
+      3191.5
+     ],
+     "pos": [
+      1472,
+      3132
+     ],
+     "size": [
+      122,
+      119
+     ],
+     "rot": 270,
+     "scale": 0.393954002750728,
+     "conf": "ambiguous",
+     "gap": 0.0777651904967037,
+     "struct": 2.471976821831482,
+     "sim": 0.9435074637509411,
+     "cands": [
+      [
+       1533.0,
+       3191.5
+      ],
+      [
+       3952.5,
+       4990.5
+      ],
+      [
+       1620.5,
+       3213.0
+      ],
+      [
+       1761.5,
+       3218.0
+      ],
+      [
+       1351.5,
+       2996.5
+      ]
+     ],
+     "t": 6.4608354568481445
+    },
+    "clean": {
+     "centre": [
+      80.5,
+      883.0
+     ],
+     "centre_in_orig": [
+      682.9081420898438,
+      3946.637451171875
+     ],
+     "pos": [
+      70,
+      873
+     ],
+     "size": [
+      21,
+      20
+     ],
+     "rot": 270,
+     "scale": 0.06582355935684679,
+     "conf": "ambiguous",
+     "gap": 0.06632940055157635,
+     "struct": 2.4315273281767085,
+     "sim": 0.912417714793335,
+     "search_piece_px": 25.298221281347036,
+     "t": 5.892338752746582
+    },
+    "dist_top1_px": 1137.0526535950291,
+    "dist_top1_sides": 8.91784773040361,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 8.91784773040361,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 21,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      7232.0,
+      3381.5
+     ],
+     "pos": [
+      7193,
+      3315
+     ],
+     "size": [
+      78,
+      133
+     ],
+     "rot": 0,
+     "scale": 0.36130207166838935,
+     "conf": "ambiguous",
+     "gap": 0.009420977861697297,
+     "struct": 8.164054439383392,
+     "sim": 0.9093176923195333,
+     "cands": [
+      [
+       7232.0,
+       3381.5
+      ],
+      [
+       2359.5,
+       4749.0
+      ],
+      [
+       3770.5,
+       4608.0
+      ],
+      [
+       7485.5,
+       3405.0
+      ],
+      [
+       785.0,
+       2544.5
+      ]
+     ],
+     "t": 11.878854990005493
+    },
+    "clean": {
+     "centre": [
+      324.0,
+      1000.5
+     ],
+     "centre_in_orig": [
+      1765.5419921875,
+      4473.33984375
+     ],
+     "pos": [
+      311,
+      993
+     ],
+     "size": [
+      26,
+      15
+     ],
+     "rot": 270,
+     "scale": 0.07168691898182326,
+     "conf": "ambiguous",
+     "gap": 0.011290877811400528,
+     "struct": 6.770536829864573,
+     "sim": 0.8852797560410575,
+     "search_piece_px": 25.298221281347036,
+     "t": 10.340842247009277
+    },
+    "dist_top1_px": 5574.430679053909,
+    "dist_top1_sides": 43.719984138217825,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.7063704849996029,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 22,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      2734.0,
+      3407.5
+     ],
+     "pos": [
+      2680,
+      3359
+     ],
+     "size": [
+      108,
+      97
+     ],
+     "rot": 180,
+     "scale": 0.3343748874659027,
+     "conf": "ambiguous",
+     "gap": 0.016086482047473323,
+     "struct": 2.3063994346475263,
+     "sim": 0.919097155765926,
+     "cands": [
+      [
+       2734.0,
+       3407.5
+      ],
+      [
+       3604.5,
+       3389.5
+      ],
+      [
+       3386.0,
+       3471.5
+      ],
+      [
+       3574.5,
+       3244.0
+      ],
+      [
+       3555.0,
+       3308.5
+      ]
+     ],
+     "t": 7.757402181625366
+    },
+    "clean": {
+     "centre": [
+      405.5,
+      926.5
+     ],
+     "centre_in_orig": [
+      2131.5234375,
+      4152.02099609375
+     ],
+     "pos": [
+      394,
+      914
+     ],
+     "size": [
+      23,
+      25
+     ],
+     "rot": 270,
+     "scale": 0.07878376564796814,
+     "conf": "ambiguous",
+     "gap": 0.36315957485781974,
+     "struct": 1.9291403836564593,
+     "sim": 0.9443801665374493,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.6170494556427
+    },
+    "dist_top1_px": 957.7523281027544,
+    "dist_top1_sides": 7.5116041446765776,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 7.089499074410999,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 23,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      555.5,
+      2996.5
+     ],
+     "pos": [
+      507,
+      2944
+     ],
+     "size": [
+      97,
+      105
+     ],
+     "rot": 90,
+     "scale": 0.3319896261397437,
+     "conf": "ambiguous",
+     "gap": 0.10291361162298615,
+     "struct": 6.959062658615226,
+     "sim": 0.8570452391854615,
+     "cands": [
+      [
+       555.5,
+       2996.5
+      ],
+      [
+       774.5,
+       3156.5
+      ],
+      [
+       5842.5,
+       3039.5
+      ],
+      [
+       6458.0,
+       3443.0
+      ],
+      [
+       6478.0,
+       3351.0
+      ]
+     ],
+     "t": 7.334597110748291
+    },
+    "clean": {
+     "centre": [
+      1279.5,
+      330.5
+     ],
+     "centre_in_orig": [
+      6127.24853515625,
+      1526.74072265625
+     ],
+     "pos": [
+      1270,
+      320
+     ],
+     "size": [
+      19,
+      21
+     ],
+     "rot": 90,
+     "scale": 0.06587095756740946,
+     "conf": "high",
+     "gap": 0.2485458785251172,
+     "struct": 6.640747350971633,
+     "sim": 0.9171373033774755,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.218170166015625
+    },
+    "dist_top1_px": 5762.341023607839,
+    "dist_top1_sides": 45.19375567764598,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 10.951879552667462,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 24,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      848.0,
+      2885.5
+     ],
+     "pos": [
+      773,
+      2794
+     ],
+     "size": [
+      150,
+      183
+     ],
+     "rot": 0,
+     "scale": 0.6441139859179614,
+     "conf": "ambiguous",
+     "gap": 0.05376695967699604,
+     "struct": 3.315198675244866,
+     "sim": 0.9189558146361546,
+     "cands": [
+      [
+       848.0,
+       2885.5
+      ],
+      [
+       1397.5,
+       2966.5
+      ],
+      [
+       768.5,
+       2868.5
+      ],
+      [
+       637.5,
+       2792.5
+      ],
+      [
+       572.5,
+       2782.5
+      ]
+     ],
+     "t": 7.04396390914917
+    },
+    "clean": {
+     "centre": [
+      230.0,
+      724.0
+     ],
+     "centre_in_orig": [
+      1348.6234130859375,
+      3256.512451171875
+     ],
+     "pos": [
+      217,
+      713
+     ],
+     "size": [
+      26,
+      22
+     ],
+     "rot": 90,
+     "scale": 0.09339259563828804,
+     "conf": "ambiguous",
+     "gap": 0.07517946301111915,
+     "struct": 2.583634549565661,
+     "sim": 0.9278777212189151,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.443286180496216
+    },
+    "dist_top1_px": 623.1163941466924,
+    "dist_top1_sides": 4.887071063727084,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.306629523943243,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 25,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1862.5,
+      1179.5
+     ],
+     "pos": [
+      1821,
+      1117
+     ],
+     "size": [
+      83,
+      125
+     ],
+     "rot": 180,
+     "scale": 0.36422006340942187,
+     "conf": "ambiguous",
+     "gap": 0.08019837182840092,
+     "struct": 9.118645512347737,
+     "sim": 0.8788895431809969,
+     "cands": [
+      [
+       1862.5,
+       1179.5
+      ],
+      [
+       2276.0,
+       1112.0
+      ],
+      [
+       7291.0,
+       496.0
+      ],
+      [
+       1924.0,
+       1184.0
+      ],
+      [
+       5321.0,
+       946.0
+      ]
+     ],
+     "t": 10.136463642120361
+    },
+    "clean": {
+     "centre": [
+      1410.0,
+      410.0
+     ],
+     "centre_in_orig": [
+      6736.84521484375,
+      1881.76220703125
+     ],
+     "pos": [
+      1400,
+      395
+     ],
+     "size": [
+      20,
+      30
+     ],
+     "rot": 0,
+     "scale": 0.08581573914656515,
+     "conf": "high",
+     "gap": 0.1497892089943291,
+     "struct": 8.330766586649933,
+     "sim": 0.8961096227545231,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.958211183547974
+    },
+    "dist_top1_px": 4924.673946658252,
+    "dist_top1_sides": 38.623974219074,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.8377516003835699,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 26,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      6363.0,
+      1588.0
+     ],
+     "pos": [
+      6306,
+      1524
+     ],
+     "size": [
+      114,
+      128
+     ],
+     "rot": 180,
+     "scale": 0.4535765993178696,
+     "conf": "high",
+     "gap": 0.14770642237866594,
+     "struct": 6.757858307735522,
+     "sim": 0.8723448991775513,
+     "cands": [
+      [
+       6363.0,
+       1588.0
+      ],
+      [
+       805.5,
+       3746.0
+      ],
+      [
+       1238.5,
+       5015.5
+      ],
+      [
+       1198.5,
+       3186.0
+      ],
+      [
+       7592.0,
+       1313.0
+      ]
+     ],
+     "t": 8.686568260192871
+    },
+    "clean": {
+     "centre": [
+      170.5,
+      951.5
+     ],
+     "centre_in_orig": [
+      1081.3631591796875,
+      4250.4150390625
+     ],
+     "pos": [
+      159,
+      939
+     ],
+     "size": [
+      23,
+      25
+     ],
+     "rot": 180,
+     "scale": 0.08999535700751381,
+     "conf": "ambiguous",
+     "gap": 0.04463589020770832,
+     "struct": 6.877819097288833,
+     "sim": 0.8557299393108271,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.969064474105835
+    },
+    "dist_top1_px": 5914.739348317603,
+    "dist_top1_sides": 46.389008201645915,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 4.509082823101439,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 27,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1981.5,
+      3814.5
+     ],
+     "pos": [
+      1915,
+      3759
+     ],
+     "size": [
+      133,
+      111
+     ],
+     "rot": 90,
+     "scale": 0.4698692563822136,
+     "conf": "ambiguous",
+     "gap": 0.21648735643174224,
+     "struct": 2.1712508898744334,
+     "sim": 0.9351237471520821,
+     "cands": [
+      [
+       1981.5,
+       3814.5
+      ],
+      [
+       2186.0,
+       3845.5
+      ],
+      [
+       2097.0,
+       3809.5
+      ],
+      [
+       2723.5,
+       3874.0
+      ],
+      [
+       3982.0,
+       3801.5
+      ]
+     ],
+     "t": 7.027252435684204
+    },
+    "clean": {
+     "centre": [
+      158.0,
+      832.0
+     ],
+     "centre_in_orig": [
+      1027.2047119140625,
+      3726.798828125
+     ],
+     "pos": [
+      147,
+      823
+     ],
+     "size": [
+      22,
+      18
+     ],
+     "rot": 90,
+     "scale": 0.07850781226102149,
+     "conf": "ambiguous",
+     "gap": 0.25126488050944906,
+     "struct": 1.9956149216520809,
+     "sim": 0.9478081501636433,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.074050664901733
+    },
+    "dist_top1_px": 958.3167495203612,
+    "dist_top1_sides": 7.516030873942001,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 6.1875364207553565,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 28,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      6536.0,
+      4885.5
+     ],
+     "pos": [
+      6478,
+      4823
+     ],
+     "size": [
+      116,
+      125
+     ],
+     "rot": 180,
+     "scale": 0.4045966438765603,
+     "conf": "high",
+     "gap": 0.12738304343266532,
+     "struct": 4.259854696624556,
+     "sim": 0.9047482914866414,
+     "cands": [
+      [
+       6536.0,
+       4885.5
+      ],
+      [
+       3761.0,
+       3362.5
+      ],
+      [
+       2140.0,
+       2810.5
+      ],
+      [
+       3933.0,
+       3493.5
+      ],
+      [
+       6178.0,
+       4879.5
+      ]
+     ],
+     "t": 6.864447116851807
+    },
+    "clean": {
+     "centre": [
+      690.5,
+      994.0
+     ],
+     "centre_in_orig": [
+      3418.790283203125,
+      4464.56689453125
+     ],
+     "pos": [
+      680,
+      984
+     ],
+     "size": [
+      21,
+      20
+     ],
+     "rot": 270,
+     "scale": 0.06760177842549045,
+     "conf": "ambiguous",
+     "gap": 0.01457924386117907,
+     "struct": 4.60821322879077,
+     "sim": 0.900650680065155,
+     "search_piece_px": 25.298221281347036,
+     "t": 5.800369024276733
+    },
+    "dist_top1_px": 3145.501724331497,
+    "dist_top1_sides": 24.670014466454884,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 8.323238070061674,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 29,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      6243.0,
+      2730.0
+     ],
+     "pos": [
+      6203,
+      2666
+     ],
+     "size": [
+      80,
+      128
+     ],
+     "rot": 180,
+     "scale": 0.3648906133420806,
+     "conf": "ambiguous",
+     "gap": 0.1127771729316729,
+     "struct": 6.77763204961698,
+     "sim": 0.8561888863675182,
+     "cands": [
+      [
+       6243.0,
+       2730.0
+      ],
+      [
+       7396.0,
+       4277.0
+      ],
+      [
+       6909.0,
+       399.0
+      ],
+      [
+       5988.0,
+       2625.0
+      ],
+      [
+       3732.0,
+       2888.0
+      ]
+     ],
+     "t": 11.987512111663818
+    },
+    "clean": {
+     "centre": [
+      1522.0,
+      546.5
+     ],
+     "centre_in_orig": [
+      7263.73046875,
+      2495.1611328125
+     ],
+     "pos": [
+      1507,
+      537
+     ],
+     "size": [
+      30,
+      19
+     ],
+     "rot": 270,
+     "scale": 0.08597373082216679,
+     "conf": "high",
+     "gap": 0.12277771813061349,
+     "struct": 5.599161843425027,
+     "sim": 0.8761451070860091,
+     "search_piece_px": 25.298221281347036,
+     "t": 9.209144115447998
+    },
+    "dist_top1_px": 1047.3967650210225,
+    "dist_top1_sides": 8.21468103015528,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.299320666977264,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 30,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      697.5,
+      3709.0
+     ],
+     "pos": [
+      646,
+      3659
+     ],
+     "size": [
+      103,
+      100
+     ],
+     "rot": 270,
+     "scale": 0.3548173483084854,
+     "conf": "ambiguous",
+     "gap": 0.012059564979013443,
+     "struct": 6.706363670107114,
+     "sim": 0.8451525128811794,
+     "cands": [
+      [
+       697.5,
+       3709.0
+      ],
+      [
+       1102.5,
+       3717.0
+      ],
+      [
+       1193.5,
+       3709.0
+      ],
+      [
+       514.5,
+       3742.0
+      ],
+      [
+       1265.5,
+       3695.0
+      ]
+     ],
+     "t": 7.070553779602051
+    },
+    "clean": {
+     "centre": [
+      103.0,
+      1092.0
+     ],
+     "centre_in_orig": [
+      779.9630126953125,
+      4861.82177734375
+     ],
+     "pos": [
+      93,
+      1082
+     ],
+     "size": [
+      20,
+      20
+     ],
+     "rot": 270,
+     "scale": 0.07040026752152488,
+     "conf": "high",
+     "gap": 0.1544224346024811,
+     "struct": 6.348179186451402,
+     "sim": 0.8678964287031843,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.087402820587158
+    },
+    "dist_top1_px": 1155.7673636077418,
+    "dist_top1_sides": 9.06462627551703,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.8970721285266436,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 31,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      2237.5,
+      2818.0
+     ],
+     "pos": [
+      2192,
+      2761
+     ],
+     "size": [
+      91,
+      114
+     ],
+     "rot": 180,
+     "scale": 0.3731449329464445,
+     "conf": "ambiguous",
+     "gap": 0.00858237466876953,
+     "struct": 1.8147782631498024,
+     "sim": 0.9152668161829047,
+     "cands": [
+      [
+       2237.5,
+       2818.0
+      ],
+      [
+       6387.5,
+       4874.0
+      ],
+      [
+       2997.5,
+       3339.0
+      ],
+      [
+       3853.0,
+       3430.0
+      ],
+      [
+       3915.0,
+       5171.0
+      ]
+     ],
+     "t": 8.373378992080688
+    },
+    "clean": {
+     "centre": [
+      472.0,
+      941.5
+     ],
+     "centre_in_orig": [
+      2430.430908203125,
+      4221.2880859375
+     ],
+     "pos": [
+      461,
+      928
+     ],
+     "size": [
+      22,
+      27
+     ],
+     "rot": 0,
+     "scale": 0.08791857299085373,
+     "conf": "ambiguous",
+     "gap": 0.12681576600237454,
+     "struct": 2.0696060356645436,
+     "sim": 0.93274211306273,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.201019048690796
+    },
+    "dist_top1_px": 1416.488541243527,
+    "dist_top1_sides": 11.109449578023069,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 8.225754513101943,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 32,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3933.5,
+      4694.0
+     ],
+     "pos": [
+      3842,
+      4640
+     ],
+     "size": [
+      183,
+      108
+     ],
+     "rot": 270,
+     "scale": 0.49679034854403537,
+     "conf": "ambiguous",
+     "gap": 0.09944582249118747,
+     "struct": 9.776126730219879,
+     "sim": 0.8277737423478455,
+     "cands": [
+      [
+       3933.5,
+       4694.0
+      ],
+      [
+       4227.5,
+       4769.0
+      ],
+      [
+       440.5,
+       5165.0
+      ],
+      [
+       6043.0,
+       4770.5
+      ],
+      [
+       6209.0,
+       4759.5
+      ]
+     ],
+     "t": 12.697144269943237
+    },
+    "clean": {
+     "centre": [
+      179.5,
+      985.0
+     ],
+     "centre_in_orig": [
+      1120.9998779296875,
+      4397.6171875
+     ],
+     "pos": [
+      172,
+      972
+     ],
+     "size": [
+      15,
+      26
+     ],
+     "rot": 180,
+     "scale": 0.07168691898182326,
+     "conf": "ambiguous",
+     "gap": 0.009127188474954919,
+     "struct": 9.730215312220087,
+     "sim": 0.8476746320724488,
+     "search_piece_px": 25.298221281347036,
+     "t": 12.76871371269226
+    },
+    "dist_top1_px": 2828.073497664255,
+    "dist_top1_sides": 22.18044058278255,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.1020518297895895,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 33,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1572.0,
+      3408.0
+     ],
+     "pos": [
+      1511,
+      3365
+     ],
+     "size": [
+      122,
+      86
+     ],
+     "rot": 270,
+     "scale": 0.36169254590315675,
+     "conf": "ambiguous",
+     "gap": 0.11176310245953425,
+     "struct": 3.9280975848619435,
+     "sim": 0.9040314893522069,
+     "cands": [
+      [
+       1572.0,
+       3408.0
+      ],
+      [
+       1486.0,
+       3397.5
+      ],
+      [
+       819.5,
+       4892.5
+      ],
+      [
+       1838.0,
+       3394.0
+      ],
+      [
+       1719.0,
+       3372.0
+      ]
+     ],
+     "t": 13.048874855041504
+    },
+    "clean": {
+     "centre": [
+      543.5,
+      909.5
+     ],
+     "centre_in_orig": [
+      2753.0830078125,
+      4083.55029296875
+     ],
+     "pos": [
+      527,
+      898
+     ],
+     "size": [
+      33,
+      23
+     ],
+     "rot": 270,
+     "scale": 0.09867604178905567,
+     "conf": "ambiguous",
+     "gap": 0.12848775498448659,
+     "struct": 3.626276128771023,
+     "sim": 0.859209934391316,
+     "search_piece_px": 25.298221281347036,
+     "t": 10.599742412567139
+    },
+    "dist_top1_px": 1360.6341424768034,
+    "dist_top1_sides": 10.671386290716159,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 8.986448894689152,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 34,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      7473.0,
+      598.5
+     ],
+     "pos": [
+      7387,
+      518
+     ],
+     "size": [
+      172,
+      161
+     ],
+     "rot": 270,
+     "scale": 0.6940234060019456,
+     "conf": "ambiguous",
+     "gap": 0.08590546503405225,
+     "struct": 10.578881941946428,
+     "sim": 0.7638966081336083,
+     "cands": [
+      [
+       7473.0,
+       598.5
+      ],
+      [
+       5123.5,
+       1035.0
+      ],
+      [
+       7417.5,
+       525.5
+      ],
+      [
+       7505.5,
+       528.5
+      ],
+      [
+       3434.5,
+       1132.5
+      ]
+     ],
+     "t": 8.333546161651611
+    },
+    "clean": {
+     "centre": [
+      1305.5,
+      405.5
+     ],
+     "centre_in_orig": [
+      6248.75830078125,
+      1861.7689208984375
+     ],
+     "pos": [
+      1295,
+      396
+     ],
+     "size": [
+      21,
+      19
+     ],
+     "rot": 90,
+     "scale": 0.08474034261318017,
+     "conf": "ambiguous",
+     "gap": 0.003778198404505215,
+     "struct": 10.091773871926698,
+     "sim": 0.8283178782964411,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.998704671859741
+    },
+    "dist_top1_px": 1759.1520982035395,
+    "dist_top1_sides": 13.7969429091949,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.6778191225944235,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 35,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      801.0,
+      3038.5
+     ],
+     "pos": [
+      740,
+      2958
+     ],
+     "size": [
+      122,
+      161
+     ],
+     "rot": 180,
+     "scale": 0.5465319229991445,
+     "conf": "ambiguous",
+     "gap": 0.028561019027317176,
+     "struct": 4.514260531206072,
+     "sim": 0.8753512885778055,
+     "cands": [
+      [
+       801.0,
+       3038.5
+      ],
+      [
+       732.0,
+       3024.5
+      ],
+      [
+       842.5,
+       3201.0
+      ],
+      [
+       6804.5,
+       3885.5
+      ],
+      [
+       6766.5,
+       4132.5
+      ]
+     ],
+     "t": 8.310965299606323
+    },
+    "clean": {
+     "centre": [
+      1585.0,
+      344.5
+     ],
+     "centre_in_orig": [
+      7558.478515625,
+      1586.9393310546875
+     ],
+     "pos": [
+      1576,
+      333
+     ],
+     "size": [
+      18,
+      23
+     ],
+     "rot": 180,
+     "scale": 0.07886463535341191,
+     "conf": "high",
+     "gap": 0.36018741928704384,
+     "struct": 4.356152580667454,
+     "sim": 0.8880501846660573,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.844877243041992
+    },
+    "dist_top1_px": 6911.623851510036,
+    "dist_top1_sides": 54.20752406031031,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.0240325964244326,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 36,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      634.5,
+      3011.5
+     ],
+     "pos": [
+      565,
+      2941
+     ],
+     "size": [
+      139,
+      141
+     ],
+     "rot": 0,
+     "scale": 0.4438419021108762,
+     "conf": "high",
+     "gap": 0.13343570331485957,
+     "struct": 4.365720713955783,
+     "sim": 0.8318839101773672,
+     "cands": [
+      [
+       634.5,
+       3011.5
+      ],
+      [
+       6727.5,
+       4081.5
+      ],
+      [
+       786.5,
+       3155.5
+      ],
+      [
+       6770.5,
+       4245.5
+      ],
+      [
+       5753.5,
+       2923.5
+      ]
+     ],
+     "t": 7.949578046798706
+    },
+    "clean": {
+     "centre": [
+      122.0,
+      764.0
+     ],
+     "centre_in_orig": [
+      868.26611328125,
+      3428.238037109375
+     ],
+     "pos": [
+      110,
+      752
+     ],
+     "size": [
+      24,
+      24
+     ],
+     "rot": 0,
+     "scale": 0.07605515999374682,
+     "conf": "ambiguous",
+     "gap": 0.06576482686501371,
+     "struct": 4.111095145712252,
+     "sim": 0.8597844695016089,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.894359350204468
+    },
+    "dist_top1_px": 477.82547786027175,
+    "dist_top1_sides": 3.7475615925020285,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.9835426749781745,
+    "agree_shortlist": true,
+    "rot_agree": true
+   },
+   {
+    "idx": 37,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      7337.0,
+      501.5
+     ],
+     "pos": [
+      7262,
+      435
+     ],
+     "size": [
+      150,
+      133
+     ],
+     "rot": 180,
+     "scale": 0.5118666812761146,
+     "conf": "high",
+     "gap": 0.16719325891939835,
+     "struct": 9.072401149323808,
+     "sim": 0.8898852121566937,
+     "cands": [
+      [
+       7337.0,
+       501.5
+      ],
+      [
+       7360.0,
+       3748.5
+      ],
+      [
+       7585.0,
+       699.0
+      ],
+      [
+       6769.0,
+       4809.5
+      ],
+      [
+       7566.0,
+       4167.5
+      ]
+     ],
+     "t": 7.622382164001465
+    },
+    "clean": {
+     "centre": [
+      1164.5,
+      414.5
+     ],
+     "centre_in_orig": [
+      5593.78515625,
+      1902.1220703125
+     ],
+     "pos": [
+      1147,
+      399
+     ],
+     "size": [
+      35,
+      31
+     ],
+     "rot": 0,
+     "scale": 0.12002645845219134,
+     "conf": "high",
+     "gap": 0.21217562927010158,
+     "struct": 8.887660823562774,
+     "sim": 0.8513745343310963,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.4442198276519775
+    },
+    "dist_top1_px": 2236.188761110477,
+    "dist_top1_sides": 17.538317865027942,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.7865067906438996,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 38,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3456.5,
+      4385.0
+     ],
+     "pos": [
+      3412,
+      4327
+     ],
+     "size": [
+      89,
+      116
+     ],
+     "rot": 270,
+     "scale": 0.383893921522854,
+     "conf": "ambiguous",
+     "gap": 0.04766843535142751,
+     "struct": 5.147960383682113,
+     "sim": 0.8703562049630391,
+     "cands": [
+      [
+       3456.5,
+       4385.0
+      ],
+      [
+       6311.0,
+       2738.5
+      ],
+      [
+       3733.5,
+       2852.0
+      ],
+      [
+       2203.5,
+       4108.0
+      ],
+      [
+       3819.5,
+       4315.0
+      ]
+     ],
+     "t": 8.378912448883057
+    },
+    "clean": {
+     "centre": [
+      1159.0,
+      581.5
+     ],
+     "centre_in_orig": [
+      5568.939453125,
+      2646.933349609375
+     ],
+     "pos": [
+      1150,
+      570
+     ],
+     "size": [
+      18,
+      23
+     ],
+     "rot": 270,
+     "scale": 0.07616942887358215,
+     "conf": "ambiguous",
+     "gap": 0.00902835614550682,
+     "struct": 4.292388182072958,
+     "sim": 0.8932606816291809,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.917126655578613
+    },
+    "dist_top1_px": 2735.557735511926,
+    "dist_top1_sides": 21.454844035491476,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 5.864085049955314,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 39,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      7531.0,
+      1534.5
+     ],
+     "pos": [
+      7459,
+      1483
+     ],
+     "size": [
+      144,
+      103
+     ],
+     "rot": 270,
+     "scale": 0.46745576875941464,
+     "conf": "ambiguous",
+     "gap": 0.10110766190339193,
+     "struct": 6.4388219047428015,
+     "sim": 0.8344956778380972,
+     "cands": [
+      [
+       7531.0,
+       1534.5
+      ],
+      [
+       640.0,
+       2984.5
+      ],
+      [
+       471.0,
+       2928.0
+      ],
+      [
+       6397.0,
+       1288.0
+      ],
+      [
+       6874.0,
+       1567.5
+      ]
+     ],
+     "t": 9.576811075210571
+    },
+    "clean": {
+     "centre": [
+      1426.5,
+      342.5
+     ],
+     "centre_in_orig": [
+      6813.56591796875,
+      1579.1922607421875
+     ],
+     "pos": [
+      1410,
+      331
+     ],
+     "size": [
+      33,
+      23
+     ],
+     "rot": 270,
+     "scale": 0.10739376475258067,
+     "conf": "high",
+     "gap": 0.20979424001484268,
+     "struct": 6.093045981504481,
+     "sim": 0.9112053255900806,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.606703519821167
+    },
+    "dist_top1_px": 718.82477713993,
+    "dist_top1_sides": 5.637707178385701,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.48277085914740137,
+    "agree_shortlist": true,
+    "rot_agree": true
+   },
+   {
+    "idx": 40,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      2971.0,
+      5150.0
+     ],
+     "pos": [
+      2910,
+      5089
+     ],
+     "size": [
+      122,
+      122
+     ],
+     "rot": 270,
+     "scale": 0.41411302723623256,
+     "conf": "ambiguous",
+     "gap": 0.010238975653572367,
+     "struct": 6.907420167812079,
+     "sim": 0.8601537893605253,
+     "cands": [
+      [
+       2971.0,
+       5150.0
+      ],
+      [
+       4848.0,
+       5236.0
+      ],
+      [
+       2948.5,
+       5071.5
+      ],
+      [
+       3117.5,
+       5118.5
+      ],
+      [
+       2870.5,
+       5198.5
+      ]
+     ],
+     "t": 7.891196966171265
+    },
+    "clean": {
+     "centre": [
+      461.0,
+      888.0
+     ],
+     "centre_in_orig": [
+      2381.29150390625,
+      3985.04296875
+     ],
+     "pos": [
+      449,
+      876
+     ],
+     "size": [
+      24,
+      24
+     ],
+     "rot": 270,
+     "scale": 0.0821652831817922,
+     "conf": "high",
+     "gap": 0.17551600811652796,
+     "struct": 5.83210112050613,
+     "sim": 0.8425738344693943,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.64099645614624
+    },
+    "dist_top1_px": 1305.7109155643777,
+    "dist_top1_sides": 10.240626138212383,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 6.0375836445702475,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 41,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3434.0,
+      2680.0
+     ],
+     "pos": [
+      3373,
+      2619
+     ],
+     "size": [
+      122,
+      122
+     ],
+     "rot": 180,
+     "scale": 0.38030779514146934,
+     "conf": "ambiguous",
+     "gap": 0.05880587726518043,
+     "struct": 4.272232078664201,
+     "sim": 0.9124547668202111,
+     "cands": [
+      [
+       3434.0,
+       2680.0
+      ],
+      [
+       2902.0,
+       2619.0
+      ],
+      [
+       3191.5,
+       2664.5
+      ],
+      [
+       3063.0,
+       2511.0
+      ],
+      [
+       3496.5,
+       2567.5
+      ]
+     ],
+     "t": 7.811888217926025
+    },
+    "clean": {
+     "centre": [
+      340.0,
+      184.0
+     ],
+     "centre_in_orig": [
+      1844.48779296875,
+      894.078125
+     ],
+     "pos": [
+      328,
+      172
+     ],
+     "size": [
+      24,
+      24
+     ],
+     "rot": 0,
+     "scale": 0.07545789586140264,
+     "conf": "high",
+     "gap": 0.12282937169023629,
+     "struct": 4.308861075734045,
+     "sim": 0.9130063156575102,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.8893303871154785
+    },
+    "dist_top1_px": 2390.829563123409,
+    "dist_top1_sides": 18.75115802761727,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 15.8434511914552,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 42,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      485.5,
+      2883.5
+     ],
+     "pos": [
+      416,
+      2813
+     ],
+     "size": [
+      139,
+      141
+     ],
+     "rot": 90,
+     "scale": 0.4896008464181167,
+     "conf": "ambiguous",
+     "gap": 0.0621711858817771,
+     "struct": 5.128338446434908,
+     "sim": 0.8763505733617115,
+     "cands": [
+      [
+       485.5,
+       2883.5
+      ],
+      [
+       743.0,
+       2986.5
+      ],
+      [
+       2126.0,
+       3829.5
+      ],
+      [
+       2058.5,
+       3822.0
+      ],
+      [
+       1883.5,
+       3756.0
+      ]
+     ],
+     "t": 7.150383234024048
+    },
+    "clean": {
+     "centre": [
+      136.0,
+      692.0
+     ],
+     "centre_in_orig": [
+      931.21875,
+      3114.064453125
+     ],
+     "pos": [
+      124,
+      680
+     ],
+     "size": [
+      24,
+      24
+     ],
+     "rot": 0,
+     "scale": 0.08389624893528333,
+     "conf": "ambiguous",
+     "gap": 0.03502591691425412,
+     "struct": 5.368383681544843,
+     "sim": 0.8900944117047852,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.005620718002319
+    },
+    "dist_top1_px": 501.8218520016768,
+    "dist_top1_sides": 3.935763968177642,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.7832839287149596,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 43,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      828.0,
+      3072.5
+     ],
+     "pos": [
+      746,
+      3013
+     ],
+     "size": [
+      164,
+      119
+     ],
+     "rot": 270,
+     "scale": 0.5331015677649036,
+     "conf": "ambiguous",
+     "gap": 0.01706650946202856,
+     "struct": 4.235338363846429,
+     "sim": 0.8764321908323087,
+     "cands": [
+      [
+       828.0,
+       3072.5
+      ],
+      [
+       7374.0,
+       672.5
+      ],
+      [
+       5109.5,
+       1554.0
+      ],
+      [
+       6725.5,
+       4098.0
+      ],
+      [
+       819.0,
+       3233.5
+      ]
+     ],
+     "t": 10.163028478622437
+    },
+    "clean": {
+     "centre": [
+      1544.5,
+      354.0
+     ],
+     "centre_in_orig": [
+      7367.74560546875,
+      1629.933837890625
+     ],
+     "pos": [
+      1536,
+      342
+     ],
+     "size": [
+      17,
+      24
+     ],
+     "rot": 180,
+     "scale": 0.07692663315510874,
+     "conf": "high",
+     "gap": 0.19943972602876864,
+     "struct": 4.625115583624462,
+     "sim": 0.8840496350087217,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.89051866531372
+    },
+    "dist_top1_px": 6696.959736799289,
+    "dist_top1_sides": 52.52392402462178,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 4.649694610220972,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 44,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      771.5,
+      2947.5
+     ],
+     "pos": [
+      701,
+      2877
+     ],
+     "size": [
+      141,
+      141
+     ],
+     "rot": 180,
+     "scale": 0.4667338866315929,
+     "conf": "ambiguous",
+     "gap": 0.09816031319582899,
+     "struct": 7.228024709551766,
+     "sim": 0.8534809993677835,
+     "cands": [
+      [
+       771.5,
+       2947.5
+      ],
+      [
+       671.0,
+       2919.0
+      ],
+      [
+       2924.0,
+       3844.0
+      ],
+      [
+       1212.5,
+       3086.5
+      ],
+      [
+       467.5,
+       2809.5
+      ]
+     ],
+     "t": 6.3551716804504395
+    },
+    "clean": {
+     "centre": [
+      187.5,
+      707.5
+     ],
+     "centre_in_orig": [
+      1159.7078857421875,
+      3183.145751953125
+     ],
+     "pos": [
+      171,
+      691
+     ],
+     "size": [
+      33,
+      33
+     ],
+     "rot": 0,
+     "scale": 0.1094433716848973,
+     "conf": "high",
+     "gap": 0.21498672987105058,
+     "struct": 7.584839477137093,
+     "sim": 0.8616640704478593,
+     "search_piece_px": 25.298221281347036,
+     "t": 5.40185546875
+    },
+    "dist_top1_px": 454.1302488999968,
+    "dist_top1_sides": 3.5617210835892004,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.8637011212930045,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 45,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3993.0,
+      5034.5
+     ],
+     "pos": [
+      3936,
+      4989
+     ],
+     "size": [
+      114,
+      91
+     ],
+     "rot": 270,
+     "scale": 0.36967108508574376,
+     "conf": "high",
+     "gap": 0.19202072158706798,
+     "struct": 4.610575395405026,
+     "sim": 0.8909020838212637,
+     "cands": [
+      [
+       3993.0,
+       5034.5
+      ],
+      [
+       3131.0,
+       5029.0
+      ],
+      [
+       2948.0,
+       5051.5
+      ],
+      [
+       1456.5,
+       3516.0
+      ],
+      [
+       1417.5,
+       3430.0
+      ]
+     ],
+     "t": 8.317596673965454
+    },
+    "clean": {
+     "centre": [
+      845.5,
+      867.0
+     ],
+     "centre_in_orig": [
+      4125.99462890625,
+      3908.786865234375
+     ],
+     "pos": [
+      832,
+      856
+     ],
+     "size": [
+      27,
+      22
+     ],
+     "rot": 270,
+     "scale": 0.0871000820514525,
+     "conf": "ambiguous",
+     "gap": 0.021042893430380512,
+     "struct": 3.980010207634661,
+     "sim": 0.8685183909449753,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.80541205406189
+    },
+    "dist_top1_px": 1133.5420738118905,
+    "dist_top1_sides": 8.890314426776483,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 5.916138162736899,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 46,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      549.0,
+      2952.5
+     ],
+     "pos": [
+      477,
+      2883
+     ],
+     "size": [
+      144,
+      139
+     ],
+     "rot": 90,
+     "scale": 0.47314351876349353,
+     "conf": "ambiguous",
+     "gap": 0.11297354069012087,
+     "struct": 9.330619777303136,
+     "sim": 0.7447985530977932,
+     "cands": [
+      [
+       549.0,
+       2952.5
+      ],
+      [
+       2982.5,
+       3881.0
+      ],
+      [
+       770.5,
+       2988.0
+      ],
+      [
+       6216.5,
+       1552.0
+      ],
+      [
+       390.5,
+       2888.0
+      ]
+     ],
+     "t": 8.047911882400513
+    },
+    "clean": {
+     "centre": [
+      124.0,
+      764.5
+     ],
+     "centre_in_orig": [
+      877.1276245117188,
+      3430.486328125
+     ],
+     "pos": [
+      114,
+      754
+     ],
+     "size": [
+      20,
+      21
+     ],
+     "rot": 0,
+     "scale": 0.06827467803225014,
+     "conf": "ambiguous",
+     "gap": 0.0927923786333871,
+     "struct": 8.690363066191454,
+     "sim": 0.8086082577705384,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.764108657836914
+    },
+    "dist_top1_px": 579.7746698866066,
+    "dist_top1_sides": 4.547144063774586,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.08941113739847535,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 47,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1499.5,
+      3389.5
+     ],
+     "pos": [
+      1411,
+      3334
+     ],
+     "size": [
+      177,
+      111
+     ],
+     "rot": 270,
+     "scale": 0.5081942927719234,
+     "conf": "ambiguous",
+     "gap": 0.0414695538099326,
+     "struct": 2.843772783465031,
+     "sim": 0.9402869704606148,
+     "cands": [
+      [
+       1499.5,
+       3389.5
+      ],
+      [
+       1682.5,
+       3365.0
+      ],
+      [
+       1576.5,
+       3329.5
+      ],
+      [
+       2227.0,
+       3205.0
+      ],
+      [
+       4192.0,
+       3527.0
+      ]
+     ],
+     "t": 11.051086187362671
+    },
+    "clean": {
+     "centre": [
+      1359.0,
+      1074.0
+     ],
+     "centre_in_orig": [
+      6503.01416015625,
+      4861.177734375
+     ],
+     "pos": [
+      1346,
+      1066
+     ],
+     "size": [
+      26,
+      16
+     ],
+     "rot": 270,
+     "scale": 0.07333250977949832,
+     "conf": "ambiguous",
+     "gap": 0.15491382756184105,
+     "struct": 2.869074300069941,
+     "sim": 0.9104021310806274,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.592467546463013
+    },
+    "dist_top1_px": 5215.456768562006,
+    "dist_top1_sides": 40.90456951090674,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 7.859266909507388,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 48,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      1415.0,
+      3275.0
+     ],
+     "pos": [
+      1358,
+      3210
+     ],
+     "size": [
+      114,
+      130
+     ],
+     "rot": 180,
+     "scale": 0.41024958528365224,
+     "conf": "ambiguous",
+     "gap": 0.23942853502682923,
+     "struct": 3.102514401543027,
+     "sim": 0.9287383495093235,
+     "cands": [
+      [
+       1415.0,
+       3275.0
+      ],
+      [
+       1619.0,
+       3268.5
+      ],
+      [
+       1513.0,
+       3295.5
+      ],
+      [
+       1349.0,
+       3449.0
+      ],
+      [
+       7569.5,
+       3783.0
+      ]
+     ],
+     "t": 8.085330724716187
+    },
+    "clean": {
+     "centre": [
+      846.5,
+      860.5
+     ],
+     "centre_in_orig": [
+      4130.57763671875,
+      3879.96337890625
+     ],
+     "pos": [
+      829,
+      845
+     ],
+     "size": [
+      35,
+      31
+     ],
+     "rot": 90,
+     "scale": 0.1113877320110167,
+     "conf": "ambiguous",
+     "gap": 0.26016938129891987,
+     "struct": 3.1320579426003636,
+     "sim": 0.8908615176115815,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.809071779251099
+    },
+    "dist_top1_px": 2782.1471188390915,
+    "dist_top1_sides": 21.82024226489752,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 8.740985777062535,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 49,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      6764.5,
+      4110.5
+     ],
+     "pos": [
+      6694,
+      4041
+     ],
+     "size": [
+      141,
+      139
+     ],
+     "rot": 0,
+     "scale": 0.48787385392416743,
+     "conf": "ambiguous",
+     "gap": 0.014321764568432817,
+     "struct": 4.0778570047786,
+     "sim": 0.875690527127717,
+     "cands": [
+      [
+       6764.5,
+       4110.5
+      ],
+      [
+       5752.5,
+       3013.0
+      ],
+      [
+       6476.5,
+       3354.5
+      ],
+      [
+       5089.0,
+       1597.5
+      ],
+      [
+       5658.5,
+       2941.0
+      ]
+     ],
+     "t": 8.453927040100098
+    },
+    "clean": {
+     "centre": [
+      1556.0,
+      146.0
+     ],
+     "centre_in_orig": [
+      7419.77685546875,
+      695.7297973632812
+     ],
+     "pos": [
+      1546,
+      136
+     ],
+     "size": [
+      20,
+      20
+     ],
+     "rot": 270,
+     "scale": 0.07040026752152488,
+     "conf": "ambiguous",
+     "gap": 0.12438225937116579,
+     "struct": 3.823038499664454,
+     "sim": 0.9039392530918121,
+     "search_piece_px": 25.298221281347036,
+     "t": 7.2752814292907715
+    },
+    "dist_top1_px": 3477.0739558037344,
+    "dist_top1_sides": 27.270519080335923,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.7052125525617103,
+    "agree_shortlist": true,
+    "rot_agree": false
+   },
+   {
+    "idx": 50,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      388.0,
+      3690.5
+     ],
+     "pos": [
+      338,
+      3639
+     ],
+     "size": [
+      100,
+      103
+     ],
+     "rot": 0,
+     "scale": 0.36628540097987317,
+     "conf": "ambiguous",
+     "gap": 0.063405292368266,
+     "struct": 2.5137540962492975,
+     "sim": 0.9104548857740055,
+     "cands": [
+      [
+       388.0,
+       3690.5
+      ],
+      [
+       893.0,
+       2859.5
+      ],
+      [
+       1132.5,
+       3709.0
+      ],
+      [
+       611.5,
+       4909.0
+      ],
+      [
+       1004.0,
+       2884.5
+      ]
+     ],
+     "t": 6.671018600463867
+    },
+    "clean": {
+     "centre": [
+      215.0,
+      728.0
+     ],
+     "centre_in_orig": [
+      1281.7994384765625,
+      3273.598876953125
+     ],
+     "pos": [
+      205,
+      718
+     ],
+     "size": [
+      20,
+      20
+     ],
+     "rot": 0,
+     "scale": 0.07267567479759389,
+     "conf": "ambiguous",
+     "gap": 0.37233853861982885,
+     "struct": 2.2495446890274744,
+     "sim": 0.9456607845673466,
+     "search_piece_px": 25.298221281347036,
+     "t": 5.624209403991699
+    },
+    "dist_top1_px": 986.2474246449336,
+    "dist_top1_sides": 7.735089777661882,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.9294195014036164,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 51,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      6600.0,
+      1665.5
+     ],
+     "pos": [
+      6550,
+      1613
+     ],
+     "size": [
+      100,
+      105
+     ],
+     "rot": 270,
+     "scale": 0.33852186038769927,
+     "conf": "ambiguous",
+     "gap": 0.036102813453751534,
+     "struct": 3.5868512154939123,
+     "sim": 0.9121962028981335,
+     "cands": [
+      [
+       6600.0,
+       1665.5
+      ],
+      [
+       1403.0,
+       3201.5
+      ],
+      [
+       6475.0,
+       1609.5
+      ],
+      [
+       6436.0,
+       1456.5
+      ],
+      [
+       543.0,
+       3680.5
+      ]
+     ],
+     "t": 7.690882921218872
+    },
+    "clean": {
+     "centre": [
+      538.5,
+      908.5
+     ],
+     "centre_in_orig": [
+      2730.50927734375,
+      4078.906982421875
+     ],
+     "pos": [
+      526,
+      897
+     ],
+     "size": [
+      25,
+      23
+     ],
+     "rot": 180,
+     "scale": 0.07976085500206206,
+     "conf": "ambiguous",
+     "gap": 0.1647123688274042,
+     "struct": 3.028788805012591,
+     "sim": 0.8946061038190982,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.343161582946777
+    },
+    "dist_top1_px": 4560.4267032291455,
+    "dist_top1_sides": 35.767201102323554,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.4432361234232118,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 52,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      573.5,
+      2866.0
+     ],
+     "pos": [
+      521,
+      2816
+     ],
+     "size": [
+      105,
+      100
+     ],
+     "rot": 0,
+     "scale": 0.4305778444300651,
+     "conf": "ambiguous",
+     "gap": 0.23005480101586398,
+     "struct": 3.691086867608938,
+     "sim": 0.9094524583446215,
+     "cands": [
+      [
+       573.5,
+       2866.0
+      ],
+      [
+       383.0,
+       2813.5
+      ],
+      [
+       474.0,
+       2835.5
+      ],
+      [
+       2070.5,
+       3828.0
+      ],
+      [
+       514.5,
+       2888.0
+      ]
+     ],
+     "t": 8.615041732788086
+    },
+    "clean": {
+     "centre": [
+      174.5,
+      746.5
+     ],
+     "centre_in_orig": [
+      1101.4912109375,
+      3353.357666015625
+     ],
+     "pos": [
+      160,
+      733
+     ],
+     "size": [
+      29,
+      27
+     ],
+     "rot": 0,
+     "scale": 0.11746915398637692,
+     "conf": "ambiguous",
+     "gap": 0.17383377436183736,
+     "struct": 3.675801872290906,
+     "sim": 0.9136093146555189,
+     "search_piece_px": 25.298221281347036,
+     "t": 7.193211555480957
+    },
+    "dist_top1_px": 718.534768436048,
+    "dist_top1_sides": 5.635432654463229,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 4.626440856016652,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 53,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      617.0,
+      2834.0
+     ],
+     "pos": [
+      563,
+      2766
+     ],
+     "size": [
+      108,
+      136
+     ],
+     "rot": 90,
+     "scale": 0.4716611914033022,
+     "conf": "ambiguous",
+     "gap": 0.06499707272385817,
+     "struct": 8.610643709624954,
+     "sim": 0.8187213569223123,
+     "cands": [
+      [
+       617.0,
+       2834.0
+      ],
+      [
+       738.5,
+       3738.0
+      ],
+      [
+       696.5,
+       2857.0
+      ],
+      [
+       519.5,
+       4860.0
+      ],
+      [
+       1639.5,
+       3608.0
+      ]
+     ],
+     "t": 7.93307638168335
+    },
+    "clean": {
+     "centre": [
+      1508.5,
+      1052.5
+     ],
+     "centre_in_orig": [
+      7204.99609375,
+      4773.76318359375
+     ],
+     "pos": [
+      1494,
+      1034
+     ],
+     "size": [
+      29,
+      37
+     ],
+     "rot": 90,
+     "scale": 0.1280617269892007,
+     "conf": "high",
+     "gap": 0.20275865033578122,
+     "struct": 8.450450319101698,
+     "sim": 0.8405059058444193,
+     "search_piece_px": 25.298221281347036,
+     "t": 7.940563678741455
+    },
+    "dist_top1_px": 6867.632324148623,
+    "dist_top1_sides": 53.86250068676944,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 4.376480746595497,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 54,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      2831.5,
+      3854.5
+     ],
+     "pos": [
+      2772,
+      3792
+     ],
+     "size": [
+      119,
+      125
+     ],
+     "rot": 270,
+     "scale": 0.40585745408645957,
+     "conf": "ambiguous",
+     "gap": 0.017472756611459996,
+     "struct": 5.917529728036424,
+     "sim": 0.7928070432516678,
+     "cands": [
+      [
+       2831.5,
+       3854.5
+      ],
+      [
+       2912.5,
+       3870.0
+      ],
+      [
+       2138.5,
+       3826.5
+      ],
+      [
+       605.5,
+       2938.0
+      ],
+      [
+       716.5,
+       2974.0
+      ]
+     ],
+     "t": 7.7469799518585205
+    },
+    "clean": {
+     "centre": [
+      131.5,
+      746.0
+     ],
+     "centre_in_orig": [
+      910.611083984375,
+      3349.878173828125
+     ],
+     "pos": [
+      121,
+      736
+     ],
+     "size": [
+      21,
+      20
+     ],
+     "rot": 180,
+     "scale": 0.06781244011469667,
+     "conf": "ambiguous",
+     "gap": 0.007351177802135261,
+     "struct": 5.683639534567366,
+     "sim": 0.8663932902032307,
+     "search_piece_px": 25.298221281347036,
+     "t": 6.34844446182251
+    },
+    "dist_top1_px": 1986.065813391067,
+    "dist_top1_sides": 15.576615955631727,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.2558119726858754,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 55,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      5640.5,
+      4729.0
+     ],
+     "pos": [
+      5560,
+      4643
+     ],
+     "size": [
+      161,
+      172
+     ],
+     "rot": 90,
+     "scale": 0.5819511367348598,
+     "conf": "ambiguous",
+     "gap": 0.04818042829693486,
+     "struct": 10.735886897544557,
+     "sim": 0.8291532206959409,
+     "cands": [
+      [
+       5640.5,
+       4729.0
+      ],
+      [
+       1907.5,
+       4759.0
+      ],
+      [
+       7251.0,
+       4867.5
+      ],
+      [
+       487.0,
+       4002.0
+      ],
+      [
+       6638.0,
+       4835.5
+      ]
+     ],
+     "t": 6.673638343811035
+    },
+    "clean": {
+     "centre": [
+      873.5,
+      655.5
+     ],
+     "centre_in_orig": [
+      4254.33642578125,
+      2970.83056640625
+     ],
+     "pos": [
+      862,
+      643
+     ],
+     "size": [
+      23,
+      25
+     ],
+     "rot": 90,
+     "scale": 0.08437936201131206,
+     "conf": "ambiguous",
+     "gap": 0.05454473138955849,
+     "struct": 9.692605495280377,
+     "sim": 0.8574747571889314,
+     "search_piece_px": 25.298221281347036,
+     "t": 5.670580148696899
+    },
+    "dist_top1_px": 2238.8857076041795,
+    "dist_top1_sides": 17.559469883003402,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 1.4163850509393487,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 56,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      6637.0,
+      1753.5
+     ],
+     "pos": [
+      6544,
+      1680
+     ],
+     "size": [
+      186,
+      147
+     ],
+     "rot": 270,
+     "scale": 0.6126442125308466,
+     "conf": "ambiguous",
+     "gap": 0.0213909054010446,
+     "struct": 10.477636950545213,
+     "sim": 0.8045794537831894,
+     "cands": [
+      [
+       6637.0,
+       1753.5
+      ],
+      [
+       5847.0,
+       1797.5
+      ],
+      [
+       5645.0,
+       1828.0
+      ],
+      [
+       6454.0,
+       1761.5
+      ],
+      [
+       7197.0,
+       3152.5
+      ]
+     ],
+     "t": 7.851430416107178
+    },
+    "clean": {
+     "centre": [
+      1216.5,
+      390.5
+     ],
+     "centre_in_orig": [
+      5834.7763671875,
+      1794.9801025390625
+     ],
+     "pos": [
+      1198,
+      376
+     ],
+     "size": [
+      37,
+      29
+     ],
+     "rot": 270,
+     "scale": 0.12155639137516795,
+     "conf": "ambiguous",
+     "gap": 0.05739042130823224,
+     "struct": 11.642624214549748,
+     "sim": 0.7959982922121479,
+     "search_piece_px": 25.298221281347036,
+     "t": 7.7732014656066895
+    },
+    "dist_top1_px": 803.2953105487022,
+    "dist_top1_sides": 6.300205394509379,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.0978852646148428,
+    "agree_shortlist": true,
+    "rot_agree": true
+   },
+   {
+    "idx": 57,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      2119.0,
+      3821.0
+     ],
+     "pos": [
+      2079,
+      3756
+     ],
+     "size": [
+      80,
+      130
+     ],
+     "rot": 0,
+     "scale": 0.3709792447024496,
+     "conf": "ambiguous",
+     "gap": 0.0663383362032066,
+     "struct": 2.3543189099237156,
+     "sim": 0.8799910302732555,
+     "cands": [
+      [
+       2119.0,
+       3821.0
+      ],
+      [
+       678.0,
+       2917.0
+      ],
+      [
+       1728.0,
+       4899.0
+      ],
+      [
+       2155.0,
+       4905.0
+      ],
+      [
+       3444.0,
+       4960.0
+      ]
+     ],
+     "t": 11.916353225708008
+    },
+    "clean": {
+     "centre": [
+      179.0,
+      734.5
+     ],
+     "centre_in_orig": [
+      1121.6241455078125,
+      3301.004638671875
+     ],
+     "pos": [
+      168,
+      717
+     ],
+     "size": [
+      22,
+      35
+     ],
+     "rot": 0,
+     "scale": 0.10120961537021196,
+     "conf": "ambiguous",
+     "gap": 0.05744959548633987,
+     "struct": 2.1786824956555164,
+     "sim": 0.9345319759180272,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.810922622680664
+    },
+    "dist_top1_px": 1124.7905453580183,
+    "dist_top1_sides": 8.82167662191039,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.776980262475255,
+    "agree_shortlist": false,
+    "rot_agree": true
+   },
+   {
+    "idx": 58,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      6100.5,
+      2672.0
+     ],
+     "pos": [
+      6056,
+      2614
+     ],
+     "size": [
+      89,
+      116
+     ],
+     "rot": 180,
+     "scale": 0.3815848817020581,
+     "conf": "ambiguous",
+     "gap": 0.36829051793503115,
+     "struct": 2.943928790491151,
+     "sim": 0.9471664912853378,
+     "cands": [
+      [
+       6100.5,
+       2672.0
+      ],
+      [
+       6208.5,
+       2727.0
+      ],
+      [
+       2278.5,
+       4027.0
+      ],
+      [
+       2209.0,
+       4778.5
+      ],
+      [
+       7420.5,
+       4279.5
+      ]
+     ],
+     "t": 8.631549596786499
+    },
+    "clean": {
+     "centre": [
+      1497.5,
+      601.0
+     ],
+     "centre_in_orig": [
+      7148.99169921875,
+      2739.8583984375
+     ],
+     "pos": [
+      1483,
+      582
+     ],
+     "size": [
+      29,
+      38
+     ],
+     "rot": 0,
+     "scale": 0.12303083983449296,
+     "conf": "ambiguous",
+     "gap": 0.2594838367547909,
+     "struct": 2.76812644889291,
+     "sim": 0.9482196826371824,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.761668920516968
+    },
+    "dist_top1_px": 1050.6853028234116,
+    "dist_top1_sides": 8.240472869508242,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 4.479025610314774,
+    "agree_shortlist": false,
+    "rot_agree": false
+   },
+   {
+    "idx": 59,
+    "type": "interior",
+    "orig": {
+     "centre": [
+      3625.5,
+      4813.5
+     ],
+     "pos": [
+      3556,
+      4743
+     ],
+     "size": [
+      139,
+      141
+     ],
+     "rot": 90,
+     "scale": 0.5610313084242787,
+     "conf": "ambiguous",
+     "gap": 0.08078942602749437,
+     "struct": 7.8604063216906965,
+     "sim": 0.8903867081381588,
+     "cands": [
+      [
+       3625.5,
+       4813.5
+      ],
+      [
+       4292.5,
+       4782.5
+      ],
+      [
+       4096.5,
+       4624.5
+      ],
+      [
+       3873.5,
+       4799.5
+      ],
+      [
+       4173.5,
+       4633.5
+      ]
+     ],
+     "t": 8.305702209472656
+    },
+    "clean": {
+     "centre": [
+      426.5,
+      1036.5
+     ],
+     "centre_in_orig": [
+      2225.01171875,
+      4637.50830078125
+     ],
+     "pos": [
+      410,
+      1020
+     ],
+     "size": [
+      33,
+      33
+     ],
+     "rot": 90,
+     "scale": 0.13155496048909854,
+     "conf": "ambiguous",
+     "gap": 0.08416506296520695,
+     "struct": 7.7291728552469205,
+     "sim": 0.8924016120477061,
+     "search_piece_px": 25.298221281347036,
+     "t": 7.320716857910156
+    },
+    "dist_top1_px": 1411.502923876703,
+    "dist_top1_sides": 11.070347627573529,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 0.07250312791887362,
+    "agree_shortlist": true,
+    "rot_agree": true
+   },
+   {
+    "idx": 60,
+    "type": "edge",
+    "orig": {
+     "centre": [
+      447.5,
+      2857.5
+     ],
+     "pos": [
+      349,
+      2788
+     ],
+     "size": [
+      197,
+      139
+     ],
+     "rot": 180,
+     "scale": 0.6753551384095955,
+     "conf": "ambiguous",
+     "gap": 0.04294092516587865,
+     "struct": 5.052566166353645,
+     "sim": 0.9021194047264669,
+     "cands": [
+      [
+       447.5,
+       2857.5
+      ],
+      [
+       535.0,
+       2901.0
+      ],
+      [
+       604.0,
+       2920.0
+      ],
+      [
+       674.0,
+       2967.0
+      ],
+      [
+       812.0,
+       3006.0
+      ]
+     ],
+     "t": 8.954318046569824
+    },
+    "clean": {
+     "centre": [
+      158.5,
+      812.5
+     ],
+     "centre_in_orig": [
+      1029.6529541015625,
+      3641.513671875
+     ],
+     "pos": [
+      142,
+      801
+     ],
+     "size": [
+      33,
+      23
+     ],
+     "rot": 0,
+     "scale": 0.11338379918354015,
+     "conf": "ambiguous",
+     "gap": 0.07811692867452878,
+     "struct": 4.985031560465239,
+     "sim": 0.9096190166271592,
+     "search_piece_px": 25.298221281347036,
+     "t": 8.282976150512695
+    },
+    "dist_top1_px": 976.5139526172148,
+    "dist_top1_sides": 7.658750637907097,
+    "agree_top1": false,
+    "min_dist_shortlists_sides": 2.181878944010797,
+    "agree_shortlist": false,
+    "rot_agree": false
+   }
+  ]
+ },
+ "expC": [
+  {
+   "laranja": 0,
+   "verde": 1,
+   "pair_ratio": 2.6663261290810683,
+   "centre": [
+    5403.5,
+    1450.0
+   ],
+   "pos": [
+    5344,
+    1389
+   ],
+   "size": [
+    119,
+    122
+   ],
+   "rot": 270,
+   "conf": "high",
+   "gap": 0.1351216112961535,
+   "struct": 5.20636189170067,
+   "cands": [
+    [
+     5403.5,
+     1450.0
+    ],
+    [
+     6962.0,
+     626.0
+    ],
+    [
+     5648.0,
+     1134.0
+    ],
+    [
+     4590.0,
+     1958.5
+    ],
+    [
+     2246.5,
+     1148.0
+    ]
+   ],
+   "t": 8.887878179550171,
+   "dist_sides": 0.706954008618017,
+   "agree": true,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 2,
+   "verde": 3,
+   "pair_ratio": 2.000678172648449,
+   "centre": [
+    5708.5,
+    1451.0
+   ],
+   "pos": [
+    5660,
+    1375
+   ],
+   "size": [
+    97,
+    152
+   ],
+   "rot": 0,
+   "conf": "high",
+   "gap": 0.12865581527079514,
+   "struct": 4.136336316973173,
+   "cands": [
+    [
+     5708.5,
+     1451.0
+    ],
+    [
+     7016.5,
+     1232.0
+    ],
+    [
+     5794.5,
+     1437.0
+    ],
+    [
+     5536.5,
+     1473.0
+    ],
+    [
+     5899.5,
+     1431.0
+    ]
+   ],
+   "t": 12.550257921218872,
+   "dist_sides": 6.530465633546815,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 4,
+   "verde": 0,
+   "pair_ratio": 3.530226549024815,
+   "centre": [
+    6777.0,
+    1600.5
+   ],
+   "pos": [
+    6727,
+    1527
+   ],
+   "size": [
+    100,
+    147
+   ],
+   "rot": 180,
+   "conf": "ambiguous",
+   "gap": 0.05760016967283836,
+   "struct": 7.721863090613676,
+   "cands": [
+    [
+     6777.0,
+     1600.5
+    ],
+    [
+     5873.5,
+     1681.5
+    ],
+    [
+     6164.5,
+     1495.5
+    ],
+    [
+     5482.5,
+     1550.5
+    ],
+    [
+     7528.5,
+     1539.5
+    ]
+   ],
+   "t": 9.300039052963257,
+   "dist_sides": 49.36865458802896,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "high"
+  },
+  {
+   "laranja": 6,
+   "verde": 6,
+   "pair_ratio": 10.174619097638708,
+   "centre": [
+    1307.0,
+    3172.5
+   ],
+   "pos": [
+    1228,
+    3127
+   ],
+   "size": [
+    158,
+    91
+   ],
+   "rot": 0,
+   "conf": "ambiguous",
+   "gap": 0.05449312171212603,
+   "struct": 7.402166149103294,
+   "cands": [
+    [
+     1307.0,
+     3172.5
+    ],
+    [
+     744.0,
+     3745.5
+    ],
+    [
+     3391.5,
+     5090.0
+    ],
+    [
+     1327.5,
+     3504.0
+    ],
+    [
+     3440.0,
+     5055.5
+    ]
+   ],
+   "t": 11.697504997253418,
+   "dist_sides": 21.9428870720634,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "high"
+  },
+  {
+   "laranja": 8,
+   "verde": 8,
+   "pair_ratio": 3.192257726764375,
+   "centre": [
+    6136.5,
+    1481.5
+   ],
+   "pos": [
+    6092,
+    1422
+   ],
+   "size": [
+    89,
+    119
+   ],
+   "rot": 0,
+   "conf": "ambiguous",
+   "gap": 0.09663953618480083,
+   "struct": 6.2732559366699165,
+   "cands": [
+    [
+     6136.5,
+     1481.5
+    ],
+    [
+     6880.5,
+     1626.0
+    ],
+    [
+     6242.5,
+     1489.5
+    ],
+    [
+     940.5,
+     3134.0
+    ],
+    [
+     876.5,
+     3119.5
+    ]
+   ],
+   "t": 9.969295263290405,
+   "dist_sides": 43.59333593273264,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 10,
+   "verde": 10,
+   "pair_ratio": 25.321004285221736,
+   "centre": [
+    5378.5,
+    2501.5
+   ],
+   "pos": [
+    5319,
+    2439
+   ],
+   "size": [
+    119,
+    125
+   ],
+   "rot": 270,
+   "conf": "ambiguous",
+   "gap": 0.1345331017802667,
+   "struct": 2.1479747488999985,
+   "cands": [
+    [
+     5378.5,
+     2501.5
+    ],
+    [
+     5339.0,
+     2447.5
+    ],
+    [
+     4682.0,
+     2389.5
+    ],
+    [
+     5269.0,
+     2389.5
+    ],
+    [
+     6508.5,
+     419.0
+    ]
+   ],
+   "t": 6.6611168384552,
+   "dist_sides": 14.469563594008788,
+   "agree": false,
+   "agree_shortlist": false,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 13,
+   "verde": 13,
+   "pair_ratio": 1.5454085130501543,
+   "centre": [
+    413.0,
+    2901.5
+   ],
+   "pos": [
+    363,
+    2849
+   ],
+   "size": [
+    100,
+    105
+   ],
+   "rot": 0,
+   "conf": "ambiguous",
+   "gap": 0.1009359195572981,
+   "struct": 5.666425815102613,
+   "cands": [
+    [
+     413.0,
+     2901.5
+    ],
+    [
+     513.0,
+     2926.5
+    ],
+    [
+     765.0,
+     2990.5
+    ],
+    [
+     837.0,
+     3012.5
+    ],
+    [
+     1874.0,
+     3808.5
+    ]
+   ],
+   "t": 6.033981084823608,
+   "dist_sides": 0.01960737636513132,
+   "agree": true,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 15,
+   "verde": 15,
+   "pair_ratio": 6.347989910942078,
+   "centre": [
+    1477.0,
+    3346.5
+   ],
+   "pos": [
+    1416,
+    3287
+   ],
+   "size": [
+    122,
+    119
+   ],
+   "rot": 180,
+   "conf": "ambiguous",
+   "gap": 0.16110766339484245,
+   "struct": 2.1185239491130536,
+   "cands": [
+    [
+     1477.0,
+     3346.5
+    ],
+    [
+     3917.0,
+     3022.5
+    ],
+    [
+     1412.5,
+     3453.5
+    ],
+    [
+     3230.5,
+     3227.5
+    ],
+    [
+     2942.5,
+     5089.0
+    ]
+   ],
+   "t": 8.086900234222412,
+   "dist_sides": 0.1804304822556231,
+   "agree": true,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 18,
+   "verde": 18,
+   "pair_ratio": 1.6618963605723112,
+   "centre": [
+    388.0,
+    3685.5
+   ],
+   "pos": [
+    338,
+    3612
+   ],
+   "size": [
+    100,
+    147
+   ],
+   "rot": 270,
+   "conf": "ambiguous",
+   "gap": 0.3371292090902104,
+   "struct": 2.9721970335399774,
+   "cands": [
+    [
+     388.0,
+     3685.5
+    ],
+    [
+     1240.5,
+     3462.0
+    ],
+    [
+     1949.0,
+     4962.5
+    ],
+    [
+     1777.0,
+     4940.5
+    ],
+    [
+     1167.0,
+     3442.5
+    ]
+   ],
+   "t": 9.861838102340698,
+   "dist_sides": 7.259942943775183,
+   "agree": false,
+   "agree_shortlist": false,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 20,
+   "verde": 20,
+   "pair_ratio": 4.546709876936826,
+   "centre": [
+    1526.5,
+    3249.0
+   ],
+   "pos": [
+    1475,
+    3199
+   ],
+   "size": [
+    103,
+    100
+   ],
+   "rot": 270,
+   "conf": "ambiguous",
+   "gap": 0.20619001209729645,
+   "struct": 2.674029392897176,
+   "cands": [
+    [
+     1526.5,
+     3249.0
+    ],
+    [
+     1628.5,
+     3238.0
+    ],
+    [
+     1417.5,
+     3243.0
+    ],
+    [
+     1880.5,
+     4925.5
+    ],
+    [
+     1323.5,
+     3468.0
+    ]
+   ],
+   "t": 6.647671222686768,
+   "dist_sides": 0.4538419412497199,
+   "agree": true,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 22,
+   "verde": 22,
+   "pair_ratio": 6.9074824856813315,
+   "centre": [
+    6581.0,
+    2895.0
+   ],
+   "pos": [
+    6517,
+    2838
+   ],
+   "size": [
+    128,
+    114
+   ],
+   "rot": 180,
+   "conf": "ambiguous",
+   "gap": 0.12084364244459053,
+   "struct": 2.6806906539749473,
+   "cands": [
+    [
+     6581.0,
+     2895.0
+    ],
+    [
+     3776.5,
+     2890.0
+    ],
+    [
+     3383.0,
+     3471.5
+    ],
+    [
+     3441.5,
+     4439.0
+    ],
+    [
+     7218.0,
+     4586.0
+    ]
+   ],
+   "t": 8.15985918045044,
+   "dist_sides": 30.43839432049136,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 24,
+   "verde": 24,
+   "pair_ratio": 4.904106780498714,
+   "centre": [
+    749.0,
+    2849.5
+   ],
+   "pos": [
+    685,
+    2772
+   ],
+   "size": [
+    128,
+    155
+   ],
+   "rot": 0,
+   "conf": "ambiguous",
+   "gap": 0.007134887941340058,
+   "struct": 2.7338777332658504,
+   "cands": [
+    [
+     749.0,
+     2849.5
+    ],
+    [
+     834.0,
+     2879.5
+    ],
+    [
+     1231.0,
+     3453.5
+    ],
+    [
+     1228.0,
+     3675.5
+    ],
+    [
+     1148.0,
+     2915.5
+    ]
+   ],
+   "t": 7.225129842758179,
+   "dist_sides": 0.8261944430054352,
+   "agree": true,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 26,
+   "verde": 26,
+   "pair_ratio": 5.061948408298,
+   "centre": [
+    6973.0,
+    1245.0
+   ],
+   "pos": [
+    6916,
+    1181
+   ],
+   "size": [
+    114,
+    128
+   ],
+   "rot": 0,
+   "conf": "ambiguous",
+   "gap": 0.054731866156945926,
+   "struct": 7.2702156495055705,
+   "cands": [
+    [
+     6973.0,
+     1245.0
+    ],
+    [
+     6388.0,
+     1591.0
+    ],
+    [
+     5947.0,
+     1358.0
+    ],
+    [
+     6246.5,
+     1626.0
+    ],
+    [
+     6165.5,
+     1099.0
+    ]
+   ],
+   "t": 8.504919052124023,
+   "dist_sides": 5.488659073129278,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "high"
+  },
+  {
+   "laranja": 28,
+   "verde": 28,
+   "pair_ratio": 1.8237526909797817,
+   "centre": [
+    705.5,
+    3939.0
+   ],
+   "pos": [
+    654,
+    3889
+   ],
+   "size": [
+    103,
+    100
+   ],
+   "rot": 180,
+   "conf": "ambiguous",
+   "gap": 0.07163906631627895,
+   "struct": 2.9795232802552967,
+   "cands": [
+    [
+     705.5,
+     3939.0
+    ],
+    [
+     6659.5,
+     2902.0
+    ],
+    [
+     5902.5,
+     2744.0
+    ],
+    [
+     2080.5,
+     2791.0
+    ],
+    [
+     3811.0,
+     2900.5
+    ]
+   ],
+   "t": 7.477381944656372,
+   "dist_sides": 46.3269436084375,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "high"
+  },
+  {
+   "laranja": 31,
+   "verde": 31,
+   "pair_ratio": 6.017835477141869,
+   "centre": [
+    4126.0,
+    4061.5
+   ],
+   "pos": [
+    4069,
+    4016
+   ],
+   "size": [
+    114,
+    91
+   ],
+   "rot": 90,
+   "conf": "ambiguous",
+   "gap": 0.12070491729714136,
+   "struct": 2.269573561502243,
+   "cands": [
+    [
+     4126.0,
+     4061.5
+    ],
+    [
+     6631.5,
+     2912.0
+    ],
+    [
+     3888.0,
+     4696.5
+    ],
+    [
+     3732.0,
+     2872.5
+    ],
+    [
+     7460.5,
+     4193.0
+    ]
+   ],
+   "t": 8.557048320770264,
+   "dist_sides": 17.73395786330021,
+   "agree": false,
+   "agree_shortlist": false,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 33,
+   "verde": 33,
+   "pair_ratio": 2.167321644991503,
+   "centre": [
+    1347.0,
+    3332.0
+   ],
+   "pos": [
+    1275,
+    3282
+   ],
+   "size": [
+    144,
+    100
+   ],
+   "rot": 270,
+   "conf": "ambiguous",
+   "gap": 0.14586070104096593,
+   "struct": 3.129429999749223,
+   "cands": [
+    [
+     1347.0,
+     3332.0
+    ],
+    [
+     1380.0,
+     3425.0
+    ],
+    [
+     1297.0,
+     3233.0
+    ],
+    [
+     1455.0,
+     3490.0
+    ],
+    [
+     3289.0,
+     3226.0
+    ]
+   ],
+   "t": 9.531109809875488,
+   "dist_sides": 1.8626140674274514,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 35,
+   "verde": 35,
+   "pair_ratio": 3.848977172401984,
+   "centre": [
+    6760.5,
+    4140.5
+   ],
+   "pos": [
+    6691,
+    4088
+   ],
+   "size": [
+    139,
+    105
+   ],
+   "rot": 270,
+   "conf": "ambiguous",
+   "gap": 0.0019496095807919383,
+   "struct": 4.134503018692076,
+   "cands": [
+    [
+     6760.5,
+     4140.5
+    ],
+    [
+     6695.5,
+     4088.0
+    ],
+    [
+     828.5,
+     3223.5
+    ],
+    [
+     7342.0,
+     651.5
+    ],
+    [
+     6890.5,
+     4210.5
+    ]
+   ],
+   "t": 8.583971977233887,
+   "dist_sides": 47.532450252723436,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 38,
+   "verde": 38,
+   "pair_ratio": 4.719495875907684,
+   "centre": [
+    2586.0,
+    1276.5
+   ],
+   "pos": [
+    2492,
+    1203
+   ],
+   "size": [
+    188,
+    147
+   ],
+   "rot": 0,
+   "conf": "ambiguous",
+   "gap": 0.04667991086115278,
+   "struct": 5.146555898326317,
+   "cands": [
+    [
+     2586.0,
+     1276.5
+    ],
+    [
+     6311.0,
+     2738.5
+    ],
+    [
+     2111.0,
+     1365.5
+    ],
+    [
+     1784.0,
+     1434.5
+    ],
+    [
+     1987.0,
+     1408.5
+    ]
+   ],
+   "t": 8.830131769180298,
+   "dist_sides": 25.317722836819094,
+   "agree": false,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 40,
+   "verde": 40,
+   "pair_ratio": 1.7550892190427894,
+   "centre": [
+    3318.0,
+    3335.0
+   ],
+   "pos": [
+    3257,
+    3274
+   ],
+   "size": [
+    122,
+    122
+   ],
+   "rot": 270,
+   "conf": "high",
+   "gap": 0.2277232874589656,
+   "struct": 5.690460857423627,
+   "cands": [
+    [
+     3318.0,
+     3335.0
+    ],
+    [
+     6472.0,
+     1735.0
+    ],
+    [
+     7574.5,
+     475.5
+    ],
+    [
+     6566.0,
+     1355.0
+    ],
+    [
+     6335.5,
+     1185.5
+    ]
+   ],
+   "t": 6.567699670791626,
+   "dist_sides": 14.492775229886393,
+   "agree": false,
+   "agree_shortlist": false,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 42,
+   "verde": 42,
+   "pair_ratio": 7.482545451658846,
+   "centre": [
+    502.5,
+    2905.5
+   ],
+   "pos": [
+    432,
+    2836
+   ],
+   "size": [
+    141,
+    139
+   ],
+   "rot": 180,
+   "conf": "high",
+   "gap": 0.23933609245192158,
+   "struct": 5.104721007514716,
+   "cands": [
+    [
+     502.5,
+     2905.5
+    ],
+    [
+     747.5,
+     2991.0
+    ],
+    [
+     2928.5,
+     3881.0
+    ],
+    [
+     602.0,
+     2945.5
+    ],
+    [
+     3010.0,
+     3890.5
+    ]
+   ],
+   "t": 4.820199489593506,
+   "dist_sides": 0.21805659365409988,
+   "agree": true,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 44,
+   "verde": 44,
+   "pair_ratio": 3.083980870439613,
+   "centre": [
+    6850.5,
+    1609.0
+   ],
+   "pos": [
+    6766,
+    1527
+   ],
+   "size": [
+    169,
+    164
+   ],
+   "rot": 0,
+   "conf": "ambiguous",
+   "gap": 0.09537613742356277,
+   "struct": 7.625789099290854,
+   "cands": [
+    [
+     6850.5,
+     1609.0
+    ],
+    [
+     6257.5,
+     1376.5
+    ],
+    [
+     6236.5,
+     1497.0
+    ],
+    [
+     6216.5,
+     1577.0
+    ],
+    [
+     6435.5,
+     1275.0
+    ]
+   ],
+   "t": 4.775414228439331,
+   "dist_sides": 48.81934216487941,
+   "agree": false,
+   "agree_shortlist": false,
+   "conf_verde": "ambiguous"
+  },
+  {
+   "laranja": 47,
+   "verde": 47,
+   "pair_ratio": 4.278520351488895,
+   "centre": [
+    1451.0,
+    3391.0
+   ],
+   "pos": [
+    1386,
+    3351
+   ],
+   "size": [
+    130,
+    80
+   ],
+   "rot": 270,
+   "conf": "ambiguous",
+   "gap": 0.0034462862983924464,
+   "struct": 2.7485671577917024,
+   "cands": [
+    [
+     1451.0,
+     3391.0
+    ],
+    [
+     1417.5,
+     3488.0
+    ],
+    [
+     6593.0,
+     3203.0
+    ],
+    [
+     3330.0,
+     3233.0
+    ],
+    [
+     2943.5,
+     5076.0
+    ]
+   ],
+   "t": 8.664083003997803,
+   "dist_sides": 0.380564982110934,
+   "agree": true,
+   "agree_shortlist": true,
+   "conf_verde": "ambiguous"
+  }
+ ],
+ "expC_pairing": [
+  {
+   "a": 0,
+   "b": 1,
+   "d1": 1.854895441069032,
+   "d2": 4.945756181235713,
+   "ratio": 2.6663261290810683,
+   "mutual": true,
+   "area_ratio": 0.9898979100967449
+  },
+  {
+   "a": 1,
+   "b": 2,
+   "d1": 2.929835179573825,
+   "d2": 6.8608676058575675,
+   "ratio": 2.341724767894811,
+   "mutual": true,
+   "area_ratio": 0.9522885141614239
+  },
+  {
+   "a": 2,
+   "b": 3,
+   "d1": 4.12342998247431,
+   "d2": 8.249656362380529,
+   "ratio": 2.000678172648449,
+   "mutual": true,
+   "area_ratio": 0.9640786587276716
+  },
+  {
+   "a": 3,
+   "b": 4,
+   "d1": 3.548900923255859,
+   "d2": 7.0400784823474085,
+   "ratio": 1.9837348617466186,
+   "mutual": true,
+   "area_ratio": 1.0476343314579164
+  },
+  {
+   "a": 4,
+   "b": 0,
+   "d1": 1.2439970834267329,
+   "d2": 4.39159153082249,
+   "ratio": 3.530226549024815,
+   "mutual": true,
+   "area_ratio": 0.9928109273903667
+  },
+  {
+   "a": 5,
+   "b": 5,
+   "d1": 0.5187660176210591,
+   "d2": 6.158192383300653,
+   "ratio": 11.87084769264706,
+   "mutual": true,
+   "area_ratio": 0.9946229331899449
+  },
+  {
+   "a": 6,
+   "b": 6,
+   "d1": 0.8957764773162826,
+   "d2": 9.114184453317776,
+   "ratio": 10.174619097638708,
+   "mutual": true,
+   "area_ratio": 0.9857678699688756
+  },
+  {
+   "a": 7,
+   "b": 7,
+   "d1": 9.648192761879235,
+   "d2": 17.578253980088384,
+   "ratio": 1.821921930243915,
+   "mutual": true,
+   "area_ratio": 0.9218473209261614
+  },
+  {
+   "a": 8,
+   "b": 8,
+   "d1": 1.7156434002148802,
+   "d2": 5.476775900708256,
+   "ratio": 3.192257726764375,
+   "mutual": true,
+   "area_ratio": 0.9784908731542844
+  },
+  {
+   "a": 9,
+   "b": 9,
+   "d1": 1.144871374130478,
+   "d2": 6.288392462886651,
+   "ratio": 5.492662848403072,
+   "mutual": true,
+   "area_ratio": 0.9877949373223767
+  },
+  {
+   "a": 10,
+   "b": 10,
+   "d1": 0.37401839768059275,
+   "d2": 9.470521450422057,
+   "ratio": 25.321004285221736,
+   "mutual": true,
+   "area_ratio": 0.9936154647631293
+  },
+  {
+   "a": 11,
+   "b": 11,
+   "d1": 2.201751215178007,
+   "d2": 7.459505436179212,
+   "ratio": 3.387987427805791,
+   "mutual": true,
+   "area_ratio": 0.9669702427763261
+  },
+  {
+   "a": 12,
+   "b": 15,
+   "d1": 7.407076692188333,
+   "d2": 7.532033550077834,
+   "ratio": 1.0168699289992884,
+   "mutual": false,
+   "area_ratio": 1.014531962587926
+  },
+  {
+   "a": 13,
+   "b": 13,
+   "d1": 3.2614270146071487,
+   "d2": 5.040237073065637,
+   "ratio": 1.5454085130501543,
+   "mutual": true,
+   "area_ratio": 0.9499757065349421
+  },
+  {
+   "a": 14,
+   "b": 14,
+   "d1": 1.397479240611612,
+   "d2": 5.921236038103887,
+   "ratio": 4.237083361261549,
+   "mutual": true,
+   "area_ratio": 0.9802148106274732
+  },
+  {
+   "a": 15,
+   "b": 15,
+   "d1": 0.8609834467483998,
+   "d2": 5.465514233446978,
+   "ratio": 6.347989910942078,
+   "mutual": true,
+   "area_ratio": 0.9754966375512097
+  },
+  {
+   "a": 16,
+   "b": 16,
+   "d1": 1.067447259194728,
+   "d2": 4.934099798559484,
+   "ratio": 4.622335910330335,
+   "mutual": true,
+   "area_ratio": 0.9930437563715594
+  },
+  {
+   "a": 17,
+   "b": 17,
+   "d1": 6.746238063970434,
+   "d2": 11.482449129890163,
+   "ratio": 1.7020521690769206,
+   "mutual": false,
+   "area_ratio": 0.8803404735592184
+  },
+  {
+   "a": 18,
+   "b": 18,
+   "d1": 4.795815596388491,
+   "d2": 7.970148485613961,
+   "ratio": 1.6618963605723112,
+   "mutual": true,
+   "area_ratio": 0.9617161585847418
+  },
+  {
+   "a": 19,
+   "b": 19,
+   "d1": 0.6100024574977074,
+   "d2": 5.3060600369577955,
+   "ratio": 8.698424033771596,
+   "mutual": true,
+   "area_ratio": 0.9837797300192843
+  },
+  {
+   "a": 20,
+   "b": 20,
+   "d1": 1.3723759703001388,
+   "d2": 6.239795379034402,
+   "ratio": 4.546709876936826,
+   "mutual": true,
+   "area_ratio": 0.9847352913221177
+  },
+  {
+   "a": 21,
+   "b": 21,
+   "d1": 1.1542201962037308,
+   "d2": 8.602058564652097,
+   "ratio": 7.4527014801374625,
+   "mutual": true,
+   "area_ratio": 1.0070035674421658
+  },
+  {
+   "a": 22,
+   "b": 22,
+   "d1": 0.720679059876997,
+   "d2": 4.978077983897644,
+   "ratio": 6.9074824856813315,
+   "mutual": true,
+   "area_ratio": 0.9851378422207383
+  },
+  {
+   "a": 23,
+   "b": 23,
+   "d1": 1.0387578126852308,
+   "d2": 6.416192208452367,
+   "ratio": 6.176793214066185,
+   "mutual": true,
+   "area_ratio": 0.9773651702319975
+  },
+  {
+   "a": 24,
+   "b": 24,
+   "d1": 1.02314866830869,
+   "d2": 5.017630321710876,
+   "ratio": 4.904106780498714,
+   "mutual": true,
+   "area_ratio": 0.9803966148793735
+  },
+  {
+   "a": 25,
+   "b": 25,
+   "d1": 1.6887156147732199,
+   "d2": 11.47998320606361,
+   "ratio": 6.798055934127946,
+   "mutual": true,
+   "area_ratio": 0.9902844093834337
+  },
+  {
+   "a": 26,
+   "b": 26,
+   "d1": 1.6773434963375418,
+   "d2": 8.490626241454821,
+   "ratio": 5.061948408298,
+   "mutual": true,
+   "area_ratio": 0.9937918755563885
+  },
+  {
+   "a": 27,
+   "b": 27,
+   "d1": 1.2355174542018803,
+   "d2": 6.530287838439559,
+   "ratio": 5.2854678954398056,
+   "mutual": true,
+   "area_ratio": 0.9914079748889421
+  },
+  {
+   "a": 28,
+   "b": 28,
+   "d1": 3.606431399571021,
+   "d2": 6.57723896980163,
+   "ratio": 1.8237526909797817,
+   "mutual": true,
+   "area_ratio": 0.9655481966166614
+  },
+  {
+   "a": 29,
+   "b": 29,
+   "d1": 1.507868058069828,
+   "d2": 9.101304892289217,
+   "ratio": 6.035876178675405,
+   "mutual": true,
+   "area_ratio": 0.9815861184579626
+  },
+  {
+   "a": 30,
+   "b": 50,
+   "d1": 5.3994431525354365,
+   "d2": 9.75702833497699,
+   "ratio": 1.8070434412102934,
+   "mutual": false,
+   "area_ratio": 1.024721391997405
+  },
+  {
+   "a": 31,
+   "b": 31,
+   "d1": 0.923576023992202,
+   "d2": 5.557928563017903,
+   "ratio": 6.017835477141869,
+   "mutual": true,
+   "area_ratio": 0.9843620139101527
+  },
+  {
+   "a": 32,
+   "b": 32,
+   "d1": 1.8789616432971115,
+   "d2": 8.264123712714529,
+   "ratio": 4.398239709786221,
+   "mutual": true,
+   "area_ratio": 0.9802801396902521
+  },
+  {
+   "a": 33,
+   "b": 33,
+   "d1": 3.483000598764922,
+   "d2": 7.548782587221582,
+   "ratio": 2.167321644991503,
+   "mutual": true,
+   "area_ratio": 0.9518042460129155
+  },
+  {
+   "a": 34,
+   "b": 34,
+   "d1": 4.056070853464544,
+   "d2": 12.487900365550052,
+   "ratio": 3.0788171155549104,
+   "mutual": true,
+   "area_ratio": 0.9667191307879772
+  },
+  {
+   "a": 35,
+   "b": 35,
+   "d1": 0.8256726832207875,
+   "d2": 3.1779953095927054,
+   "ratio": 3.848977172401984,
+   "mutual": true,
+   "area_ratio": 0.9811151948931232
+  },
+  {
+   "a": 36,
+   "b": 36,
+   "d1": 0.9757800405899463,
+   "d2": 9.769056186333678,
+   "ratio": 10.011535161579458,
+   "mutual": true,
+   "area_ratio": 0.9882849882849882
+  },
+  {
+   "a": 37,
+   "b": 37,
+   "d1": 4.044072372318038,
+   "d2": 5.24498709836829,
+   "ratio": 1.2969567840255773,
+   "mutual": true,
+   "area_ratio": 0.9123437026781465
+  },
+  {
+   "a": 38,
+   "b": 38,
+   "d1": 1.9237585127486745,
+   "d2": 9.07917036715967,
+   "ratio": 4.719495875907684,
+   "mutual": true,
+   "area_ratio": 0.9753174745126095
+  },
+  {
+   "a": 39,
+   "b": 39,
+   "d1": 1.8229488984573132,
+   "d2": 6.516054157763162,
+   "ratio": 3.5744579364113997,
+   "mutual": true,
+   "area_ratio": 0.9824328877906324
+  },
+  {
+   "a": 40,
+   "b": 40,
+   "d1": 3.7848637401237735,
+   "d2": 6.642773545837205,
+   "ratio": 1.7550892190427894,
+   "mutual": true,
+   "area_ratio": 0.9700297331314642
+  },
+  {
+   "a": 41,
+   "b": 41,
+   "d1": 0.7217317405808289,
+   "d2": 8.659015698277452,
+   "ratio": 11.99755423158877,
+   "mutual": true,
+   "area_ratio": 0.9898003629764065
+  },
+  {
+   "a": 42,
+   "b": 42,
+   "d1": 0.6829943041708003,
+   "d2": 5.110535924182121,
+   "ratio": 7.482545451658846,
+   "mutual": true,
+   "area_ratio": 0.9894211576846308
+  },
+  {
+   "a": 43,
+   "b": 43,
+   "d1": 0.7408592288960093,
+   "d2": 2.85535072942506,
+   "ratio": 3.8541069855874754,
+   "mutual": true,
+   "area_ratio": 0.9803379203835604
+  },
+  {
+   "a": 44,
+   "b": 44,
+   "d1": 2.2087591546393637,
+   "d2": 6.811770980316169,
+   "ratio": 3.083980870439613,
+   "mutual": true,
+   "area_ratio": 0.9625233971656005
+  },
+  {
+   "a": 45,
+   "b": 51,
+   "d1": 5.968664625291536,
+   "d2": 6.099539341906508,
+   "ratio": 1.0219269677274887,
+   "mutual": false,
+   "area_ratio": 0.8684584646123108
+  },
+  {
+   "a": 46,
+   "b": 46,
+   "d1": 0.6740449590712974,
+   "d2": 4.499795700363418,
+   "ratio": 6.675809439422646,
+   "mutual": true,
+   "area_ratio": 0.9882587104686463
+  },
+  {
+   "a": 47,
+   "b": 47,
+   "d1": 0.9664874863052738,
+   "d2": 4.135136379616459,
+   "ratio": 4.278520351488895,
+   "mutual": true,
+   "area_ratio": 0.9741765852055309
+  },
+  {
+   "a": 48,
+   "b": 48,
+   "d1": 1.3737017995646175,
+   "d2": 6.0898579235377746,
+   "ratio": 4.433173142430111,
+   "mutual": true,
+   "area_ratio": 0.9855951610929496
+  },
+  {
+   "a": 49,
+   "b": 49,
+   "d1": 1.1528771246794443,
+   "d2": 10.513356339133745,
+   "ratio": 9.119234057191454,
+   "mutual": true,
+   "area_ratio": 0.9817435435539467
+  },
+  {
+   "a": 50,
+   "b": 50,
+   "d1": 1.110435999966802,
+   "d2": 6.544140454765184,
+   "ratio": 5.893307182909083,
+   "mutual": true,
+   "area_ratio": 0.9874887050809759
+  },
+  {
+   "a": 51,
+   "b": 51,
+   "d1": 0.6984986002695273,
+   "d2": 5.628065559620828,
+   "ratio": 8.057375573049317,
+   "mutual": true,
+   "area_ratio": 0.9823253669407516
+  },
+  {
+   "a": 52,
+   "b": 52,
+   "d1": 0.9943416278836875,
+   "d2": 9.61926820587464,
+   "ratio": 9.67400733925609,
+   "mutual": true,
+   "area_ratio": 0.9832146223944694
+  },
+  {
+   "a": 53,
+   "b": 53,
+   "d1": 5.314117973295955,
+   "d2": 11.23847927194154,
+   "ratio": 2.114834357915306,
+   "mutual": true,
+   "area_ratio": 0.9235586960012847
+  },
+  {
+   "a": 54,
+   "b": 42,
+   "d1": 7.53674694302306,
+   "d2": 7.94453844073873,
+   "ratio": 1.0541070969741357,
+   "mutual": false,
+   "area_ratio": 1.0155489021956088
+  },
+  {
+   "a": 55,
+   "b": 55,
+   "d1": 0.9781489998386821,
+   "d2": 9.03803251023264,
+   "ratio": 9.239934316472446,
+   "mutual": true,
+   "area_ratio": 0.9918315483753858
+  },
+  {
+   "a": 56,
+   "b": 56,
+   "d1": 3.3970280852820554,
+   "d2": 9.729981892882257,
+   "ratio": 2.86426301125926,
+   "mutual": true,
+   "area_ratio": 0.9439722340274826
+  },
+  {
+   "a": 57,
+   "b": 57,
+   "d1": 1.2574829638093452,
+   "d2": 3.949782935435982,
+   "ratio": 3.1410230190878616,
+   "mutual": true,
+   "area_ratio": 0.9767544368402737
+  },
+  {
+   "a": 58,
+   "b": 58,
+   "d1": 0.6998478692680526,
+   "d2": 9.523756429728854,
+   "ratio": 13.608323819988808,
+   "mutual": true,
+   "area_ratio": 0.9883371380783401
+  },
+  {
+   "a": 59,
+   "b": 59,
+   "d1": 1.520871361701254,
+   "d2": 24.19377539535871,
+   "ratio": 15.907838101636314,
+   "mutual": true,
+   "area_ratio": 0.9717683412144763
+  },
+  {
+   "a": 60,
+   "b": 60,
+   "d1": 3.2162529253731895,
+   "d2": 6.833062855217674,
+   "ratio": 2.1245415126749765,
+   "mutual": true,
+   "area_ratio": 0.948023023023023
+  }
+ ]
+}
