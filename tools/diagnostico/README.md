@@ -21,7 +21,24 @@ $env:PPF_SCRATCH = "C:\tmp\ppf"      # ou qualquer pasta fora do repo
 | `matching/expB.py` | Experiência B: 61 peças reais contra as duas referências + homografia SIFT. | idem + `1186441_1.jpg` | `diag/B_*.json` |
 | `matching/pairing.py`, `matching/expC.py` | Emparelhamento laranja↔verde e experiência C (estabilidade). | `seg/scan_laranja.npz` | `diag/C_*.json` |
 | `matching/analyze.py` | Tabelas finais e montagens em `docs/diagnostico/matching/`. | json acima | png + `results.json` |
+| `gemeos/segcache.py` | Corre `segment_pieces(debug=True)` + `classify_pieces` nos 4 scans dos gémeos (A1, A2, B2, B1), com uma moldura de 64 px para não perder peças junto ao bordo (defeito S1); guarda os `.npz`. Também é importado por `esym.py` e `cortes.py`. `--force` refaz. | `images/pieces/coluna5-24_*.jpg`, `colunas5-24_*.jpg` | `$PPF_SCRATCH/seg/gemeos_{A1,A2,B2,B1}.npz`; `docs/diagnostico/gemeos/gemeos_*__contours.jpg` |
+| `gemeos/esym.py` | E-sym rigoroso: gémeos por rotação de 180° (re-scan A1/A2, gémeo A1/B2 e A2/B2, não-gémeo mais próximo, top-1, NN mútuo, por lado, topologia) com contornos `seg`, `simples` e `hibrido` e métricas corner e free; extrapolação da margem para 3008. Tempo ≈ 50 s. | `gemeos_*.npz` (gera-os por `segcache.py` se faltarem), `seg/scan_verde.npz` | `docs/diagnostico/gemeos/esym_*.png`, `results.json` (chave `esym`); `$PPF_SCRATCH/gemeos/esym.pkl` |
+| `gemeos/cortes.py` | Cortes repetidos: ruído por lado verde↔laranja e pares de lados do mesmo tipo de peças diferentes, direto contra invertido (linha de base do acaso). Tempo ≈ 20 s. Correr depois de `esym.py`. | `seg/scan_verde.npz`, `scan_laranja.npz`, `gemeos_{A1,B2}.npz`, `esym.pkl` | `cortes_pares_mais_parecidos.png`, `results.json` (chave `cortes`) |
+| `gemeos/seccao.py` | Secção montada de canto: linhas de corte (black-hat, Hessiana, histerese, watershed com prior), frente contra traseira, 300 contra 600 dpi, localização na arte (NCC em L\*) e fotometria (scan, arte, caixa). Tempo ≈ 4,5 min. Lê `PuzzleOriginal.jpeg` com `IMREAD_IGNORE_ORIENTATION` (EXIF orientation = 3). | `images/pieces/{frente,traseira}_{300,600}dpi.jpg`, `1186441_1.jpg`, `PuzzleOriginal.jpeg`, `seg/scan_verde.npz`, `gemeos_{A1,B2}.npz` | `docs/diagnostico/gemeos/seccao_*.png`, `seccao_results.json`, `seccao_celulas.json` |
+| `gemeos_quick.py` | Versão **preliminar** do utilizador (escrita no Project) da verificação dos gémeos: limiar Lab simples, sem suavização. Os seus números (0,28 / 0,34 / 0,56 mm) reproduzem-se no `esym.py`; o rigoroso é o `gemeos/esym.py`. | 3 scans (A1, A2, B) | consola |
 
 Ordem: `segmentacao_diag.py` → `forma/run_all.py` → `forma/figs.py`; `matching/expA.py` → `expB.py` → `pairing.py` → `expC.py` → `analyze.py`. Tempo total ≈ 45 min (o matching leva ≈ 8 s por peça por referência).
+
+Gémeos (2026-10-30): `gemeos/segcache.py` → `gemeos/esym.py` → `gemeos/cortes.py`; `gemeos/seccao.py` é independente (usa os `.npz` dos gémeos se existirem). Definir `PPF_SCRATCH` e, no Windows, `PYTHONIOENCODING=utf-8` (os scripts imprimem acentos):
+
+```powershell
+$env:PPF_SCRATCH = "C:\tmp\ppf"
+$env:PYTHONIOENCODING = "utf-8"
+python tools/diagnostico/gemeos/esym.py     # ≈ 50 s
+python tools/diagnostico/gemeos/cortes.py   # ≈ 20 s
+python tools/diagnostico/gemeos/seccao.py   # ≈ 4,5 min
+```
+
+Resultados em `docs/diagnostico/gemeos/` (`RESULTADOS.md`, `SECCAO.md`).
 
 Os `.npz` (≈200 MB) não estão no git; regeneram-se com o primeiro script a partir dos scans que estão em `images/pieces/`.
