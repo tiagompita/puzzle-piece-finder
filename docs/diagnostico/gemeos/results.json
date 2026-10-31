@@ -56,6 +56,24 @@
    ]
   },
   "padding_note": "sem moldura (segcache.PAD = 0; S1 corrigido em bc124d2); .npz dos gémeos regenerados em 2026-10-31",
+  "scan_counts_refined": {
+   "A1": [
+    20,
+    20
+   ],
+   "A2": [
+    20,
+    20
+   ],
+   "B2": [
+    20,
+    20
+   ],
+   "B1": [
+    20,
+    20
+   ]
+  },
   "sombra_params": {
    "tau_h": 10.0,
    "kappa": 0.4,
@@ -10010,6 +10028,2359 @@
     }
    }
   },
+  "scan": {
+   "corner": {
+    "rescan_A1A2": {
+     "n": 20,
+     "mean": 0.387,
+     "std": 0.098,
+     "min": 0.213,
+     "p5": 0.269,
+     "p10": 0.286,
+     "median": 0.368,
+     "p90": 0.513,
+     "p95": 0.559,
+     "max": 0.606
+    },
+    "twin_A1B2": {
+     "n": 20,
+     "mean": 0.368,
+     "std": 0.1,
+     "min": 0.23,
+     "p5": 0.237,
+     "p10": 0.245,
+     "median": 0.371,
+     "p90": 0.505,
+     "p95": 0.551,
+     "max": 0.6
+    },
+    "twin_A2B2": {
+     "n": 20,
+     "mean": 0.493,
+     "std": 0.127,
+     "min": 0.343,
+     "p5": 0.345,
+     "p10": 0.355,
+     "median": 0.475,
+     "p90": 0.675,
+     "p95": 0.721,
+     "max": 0.777
+    },
+    "nearest_nontwin_in_B2": {
+     "n": 20,
+     "mean": 1.051,
+     "std": 0.523,
+     "min": 0.58,
+     "p5": 0.614,
+     "p10": 0.619,
+     "median": 0.836,
+     "p90": 1.999,
+     "p95": 2.026,
+     "max": 2.077
+    },
+    "nearest_other_in_A1": {
+     "n": 20,
+     "mean": 1.015,
+     "std": 0.542,
+     "min": 0.571,
+     "p5": 0.571,
+     "p10": 0.581,
+     "median": 0.786,
+     "p90": 2.023,
+     "p95": 2.043,
+     "max": 2.102
+    },
+    "nearest_other_in_B2_from_B2": {
+     "n": 20,
+     "mean": 1.1,
+     "std": 0.527,
+     "min": 0.681,
+     "p5": 0.681,
+     "p10": 0.711,
+     "median": 0.86,
+     "p90": 2.073,
+     "p95": 2.111,
+     "max": 2.14
+    },
+    "nearest_nontwin_any": {
+     "n": 20,
+     "mean": 0.993,
+     "std": 0.542,
+     "min": 0.571,
+     "p5": 0.571,
+     "p10": 0.579,
+     "median": 0.751,
+     "p90": 1.994,
+     "p95": 2.0,
+     "max": 2.077
+    },
+    "top1_A1_to_B2": 20,
+    "top1_B2_to_A1": 20,
+    "top1_A2_to_B2": 19,
+    "top1_rescan_A1_to_A2": 20,
+    "top1_pool39": 20,
+    "mutual_nn": 20,
+    "mutual_nn_correct": 20,
+    "pairing_from_shape": [
+     {
+      "A1": [
+       0,
+       0
+      ],
+      "B2": [
+       0,
+       4
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       0,
+       1
+      ],
+      "B2": [
+       0,
+       3
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       0,
+       2
+      ],
+      "B2": [
+       0,
+       2
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       0,
+       3
+      ],
+      "B2": [
+       0,
+       1
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       0,
+       4
+      ],
+      "B2": [
+       0,
+       0
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       0
+      ],
+      "B2": [
+       1,
+       4
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       1
+      ],
+      "B2": [
+       1,
+       3
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       2
+      ],
+      "B2": [
+       1,
+       2
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       3
+      ],
+      "B2": [
+       1,
+       1
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       4
+      ],
+      "B2": [
+       1,
+       0
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       0
+      ],
+      "B2": [
+       2,
+       4
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       1
+      ],
+      "B2": [
+       2,
+       3
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       2
+      ],
+      "B2": [
+       2,
+       2
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       3
+      ],
+      "B2": [
+       2,
+       1
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       4
+      ],
+      "B2": [
+       2,
+       0
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       0
+      ],
+      "B2": [
+       3,
+       4
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       1
+      ],
+      "B2": [
+       3,
+       3
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       2
+      ],
+      "B2": [
+       3,
+       2
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       3
+      ],
+      "B2": [
+       3,
+       1
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       4
+      ],
+      "B2": [
+       3,
+       0
+      ],
+      "mutual": true,
+      "correct": true
+     }
+    ],
+    "margin_B2": {
+     "n": 20,
+     "mean": 3.218,
+     "std": 2.274,
+     "min": 1.026,
+     "p5": 1.458,
+     "p10": 1.564,
+     "median": 2.402,
+     "p90": 7.667,
+     "p95": 8.441,
+     "max": 8.527
+    },
+    "margin_any": {
+     "n": 20,
+     "mean": 3.047,
+     "std": 2.291,
+     "min": 1.026,
+     "p5": 1.158,
+     "p10": 1.364,
+     "median": 2.186,
+     "p90": 7.647,
+     "p95": 8.246,
+     "max": 8.436
+    },
+    "ratio_second_over_best_row": {
+     "n": 20,
+     "mean": 3.218,
+     "std": 2.274,
+     "min": 1.026,
+     "p5": 1.458,
+     "p10": 1.564,
+     "median": 2.402,
+     "p90": 7.667,
+     "p95": 8.441,
+     "max": 8.527
+    },
+    "pieces_margin_lt_1_5": [
+     {
+      "A1": [
+       1,
+       1
+      ],
+      "col": 11,
+      "twin": 0.5,
+      "nearest_nontwin": 0.582,
+      "which": "A1(3, 3)",
+      "margin": 1.17
+     },
+     {
+      "A1": [
+       1,
+       3
+      ],
+      "col": 13,
+      "twin": 0.6,
+      "nearest_nontwin": 0.615,
+      "which": "B2(1, 3)",
+      "margin": 1.03
+     },
+     {
+      "A1": [
+       2,
+       4
+      ],
+      "col": 19,
+      "twin": 0.412,
+      "nearest_nontwin": 0.571,
+      "which": "A1(3, 3)",
+      "margin": 1.39
+     },
+     {
+      "A1": [
+       3,
+       3
+      ],
+      "col": 23,
+      "twin": 0.394,
+      "nearest_nontwin": 0.571,
+      "which": "A1(2, 4)",
+      "margin": 1.45
+     }
+    ],
+    "per_piece": [
+     {
+      "A1": [
+       0,
+       0
+      ],
+      "col": 5,
+      "rescan": 0.435,
+      "twin_A1B2": 0.263,
+      "twin_A2B2": 0.545,
+      "nearest_nontwin_B2": 1.996,
+      "nearest_other_A1": 2.022,
+      "nearest_which": "B2(2, 2)",
+      "margin_any": 7.58,
+      "argmin_B2": [
+       0,
+       4
+      ]
+     },
+     {
+      "A1": [
+       0,
+       1
+      ],
+      "col": 6,
+      "rescan": 0.451,
+      "twin_A1B2": 0.374,
+      "twin_A2B2": 0.356,
+      "nearest_nontwin_B2": 0.735,
+      "nearest_other_A1": 0.828,
+      "nearest_which": "B2(3, 2)",
+      "margin_any": 1.97,
+      "argmin_B2": [
+       0,
+       3
+      ]
+     },
+     {
+      "A1": [
+       0,
+       2
+      ],
+      "col": 7,
+      "rescan": 0.288,
+      "twin_A1B2": 0.339,
+      "twin_A2B2": 0.356,
+      "nearest_nontwin_B2": 1.319,
+      "nearest_other_A1": 1.258,
+      "nearest_which": "A1(2, 2)",
+      "margin_any": 3.71,
+      "argmin_B2": [
+       0,
+       2
+      ]
+     },
+     {
+      "A1": [
+       0,
+       3
+      ],
+      "col": 8,
+      "rescan": 0.338,
+      "twin_A1B2": 0.421,
+      "twin_A2B2": 0.385,
+      "nearest_nontwin_B2": 0.7,
+      "nearest_other_A1": 0.733,
+      "nearest_which": "B2(1, 0)",
+      "margin_any": 1.66,
+      "argmin_B2": [
+       0,
+       1
+      ]
+     },
+     {
+      "A1": [
+       0,
+       4
+      ],
+      "col": 9,
+      "rescan": 0.272,
+      "twin_A1B2": 0.316,
+      "twin_A2B2": 0.392,
+      "nearest_nontwin_B2": 0.893,
+      "nearest_other_A1": 0.767,
+      "nearest_which": "A1(1, 3)",
+      "margin_any": 2.43,
+      "argmin_B2": [
+       0,
+       0
+      ]
+     },
+     {
+      "A1": [
+       1,
+       0
+      ],
+      "col": 10,
+      "rescan": 0.37,
+      "twin_A1B2": 0.406,
+      "twin_A2B2": 0.67,
+      "nearest_nontwin_B2": 0.818,
+      "nearest_other_A1": 0.805,
+      "nearest_which": "A1(3, 2)",
+      "margin_any": 1.98,
+      "argmin_B2": [
+       1,
+       4
+      ]
+     },
+     {
+      "A1": [
+       1,
+       1
+      ],
+      "col": 11,
+      "rescan": 0.339,
+      "twin_A1B2": 0.5,
+      "twin_A2B2": 0.448,
+      "nearest_nontwin_B2": 0.74,
+      "nearest_other_A1": 0.582,
+      "nearest_which": "A1(3, 3)",
+      "margin_any": 1.17,
+      "argmin_B2": [
+       1,
+       3
+      ]
+     },
+     {
+      "A1": [
+       1,
+       2
+      ],
+      "col": 12,
+      "rescan": 0.508,
+      "twin_A1B2": 0.306,
+      "twin_A2B2": 0.718,
+      "nearest_nontwin_B2": 0.58,
+      "nearest_other_A1": 0.641,
+      "nearest_which": "B2(3, 2)",
+      "margin_any": 1.9,
+      "argmin_B2": [
+       1,
+       2
+      ]
+     },
+     {
+      "A1": [
+       1,
+       3
+      ],
+      "col": 13,
+      "rescan": 0.556,
+      "twin_A1B2": 0.6,
+      "twin_A2B2": 0.343,
+      "nearest_nontwin_B2": 0.615,
+      "nearest_other_A1": 0.767,
+      "nearest_which": "B2(1, 3)",
+      "margin_any": 1.03,
+      "argmin_B2": [
+       1,
+       1
+      ]
+     },
+     {
+      "A1": [
+       1,
+       4
+      ],
+      "col": 14,
+      "rescan": 0.477,
+      "twin_A1B2": 0.393,
+      "twin_A2B2": 0.503,
+      "nearest_nontwin_B2": 0.853,
+      "nearest_other_A1": 0.733,
+      "nearest_which": "A1(0, 3)",
+      "margin_any": 1.86,
+      "argmin_B2": [
+       1,
+       0
+      ]
+     },
+     {
+      "A1": [
+       2,
+       0
+      ],
+      "col": 15,
+      "rescan": 0.321,
+      "twin_A1B2": 0.246,
+      "twin_A2B2": 0.428,
+      "nearest_nontwin_B2": 2.077,
+      "nearest_other_A1": 2.102,
+      "nearest_which": "B2(0, 4)",
+      "margin_any": 8.44,
+      "argmin_B2": [
+       2,
+       4
+      ]
+     },
+     {
+      "A1": [
+       2,
+       1
+      ],
+      "col": 16,
+      "rescan": 0.367,
+      "twin_A1B2": 0.237,
+      "twin_A2B2": 0.506,
+      "nearest_nontwin_B2": 2.024,
+      "nearest_other_A1": 1.954,
+      "nearest_which": "A1(1, 1)",
+      "margin_any": 8.24,
+      "argmin_B2": [
+       2,
+       3
+      ]
+     },
+     {
+      "A1": [
+       2,
+       2
+      ],
+      "col": 17,
+      "rescan": 0.294,
+      "twin_A1B2": 0.382,
+      "twin_A2B2": 0.513,
+      "nearest_nontwin_B2": 0.763,
+      "nearest_other_A1": 0.714,
+      "nearest_which": "A1(2, 4)",
+      "margin_any": 1.87,
+      "argmin_B2": [
+       2,
+       2
+      ]
+     },
+     {
+      "A1": [
+       2,
+       3
+      ],
+      "col": 18,
+      "rescan": 0.382,
+      "twin_A1B2": 0.549,
+      "twin_A2B2": 0.583,
+      "nearest_nontwin_B2": 1.994,
+      "nearest_other_A1": 2.039,
+      "nearest_which": "B2(0, 3)",
+      "margin_any": 3.63,
+      "argmin_B2": [
+       2,
+       1
+      ]
+     },
+     {
+      "A1": [
+       2,
+       4
+      ],
+      "col": 19,
+      "rescan": 0.401,
+      "twin_A1B2": 0.412,
+      "twin_A2B2": 0.615,
+      "nearest_nontwin_B2": 0.714,
+      "nearest_other_A1": 0.571,
+      "nearest_which": "A1(3, 3)",
+      "margin_any": 1.39,
+      "argmin_B2": [
+       2,
+       0
+      ]
+     },
+     {
+      "A1": [
+       3,
+       0
+      ],
+      "col": 20,
+      "rescan": 0.606,
+      "twin_A1B2": 0.292,
+      "twin_A2B2": 0.777,
+      "nearest_nontwin_B2": 0.901,
+      "nearest_other_A1": 0.846,
+      "nearest_which": "A1(3, 2)",
+      "margin_any": 2.9,
+      "argmin_B2": [
+       3,
+       4
+      ]
+     },
+     {
+      "A1": [
+       3,
+       1
+      ],
+      "col": 21,
+      "rescan": 0.35,
+      "twin_A1B2": 0.324,
+      "twin_A2B2": 0.346,
+      "nearest_nontwin_B2": 0.932,
+      "nearest_other_A1": 0.837,
+      "nearest_which": "A1(3, 3)",
+      "margin_any": 2.58,
+      "argmin_B2": [
+       3,
+       3
+      ]
+     },
+     {
+      "A1": [
+       3,
+       2
+      ],
+      "col": 22,
+      "rescan": 0.435,
+      "twin_A1B2": 0.23,
+      "twin_A2B2": 0.467,
+      "nearest_nontwin_B2": 0.771,
+      "nearest_other_A1": 0.641,
+      "nearest_which": "A1(1, 2)",
+      "margin_any": 2.79,
+      "argmin_B2": [
+       3,
+       2
+      ]
+     },
+     {
+      "A1": [
+       3,
+       3
+      ],
+      "col": 23,
+      "rescan": 0.213,
+      "twin_A1B2": 0.394,
+      "twin_A2B2": 0.417,
+      "nearest_nontwin_B2": 0.62,
+      "nearest_other_A1": 0.571,
+      "nearest_which": "A1(2, 4)",
+      "margin_any": 1.45,
+      "argmin_B2": [
+       3,
+       1
+      ]
+     },
+     {
+      "A1": [
+       3,
+       4
+      ],
+      "col": 24,
+      "rescan": 0.344,
+      "twin_A1B2": 0.369,
+      "twin_A2B2": 0.483,
+      "nearest_nontwin_B2": 0.973,
+      "nearest_other_A1": 0.883,
+      "nearest_which": "A1(3, 2)",
+      "margin_any": 2.39,
+      "argmin_B2": [
+       3,
+       0
+      ]
+     }
+    ]
+   },
+   "free": {
+    "rescan_A1A2": {
+     "n": 20,
+     "mean": 0.282,
+     "std": 0.081,
+     "min": 0.169,
+     "p5": 0.194,
+     "p10": 0.197,
+     "median": 0.257,
+     "p90": 0.371,
+     "p95": 0.447,
+     "max": 0.475
+    },
+    "twin_A1B2": {
+     "n": 20,
+     "mean": 0.309,
+     "std": 0.076,
+     "min": 0.158,
+     "p5": 0.219,
+     "p10": 0.234,
+     "median": 0.304,
+     "p90": 0.403,
+     "p95": 0.425,
+     "max": 0.465
+    },
+    "twin_A2B2": {
+     "n": 20,
+     "mean": 0.403,
+     "std": 0.088,
+     "min": 0.234,
+     "p5": 0.292,
+     "p10": 0.304,
+     "median": 0.383,
+     "p90": 0.497,
+     "p95": 0.514,
+     "max": 0.609
+    },
+    "nearest_nontwin_in_B2": {
+     "n": 20,
+     "mean": 1.197,
+     "std": 0.701,
+     "min": 0.6,
+     "p5": 0.691,
+     "p10": 0.716,
+     "median": 0.881,
+     "p90": 2.453,
+     "p95": 2.577,
+     "max": 2.688
+    },
+    "nearest_other_in_A1": {
+     "n": 20,
+     "mean": 1.165,
+     "std": 0.715,
+     "min": 0.646,
+     "p5": 0.646,
+     "p10": 0.656,
+     "median": 0.848,
+     "p90": 2.473,
+     "p95": 2.621,
+     "max": 2.725
+    },
+    "nearest_other_in_B2_from_B2": {
+     "n": 20,
+     "mean": 1.182,
+     "std": 0.71,
+     "min": 0.645,
+     "p5": 0.645,
+     "p10": 0.691,
+     "median": 0.855,
+     "p90": 2.505,
+     "p95": 2.562,
+     "max": 2.682
+    },
+    "nearest_nontwin_any": {
+     "n": 20,
+     "mean": 1.147,
+     "std": 0.711,
+     "min": 0.6,
+     "p5": 0.644,
+     "p10": 0.656,
+     "median": 0.823,
+     "p90": 2.453,
+     "p95": 2.577,
+     "max": 2.688
+    },
+    "top1_A1_to_B2": 20,
+    "top1_B2_to_A1": 20,
+    "top1_A2_to_B2": 20,
+    "top1_rescan_A1_to_A2": 20,
+    "top1_pool39": 20,
+    "mutual_nn": 20,
+    "mutual_nn_correct": 20,
+    "pairing_from_shape": [
+     {
+      "A1": [
+       0,
+       0
+      ],
+      "B2": [
+       0,
+       4
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       0,
+       1
+      ],
+      "B2": [
+       0,
+       3
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       0,
+       2
+      ],
+      "B2": [
+       0,
+       2
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       0,
+       3
+      ],
+      "B2": [
+       0,
+       1
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       0,
+       4
+      ],
+      "B2": [
+       0,
+       0
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       0
+      ],
+      "B2": [
+       1,
+       4
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       1
+      ],
+      "B2": [
+       1,
+       3
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       2
+      ],
+      "B2": [
+       1,
+       2
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       3
+      ],
+      "B2": [
+       1,
+       1
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       1,
+       4
+      ],
+      "B2": [
+       1,
+       0
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       0
+      ],
+      "B2": [
+       2,
+       4
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       1
+      ],
+      "B2": [
+       2,
+       3
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       2
+      ],
+      "B2": [
+       2,
+       2
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       3
+      ],
+      "B2": [
+       2,
+       1
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       2,
+       4
+      ],
+      "B2": [
+       2,
+       0
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       0
+      ],
+      "B2": [
+       3,
+       4
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       1
+      ],
+      "B2": [
+       3,
+       3
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       2
+      ],
+      "B2": [
+       3,
+       2
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       3
+      ],
+      "B2": [
+       3,
+       1
+      ],
+      "mutual": true,
+      "correct": true
+     },
+     {
+      "A1": [
+       3,
+       4
+      ],
+      "B2": [
+       3,
+       0
+      ],
+      "mutual": true,
+      "correct": true
+     }
+    ],
+    "margin_B2": {
+     "n": 20,
+     "mean": 4.066,
+     "std": 2.501,
+     "min": 1.996,
+     "p5": 2.002,
+     "p10": 2.011,
+     "median": 3.128,
+     "p90": 8.256,
+     "p95": 9.031,
+     "max": 9.741
+    },
+    "margin_any": {
+     "n": 20,
+     "mean": 3.892,
+     "std": 2.462,
+     "min": 1.718,
+     "p5": 1.776,
+     "p10": 1.988,
+     "median": 2.856,
+     "p90": 8.196,
+     "p95": 8.438,
+     "max": 9.338
+    },
+    "ratio_second_over_best_row": {
+     "n": 20,
+     "mean": 4.066,
+     "std": 2.501,
+     "min": 1.996,
+     "p5": 2.002,
+     "p10": 2.011,
+     "median": 3.128,
+     "p90": 8.256,
+     "p95": 9.031,
+     "max": 9.741
+    },
+    "pieces_margin_lt_1_5": [],
+    "per_piece": [
+     {
+      "A1": [
+       0,
+       0
+      ],
+      "col": 5,
+      "rescan": 0.311,
+      "twin_A1B2": 0.329,
+      "twin_A2B2": 0.351,
+      "nearest_nontwin_B2": 2.688,
+      "nearest_other_A1": 2.725,
+      "nearest_which": "B2(0, 3)",
+      "margin_any": 8.17,
+      "argmin_B2": [
+       0,
+       4
+      ]
+     },
+     {
+      "A1": [
+       0,
+       1
+      ],
+      "col": 6,
+      "rescan": 0.236,
+      "twin_A1B2": 0.252,
+      "twin_A2B2": 0.388,
+      "nearest_nontwin_B2": 0.718,
+      "nearest_other_A1": 0.804,
+      "nearest_which": "B2(3, 2)",
+      "margin_any": 2.85,
+      "argmin_B2": [
+       0,
+       3
+      ]
+     },
+     {
+      "A1": [
+       0,
+       2
+      ],
+      "col": 7,
+      "rescan": 0.169,
+      "twin_A1B2": 0.158,
+      "twin_A2B2": 0.234,
+      "nearest_nontwin_B2": 1.425,
+      "nearest_other_A1": 1.329,
+      "nearest_which": "A1(2, 2)",
+      "margin_any": 8.39,
+      "argmin_B2": [
+       0,
+       2
+      ]
+     },
+     {
+      "A1": [
+       0,
+       3
+      ],
+      "col": 8,
+      "rescan": 0.326,
+      "twin_A1B2": 0.266,
+      "twin_A2B2": 0.37,
+      "nearest_nontwin_B2": 0.835,
+      "nearest_other_A1": 0.848,
+      "nearest_which": "B2(3, 0)",
+      "margin_any": 3.14,
+      "argmin_B2": [
+       0,
+       1
+      ]
+     },
+     {
+      "A1": [
+       0,
+       4
+      ],
+      "col": 9,
+      "rescan": 0.198,
+      "twin_A1B2": 0.279,
+      "twin_A2B2": 0.295,
+      "nearest_nontwin_B2": 0.696,
+      "nearest_other_A1": 0.672,
+      "nearest_which": "A1(1, 3)",
+      "margin_any": 2.41,
+      "argmin_B2": [
+       0,
+       0
+      ]
+     },
+     {
+      "A1": [
+       1,
+       0
+      ],
+      "col": 10,
+      "rescan": 0.247,
+      "twin_A1B2": 0.423,
+      "twin_A2B2": 0.483,
+      "nearest_nontwin_B2": 0.926,
+      "nearest_other_A1": 0.856,
+      "nearest_which": "A1(3, 2)",
+      "margin_any": 2.03,
+      "argmin_B2": [
+       1,
+       4
+      ]
+     },
+     {
+      "A1": [
+       1,
+       1
+      ],
+      "col": 11,
+      "rescan": 0.268,
+      "twin_A1B2": 0.321,
+      "twin_A2B2": 0.435,
+      "nearest_nontwin_B2": 0.761,
+      "nearest_other_A1": 0.646,
+      "nearest_which": "A1(3, 3)",
+      "margin_any": 2.01,
+      "argmin_B2": [
+       1,
+       3
+      ]
+     },
+     {
+      "A1": [
+       1,
+       2
+      ],
+      "col": 12,
+      "rescan": 0.255,
+      "twin_A1B2": 0.348,
+      "twin_A2B2": 0.478,
+      "nearest_nontwin_B2": 0.807,
+      "nearest_other_A1": 0.852,
+      "nearest_which": "B2(3, 2)",
+      "margin_any": 2.32,
+      "argmin_B2": [
+       1,
+       2
+      ]
+     },
+     {
+      "A1": [
+       1,
+       3
+      ],
+      "col": 13,
+      "rescan": 0.334,
+      "twin_A1B2": 0.235,
+      "twin_A2B2": 0.379,
+      "nearest_nontwin_B2": 0.731,
+      "nearest_other_A1": 0.672,
+      "nearest_which": "A1(0, 4)",
+      "margin_any": 2.86,
+      "argmin_B2": [
+       1,
+       1
+      ]
+     },
+     {
+      "A1": [
+       1,
+       4
+      ],
+      "col": 14,
+      "rescan": 0.29,
+      "twin_A1B2": 0.401,
+      "twin_A2B2": 0.508,
+      "nearest_nontwin_B2": 1.068,
+      "nearest_other_A1": 1.117,
+      "nearest_which": "B2(3, 4)",
+      "margin_any": 2.67,
+      "argmin_B2": [
+       1,
+       0
+      ]
+     },
+     {
+      "A1": [
+       2,
+       0
+      ],
+      "col": 15,
+      "rescan": 0.251,
+      "twin_A1B2": 0.242,
+      "twin_A2B2": 0.305,
+      "nearest_nontwin_B2": 2.362,
+      "nearest_other_A1": 2.264,
+      "nearest_which": "A1(2, 2)",
+      "margin_any": 9.34,
+      "argmin_B2": [
+       2,
+       4
+      ]
+     },
+     {
+      "A1": [
+       2,
+       1
+      ],
+      "col": 16,
+      "rescan": 0.243,
+      "twin_A1B2": 0.371,
+      "twin_A2B2": 0.357,
+      "nearest_nontwin_B2": 2.571,
+      "nearest_other_A1": 2.615,
+      "nearest_which": "B2(3, 2)",
+      "margin_any": 6.93,
+      "argmin_B2": [
+       2,
+       3
+      ]
+     },
+     {
+      "A1": [
+       2,
+       2
+      ],
+      "col": 17,
+      "rescan": 0.212,
+      "twin_A1B2": 0.465,
+      "twin_A2B2": 0.4,
+      "nearest_nontwin_B2": 0.931,
+      "nearest_other_A1": 0.799,
+      "nearest_which": "A1(2, 4)",
+      "margin_any": 1.72,
+      "argmin_B2": [
+       2,
+       2
+      ]
+     },
+     {
+      "A1": [
+       2,
+       3
+      ],
+      "col": 18,
+      "rescan": 0.363,
+      "twin_A1B2": 0.377,
+      "twin_A2B2": 0.465,
+      "nearest_nontwin_B2": 2.44,
+      "nearest_other_A1": 2.457,
+      "nearest_which": "B2(3, 0)",
+      "margin_any": 6.47,
+      "argmin_B2": [
+       2,
+       1
+      ]
+     },
+     {
+      "A1": [
+       2,
+       4
+      ],
+      "col": 19,
+      "rescan": 0.218,
+      "twin_A1B2": 0.369,
+      "twin_A2B2": 0.347,
+      "nearest_nontwin_B2": 0.737,
+      "nearest_other_A1": 0.657,
+      "nearest_which": "A1(3, 3)",
+      "margin_any": 1.78,
+      "argmin_B2": [
+       2,
+       0
+      ]
+     },
+     {
+      "A1": [
+       3,
+       0
+      ],
+      "col": 20,
+      "rescan": 0.445,
+      "twin_A1B2": 0.26,
+      "twin_A2B2": 0.609,
+      "nearest_nontwin_B2": 0.947,
+      "nearest_other_A1": 0.819,
+      "nearest_which": "A1(3, 2)",
+      "margin_any": 3.15,
+      "argmin_B2": [
+       3,
+       4
+      ]
+     },
+     {
+      "A1": [
+       3,
+       1
+      ],
+      "col": 21,
+      "rescan": 0.259,
+      "twin_A1B2": 0.309,
+      "twin_A2B2": 0.36,
+      "nearest_nontwin_B2": 1.037,
+      "nearest_other_A1": 0.876,
+      "nearest_which": "A1(2, 4)",
+      "margin_any": 2.84,
+      "argmin_B2": [
+       3,
+       3
+      ]
+     },
+     {
+      "A1": [
+       3,
+       2
+      ],
+      "col": 22,
+      "rescan": 0.341,
+      "twin_A1B2": 0.263,
+      "twin_A2B2": 0.449,
+      "nearest_nontwin_B2": 0.83,
+      "nearest_other_A1": 0.804,
+      "nearest_which": "A1(0, 1)",
+      "margin_any": 3.05,
+      "argmin_B2": [
+       3,
+       2
+      ]
+     },
+     {
+      "A1": [
+       3,
+       3
+      ],
+      "col": 23,
+      "rescan": 0.195,
+      "twin_A1B2": 0.298,
+      "twin_A2B2": 0.343,
+      "nearest_nontwin_B2": 0.6,
+      "nearest_other_A1": 0.646,
+      "nearest_which": "B2(1, 3)",
+      "margin_any": 2.01,
+      "argmin_B2": [
+       3,
+       1
+      ]
+     },
+     {
+      "A1": [
+       3,
+       4
+      ],
+      "col": 24,
+      "rescan": 0.475,
+      "twin_A1B2": 0.223,
+      "twin_A2B2": 0.496,
+      "nearest_nontwin_B2": 0.826,
+      "nearest_other_A1": 0.848,
+      "nearest_which": "B2(0, 1)",
+      "margin_any": 3.71,
+      "argmin_B2": [
+       3,
+       0
+      ]
+     }
+    ]
+   },
+   "sides_twin_A1B2": {
+    "all": {
+     "rms_global_mm": {
+      "n": 80,
+      "mean": 0.351,
+      "std": 0.147,
+      "min": 0.08,
+      "p5": 0.157,
+      "p10": 0.207,
+      "median": 0.306,
+      "p90": 0.549,
+      "p95": 0.596,
+      "max": 0.841
+     },
+     "rms_prof_mm": {
+      "n": 80,
+      "mean": 0.342,
+      "std": 0.184,
+      "min": 0.055,
+      "p5": 0.086,
+      "p10": 0.105,
+      "median": 0.309,
+      "p90": 0.576,
+      "p95": 0.606,
+      "max": 0.976
+     },
+     "absdL_mm": {
+      "n": 80,
+      "mean": 0.347,
+      "std": 0.362,
+      "min": 0.009,
+      "p5": 0.024,
+      "p10": 0.035,
+      "median": 0.213,
+      "p90": 0.778,
+      "p95": 1.03,
+      "max": 1.839
+     },
+     "dL_signed_sd": 0.5,
+     "type_agree": "80/80"
+    },
+    "non_F": {
+     "rms_global_mm": {
+      "n": 60,
+      "mean": 0.37,
+      "std": 0.139,
+      "min": 0.157,
+      "p5": 0.208,
+      "p10": 0.228,
+      "median": 0.333,
+      "p90": 0.562,
+      "p95": 0.597,
+      "max": 0.841
+     },
+     "rms_prof_mm": {
+      "n": 60,
+      "mean": 0.37,
+      "std": 0.168,
+      "min": 0.141,
+      "p5": 0.19,
+      "p10": 0.205,
+      "median": 0.337,
+      "p90": 0.576,
+      "p95": 0.606,
+      "max": 0.976
+     },
+     "absdL_mm": {
+      "n": 60,
+      "mean": 0.316,
+      "std": 0.349,
+      "min": 0.009,
+      "p5": 0.024,
+      "p10": 0.034,
+      "median": 0.209,
+      "p90": 0.7,
+      "p95": 0.778,
+      "max": 1.839
+     },
+     "dL_signed_sd": 0.466,
+     "type_agree": "60/60"
+    },
+    "F": {
+     "rms_global_mm": {
+      "n": 20,
+      "mean": 0.295,
+      "std": 0.16,
+      "min": 0.08,
+      "p5": 0.109,
+      "p10": 0.124,
+      "median": 0.243,
+      "p90": 0.546,
+      "p95": 0.552,
+      "max": 0.635
+     },
+     "rms_prof_mm": {
+      "n": 20,
+      "mean": 0.26,
+      "std": 0.21,
+      "min": 0.055,
+      "p5": 0.066,
+      "p10": 0.076,
+      "median": 0.128,
+      "p90": 0.547,
+      "p95": 0.608,
+      "max": 0.675
+     },
+     "absdL_mm": {
+      "n": 20,
+      "mean": 0.441,
+      "std": 0.393,
+      "min": 0.023,
+      "p5": 0.041,
+      "p10": 0.087,
+      "median": 0.237,
+      "p90": 0.968,
+      "p95": 1.057,
+      "max": 1.261
+     },
+     "dL_signed_sd": 0.6,
+     "type_agree": "20/20"
+    }
+   },
+   "sides_twin_A2B2": {
+    "all": {
+     "rms_global_mm": {
+      "n": 80,
+      "mean": 0.475,
+      "std": 0.182,
+      "min": 0.158,
+      "p5": 0.249,
+      "p10": 0.311,
+      "median": 0.422,
+      "p90": 0.698,
+      "p95": 0.857,
+      "max": 1.101
+     },
+     "rms_prof_mm": {
+      "n": 80,
+      "mean": 0.466,
+      "std": 0.204,
+      "min": 0.091,
+      "p5": 0.127,
+      "p10": 0.209,
+      "median": 0.438,
+      "p90": 0.748,
+      "p95": 0.827,
+      "max": 1.019
+     },
+     "absdL_mm": {
+      "n": 80,
+      "mean": 0.427,
+      "std": 0.285,
+      "min": 0.003,
+      "p5": 0.022,
+      "p10": 0.087,
+      "median": 0.384,
+      "p90": 0.862,
+      "p95": 0.959,
+      "max": 1.131
+     },
+     "dL_signed_sd": 0.513,
+     "type_agree": "80/80"
+    },
+    "non_F": {
+     "rms_global_mm": {
+      "n": 60,
+      "mean": 0.526,
+      "std": 0.176,
+      "min": 0.295,
+      "p5": 0.321,
+      "p10": 0.356,
+      "median": 0.489,
+      "p90": 0.796,
+      "p95": 0.866,
+      "max": 1.101
+     },
+     "rms_prof_mm": {
+      "n": 60,
+      "mean": 0.536,
+      "std": 0.172,
+      "min": 0.298,
+      "p5": 0.33,
+      "p10": 0.341,
+      "median": 0.483,
+      "p90": 0.789,
+      "p95": 0.85,
+      "max": 1.019
+     },
+     "absdL_mm": {
+      "n": 60,
+      "mean": 0.391,
+      "std": 0.285,
+      "min": 0.003,
+      "p5": 0.021,
+      "p10": 0.063,
+      "median": 0.358,
+      "p90": 0.785,
+      "p95": 0.959,
+      "max": 1.131
+     },
+     "dL_signed_sd": 0.44,
+     "type_agree": "60/60"
+    },
+    "F": {
+     "rms_global_mm": {
+      "n": 20,
+      "mean": 0.32,
+      "std": 0.086,
+      "min": 0.158,
+      "p5": 0.172,
+      "p10": 0.179,
+      "median": 0.339,
+      "p90": 0.422,
+      "p95": 0.426,
+      "max": 0.427
+     },
+     "rms_prof_mm": {
+      "n": 20,
+      "mean": 0.258,
+      "std": 0.139,
+      "min": 0.091,
+      "p5": 0.097,
+      "p10": 0.102,
+      "median": 0.232,
+      "p90": 0.449,
+      "p95": 0.46,
+      "max": 0.522
+     },
+     "absdL_mm": {
+      "n": 20,
+      "mean": 0.537,
+      "std": 0.263,
+      "min": 0.099,
+      "p5": 0.206,
+      "p10": 0.229,
+      "median": 0.491,
+      "p90": 0.891,
+      "p95": 0.907,
+      "max": 1.006
+     },
+     "dL_signed_sd": 0.452,
+     "type_agree": "20/20"
+    }
+   },
+   "sides_rescan_A1A2": {
+    "all": {
+     "rms_global_mm": {
+      "n": 80,
+      "mean": 0.373,
+      "std": 0.144,
+      "min": 0.127,
+      "p5": 0.172,
+      "p10": 0.203,
+      "median": 0.356,
+      "p90": 0.566,
+      "p95": 0.605,
+      "max": 0.844
+     },
+     "rms_prof_mm": {
+      "n": 80,
+      "mean": 0.379,
+      "std": 0.175,
+      "min": 0.079,
+      "p5": 0.105,
+      "p10": 0.162,
+      "median": 0.358,
+      "p90": 0.582,
+      "p95": 0.71,
+      "max": 0.909
+     },
+     "absdL_mm": {
+      "n": 80,
+      "mean": 0.398,
+      "std": 0.304,
+      "min": 0.006,
+      "p5": 0.06,
+      "p10": 0.075,
+      "median": 0.362,
+      "p90": 0.834,
+      "p95": 0.963,
+      "max": 1.552
+     },
+     "dL_signed_sd": 0.503,
+     "type_agree": "80/80"
+    },
+    "non_F": {
+     "rms_global_mm": {
+      "n": 60,
+      "mean": 0.405,
+      "std": 0.137,
+      "min": 0.127,
+      "p5": 0.239,
+      "p10": 0.261,
+      "median": 0.378,
+      "p90": 0.582,
+      "p95": 0.634,
+      "max": 0.844
+     },
+     "rms_prof_mm": {
+      "n": 60,
+      "mean": 0.429,
+      "std": 0.154,
+      "min": 0.148,
+      "p5": 0.23,
+      "p10": 0.261,
+      "median": 0.388,
+      "p90": 0.59,
+      "p95": 0.729,
+      "max": 0.909
+     },
+     "absdL_mm": {
+      "n": 60,
+      "mean": 0.335,
+      "std": 0.289,
+      "min": 0.006,
+      "p5": 0.052,
+      "p10": 0.062,
+      "median": 0.225,
+      "p90": 0.635,
+      "p95": 0.842,
+      "max": 1.552
+     },
+     "dL_signed_sd": 0.425,
+     "type_agree": "60/60"
+    },
+    "F": {
+     "rms_global_mm": {
+      "n": 20,
+      "mean": 0.277,
+      "std": 0.122,
+      "min": 0.131,
+      "p5": 0.136,
+      "p10": 0.164,
+      "median": 0.233,
+      "p90": 0.412,
+      "p95": 0.507,
+      "max": 0.577
+     },
+     "rms_prof_mm": {
+      "n": 20,
+      "mean": 0.229,
+      "std": 0.148,
+      "min": 0.079,
+      "p5": 0.09,
+      "p10": 0.094,
+      "median": 0.192,
+      "p90": 0.341,
+      "p95": 0.438,
+      "max": 0.695
+     },
+     "absdL_mm": {
+      "n": 20,
+      "mean": 0.585,
+      "std": 0.277,
+      "min": 0.088,
+      "p5": 0.231,
+      "p10": 0.269,
+      "median": 0.544,
+      "p90": 0.968,
+      "p95": 1.034,
+      "max": 1.098
+     },
+     "dL_signed_sd": 0.516,
+     "type_agree": "20/20"
+    }
+   },
+   "topology": {
+    "classes": {
+     "A1": [
+      "BBTF",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFTT",
+      "BBFT",
+      "BFBT",
+      "FTTT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT"
+     ],
+     "A2": [
+      "BBTF",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFTT",
+      "BBFT",
+      "BFBT",
+      "FTTT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT"
+     ],
+     "B2": [
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BBTF",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "FTTT",
+      "BFBT",
+      "BBFT",
+      "BFTT",
+      "BTFT",
+      "BFBT",
+      "BTFT",
+      "BFBT",
+      "BTFT"
+     ]
+    },
+    "types": {
+     "A1": [
+      "BBTF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "TTBF",
+      "TBBF",
+      "BTBF",
+      "TTTF",
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF"
+     ],
+     "A2": [
+      "TFBB",
+      "TFTB",
+      "BFBT",
+      "TFTB",
+      "BFBT",
+      "TFTB",
+      "BFBT",
+      "TFTB",
+      "BFBT",
+      "TFTB",
+      "BFTT",
+      "BFTB",
+      "BFBT",
+      "TFTT",
+      "BFBT",
+      "TFTB",
+      "BFBT",
+      "TFTB",
+      "BFBT",
+      "TFTB"
+     ],
+     "B2": [
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "BBTF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TTTF",
+      "BTBF",
+      "TBBF",
+      "TTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF",
+      "BTBF",
+      "TBTF"
+     ]
+    },
+    "exactly_one_F": {
+     "A1": 20,
+     "A2": 20,
+     "B2": 20
+    },
+    "class_agree_A1B2": 20,
+    "class_agree_A1A2": 20,
+    "class_agree_A2B2": 20,
+    "mismatches_A1B2": [],
+    "F_maxdev": {
+     "A1": {
+      "n": 20,
+      "mean": 0.018,
+      "std": 0.017,
+      "min": 0.006,
+      "p5": 0.006,
+      "p10": 0.007,
+      "median": 0.011,
+      "p90": 0.046,
+      "p95": 0.049,
+      "max": 0.06
+     },
+     "A2": {
+      "n": 20,
+      "mean": 0.023,
+      "std": 0.008,
+      "min": 0.013,
+      "p5": 0.013,
+      "p10": 0.013,
+      "median": 0.023,
+      "p90": 0.033,
+      "p95": 0.034,
+      "max": 0.034
+     },
+     "B2": {
+      "n": 20,
+      "mean": 0.022,
+      "std": 0.016,
+      "min": 0.01,
+      "p5": 0.01,
+      "p10": 0.011,
+      "median": 0.013,
+      "p90": 0.049,
+      "p95": 0.053,
+      "max": 0.059
+     }
+    },
+    "min_nonF_maxdev": {
+     "A1": 0.184,
+     "A2": 0.201,
+     "B2": 0.188
+    },
+    "edgepy_types": {
+     "A1": [
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-"
+     ],
+     "A2": [
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-"
+     ],
+     "B2": [
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-",
+      "-"
+     ]
+    }
+   },
+   "roughness": {
+    "per_scan": {
+     "A1": {
+      "n": 20,
+      "mean": 1.068,
+      "std": 0.005,
+      "min": 1.059,
+      "p5": 1.062,
+      "p10": 1.063,
+      "median": 1.067,
+      "p90": 1.074,
+      "p95": 1.075,
+      "max": 1.075
+     },
+     "A2": {
+      "n": 20,
+      "mean": 1.066,
+      "std": 0.004,
+      "min": 1.059,
+      "p5": 1.06,
+      "p10": 1.061,
+      "median": 1.066,
+      "p90": 1.071,
+      "p95": 1.073,
+      "max": 1.074
+     },
+     "B2": {
+      "n": 20,
+      "mean": 1.07,
+      "std": 0.009,
+      "min": 1.055,
+      "p5": 1.058,
+      "p10": 1.061,
+      "median": 1.067,
+      "p90": 1.081,
+      "p95": 1.087,
+      "max": 1.094
+     }
+    },
+    "B1": {
+     "n": 20,
+     "mean": 1.069,
+     "std": 0.009,
+     "min": 1.058,
+     "p5": 1.058,
+     "p10": 1.059,
+     "median": 1.068,
+     "p90": 1.08,
+     "p95": 1.084,
+     "max": 1.089
+    },
+    "corr": {
+     "corner": {
+      "twin_vs_maxrough_pearson": 0.55,
+      "twin_vs_maxrough_spearman": 0.659,
+      "rescan_vs_maxrough_pearson": 0.341,
+      "rescan_vs_maxrough_spearman": 0.292
+     },
+     "free": {
+      "twin_vs_maxrough_pearson": 0.169,
+      "twin_vs_maxrough_spearman": 0.053,
+      "rescan_vs_maxrough_pearson": 0.205,
+      "rescan_vs_maxrough_spearman": 0.281
+     }
+    },
+    "per_piece": {
+     "A1": [
+      1.068,
+      1.067,
+      1.067,
+      1.072,
+      1.064,
+      1.063,
+      1.075,
+      1.068,
+      1.067,
+      1.075,
+      1.064,
+      1.063,
+      1.073,
+      1.062,
+      1.073,
+      1.074,
+      1.066,
+      1.059,
+      1.064,
+      1.069
+     ],
+     "A2": [
+      1.074,
+      1.065,
+      1.068,
+      1.067,
+      1.06,
+      1.068,
+      1.059,
+      1.07,
+      1.068,
+      1.073,
+      1.071,
+      1.064,
+      1.063,
+      1.067,
+      1.064,
+      1.069,
+      1.065,
+      1.064,
+      1.061,
+      1.065
+     ],
+     "B2": [
+      1.064,
+      1.062,
+      1.065,
+      1.087,
+      1.066,
+      1.094,
+      1.079,
+      1.07,
+      1.065,
+      1.07,
+      1.068,
+      1.08,
+      1.067,
+      1.055,
+      1.066,
+      1.073,
+      1.072,
+      1.067,
+      1.058,
+      1.073
+     ]
+    }
+   },
+   "corner_quad": {
+    "A1": {
+     "poly_ang_absdev": {
+      "n": 80,
+      "mean": 2.561,
+      "std": 1.907,
+      "min": 0.062,
+      "p5": 0.173,
+      "p10": 0.331,
+      "median": 2.023,
+      "p90": 5.244,
+      "p95": 6.01,
+      "max": 8.408
+     },
+     "side_len": {
+      "n": 80,
+      "mean": 18.656,
+      "std": 0.891,
+      "min": 16.492,
+      "p5": 17.298,
+      "p10": 17.699,
+      "median": 18.65,
+      "p90": 19.781,
+      "p95": 20.065,
+      "max": 21.677
+     }
+    },
+    "A2": {
+     "poly_ang_absdev": {
+      "n": 80,
+      "mean": 2.607,
+      "std": 1.947,
+      "min": 0.013,
+      "p5": 0.178,
+      "p10": 0.294,
+      "median": 2.406,
+      "p90": 5.298,
+      "p95": 5.943,
+      "max": 7.383
+     },
+     "side_len": {
+      "n": 80,
+      "mean": 18.66,
+      "std": 0.94,
+      "min": 16.538,
+      "p5": 17.173,
+      "p10": 17.644,
+      "median": 18.589,
+      "p90": 19.891,
+      "p95": 20.007,
+      "max": 21.371
+     }
+    },
+    "B2": {
+     "poly_ang_absdev": {
+      "n": 80,
+      "mean": 2.735,
+      "std": 2.075,
+      "min": 0.025,
+      "p5": 0.244,
+      "p10": 0.422,
+      "median": 2.313,
+      "p90": 5.83,
+      "p95": 6.794,
+      "max": 8.105
+     },
+     "side_len": {
+      "n": 80,
+      "mean": 18.714,
+      "std": 0.875,
+      "min": 16.953,
+      "p5": 17.608,
+      "p10": 17.732,
+      "median": 18.596,
+      "p90": 19.908,
+      "p95": 20.397,
+      "max": 21.722
+     }
+    }
+   }
+  },
   "B1_diag": {
    "argmin_A1_to_B1": [
     [
@@ -13111,6 +15482,26 @@
      "twin_median_mm": 0.766,
      "top1": 0.75,
      "viable": false
+    },
+    "scan_corner_A1B2": {
+     "twin_median_mm": 0.371,
+     "top1": 1.0,
+     "viable": true
+    },
+    "scan_corner_A2B2": {
+     "twin_median_mm": 0.475,
+     "top1": 0.95,
+     "viable": true
+    },
+    "scan_free_A1B2": {
+     "twin_median_mm": 0.304,
+     "top1": 1.0,
+     "viable": true
+    },
+    "scan_free_A2B2": {
+     "twin_median_mm": 0.383,
+     "top1": 1.0,
+     "viable": true
     }
    },
    "product_pipeline_seg_viable": false,
@@ -13148,6 +15539,14 @@
     "top1_A2_to_B2": 15,
     "rough_p95_B2": 1.139,
     "meets": false
+   },
+   "scan": {
+    "twin_A2B2_median": 0.383,
+    "top1_A1_to_B2": 20,
+    "top1_B2_to_A1": 20,
+    "top1_A2_to_B2": 20,
+    "rough_p95_B2": 1.087,
+    "meets": true
    }
   },
   "B2_darkest_pieces": [

@@ -5,7 +5,7 @@ _Gerado em 2026-10-29 a partir do código real (HEAD `c35442f`; atualizado após
 ## 1. O que o sistema faz hoje (fluxo real)
 
 ```
-foto/scan de várias peças ──► segmentation.segment_pieces ──► lista de peças
+foto/scan de várias peças ──► segmentation.segment_pieces (fotos) | segment_scan (scans) ──► lista de peças
                                                                {image, mask, contour, bbox, angle, is_cluster}
                                                                       │
                                                      edges.classify_pieces (in place)
@@ -25,7 +25,7 @@ Só a GUI liga as etapas de ponta a ponta. A CLI (`src/main.py`) usa apenas o co
 
 | Módulo | Linhas | Papel | Depende de | Estado observado (2026-10-29) |
 |---|---|---|---|---|
-| `segmentation.py` | 1750 | Deteção/recorte de peças numa foto: distância Lab ao fundo (modelo de fundo pela margem ou global), histerese + conetividade, limpeza morfológica, seam-carve/watershed para peças encostadas, bisect forçado, encolhimento de sombra, refinamento de fronteira, rejeição de franja de fundo, normalização de rotação (`minAreaRect`). Também `piece_to_rgba`, `save_pieces`, `segment_pieces_from_file`. | cv2, numpy, PIL | Funciona bem em scans de flatbed com fundo saturado (≈60/64 peças, 0 clusters). Degrada em fundo pálido e em fotos de telemóvel com peças juntas. O teste sintético falhava desde `f6cc2b7` (Otsu do OpenCV no topo de um vazio do histograma + histerese); corrigido no M0 com `_otsu_plateau_threshold`. |
+| `segmentation.py` | 1750 | Deteção/recorte de peças numa foto: distância Lab ao fundo (modelo de fundo pela margem ou global), histerese + conetividade, limpeza morfológica, seam-carve/watershed para peças encostadas, bisect forçado, encolhimento de sombra, refinamento de fronteira, rejeição de franja de fundo, normalização de rotação (`minAreaRect`). Também `piece_to_rgba`, `save_pieces`, `segment_pieces_from_file`. **`segment_scan`** (2026-10-31, caminho oficial para scans de flatbed): separação de `segment_pieces` + fronteira por limiar Lab a resolução total (fundo pela orla, d > 28, abertura/fecho 0,42/0,76 mm) no Voronoi das peças e numa banda de 1,5 mm; sem encolhimento de sombra, refinamento nem rejeição de franja (mordiam as peças escuras). | cv2, numpy, PIL | Funciona bem em scans de flatbed com fundo saturado (≈60/64 peças, 0 clusters). Degrada em fundo pálido e em fotos de telemóvel com peças juntas. O teste sintético falhava desde `f6cc2b7` (Otsu do OpenCV no topo de um vazio do histograma + histerese); corrigido no M0 com `_otsu_plateau_threshold`. |
 | `edges.py` | 194 | Classifica a peça pelo nº de lados retos do `minAreaRect` (`_STRAIGHT_RATIO=0.09`). Não extrai perfis de lado nem tab/blank. | cv2, numpy | Funciona; o teste de canto passou a verificar adjacência cíclica (a ordem de `cv2.boxPoints` muda no OpenCV 5). Falha 2/3 peças de bordo reais (mede o desvio ao `minAreaRect` com abas); substituição prevista no M4. |
 | `matching.py` | 1087 | Motor principal `multi_scale_template_match` (linhas 645–1082): downscale da referência para ≈46 px/peça, assinatura zonal Lab 4×4 por janela via imagens integrais, varrimento em banda de escalas derivada de `num_pieces` × 4 rotações, mínimos locais + NMS, refinamento a stride 1, re-rank por textura e prior de borda, gap diferencial → `confidence`. Mantém também o legado: `compare_images`, `basic_metrics`, `sliding_window_search`, `estimate_piece_scale_factors`. | numpy, PIL, cv2 (import local), `features`, `texture` | Funciona como desenhado; a sua utilidade depende da arte (ver `docs/estado-e-plano.md`). O prior de borda assume que **a arte preenche a referência**, o que é falso para `images/puzzles/PuzzleOriginal.jpeg` (foto da caixa com margem branca). |
 | `texture.py` | 233 | Assinatura de orientação de gradiente (Sobel em L, 8 bins, por célula 4×4, normalização L2, células planas a zero) e distância entre assinaturas. | cv2, numpy | Funciona; usado pelo motor quando `use_texture=True` (default). |
@@ -42,6 +42,8 @@ Constantes afinadas que importam ao ler resultados: `_SEARCH_TARGET_PIECE_PX=46`
 **Peça** (saída de `segment_pieces`, enriquecida por `classify_pieces`):
 `index, image (PIL RGB, fundo preenchido com a cor média), mask (PIL L), bbox (x,y,w,h em coords da foto), area_px, angle, contour (N×2 em coords da foto), is_cluster, touches_frame, piece_type, straight_sides, sides[4], side_deviations[4], min_area_box`.
 
+**`segment_scan`** devolve o mesmo dict que `segment_pieces` (mesmas peças, ordem e índices) mais `mm_per_px = 25,4/dpi`, `method = 'scan'` e `scan_background_lab`; cada peça ganha `refined` (False se o limiar não tinha píxeis na banda, e nos clusters, que mantêm o contorno de `segment_pieces`) e `roughness` (perímetro / perímetro suavizado, como `rough` do `shapelib`; só diagnóstico, nunca filtro). Enviesamento conhecido: o contorno inclui a sombra projetada (corda mediana 18,6 mm contra 18,2 nominal; E-sym em `docs/diagnostico/gemeos/RESULTADOS.md`).
+
 **Resultado de matching**: `best_position (x,y)`, `piece_size_final (w,h)`, `rotation ∈ {0,90,180,270}`, `scale`, `refined_similarity ∈ [0,1]`, `candidates` (até 5: `position, size, rotation, similarity, score, cost_comb, d_grad, edge_penalized`), `confidence`, `confidence_reason`, `confidence_gap`, `piece_structure`. Coordenadas no referencial da imagem de referência passada. Erro → `{'error': str}`.
 
 **JSON de exportação** (GUI): `timestamp, puzzle_info{size,mode}, pixels_per_cm?, pieces[{id, position, size, similarity, scale, path, confidence, confidence_reason, candidates[]}]`.
@@ -53,7 +55,7 @@ Constantes afinadas que importam ao ler resultados: `_SEARCH_TARGET_PIECE_PX=46`
 | `python -m src.gui` | GUI completa | funciona (precisa de Tk) |
 | `python -m src.main` | CLI ingénua (`compare_images`) | corre, mas não localiza peças |
 | `python eval_matching.py` | Harness A/B do motor em `images/pieces/IMG_2114.DNG` (64 peças, foto de telemóvel) | corre; escreve em `$PPF_SCRATCH/eval_matching` (default `./scratch`) |
-| `pytest tests/` | 6 testes sintéticos | 6/6 com OpenCV 4.11 e 5.0 (desde o M0) |
+| `pytest tests/` | testes sintéticos + `test_segment_scan_esym.py` (marcador `slow`, scans reais do E-sym; corre por omissão, `-m "not slow"` exclui) | 10/10 com OpenCV 4.11 e 5.0 (2026-10-31) |
 | `examples/basic_usage.py` | 4 exemplos sobre `.DNG` | parse OK; não corrido ponta a ponta |
 | `tools/diagnostico/` | scripts do diagnóstico de 2026-10-29 (segmentação, forma, matching); ver o README aí | correm com `PPF_SCRATCH`; regeneram `docs/diagnostico/` |
 

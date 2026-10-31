@@ -186,9 +186,11 @@ O S1 está corrigido em `src/` (`bc124d2`) e `segcache.PAD = 0`. Os `.npz` dos g
 | seg | 0,98 / 1,25 | 1,33 / 3,13 | 1,93 / 3,31 | 8 / 14 / 8 | 18 | 1,195 | não [F] |
 | híbrido | 0,27 / 0,50 | 0,29 / 0,45 | 0,38 / 0,64 | 20 / 20 / 20 | 0 | 1,085 | **sim** [V] |
 | sombra | 0,42 / 0,61 | 0,45 / 4,72 | 0,77 / 4,77 | 15 / 18 / 15 | 8 | 1,139 | não [F] |
+| scan (`segment_scan`) | 0,26 / 0,48 | 0,30 / 0,47 | 0,38 / 0,61 | 20 / 20 / 20 | 0 | 1,087 | **sim** [V] |
 
 - **Sem a moldura, `seg` e `hibrido` reproduzem os números de 30-out [V]:** híbrido free 0,27 / 0,29 / 0,38 contra 0,27 / 0,29 / 0,39; seg free 0,98 / 1,33 / 1,93 contra 0,96 / 1,42 / 1,81 (±0,12 mm, com os top-1 do seg a variarem 1–4 peças). A extrapolação também se reproduz (t95 0,507; 40/40 no pool de 100). A chave `cortes` do `results.json` **não** foi recalculada: ainda vem dos `.npz` com moldura.
 - **`sombra` falha o M3 [F]** porque apaga zonas de relva verde-viva nas peças de prado de B2. O pior é B2 (0,4), com RMS de 4,7 mm ao gémeo (`esym_franjas_sombra_B2.png`). Nas peças claras (A1/A2) é o contorno mais limpo medido até agora: \|ΔL\| de re-scan 0,13 mm, rugosidade 1,055, corda 18,0–18,1 mm. O passo seguinte do M3 (rejeição restrita à faixa exterior no lado da sombra) está descrito no relatório do E-fundo.
+- **`scan` = o híbrido promovido a `src.segmentation.segment_scan` [V].** A variante corre a função do produto diretamente sobre o scan (sem `.npz`): separação de `segment_pieces`, limiar Lab 28 com abertura 5 / fecho 9 px, banda de 1,5 mm no Voronoi das peças. A única diferença para `hibrido` é o fundo do limiar: `segment_scan` usa a orla (`rim_bg`, como `simples`/E-fundo); `hibrido` usa a faixa de baixo do gemeos_quick. Com o fundo pela orla, os contornos de `segment_scan` são idênticos píxel a píxel aos de `hybrid_pieces(mask=simple_mask(bgr, bg=rim_bg(bgr)))` nas 20 peças de A1 e de B2. Free contra `hibrido`: re-scan 0,257 vs 0,270, A1/B2 0,304 vs 0,292, A2/B2 0,383 vs 0,377 mm (todas a ≤ 0,013 mm). Top-1 20/20/20, rugosidade de B2 p95 1,087 vs 1,085 e corda mediana 18,65 / 18,59 / 18,60 mm (A1 / A2 / B2) vs 18,61 / 18,61 / 18,65. Na métrica corner o A2→B2 dá 19/20 (híbrido 20/20); o critério do M3 usa a free. O enviesamento conhecido mantém-se: o contorno inclui a sombra projetada, a corda fica em 18,6 mm contra 18,2 nominais e o RMS depende da pose (A2/B2 ≈ +0,08 mm sobre A1/B2). O modelo de sombra fica adiado até o E-real mostrar enviesamento. No `scan_verde` de julho: 61 peças, 0 clusters, 61/61 com cantos, corda mediana 18,87 mm (= método (b) do E-fundo), rugosidade p95 1,110.
 
 ## Figuras
 
@@ -200,7 +202,7 @@ O S1 está corrigido em `src/` (`bc124d2`) e `segcache.PAD = 0`. Os `.npz` dos g
 | `esym_rescan.png` | Re-scan A1/A2 (mesma peça rodada 180°), contorno `seg` |
 | `esym_histogramas.png`, `esym_histogramas_hibrido.png` | Re-scan contra gémeo contra não-gémeo, corner e free |
 | `esym_matriz.png` | Matrizes 20×20 A1×B2 (seg e híbrido; corner e free): gémeo a vermelho, argmin marcado |
-| `esym_franjas_sombra_B2.png` | (31-out) As 3 peças de prado mais escuras de B2, a 2×: seg vermelho, híbrido azul, sombra verde |
+| `esym_franjas_sombra_B2.png` | (31-out) As 3 peças de prado mais escuras de B2, a 2×: seg vermelho, híbrido azul, sombra verde, scan magenta (desenhado por baixo do azul; só aparece onde difere) |
 | `esym_franjas_contorno.png` | Recortes a 2× com o contorno `segment_pieces` (vermelho) e o do limiar simples (azul): mordidelas em B2 e sombra incluída pelo limiar |
 | `cortes_pares_mais_parecidos.png` | Os 8 pares de lados do mesmo tipo de peças diferentes mais parecidos (verde + A1/B2, híbrido) |
 

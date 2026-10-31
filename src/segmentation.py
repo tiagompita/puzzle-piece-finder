@@ -3,7 +3,8 @@
 Given a single photo containing many pieces spread on a (roughly uniform)
 surface, this module detects, splits and crops individual pieces.
 
-Public entry point: :func:`segment_pieces` (pure, PIL in / dict out).
+Public entry points: :func:`segment_pieces` (photos; pure, PIL in / dict out) and
+:func:`segment_scan` (flatbed scans: segment_pieces separation + hybrid full-res boundary).
 Filesystem wrappers: :func:`segment_pieces_from_file`, :func:`save_pieces`.
 
 Only ``cv2`` + ``numpy`` + ``PIL`` are used. Detection logic is kept pure and
@@ -26,6 +27,7 @@ from PIL import Image
 
 __all__ = [
 	"segment_pieces",
+	"segment_scan",
 	"segment_pieces_from_file",
 	"save_pieces",
 	"piece_to_rgba",
@@ -1513,6 +1515,32 @@ def _extract_piece(
 	# keep their original colour in img, removed specks get mean-filled below.
 	mask_full = _clean_piece_mask(mask_full)
 
+	return _compose_piece_fullres(mask_full, rgb_crop, ox, oy, W, H, local_cnt, normalize_rotation)
+
+
+def _compose_piece_fullres(
+	mask_full: np.ndarray,
+	rgb_crop: np.ndarray,
+	ox: int,
+	oy: int,
+	W: int,
+	H: int,
+	rect_cnt: np.ndarray,
+	normalize_rotation: bool,
+) -> dict | None:
+	"""Turn a FINAL full-res crop mask into a piece record (shared by both segmenters).
+
+	``mask_full`` is the uint8 0/255 piece mask of the crop ``rgb_crop`` whose
+	top-left corner sits at ``(ox, oy)`` of the ``W x H`` photo. The returned
+	``contour`` is the largest external contour of ``mask_full`` in photo
+	coordinates; ``rect_cnt`` (crop-local N x 2 points) feeds the ``minAreaRect``
+	that sets the rotation angle. The background of the crop is filled with the
+	piece's mean colour and, with ``normalize_rotation``, the crop is rotated to
+	axis-align that rect. Returns a dict without ``index``/``is_cluster``/
+	``touches_frame`` (assigned by the caller), or ``None`` if the mask is empty.
+	"""
+	ow, oh = mask_full.shape[1], mask_full.shape[0]
+	local_cnt = rect_cnt
 	# Derive the returned contour from the FINAL mask (post shrink/clean/refine) so
 	# edges.py classifies the exact geometry the emitted crop mask carries -- not the
 	# working-resolution contour the mask was seeded from, which drifts after those
@@ -1591,6 +1619,115 @@ def _labels_overlay(work_bgr: np.ndarray, components: list[tuple[tuple[int, int,
 		sel = mask > 0
 		region[sel] = 0.5 * region[sel] + 0.5 * color
 	return Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), "RGB")
+
+
+# ===== Flatbed-scan path (segment_scan) =====
+# Rim band used to estimate the scan background: 100..250 px from each border at
+# 300 dpi (inside the scanner's white margins, outside most pieces), in mm so it
+# scales with the dpi. Port of tools/diagnostico/gemeos/esym.rim_bg.
+_SCAN_RIM_MM = (100 * 25.4 / 300.0, 250 * 25.4 / 300.0)
+# Robust-mode refinement of the rim median: iterations and Lab radius (8-bit units).
+_SCAN_RIM_ITERS = 3
+_SCAN_RIM_RADIUS = 15.0
+# Weights of the squared (dL, da, db) in the scan threshold distance.
+_SCAN_LAB_WEIGHTS = (0.5, 1.0, 1.0)
+# Roughness diagnostic (same definition as tools/diagnostico/forma/shapelib.analyse_v2):
+# contour resampled to this many points, then smoothed with this sigma (in samples).
+_ROUGH_SAMPLES = 1200
+_ROUGH_SIGMA = 6.0
+
+
+def _rim_background(lab: np.ndarray, mm_per_px: float) -> np.ndarray:
+	"""Background colour (OpenCV 8-bit Lab, float) estimated on the scan rim.
+
+	Pixels of the band ``_SCAN_RIM_MM`` from each border are pooled; the median is
+	then refined ``_SCAN_RIM_ITERS`` times as the median of the pixels within
+	``_SCAN_RIM_RADIUS`` of the current estimate (a robust mode that ignores the
+	pieces lying in the band). On images too small for the band, the band is
+	clamped to the central half so it never inverts or empties.
+	"""
+	h, w = lab.shape[:2]
+	lo = int(round(_SCAN_RIM_MM[0] / mm_per_px))
+	hi = int(round(_SCAN_RIM_MM[1] / mm_per_px))
+	hi = max(1, min(hi, min(h, w) // 2))
+	lo = max(0, min(lo, hi - 1))
+	pts = np.concatenate([
+		lab[lo:hi, lo:w - lo].reshape(-1, 3), lab[h - hi:h - lo, lo:w - lo].reshape(-1, 3),
+		lab[lo:h - lo, lo:hi].reshape(-1, 3), lab[lo:h - lo, w - hi:w - lo].reshape(-1, 3),
+	]).astype(np.float32)
+	m = np.median(pts, axis=0)
+	for _ in range(_SCAN_RIM_ITERS):
+		near = pts[np.sqrt(((pts - m) ** 2).sum(1)) < _SCAN_RIM_RADIUS]
+		if len(near) == 0:
+			break
+		m = np.median(near, axis=0)
+	return m
+
+
+def _odd_kernel(mm: float, mm_per_px: float) -> int:
+	"""Side (px, odd, >= 1) of a square kernel of ``mm`` millimetres."""
+	k = max(1, int(round(mm / mm_per_px)))
+	return k if k % 2 == 1 else k + 1
+
+
+def _scan_threshold_mask(lab: np.ndarray, bg: np.ndarray, threshold: float, open_px: int, close_px: int) -> np.ndarray:
+	"""Full-res foreground of a scan: weighted Lab distance to ``bg`` above ``threshold``.
+
+	Distance ``sqrt(0.5 dL^2 + da^2 + db^2)`` in OpenCV 8-bit Lab units, then a
+	square-kernel opening (``open_px``) and closing (``close_px``). Returns uint8 0/255.
+	"""
+	wts = np.asarray(_SCAN_LAB_WEIGHTS, np.float32)
+	d = np.sqrt((((lab - np.asarray(bg, np.float32)) ** 2) * wts).sum(-1))
+	m = (d > threshold).astype(np.uint8) * 255
+	m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((open_px, open_px), np.uint8))
+	return cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((close_px, close_px), np.uint8))
+
+
+def _voronoi_from_contours(shape: tuple[int, int], contours: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
+	"""Voronoi partition of the image by filled piece contours.
+
+	Returns ``(vor, dist)``: ``vor`` (int32) holds, for every pixel, ``q + 1`` of
+	the nearest piece ``contours[q]`` (pixels inside a piece get its own label);
+	``dist`` (float32) is the Euclidean distance (px) to the nearest piece pixel
+	(0 inside pieces).
+	"""
+	H, W = shape
+	lab_img = np.zeros((H, W), np.int32)
+	for q, c in enumerate(contours):
+		cv2.fillPoly(lab_img, [np.asarray(c).reshape(-1, 1, 2).astype(np.int32)], q + 1)
+	inv = (lab_img == 0).astype(np.uint8)
+	dist, lbl = cv2.distanceTransformWithLabels(inv, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+	# lbl numbers the zero pixels of ``inv`` (piece pixels) 1..n in raster order;
+	# map each one to the label of the piece it belongs to.
+	zero = np.flatnonzero(inv.ravel() == 0)
+	lut = np.zeros(int(lbl.max()) + 1, np.int32)
+	lut[np.arange(1, len(zero) + 1)] = lab_img.ravel()[zero]
+	return lut[lbl], dist
+
+
+def _contour_roughness(contour: np.ndarray) -> float:
+	"""Perimeter of the contour over that of its smoothed version (>= 1; 1 = smooth).
+
+	The closed contour is resampled to ``_ROUGH_SAMPLES`` equidistant points and
+	smoothed with a circular Gaussian of ``_ROUGH_SIGMA`` samples (same definition
+	as ``rough`` in tools/diagnostico/forma/shapelib.analyse_v2). Diagnostic only.
+	"""
+	c = np.asarray(contour, np.float64).reshape(-1, 2)
+	if len(c) < 3:
+		return 1.0
+	p = np.vstack([c, c[:1]])
+	s = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(p, axis=0), axis=1))])
+	if s[-1] <= 0:
+		return 1.0
+	t = np.linspace(0.0, s[-1], _ROUGH_SAMPLES, endpoint=False)
+	r = np.c_[np.interp(t, s, p[:, 0]), np.interp(t, s, p[:, 1])]
+	rs = _circular_gaussian(r, _ROUGH_SIGMA)
+
+	def _per(a: np.ndarray) -> float:
+		return float(np.sum(np.linalg.norm(np.diff(np.vstack([a, a[:1]]), axis=0), axis=1)))
+
+	ps = _per(rs)
+	return _per(r) / ps if ps > 0 else 1.0
 
 
 # ===== Public API =====
@@ -1803,6 +1940,138 @@ def segment_pieces(
 			"labels_overlay": _labels_overlay(work_bgr, components),
 		}
 	return result
+
+
+def segment_scan(
+	photo: Image.Image,
+	*,
+	dpi: float = 300,
+	band_mm: float = 1.5,
+	threshold: float = 28.0,
+	open_mm: float = 0.42,
+	close_mm: float = 0.76,
+	debug: bool = False,
+	**segment_pieces_kwargs,
+) -> dict:
+	"""Segment a flatbed scan of loose pieces: the official path for scans.
+
+	Hybrid contour (promoted from the E-sym diagnostic ``hibrido`` variant,
+	tools/diagnostico/gemeos/esym.py): :func:`segment_pieces` decides WHICH
+	pieces exist (separation of touching pieces, ``is_cluster``,
+	``touches_frame``, order and indices), and a plain full-resolution Lab
+	threshold decides WHERE each boundary is, restricted to the piece's Voronoi
+	cell and to a band of ``band_mm`` around the ``segment_pieces`` contour.
+	The boundary steps of ``segment_pieces`` that bite into dark pieces (shadow
+	shrink, boundary-band refinement, fringe rejection) are not applied.
+
+	Steps: (1) ``segment_pieces(photo, **segment_pieces_kwargs)``; (2) background
+	in OpenCV 8-bit Lab from the scan rim (8.5..21 mm from each border; median +
+	3 robust-mode iterations); (3) ``sqrt(0.5 dL^2 + da^2 + db^2) > threshold``,
+	square opening of ``open_mm`` and closing of ``close_mm`` (5 and 9 px at
+	300 dpi); (4) Voronoi of the ``segment_pieces`` piece masks and, per piece,
+	the largest external contour of threshold AND own cell AND band; (5) the
+	piece record is composed from that contour like ``segment_pieces`` does
+	(mean-colour fill, ``pad_ratio`` bbox, ``minAreaRect`` angle and rotation).
+
+	Calibration and known bias (measured, docs/diagnostico/gemeos/RESULTADOS.md
+	and docs/diagnostico/fundo/RESULTADOS.md): the threshold/morphology
+	constants were calibrated on the green-background scans (E-fundo,
+	2026-10-31). On the E-sym border twins (green, 300 dpi) the hybrid contour
+	gives twin free RMS ~0.38 mm (opposite pose, A2/B2), re-scan ~0.27 mm and
+	top-1 20/20. The contour INCLUDES the cast shadow (~0.4 mm on the bottom and
+	left sides in the scanner frame), so the median side chord is ~18.6 mm
+	against 18.2 mm nominal (``segment_pieces`` gives 17.7..18.0 because it
+	bites) and the twin RMS is pose-dependent (~+0.1 mm for opposite-pose
+	pairs, A2/B2, against same-pose pairs). A shadow model is deferred until the
+	E-real experiment shows that this bias matters.
+
+	Args:
+		photo: PIL image of the scan.
+		dpi: scan resolution; sets ``mm_per_px = 25.4 / dpi`` and scales every
+			mm parameter to pixels.
+		band_mm: max distance (mm) of the new boundary from the
+			``segment_pieces`` contour.
+		threshold: weighted Lab distance (OpenCV 8-bit units) above which a pixel
+			is foreground.
+		open_mm, close_mm: square morphology kernels (mm; rounded to odd px).
+		debug: attach ``segment_pieces``' debug images, with ``threshold_mask``,
+			``voronoi`` (cell labels as colours) and ``labels_overlay`` (full-res;
+			``segment_pieces`` contour red, scan contour blue) added/replaced.
+		**segment_pieces_kwargs: forwarded to :func:`segment_pieces`
+			(``pad_ratio`` and ``normalize_rotation`` are also used here).
+
+	Returns:
+		The :func:`segment_pieces` dict (``pieces, count, background_lab,
+		background_model, working_scale``) plus ``mm_per_px``, ``method='scan'``
+		and ``scan_background_lab`` (rim estimate, OpenCV 8-bit Lab). Pieces keep
+		the same order, indices and keys, plus ``refined`` (False when the
+		threshold had no pixel in the band, and for ``is_cluster`` records, which
+		keep the ``segment_pieces`` contour and crop) and ``roughness``
+		(perimeter / smoothed perimeter; a diagnostic, never a gate). On failure
+		the ``segment_pieces`` error dict with ``method`` and ``mm_per_px`` added.
+	"""
+	mm_per_px = 25.4 / float(dpi)
+	res = segment_pieces(photo, debug=debug, **segment_pieces_kwargs)
+	res["method"] = "scan"
+	res["mm_per_px"] = mm_per_px
+	if "error" in res:
+		return res
+	pad_ratio = float(segment_pieces_kwargs.get("pad_ratio", 0.02))
+	normalize_rotation = bool(segment_pieces_kwargs.get("normalize_rotation", True))
+
+	rgb = np.asarray(photo.convert("RGB"))
+	H, W = rgb.shape[:2]
+	lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
+	bg = _rim_background(lab, mm_per_px)
+	thr = _scan_threshold_mask(lab, bg, threshold, _odd_kernel(open_mm, mm_per_px), _odd_kernel(close_mm, mm_per_px))
+	del lab
+	pieces = res["pieces"]
+	seg_contours = [np.asarray(p["contour"]).reshape(-1, 2) for p in pieces]
+	vor, dist = _voronoi_from_contours((H, W), seg_contours)
+	band_px = band_mm / mm_per_px
+	band = dist <= band_px
+	reach = int(np.ceil(band_px)) + 2
+
+	for q, p in enumerate(pieces):
+		p["refined"] = False
+		# Clusters keep the segment_pieces contour: the threshold cannot split them either.
+		if not p["is_cluster"]:
+			x, y, w, h = cv2.boundingRect(seg_contours[q].astype(np.int32).reshape(-1, 1, 2))
+			x0, y0 = max(0, x - reach), max(0, y - reach)
+			x1, y1 = min(W, x + w + reach), min(H, y + h + reach)
+			m = ((thr[y0:y1, x0:x1] > 0) & (vor[y0:y1, x0:x1] == q + 1) & band[y0:y1, x0:x1]).astype(np.uint8)
+			cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+			if cnts:
+				c = max(cnts, key=cv2.contourArea).reshape(-1, 2) + np.array([x0, y0])
+				ox, oy, ow, oh = cv2.boundingRect(c.astype(np.int32).reshape(-1, 1, 2))
+				pad = int(round(pad_ratio * max(ow, oh)))
+				ox, oy = max(0, ox - pad), max(0, oy - pad)
+				ow, oh = min(W - ox, ow + 2 * pad), min(H - oy, oh + 2 * pad)
+				local = (c - np.array([ox, oy])).astype(np.int32)
+				mask_full = np.zeros((oh, ow), np.uint8)
+				cv2.drawContours(mask_full, [local.reshape(-1, 1, 2)], -1, 255, thickness=cv2.FILLED)
+				rec = _compose_piece_fullres(
+					mask_full, rgb[oy:oy + oh, ox:ox + ow].copy(), ox, oy, W, H, local, normalize_rotation,
+				)
+				if rec is not None:
+					p.update(rec)
+					p["refined"] = True
+		p["roughness"] = _contour_roughness(p["contour"])
+
+	res["scan_background_lab"] = (float(bg[0]), float(bg[1]), float(bg[2]))
+	if debug:
+		dbg = res.setdefault("debug", {})
+		dbg["threshold_mask"] = Image.fromarray(thr, "L")
+		palette = np.random.default_rng(12345).integers(60, 256, size=(len(pieces) + 1, 3)).astype(np.uint8)
+		palette[0] = 0
+		dbg["voronoi"] = Image.fromarray(palette[vor], "RGB")
+		ov = rgb.copy()
+		lw = max(1, int(round(0.1 / mm_per_px)))
+		for q, p in enumerate(pieces):
+			cv2.polylines(ov, [seg_contours[q].astype(np.int32).reshape(-1, 1, 2)], True, (255, 0, 0), lw)
+			cv2.polylines(ov, [np.asarray(p["contour"]).astype(np.int32).reshape(-1, 1, 2)], True, (0, 0, 255), lw)
+		dbg["labels_overlay"] = Image.fromarray(ov, "RGB")
+	return res
 
 
 # ===== Filesystem wrappers (only functions doing I/O) =====

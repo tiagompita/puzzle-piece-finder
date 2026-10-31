@@ -13,9 +13,10 @@ and near-equal size (a few px of symmetric padding is expected and tolerated).
 """
 
 import numpy as np
+import pytest
 from PIL import Image
 
-from src.segmentation import segment_pieces
+from src.segmentation import segment_pieces, segment_scan
 
 
 # Placed rectangles as (x, y, w, h, (r, g, b)); equal area, well separated, inset.
@@ -79,11 +80,14 @@ def test_segment_recovers_all_rectangles():
     assert remaining == []
 
 
-def test_piece_near_frame_is_kept():
+@pytest.mark.parametrize("segment", [segment_pieces, segment_scan], ids=["segment_pieces", "segment_scan"])
+def test_piece_near_frame_is_kept(segment):
     """A piece next to (or touching) the image border is kept, not silently dropped (S1).
 
     One rectangle sits 2 px from the right border (kept, ``touches_frame`` False);
     another touches the bottom border (kept, ``touches_frame`` True, not a cluster).
+    Runs on both the photo path and the scan path (which reuses segment_pieces'
+    separation and must carry its ``touches_frame``; every scan piece is refined).
     """
     bg = np.full((_IMG_H, _IMG_W, 3), _BG, dtype=np.uint8)
     inset = [(80, 90, 150, 120, (200, 40, 40)), (400, 70, 150, 120, (40, 160, 40)),
@@ -92,10 +96,13 @@ def test_piece_near_frame_is_kept():
     touch = (450, _IMG_H - 120, 150, 120, (150, 40, 170))     # bbox reaches the bottom edge
     for (x, y, w, h, colour) in inset + [near, touch]:
         bg[y:y + h, x:x + w] = colour
-    result = segment_pieces(Image.fromarray(bg))
+    result = segment(Image.fromarray(bg))
 
     assert "error" not in result, result.get("error")
     assert result["count"] == 5
+    if segment is segment_scan:
+        assert result["method"] == "scan"
+        assert all(p["refined"] for p in result["pieces"])
     assert all("touches_frame" in p for p in result["pieces"])
 
     def _find(rect):
