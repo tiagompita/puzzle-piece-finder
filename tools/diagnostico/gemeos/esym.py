@@ -35,7 +35,8 @@ NF = 512
 NAMES = ["A1", "A2", "B2"]
 RNG = np.random.default_rng(0)
 
-__all__ = ["free_vec", "prep", "twin", "fk", "st", "r3", "corner_d", "free_d", "METRICS", "quick_pieces", "per_side"]
+__all__ = ["free_vec", "prep", "twin", "fk", "st", "r3", "corner_d", "free_d", "METRICS", "quick_pieces", "per_side",
+		   "imread_bgr", "simple_mask", "rim_bg", "shadow_mask", "hybrid_pieces", "sombra_pieces", "TAU_H", "KAPPA", "C_ACH"]
 
 
 # ---------------------------------------------------------------- utilitários puros
@@ -138,24 +139,78 @@ def quick_pieces(path):
 	return out
 
 
-def simple_mask(bgr):
-	"""Máscara binária do gemeos_quick (fundo = mediana das linhas h-300..h-50)."""
+def simple_mask(bgr, bg=None, shadow=None):
+	"""Máscara binária do gemeos_quick (Lab ponderado [0,5; 1; 1], d > 28, abertura 5, fecho 9).
+	bg: Lab de referência do fundo em unidades 8 bits do OpenCV (por omissão, mediana das linhas h-300..h-50,
+	como no gemeos_quick). shadow: máscara booleana de píxeis a forçar para fundo antes da abertura/fecho
+	(variante "sombra")."""
 	lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
 	h, w = lab.shape[:2]
-	bg = np.median(lab[h - 300:h - 50, 50:w - 50].reshape(-1, 3), axis=0)
-	d = np.sqrt(((lab - bg) ** 2 * np.array([0.5, 1, 1])).sum(-1))
-	m = (d > 28).astype(np.uint8) * 255
+	if bg is None:
+		bg = np.median(lab[h - 300:h - 50, 50:w - 50].reshape(-1, 3), axis=0)
+	d = np.sqrt(((lab - np.asarray(bg, np.float32)) ** 2 * np.array([0.5, 1, 1])).sum(-1))
+	fg = d > 28
+	if shadow is not None:
+		fg &= ~shadow
+	m = fg.astype(np.uint8) * 255
 	m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
 	return cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
 
 
-def hybrid_pieces(path, segP, band_mm=1.5):
+# ---------------------------------------------------------------- fundo pela orla e modelo de sombra (variante "sombra")
+# Fixados UMA vez no scan_verde de julho (tools/diagnostico/fundo/efundo.py, regra de calibração no RESULTADOS.md
+# de docs/diagnostico/fundo/) e aplicados sem alteração a todos os fundos e aos scans dos gémeos.
+TAU_H = 10.0   # graus: |h - h_fundo| < TAU_H
+KAPPA = 0.4    # croma: C >= KAPPA * C_fundo
+C_ACH = 8.0    # fundo com croma < C_ACH é acromático: tonalidade indefinida, a rejeição da sombra não se aplica
+
+
+def rim_bg(bgr, lo=100, hi=250):
+	"""Lab (unidades 8 bits do OpenCV) do fundo estimado pela orla: faixa a lo..hi px de cada bordo (evita as
+	margens brancas do scanner), mediana e 3 iterações de mediana dos píxeis a < 15 da estimativa (moda robusta)."""
+	lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+	h, w = lab.shape[:2]
+	pts = np.concatenate([lab[lo:hi, lo:w - lo].reshape(-1, 3), lab[h - hi:h - lo, lo:w - lo].reshape(-1, 3),
+						  lab[lo:h - lo, lo:hi].reshape(-1, 3), lab[lo:h - lo, w - hi:w - lo].reshape(-1, 3)])
+	m = np.median(pts, axis=0)
+	for _ in range(3):
+		m = np.median(pts[np.sqrt(((pts - m) ** 2).sum(1)) < 15], axis=0)
+	return m
+
+
+def shadow_mask(bgr, bg, tau_h=None, kappa=None):
+	"""Sombra projetada = fundo escurecido na mesma direção a*/b*: L < L_fundo, |h - h_fundo| < tau_h e
+	C >= kappa * C_fundo. bg em unidades 8 bits do OpenCV. Devolve None se o fundo for acromático (C < C_ACH)."""
+	tau_h = TAU_H if tau_h is None else tau_h
+	kappa = KAPPA if kappa is None else kappa
+	bg = np.asarray(bg, np.float32)
+	ab_bg = bg[1:] - 128
+	C_bg = float(np.hypot(*ab_bg))
+	if C_bg < C_ACH:
+		return None
+	lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+	a, b = lab[..., 1] - 128, lab[..., 2] - 128
+	dh = np.abs((np.degrees(np.arctan2(b, a) - np.arctan2(ab_bg[1], ab_bg[0])) + 180) % 360 - 180)
+	return (lab[..., 0] < bg[0]) & (dh < tau_h) & (np.hypot(a, b) >= kappa * C_bg)
+
+
+def sombra_pieces(path, segP, band_mm=1.5):
+	"""Variante "sombra" (método (c) do E-fundo): como hybrid_pieces, mas o limiar usa o fundo estimado pela orla
+	(rim_bg) e os píxeis de sombra (shadow_mask) passam a fundo antes da abertura/fecho."""
+	bgr = imread_bgr(path) if isinstance(path, str) else path
+	bg = rim_bg(bgr)
+	return hybrid_pieces(bgr, segP, band_mm, mask=simple_mask(bgr, bg=bg, shadow=shadow_mask(bgr, bg)))
+
+
+def hybrid_pieces(path, segP, band_mm=1.5, mask=None):
 	"""Variante "hibrido": separação das peças por segment_pieces (Voronoi das máscaras segP) e
 	fronteira pelo limiar simples, limitada a band_mm à volta do contorno de segment_pieces.
-	segP: peças de shapelib.load (contornos em coordenadas do scan). Devolve dicts na mesma ordem."""
-	bgr = imread_bgr(path)
+	path: caminho do scan ou imagem BGR já carregada. mask: máscara do limiar a usar (por omissão simple_mask(bgr)).
+	segP: peças de shapelib.load (contornos em coordenadas do scan). Devolve dicts na mesma ordem; uma peça sem
+	píxeis do limiar dentro da banda fica com contour=None e missing=True."""
+	bgr = imread_bgr(path) if isinstance(path, str) else path
 	H, W = bgr.shape[:2]
-	sm = simple_mask(bgr) > 0
+	sm = (simple_mask(bgr) if mask is None else mask) > 0
 	lab_img = np.zeros((H, W), np.int32)
 	for q, p in enumerate(segP):
 		cv2.fillPoly(lab_img, [np.round(p["contour"]).astype(np.int32).reshape(-1, 1, 2)], q + 1)
@@ -174,11 +229,15 @@ def hybrid_pieces(path, segP, band_mm=1.5):
 		x0, y0, x1, y1 = max(0, x - pad), max(0, y - pad), min(W, x + w + pad), min(H, y + h + pad)
 		m = (sm[y0:y1, x0:x1] & (vor[y0:y1, x0:x1] == q + 1) & band[y0:y1, x0:x1]).astype(np.uint8)
 		cs, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-		c = max(cs, key=cv2.contourArea).reshape(-1, 2).astype(np.float64) + [x0, y0]
 		d = dict(p)
-		d.update(contour=c, bbox=np.array(cv2.boundingRect(c.astype(np.int32).reshape(-1, 1, 2))))
 		for k in ("c", "z", "vec", "ok"):
 			d.pop(k, None)
+		if not cs:
+			d.update(contour=None, missing=True)
+			out.append(d)
+			continue
+		c = max(cs, key=cv2.contourArea).reshape(-1, 2).astype(np.float64) + [x0, y0]
+		d.update(contour=c, bbox=np.array(cv2.boundingRect(c.astype(np.int32).reshape(-1, 1, 2))))
 		out.append(d)
 	return out
 
@@ -431,6 +490,27 @@ def fig_fringes(seg, simp, picks, fname):
 	cv2.imwrite(os.path.join(OUT, fname), np.hstack(tiles))
 
 
+def fig_fringes3(V, idx, fname):
+	"""B2: recortes a 2x das peças mais escuras (prado) com os contornos seg (vermelho), híbrido (azul) e sombra (verde)."""
+	im = imread_bgr(os.path.join(sc.REPO, sc.SCANS["B2"]))
+	tiles = []
+	for i in idx:
+		x, y, w, h = map(int, V["seg"][i]["bbox"])
+		pad = 12
+		x0, y0 = max(0, x - pad), max(0, y - pad)
+		s = 2
+		crop = cv2.resize(im[y0:y + h + pad, x0:x + w + pad], None, fx=s, fy=s, interpolation=cv2.INTER_CUBIC)
+		for var, c in [("hibrido", BLUE), ("sombra", GRN), ("seg", RED)]:
+			cv2.polylines(crop, [np.round((V[var][i]["contour"] - [x0, y0]) * s + s / 2).astype(np.int32).reshape(-1, 1, 2)], True, c, 1, cv2.LINE_AA)
+		lab_ = f"B2 {tuple(fk(i))}: vermelho seg, azul hibrido, verde sombra"
+		put(crop, lab_, (6, 18), 0.5, (255, 255, 255), 3)
+		put(crop, lab_, (6, 18), 0.5, BLK, 1)
+		tiles.append(crop)
+	H = max(t.shape[0] for t in tiles)
+	tiles = [np.vstack([t, np.full((H - t.shape[0], t.shape[1], 3), 255, np.uint8)]) for t in tiles]
+	cv2.imwrite(os.path.join(OUT, fname), np.hstack(tiles))
+
+
 # ---------------------------------------------------------------- extrapolação da margem (ponto 6)
 def tail_fit(x, t_list, frac=0.05, nmin=12):
 	"""Cauda inferior da distribuição empírica (pontos com F <= frac, pelo menos nmin): exponencial
@@ -556,15 +636,21 @@ def main():
 	simp_ok = {n: [len(simp[n]), int(sum(p["ok"] for p in simp[n]))] for n in sc.SCANS}
 	# --- variante híbrida (separação por segment_pieces, fronteira pelo limiar simples)
 	hyb = {name: prep(hybrid_pieces(os.path.join(sc.REPO, sc.SCANS[name]), sc.load_grid(name))) for name in sc.SCANS}
+	# --- variante sombra (método (c) do E-fundo: fundo pela orla + rejeição da sombra por tonalidade)
+	sh = {name: prep(sombra_pieces(os.path.join(sc.REPO, sc.SCANS[name]), sc.load_grid(name))) for name in sc.SCANS}
 	for name in sc.SCANS:
 		for p, q in zip(hyb[name], seg[name]):
 			p["fk"] = q["fk"]
+		for p, q in zip(sh[name], seg[name]):
+			p["fk"] = q["fk"]
 	R = {"segmentation": segstats, "B1_rows": B1_rows, "simples_counts_ok": simp_ok,
-		 "padding_note": "scans com moldura de 64 px da cor mediana da orla antes de segment_pieces (ver segcache.py)"}
+		 "padding_note": (f"scans com moldura de {sc.PAD} px da cor mediana da orla antes de segment_pieces (ver segcache.py)" if sc.PAD > 0
+						  else "sem moldura (segcache.PAD = 0; S1 corrigido em bc124d2); .npz dos gémeos regenerados em 2026-10-31"),
+		 "sombra_params": dict(tau_h=TAU_H, kappa=KAPPA, C_ach=C_ACH, bg={n: [round(float(v), 1) for v in rim_bg(imread_bgr(os.path.join(sc.REPO, sc.SCANS[n])))] for n in NAMES})}
 	R["quick_replica"] = quick_replica({n: os.path.join(sc.REPO, sc.SCANS[n]) for n in sc.SCANS})
 	T = [twin(i) for i in range(20)]
 	Mall = {}
-	VARS = [("seg", seg), ("simples", simp), ("hibrido", hyb)]
+	VARS = [("seg", seg), ("simples", simp), ("hibrido", hyb), ("sombra", sh)]
 	for var, S in VARS:
 		if not all(len(S[n]) == 20 and all(p["ok"] for p in S[n]) for n in NAMES):
 			R[var] = dict(error="contagem/cantos falharam", counts=simp_ok)
@@ -675,17 +761,38 @@ def main():
 	R["verdict_M5"] = dict(criterion="RMS gémeo mediano <= 0,7 mm E top-1 >= 95 %", by_variant_metric=v,
 						   product_pipeline_seg_viable=bool(all(v[f"seg_{m}_{pr}"]["viable"] for m in METRICS for pr in ("A1B2", "A2B2"))),
 						   hibrido_viable=bool(all(v[f"hibrido_{m}_{pr}"]["viable"] for m in METRICS for pr in ("A1B2", "A2B2"))))
+	# --- critério M3 (fronteira do M3 pronta para o M10): métrica free, A2/B2 mediano <= 0,5 mm, top-1 20/20
+	# (A1->B2, B2->A1, A2->B2) e rugosidade p95 < 1,1 em B2 (prado escuro sobre verde: o pior caso)
+	m3 = {}
+	for var, _ in VARS:
+		if "free" not in R.get(var, {}):
+			continue
+		r = R[var]["free"]
+		rp = R[var]["roughness"]["per_scan"]["B2"]["p95"]
+		m3[var] = dict(twin_A2B2_median=r["twin_A2B2"]["median"], top1_A1_to_B2=r["top1_A1_to_B2"], top1_B2_to_A1=r["top1_B2_to_A1"],
+					   top1_A2_to_B2=r["top1_A2_to_B2"], rough_p95_B2=rp,
+					   meets=bool(r["twin_A2B2"]["median"] <= 0.5 and min(r["top1_A1_to_B2"], r["top1_B2_to_A1"], r["top1_A2_to_B2"]) == 20 and rp < 1.1))
+	R["M3"] = m3
+	gB2 = cv2.cvtColor(imread_bgr(os.path.join(sc.REPO, sc.SCANS["B2"])), cv2.COLOR_BGR2GRAY)
+
+	def mean_grey(p):
+		mk = np.zeros(gB2.shape, np.uint8)
+		cv2.fillPoly(mk, [np.round(p["contour"]).astype(np.int32).reshape(-1, 1, 2)], 1)
+		return float(gB2[mk > 0].mean())
+	dark = np.argsort([mean_grey(p) for p in seg["B2"]])[:3]
+	R["B2_darkest_pieces"] = [dict(fk=fk(int(i)), mean_grey=round(mean_grey(seg["B2"][int(i)]), 1)) for i in dark]
+	fig_fringes3({"seg": seg["B2"], "hibrido": hyb["B2"], "sombra": sh["B2"]}, [int(i) for i in dark], "esym_franjas_sombra_B2.png")
 	# --- gravar
 	jp = os.path.join(OUT, "results.json")
 	J = json.load(open(jp, encoding="utf-8")) if os.path.exists(jp) else {}
 	J["esym"] = R
 	json.dump(J, open(jp, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=lambda o: o.item() if hasattr(o, "item") else str(o))
-	pickle.dump(dict(seg=seg, simp=simp, hyb=hyb, V=Vv, D101=Dx), open(os.path.join(WORK, "esym.pkl"), "wb"))
+	pickle.dump(dict(seg=seg, simp=simp, hyb=hyb, sombra=sh, V=Vv, D101=Dx), open(os.path.join(WORK, "esym.pkl"), "wb"))
 	summary(R)
 
 
 def summary(R):
-	for var in ["seg", "simples", "hibrido"]:
+	for var in ["seg", "simples", "hibrido", "sombra"]:
 		if "corner" not in R.get(var, {}):
 			print(var, R.get(var))
 			continue
@@ -698,6 +805,8 @@ def summary(R):
 				  f"pool39 {r['top1_pool39']} mutual {r['mutual_nn']} margin<1.5: {len(r['pieces_margin_lt_1_5'])} margin min {r['margin_any']['min']}")
 	print("quick replica", json.dumps(R["quick_replica"], default=str)[:700])
 	print("verdict", R["verdict_M5"])
+	for var, v in R.get("M3", {}).items():
+		print("M3", var, v)
 
 
 if __name__ == "__main__":

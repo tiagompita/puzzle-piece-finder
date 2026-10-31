@@ -177,6 +177,19 @@ Critério: RMS gémeo mediano ≤ 0,7 mm **e** top-1 ≥ 95 %.
 
 **M5 decidido: VIÁVEL quanto ao puzzle [V, 20 pares, 2 poses].** Os gémeos de 180° são o mesmo recorte, dentro do ruído de re-digitalização, e a forma encontra-os em 20/20 com NN mútuo, margem ≥ 1,5 e top-1 também no pool de 100. **Condição:** a fronteira do `segment_pieces` não cumpre [V]. O M10 depende do M3 dar uma fronteira sem mordidelas nas peças escuras e com um tratamento explícito da sombra projetada (por exemplo, a sombra cai sempre nos mesmos lados no referencial do scanner). Até lá, o contorno de referência para medir forma é o híbrido. Métrica recomendada: free, com t ≈ 0,5 mm e gap ≥ 1,5.
 
+## Atualização 2026-10-31: sem moldura e variante `sombra` (E-fundo, método (c))
+
+O S1 está corrigido em `src/` (`bc124d2`) e `segcache.PAD = 0`. Os `.npz` dos gémeos foram regenerados sem moldura, e `esym.py` voltou a correr com as quatro variantes. A variante nova `sombra` = híbrido com o fundo estimado pela orla e os píxeis de sombra rejeitados por tonalidade (`L < L_fundo`, `|h − h_fundo| < 10°`, `C ≥ 0,4·C_fundo`; parâmetros fixados no `scan_verde`, ver `docs/diagnostico/fundo/RESULTADOS.md`). Métrica free; n = 20 por linha; mediana / máx.
+
+| Variante | Re-scan A1/A2 | Gémeo A1/B2 | Gémeo A2/B2 | Top-1 A1→B2 / B2→A1 / A2→B2 | Margem < 1,5 | Rugosidade B2 p95 | Critério M3 |
+|---|---|---|---|---|---|---|---|
+| seg | 0,98 / 1,25 | 1,33 / 3,13 | 1,93 / 3,31 | 8 / 14 / 8 | 18 | 1,195 | não [F] |
+| híbrido | 0,27 / 0,50 | 0,29 / 0,45 | 0,38 / 0,64 | 20 / 20 / 20 | 0 | 1,085 | **sim** [V] |
+| sombra | 0,42 / 0,61 | 0,45 / 4,72 | 0,77 / 4,77 | 15 / 18 / 15 | 8 | 1,139 | não [F] |
+
+- **Sem a moldura, `seg` e `hibrido` reproduzem os números de 30-out [V]:** híbrido free 0,27 / 0,29 / 0,38 contra 0,27 / 0,29 / 0,39; seg free 0,98 / 1,33 / 1,93 contra 0,96 / 1,42 / 1,81 (±0,12 mm, com os top-1 do seg a variarem 1–4 peças). A extrapolação também se reproduz (t95 0,507; 40/40 no pool de 100). A chave `cortes` do `results.json` **não** foi recalculada: ainda vem dos `.npz` com moldura.
+- **`sombra` falha o M3 [F]** porque apaga zonas de relva verde-viva nas peças de prado de B2. O pior é B2 (0,4), com RMS de 4,7 mm ao gémeo (`esym_franjas_sombra_B2.png`). Nas peças claras (A1/A2) é o contorno mais limpo medido até agora: \|ΔL\| de re-scan 0,13 mm, rugosidade 1,055, corda 18,0–18,1 mm. O passo seguinte do M3 (rejeição restrita à faixa exterior no lado da sombra) está descrito no relatório do E-fundo.
+
 ## Figuras
 
 | Ficheiro | O que mostra |
@@ -187,6 +200,7 @@ Critério: RMS gémeo mediano ≤ 0,7 mm **e** top-1 ≥ 95 %.
 | `esym_rescan.png` | Re-scan A1/A2 (mesma peça rodada 180°), contorno `seg` |
 | `esym_histogramas.png`, `esym_histogramas_hibrido.png` | Re-scan contra gémeo contra não-gémeo, corner e free |
 | `esym_matriz.png` | Matrizes 20×20 A1×B2 (seg e híbrido; corner e free): gémeo a vermelho, argmin marcado |
+| `esym_franjas_sombra_B2.png` | (31-out) As 3 peças de prado mais escuras de B2, a 2×: seg vermelho, híbrido azul, sombra verde |
 | `esym_franjas_contorno.png` | Recortes a 2× com o contorno `segment_pieces` (vermelho) e o do limiar simples (azul): mordidelas em B2 e sombra incluída pelo limiar |
 | `cortes_pares_mais_parecidos.png` | Os 8 pares de lados do mesmo tipo de peças diferentes mais parecidos (verde + A1/B2, híbrido) |
 
