@@ -780,6 +780,68 @@ def section_vs_loose(UL, L, E, tag="", ref=None):
 	return out, (QK, LK, D28, CK68, D68)
 
 
+# ----------------------------------------------------------------------------- (c1) calibração fora da amostra (leave-one-out)
+def offset_z(p, delta_mm):
+	"""Vetor free do contorno da peça deslocado delta_mm ao longo da normal exterior (dilatação isotrópica)."""
+	from shapelib import smooth_closed
+	c = p["c"]
+	cs = smooth_closed(c, 3)
+	t = np.roll(cs, -1, 0) - np.roll(cs, 1, 0)
+	n = np.c_[t[:, 1], -t[:, 0]] / (np.linalg.norm(t, axis=1)[:, None] + 1e-12)
+	if np.mean(np.sum(n * (c - c.mean(0)), 1)) < 0:
+		n = -n
+	return es.free_vec(c + delta_mm / MM * n)
+
+
+def c1_loo(UL, L, E, rows_t):
+	"""Calibração célula -> silhueta fora da amostra: para cada consulta UL(k, j) de (b), a escala (mediana de
+	'scale') e o desvio isotrópico (mediana de 'iso') vêm das OUTRAS 24 comparações c1 via gémeo; aplicam-se à célula
+	retida (escala: z x lambda; desvio: contorno dilatado delta mm ao longo da normal) e recomputa-se d1 / margem contra
+	o pool de 28 soltas e o de 68 (+ E-sym), com e sem filtro de classe. 'sem' = sem correção (deve dar os números de (b))."""
+	Lp = {(p["k"], p["j"]): p for p in L}
+	LK = sorted(Lp)
+	EK = [p["key"] for p in E]
+	Ep = dict(zip(EK, E))
+	byk = {(r["k"], r["j"]): r for r in rows_t}
+	QK = [k for k in sorted(UL) if k in Lp and k in byk]
+	ccls = {**{k: Lp[k].get("cls") for k in LK}, **{k: Ep[k].get("cls") for k in EK}}
+	pool28 = [Lp[k] for k in LK]
+	pool68 = pool28 + [Ep[k] for k in EK]
+	out = {}
+	for var in ("sem", "escala", "desvio"):
+		rows28, rows28c, rows68c, cal = [], [], [], []
+		for q in QK:
+			oth = [byk[k] for k in QK if k != q]
+			lam = float(np.median([r["scale"] for r in oth]))
+			dlt = float(np.median([r["iso"] for r in oth if r["iso"] is not None]))
+			z = UL[q]["z"] * lam if var == "escala" else offset_z(UL[q], dlt) if var == "desvio" else UL[q]["z"]
+			qp = dict(UL[q], z=z)
+			d28 = np.array([[free_d(qp, b) for b in pool28]])
+			d68 = np.array([[free_d(qp, b) for b in pool68]])
+			g = {q: q}
+			qc = {q: UL[q].get("cls")}
+			rows28 += queries([q], LK, d28, g)[0]
+			rows28c += queries([q], LK, d28, g, qc, ccls)[0]
+			rows68c += queries([q], LK + EK, d68, g, qc, ccls)[0]
+			cal.append(dict(k=list(q), scale=r3(lam), iso_mm=r3(dlt)))
+
+		def sm(rows):
+			mg = [r["margin"] for r in rows if r["margin"] is not None]
+			return dict(n=len(rows), top1=int(sum(r["top1"] for r in rows)), d_true=st([r["d_true"] for r in rows]),
+						margin_median=r3(np.median(mg)) if mg else None, margin_lt_1_5=int(sum(m < 1.5 for m in mg)))
+		out[var] = dict(pool28=sm(rows28), pool28_class_filter=sm(rows28c), pool68_class_filter=sm(rows68c),
+						calibracao=cal if var != "sem" else None,
+						calibracao_resumo=dict(scale=st([c["scale"] for c in cal]), iso_mm=st([c["iso_mm"] for c in cal])))
+		o = out[var]
+		log(f"[c1 LOO] {var}: pool28 top-1 {o['pool28']['top1']}/{o['pool28']['n']} margem<1,5 {o['pool28']['margin_lt_1_5']}; "
+			f"pool28 classe top-1 {o['pool28_class_filter']['top1']} margem<1,5 {o['pool28_class_filter']['margin_lt_1_5']}; "
+			f"pool68 classe top-1 {o['pool68_class_filter']['top1']} margem<1,5 {o['pool68_class_filter']['margin_lt_1_5']}; "
+			f"gémeo mediana {o['pool68_class_filter']['d_true'].get('median')}")
+	out["descricao"] = ("leave-one-out: escala e desvio isotrópico estimados nas outras 24 comparações (c1 via gémeo) e aplicados "
+						"à célula UL retida; 'sem' reproduz (b)")
+	return out
+
+
 def c2_noise(F, R):
 	ks = sorted(set(F) & set(R))
 	v = [free_d(F[k], R[k]) for k in ks]
@@ -928,6 +990,7 @@ def main():
 	R["b_seccao_soltas"] = dict(orla=Rb, crua=Rb_raw, sem_prior_histerese=dict(n_cells=len(ULnp), **Rb_np),
 								escala_c1=dict(scale=r3(lam), **{k: Rb_s[k] for k in ("n_queries", "pool28", "pool68",
 										"pool28_class_filter", "pool68_class_filter", "reverse_loose_to_UL")}))
+	R["c1_loo"] = c1_loo(UL, L, E, rows_t)
 	# --- (c2) ruído das linhas de corte com mudança de pose (frente vs rot180)
 	c2 = {}
 	vals_c2 = []

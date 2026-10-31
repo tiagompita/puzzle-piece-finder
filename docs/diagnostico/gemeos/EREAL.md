@@ -117,8 +117,10 @@ Mesmo conjunto de consultas em todas as linhas (n = 25, salvo indicação): gém
 | células "cruas" do `seccao.py` (sem eixo médio), pool de 28 | 25 | 17/25 (gémeo 1,20) | 0,59 / 1,06 | 23 |
 | células UL sem prior (hessiana/histerese + eixo médio), pool de 28 | 23 | 22/23 (gémeo 0,75, p90 0,83, máx 0,91) | 0,93 / 1,60 | 7 |
 | escala × 1,048 nas células (circular, ver c1), pool de 68 com classe | 25 | 22/25 (gémeo 0,56) | — / 2,08 | **3** |
+| **leave-one-out** (escala ou desvio estimados nas outras 24, aplicados à 25.ª), pool de 68 com classe | 25 | 22/25 (gémeo 0,56 com escala; **0,40** com desvio isotrópico ≈ +0,48 mm ao longo da normal) | — | **3** (pool de 28 sem classe: 6, era 12) |
 
 - Fonte: [V] `results.json` → `ereal.b_seccao_soltas`.
+- **Fora da amostra [V, n = 25, `results.json` → `ereal.c1_loo`]:** com a calibração estimada sem o par retido, a margem < 1,5 desce de 9/25 para **3/25**, tal como na estimativa circular. Isto vale para a escala (mediana 1,048) e para o desvio isotrópico (dilatação da célula pela mediana de `iso` das outras 24, ≈ 0,48 mm). A variante "sem" reproduz os 9/25.
 - Classe topológica do gémeo: igual em 22/24.
 - Por lado (24 pares, lados alinhados pelo `best_k` dos cantos): |ΔL| mediana 0,42 mm, p90 0,99; tipo de lado igual em 94/96.
 - **Falhas:**
