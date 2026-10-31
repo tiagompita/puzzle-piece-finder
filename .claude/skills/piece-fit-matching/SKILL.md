@@ -1,35 +1,34 @@
 ---
 name: piece-fit-matching
-description: Desenho e implementação do encaixe entre peças / montar grupos (feature 1 do ROADMAP), com perfis de lado flat/tab/blank, compatibilidade geométrica e continuidade de imagem, e secções montadas como referência local de alta resolução. Usar ao trabalhar em src/edges.py além da classificação atual, ou em qualquer código de "que peça encaixa aqui".
+description: Desenho e implementação do gémeo (M10), molde do buraco (M11) e encaixe na fronteira (M6) a partir de lados de peças (perfis, cordas, classe), com imagem obrigatória e secções montadas como referência local. Usar ao trabalhar em src/shape.py, src/twin.py, src/fit.py, no protótipo tools/diagnostico/forma/shapelib.py ou em qualquer código de "que peça vai aqui / qual é o gémeo".
 ---
 
-# Encaixe entre peças (feature 1 do ROADMAP)
+# Gémeo, molde do buraco e encaixe (M10 → M11 → M6)
 
 ## Âmbito: consulta interativa, não montagem global
-- O objetivo é: **"dado este lado/grupo montado, ranqueia os melhores parceiros"**, com custo `O(N)` por consulta.
-- **NÃO** montar as 3000 peças (sem solver global, sem backtracking sobre o puzzle inteiro). Se uma ideia exigir isso, para e reporta.
-- Fora de âmbito nesta fase: classificação por ML e API REST.
+- Ordem de sinal: **gémeo** (M10, 1-contra-1 na célula gémea) → **molde do buraco** (M11) → **encaixe na fronteira** (M6).
+- Custo `O(N)` por consulta, N ≤ 3008. **Sem solver global** nem backtracking sobre o puzzle; se uma ideia o exigir, para e reporta. Fora de âmbito: ML e API REST.
 
 ## Ponto de partida real
-`src/edges.py` hoje só **classifica** a peça (`edge`/`corner`/`interior`/`suspect`) contando lados retos do `minAreaRect` (`_STRAIGHT_RATIO`, `_CORNER_MARGIN`, `_MIN_SIDE_POINTS`) e alimenta o *border prior* do matching. O perfil por lado (flat/tab/blank) ainda **não existe**: é a fundação a construir, sem partir `classify_piece_edges`/`classify_pieces` nem os testes em `tests/test_edges.py`.
+- O protótipo é `tools/diagnostico/forma/shapelib.py` (cantos v2, lados, classe, métricas free/corner), a promover a `src/shape.py` no M4. `src/edges.py` conta lados retos do `minAreaRect` e falha bordas (8/20): vai ser substituído, não estendido.
+- Escala em **mm a partir do dpi do scanner** (1 px = 0,0847 mm a 300 dpi), não px/cm da GUI.
 
-## Perfil de um lado
-1. Divide o contorno da peça (`piece["contour"]`) pelos 4 cantos.
-2. Normaliza cada lado: translada o canto inicial para `(0,0)`, roda para o canto final ficar em `(L,0)`, reamostra para N pontos equidistantes e **divide por L**. As fotos têm escalas diferentes; a escala física vem da calibração px/cm que a GUI já pede.
-3. Classifica: desvio máximo pequeno → `flat`; para fora → `tab`; para dentro → `blank`.
+## Lado como unidade
+Cada lado: tipo F/T/B, corda em mm, perfil normalizado (64 pontos). Compatível: F com nada, T só com B; perfil A contra B invertido e negado (RMS em mm) e |ΔL| em mm. Filtro de cordas ≈ 1 mm por lado. Cada lado digitalizado entra na memória de cortes (~2953 cortes distintos).
 
-## Compatibilidade
-- Regra dura: `flat` não encaixa em nada; `tab` só com `blank`.
-- Geometria: perfil A contra perfil B **invertido e negado** (percorre-se ao contrário e o eixo y troca de sinal); custo = MSE ou Fréchet entre os pontos reamostrados, mais a diferença dos comprimentos L em cm.
-- Imagem: continuidade em **Lab** numa faixa fina de cada lado do corte (reutiliza `matching._cie_lab`).
-- Combina numa pontuação com pesos nomeados (constantes `_FIT_*`) e devolve a shortlist + uma confiança no mesmo espírito do *gap* diferencial do matching (`high` quando o 1.º se destaca do 2.º).
+## Compatibilidade: a forma não chega
+- Cada lado tem **≥ 2 parceiros físicos** (o vizinho verdadeiro e o gémeo do vizinho). E4/E5 contam o gémeo do vizinho como acerto.
+- **Imagem obrigatória**: continuidade em Lab na fronteira; no gémeo, teste 1-contra-1 contra a arte da célula conhecida (a forma sozinha só serve até ≈ 60 candidatos).
+- **Molde do buraco** = lados livres dos vizinhos já colocados; sai a peça certa ou a sua gémea e a imagem decide.
+- Pesos como constantes nomeadas; shortlist + confiança por gap diferencial (aceitar se d₁ ≤ 0,5 mm e d₂/d₁ ≥ 1,5 no gémeo).
 
-## Arquitetura em 2 níveis (insight do utilizador)
-1. Localizar a **secção montada** na referência (fácil: muito conteúdo).
-2. Casar a peça solta contra a **secção de alta resolução**, não contra a referência inteira.
-3. A peça que encaixa na **fronteira** da secção (geometria do corte + continuidade da imagem) é a vizinha.
+## Simetria: vem do perfil, nunca fixa no código
+A célula gémea é `perfil.simetria(l, c)` (perfil do puzzle, M13, §11 do plano). **Nunca escrever `(48 − l, 65 − c)` no código**; só o perfil deste puzzle a define.
+
+## Arquitetura
+- A **secção montada** continua a ser a referência local de alta resolução (frente a 300 dpi): localizar por canto e escala conhecidos, casar as soltas contra a fronteira.
+- **Índice persistente** (M12: soltas, mapa, `log.jsonl`); cada confirmação gera consultas novas (gémea pendente, buracos vizinhos), §0 e §10.
 
 ## Regras
-- Algoritmo novo em módulo puro (sem Tkinter, sem I/O) e testável com contornos sintéticos: um par tab/blank gerado que tem de dar o melhor custo; flat contra qualquer coisa = rejeitado.
-- Mudanças que toquem `matching.py`/`segmentation.py` seguem o routing do `CLAUDE.md` (implementer).
-- Verificação visual e números: segue a skill `cv-visual-verification`.
+- Módulo puro (sem Tkinter/I/O), testável com contornos sintéticos (par tab/blank gerado = melhor custo; F rejeitado) e com GT (E-sym, E-real, E-buraco).
+- Módulos críticos: desenho ou revisão do `implementer` (`CLAUDE.md`). Verificação: skill `cv-visual-verification`.
