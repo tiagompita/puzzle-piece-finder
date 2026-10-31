@@ -1,0 +1,169 @@
+E-real-2: propostas para verificação física (gerado por tools/diagnostico/gemeos/ereal2.py)
+Regras: classe igual; |ΔL| <= 1.0 mm nos 4 lados; ACEITE se d1 <= 0.507 mm e d2/d1 >= 1.5; AMBÍGUA se d1 <= 0.637; forma+imagem: ACEITE se forma ACEITE, a imagem escolhe a mesma entre as top-3 com d <= 0.637 e ΔE <= p90 (50.0).
+dE = ΔE médio (Lab, L* do scan - 4,8) contra a célula gémea da arte limpa: consistência de imagem, não identidade.
+Numeração das folhas de céu: ver ereal2_<folha>__contours.jpg / ereal2_<folha>_propostas.jpg (#n).
+ATENÇÃO f2p1: 40 peças numeradas, 42 esperadas; as que faltam não foram segmentadas (ver ereal2_f2p1__contours.jpg: peças sem número) e não estão na memória.
+
+== Secção 1: as 20 BE (relva, GT) -> gémea entre as 185 outras soltas ==
+
+BE(2,2) global (46,2) → gémea (2,63) | proposta: BE(4,4) | d1 1.448 mm | d2/d1 1.03 | dE 31.8 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BE(4,4) d 1.448 dE 31.8; BD(5,7) d 1.487 dE 36.1; f1p1 #10 d 1.674 dE 20.5
+BE(2,3) global (46,3) → gémea (2,62) | proposta: BD(2,7) | d1 1.953 mm | d2/d1 - | dE 44.5 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BD(2,7) d 1.953 dE 44.5
+BE(2,4) global (46,4) → gémea (2,61) | proposta: f2p1 #4 | d1 0.408 mm | d2/d1 2.39 | dE 8.7 | forma: ACEITE | forma+imagem: ACEITE (f2p1 #4; forma ACEITE e ΔE <= p90) | ACERTO/ERRO: ____
+      top-3: f2p1 #4 d 0.408 dE 8.7; f1p1 #9 d 0.976 dE 20.2
+BE(2,5) global (46,5) → gémea (2,60) | proposta: f2p1 #9 | d1 0.965 mm | d2/d1 1.08 | dE 28.6 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f2p1 #9 d 0.965 dE 28.6; f1p1 #15 d 1.043 dE 12.1; BD(2,5) d 1.218 dE 52.8
+BE(2,6) global (46,6) → gémea (2,59) | proposta: f2p1 #19 | d1 1.171 mm | d2/d1 1.01 | dE 15.5 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f2p1 #19 d 1.171 dE 15.5; f1p1 #17 d 1.182 dE 19.9; BD(2,2) d 1.210 dE 53.9
+BE(2,7) global (46,7) → gémea (2,58) | proposta: BD(2,3) | d1 0.996 mm | d2/d1 1.09 | dE 57.5 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BD(2,3) d 0.996 dE 57.5; f2p2 #4 d 1.084 dE 15.6; BE(2,6) d 1.211 dE 50.2
+BE(3,2) global (45,2) → gémea (3,63) | proposta: BD(5,3) | d1 1.308 mm | d2/d1 1.34 | dE 43.9 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BD(5,3) d 1.308 dE 43.9; f1p1 #18 d 1.756 dE 30.5
+BE(3,3) global (45,3) → gémea (3,62) | proposta: BD(3,2) | d1 1.372 mm | d2/d1 1.07 | dE 58.1 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BD(3,2) d 1.372 dE 58.1; BE(3,6) d 1.469 dE 42.4; BD(3,7) d 1.494 dE 59.0
+BE(3,4) global (45,4) → gémea (3,61) | proposta: f2p1 #1 | d1 1.150 mm | d2/d1 1.29 | dE 21.9 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f2p1 #1 d 1.150 dE 21.9; f2p1 #21 d 1.487 dE 26.9
+BE(3,5) global (45,5) → gémea (3,60) | proposta: f1p1 #10 | d1 1.160 mm | d2/d1 - | dE 33.8 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f1p1 #10 d 1.160 dE 33.8
+BE(3,6) global (45,6) → gémea (3,59) | proposta: f2p1 #15 | d1 1.088 mm | d2/d1 1.05 | dE 24.6 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f2p1 #15 d 1.088 dE 24.6; f2p1 #19 d 1.138 dE 28.7; f2p2 #5 d 1.184 dE 39.3
+BE(3,7) global (45,7) → gémea (3,58) | proposta: f2p1 #39 | d1 0.944 mm | d2/d1 1.22 | dE 22.5 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f2p1 #39 d 0.944 dE 22.5; f1p1 #31 d 1.155 dE 14.4
+BE(4,2) global (44,2) → gémea (4,63) | proposta: BE(5,2) | d1 1.450 mm | d2/d1 1.48 | dE 69.3 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BE(5,2) d 1.450 dE 69.3; BE(4,4) d 2.143 dE 46.5; BE(2,2) d 2.336 dE 53.5
+BE(4,3) global (44,3) → gémea (4,62) | proposta: BD(2,3) | d1 1.291 mm | d2/d1 - | dE 67.3 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BD(2,3) d 1.291 dE 67.3
+BE(4,4) global (44,4) → gémea (4,61) | proposta: f1p2 #3 | d1 1.069 mm | d2/d1 1.24 | dE 51.1 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f1p2 #3 d 1.069 dE 51.1; BD(2,6) d 1.331 dE 63.4; BE(2,2) d 1.448 dE 50.8
+BE(4,5) global (44,5) → gémea (4,60) | proposta: f2p2 #4 | d1 0.850 mm | d2/d1 1.02 | dE 19.7 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f2p2 #4 d 0.850 dE 19.7; f1p2 #9 d 0.865 dE 41.9
+BE(5,2) global (43,2) → gémea (5,63) | proposta: BE(4,2) | d1 1.450 mm | d2/d1 - | dE 41.2 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BE(4,2) d 1.450 dE 41.2
+BE(5,3) global (43,3) → gémea (5,62) | proposta: BD(5,7) | d1 1.048 mm | d2/d1 1.13 | dE 53.8 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: BD(5,7) d 1.048 dE 53.8; f2p1 #35 d 1.181 dE 55.4; f1p1 #21 d 1.250 dE 18.3
+BE(5,4) global (43,4) → gémea (5,61) | proposta: f2p1 #17 | d1 0.806 mm | d2/d1 1.25 | dE 32.0 | forma: SEM | forma+imagem: SEM (-; sem candidata com d <= tmax) | ACERTO/ERRO: ____
+      top-3: f2p1 #17 d 0.806 dE 32.0; f1p1 #27 d 1.011 dE 76.9; f1p2 #2 d 1.091 dE 11.0
+BE(5,5) global (43,5) → gémea (5,60) | proposta: f1p1 #6 | d1 0.539 mm | d2/d1 - | dE 10.8 | forma: AMBÍGUA | forma+imagem: AMBÍGUA (f1p1 #6; forma AMBÍGUA, ΔE <= p90) | ACERTO/ERRO: ____
+      top-3: f1p1 #6 d 0.539 dE 10.8
+
+== Secção 2: as peças de céu, por folha e número (consulta céu -> as outras 185) ==
+
+f1p1 #1 → sem gémeo (melhor f1p1 #14 d 1.062)
+f1p1 #2 → sem gémeo (melhor f2p1 #22 d 1.065)
+f1p1 #3 → sem gémeo (melhor f2p1 #11 d 1.597)
+f1p1 #4 → sem gémeo (nenhuma passa classe+cordas)
+f1p1 #5 → sem gémeo (melhor f2p1 #15 d 0.987)
+f1p1 #6 → (5,60) [BE(5,5)] d1 0.539 margem - dE 10.8 AMBÍGUA (mútuo)
+f1p1 #7 → sem gémeo (melhor BE(5,4) d 1.254)
+f1p1 #8 → sem gémeo (melhor f1p2 #2 d 1.075)
+f1p1 #9 → sem gémeo (melhor BE(2,4) d 0.976)
+f1p1 #10 → sem gémeo (melhor f1p2 #3 d 0.871)
+f1p1 #11 → sem gémeo (melhor f2p1 #16 d 1.258)
+f1p1 #12 → sem gémeo (melhor f1p2 #3 d 1.095)
+f1p1 #13 → sem gémeo (melhor f1p1 #9 d 1.117)
+f1p1 #14 → sem gémeo (melhor f2p1 #19 d 0.927)
+f1p1 #15 → sem gémeo (melhor BE(2,5) d 1.043)
+f1p1 #16 → sem gémeo (melhor f1p2 #15 d 0.824)
+f1p1 #17 → sem gémeo (melhor f2p2 #5 d 1.168)
+f1p1 #18 → sem gémeo (melhor BE(3,2) d 1.756)
+f1p1 #19 → sem gémeo (melhor f1p2 #9 d 1.307)
+f1p1 #20 → sem gémeo (melhor f2p2 #5 d 1.007)
+f1p1 #21 → sem gémeo (melhor f2p1 #35 d 0.846)
+f1p1 #22 → sem gémeo (melhor BD(6,3) d 0.800)
+f1p1 #23 → sem gémeo (nenhuma passa classe+cordas)
+f1p1 #24 → sem gémeo (melhor f2p1 #10 d 0.971)
+f1p1 #25 → sem gémeo (nenhuma passa classe+cordas)
+f1p1 #26 → sem gémeo (melhor f1p1 #28 d 0.824)
+f1p1 #27 → sem gémeo (melhor f2p1 #37 d 0.651)
+f1p1 #28 → sem gémeo (melhor f1p1 #26 d 0.824)
+f1p1 #29 → sem gémeo (nenhuma passa classe+cordas)
+f1p1 #30 → sem gémeo (melhor f1p1 #22 d 0.961)
+f1p1 #31 → sem gémeo (melhor BE(3,7) d 1.155)
+f1p1 #32 → sem gémeo (nenhuma passa classe+cordas)
+f1p1 #33 → sem gémeo (melhor f1p2 #3 d 0.993)
+f1p1 #34 → sem gémeo (nenhuma passa classe+cordas)
+f1p1 #35 → sem gémeo (nenhuma passa classe+cordas)
+f1p2 #1 → sem gémeo (melhor BD(6,4) d 1.050)
+f1p2 #2 → sem gémeo (melhor f2p1 #23 d 0.867)
+f1p2 #3 → sem gémeo (melhor f1p1 #10 d 0.871)
+f1p2 #4 → sem gémeo (melhor BD(3,5) d 1.186)
+f1p2 #5 → sem gémeo (melhor f1p2 #9 d 1.000)
+f1p2 #6 → sem gémeo (nenhuma passa classe+cordas)
+f1p2 #7 → sem gémeo (melhor f2p2 #5 d 1.180)
+f1p2 #8 → sem gémeo (melhor f2p1 #37 d 1.304)
+f1p2 #9 → sem gémeo (melhor BE(4,5) d 0.865)
+f1p2 #10 → sem gémeo (melhor f2p1 #11 d 1.779)
+f1p2 #11 → sem gémeo (melhor f2p1 #5 d 1.723)
+f1p2 #12 → sem gémeo (nenhuma passa classe+cordas)
+f1p2 #13 → sem gémeo (melhor f1p1 #17 d 1.297)
+f1p2 #14 → sem gémeo (nenhuma passa classe+cordas)
+f1p2 #15 → sem gémeo (melhor f1p1 #16 d 0.824)
+f2p1 #1 → sem gémeo (melhor BE(3,4) d 1.150)
+f2p1 #2 → sem gémeo (melhor f2p2 #4 d 1.058)
+f2p1 #3 → sem gémeo (melhor f2p1 #2 d 1.226)
+f2p1 #4 → (2,61) [BE(2,4)] d1 0.408 margem 3.63 dE 8.7 ACEITE (mútuo)
+f2p1 #5 → sem gémeo (melhor f2p1 #31 d 1.422)
+f2p1 #6 → sem gémeo (melhor f2p1 #27 d 1.087)
+f2p1 #7 → sem gémeo (melhor f1p1 #14 d 1.318)
+f2p1 #8 → sem gémeo (melhor f1p1 #15 d 1.094)
+f2p1 #9 → sem gémeo (melhor BE(2,5) d 0.965)
+f2p1 #10 → sem gémeo (melhor f1p1 #24 d 0.971)
+f2p1 #11 → sem gémeo (melhor f1p1 #26 d 1.365)
+f2p1 #12 → sem gémeo (melhor f1p1 #26 d 1.031)
+f2p1 #13 → sem gémeo (melhor f2p1 #30 d 1.607)
+f2p1 #14 → sem gémeo (melhor f2p1 #32 d 1.091)
+f2p1 #15 → sem gémeo (melhor f1p1 #5 d 0.987)
+f2p1 #16 → sem gémeo (melhor f1p1 #11 d 1.258)
+f2p1 #17 → sem gémeo (melhor BE(5,4) d 0.806)
+f2p1 #18 → sem gémeo (nenhuma passa classe+cordas)
+f2p1 #19 → sem gémeo (melhor f1p1 #14 d 0.927)
+f2p1 #20 → sem gémeo (nenhuma passa classe+cordas)
+f2p1 #21 → sem gémeo (melhor f2p1 #19 d 1.211)
+f2p1 #22 → sem gémeo (melhor f1p1 #2 d 1.065)
+f2p1 #23 → sem gémeo (melhor f1p2 #2 d 0.867)
+f2p1 #24 → sem gémeo (melhor f2p1 #28 d 2.023)
+f2p1 #25 → sem gémeo (melhor BE(2,5) d 1.366)
+f2p1 #26 → sem gémeo (nenhuma passa classe+cordas)
+f2p1 #27 → sem gémeo (melhor f2p1 #6 d 1.087)
+f2p1 #28 → sem gémeo (melhor f2p1 #24 d 2.023)
+f2p1 #29 → sem gémeo (melhor f1p1 #15 d 1.206)
+f2p1 #30 → sem gémeo (melhor f2p1 #13 d 1.607)
+f2p1 #31 → sem gémeo (melhor f1p1 #27 d 1.243)
+f2p1 #32 → sem gémeo (melhor f2p1 #14 d 1.091)
+f2p1 #33 → sem gémeo (nenhuma passa classe+cordas)
+f2p1 #34 → sem gémeo (melhor f2p2 #8 d 1.228)
+f2p1 #35 → sem gémeo (melhor f1p1 #21 d 0.846)
+f2p1 #36 → sem gémeo (melhor f1p1 #14 d 1.086)
+f2p1 #37 → sem gémeo (melhor f1p1 #27 d 0.651)
+f2p1 #38 → sem gémeo (melhor BD(4,6) d 1.273)
+f2p1 #39 → sem gémeo (melhor BE(3,7) d 0.944)
+f2p1 #40 → sem gémeo (melhor BD(5,4) d 1.132)
+f2p2 #1 → sem gémeo (melhor f2p1 #35 d 1.197)
+f2p2 #2 → sem gémeo (nenhuma passa classe+cordas)
+f2p2 #3 → sem gémeo (melhor BD(2,5) d 1.222)
+f2p2 #4 → sem gémeo (melhor BE(4,5) d 0.850)
+f2p2 #5 → sem gémeo (melhor f1p1 #20 d 1.007)
+f2p2 #6 → sem gémeo (nenhuma passa classe+cordas)
+f2p2 #7 → sem gémeo (melhor f2p1 #14 d 1.149)
+f2p2 #8 → sem gémeo (melhor f2p1 #34 d 1.228)
+
+== Secção 3: colocações (preencher) ==
+
+folha #n → colocada em (l,c) | encaixa? | imagem bate? | notas
+
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________
+____ #__ → (__,__) | ___ | ___ | ____________

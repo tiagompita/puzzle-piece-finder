@@ -28247,6 +28247,615 @@
     }
    }
   },
+  "c1_loo": {
+   "sem": {
+    "pool28": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.76,
+      "p90": 2.571,
+      "max": 3.426,
+      "min": 0.634,
+      "mean": 1.152,
+      "p95": 3.235
+     },
+     "margin_median": 1.54,
+     "margin_lt_1_5": 12
+    },
+    "pool28_class_filter": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.76,
+      "p90": 2.571,
+      "max": 3.426,
+      "min": 0.634,
+      "mean": 1.152,
+      "p95": 3.235
+     },
+     "margin_median": 1.582,
+     "margin_lt_1_5": 9
+    },
+    "pool68_class_filter": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.76,
+      "p90": 2.571,
+      "max": 3.426,
+      "min": 0.634,
+      "mean": 1.152,
+      "p95": 3.235
+     },
+     "margin_median": 1.582,
+     "margin_lt_1_5": 9
+    },
+    "calibracao": null,
+    "calibracao_resumo": {
+     "scale": {
+      "n": 25,
+      "median": 1.049,
+      "p90": 1.049,
+      "max": 1.049,
+      "min": 1.048,
+      "mean": 1.049,
+      "p95": 1.049
+     },
+     "iso_mm": {
+      "n": 25,
+      "median": 0.477,
+      "p90": 0.48,
+      "max": 0.48,
+      "min": 0.473,
+      "mean": 0.477,
+      "p95": 0.48
+     }
+    }
+   },
+   "escala": {
+    "pool28": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.561,
+      "p90": 2.508,
+      "max": 3.194,
+      "min": 0.454,
+      "mean": 0.968,
+      "p95": 3.036
+     },
+     "margin_median": 1.99,
+     "margin_lt_1_5": 6
+    },
+    "pool28_class_filter": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.561,
+      "p90": 2.508,
+      "max": 3.194,
+      "min": 0.454,
+      "mean": 0.968,
+      "p95": 3.036
+     },
+     "margin_median": 2.079,
+     "margin_lt_1_5": 3
+    },
+    "pool68_class_filter": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.561,
+      "p90": 2.508,
+      "max": 3.194,
+      "min": 0.454,
+      "mean": 0.968,
+      "p95": 3.036
+     },
+     "margin_median": 2.079,
+     "margin_lt_1_5": 3
+    },
+    "calibracao": [
+     {
+      "k": [
+       2,
+       2
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       3
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       4
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       5
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       6
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       7
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       3,
+       2
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       3
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       4
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       5
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       6
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       7
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       2
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       4,
+       3
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       4
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       5
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       6
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       7
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       5,
+       2
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.477
+     },
+     {
+      "k": [
+       5,
+       3
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       5,
+       4
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       5,
+       5
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       5,
+       7
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       6,
+       2
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       6,
+       3
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     }
+    ],
+    "calibracao_resumo": {
+     "scale": {
+      "n": 25,
+      "median": 1.049,
+      "p90": 1.049,
+      "max": 1.049,
+      "min": 1.048,
+      "mean": 1.049,
+      "p95": 1.049
+     },
+     "iso_mm": {
+      "n": 25,
+      "median": 0.477,
+      "p90": 0.48,
+      "max": 0.48,
+      "min": 0.473,
+      "mean": 0.477,
+      "p95": 0.48
+     }
+    }
+   },
+   "desvio": {
+    "pool28": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.395,
+      "p90": 2.341,
+      "max": 3.09,
+      "min": 0.28,
+      "mean": 0.813,
+      "p95": 2.908
+     },
+     "margin_median": 2.711,
+     "margin_lt_1_5": 6
+    },
+    "pool28_class_filter": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.395,
+      "p90": 2.341,
+      "max": 3.09,
+      "min": 0.28,
+      "mean": 0.813,
+      "p95": 2.908
+     },
+     "margin_median": 2.896,
+     "margin_lt_1_5": 3
+    },
+    "pool68_class_filter": {
+     "n": 25,
+     "top1": 22,
+     "d_true": {
+      "n": 25,
+      "median": 0.395,
+      "p90": 2.341,
+      "max": 3.09,
+      "min": 0.28,
+      "mean": 0.813,
+      "p95": 2.908
+     },
+     "margin_median": 2.896,
+     "margin_lt_1_5": 3
+    },
+    "calibracao": [
+     {
+      "k": [
+       2,
+       2
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       3
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       4
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       5
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       6
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       2,
+       7
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       3,
+       2
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       3
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       4
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       5
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       6
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       3,
+       7
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       2
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       4,
+       3
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       4
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       5
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       6
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       4,
+       7
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       5,
+       2
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.477
+     },
+     {
+      "k": [
+       5,
+       3
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       5,
+       4
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       5,
+       5
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       5,
+       7
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     },
+     {
+      "k": [
+       6,
+       2
+      ],
+      "scale": 1.049,
+      "iso_mm": 0.48
+     },
+     {
+      "k": [
+       6,
+       3
+      ],
+      "scale": 1.048,
+      "iso_mm": 0.473
+     }
+    ],
+    "calibracao_resumo": {
+     "scale": {
+      "n": 25,
+      "median": 1.049,
+      "p90": 1.049,
+      "max": 1.049,
+      "min": 1.048,
+      "mean": 1.049,
+      "p95": 1.049
+     },
+     "iso_mm": {
+      "n": 25,
+      "median": 0.477,
+      "p90": 0.48,
+      "max": 0.48,
+      "min": 0.473,
+      "mean": 0.477,
+      "p95": 0.48
+     }
+    }
+   },
+   "descricao": "leave-one-out: escala e desvio isotrópico estimados nas outras 24 comparações (c1 via gémeo) e aplicados à célula UL retida; 'sem' reproduz (b)"
+  },
   "c2_frente_vs_rot180": {
    "hessiana/histerese": {
     "n_front": 2,
@@ -28376,7 +28985,7 @@
     "volta_a_agenda": false
    }
   },
-  "segundos": 36.126,
+  "segundos": 36.433,
   "log": [
    "[ext] UL frente_300: bloco 15507 mm2, lados retos ['bottom', 'left'] frac {'left': 0.677, 'right': 0.038, 'top': 0.016, 'bottom': 0.899}, phi 0.66 deg; passo por autocorrelação u 18.41 w 18.96 mm (0.9 s)",
    "[ext] UL frente_300 hessiana/histerese: válidas 30, recuperadas 30/44, 2x 7, multi 0, frag 0",
@@ -28408,8 +29017,5452 @@
    "[b crua] UL -> soltas: n=25; gémeo free mediana 1.198 p90 2.799 máx 3.8; top-1 pool28 17/25 (classe 16), pool68 16/25 (classe 16); margem mín 0.59 med 1.055 <1,5: 23; inverso 19/25; classe 21/24",
    "[b sem prior] UL -> soltas: n=23; gémeo free mediana 0.751 p90 0.827 máx 0.912; top-1 pool28 22/23 (classe 22), pool68 22/23 (classe 22); margem mín 0.929 med 1.6 <1,5: 7; inverso 22/23; classe 23/23",
    "[b escala x1.048] UL -> soltas: n=25; gémeo free mediana 0.561 p90 2.508 máx 3.194; top-1 pool28 22/25 (classe 22), pool68 21/25 (classe 22); margem mín 0.54 med 1.979 <1,5: 6; inverso 21/25; classe 22/24",
+   "[c1 LOO] sem: pool28 top-1 22/25 margem<1,5 12; pool28 classe top-1 22 margem<1,5 9; pool68 classe top-1 22 margem<1,5 9; gémeo mediana 0.76",
+   "[c1 LOO] escala: pool28 top-1 22/25 margem<1,5 6; pool28 classe top-1 22 margem<1,5 3; pool68 classe top-1 22 margem<1,5 3; gémeo mediana 0.561",
+   "[c1 LOO] desvio: pool28 top-1 22/25 margem<1,5 6; pool28 classe top-1 22 margem<1,5 3; pool68 classe top-1 22 margem<1,5 3; gémeo mediana 0.395",
    "[c2] frente vs rot180: hessiana/histerese: n=2 med 3.565 p90 4.555; hessiana/watershed: n=1 med 1.371 p90 1.371; branco/histerese: n=0 med None p90 None; branco/watershed: n=25 med 3.148 p90 3.805; branco/watershed+orla: n=25 med 3.017 p90 3.87",
    "[veredicto] M10 / E-real: inconclusivo (top-1 pool28 c/ classe 0.88, pool68 c/ classe 0.88, margem<1,5 no pool68 9); sombra volta à agenda: False (assimetria [0.092, 0.047])"
+  ]
+ },
+ "ereal2": {
+  "descricao": "E-real-2 (2026-10-31): BE (relva, GT) -> gémea entre 100 soltas de céu (sem GT) numa memória de 188 soltas; forma (regras 1-4) + imagem 1-contra-1 contra a arte limpa. Ver docs/diagnostico/gemeos/EREAL2.md.",
+  "limiares": {
+   "t95": 0.507,
+   "tmax": 0.637,
+   "margem": 1.5,
+   "dL_max_mm": 1.0,
+   "L_shift": 4.8,
+   "erode_px": 1,
+   "passo_mm": {
+    "x": 18.972,
+    "y": 18.394
+   },
+   "canvas_px": [
+    43,
+    41
+   ],
+   "jitter_px": 2,
+   "celula_arte_px": [
+    25.0,
+    23.723
+   ],
+   "arte_linhas": [
+    42,
+    1156
+   ]
+  },
+  "memoria": {
+   "n": 186,
+   "BE": 20,
+   "ceu": 98,
+   "ceu_numeradas": 98,
+   "BD": 28,
+   "ES": 40,
+   "checks": {
+    "BE": {
+     "n_segment_scan": 25,
+     "excluidos": [
+      {
+       "index": 12,
+       "razao": "sem 4 cantos (fragmento da faixa em L)",
+       "area_mm2": 281.218,
+       "bbox": [
+        2159,
+        1745,
+        258,
+        261
+       ]
+      },
+      {
+       "index": 17,
+       "razao": "a 0.0 mm de outra peça (faixa em L montada)",
+       "area_mm2": 535.931,
+       "bbox": [
+        2165,
+        2035,
+        248,
+        510
+       ]
+      },
+      {
+       "index": 18,
+       "razao": "área 206 mm²; a 0.0 mm de outra peça (faixa em L montada)",
+       "area_mm2": 205.953,
+       "bbox": [
+        2190,
+        2440,
+        199,
+        259
+       ]
+      },
+      {
+       "index": 23,
+       "razao": "a 0.0 mm de outra peça (faixa em L montada)",
+       "area_mm2": 330.29,
+       "bbox": [
+        2169,
+        2625,
+        208,
+        327
+       ]
+      },
+      {
+       "index": 24,
+       "razao": "cluster; área 2410 mm²; a 0.2 mm de outra peça (faixa em L montada)",
+       "area_mm2": 2409.777,
+       "bbox": [
+        815,
+        2891,
+        1566,
+        482
+       ]
+      }
+     ],
+     "filas_de_baixo": [
+      4,
+      4,
+      4,
+      4,
+      2,
+      2
+     ],
+     "colunas_da_direita": [
+      6,
+      6,
+      4,
+      4
+     ],
+     "col_x": {
+      "1": 1880.0,
+      "2": 1414.5,
+      "3": 947.75,
+      "4": 476.5
+     },
+     "L_med_por_coluna_k": {
+      "2": 48.584,
+      "3": 56.247,
+      "4": 56.955,
+      "5": 25.372
+     },
+     "area_mm2": {
+      "n": 20,
+      "median": 399.377,
+      "p90": 433.001,
+      "max": 472.863,
+      "min": 345.827,
+      "mean": 401.359,
+      "p95": 454.503
+     },
+     "menor_distancia_mm": 3.315,
+     "todas_4_cantos_sem_F": true
+    },
+    "ceu": {
+     "f1p1": {
+      "n_segment_scan": 35,
+      "numeradas": 35,
+      "esperadas": 35,
+      "na_memoria": 35,
+      "excluidos": []
+     },
+     "f1p2": {
+      "n_segment_scan": 15,
+      "numeradas": 15,
+      "esperadas": 15,
+      "na_memoria": 15,
+      "excluidos": []
+     },
+     "f2p1": {
+      "n_segment_scan": 40,
+      "numeradas": 40,
+      "esperadas": 42,
+      "na_memoria": 40,
+      "excluidos": []
+     },
+     "f2p2": {
+      "n_segment_scan": 8,
+      "numeradas": 8,
+      "esperadas": 8,
+      "na_memoria": 8,
+      "excluidos": []
+     }
+    },
+    "BD": {
+     "n_segment_scan": 28,
+     "excluded": [],
+     "rows": [
+      5,
+      5,
+      5,
+      5,
+      4,
+      4
+     ],
+     "col_x": {
+      "1": 1890.0,
+      "2": 1487.75,
+      "3": 1085.75,
+      "4": 681.5,
+      "5": 295.0
+     },
+     "road_frac": {
+      "2,2": 0.006,
+      "3,2": 0.004,
+      "4,2": 0.006,
+      "5,2": 0.01,
+      "6,2": 0.02,
+      "2,3": 0.012,
+      "3,3": 0.007,
+      "4,3": 0.007,
+      "5,3": 0.009,
+      "6,3": 0.085,
+      "2,4": 0.008,
+      "3,4": 0.006,
+      "4,4": 0.014,
+      "5,4": 0.015,
+      "6,4": 0.117,
+      "2,5": 0.008,
+      "3,5": 0.013,
+      "4,5": 0.009,
+      "5,5": 0.008,
+      "6,5": 0.205,
+      "2,6": 0.01,
+      "3,6": 0.007,
+      "4,6": 0.005,
+      "5,6": 0.008,
+      "2,7": 0.011,
+      "3,7": 0.01,
+      "4,7": 0.024,
+      "5,7": 0.008
+     },
+     "black_frac": {
+      "2,2": 0.199,
+      "3,2": 0.111,
+      "4,2": 0.115,
+      "5,2": 0.153,
+      "6,2": 0.296,
+      "2,3": 0.222,
+      "3,3": 0.125,
+      "4,3": 0.149,
+      "5,3": 0.128,
+      "6,3": 0.186,
+      "2,4": 0.132,
+      "3,4": 0.119,
+      "4,4": 0.159,
+      "5,4": 0.18,
+      "6,4": 0.089,
+      "2,5": 0.218,
+      "3,5": 0.141,
+      "4,5": 0.149,
+      "5,5": 0.159,
+      "6,5": 0.068,
+      "2,6": 0.18,
+      "3,6": 0.124,
+      "4,6": 0.092,
+      "5,6": 0.149,
+      "2,7": 0.213,
+      "3,7": 0.138,
+      "4,7": 0.094,
+      "5,7": 0.137
+     },
+     "Lmed_k6": [
+      45.782,
+      55.542,
+      56.445,
+      57.581
+     ],
+     "Lmed_others_median": 36.134,
+     "classes": {
+      "2,2": "BTBT",
+      "3,2": "BTBT",
+      "4,2": "BBBT",
+      "5,2": "BBTT",
+      "6,2": "BBBT",
+      "2,3": "BTBT",
+      "3,3": "BTBT",
+      "4,3": "BTBT",
+      "5,3": "BTBT",
+      "6,3": "BTTT",
+      "2,4": "BBBT",
+      "3,4": "BTTT",
+      "4,4": "BBBT",
+      "5,4": "BBTT",
+      "6,4": "BBBT",
+      "2,5": "BTTT",
+      "3,5": "BBBT",
+      "4,5": "BBTT",
+      "5,5": "BTTT",
+      "6,5": "BTBT",
+      "2,6": "BBTT",
+      "3,6": "BTTT",
+      "4,6": "BBTT",
+      "5,6": "BBTT",
+      "2,7": "BBBT",
+      "3,7": "BTBT",
+      "4,7": "BTBT",
+      "5,7": "BBTT"
+     }
+    }
+   },
+   "ceu_por_folha": {
+    "f1p1": 35,
+    "f1p2": 15,
+    "f2p1": 40,
+    "f2p2": 8
+   }
+  },
+  "orientacao_esym": {
+   "+phi": {
+    "A1_F_em_cima": 20,
+    "B2_F_em_baixo": 20,
+    "n": 20,
+    "resid_abs": {
+     "n": 20,
+     "median": 0.488,
+     "p90": 1.626,
+     "max": 2.033,
+     "min": 0.039,
+     "mean": 0.728,
+     "p95": 1.942
+    }
+   },
+   "-phi": {
+    "A1_F_em_cima": 20,
+    "B2_F_em_baixo": 20,
+    "n": 20,
+    "resid_abs": {
+     "n": 20,
+     "median": 9.151,
+     "p90": 22.549,
+     "max": 26.664,
+     "min": 0.292,
+     "mean": 9.392,
+     "p95": 26.083
+    }
+   }
+  },
+  "sinal_phi_usado": "+phi",
+  "orientacao_esym_por_par": [
+   {
+    "A1": "A1(0,0)",
+    "B2": "B2(0,4)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 0.464,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(0,1)",
+    "B2": "B2(0,3)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -0.852,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(0,2)",
+    "B2": "B2(0,2)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -0.757,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(0,3)",
+    "B2": "B2(0,1)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -1.937,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(0,4)",
+    "B2": "B2(0,0)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -0.252,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(1,0)",
+    "B2": "B2(1,4)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -0.196,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(1,1)",
+    "B2": "B2(1,3)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -2.033,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(1,2)",
+    "B2": "B2(1,2)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -0.106,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(1,3)",
+    "B2": "B2(1,1)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 1.56,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(1,4)",
+    "B2": "B2(1,0)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 0.078,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(2,0)",
+    "B2": "B2(2,4)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -0.91,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(2,1)",
+    "B2": "B2(2,3)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -0.279,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(2,2)",
+    "B2": "B2(2,2)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 0.039,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(2,3)",
+    "B2": "B2(2,1)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 1.318,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(2,4)",
+    "B2": "B2(2,0)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 0.329,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(3,0)",
+    "B2": "B2(3,4)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 0.325,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(3,1)",
+    "B2": "B2(3,3)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -0.824,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(3,2)",
+    "B2": "B2(3,2)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 0.204,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(3,3)",
+    "B2": "B2(3,1)",
+    "mA": 0,
+    "mB": 2,
+    "resid": -1.591,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   },
+   {
+    "A1": "A1(3,4)",
+    "B2": "B2(3,0)",
+    "mA": 0,
+    "mB": 2,
+    "resid": 0.511,
+    "A_F_cima": true,
+    "B_F_baixo": true
+   }
+  ],
+  "imagem_esym": {
+   "dE_A1": {
+    "n": 20,
+    "median": 6.682,
+    "p90": 7.379,
+    "max": 7.782,
+    "min": 6.002,
+    "mean": 6.692,
+    "p95": 7.737
+   },
+   "dE_B2": {
+    "n": 20,
+    "median": 21.471,
+    "p90": 24.308,
+    "max": 31.937,
+    "min": 16.753,
+    "mean": 21.944,
+    "p95": 25.312
+   },
+   "A1_rot_vence": 0,
+   "B2_rot_vence": 8,
+   "por_par": [
+    {
+     "A1": "A1(0,0)",
+     "cell_A": [
+      1,
+      5
+     ],
+     "dE_A": 6.002,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.002,
+      5.816,
+      5.835,
+      6.365
+     ],
+     "B2": "B2(0,4)",
+     "cell_B": [
+      47,
+      60
+     ],
+     "dE_B": 22.276,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      20.888,
+      21.071,
+      22.276,
+      20.873
+     ]
+    },
+    {
+     "A1": "A1(0,1)",
+     "cell_A": [
+      1,
+      6
+     ],
+     "dE_A": 6.752,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.752,
+      6.347,
+      6.644,
+      6.441
+     ],
+     "B2": "B2(0,3)",
+     "cell_B": [
+      47,
+      59
+     ],
+     "dE_B": 21.373,
+     "B_rot_vence": true,
+     "dE_B_4rot": [
+      21.554,
+      21.607,
+      21.373,
+      21.497
+     ]
+    },
+    {
+     "A1": "A1(0,2)",
+     "cell_A": [
+      1,
+      7
+     ],
+     "dE_A": 6.798,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.798,
+      6.761,
+      6.083,
+      6.626
+     ],
+     "B2": "B2(0,2)",
+     "cell_B": [
+      47,
+      58
+     ],
+     "dE_B": 20.003,
+     "B_rot_vence": true,
+     "dE_B_4rot": [
+      21.399,
+      20.482,
+      20.003,
+      20.545
+     ]
+    },
+    {
+     "A1": "A1(0,3)",
+     "cell_A": [
+      1,
+      8
+     ],
+     "dE_A": 6.864,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.864,
+      6.422,
+      6.568,
+      7.019
+     ],
+     "B2": "B2(0,1)",
+     "cell_B": [
+      47,
+      57
+     ],
+     "dE_B": 31.937,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      30.744,
+      34.128,
+      31.937,
+      31.12
+     ]
+    },
+    {
+     "A1": "A1(0,4)",
+     "cell_A": [
+      1,
+      9
+     ],
+     "dE_A": 7.735,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      7.735,
+      6.835,
+      7.073,
+      7.727
+     ],
+     "B2": "B2(0,0)",
+     "cell_B": [
+      47,
+      56
+     ],
+     "dE_B": 21.763,
+     "B_rot_vence": true,
+     "dE_B_4rot": [
+      21.965,
+      23.925,
+      21.763,
+      21.807
+     ]
+    },
+    {
+     "A1": "A1(1,0)",
+     "cell_A": [
+      1,
+      10
+     ],
+     "dE_A": 6.071,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.071,
+      5.527,
+      5.754,
+      5.709
+     ],
+     "B2": "B2(1,4)",
+     "cell_B": [
+      47,
+      55
+     ],
+     "dE_B": 24.235,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      21.733,
+      22.701,
+      24.235,
+      23.861
+     ]
+    },
+    {
+     "A1": "A1(1,1)",
+     "cell_A": [
+      1,
+      11
+     ],
+     "dE_A": 6.784,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.784,
+      6.5,
+      6.37,
+      7.04
+     ],
+     "B2": "B2(1,3)",
+     "cell_B": [
+      47,
+      54
+     ],
+     "dE_B": 21.554,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      20.277,
+      20.393,
+      21.554,
+      19.933
+     ]
+    },
+    {
+     "A1": "A1(1,2)",
+     "cell_A": [
+      1,
+      12
+     ],
+     "dE_A": 6.612,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.612,
+      6.32,
+      6.363,
+      6.314
+     ],
+     "B2": "B2(1,2)",
+     "cell_B": [
+      47,
+      53
+     ],
+     "dE_B": 16.753,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      16.589,
+      17.62,
+      16.753,
+      18.015
+     ]
+    },
+    {
+     "A1": "A1(1,3)",
+     "cell_A": [
+      1,
+      13
+     ],
+     "dE_A": 7.339,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      7.339,
+      7.355,
+      6.931,
+      7.613
+     ],
+     "B2": "B2(1,1)",
+     "cell_B": [
+      47,
+      52
+     ],
+     "dE_B": 20.16,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      18.526,
+      17.396,
+      20.16,
+      21.325
+     ]
+    },
+    {
+     "A1": "A1(1,4)",
+     "cell_A": [
+      1,
+      14
+     ],
+     "dE_A": 7.782,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      7.782,
+      6.615,
+      7.9,
+      7.502
+     ],
+     "B2": "B2(1,0)",
+     "cell_B": [
+      47,
+      51
+     ],
+     "dE_B": 21.476,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      23.241,
+      22.505,
+      21.476,
+      20.425
+     ]
+    },
+    {
+     "A1": "A1(2,0)",
+     "cell_A": [
+      1,
+      15
+     ],
+     "dE_A": 6.934,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.934,
+      6.873,
+      6.416,
+      6.871
+     ],
+     "B2": "B2(2,4)",
+     "cell_B": [
+      47,
+      50
+     ],
+     "dE_B": 21.465,
+     "B_rot_vence": true,
+     "dE_B_4rot": [
+      23.641,
+      21.793,
+      21.465,
+      22.483
+     ]
+    },
+    {
+     "A1": "A1(2,1)",
+     "cell_A": [
+      1,
+      16
+     ],
+     "dE_A": 7.118,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      7.118,
+      6.673,
+      6.715,
+      7.17
+     ],
+     "B2": "B2(2,3)",
+     "cell_B": [
+      47,
+      49
+     ],
+     "dE_B": 24.042,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      22.902,
+      20.525,
+      24.042,
+      23.844
+     ]
+    },
+    {
+     "A1": "A1(2,2)",
+     "cell_A": [
+      1,
+      17
+     ],
+     "dE_A": 6.272,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.272,
+      6.747,
+      6.149,
+      6.631
+     ],
+     "B2": "B2(2,2)",
+     "cell_B": [
+      47,
+      48
+     ],
+     "dE_B": 21.244,
+     "B_rot_vence": true,
+     "dE_B_4rot": [
+      21.58,
+      25.158,
+      21.244,
+      22.188
+     ]
+    },
+    {
+     "A1": "A1(2,3)",
+     "cell_A": [
+      1,
+      18
+     ],
+     "dE_A": 6.476,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.476,
+      6.186,
+      6.459,
+      6.455
+     ],
+     "B2": "B2(2,1)",
+     "cell_B": [
+      47,
+      47
+     ],
+     "dE_B": 20.228,
+     "B_rot_vence": true,
+     "dE_B_4rot": [
+      20.661,
+      20.432,
+      20.228,
+      20.282
+     ]
+    },
+    {
+     "A1": "A1(2,4)",
+     "cell_A": [
+      1,
+      19
+     ],
+     "dE_A": 6.511,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.511,
+      6.596,
+      6.205,
+      6.654
+     ],
+     "B2": "B2(2,0)",
+     "cell_B": [
+      47,
+      46
+     ],
+     "dE_B": 20.718,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      20.594,
+      20.334,
+      20.718,
+      20.598
+     ]
+    },
+    {
+     "A1": "A1(3,0)",
+     "cell_A": [
+      1,
+      20
+     ],
+     "dE_A": 6.047,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.047,
+      5.621,
+      5.61,
+      5.415
+     ],
+     "B2": "B2(3,4)",
+     "cell_B": [
+      47,
+      45
+     ],
+     "dE_B": 20.341,
+     "B_rot_vence": true,
+     "dE_B_4rot": [
+      23.035,
+      22.727,
+      20.341,
+      21.035
+     ]
+    },
+    {
+     "A1": "A1(3,1)",
+     "cell_A": [
+      1,
+      21
+     ],
+     "dE_A": 6.812,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.812,
+      6.619,
+      6.255,
+      6.799
+     ],
+     "B2": "B2(3,3)",
+     "cell_B": [
+      47,
+      44
+     ],
+     "dE_B": 19.675,
+     "B_rot_vence": true,
+     "dE_B_4rot": [
+      23.646,
+      20.973,
+      19.675,
+      20.655
+     ]
+    },
+    {
+     "A1": "A1(3,2)",
+     "cell_A": [
+      1,
+      22
+     ],
+     "dE_A": 6.202,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.202,
+      5.783,
+      6.3,
+      6.03
+     ],
+     "B2": "B2(3,2)",
+     "cell_B": [
+      47,
+      43
+     ],
+     "dE_B": 22.43,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      21.467,
+      23.104,
+      22.43,
+      21.883
+     ]
+    },
+    {
+     "A1": "A1(3,3)",
+     "cell_A": [
+      1,
+      23
+     ],
+     "dE_A": 6.504,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.504,
+      6.158,
+      5.872,
+      6.798
+     ],
+     "B2": "B2(3,1)",
+     "cell_B": [
+      47,
+      42
+     ],
+     "dE_B": 24.963,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      22.448,
+      22.537,
+      24.963,
+      23.217
+     ]
+    },
+    {
+     "A1": "A1(3,4)",
+     "cell_A": [
+      1,
+      24
+     ],
+     "dE_A": 6.224,
+     "A_rot_vence": false,
+     "dE_A_4rot": [
+      6.224,
+      5.513,
+      5.96,
+      6.482
+     ],
+     "B2": "B2(3,0)",
+     "cell_B": [
+      47,
+      41
+     ],
+     "dE_B": 22.242,
+     "B_rot_vence": false,
+     "dE_B_4rot": [
+      21.652,
+      22.159,
+      22.242,
+      20.397
+     ]
+    }
+   ]
+  },
+  "imagem_BE_propria": {
+   "dE": {
+    "n": 20,
+    "median": 23.034,
+    "p90": 30.52,
+    "max": 34.401,
+    "min": 16.639,
+    "mean": 24.055,
+    "p95": 31.262
+   },
+   "rot_vence": 7,
+   "por_peca": [
+    {
+     "BE": "BE(2,2)",
+     "cell": [
+      46,
+      2
+     ],
+     "m": 1,
+     "resid": -2.404,
+     "dE": 26.69,
+     "ncc": -0.162,
+     "rot_vence": false,
+     "dE_4rot": [
+      24.471,
+      26.69,
+      24.952,
+      27.589
+     ]
+    },
+    {
+     "BE": "BE(2,3)",
+     "cell": [
+      46,
+      3
+     ],
+     "m": 1,
+     "resid": -2.303,
+     "dE": 26.905,
+     "ncc": 0.096,
+     "rot_vence": false,
+     "dE_4rot": [
+      23.848,
+      26.905,
+      29.417,
+      28.984
+     ]
+    },
+    {
+     "BE": "BE(2,4)",
+     "cell": [
+      46,
+      4
+     ],
+     "m": 1,
+     "resid": 1.495,
+     "dE": 20.887,
+     "ncc": 0.207,
+     "rot_vence": true,
+     "dE_4rot": [
+      21.142,
+      20.887,
+      21.991,
+      22.237
+     ]
+    },
+    {
+     "BE": "BE(2,5)",
+     "cell": [
+      46,
+      5
+     ],
+     "m": 1,
+     "resid": 2.533,
+     "dE": 23.852,
+     "ncc": -0.086,
+     "rot_vence": false,
+     "dE_4rot": [
+      23.125,
+      23.852,
+      22.95,
+      22.717
+     ]
+    },
+    {
+     "BE": "BE(2,6)",
+     "cell": [
+      46,
+      6
+     ],
+     "m": 1,
+     "resid": -4.523,
+     "dE": 29.519,
+     "ncc": -0.03,
+     "rot_vence": false,
+     "dE_4rot": [
+      26.769,
+      29.519,
+      29.309,
+      24.481
+     ]
+    },
+    {
+     "BE": "BE(2,7)",
+     "cell": [
+      46,
+      7
+     ],
+     "m": 1,
+     "resid": 6.498,
+     "dE": 25.2,
+     "ncc": 0.073,
+     "rot_vence": false,
+     "dE_4rot": [
+      25.309,
+      25.2,
+      25.056,
+      25.39
+     ]
+    },
+    {
+     "BE": "BE(3,2)",
+     "cell": [
+      45,
+      2
+     ],
+     "m": 1,
+     "resid": -3.173,
+     "dE": 21.718,
+     "ncc": 0.047,
+     "rot_vence": false,
+     "dE_4rot": [
+      21.71,
+      21.718,
+      21.623,
+      22.066
+     ]
+    },
+    {
+     "BE": "BE(3,3)",
+     "cell": [
+      45,
+      3
+     ],
+     "m": 1,
+     "resid": -0.146,
+     "dE": 22.216,
+     "ncc": 0.183,
+     "rot_vence": true,
+     "dE_4rot": [
+      24.723,
+      22.216,
+      22.253,
+      22.598
+     ]
+    },
+    {
+     "BE": "BE(3,4)",
+     "cell": [
+      45,
+      4
+     ],
+     "m": 1,
+     "resid": 5.867,
+     "dE": 17.475,
+     "ncc": 0.215,
+     "rot_vence": true,
+     "dE_4rot": [
+      18.696,
+      17.475,
+      18.336,
+      20.901
+     ]
+    },
+    {
+     "BE": "BE(3,5)",
+     "cell": [
+      45,
+      5
+     ],
+     "m": 1,
+     "resid": 0.627,
+     "dE": 21.509,
+     "ncc": -0.033,
+     "rot_vence": false,
+     "dE_4rot": [
+      21.051,
+      21.509,
+      21.677,
+      21.504
+     ]
+    },
+    {
+     "BE": "BE(3,6)",
+     "cell": [
+      45,
+      6
+     ],
+     "m": 1,
+     "resid": 1.89,
+     "dE": 18.847,
+     "ncc": 0.238,
+     "rot_vence": true,
+     "dE_4rot": [
+      23.029,
+      18.847,
+      20.196,
+      21.07
+     ]
+    },
+    {
+     "BE": "BE(3,7)",
+     "cell": [
+      45,
+      7
+     ],
+     "m": 1,
+     "resid": -6.796,
+     "dE": 17.529,
+     "ncc": 0.207,
+     "rot_vence": false,
+     "dE_4rot": [
+      17.924,
+      17.529,
+      18.753,
+      17.033
+     ]
+    },
+    {
+     "BE": "BE(4,2)",
+     "cell": [
+      44,
+      2
+     ],
+     "m": 1,
+     "resid": -1.876,
+     "dE": 30.456,
+     "ncc": 0.158,
+     "rot_vence": false,
+     "dE_4rot": [
+      33.409,
+      30.456,
+      29.746,
+      28.714
+     ]
+    },
+    {
+     "BE": "BE(4,3)",
+     "cell": [
+      44,
+      3
+     ],
+     "m": 1,
+     "resid": 2.672,
+     "dE": 31.097,
+     "ncc": 0.009,
+     "rot_vence": true,
+     "dE_4rot": [
+      40.634,
+      31.097,
+      39.879,
+      31.173
+     ]
+    },
+    {
+     "BE": "BE(4,4)",
+     "cell": [
+      44,
+      4
+     ],
+     "m": 1,
+     "resid": -0.491,
+     "dE": 34.401,
+     "ncc": 0.026,
+     "rot_vence": false,
+     "dE_4rot": [
+      33.271,
+      34.401,
+      33.603,
+      34.355
+     ]
+    },
+    {
+     "BE": "BE(4,5)",
+     "cell": [
+      44,
+      5
+     ],
+     "m": 1,
+     "resid": 9.391,
+     "dE": 28.489,
+     "ncc": 0.158,
+     "rot_vence": false,
+     "dE_4rot": [
+      23.885,
+      28.489,
+      25.733,
+      27.643
+     ]
+    },
+    {
+     "BE": "BE(5,2)",
+     "cell": [
+      43,
+      2
+     ],
+     "m": 1,
+     "resid": 3.302,
+     "dE": 25.363,
+     "ncc": 0.211,
+     "rot_vence": false,
+     "dE_4rot": [
+      25.017,
+      25.363,
+      25.132,
+      28.672
+     ]
+    },
+    {
+     "BE": "BE(5,3)",
+     "cell": [
+      43,
+      3
+     ],
+     "m": 1,
+     "resid": 0.094,
+     "dE": 21.935,
+     "ncc": 0.196,
+     "rot_vence": true,
+     "dE_4rot": [
+      24.5,
+      21.935,
+      25.592,
+      23.369
+     ]
+    },
+    {
+     "BE": "BE(5,4)",
+     "cell": [
+      43,
+      4
+     ],
+     "m": 1,
+     "resid": 3.866,
+     "dE": 16.639,
+     "ncc": 0.338,
+     "rot_vence": true,
+     "dE_4rot": [
+      21.758,
+      16.639,
+      16.973,
+      17.98
+     ]
+    },
+    {
+     "BE": "BE(5,5)",
+     "cell": [
+      43,
+      5
+     ],
+     "m": 1,
+     "resid": 0.94,
+     "dE": 20.369,
+     "ncc": 0.073,
+     "rot_vence": false,
+     "dE_4rot": [
+      19.522,
+      20.369,
+      20.715,
+      18.064
+     ]
+    }
+   ]
+  },
+  "be_consultas": [
+   {
+    "BE": "BE(2,2)",
+    "cell": [
+     46,
+     2
+    ],
+    "gemea": [
+     2,
+     63
+    ],
+    "n_passam": 5,
+    "top3": [
+     {
+      "lab": "BE(4,4)",
+      "src": "BE",
+      "d": 1.448,
+      "dE": 31.768,
+      "ncc": 0.239,
+      "rot_vence": true,
+      "resid_graus": -1.95,
+      "dE_4rot": [
+       31.95,
+       31.768,
+       32.111,
+       32.058
+      ]
+     },
+     {
+      "lab": "BD(5,7)",
+      "src": "BD",
+      "d": 1.487,
+      "dE": 36.092,
+      "ncc": -0.084,
+      "rot_vence": false,
+      "resid_graus": 2.924,
+      "dE_4rot": [
+       36.092,
+       36.27,
+       36.013,
+       35.772
+      ]
+     },
+     {
+      "lab": "f1p1 #10",
+      "src": "ceu",
+      "d": 1.674,
+      "dE": 20.527,
+      "ncc": -0.089,
+      "rot_vence": false,
+      "resid_graus": -0.634,
+      "dE_4rot": [
+       20.293,
+       21.281,
+       21.501,
+       20.527
+      ]
+     }
+    ],
+    "d1": 1.448,
+    "margem": 1.027,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 0,
+    "pct_ii": 89.796
+   },
+   {
+    "BE": "BE(2,3)",
+    "cell": [
+     46,
+     3
+    ],
+    "gemea": [
+     2,
+     62
+    ],
+    "n_passam": 1,
+    "top3": [
+     {
+      "lab": "BD(2,7)",
+      "src": "BD",
+      "d": 1.953,
+      "dE": 44.542,
+      "ncc": -0.42,
+      "rot_vence": false,
+      "resid_graus": -15.482,
+      "dE_4rot": [
+       42.498,
+       42.178,
+       43.311,
+       44.542
+      ]
+     }
+    ],
+    "d1": 1.953,
+    "margem": null,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 0,
+    "pct_ii": 97.959
+   },
+   {
+    "BE": "BE(2,4)",
+    "cell": [
+     46,
+     4
+    ],
+    "gemea": [
+     2,
+     61
+    ],
+    "n_passam": 2,
+    "top3": [
+     {
+      "lab": "f2p1 #4",
+      "src": "ceu",
+      "d": 0.408,
+      "dE": 8.734,
+      "ncc": 0.321,
+      "rot_vence": true,
+      "resid_graus": -0.828,
+      "dE_4rot": [
+       10.712,
+       11.664,
+       9.991,
+       8.734
+      ]
+     },
+     {
+      "lab": "f1p1 #9",
+      "src": "ceu",
+      "d": 0.976,
+      "dE": 20.197,
+      "ncc": 0.123,
+      "rot_vence": true,
+      "resid_graus": 3.02,
+      "dE_4rot": [
+       21.934,
+       22.269,
+       21.221,
+       20.197
+      ]
+     }
+    ],
+    "d1": 0.408,
+    "margem": 2.395,
+    "forma": "ACEITE",
+    "forma_imagem": "ACEITE",
+    "pick_fi": "f2p1 #4",
+    "nota_fi": "forma ACEITE e ΔE <= p90",
+    "rank_i": 2,
+    "pct_ii": 1.02
+   },
+   {
+    "BE": "BE(2,5)",
+    "cell": [
+     46,
+     5
+    ],
+    "gemea": [
+     2,
+     60
+    ],
+    "n_passam": 4,
+    "top3": [
+     {
+      "lab": "f2p1 #9",
+      "src": "ceu",
+      "d": 0.965,
+      "dE": 28.631,
+      "ncc": 0.491,
+      "rot_vence": false,
+      "resid_graus": -5.987,
+      "dE_4rot": [
+       29.357,
+       28.631,
+       28.503,
+       29.202
+      ]
+     },
+     {
+      "lab": "f1p1 #15",
+      "src": "ceu",
+      "d": 1.043,
+      "dE": 12.115,
+      "ncc": 0.536,
+      "rot_vence": true,
+      "resid_graus": 1.464,
+      "dE_4rot": [
+       14.938,
+       19.629,
+       17.15,
+       12.115
+      ]
+     },
+     {
+      "lab": "BD(2,5)",
+      "src": "BD",
+      "d": 1.218,
+      "dE": 52.762,
+      "ncc": -0.395,
+      "rot_vence": false,
+      "resid_graus": 2.005,
+      "dE_4rot": [
+       53.069,
+       52.762,
+       49.874,
+       50.508
+      ]
+     }
+    ],
+    "d1": 0.965,
+    "margem": 1.081,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 16,
+    "pct_ii": 73.469
+   },
+   {
+    "BE": "BE(2,6)",
+    "cell": [
+     46,
+     6
+    ],
+    "gemea": [
+     2,
+     59
+    ],
+    "n_passam": 6,
+    "top3": [
+     {
+      "lab": "f2p1 #19",
+      "src": "ceu",
+      "d": 1.171,
+      "dE": 15.5,
+      "ncc": 0.705,
+      "rot_vence": true,
+      "resid_graus": -2.657,
+      "dE_4rot": [
+       20.22,
+       16.228,
+       15.5,
+       16.859
+      ]
+     },
+     {
+      "lab": "f1p1 #17",
+      "src": "ceu",
+      "d": 1.182,
+      "dE": 19.899,
+      "ncc": -0.557,
+      "rot_vence": false,
+      "resid_graus": -3.291,
+      "dE_4rot": [
+       16.293,
+       17.087,
+       19.899,
+       19.154
+      ]
+     },
+     {
+      "lab": "BD(2,2)",
+      "src": "BD",
+      "d": 1.21,
+      "dE": 53.892,
+      "ncc": 0.058,
+      "rot_vence": true,
+      "resid_graus": -3.668,
+      "dE_4rot": [
+       55.722,
+       54.82,
+       54.994,
+       53.892
+      ]
+     }
+    ],
+    "d1": 1.171,
+    "margem": 1.009,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 0,
+    "pct_ii": 21.429
+   },
+   {
+    "BE": "BE(2,7)",
+    "cell": [
+     46,
+     7
+    ],
+    "gemea": [
+     2,
+     58
+    ],
+    "n_passam": 4,
+    "top3": [
+     {
+      "lab": "BD(2,3)",
+      "src": "BD",
+      "d": 0.996,
+      "dE": 57.462,
+      "ncc": 0.193,
+      "rot_vence": true,
+      "resid_graus": -0.616,
+      "dE_4rot": [
+       58.635,
+       58.047,
+       58.591,
+       57.462
+      ]
+     },
+     {
+      "lab": "f2p2 #4",
+      "src": "ceu",
+      "d": 1.084,
+      "dE": 15.569,
+      "ncc": -0.217,
+      "rot_vence": false,
+      "resid_graus": -3.027,
+      "dE_4rot": [
+       17.403,
+       15.569,
+       15.035,
+       15.161
+      ]
+     },
+     {
+      "lab": "BE(2,6)",
+      "src": "BE",
+      "d": 1.211,
+      "dE": 50.203,
+      "ncc": 0.091,
+      "rot_vence": true,
+      "resid_graus": 1.165,
+      "dE_4rot": [
+       50.203,
+       50.887,
+       50.624,
+       51.718
+      ]
+     }
+    ],
+    "d1": 0.996,
+    "margem": 1.089,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 5,
+    "pct_ii": 100.0
+   },
+   {
+    "BE": "BE(3,2)",
+    "cell": [
+     45,
+     2
+    ],
+    "gemea": [
+     3,
+     63
+    ],
+    "n_passam": 2,
+    "top3": [
+     {
+      "lab": "BD(5,3)",
+      "src": "BD",
+      "d": 1.308,
+      "dE": 43.91,
+      "ncc": 0.396,
+      "rot_vence": true,
+      "resid_graus": -0.356,
+      "dE_4rot": [
+       44.954,
+       45.591,
+       44.355,
+       43.91
+      ]
+     },
+     {
+      "lab": "f1p1 #18",
+      "src": "ceu",
+      "d": 1.756,
+      "dE": 30.507,
+      "ncc": 0.229,
+      "rot_vence": false,
+      "resid_graus": 2.045,
+      "dE_4rot": [
+       31.776,
+       30.507,
+       31.04,
+       30.312
+      ]
+     }
+    ],
+    "d1": 1.308,
+    "margem": 1.343,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 4,
+    "pct_ii": 83.673
+   },
+   {
+    "BE": "BE(3,3)",
+    "cell": [
+     45,
+     3
+    ],
+    "gemea": [
+     3,
+     62
+    ],
+    "n_passam": 3,
+    "top3": [
+     {
+      "lab": "BD(3,2)",
+      "src": "BD",
+      "d": 1.372,
+      "dE": 58.134,
+      "ncc": 0.251,
+      "rot_vence": false,
+      "resid_graus": 8.9,
+      "dE_4rot": [
+       57.548,
+       58.134,
+       57.081,
+       59.034
+      ]
+     },
+     {
+      "lab": "BE(3,6)",
+      "src": "BE",
+      "d": 1.469,
+      "dE": 42.412,
+      "ncc": -0.158,
+      "rot_vence": false,
+      "resid_graus": -1.535,
+      "dE_4rot": [
+       42.587,
+       42.412,
+       39.881,
+       42.546
+      ]
+     },
+     {
+      "lab": "BD(3,7)",
+      "src": "BD",
+      "d": 1.494,
+      "dE": 58.954,
+      "ncc": -0.187,
+      "rot_vence": false,
+      "resid_graus": 6.348,
+      "dE_4rot": [
+       57.031,
+       58.954,
+       57.158,
+       58.235
+      ]
+     }
+    ],
+    "d1": 1.372,
+    "margem": 1.071,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 9,
+    "pct_ii": 96.939
+   },
+   {
+    "BE": "BE(3,4)",
+    "cell": [
+     45,
+     4
+    ],
+    "gemea": [
+     3,
+     61
+    ],
+    "n_passam": 2,
+    "top3": [
+     {
+      "lab": "f2p1 #1",
+      "src": "ceu",
+      "d": 1.15,
+      "dE": 21.93,
+      "ncc": 0.335,
+      "rot_vence": true,
+      "resid_graus": -0.452,
+      "dE_4rot": [
+       21.93,
+       23.624,
+       24.034,
+       22.329
+      ]
+     },
+     {
+      "lab": "f2p1 #21",
+      "src": "ceu",
+      "d": 1.487,
+      "dE": 26.914,
+      "ncc": -0.478,
+      "rot_vence": false,
+      "resid_graus": -4.605,
+      "dE_4rot": [
+       26.914,
+       26.077,
+       25.104,
+       26.743
+      ]
+     }
+    ],
+    "d1": 1.15,
+    "margem": 1.293,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 9,
+    "pct_ii": 43.878
+   },
+   {
+    "BE": "BE(3,5)",
+    "cell": [
+     45,
+     5
+    ],
+    "gemea": [
+     3,
+     60
+    ],
+    "n_passam": 1,
+    "top3": [
+     {
+      "lab": "f1p1 #10",
+      "src": "ceu",
+      "d": 1.16,
+      "dE": 33.803,
+      "ncc": 0.129,
+      "rot_vence": false,
+      "resid_graus": -3.775,
+      "dE_4rot": [
+       32.707,
+       33.803,
+       33.341,
+       32.284
+      ]
+     }
+    ],
+    "d1": 1.16,
+    "margem": null,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 6,
+    "pct_ii": 72.449
+   },
+   {
+    "BE": "BE(3,6)",
+    "cell": [
+     45,
+     6
+    ],
+    "gemea": [
+     3,
+     59
+    ],
+    "n_passam": 7,
+    "top3": [
+     {
+      "lab": "f2p1 #15",
+      "src": "ceu",
+      "d": 1.088,
+      "dE": 24.627,
+      "ncc": -0.27,
+      "rot_vence": false,
+      "resid_graus": 4.484,
+      "dE_4rot": [
+       24.147,
+       24.627,
+       24.158,
+       23.574
+      ]
+     },
+     {
+      "lab": "f2p1 #19",
+      "src": "ceu",
+      "d": 1.138,
+      "dE": 28.739,
+      "ncc": -0.505,
+      "rot_vence": false,
+      "resid_graus": 5.415,
+      "dE_4rot": [
+       28.884,
+       28.739,
+       28.534,
+       27.965
+      ]
+     },
+     {
+      "lab": "f2p2 #5",
+      "src": "ceu",
+      "d": 1.184,
+      "dE": 39.307,
+      "ncc": -0.544,
+      "rot_vence": false,
+      "resid_graus": 5.428,
+      "dE_4rot": [
+       39.307,
+       38.378,
+       38.441,
+       39.131
+      ]
+     }
+    ],
+    "d1": 1.088,
+    "margem": 1.046,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 13,
+    "pct_ii": 41.837
+   },
+   {
+    "BE": "BE(3,7)",
+    "cell": [
+     45,
+     7
+    ],
+    "gemea": [
+     3,
+     58
+    ],
+    "n_passam": 2,
+    "top3": [
+     {
+      "lab": "f2p1 #39",
+      "src": "ceu",
+      "d": 0.944,
+      "dE": 22.457,
+      "ncc": -0.13,
+      "rot_vence": false,
+      "resid_graus": -2.113,
+      "dE_4rot": [
+       22.457,
+       22.184,
+       21.476,
+       21.866
+      ]
+     },
+     {
+      "lab": "f1p1 #31",
+      "src": "ceu",
+      "d": 1.155,
+      "dE": 14.362,
+      "ncc": 0.027,
+      "rot_vence": true,
+      "resid_graus": 1.34,
+      "dE_4rot": [
+       14.403,
+       14.395,
+       14.362,
+       14.793
+      ]
+     }
+    ],
+    "d1": 0.944,
+    "margem": 1.223,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 8,
+    "pct_ii": 35.714
+   },
+   {
+    "BE": "BE(4,2)",
+    "cell": [
+     44,
+     2
+    ],
+    "gemea": [
+     4,
+     63
+    ],
+    "n_passam": 3,
+    "top3": [
+     {
+      "lab": "BE(5,2)",
+      "src": "BE",
+      "d": 1.45,
+      "dE": 69.32,
+      "ncc": -0.385,
+      "rot_vence": false,
+      "resid_graus": -3.937,
+      "dE_4rot": [
+       69.32,
+       68.256,
+       68.395,
+       69.529
+      ]
+     },
+     {
+      "lab": "BE(4,4)",
+      "src": "BE",
+      "d": 2.143,
+      "dE": 46.525,
+      "ncc": 0.28,
+      "rot_vence": false,
+      "resid_graus": -2.905,
+      "dE_4rot": [
+       46.525,
+       45.447,
+       45.915,
+       46.564
+      ]
+     },
+     {
+      "lab": "BE(2,2)",
+      "src": "BE",
+      "d": 2.336,
+      "dE": 53.472,
+      "ncc": 0.174,
+      "rot_vence": false,
+      "resid_graus": 1.218,
+      "dE_4rot": [
+       52.507,
+       53.386,
+       53.472,
+       52.26
+      ]
+     }
+    ],
+    "d1": 1.45,
+    "margem": 1.478,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 18,
+    "pct_ii": 98.98
+   },
+   {
+    "BE": "BE(4,3)",
+    "cell": [
+     44,
+     3
+    ],
+    "gemea": [
+     4,
+     62
+    ],
+    "n_passam": 1,
+    "top3": [
+     {
+      "lab": "BD(2,3)",
+      "src": "BD",
+      "d": 1.291,
+      "dE": 67.319,
+      "ncc": -0.027,
+      "rot_vence": false,
+      "resid_graus": -3.542,
+      "dE_4rot": [
+       67.297,
+       67.008,
+       67.319,
+       66.859
+      ]
+     }
+    ],
+    "d1": 1.291,
+    "margem": null,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 17,
+    "pct_ii": 95.918
+   },
+   {
+    "BE": "BE(4,4)",
+    "cell": [
+     44,
+     4
+    ],
+    "gemea": [
+     4,
+     61
+    ],
+    "n_passam": 10,
+    "top3": [
+     {
+      "lab": "f1p2 #3",
+      "src": "ceu",
+      "d": 1.069,
+      "dE": 51.131,
+      "ncc": 0.149,
+      "rot_vence": false,
+      "resid_graus": 4.721,
+      "dE_4rot": [
+       50.858,
+       49.557,
+       50.316,
+       51.131
+      ]
+     },
+     {
+      "lab": "BD(2,6)",
+      "src": "BD",
+      "d": 1.331,
+      "dE": 63.384,
+      "ncc": 0.137,
+      "rot_vence": false,
+      "resid_graus": 0.524,
+      "dE_4rot": [
+       63.384,
+       63.323,
+       63.358,
+       63.274
+      ]
+     },
+     {
+      "lab": "BE(2,2)",
+      "src": "BE",
+      "d": 1.448,
+      "dE": 50.769,
+      "ncc": 0.333,
+      "rot_vence": false,
+      "resid_graus": 1.95,
+      "dE_4rot": [
+       51.031,
+       50.769,
+       50.695,
+       50.888
+      ]
+     }
+    ],
+    "d1": 1.069,
+    "margem": 1.245,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 13,
+    "pct_ii": 87.755
+   },
+   {
+    "BE": "BE(4,5)",
+    "cell": [
+     44,
+     5
+    ],
+    "gemea": [
+     4,
+     60
+    ],
+    "n_passam": 2,
+    "top3": [
+     {
+      "lab": "f2p2 #4",
+      "src": "ceu",
+      "d": 0.85,
+      "dE": 19.709,
+      "ncc": -0.013,
+      "rot_vence": true,
+      "resid_graus": -1.161,
+      "dE_4rot": [
+       20.891,
+       19.709,
+       20.155,
+       20.032
+      ]
+     },
+     {
+      "lab": "f1p2 #9",
+      "src": "ceu",
+      "d": 0.865,
+      "dE": 41.922,
+      "ncc": 0.179,
+      "rot_vence": true,
+      "resid_graus": 1.55,
+      "dE_4rot": [
+       43.598,
+       41.922,
+       44.119,
+       42.081
+      ]
+     }
+    ],
+    "d1": 0.85,
+    "margem": 1.018,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 12,
+    "pct_ii": 18.367
+   },
+   {
+    "BE": "BE(5,2)",
+    "cell": [
+     43,
+     2
+    ],
+    "gemea": [
+     5,
+     63
+    ],
+    "n_passam": 1,
+    "top3": [
+     {
+      "lab": "BE(4,2)",
+      "src": "BE",
+      "d": 1.45,
+      "dE": 41.196,
+      "ncc": 0.108,
+      "rot_vence": false,
+      "resid_graus": 3.937,
+      "dE_4rot": [
+       40.871,
+       40.938,
+       41.196,
+       41.036
+      ]
+     }
+    ],
+    "d1": 1.45,
+    "margem": null,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 14,
+    "pct_ii": 58.163
+   },
+   {
+    "BE": "BE(5,3)",
+    "cell": [
+     43,
+     3
+    ],
+    "gemea": [
+     5,
+     62
+    ],
+    "n_passam": 4,
+    "top3": [
+     {
+      "lab": "BD(5,7)",
+      "src": "BD",
+      "d": 1.048,
+      "dE": 53.83,
+      "ncc": 0.36,
+      "rot_vence": false,
+      "resid_graus": 4.497,
+      "dE_4rot": [
+       53.79,
+       54.432,
+       53.83,
+       53.534
+      ]
+     },
+     {
+      "lab": "f2p1 #35",
+      "src": "ceu",
+      "d": 1.181,
+      "dE": 55.366,
+      "ncc": -0.284,
+      "rot_vence": false,
+      "resid_graus": 2.373,
+      "dE_4rot": [
+       54.684,
+       54.317,
+       55.025,
+       55.366
+      ]
+     },
+     {
+      "lab": "f1p1 #21",
+      "src": "ceu",
+      "d": 1.25,
+      "dE": 18.291,
+      "ncc": -0.257,
+      "rot_vence": false,
+      "resid_graus": 2.784,
+      "dE_4rot": [
+       17.392,
+       17.1,
+       18.291,
+       18.94
+      ]
+     }
+    ],
+    "d1": 1.048,
+    "margem": 1.127,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 17,
+    "pct_ii": 75.51
+   },
+   {
+    "BE": "BE(5,4)",
+    "cell": [
+     43,
+     4
+    ],
+    "gemea": [
+     5,
+     61
+    ],
+    "n_passam": 6,
+    "top3": [
+     {
+      "lab": "f2p1 #17",
+      "src": "ceu",
+      "d": 0.806,
+      "dE": 32.039,
+      "ncc": 0.152,
+      "rot_vence": true,
+      "resid_graus": 0.55,
+      "dE_4rot": [
+       32.375,
+       32.567,
+       32.04,
+       32.039
+      ]
+     },
+     {
+      "lab": "f1p1 #27",
+      "src": "ceu",
+      "d": 1.011,
+      "dE": 76.936,
+      "ncc": -0.028,
+      "rot_vence": false,
+      "resid_graus": -1.094,
+      "dE_4rot": [
+       77.101,
+       76.793,
+       76.794,
+       76.936
+      ]
+     },
+     {
+      "lab": "f1p2 #2",
+      "src": "ceu",
+      "d": 1.091,
+      "dE": 10.995,
+      "ncc": -0.321,
+      "rot_vence": false,
+      "resid_graus": -1.364,
+      "dE_4rot": [
+       10.984,
+       11.002,
+       11.199,
+       10.995
+      ]
+     }
+    ],
+    "d1": 0.806,
+    "margem": 1.255,
+    "forma": "SEM",
+    "forma_imagem": "SEM",
+    "pick_fi": null,
+    "nota_fi": "sem candidata com d <= tmax",
+    "rank_i": 16,
+    "pct_ii": 31.633
+   },
+   {
+    "BE": "BE(5,5)",
+    "cell": [
+     43,
+     5
+    ],
+    "gemea": [
+     5,
+     60
+    ],
+    "n_passam": 1,
+    "top3": [
+     {
+      "lab": "f1p1 #6",
+      "src": "ceu",
+      "d": 0.539,
+      "dE": 10.791,
+      "ncc": 0.36,
+      "rot_vence": true,
+      "resid_graus": 0.062,
+      "dE_4rot": [
+       11.534,
+       10.791,
+       11.649,
+       12.068
+      ]
+     }
+    ],
+    "d1": 0.539,
+    "margem": null,
+    "forma": "AMBÍGUA",
+    "forma_imagem": "AMBÍGUA",
+    "pick_fi": "f1p1 #6",
+    "nota_fi": "forma AMBÍGUA, ΔE <= p90",
+    "rank_i": 4,
+    "pct_ii": 1.02
+   }
+  ],
+  "be_resumo": {
+   "forma": {
+    "ACEITE": 1,
+    "AMBÍGUA": 1,
+    "SEM": 18
+   },
+   "forma_imagem": {
+    "ACEITE": 1,
+    "AMBÍGUA": 1,
+    "SEM": 18
+   },
+   "origem_top1": {
+    "ACEITE": {
+     "ceu": 1
+    },
+    "AMBÍGUA": {
+     "ceu": 1
+    }
+   },
+   "mudam": 0,
+   "contradiz": 0
+  },
+  "imagem_baseline": {
+   "i_certa": {
+    "n": 20,
+    "median": 32.921,
+    "p90": 59.052,
+    "max": 69.32,
+    "min": 8.734,
+    "mean": 36.841,
+    "p95": 67.419
+   },
+   "i_erradas": {
+    "n": 380,
+    "median": 37.917,
+    "p90": 62.557,
+    "max": 70.3,
+    "min": 7.588,
+    "mean": 38.22,
+    "p95": 65.069
+   },
+   "i_rank_certa_entre_20": [
+    0,
+    0,
+    2,
+    16,
+    0,
+    5,
+    4,
+    9,
+    9,
+    6,
+    13,
+    8,
+    18,
+    17,
+    13,
+    12,
+    14,
+    17,
+    16,
+    4
+   ],
+   "ii_ceu_x_celula": {
+    "n": 1960,
+    "median": 27.599,
+    "p90": 50.038,
+    "max": 79.941,
+    "min": 6.611,
+    "mean": 30.458,
+    "p95": 55.372
+   },
+   "p90": 50.038,
+   "iii_rot_prevista_vence": 9,
+   "iii_n": 20
+  },
+  "ceu_consultas": {
+   "decisao_x_origem": {
+    "SEM": {
+     "ceu": 62,
+     "None": 16,
+     "BE": 12,
+     "BD": 6
+    },
+    "AMBÍGUA": {
+     "BE": 1
+    },
+    "ACEITE": {
+     "BE": 1
+    }
+   },
+   "mutuos": 7,
+   "por_peca": [
+    {
+     "peca": "f1p1 #1",
+     "dec": "SEM",
+     "melhor": "f1p1 #14",
+     "d1": 1.062,
+     "margem": 1.217,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #2",
+     "dec": "SEM",
+     "melhor": "f2p1 #22",
+     "d1": 1.065,
+     "margem": 1.08,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #3",
+     "dec": "SEM",
+     "melhor": "f2p1 #11",
+     "d1": 1.597,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #4",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #5",
+     "dec": "SEM",
+     "melhor": "f2p1 #15",
+     "d1": 0.987,
+     "margem": 1.418,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #6",
+     "dec": "AMBÍGUA",
+     "melhor": "BE(5,5)",
+     "d1": 0.539,
+     "margem": null,
+     "destino": [
+      5,
+      60
+     ],
+     "mutuo": true
+    },
+    {
+     "peca": "f1p1 #7",
+     "dec": "SEM",
+     "melhor": "BE(5,4)",
+     "d1": 1.254,
+     "margem": 1.523,
+     "destino": [
+      5,
+      61
+     ],
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #8",
+     "dec": "SEM",
+     "melhor": "f1p2 #2",
+     "d1": 1.075,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #9",
+     "dec": "SEM",
+     "melhor": "BE(2,4)",
+     "d1": 0.976,
+     "margem": 1.145,
+     "destino": [
+      2,
+      61
+     ],
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #10",
+     "dec": "SEM",
+     "melhor": "f1p2 #3",
+     "d1": 0.871,
+     "margem": 1.126,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #11",
+     "dec": "SEM",
+     "melhor": "f2p1 #16",
+     "d1": 1.258,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #12",
+     "dec": "SEM",
+     "melhor": "f1p2 #3",
+     "d1": 1.095,
+     "margem": 1.05,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #13",
+     "dec": "SEM",
+     "melhor": "f1p1 #9",
+     "d1": 1.117,
+     "margem": 1.335,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #14",
+     "dec": "SEM",
+     "melhor": "f2p1 #19",
+     "d1": 0.927,
+     "margem": 1.145,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #15",
+     "dec": "SEM",
+     "melhor": "BE(2,5)",
+     "d1": 1.043,
+     "margem": 1.013,
+     "destino": [
+      2,
+      60
+     ],
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #16",
+     "dec": "SEM",
+     "melhor": "f1p2 #15",
+     "d1": 0.824,
+     "margem": 1.364,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #17",
+     "dec": "SEM",
+     "melhor": "f2p2 #5",
+     "d1": 1.168,
+     "margem": 1.012,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #18",
+     "dec": "SEM",
+     "melhor": "BE(3,2)",
+     "d1": 1.756,
+     "margem": null,
+     "destino": [
+      3,
+      63
+     ],
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #19",
+     "dec": "SEM",
+     "melhor": "f1p2 #9",
+     "d1": 1.307,
+     "margem": 1.094,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #20",
+     "dec": "SEM",
+     "melhor": "f2p2 #5",
+     "d1": 1.007,
+     "margem": 1.051,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #21",
+     "dec": "SEM",
+     "melhor": "f2p1 #35",
+     "d1": 0.846,
+     "margem": 1.289,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #22",
+     "dec": "SEM",
+     "melhor": "BD(6,3)",
+     "d1": 0.8,
+     "margem": 1.201,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #23",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #24",
+     "dec": "SEM",
+     "melhor": "f2p1 #10",
+     "d1": 0.971,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #25",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #26",
+     "dec": "SEM",
+     "melhor": "f1p1 #28",
+     "d1": 0.824,
+     "margem": 1.251,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #27",
+     "dec": "SEM",
+     "melhor": "f2p1 #37",
+     "d1": 0.651,
+     "margem": 1.444,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #28",
+     "dec": "SEM",
+     "melhor": "f1p1 #26",
+     "d1": 0.824,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #29",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #30",
+     "dec": "SEM",
+     "melhor": "f1p1 #22",
+     "d1": 0.961,
+     "margem": 1.047,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #31",
+     "dec": "SEM",
+     "melhor": "BE(3,7)",
+     "d1": 1.155,
+     "margem": 1.022,
+     "destino": [
+      3,
+      58
+     ],
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #32",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #33",
+     "dec": "SEM",
+     "melhor": "f1p2 #3",
+     "d1": 0.993,
+     "margem": 1.187,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #34",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p1 #35",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #1",
+     "dec": "SEM",
+     "melhor": "BD(6,4)",
+     "d1": 1.05,
+     "margem": 1.451,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #2",
+     "dec": "SEM",
+     "melhor": "f2p1 #23",
+     "d1": 0.867,
+     "margem": 1.195,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #3",
+     "dec": "SEM",
+     "melhor": "f1p1 #10",
+     "d1": 0.871,
+     "margem": 1.141,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #4",
+     "dec": "SEM",
+     "melhor": "BD(3,5)",
+     "d1": 1.186,
+     "margem": 1.057,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #5",
+     "dec": "SEM",
+     "melhor": "f1p2 #9",
+     "d1": 1.0,
+     "margem": 1.301,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #6",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #7",
+     "dec": "SEM",
+     "melhor": "f2p2 #5",
+     "d1": 1.18,
+     "margem": 1.019,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #8",
+     "dec": "SEM",
+     "melhor": "f2p1 #37",
+     "d1": 1.304,
+     "margem": 1.199,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #9",
+     "dec": "SEM",
+     "melhor": "BE(4,5)",
+     "d1": 0.865,
+     "margem": 1.156,
+     "destino": [
+      4,
+      60
+     ],
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #10",
+     "dec": "SEM",
+     "melhor": "f2p1 #11",
+     "d1": 1.779,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #11",
+     "dec": "SEM",
+     "melhor": "f2p1 #5",
+     "d1": 1.723,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #12",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #13",
+     "dec": "SEM",
+     "melhor": "f1p1 #17",
+     "d1": 1.297,
+     "margem": 1.084,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #14",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f1p2 #15",
+     "dec": "SEM",
+     "melhor": "f1p1 #16",
+     "d1": 0.824,
+     "margem": 1.484,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #1",
+     "dec": "SEM",
+     "melhor": "BE(3,4)",
+     "d1": 1.15,
+     "margem": 1.32,
+     "destino": [
+      3,
+      61
+     ],
+     "mutuo": true
+    },
+    {
+     "peca": "f2p1 #2",
+     "dec": "SEM",
+     "melhor": "f2p2 #4",
+     "d1": 1.058,
+     "margem": 1.159,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #3",
+     "dec": "SEM",
+     "melhor": "f2p1 #2",
+     "d1": 1.226,
+     "margem": 1.097,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #4",
+     "dec": "ACEITE",
+     "melhor": "BE(2,4)",
+     "d1": 0.408,
+     "margem": 3.635,
+     "destino": [
+      2,
+      61
+     ],
+     "mutuo": true
+    },
+    {
+     "peca": "f2p1 #5",
+     "dec": "SEM",
+     "melhor": "f2p1 #31",
+     "d1": 1.422,
+     "margem": 1.212,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #6",
+     "dec": "SEM",
+     "melhor": "f2p1 #27",
+     "d1": 1.087,
+     "margem": 1.121,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #7",
+     "dec": "SEM",
+     "melhor": "f1p1 #14",
+     "d1": 1.318,
+     "margem": 1.062,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #8",
+     "dec": "SEM",
+     "melhor": "f1p1 #15",
+     "d1": 1.094,
+     "margem": 1.253,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #9",
+     "dec": "SEM",
+     "melhor": "BE(2,5)",
+     "d1": 0.965,
+     "margem": 1.095,
+     "destino": [
+      2,
+      60
+     ],
+     "mutuo": true
+    },
+    {
+     "peca": "f2p1 #10",
+     "dec": "SEM",
+     "melhor": "f1p1 #24",
+     "d1": 0.971,
+     "margem": 1.206,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #11",
+     "dec": "SEM",
+     "melhor": "f1p1 #26",
+     "d1": 1.365,
+     "margem": 1.067,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #12",
+     "dec": "SEM",
+     "melhor": "f1p1 #26",
+     "d1": 1.031,
+     "margem": 1.392,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #13",
+     "dec": "SEM",
+     "melhor": "f2p1 #30",
+     "d1": 1.607,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #14",
+     "dec": "SEM",
+     "melhor": "f2p1 #32",
+     "d1": 1.091,
+     "margem": 1.053,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #15",
+     "dec": "SEM",
+     "melhor": "f1p1 #5",
+     "d1": 0.987,
+     "margem": 1.06,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #16",
+     "dec": "SEM",
+     "melhor": "f1p1 #11",
+     "d1": 1.258,
+     "margem": 1.024,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #17",
+     "dec": "SEM",
+     "melhor": "BE(5,4)",
+     "d1": 0.806,
+     "margem": 1.051,
+     "destino": [
+      5,
+      61
+     ],
+     "mutuo": true
+    },
+    {
+     "peca": "f2p1 #18",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #19",
+     "dec": "SEM",
+     "melhor": "f1p1 #14",
+     "d1": 0.927,
+     "margem": 1.178,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #20",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #21",
+     "dec": "SEM",
+     "melhor": "f2p1 #19",
+     "d1": 1.211,
+     "margem": 1.027,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #22",
+     "dec": "SEM",
+     "melhor": "f1p1 #2",
+     "d1": 1.065,
+     "margem": 1.146,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #23",
+     "dec": "SEM",
+     "melhor": "f1p2 #2",
+     "d1": 0.867,
+     "margem": 1.084,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #24",
+     "dec": "SEM",
+     "melhor": "f2p1 #28",
+     "d1": 2.023,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #25",
+     "dec": "SEM",
+     "melhor": "BE(2,5)",
+     "d1": 1.366,
+     "margem": 1.057,
+     "destino": [
+      2,
+      60
+     ],
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #26",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #27",
+     "dec": "SEM",
+     "melhor": "f2p1 #6",
+     "d1": 1.087,
+     "margem": 1.087,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #28",
+     "dec": "SEM",
+     "melhor": "f2p1 #24",
+     "d1": 2.023,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #29",
+     "dec": "SEM",
+     "melhor": "f1p1 #15",
+     "d1": 1.206,
+     "margem": 1.136,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #30",
+     "dec": "SEM",
+     "melhor": "f2p1 #13",
+     "d1": 1.607,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #31",
+     "dec": "SEM",
+     "melhor": "f1p1 #27",
+     "d1": 1.243,
+     "margem": 1.144,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #32",
+     "dec": "SEM",
+     "melhor": "f2p1 #14",
+     "d1": 1.091,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #33",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #34",
+     "dec": "SEM",
+     "melhor": "f2p2 #8",
+     "d1": 1.228,
+     "margem": 1.518,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #35",
+     "dec": "SEM",
+     "melhor": "f1p1 #21",
+     "d1": 0.846,
+     "margem": 1.159,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #36",
+     "dec": "SEM",
+     "melhor": "f1p1 #14",
+     "d1": 1.086,
+     "margem": 1.337,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #37",
+     "dec": "SEM",
+     "melhor": "f1p1 #27",
+     "d1": 0.651,
+     "margem": 1.738,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #38",
+     "dec": "SEM",
+     "melhor": "BD(4,6)",
+     "d1": 1.273,
+     "margem": 1.172,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p1 #39",
+     "dec": "SEM",
+     "melhor": "BE(3,7)",
+     "d1": 0.944,
+     "margem": 1.16,
+     "destino": [
+      3,
+      58
+     ],
+     "mutuo": true
+    },
+    {
+     "peca": "f2p1 #40",
+     "dec": "SEM",
+     "melhor": "BD(5,4)",
+     "d1": 1.132,
+     "margem": 1.034,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p2 #1",
+     "dec": "SEM",
+     "melhor": "f2p1 #35",
+     "d1": 1.197,
+     "margem": 1.335,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p2 #2",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p2 #3",
+     "dec": "SEM",
+     "melhor": "BD(2,5)",
+     "d1": 1.222,
+     "margem": 1.329,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p2 #4",
+     "dec": "SEM",
+     "melhor": "BE(4,5)",
+     "d1": 0.85,
+     "margem": 1.245,
+     "destino": [
+      4,
+      60
+     ],
+     "mutuo": true
+    },
+    {
+     "peca": "f2p2 #5",
+     "dec": "SEM",
+     "melhor": "f1p1 #20",
+     "d1": 1.007,
+     "margem": 1.16,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p2 #6",
+     "dec": "SEM",
+     "melhor": null,
+     "d1": null,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p2 #7",
+     "dec": "SEM",
+     "melhor": "f2p1 #14",
+     "d1": 1.149,
+     "margem": null,
+     "destino": null,
+     "mutuo": false
+    },
+    {
+     "peca": "f2p2 #8",
+     "dec": "SEM",
+     "melhor": "f2p1 #34",
+     "d1": 1.228,
+     "margem": 1.045,
+     "destino": null,
+     "mutuo": false
+    }
+   ]
+  },
+  "pares": {
+   "n_pares": 17205,
+   "por_relacao_GT": {
+    "neg": 10472,
+    "BExceu": 1960,
+    "ceuceu": 4753,
+    "pos": 20
+   },
+   "decisoes_por_relacao": {
+    "BExceu": {
+     "ACEITE": 1,
+     "AMBÍGUA": 1
+    },
+    "pos": {
+     "ACEITE": 17
+    },
+    "neg": {
+     "AMBÍGUA": 1
+    }
+   },
+   "esym": [
+    {
+     "A1": "A1(0,0)",
+     "B2": "B2(0,4)",
+     "d": 0.329,
+     "passa_1_2": true,
+     "margin": null,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(0,1)",
+     "B2": "B2(0,3)",
+     "d": 0.252,
+     "passa_1_2": true,
+     "margin": 4.766,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(0,2)",
+     "B2": "B2(0,2)",
+     "d": 0.158,
+     "passa_1_2": true,
+     "margin": null,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(0,3)",
+     "B2": "B2(0,1)",
+     "d": 0.266,
+     "passa_1_2": true,
+     "margin": 3.089,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(0,4)",
+     "B2": "B2(0,0)",
+     "d": 0.279,
+     "passa_1_2": true,
+     "margin": 2.407,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(1,0)",
+     "B2": "B2(1,4)",
+     "d": 0.423,
+     "passa_1_2": true,
+     "margin": 2.025,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(1,1)",
+     "B2": "B2(1,3)",
+     "d": 0.321,
+     "passa_1_2": true,
+     "margin": 1.87,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(1,2)",
+     "B2": "B2(1,2)",
+     "d": 0.348,
+     "passa_1_2": true,
+     "margin": 2.317,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(1,3)",
+     "B2": "B2(1,1)",
+     "d": 0.235,
+     "passa_1_2": false,
+     "margin": 2.861,
+     "dec": "SEM"
+    },
+    {
+     "A1": "A1(1,4)",
+     "B2": "B2(1,0)",
+     "d": 0.401,
+     "passa_1_2": true,
+     "margin": 2.86,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(2,0)",
+     "B2": "B2(2,4)",
+     "d": 0.242,
+     "passa_1_2": true,
+     "margin": null,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(2,1)",
+     "B2": "B2(2,3)",
+     "d": 0.371,
+     "passa_1_2": true,
+     "margin": null,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(2,2)",
+     "B2": "B2(2,2)",
+     "d": 0.465,
+     "passa_1_2": true,
+     "margin": 1.669,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(2,3)",
+     "B2": "B2(2,1)",
+     "d": 0.377,
+     "passa_1_2": false,
+     "margin": null,
+     "dec": "SEM"
+    },
+    {
+     "A1": "A1(2,4)",
+     "B2": "B2(2,0)",
+     "d": 0.369,
+     "passa_1_2": true,
+     "margin": 1.996,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(3,0)",
+     "B2": "B2(3,4)",
+     "d": 0.26,
+     "passa_1_2": true,
+     "margin": 4.253,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(3,1)",
+     "B2": "B2(3,3)",
+     "d": 0.309,
+     "passa_1_2": true,
+     "margin": 2.702,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(3,2)",
+     "B2": "B2(3,2)",
+     "d": 0.263,
+     "passa_1_2": true,
+     "margin": 3.065,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(3,3)",
+     "B2": "B2(3,1)",
+     "d": 0.298,
+     "passa_1_2": true,
+     "margin": 2.011,
+     "dec": "ACEITE"
+    },
+    {
+     "A1": "A1(3,4)",
+     "B2": "B2(3,0)",
+     "d": 0.223,
+     "passa_1_2": false,
+     "margin": 4.996,
+     "dec": "SEM"
+    }
+   ],
+   "aceites": [
+    {
+     "a": "BE(2,4)",
+     "b": "f2p1 #4",
+     "d": 0.408,
+     "margem": 2.395,
+     "rel": "BExceu"
+    },
+    {
+     "a": "A1(0,0)",
+     "b": "B2(0,4)",
+     "d": 0.329,
+     "margem": null,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(0,1)",
+     "b": "B2(0,3)",
+     "d": 0.252,
+     "margem": 4.766,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(0,2)",
+     "b": "B2(0,2)",
+     "d": 0.158,
+     "margem": null,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(0,3)",
+     "b": "B2(0,1)",
+     "d": 0.266,
+     "margem": 3.089,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(0,4)",
+     "b": "B2(0,0)",
+     "d": 0.279,
+     "margem": 2.407,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(1,0)",
+     "b": "B2(1,4)",
+     "d": 0.423,
+     "margem": 2.025,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(1,1)",
+     "b": "B2(1,3)",
+     "d": 0.321,
+     "margem": 1.87,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(1,2)",
+     "b": "B2(1,2)",
+     "d": 0.348,
+     "margem": 2.317,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(1,4)",
+     "b": "B2(1,0)",
+     "d": 0.401,
+     "margem": 2.86,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(2,0)",
+     "b": "B2(2,4)",
+     "d": 0.242,
+     "margem": null,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(2,1)",
+     "b": "B2(2,3)",
+     "d": 0.371,
+     "margem": null,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(2,2)",
+     "b": "B2(2,2)",
+     "d": 0.465,
+     "margem": 1.669,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(2,4)",
+     "b": "B2(2,0)",
+     "d": 0.369,
+     "margem": 1.996,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(3,0)",
+     "b": "B2(3,4)",
+     "d": 0.26,
+     "margem": 4.253,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(3,1)",
+     "b": "B2(3,3)",
+     "d": 0.309,
+     "margem": 2.702,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(3,2)",
+     "b": "B2(3,2)",
+     "d": 0.263,
+     "margem": 3.065,
+     "rel": "pos"
+    },
+    {
+     "a": "A1(3,3)",
+     "b": "B2(3,1)",
+     "d": 0.298,
+     "margem": 2.011,
+     "rel": "pos"
+    }
+   ],
+   "ambiguas": [
+    {
+     "a": "BE(5,5)",
+     "b": "f1p1 #6",
+     "d": 0.539,
+     "margem": null,
+     "rel": "BExceu"
+    },
+    {
+     "a": "A1(3,3)",
+     "b": "B2(1,3)",
+     "d": 0.6,
+     "margem": 0.497,
+     "rel": "neg"
+    }
+   ]
+  },
+  "sensibilidade_cordas": {
+   "1.0": {
+    "pares": {
+     "BExceu": {
+      "ACEITE": 1,
+      "AMBÍGUA": 1
+     },
+     "pos": {
+      "ACEITE": 17
+     },
+     "neg": {
+      "AMBÍGUA": 1
+     }
+    },
+    "BE": {
+     "ACEITE": 1,
+     "AMBÍGUA": 1,
+     "SEM": 18
+    },
+    "BE_propostas": [
+     "BE(2,4)->f2p1 #4 ACEITE 0.408",
+     "BE(5,5)->f1p1 #6 AMBÍGUA 0.539"
+    ]
+   },
+   "1.5": {
+    "pares": {
+     "BExceu": {
+      "ACEITE": 1,
+      "AMBÍGUA": 1
+     },
+     "ceuceu": {
+      "AMBÍGUA": 1
+     },
+     "pos": {
+      "ACEITE": 18
+     },
+     "neg": {
+      "AMBÍGUA": 1
+     }
+    },
+    "BE": {
+     "ACEITE": 1,
+     "AMBÍGUA": 1,
+     "SEM": 18
+    },
+    "BE_propostas": [
+     "BE(2,4)->f2p1 #4 ACEITE 0.408",
+     "BE(5,5)->f1p1 #6 AMBÍGUA 0.539"
+    ]
+   },
+   "2.0": {
+    "pares": {
+     "BExceu": {
+      "ACEITE": 1,
+      "AMBÍGUA": 1
+     },
+     "ceuceu": {
+      "AMBÍGUA": 1
+     },
+     "pos": {
+      "ACEITE": 20
+     },
+     "neg": {
+      "AMBÍGUA": 1
+     }
+    },
+    "BE": {
+     "ACEITE": 1,
+     "AMBÍGUA": 1,
+     "SEM": 18
+    },
+    "BE_propostas": [
+     "BE(2,4)->f2p1 #4 ACEITE 0.408",
+     "BE(5,5)->f1p1 #6 AMBÍGUA 0.539"
+    ]
+   },
+   "None": {
+    "pares": {
+     "BExceu": {
+      "ACEITE": 1,
+      "AMBÍGUA": 1
+     },
+     "ceuceu": {
+      "AMBÍGUA": 2
+     },
+     "pos": {
+      "ACEITE": 20
+     },
+     "neg": {
+      "AMBÍGUA": 1
+     }
+    },
+    "BE": {
+     "ACEITE": 1,
+     "AMBÍGUA": 1,
+     "SEM": 18
+    },
+    "BE_propostas": [
+     "BE(2,4)->f2p1 #4 ACEITE 0.408",
+     "BE(5,5)->f1p1 #6 AMBÍGUA 0.539"
+    ]
+   }
+  },
+  "localizacao": {
+   "esym": [
+    {
+     "top3": [
+      [
+       1,
+       6,
+       30.733,
+       2
+      ],
+      [
+       1,
+       5,
+       30.769,
+       1
+      ],
+      [
+       1,
+       12,
+       30.877,
+       2
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       6,
+       30.733,
+       2
+      ],
+      [
+       1,
+       5,
+       30.769,
+       1
+      ],
+      [
+       1,
+       12,
+       30.877,
+       2
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      5
+     ],
+     "score_gt": 30.769,
+     "rank_3008": 1,
+     "rank_compat": 1,
+     "g_gt": 1,
+     "A1": "A1(0,0)",
+     "B2": "B2(0,4)"
+    },
+    {
+     "top3": [
+      [
+       3,
+       6,
+       29.357,
+       3
+      ],
+      [
+       3,
+       9,
+       29.627,
+       3
+      ],
+      [
+       2,
+       3,
+       29.964,
+       3
+      ]
+     ],
+     "top3_compat": [
+      [
+       3,
+       1,
+       30.097,
+       0
+      ],
+      [
+       1,
+       9,
+       30.435,
+       3
+      ],
+      [
+       1,
+       10,
+       30.492,
+       3
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      6
+     ],
+     "score_gt": 32.824,
+     "rank_3008": 44,
+     "rank_compat": 13,
+     "g_gt": 3,
+     "A1": "A1(0,1)",
+     "B2": "B2(0,3)"
+    },
+    {
+     "top3": [
+      [
+       4,
+       3,
+       27.674,
+       3
+      ],
+      [
+       3,
+       5,
+       27.897,
+       0
+      ],
+      [
+       4,
+       4,
+       28.56,
+       3
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       11,
+       28.771,
+       2
+      ],
+      [
+       1,
+       13,
+       28.942,
+       2
+      ],
+      [
+       1,
+       15,
+       29.007,
+       2
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      7
+     ],
+     "score_gt": 30.535,
+     "rank_3008": 34,
+     "rank_compat": 9,
+     "g_gt": 3,
+     "A1": "A1(0,2)",
+     "B2": "B2(0,2)"
+    },
+    {
+     "top3": [
+      [
+       4,
+       11,
+       29.854,
+       0
+      ],
+      [
+       4,
+       9,
+       30.28,
+       0
+      ],
+      [
+       4,
+       10,
+       31.185,
+       2
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       12,
+       33.563,
+       0
+      ],
+      [
+       1,
+       11,
+       34.579,
+       1
+      ],
+      [
+       1,
+       5,
+       34.786,
+       1
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      8
+     ],
+     "score_gt": 42.771,
+     "rank_3008": 73,
+     "rank_compat": 21,
+     "g_gt": 2,
+     "A1": "A1(0,3)",
+     "B2": "B2(0,1)"
+    },
+    {
+     "top3": [
+      [
+       1,
+       16,
+       31.411,
+       1
+      ],
+      [
+       4,
+       4,
+       31.649,
+       2
+      ],
+      [
+       1,
+       17,
+       32.061,
+       2
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       16,
+       31.411,
+       1
+      ],
+      [
+       1,
+       17,
+       32.061,
+       2
+      ],
+      [
+       1,
+       9,
+       32.991,
+       1
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      9
+     ],
+     "score_gt": 32.991,
+     "rank_3008": 5,
+     "rank_compat": 2,
+     "g_gt": 1,
+     "A1": "A1(0,4)",
+     "B2": "B2(0,0)"
+    },
+    {
+     "top3": [
+      [
+       4,
+       3,
+       29.476,
+       0
+      ],
+      [
+       4,
+       6,
+       30.203,
+       1
+      ],
+      [
+       4,
+       4,
+       30.355,
+       0
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       13,
+       30.54,
+       1
+      ],
+      [
+       1,
+       15,
+       31.007,
+       1
+      ],
+      [
+       1,
+       17,
+       31.858,
+       0
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      10
+     ],
+     "score_gt": 32.122,
+     "rank_3008": 27,
+     "rank_compat": 3,
+     "g_gt": 2,
+     "A1": "A1(1,0)",
+     "B2": "B2(1,4)"
+    },
+    {
+     "top3": [
+      [
+       1,
+       13,
+       29.803,
+       2
+      ],
+      [
+       3,
+       12,
+       29.833,
+       2
+      ],
+      [
+       4,
+       6,
+       30.065,
+       2
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       13,
+       29.803,
+       2
+      ],
+      [
+       1,
+       12,
+       30.571,
+       2
+      ],
+      [
+       1,
+       16,
+       30.908,
+       2
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      11
+     ],
+     "score_gt": 31.395,
+     "rank_3008": 26,
+     "rank_compat": 4,
+     "g_gt": 2,
+     "A1": "A1(1,1)",
+     "B2": "B2(1,3)"
+    },
+    {
+     "top3": [
+      [
+       4,
+       9,
+       25.351,
+       0
+      ],
+      [
+       4,
+       10,
+       25.376,
+       0
+      ],
+      [
+       3,
+       12,
+       25.392,
+       0
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       12,
+       26.745,
+       2
+      ],
+      [
+       1,
+       11,
+       27.929,
+       3
+      ],
+      [
+       1,
+       16,
+       28.422,
+       3
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      12
+     ],
+     "score_gt": 26.745,
+     "rank_3008": 14,
+     "rank_compat": 0,
+     "g_gt": 2,
+     "A1": "A1(1,2)",
+     "B2": "B2(1,2)"
+    },
+    {
+     "top3": [
+      [
+       3,
+       12,
+       28.535,
+       0
+      ],
+      [
+       3,
+       11,
+       28.599,
+       0
+      ],
+      [
+       3,
+       15,
+       28.654,
+       0
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       16,
+       30.185,
+       1
+      ],
+      [
+       1,
+       12,
+       30.261,
+       2
+      ],
+      [
+       1,
+       13,
+       30.353,
+       2
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      13
+     ],
+     "score_gt": 30.353,
+     "rank_3008": 22,
+     "rank_compat": 2,
+     "g_gt": 2,
+     "A1": "A1(1,3)",
+     "B2": "B2(1,1)"
+    },
+    {
+     "top3": [
+      [
+       3,
+       13,
+       28.73,
+       0
+      ],
+      [
+       3,
+       14,
+       28.902,
+       0
+      ],
+      [
+       3,
+       12,
+       29.178,
+       0
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       16,
+       29.531,
+       1
+      ],
+      [
+       1,
+       10,
+       30.713,
+       1
+      ],
+      [
+       1,
+       13,
+       30.931,
+       3
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      14
+     ],
+     "score_gt": 31.708,
+     "rank_3008": 29,
+     "rank_compat": 5,
+     "g_gt": 1,
+     "A1": "A1(1,4)",
+     "B2": "B2(1,0)"
+    },
+    {
+     "top3": [
+      [
+       4,
+       12,
+       27.958,
+       3
+      ],
+      [
+       4,
+       13,
+       28.196,
+       3
+      ],
+      [
+       4,
+       10,
+       28.279,
+       3
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       16,
+       30.113,
+       2
+      ],
+      [
+       1,
+       12,
+       30.336,
+       2
+      ],
+      [
+       1,
+       11,
+       31.226,
+       2
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      15
+     ],
+     "score_gt": 32.628,
+     "rank_3008": 42,
+     "rank_compat": 5,
+     "g_gt": 3,
+     "A1": "A1(2,0)",
+     "B2": "B2(2,4)"
+    },
+    {
+     "top3": [
+      [
+       4,
+       11,
+       26.438,
+       0
+      ],
+      [
+       4,
+       10,
+       27.271,
+       1
+      ],
+      [
+       4,
+       9,
+       27.634,
+       0
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       12,
+       29.529,
+       2
+      ],
+      [
+       1,
+       32,
+       31.17,
+       0
+      ],
+      [
+       1,
+       11,
+       31.353,
+       1
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      16
+     ],
+     "score_gt": 32.072,
+     "rank_3008": 26,
+     "rank_compat": 3,
+     "g_gt": 3,
+     "A1": "A1(2,1)",
+     "B2": "B2(2,3)"
+    },
+    {
+     "top3": [
+      [
+       4,
+       8,
+       27.752,
+       2
+      ],
+      [
+       3,
+       13,
+       28.05,
+       3
+      ],
+      [
+       3,
+       15,
+       28.346,
+       3
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       13,
+       29.101,
+       2
+      ],
+      [
+       1,
+       15,
+       29.678,
+       2
+      ],
+      [
+       1,
+       16,
+       30.52,
+       0
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      17
+     ],
+     "score_gt": 31.513,
+     "rank_3008": 40,
+     "rank_compat": 3,
+     "g_gt": 0,
+     "A1": "A1(2,2)",
+     "B2": "B2(2,2)"
+    },
+    {
+     "top3": [
+      [
+       2,
+       17,
+       27.715,
+       1
+      ],
+      [
+       3,
+       13,
+       27.745,
+       1
+      ],
+      [
+       3,
+       12,
+       27.816,
+       1
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       15,
+       28.585,
+       1
+      ],
+      [
+       1,
+       16,
+       28.743,
+       3
+      ],
+      [
+       1,
+       13,
+       29.737,
+       1
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      18
+     ],
+     "score_gt": 30.868,
+     "rank_3008": 44,
+     "rank_compat": 7,
+     "g_gt": 1,
+     "A1": "A1(2,3)",
+     "B2": "B2(2,1)"
+    },
+    {
+     "top3": [
+      [
+       2,
+       19,
+       29.334,
+       2
+      ],
+      [
+       2,
+       25,
+       29.786,
+       1
+      ],
+      [
+       2,
+       18,
+       30.299,
+       3
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       18,
+       30.608,
+       2
+      ],
+      [
+       1,
+       14,
+       31.038,
+       2
+      ],
+      [
+       1,
+       28,
+       31.063,
+       2
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      19
+     ],
+     "score_gt": 31.512,
+     "rank_3008": 14,
+     "rank_compat": 4,
+     "g_gt": 2,
+     "A1": "A1(2,4)",
+     "B2": "B2(2,0)"
+    },
+    {
+     "top3": [
+      [
+       2,
+       20,
+       28.413,
+       3
+      ],
+      [
+       2,
+       18,
+       28.613,
+       1
+      ],
+      [
+       2,
+       19,
+       28.724,
+       2
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       19,
+       29.839,
+       3
+      ],
+      [
+       1,
+       18,
+       30.019,
+       1
+      ],
+      [
+       1,
+       23,
+       30.142,
+       2
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      20
+     ],
+     "score_gt": 30.753,
+     "rank_3008": 25,
+     "rank_compat": 7,
+     "g_gt": 1,
+     "A1": "A1(3,0)",
+     "B2": "B2(3,4)"
+    },
+    {
+     "top3": [
+      [
+       3,
+       20,
+       28.41,
+       2
+      ],
+      [
+       3,
+       19,
+       28.536,
+       2
+      ],
+      [
+       3,
+       13,
+       28.814,
+       1
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       29,
+       29.029,
+       0
+      ],
+      [
+       1,
+       25,
+       29.167,
+       2
+      ],
+      [
+       1,
+       15,
+       29.774,
+       1
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      21
+     ],
+     "score_gt": 32.424,
+     "rank_3008": 73,
+     "rank_compat": 22,
+     "g_gt": 0,
+     "A1": "A1(3,1)",
+     "B2": "B2(3,3)"
+    },
+    {
+     "top3": [
+      [
+       4,
+       10,
+       26.986,
+       1
+      ],
+      [
+       4,
+       8,
+       28.341,
+       1
+      ],
+      [
+       4,
+       12,
+       28.363,
+       0
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       31,
+       29.621,
+       0
+      ],
+      [
+       1,
+       32,
+       30.311,
+       1
+      ],
+      [
+       1,
+       25,
+       30.63,
+       1
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      22
+     ],
+     "score_gt": 32.259,
+     "rank_3008": 37,
+     "rank_compat": 7,
+     "g_gt": 1,
+     "A1": "A1(3,2)",
+     "B2": "B2(3,2)"
+    },
+    {
+     "top3": [
+      [
+       3,
+       19,
+       30.486,
+       2
+      ],
+      [
+       3,
+       18,
+       31.244,
+       2
+      ],
+      [
+       3,
+       17,
+       31.266,
+       2
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       31,
+       31.795,
+       0
+      ],
+      [
+       1,
+       25,
+       32.171,
+       2
+      ],
+      [
+       1,
+       23,
+       32.557,
+       2
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      23
+     ],
+     "score_gt": 32.557,
+     "rank_3008": 13,
+     "rank_compat": 2,
+     "g_gt": 2,
+     "A1": "A1(3,3)",
+     "B2": "B2(3,1)"
+    },
+    {
+     "top3": [
+      [
+       1,
+       31,
+       29.059,
+       1
+      ],
+      [
+       1,
+       24,
+       29.459,
+       1
+      ],
+      [
+       2,
+       25,
+       29.732,
+       0
+      ]
+     ],
+     "top3_compat": [
+      [
+       1,
+       31,
+       29.059,
+       1
+      ],
+      [
+       1,
+       24,
+       29.459,
+       1
+      ],
+      [
+       1,
+       28,
+       29.896,
+       1
+      ]
+     ],
+     "n_compat": 214,
+     "gt": [
+      1,
+      24
+     ],
+     "score_gt": 29.459,
+     "rank_3008": 1,
+     "rank_compat": 1,
+     "g_gt": 1,
+     "A1": "A1(3,4)",
+     "B2": "B2(3,0)"
+    }
+   ],
+   "esym_resumo": {
+    "rank_3008": {
+     "n": 20,
+     "median": 26.5,
+     "p90": 46.9,
+     "max": 73.0,
+     "min": 1.0,
+     "mean": 29.5,
+     "p95": 73.0
+    },
+    "top1": 0,
+    "top10": 3,
+    "rank_borda": {
+     "n": 20,
+     "median": 4.0,
+     "p90": 13.8,
+     "max": 22.0,
+     "min": 0.0,
+     "mean": 6.05,
+     "p95": 21.05
+    },
+    "top1_borda": 1,
+    "top10_borda": 17,
+    "n_borda": 214
+   },
+   "BE_sozinha": [
+    {
+     "BE": "BE(2,2)",
+     "cell": [
+      46,
+      2
+     ],
+     "rank_3008": 490,
+     "rank_interior": 412
+    },
+    {
+     "BE": "BE(2,3)",
+     "cell": [
+      46,
+      3
+     ],
+     "rank_3008": 454,
+     "rank_interior": 383
+    },
+    {
+     "BE": "BE(2,4)",
+     "cell": [
+      46,
+      4
+     ],
+     "rank_3008": 258,
+     "rank_interior": 228
+    },
+    {
+     "BE": "BE(2,5)",
+     "cell": [
+      46,
+      5
+     ],
+     "rank_3008": 255,
+     "rank_interior": 213
+    },
+    {
+     "BE": "BE(2,6)",
+     "cell": [
+      46,
+      6
+     ],
+     "rank_3008": 406,
+     "rank_interior": 352
+    },
+    {
+     "BE": "BE(2,7)",
+     "cell": [
+      46,
+      7
+     ],
+     "rank_3008": 711,
+     "rank_interior": 625
+    },
+    {
+     "BE": "BE(3,2)",
+     "cell": [
+      45,
+      2
+     ],
+     "rank_3008": 430,
+     "rank_interior": 367
+    },
+    {
+     "BE": "BE(3,3)",
+     "cell": [
+      45,
+      3
+     ],
+     "rank_3008": 408,
+     "rank_interior": 345
+    },
+    {
+     "BE": "BE(3,4)",
+     "cell": [
+      45,
+      4
+     ],
+     "rank_3008": 142,
+     "rank_interior": 138
+    },
+    {
+     "BE": "BE(3,5)",
+     "cell": [
+      45,
+      5
+     ],
+     "rank_3008": 415,
+     "rank_interior": 353
+    },
+    {
+     "BE": "BE(3,6)",
+     "cell": [
+      45,
+      6
+     ],
+     "rank_3008": 171,
+     "rank_interior": 155
+    },
+    {
+     "BE": "BE(3,7)",
+     "cell": [
+      45,
+      7
+     ],
+     "rank_3008": 84,
+     "rank_interior": 81
+    },
+    {
+     "BE": "BE(4,2)",
+     "cell": [
+      44,
+      2
+     ],
+     "rank_3008": 700,
+     "rank_interior": 612
+    },
+    {
+     "BE": "BE(4,3)",
+     "cell": [
+      44,
+      3
+     ],
+     "rank_3008": 933,
+     "rank_interior": 837
+    },
+    {
+     "BE": "BE(4,4)",
+     "cell": [
+      44,
+      4
+     ],
+     "rank_3008": 1193,
+     "rank_interior": 1087
+    },
+    {
+     "BE": "BE(4,5)",
+     "cell": [
+      44,
+      5
+     ],
+     "rank_3008": 730,
+     "rank_interior": 643
+    },
+    {
+     "BE": "BE(5,2)",
+     "cell": [
+      43,
+      2
+     ],
+     "rank_3008": 764,
+     "rank_interior": 720
+    },
+    {
+     "BE": "BE(5,3)",
+     "cell": [
+      43,
+      3
+     ],
+     "rank_3008": 460,
+     "rank_interior": 438
+    },
+    {
+     "BE": "BE(5,4)",
+     "cell": [
+      43,
+      4
+     ],
+     "rank_3008": 227,
+     "rank_interior": 217
+    },
+    {
+     "BE": "BE(5,5)",
+     "cell": [
+      43,
+      5
+     ],
+     "rank_3008": 429,
+     "rank_interior": 403
+    }
+   ],
+   "BE_sozinha_resumo": {
+    "rank_3008": {
+     "n": 20,
+     "median": 429.5,
+     "p90": 780.9,
+     "max": 1193.0,
+     "min": 84.0,
+     "mean": 483.0,
+     "p95": 946.0
+    },
+    "top1": 0,
+    "top10": 0
+   },
+   "pares_aceites": [
+    {
+     "top3": [
+      [
+       47,
+       4,
+       30.699,
+       1
+      ],
+      [
+       47,
+       1,
+       33.971,
+       2
+      ],
+      [
+       46,
+       2,
+       34.031,
+       0
+      ]
+     ],
+     "top3_compat": [
+      [
+       46,
+       2,
+       34.031,
+       0
+      ],
+      [
+       46,
+       4,
+       34.58,
+       1
+      ],
+      [
+       46,
+       3,
+       36.234,
+       2
+      ]
+     ],
+     "n_compat": 2790,
+     "gt": [
+      46,
+      4
+     ],
+     "score_gt": 34.58,
+     "rank_3008": 4,
+     "rank_compat": 1,
+     "g_gt": 1,
+     "a": "BE(2,4)",
+     "b": "f2p1 #4",
+     "d": 0.408,
+     "margin": 2.395,
+     "rel": "BExceu"
+    }
+   ],
+   "score": "RMS ΔE (filter2D) de a em X + b na gémea de X, mínimo em ±2 px e nas 4 rotações globais"
+  },
+  "segundos": 131.264,
+  "log": [
+   "[memória] cache C:/Users/Tiago/AppData/Local/Temp/claude/c--Users-Tiago-Desktop-puzzle-piece-finder/f748cb5c-95ce-4ca7-bb40-feccfde7cc64/scratchpad\\ereal2\\memoria.pkl (usar --force para refazer)",
+   "  (cache) [BE] segment_scan: 25 objetos, 20 peças isoladas, excluídos 5: #12 sem 4 cantos (fragmento da faixa em L); #17 a 0.0 mm de outra peça (faixa em L montada); #18 área 206 mm²; a 0.0 mm de outra peça (faixa em L montada); #23 a 0.0 mm de outra peça (faixa em L montada); #24 cluster; área 2410 mm²; a 0.2 mm de outra peça (faixa em L montada) (6.5 s)",
+   "  (cache) [BE] grelha verificada: filas (de baixo) [4, 4, 4, 4, 2, 2], colunas (da direita) [6, 6, 4, 4], x das colunas {1: 1880, 2: 1414, 3: 948, 4: 476}; 20 com 4 cantos e sem F; L* mediano por coluna {2: 48.6, 3: 56.2, 4: 57.0, 5: 25.4} (k=5 o mais baixo); áreas 346-473 mm²; menor distância entre peças 3.3 mm",
+   "  (cache) [céu f1p1] segment_scan 35 objetos; peças numeradas 35 (esperadas 35); na memória 35; excluídos: nenhum; menor distância entre peças 8.1 mm (6.5 s)",
+   "  (cache) [céu f1p2] segment_scan 15 objetos; peças numeradas 15 (esperadas 15); na memória 15; excluídos: nenhum; menor distância entre peças 12.2 mm (3.5 s)",
+   "  (cache) [céu f2p1] segment_scan 40 objetos; peças numeradas 40 (esperadas 42 -> NÃO BATE); na memória 40; excluídos: nenhum; menor distância entre peças 6.1 mm (7.1 s)",
+   "  (cache) [céu f2p2] segment_scan 8 objetos; peças numeradas 8 (esperadas 8); na memória 8; excluídos: nenhum; menor distância entre peças 18.0 mm (2.4 s)",
+   "  (cache)   (ereal) [soltas] segment_scan: 28 peças, excluídas 0 []; 2.3 s",
+   "  (cache)   (ereal) [soltas] grelha verificada: filas [5, 5, 5, 5, 4, 4], colunas x {1: 1890, 2: 1488, 3: 1086, 4: 682, 5: 295}; faixa do caminho na coluna k=6: cinzento [0.02, 0.085, 0.117, 0.205] (outras máx 0.024), preto em (6,2) 0.296 (outras máx 0.222)",
+   "[memória] 186 soltas: BE 20, céu 98 (numeradas 98), BD 28, E-sym 40 (4 cantos 40/40)",
+   "[forma] matrizes 186x186 (free + cordas) em 1.1 s; pares que passam classe+cordas 340 de 17205",
+   "[orientação E-sym] +phi: A1 F em cima 20/20, B2 F em baixo 20/20 (resíduo |θ| mediana 0.488°, máx 2.033°); -phi: B2 F em baixo 20/20 -> sinal usado +phi",
+   "[imagem E-sym] A1 na sua célula (F em cima): ΔE mediana 6.7, rotação prevista vence 0/20; B2 com a rotação prevista pela forma: ΔE mediana 21.5, vence 8/20",
+   "[imagem BE própria] BE na sua célula (relva) com rotação 90°: ΔE mediana 23.0, rotação prevista vence 7/20; resíduo de orientação máx 9.4°",
+   "[BE -> memória] forma: {'ACEITE': 1, 'AMBÍGUA': 1, 'SEM': 18}; origem da top-1 das ACEITE/AMBÍGUA {'ACEITE': {'ceu': 1}, 'AMBÍGUA': {'ceu': 1}}",
+   "[BE -> memória] forma+imagem: {'ACEITE': 1, 'AMBÍGUA': 1, 'SEM': 18}; propostas que a imagem muda 0; imagem contradiz 0",
+   "[imagem] (i) top-1 na célula certa vs nas 19 erradas: ΔE mediana 32.9 vs 37.9; rank da certa entre 20 = 0 em 3/20, mediana 9; (ii) céu x célula gémea: n=1960, mediana 27.6, p90 50.0; (iii) rotação prevista vence nas top-1: 9/20 (6.3 s)",
+   "   BE(2,2) -> gémea (2, 63): SEM     d1 1.448 margem 1.027 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 89.796 rank(i) 0 | top3: BE(4,4) 1.448 ΔE 31.8 res -2°, BD(5,7) 1.487 ΔE 36.1 res 3°, f1p1 #10 1.674 ΔE 20.5 res -1° | passam 5",
+   "   BE(2,3) -> gémea (2, 62): SEM     d1 1.953 margem None | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 97.959 rank(i) 0 | top3: BD(2,7) 1.953 ΔE 44.5 res -15° | passam 1",
+   "   BE(2,4) -> gémea (2, 61): ACEITE  d1 0.408 margem 2.395 | forma+imagem ACEITE f2p1 #4 (forma ACEITE e ΔE <= p90) | pct(ii) 1.02 rank(i) 2 | top3: f2p1 #4 0.408 ΔE 8.7 res -1°, f1p1 #9 0.976 ΔE 20.2 res 3° | passam 2",
+   "   BE(2,5) -> gémea (2, 60): SEM     d1 0.965 margem 1.081 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 73.469 rank(i) 16 | top3: f2p1 #9 0.965 ΔE 28.6 res -6°, f1p1 #15 1.043 ΔE 12.1 res 1°, BD(2,5) 1.218 ΔE 52.8 res 2° | passam 4",
+   "   BE(2,6) -> gémea (2, 59): SEM     d1 1.171 margem 1.009 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 21.429 rank(i) 0 | top3: f2p1 #19 1.171 ΔE 15.5 res -3°, f1p1 #17 1.182 ΔE 19.9 res -3°, BD(2,2) 1.210 ΔE 53.9 res -4° | passam 6",
+   "   BE(2,7) -> gémea (2, 58): SEM     d1 0.996 margem 1.089 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 100.0 rank(i) 5 | top3: BD(2,3) 0.996 ΔE 57.5 res -1°, f2p2 #4 1.084 ΔE 15.6 res -3°, BE(2,6) 1.211 ΔE 50.2 res 1° | passam 4",
+   "   BE(3,2) -> gémea (3, 63): SEM     d1 1.308 margem 1.343 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 83.673 rank(i) 4 | top3: BD(5,3) 1.308 ΔE 43.9 res -0°, f1p1 #18 1.756 ΔE 30.5 res 2° | passam 2",
+   "   BE(3,3) -> gémea (3, 62): SEM     d1 1.372 margem 1.071 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 96.939 rank(i) 9 | top3: BD(3,2) 1.372 ΔE 58.1 res 9°, BE(3,6) 1.469 ΔE 42.4 res -2°, BD(3,7) 1.494 ΔE 59.0 res 6° | passam 3",
+   "   BE(3,4) -> gémea (3, 61): SEM     d1 1.15 margem 1.293 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 43.878 rank(i) 9 | top3: f2p1 #1 1.150 ΔE 21.9 res -0°, f2p1 #21 1.487 ΔE 26.9 res -5° | passam 2",
+   "   BE(3,5) -> gémea (3, 60): SEM     d1 1.16 margem None | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 72.449 rank(i) 6 | top3: f1p1 #10 1.160 ΔE 33.8 res -4° | passam 1",
+   "   BE(3,6) -> gémea (3, 59): SEM     d1 1.088 margem 1.046 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 41.837 rank(i) 13 | top3: f2p1 #15 1.088 ΔE 24.6 res 4°, f2p1 #19 1.138 ΔE 28.7 res 5°, f2p2 #5 1.184 ΔE 39.3 res 5° | passam 7",
+   "   BE(3,7) -> gémea (3, 58): SEM     d1 0.944 margem 1.223 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 35.714 rank(i) 8 | top3: f2p1 #39 0.944 ΔE 22.5 res -2°, f1p1 #31 1.155 ΔE 14.4 res 1° | passam 2",
+   "   BE(4,2) -> gémea (4, 63): SEM     d1 1.45 margem 1.478 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 98.98 rank(i) 18 | top3: BE(5,2) 1.450 ΔE 69.3 res -4°, BE(4,4) 2.143 ΔE 46.5 res -3°, BE(2,2) 2.336 ΔE 53.5 res 1° | passam 3",
+   "   BE(4,3) -> gémea (4, 62): SEM     d1 1.291 margem None | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 95.918 rank(i) 17 | top3: BD(2,3) 1.291 ΔE 67.3 res -4° | passam 1",
+   "   BE(4,4) -> gémea (4, 61): SEM     d1 1.069 margem 1.245 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 87.755 rank(i) 13 | top3: f1p2 #3 1.069 ΔE 51.1 res 5°, BD(2,6) 1.331 ΔE 63.4 res 1°, BE(2,2) 1.448 ΔE 50.8 res 2° | passam 10",
+   "   BE(4,5) -> gémea (4, 60): SEM     d1 0.85 margem 1.018 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 18.367 rank(i) 12 | top3: f2p2 #4 0.850 ΔE 19.7 res -1°, f1p2 #9 0.865 ΔE 41.9 res 2° | passam 2",
+   "   BE(5,2) -> gémea (5, 63): SEM     d1 1.45 margem None | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 58.163 rank(i) 14 | top3: BE(4,2) 1.450 ΔE 41.2 res 4° | passam 1",
+   "   BE(5,3) -> gémea (5, 62): SEM     d1 1.048 margem 1.127 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 75.51 rank(i) 17 | top3: BD(5,7) 1.048 ΔE 53.8 res 4°, f2p1 #35 1.181 ΔE 55.4 res 2°, f1p1 #21 1.250 ΔE 18.3 res 3° | passam 4",
+   "   BE(5,4) -> gémea (5, 61): SEM     d1 0.806 margem 1.255 | forma+imagem SEM  (sem candidata com d <= tmax) | pct(ii) 31.633 rank(i) 16 | top3: f2p1 #17 0.806 ΔE 32.0 res 1°, f1p1 #27 1.011 ΔE 76.9 res -1°, f1p2 #2 1.091 ΔE 11.0 res -1° | passam 6",
+   "   BE(5,5) -> gémea (5, 60): AMBÍGUA d1 0.539 margem None | forma+imagem AMBÍGUA f1p1 #6 (forma AMBÍGUA, ΔE <= p90) | pct(ii) 1.02 rank(i) 4 | top3: f1p1 #6 0.539 ΔE 10.8 res 0° | passam 1",
+   "[céu -> memória] decisão x origem da melhor: {'SEM': {'ceu': 62, 'None': 16, 'BE': 12, 'BD': 6}, 'AMBÍGUA': {'BE': 1}, 'ACEITE': {'BE': 1}}; vizinhos mútuos com a BE que a escolheu: 7",
+   "   f1p1 #6 -> BE(5,5) AMBÍGUA d1 0.539 margem None destino (5, 60) (mútuo)",
+   "   f2p1 #4 -> BE(2,4) ACEITE d1 0.408 margem 3.635 destino (2, 61) (mútuo)",
+   "[pares] 17205 pares; por relação GT {'neg': 10472, 'BExceu': 1960, 'ceuceu': 4753, 'pos': 20}; ACEITE/AMBÍGUA por relação: {'BExceu': {'ACEITE': 1, 'AMBÍGUA': 1}, 'pos': {'ACEITE': 17}, 'neg': {'AMBÍGUA': 1}}",
+   "[pares] controlo E-sym: ACEITE 17/20, AMBÍGUA 0, passam 1-2 17/20, d mediana 0.303 máx 0.465, margem mín 1.669 mediana 2.702",
+   "   falso positivo (neg): A1(3,3) x B2(1,3) AMBÍGUA d 0.600 margem 0.50",
+   "[sensibilidade cordas] |ΔL| <= 1.0: pares {'BExceu': {'ACEITE': 1, 'AMBÍGUA': 1}, 'pos': {'ACEITE': 17}, 'neg': {'AMBÍGUA': 1}}; BE {'ACEITE': 1, 'AMBÍGUA': 1, 'SEM': 18} ['BE(2,4)->f2p1 #4 ACEITE 0.408', 'BE(5,5)->f1p1 #6 AMBÍGUA 0.539']",
+   "[sensibilidade cordas] |ΔL| <= 1.5: pares {'BExceu': {'ACEITE': 1, 'AMBÍGUA': 1}, 'ceuceu': {'AMBÍGUA': 1}, 'pos': {'ACEITE': 18}, 'neg': {'AMBÍGUA': 1}}; BE {'ACEITE': 1, 'AMBÍGUA': 1, 'SEM': 18} ['BE(2,4)->f2p1 #4 ACEITE 0.408', 'BE(5,5)->f1p1 #6 AMBÍGUA 0.539']",
+   "[sensibilidade cordas] |ΔL| <= 2.0: pares {'BExceu': {'ACEITE': 1, 'AMBÍGUA': 1}, 'ceuceu': {'AMBÍGUA': 1}, 'pos': {'ACEITE': 20}, 'neg': {'AMBÍGUA': 1}}; BE {'ACEITE': 1, 'AMBÍGUA': 1, 'SEM': 18} ['BE(2,4)->f2p1 #4 ACEITE 0.408', 'BE(5,5)->f1p1 #6 AMBÍGUA 0.539']",
+   "[sensibilidade cordas] |ΔL| <= None: pares {'BExceu': {'ACEITE': 1, 'AMBÍGUA': 1}, 'ceuceu': {'AMBÍGUA': 2}, 'pos': {'ACEITE': 20}, 'neg': {'AMBÍGUA': 1}}; BE {'ACEITE': 1, 'AMBÍGUA': 1, 'SEM': 18} ['BE(2,4)->f2p1 #4 ACEITE 0.408', 'BE(5,5)->f1p1 #6 AMBÍGUA 0.539']",
+   "[localização E-sym] rank da célula certa entre 3008: mediana 26, top-1 0/20, top-10 3/20; entre as 214 de borda: mediana 4, top-1 1/20, top-10 17/20 (80.5 s)",
+   "   A1(0,0) GT [1, 5]: rank 1/3008, 1/214 borda; top-3 [(1, 6, 30.733, 2), (1, 5, 30.769, 1), (1, 12, 30.877, 2)]",
+   "   A1(0,1) GT [1, 6]: rank 44/3008, 13/214 borda; top-3 [(3, 6, 29.357, 3), (3, 9, 29.627, 3), (2, 3, 29.964, 3)]",
+   "   A1(0,2) GT [1, 7]: rank 34/3008, 9/214 borda; top-3 [(4, 3, 27.674, 3), (3, 5, 27.897, 0), (4, 4, 28.56, 3)]",
+   "   A1(0,3) GT [1, 8]: rank 73/3008, 21/214 borda; top-3 [(4, 11, 29.854, 0), (4, 9, 30.28, 0), (4, 10, 31.185, 2)]",
+   "   A1(0,4) GT [1, 9]: rank 5/3008, 2/214 borda; top-3 [(1, 16, 31.411, 1), (4, 4, 31.649, 2), (1, 17, 32.061, 2)]",
+   "   A1(1,0) GT [1, 10]: rank 27/3008, 3/214 borda; top-3 [(4, 3, 29.476, 0), (4, 6, 30.203, 1), (4, 4, 30.355, 0)]",
+   "   A1(1,1) GT [1, 11]: rank 26/3008, 4/214 borda; top-3 [(1, 13, 29.803, 2), (3, 12, 29.833, 2), (4, 6, 30.065, 2)]",
+   "   A1(1,2) GT [1, 12]: rank 14/3008, 0/214 borda; top-3 [(4, 9, 25.351, 0), (4, 10, 25.376, 0), (3, 12, 25.392, 0)]",
+   "   A1(1,3) GT [1, 13]: rank 22/3008, 2/214 borda; top-3 [(3, 12, 28.535, 0), (3, 11, 28.599, 0), (3, 15, 28.654, 0)]",
+   "   A1(1,4) GT [1, 14]: rank 29/3008, 5/214 borda; top-3 [(3, 13, 28.73, 0), (3, 14, 28.902, 0), (3, 12, 29.178, 0)]",
+   "   A1(2,0) GT [1, 15]: rank 42/3008, 5/214 borda; top-3 [(4, 12, 27.958, 3), (4, 13, 28.196, 3), (4, 10, 28.279, 3)]",
+   "   A1(2,1) GT [1, 16]: rank 26/3008, 3/214 borda; top-3 [(4, 11, 26.438, 0), (4, 10, 27.271, 1), (4, 9, 27.634, 0)]",
+   "   A1(2,2) GT [1, 17]: rank 40/3008, 3/214 borda; top-3 [(4, 8, 27.752, 2), (3, 13, 28.05, 3), (3, 15, 28.346, 3)]",
+   "   A1(2,3) GT [1, 18]: rank 44/3008, 7/214 borda; top-3 [(2, 17, 27.715, 1), (3, 13, 27.745, 1), (3, 12, 27.816, 1)]",
+   "   A1(2,4) GT [1, 19]: rank 14/3008, 4/214 borda; top-3 [(2, 19, 29.334, 2), (2, 25, 29.786, 1), (2, 18, 30.299, 3)]",
+   "   A1(3,0) GT [1, 20]: rank 25/3008, 7/214 borda; top-3 [(2, 20, 28.413, 3), (2, 18, 28.613, 1), (2, 19, 28.724, 2)]",
+   "   A1(3,1) GT [1, 21]: rank 73/3008, 22/214 borda; top-3 [(3, 20, 28.41, 2), (3, 19, 28.536, 2), (3, 13, 28.814, 1)]",
+   "   A1(3,2) GT [1, 22]: rank 37/3008, 7/214 borda; top-3 [(4, 10, 26.986, 1), (4, 8, 28.341, 1), (4, 12, 28.363, 0)]",
+   "   A1(3,3) GT [1, 23]: rank 13/3008, 2/214 borda; top-3 [(3, 19, 30.486, 2), (3, 18, 31.244, 2), (3, 17, 31.266, 2)]",
+   "   A1(3,4) GT [1, 24]: rank 1/3008, 1/214 borda; top-3 [(1, 31, 29.059, 1), (1, 24, 29.459, 1), (2, 25, 29.732, 0)]",
+   "[localização BE sozinha, controlo] rank da própria célula (relva) entre 3008: mediana 430, top-1 0/20, top-10 0/20",
+   "[localização pares ACEITE] 1 pares (sem os E-sym) (122.5 s)",
+   "   BE(2,4) + f2p1 #4 (BExceu): d 0.408 margem 2.395; top-3 [(47, 4, 30.699, 1), (47, 1, 33.971, 2), (46, 2, 34.031, 0)]; top-3 compat. [(46, 2, 34.031, 0), (46, 4, 34.58, 1), (46, 3, 36.234, 2)]; GT [46, 4] rank 4/3008, 1/2790 compat."
   ]
  }
 }
