@@ -31,3 +31,5 @@ A disposição é o bloco **rodado 90° no sentido anti-horário**. Isto é infe
 - As filas 5 e 6 do scan têm só 4 peças, porque faltam (6,6) e (6,7), as mais à esquerda.
 
 **Verificado no Project:** com o limiar simples, a segmentação dá 28 peças soltas (áreas de 320 a 476 mm²) mais a faixa em L como um só objeto.
+
+Disposição verificada pela imagem em 2026-10-31; GT legível por máquina em `docs/diagnostico/gemeos/ereal_gt.json` (verificações automáticas em `tools/diagnostico/gemeos/ereal.py`; resultados em `docs/diagnostico/gemeos/EREAL.md`).
