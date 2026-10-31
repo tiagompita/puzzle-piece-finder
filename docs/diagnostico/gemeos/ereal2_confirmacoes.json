@@ -1,0 +1,6 @@
+{
+ "BE(2,4)": {"gemea": [2, 61], "proposta": "f2p1 #4", "centro_mm": [123.78, 16.93], "resultado": "ACERTO", "data": "2026-10-31",
+             "nota": "encaixa na borda; coincide com BE(2,4) rodada 180°"},
+ "BE(5,5)": {"gemea": [5, 60], "proposta": "f1p1 #6", "centro_mm": [28.19, 52.92], "resultado": "FORMA_CONFIRMADA_POSICAO_NAO_VERIFICAVEL", "data": "2026-10-31",
+             "nota": "zona vazia; peça guardada à parte etiquetada (5,60)"}
+}

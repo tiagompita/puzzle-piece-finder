@@ -3,10 +3,15 @@
 Diagnóstico (não é código de produção). Correr a partir da raiz do repositório:
 
 	PowerShell:  $env:PPF_SCRATCH = "C:\\caminho\\scratchpad"; $env:PYTHONIOENCODING = "utf-8"
-	python tools/diagnostico/gemeos/ereal2.py [--force]
+	python tools/diagnostico/gemeos/ereal2.py [--force] [--dl-mode {1mm,tipo,2mm}]
 
 --force refaz a memória (segment_scan em todas as folhas); por omissão usa $PPF_SCRATCH/ereal2/memoria.pkl.
+--dl-mode: tolerância das cordas da regra 2 (por omissão "tipo": 2 mm nos lados F ou adjacentes a um F, 1 mm nos
+outros; "1mm" / "2mm" uniformes). A comparação dos três modos sai sempre em results.json -> ereal2.modos_cordas.
 Precisa de $PPF_SCRATCH/gemeos/esym.pkl (esym.py).
+Confirmações físicas: docs/diagnostico/gemeos/ereal2_confirmacoes.json (ficheiro manual, lido aqui; chave = BE,
+centro_mm = centro da peça proposta na sua folha, a chave estável quando a numeração muda); o resultado entra no
+ereal2_propostas.txt em vez de "ACERTO/ERRO: ____".
 
 Memória de 188 soltas, todas por src.segmentation.segment_scan:
   BE    images/pieces/gt_canto_BE_soltas_300dpi.jpg                 20 interiores do canto BE, GT (k, j) pela grelha
@@ -17,7 +22,8 @@ Coordenadas BE (images/pieces/gt_canto_BE.md): k = linha a contar de baixo, j = 
 (l, c) = (48 - k, j); gémea de BE(k, j) = célula global (k, 65 - j). A simetria está isolada em twin_cell().
 
 Consulta (regras 1-4 = forma; 5 = imagem):
-  1 classe topológica (analyse_v2 cls) igual; 2 cordas dos lados homólogos (best_k de shape_dist) |ΔL| <= 1 mm;
+  1 classe topológica (analyse_v2 cls) igual; 2 cordas dos lados homólogos (best_k de shape_dist) |ΔL| <= 1 mm
+  (modo "tipo": <= 2 mm no lado F e nos dois adjacentes, onde o canto escorrega ao longo do lado reto);
   3 RMS free (dist.free_dist) -> d1, d2, margem d2/d1; 4 ACEITE se d1 <= t95 e margem >= 1,5, AMBÍGUA se d1 <= tmax,
   senão SEM (t95 0,507 / tmax 0,637 mm: E-sym, results.json -> esym.extrapolation.hibrido.free);
   5 imagem 1-contra-1: recorte Lab da candidata (L* - 4,8), rodado para a orientação prevista pela forma, à escala da
@@ -54,6 +60,10 @@ F_ART = os.path.join(REPO, "images", "puzzles", "1186441_1.jpg")
 AREA_MM2 = (250.0, 650.0)   # peça isolada plausível (célula ≈ 349 mm²; silhuetas 340-480)
 ADJ_MM = 1.5                # BE: peça a < 1,5 mm de outra = fragmento da faixa em L montada (soltas ficam >= 5 mm)
 DL_MAX = 1.0                # regra 2: |ΔL| máximo por lado homólogo (mm)
+DL_F_ADJ = 2.0              # regra 2, modo "tipo": |ΔL| máximo num lado F ou adjacente a um F (mm; decisão do Tiago)
+DL_MODES = ("1mm", "tipo", "2mm")
+CONF_MM = 3.0               # confirmação: a proposta atual é a mesma peça se o centro estiver a <= 3 mm de centro_mm
+F_CONF = os.path.join(OUT, "ereal2_confirmacoes.json")
 MARGIN_MIN = 1.5            # regra 4: margem d2/d1
 L_SHIFT = 4.8               # L*scan ≈ L*arte + 4,8 (SECCAO.md §C): subtrai-se ao scan
 NROW, NCOL = 47, 64         # grelha do puzzle (perfil do puzzle, M13)
@@ -124,7 +134,7 @@ def seg_sheet(path):
 	for p in r["pieces"]:
 		c = np.asarray(p["contour"]).reshape(-1, 2).astype(float)
 		out.append(dict(index=int(p["index"]), contour=c, bbox=[int(v) for v in p["bbox"]], is_cluster=bool(p["is_cluster"]),
-						touches_frame=bool(p.get("touches_frame")),
+						touches_frame=bool(p.get("touches_frame")), touches_strip=bool(p.get("touches_strip")),
 						area_mm2=float(cv2.contourArea(c.astype(np.float32).reshape(-1, 1, 2))) * MM ** 2))
 	return out, shp
 
@@ -274,7 +284,7 @@ def ceu_pieces(sheet):
 		for n, (f, k, i) in enumerate(sc.grid_order([p["bbox"] for p in cand]), 1):
 			q = cand[i]
 			p = er.mkpiece(q["contour"], index=q["index"], bbox=q["bbox"], area_mm2=q["area_mm2"], gap_mm=q["gap_mm"],
-						   sheet=sheet, num=n, fila=f + 1)
+						   sheet=sheet, num=n, fila=f + 1, touches_strip=q["touches_strip"])
 			b = q["bbox"]
 			p.update(src="ceu", lab=f"{sheet} #{n}", img=F_CEU[sheet], cell=None, cx=b[0] + b[2] / 2, cy=b[1] + b[3] / 2)
 			out.append(p)
@@ -287,8 +297,10 @@ def ceu_pieces(sheet):
 	log(f"[céu {sheet}] segment_scan {len(raw)} objetos; peças numeradas {len(out)} (esperadas {n_exp}"
 		f"{'' if len(out) == n_exp else ' -> NÃO BATE'}); na memória {len(ok)}; excluídos: "
 		+ ("; ".join(f"#{e['index']} {e['razao']} bbox {e['bbox']}" for e in excl) or "nenhum")
-		+ f"; menor distância entre peças {min([p['gap_mm'] for p in out] or [float('nan')]):.1f} mm ({time.time() - t0:.1f} s)")
+		+ f"; menor distância entre peças {min([p['gap_mm'] for p in out] or [float('nan')]):.1f} mm; junto à tira branca "
+		f"(touches_strip): {[p['lab'] for p in out if p.get('touches_strip')] or 'nenhuma'} ({time.time() - t0:.1f} s)")
 	return out, dict(n_segment_scan=len(raw), numeradas=len(out), esperadas=n_exp, na_memoria=len(ok),
+					 touches_strip=[p["lab"] for p in out if p.get("touches_strip")],
 					 excluidos=[{k: v for k, v in e.items() if k != "contour"} for e in excl]), excl
 
 
@@ -350,18 +362,64 @@ def shape_matrices(M):
 	return D, PHI
 
 
+def f_adjacent(types):
+	"""Por lado: é F ou adjacente a um F? (o canto do lado reto escorrega ao longo dele e muda as duas cordas que lhe tocam)."""
+	n = len(types)
+	return [types[s] == "F" or types[(s - 1) % n] == "F" or types[(s + 1) % n] == "F" for s in range(n)]
+
+
 def chord_matrix(M):
-	"""DL[i, j] = máx |ΔL| (mm) dos 4 lados homólogos (best_k de shape_dist), só para a mesma classe; inf noutros casos."""
+	"""DLS[i, j, s] = |ΔL| (mm) entre o lado s de M[i] e o homólogo de M[j] (best_k de shape_dist); FADJ[i, j, s] = esse
+	lado (em i ou no homólogo em j) é F ou adjacente a um F. Só para a mesma classe; DLS = inf noutros casos."""
 	N = len(M)
-	DL = np.full((N, N), np.inf)
+	DLS = np.full((N, N, 4), np.inf)
+	FADJ = np.zeros((N, N, 4), bool)
 	for i in range(N):
 		for j in range(i + 1, N):
 			a, b = M[i], M[j]
 			if not (a.get("ok") and b.get("ok")) or a["cls"] != b["cls"]:
 				continue
 			_, k, _ = shape_dist(a, b)
-			DL[i, j] = DL[j, i] = max(abs(a["lens"][s] - b["lens"][(s + k) % 4]) for s in range(4))
-	return DL
+			fa, fb = f_adjacent(a["types"]), f_adjacent(b["types"])
+			for s_ in range(4):
+				t = (s_ + k) % 4
+				d = abs(a["lens"][s_] - b["lens"][t])
+				DLS[i, j, s_] = DLS[j, i, t] = d
+				FADJ[i, j, s_] = FADJ[j, i, t] = fa[s_] or fb[t]
+	return DLS, FADJ
+
+
+def chord_pass(DLS, FADJ, mode):
+	"""Regra 2 por modo: "1mm" / "2mm" uniformes; "tipo" = DL_F_ADJ nos lados F ou adjacentes, DL_MAX nos outros."""
+	if mode == "1mm":
+		tol = DL_MAX
+	elif mode == "2mm":
+		tol = DL_F_ADJ
+	elif mode == "tipo":
+		tol = np.where(FADJ, DL_F_ADJ, DL_MAX)
+	else:
+		raise SystemExit(f"[E-real-2] --dl-mode desconhecido: {mode} (use {DL_MODES})")
+	return np.all(DLS <= tol, axis=2)
+
+
+def load_confirmations():
+	"""ereal2_confirmacoes.json (manual) -> {rótulo da BE: registo}; {} se não existir."""
+	if not os.path.exists(F_CONF):
+		return {}
+	return json.load(open(F_CONF, encoding="utf-8"))
+
+
+def find_by_centre(P, sheet, centre_mm):
+	"""Peça de céu da folha cujo centro da bbox (mm) está a <= CONF_MM de centre_mm -> (peça, distância) ou (None, dist)."""
+	best, bd = None, float("inf")
+	for p in P:
+		if p.get("sheet") != sheet:
+			continue
+		b = p["bbox"]
+		d = float(np.hypot((b[0] + b[2] / 2) * MM - centre_mm[0], (b[1] + b[3] / 2) * MM - centre_mm[1]))
+		if d < bd:
+			best, bd = p, d
+	return (best, bd) if bd <= CONF_MM else (None, bd)
 
 
 def decide(d1, margin):
@@ -753,10 +811,15 @@ def fig_sheet(sheet, P, info, fname):
 def main():
 	t0 = time.time()
 	force = "--force" in sys.argv
+	mode = sys.argv[sys.argv.index("--dl-mode") + 1] if "--dl-mode" in sys.argv else "tipo"
+	if mode not in DL_MODES:
+		raise SystemExit(f"[E-real-2] --dl-mode {mode}: use um de {DL_MODES}")
 	os.makedirs(WORK, exist_ok=True)
+	CONF = load_confirmations()
 	R = dict(descricao="E-real-2 (2026-10-31): BE (relva, GT) -> gémea entre 100 soltas de céu (sem GT) numa memória de 188 "
 			 "soltas; forma (regras 1-4) + imagem 1-contra-1 contra a arte limpa. Ver docs/diagnostico/gemeos/EREAL2.md.",
-			 limiares=dict(t95=T95, tmax=TMAX, margem=MARGIN_MIN, dL_max_mm=DL_MAX, L_shift=L_SHIFT, erode_px=ERODE_PX,
+			 limiares=dict(t95=T95, tmax=TMAX, margem=MARGIN_MIN, dL_max_mm=DL_MAX, dL_F_adj_mm=DL_F_ADJ, dl_mode=mode,
+						   L_shift=L_SHIFT, erode_px=ERODE_PX,
 						   passo_mm=dict(x=r3(PITCH_X), y=r3(PITCH_Y)), canvas_px=list(CANVAS), jitter_px=JIT,
 						   celula_arte_px=[r3(CELL_W), r3(CELL_H)], arte_linhas=[ART_Y0, ART_Y0 + ART_H - 1]))
 	MEMD = build_memory(force)
@@ -785,10 +848,11 @@ def main():
 	for (i, j) in ((0, 5), (3, N - 1), (gidx["ES"][0], gidx["ES"][-1]), (gidx["ceu"][7], gidx["BD"][3])):
 		d_, _, ph = free_dist(M[i], M[j])
 		assert abs(d_ - D[i, j]) < 1e-6 and abs(wrap(np.degrees(ph - PHI[i, j]))) < 1e-6, "free_dist vectorizado difere"
-	DL = chord_matrix(M)
-	PASS = DL <= DL_MAX
-	log(f"[forma] matrizes {N}x{N} (free + cordas) em {time.time() - t1:.1f} s; pares que passam classe+cordas "
-		f"{int(np.triu(PASS, 1).sum())} de {N * (N - 1) // 2}")
+	DLS, FADJ = chord_matrix(M)
+	DL = DLS.max(2)
+	PASS = chord_pass(DLS, FADJ, mode)
+	log(f"[forma] matrizes {N}x{N} (free + cordas) em {time.time() - t1:.1f} s; cordas modo {mode}; pares que passam "
+		f"classe+cordas {int(np.triu(PASS, 1).sum())} de {N * (N - 1) // 2}")
 	# --- controlo E-sym da cadeia de orientação (sinal de phi)
 	iA = {M[i]["esym_i"]: i for i in gidx["ES"] if M[i]["esym_name"] == "A1"}
 	iB = {M[i]["esym_i"]: i for i in gidx["ES"] if M[i]["esym_name"] == "B2"}
@@ -996,10 +1060,11 @@ def main():
 		if gt_rel(pr["i"], pr["j"]) in ("neg", "ceuceu"):
 			log(f"   falso positivo ({gt_rel(pr['i'], pr['j'])}): {M[pr['i']]['lab']} x {M[pr['j']]['lab']} {pr['dec']} d {pr['d']:.3f} "
 				f"margem {pr['margin']:.2f}")
-	# --- sensibilidade à tolerância das cordas (regra 2)
-	sens = {}
-	for dlm in (1.0, 1.5, 2.0, None):
-		PS = (DL <= dlm) if dlm is not None else np.isfinite(DL)
+	# --- sensibilidade à tolerância das cordas (regra 2): limites uniformes e os modos de --dl-mode
+	sens, modes = {}, {}
+	variants = [(str(dlm), (DL <= dlm) if dlm is not None else np.isfinite(DL)) for dlm in (1.0, 1.5, 2.0, None)]
+	variants += [("modo:" + m, chord_pass(DLS, FADJ, m)) for m in DL_MODES]
+	for name, PS in variants:
 		Dq = np.where(PS, D, np.inf)
 		np.fill_diagonal(Dq, np.inf)
 
@@ -1010,19 +1075,31 @@ def main():
 			rj[i] = np.inf
 			comp = min(ri.min(), rj.min())
 			return comp / D[i, j] if np.isfinite(comp) else float("inf")
-		cntp = {}
+		cntp, npass = {}, {}
 		for i in range(N):
 			for j in range(i + 1, N):
 				if PS[i, j]:
+					k = gt_rel(i, j)
+					npass[k] = npass.get(k, 0) + 1
 					dec = decide(D[i, j], mg_(i, j))
 					if dec != "SEM":
-						k = gt_rel(i, j)
 						cntp.setdefault(k, {}).setdefault(dec, 0)
 						cntp[k][dec] += 1
 		beq = [query(q, D, PS) for q in gidx["BE"]]
-		sens[str(dlm)] = dict(pares=cntp, BE=dict((d, sum(r["dec"] == d for r in beq)) for d in ("ACEITE", "AMBÍGUA", "SEM")),
-							  BE_propostas=[f"{M[r['i']]['lab']}->{M[r['top'][0]]['lab']} {r['dec']} {r['d1']:.3f}" for r in beq if r["dec"] != "SEM"])
-		log(f"[sensibilidade cordas] |ΔL| <= {dlm}: pares {cntp}; BE {sens[str(dlm)]['BE']} {sens[str(dlm)]['BE_propostas']}")
+		esd = []
+		for a, b in es_pairs:
+			esd.append(decide(D[a, b], mg_(a, b)) if PS[a, b] else "SEM")
+		ent = dict(pares=cntp, passam_filtro=npass, n_por_relacao=rel_all,
+				   esym=dict((d, esd.count(d)) for d in ("ACEITE", "AMBÍGUA", "SEM")),
+				   BE=dict((d, sum(r["dec"] == d for r in beq)) for d in ("ACEITE", "AMBÍGUA", "SEM")),
+				   BE_propostas=[f"{M[r['i']]['lab']}->{M[r['top'][0]]['lab']} {r['dec']} {r['d1']:.3f} margem {fin(r['margin'])}"
+								 for r in beq if r["dec"] != "SEM"])
+		if name.startswith("modo:"):
+			modes[name[5:]] = ent
+		else:
+			sens[name] = ent
+		log(f"[sensibilidade cordas] {name if name.startswith('modo:') else '|ΔL| <= ' + name}: passam {npass}; ACEITE/AMBÍGUA "
+			f"{cntp}; E-sym {ent['esym']}; BE {ent['BE']} {ent['BE_propostas']}")
 	# --- localização conjunta pela imagem
 	t3 = time.time()
 	loc_es = []
@@ -1063,6 +1140,57 @@ def main():
 		log(f"   {r_['a']} + {r_['b']} ({r_['rel']}): d {r_['d']} margem {r_['margin']}; top-3 {r_['top3']}"
 			+ f"; top-3 compat. {r_['top3_compat']}"
 			+ (f"; GT {r_['gt']} rank {r_['rank_3008']}/3008, {r_['rank_compat']}/{r_['n_compat']} compat." if "gt" in r_ else ""))
+	# --- confirmações físicas (ereal2_confirmacoes.json): a proposta atual ainda é a peça confirmada?
+	conf_rows = []
+	rec_by_lab = {M[r["i"]]["lab"]: r for r in recs}
+	for be_lab, c in CONF.items():
+		sheet = c["proposta"].split()[0]
+		pc, dist = find_by_centre(CEU, sheet, c["centro_mm"])
+		r = rec_by_lab.get(be_lab)
+		cur = M[r["top"][0]] if r is not None and r["top"] else None
+		row = dict(BE=be_lab, gemea=c["gemea"], resultado=c["resultado"], data=c["data"], proposta_original=c["proposta"],
+				   peca_confirmada=pc["lab"] if pc is not None else None, dist_centro_mm=r3(dist),
+				   proposta_atual=cur["lab"] if cur is not None else None, dec=r["dec"] if r is not None else None,
+				   d1=fin(r["d1"]) if r is not None else None, margem=fin(r["margin"]) if r is not None else None,
+				   dE=r3(r["img"]["dE"]) if r is not None and r["top"] else None, pct_ii=r.get("pct_ii") if r is not None else None)
+		row["mesma_peca"] = bool(pc is not None and cur is not None and pc["lab"] == cur["lab"])
+		if pc is not None and r is not None:
+			jq = next(q for q in range(N) if M[q] is pc)
+			row["rank_na_consulta"] = int(np.sum(np.where(PASS[r["i"]], D[r["i"]], np.inf) < D[r["i"], jq]))
+			row["d_confirmada"] = r3(D[r["i"], jq])
+			row["passa_cordas"] = bool(PASS[r["i"], jq])
+		conf_rows.append(row)
+		log(f"[confirmação] {be_lab} -> {c['gemea']} {c['resultado']} ({c['data']}): peça confirmada {row['peca_confirmada']} "
+			f"(centro a {dist:.2f} mm de {c['centro_mm']}; era {c['proposta']}); proposta atual {row['proposta_atual']} "
+			f"{row['dec']} d1 {row['d1']} margem {row['margem']} ΔE {row['dE']} -> "
+			f"{'MESMA PEÇA' if row['mesma_peca'] else 'PEÇA DIFERENTE'}")
+	n_ok = sum(1 for c in CONF.values() if c["resultado"].startswith(("ACERTO", "FORMA_CONFIRMADA")))
+	conf_date = max([c["data"] for c in CONF.values()] or ["-"])
+	# localização conjunta dos pares confirmados (BE com GT + a peça de céu confirmada)
+	loc_conf = []
+	for row in conf_rows:
+		if row["peca_confirmada"] is None:
+			continue
+		a = next(q for q in gidx["BE"] if M[q]["lab"] == row["BE"])
+		b = next(q for q in gidx["ceu"] if M[q]["lab"] == row["peca_confirmada"])
+		r_ = joint_locate(a, b, PHI, SIGN, RS, gt_cell=M[a]["cell"])
+		r_.update(a=M[a]["lab"], b=M[b]["lab"], d=r3(D[a, b]))
+		loc_conf.append(r_)
+		log(f"[localização par confirmado] {r_['a']} + {r_['b']}: GT {r_['gt']} rank {r_['rank_3008']}/3008, "
+			f"{r_['rank_compat']}/{r_['n_compat']} interiores; top-3 {r_['top3']}; top-3 compat. {r_['top3_compat']}")
+	# peças junto à tira branca (recuperadas pela correção S3 de segment_scan)
+	strip_rep = []
+	for j in [q for q in gidx["ceu"] if M[q].get("touches_strip")]:
+		rq = next(r for r in sky_recs if r["i"] == j)
+		des = sorted((sky_de[(r["i"], j)], M[r["i"]]["lab"]) for r in recs)
+		be_prop = [M[r["i"]]["lab"] for r in recs if j in r["top"]]
+		pcts = {M[r["i"]]["lab"]: r3(100.0 * np.mean([sky_de[(r["i"], q)] < sky_de[(r["i"], j)] for q in gidx["ceu"]])) for r in recs}
+		strip_rep.append(dict(peca=M[j]["lab"], classe=M[j]["cls"], tipos="".join(M[j]["types"]), area_mm2=r3(M[j]["area_mm2"]),
+							  consulta=rq["dec"], melhor=M[rq["top"][0]]["lab"] if rq["top"] else None, d1=fin(rq["d1"]),
+							  BE_que_a_tem_no_top3=be_prop, dE_min=r3(des[0][0]), dE_min_BE=des[0][1], pct_na_BE_do_dE_min=pcts[des[0][1]]))
+		log(f"[tira branca] {M[j]['lab']}: classe {M[j]['cls']}, área {M[j]['area_mm2']:.0f} mm²; consulta {rq['dec']} "
+			f"(melhor {strip_rep[-1]['melhor']} d1 {strip_rep[-1]['d1']}); no top-3 de {be_prop or 'nenhuma BE'}; ΔE mínimo "
+			f"{des[0][0]:.1f} na gémea de {des[0][1]} (pct {pcts[des[0][1]]} %)")
 	# --- figuras
 	info = {}
 	for r in sky_recs:
@@ -1111,7 +1239,8 @@ def main():
 	# --- propostas.txt
 	fmt = lambda v, n=2: "-" if v is None or not np.isfinite(v) else f"{v:.{n}f}"  # noqa: E731
 	L_ = ["E-real-2: propostas para verificação física (gerado por tools/diagnostico/gemeos/ereal2.py)",
-		  f"Regras: classe igual; |ΔL| <= {DL_MAX} mm nos 4 lados; ACEITE se d1 <= {T95} mm e d2/d1 >= {MARGIN_MIN}; AMBÍGUA se d1 <= {TMAX}; "
+		  f"Regras: classe igual; |ΔL| " + ("<= 1 mm nos 4 lados" if mode == "1mm" else "<= 2 mm nos 4 lados" if mode == "2mm" else
+		  f"<= {DL_F_ADJ} mm no lado F e nos adjacentes, <= {DL_MAX} mm nos outros (modo tipo)") + f"; ACEITE se d1 <= {T95} mm e d2/d1 >= {MARGIN_MIN}; AMBÍGUA se d1 <= {TMAX}; "
 		  f"forma+imagem: ACEITE se forma ACEITE, a imagem escolhe a mesma entre as top-3 com d <= {TMAX} e ΔE <= p90 ({P90:.1f}).",
 		  "dE = ΔE médio (Lab, L* do scan - 4,8) contra a célula gémea da arte limpa: consistência de imagem, não identidade.",
 		  "Numeração das folhas de céu: ver ereal2_<folha>__contours.jpg / ereal2_<folha>_propostas.jpg (#n)."]
@@ -1126,13 +1255,27 @@ def main():
 		p = M[r["i"]]
 		l2, c2 = (int(v) for v in r["twin_cell"])
 		head = f"BE({p['k']},{p['j']}) global ({p['cell'][0]},{p['cell'][1]}) → gémea ({l2},{c2})"
+		cr = next((x for x in conf_rows if x["BE"] == p["lab"]), None)
+		res_txt = "ACERTO/ERRO: ____"
+		prop_lab = M[r["top"][0]]["lab"] if r["top"] else None
+		if cr is not None:
+			res_txt = f"{cr['resultado']} ({cr['data']}; {CONF[p['lab']].get('nota', '')})"
+			if cr["mesma_peca"] and prop_lab != cr["proposta_original"]:
+				prop_lab = f"{prop_lab} (era {cr['proposta_original'].split()[-1]})"
 		if r["top"]:
 			pk = M[r["pick_fi"]]["lab"] if r.get("pick_fi") is not None else "-"
-			L_.append(f"{head} | proposta: {M[r['top'][0]]['lab']} | d1 {fmt(r['d1'], 3)} mm | d2/d1 {fmt(r['margin'])} | "
-					  f"dE {fmt(r['img']['dE'], 1)} | forma: {r['dec']} | forma+imagem: {r['dec_fi']} ({pk}; {r['nota_fi']}) | ACERTO/ERRO: ____")
+			if cr is not None and not cr["mesma_peca"]:
+				L_.append(f"!!! ATENÇÃO {p['lab']}: a proposta atual ({M[r['top'][0]]['lab']}) NÃO é a peça confirmada fisicamente "
+						  f"({cr['proposta_original']}, centro {CONF[p['lab']]['centro_mm']} mm -> agora {cr['peca_confirmada']}). "
+						  "A confirmação abaixo refere-se à peça confirmada, não à proposta atual. !!!")
+			L_.append(f"{head} | proposta: {prop_lab} | d1 {fmt(r['d1'], 3)} mm | d2/d1 {fmt(r['margin'])} | "
+					  f"dE {fmt(r['img']['dE'], 1)} | forma: {r['dec']} | forma+imagem: {r['dec_fi']} ({pk}; {r['nota_fi']}) | {res_txt}")
 			L_.append("      top-3: " + "; ".join(f"{M[ci['j']]['lab']} d {D[r['i'], ci['j']]:.3f} dE {ci['dE']:.1f}" for ci in r["cand_img"]))
 		else:
-			L_.append(f"{head} | sem candidata (classe + cordas) | forma: SEM | ACERTO/ERRO: ____")
+			if cr is not None:
+				L_.append(f"!!! ATENÇÃO {p['lab']}: sem candidata agora, mas há confirmação física ({cr['proposta_original']} -> "
+						  f"{cr['peca_confirmada']}) !!!")
+			L_.append(f"{head} | sem candidata (classe + cordas) | forma: SEM | {res_txt}")
 	L_ += ["", f"== Secção 2: as peças de céu, por folha e número (consulta céu -> as outras {N - 1}) ==", ""]
 	srec = {M[r["i"]]["lab"]: r for r in sky_recs}
 	for p in CEU:
@@ -1150,7 +1293,13 @@ def main():
 					  f"{r['dec']}{' (mútuo)' if r['mutual'] else ''}")
 		else:
 			L_.append(f"{p['lab']} → melhor {M[b]['lab']} (fora das BE: falso positivo) d1 {fmt(r['d1'], 3)} margem {fmt(r['margin'])} {r['dec']}")
-	L_ += ["", "== Secção 3: colocações (preencher) ==", "", "folha #n → colocada em (l,c) | encaixa? | imagem bate? | notas", ""]
+	L_ += ["", "== Secção 3: colocações (preencher) ==", ""]
+	if CONF:
+		L_.append(f"Precisão das propostas confirmadas fisicamente: {n_ok}/{len(CONF)} ({conf_date})")
+		for cr in conf_rows:
+			L_.append(f"  {cr['BE']} → {tuple(cr['gemea'])}: {cr['peca_confirmada'] or '?'} {cr['resultado']} ({cr['data']})")
+		L_.append("")
+	L_ += ["folha #n → colocada em (l,c) | encaixa? | imagem bate? | notas", ""]
 	L_ += ["____ #__ → (__,__) | ___ | ___ | ____________"] * 15
 	with open(os.path.join(OUT, "ereal2_propostas.txt"), "w", encoding="utf-8") as f:
 		f.write("\n".join(L_) + "\n")
@@ -1181,7 +1330,9 @@ def main():
 							for p in pairs if p["dec"] == "ACEITE"],
 				   ambiguas=[dict(a=M[p["i"]]["lab"], b=M[p["j"]]["lab"], d=r3(p["d"]), margem=fin(p["margin"]), rel=gt_rel(p["i"], p["j"]))
 							 for p in pairs if p["dec"] == "AMBÍGUA"]),
-		sensibilidade_cordas=sens,
+		sensibilidade_cordas=sens, modos_cordas=modes,
+		confirmacoes=dict(precisao=f"{n_ok}/{len(CONF)}", data=conf_date, por_be=conf_rows, localizacao=loc_conf),
+		tira_branca=strip_rep,
 		localizacao=dict(esym=loc_es, esym_resumo=dict(rank_3008=st(rk), top1=sum(x == 0 for x in rk), top10=sum(x < 10 for x in rk),
 														rank_borda=st(rkc), top1_borda=sum(x == 0 for x in rkc), top10_borda=sum(x < 10 for x in rkc),
 														n_borda=loc_es[0]["n_compat"]),
@@ -1190,7 +1341,9 @@ def main():
 	R["segundos"] = r3(time.time() - t0)
 	R["log"] = LOG
 	jp = os.path.join(OUT, "results.json")
-	Jr = json.load(open(jp, encoding="utf-8"))
+	Jr = json.load(open(jp, encoding="utf-8"))   # relido mesmo antes de escrever: só se mexe em ereal2 / ereal2_v1
+	if "ereal2_v1" not in Jr and "ereal2" in Jr:
+		Jr["ereal2_v1"] = Jr["ereal2"]           # 1.ª execução (186 soltas, cordas 1 mm), guardada ao substituir
 	Jr["ereal2"] = er.clean(R)
 	json.dump(Jr, open(jp, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=lambda o: o.item() if hasattr(o, "item") else str(o))
 	log(f"total {time.time() - t0:.0f} s")

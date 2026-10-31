@@ -130,6 +130,33 @@ _MAX_BBOX_ASPECT = 4.0
 _MIN_STROKE_FRAC = 0.20
 
 
+# ===== Scan-edge paper strip tunables (defect S3, fixed 2026-10-31) =====
+# On a flatbed scan the coloured paper often does not cover the whole glass, leaving
+# a near-white strip of bare lid/glass along one or more edges (~4 mm on the E-real-2
+# sky sheets). Against a saturated background it is strong foreground, so a piece
+# abutting it merged with it and the merged blob was dropped by the aspect / frame-blob
+# gates. ``_frame_strip_mask`` finds it and the strip is zeroed before labelling.
+# Near-white: OpenCV 8-bit L (NOT illumination-flattened: the flattening pulls a strip
+# at the edge down) and chroma sqrt((a-128)^2 + (b-128)^2). Measured on the sky sheets:
+# strip L 240..255, chroma 0..5; green paper L ~190, chroma ~65.
+_STRIP_MIN_L = 215.0
+_STRIP_MAX_CHROMA = 12.0
+# A strip spans >= this fraction of the side it runs along (rows reaching the frame zone)...
+_STRIP_MIN_SPAN_FRAC = 0.25
+# ...is at most this fraction of the image dimension wide (median per-row width)...
+_STRIP_MAX_WIDTH_FRAC = 0.15
+# ...and comes within this fraction of the dimension of the image border: the paper
+# can leave a thin band of background between the strip and the frame (f1p1: ~1 mm).
+_STRIP_FRAME_GAP_FRAC = 0.01
+# The removal is restricted to the strip's band along the frame: a robust line fit of
+# the per-row inner edge plus this tolerance (px). A light (cloud) piece abutting the
+# strip joins the white component but sticks out of the band, so it is kept.
+_STRIP_BAND_TOL_PX = 2
+# Dilation (px, at the working resolution) of the removed strip, to swallow the
+# 1-2 px colour-blend seam between strip and background.
+_STRIP_DILATE_PX = 2
+
+
 # ===== Edge-shadow halo removal tunables (step 9, _extract_piece) =====
 # Segmented pieces carry a thin, desaturated blue/grey cast-shadow halo on the
 # INTERIOR rim of the mask (most visible hugging the tabs). Left in place it feeds
@@ -963,6 +990,117 @@ def _frame_reach(working_dim: int) -> int:
 	return 2 * k + 1
 
 
+def _strip_band_canonical(
+	c: np.ndarray, offset: int, gap: int, dim_along: int, dim_across: int,
+) -> tuple[np.ndarray, float] | None:
+	"""Band of one white component along one side, in canonical orientation.
+
+	``c`` is the component's bool crop with rows running ALONG the side and column 0
+	the column nearest the frame, ``offset`` px away from it. Returns ``(band, width)``
+	-- ``band`` a bool array like ``c`` (the component pixels inside the strip band)
+	and ``width`` the median per-row strip width (px from the frame) -- or ``None``
+	when the component is not a strip along this side (see ``_STRIP_*``).
+	"""
+	has = c.any(1)
+	if not has.any():
+		return None
+	first = np.argmax(c, 1)
+	reach = has & (offset + first < gap)
+	if reach.sum() < _STRIP_MIN_SPAN_FRAC * dim_along:
+		return None
+	# Per-row inner edge = innermost pixel (distance from the frame, exclusive).
+	inner = offset + c.shape[1] - np.argmax(c[:, ::-1], 1)
+	t = np.nonzero(reach)[0].astype(np.float64)
+	e = inner[reach].astype(np.float64)
+	width = float(np.median(e))
+	if width > _STRIP_MAX_WIDTH_FRAC * dim_across:
+		return None
+	# Robust straight-line fit of the inner edge (the paper edge is straight but may be
+	# skewed): rows where a light piece joins the strip are outliers and are dropped.
+	keep = np.ones(len(t), bool)
+	coef = np.array([0.0, width])
+	for _ in range(4):
+		if keep.sum() < 2:
+			break
+		coef = np.polyfit(t[keep], e[keep], 1)
+		res = e - np.polyval(coef, t)
+		mad = float(np.median(np.abs(res[keep] - np.median(res[keep]))))
+		keep = np.abs(res) <= max(float(_STRIP_BAND_TOL_PX), 3.0 * 1.4826 * mad)
+	limit = np.polyval(coef, np.arange(c.shape[0], dtype=np.float64)) + _STRIP_BAND_TOL_PX
+	dist = offset + np.arange(c.shape[1])[None, :]
+	return c & (dist < limit[:, None]), width
+
+
+def _frame_strip_mask(
+	lab: np.ndarray, binary: np.ndarray, dilate_px: int = _STRIP_DILATE_PX,
+) -> tuple[np.ndarray | None, list[dict]]:
+	"""Near-white paper strip along the scan frame (defect S3).
+
+	Candidates are foreground pixels of ``binary`` (0/255) that are near-white in
+	``lab`` (OpenCV 8-bit Lab, NOT illumination-flattened): L >= ``_STRIP_MIN_L`` and
+	chroma <= ``_STRIP_MAX_CHROMA``. An 8-connected candidate component is a strip
+	along a side when it comes within ``_STRIP_FRAME_GAP_FRAC`` of that border on at
+	least ``_STRIP_MIN_SPAN_FRAC`` of the side's rows and its median per-row width is
+	at most ``_STRIP_MAX_WIDTH_FRAC`` of the image dimension. Only the component's
+	pixels inside the band along the frame (robust line fit of the per-row inner edge
+	+ ``_STRIP_BAND_TOL_PX``) are removed, so a light piece abutting the strip, which
+	joins its component but sticks out of the band, is kept. An L-shaped strip is
+	handled side by side. The union is dilated by ``dilate_px`` (colour-blend seam).
+
+	Returns ``(mask, strips)``: ``mask`` is a 0/255 uint8 array (``None`` when no strip
+	was found) and ``strips`` a list of ``{'side', 'width_px', 'span_frac'}`` (px of
+	``lab``) sorted by decreasing span.
+	"""
+	h, w = binary.shape[:2]
+	L = lab[..., 0].astype(np.float32)
+	chroma = np.hypot(lab[..., 1].astype(np.float32) - 128.0, lab[..., 2].astype(np.float32) - 128.0)
+	white = ((L >= _STRIP_MIN_L) & (chroma <= _STRIP_MAX_CHROMA) & (binary > 0)).astype(np.uint8)
+	num, labels, stats, _ = cv2.connectedComponentsWithStats(white, connectivity=8)
+	out = np.zeros((h, w), bool)
+	strips: list[dict] = []
+	for lid in range(1, num):
+		x, y, bw, bh = (int(v) for v in stats[lid, :4])
+		comp = None
+		for side in ("left", "right", "top", "bottom"):
+			along, across = (h, w) if side in ("left", "right") else (w, h)
+			gap = max(1, int(round(_STRIP_FRAME_GAP_FRAC * across)))
+			offset = {"left": x, "right": w - (x + bw), "top": y, "bottom": h - (y + bh)}[side]
+			span = bh if side in ("left", "right") else bw
+			if offset >= gap or span < _STRIP_MIN_SPAN_FRAC * along:
+				continue
+			if comp is None:
+				comp = labels[y:y + bh, x:x + bw] == lid
+			c = {"left": comp, "right": comp[:, ::-1], "top": comp.T, "bottom": comp.T[:, ::-1]}[side]
+			got = _strip_band_canonical(c, offset, gap, along, across)
+			if got is None:
+				continue
+			band, width = got
+			band = {"left": band, "right": band[:, ::-1], "top": band.T, "bottom": band[:, ::-1].T}[side]
+			out[y:y + bh, x:x + bw] |= band
+			strips.append({"side": side, "width_px": width, "span_frac": float(span) / along})
+	if not out.any():
+		return None, []
+	m = out.astype(np.uint8) * 255
+	if dilate_px > 0:
+		k = 2 * int(dilate_px) + 1
+		m = cv2.dilate(m, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+	strips.sort(key=lambda s: -s["span_frac"])
+	return m, strips
+
+
+def _touches_strip(bbox: tuple[int, int, int, int], comp_mask: np.ndarray, strip_zone: np.ndarray) -> bool:
+	"""Whether a component reaches ``strip_zone`` (0/255, working coords).
+
+	``strip_zone`` is the strip mask dilated by :func:`_frame_reach` -- the distance
+	over which the step-6 closing would have glued a piece to the strip (on the
+	E-real-2 sheets the abutting pieces are a few px of background away from the
+	strip in the raw foreground, and only the closing merged them). ``comp_mask`` is
+	the component's 0/255 crop at ``bbox``.
+	"""
+	x, y, bw, bh = bbox
+	return bool((strip_zone[y:y + bh, x:x + bw][comp_mask > 0] > 0).any())
+
+
 def _extract_components(
 	binary: np.ndarray,
 	work_bgr: np.ndarray,
@@ -1768,14 +1906,23 @@ def segment_pieces(
 
 	Returns:
 		On success ``{'pieces': [...], 'count': int,
-		'background_lab': (L, a, b), 'working_scale': float}``; each piece is a
-		dict with ``index, image, mask, bbox, area_px, angle, contour,
-		is_cluster, touches_frame``. ``is_cluster`` is ``True`` for a blob that
-		could not be confidently split into single pieces (such a record also
+		'background_lab': (L, a, b), 'working_scale': float, 'frame_strip': ...}``;
+		each piece is a dict with ``index, image, mask, bbox, area_px, angle,
+		contour, is_cluster, touches_frame, touches_strip``. ``is_cluster`` is
+		``True`` for a blob that could not be confidently split into single
+		pieces (such a record also
 		carries ``piece_type='cluster'``); it is ``False`` on every normal piece.
 		``touches_frame`` is ``True`` when the piece's working-resolution bbox
 		reaches the image border (the piece may be cut off by the frame, or be
-		a photo-margin artefact); it does not set ``is_cluster``. On
+		a photo-margin artefact); it does not set ``is_cluster``. A near-white
+		paper strip along the frame (scan whose paper does not cover the
+		glass, defect S3; see :func:`_frame_strip_mask`) is removed from the
+		foreground before labelling: ``frame_strip`` is ``None`` or
+		``{'side', 'width_px', 'span_frac', 'sides'}`` (``width_px`` in original
+		px; ``sides`` lists every strip found), and ``touches_strip`` is ``True``
+		on a piece within the closing reach of the strip (the pieces the strip
+		used to swallow; its contour on that side is less reliable; ``touches_frame`` keeps meaning the real
+		image border). With ``debug`` the strip is in ``debug['strip_mask']``. On
 		failure ``{'error': str, 'count': 0, ...}`` (mirrors ``matching.py``).
 	"""
 	# Watershed marker threshold, split trigger, seam sensitivity and the
@@ -1851,8 +1998,30 @@ def segment_pieces(
 			}
 		return result
 
+	# --- Step 5b: scan-edge paper strip (S3) ---
+	# A near-white strip along the frame (paper not covering the glass) is foreground;
+	# a piece touching it would merge with it and be dropped. Zero it before the
+	# morphology and the labelling, remembering which raw components touched it.
+	strip_mask, strips = _frame_strip_mask(cv2.cvtColor(work_bgr, cv2.COLOR_BGR2LAB), binary_raw)
+	strip_zone = None
+	if strip_mask is not None:
+		r = _frame_reach(working_dim)
+		strip_zone = cv2.dilate(strip_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1)))
+		binary_raw = binary_raw.copy()
+		binary_raw[strip_mask > 0] = 0
+	frame_strip = None
+	if strips:
+		frame_strip = {
+			"side": strips[0]["side"],
+			"width_px": float(strips[0]["width_px"] * inv),
+			"span_frac": float(strips[0]["span_frac"]),
+			"sides": [{**st, "width_px": float(st["width_px"] * inv)} for st in strips],
+		}
+
 	# --- Step 6: morphology (open -> close -> fill holes) ---
 	binary = _morph_clean(binary_raw, working_dim)
+	if strip_mask is not None:
+		binary[strip_mask > 0] = 0
 
 	# --- Steps 7 & 8: label, prune, split touching ---
 	components = _extract_components(
@@ -1882,6 +2051,7 @@ def segment_pieces(
 	pieces: list[dict] = []
 	for bbox_w, mask_crop, is_cluster in components:
 		touches_frame = _raw_touches_frame(bbox_w, mask_crop, binary_raw, _frame_reach(working_dim))
+		touches_strip = strip_zone is not None and _touches_strip(bbox_w, mask_crop, strip_zone)
 		rec = _extract_piece(
 			mask_crop, bbox_w, inv, original_rgb, normalize_rotation, pad_ratio,
 			bg, luma_weight, chroma_weight,
@@ -1893,6 +2063,7 @@ def segment_pieces(
 			final_cluster = bool(is_cluster) or _solidity(np.asarray(rec["mask"])) < _SUB_SOLIDITY_MIN
 			rec["is_cluster"] = final_cluster
 			rec["touches_frame"] = touches_frame
+			rec["touches_strip"] = bool(touches_strip)
 			if final_cluster:
 				# Note: edges.classify_pieces (if run downstream) overwrites
 				# piece_type; is_cluster is the reliable cluster flag.
@@ -1931,6 +2102,7 @@ def segment_pieces(
 		"background_lab": (float(bg[0]), float(bg[1]), float(bg[2])),
 		"background_model": background_model,
 		"working_scale": float(working_scale),
+		"frame_strip": frame_strip,
 	}
 	if debug:
 		result["debug"] = {
@@ -1938,6 +2110,7 @@ def segment_pieces(
 			"distance_map": Image.fromarray(D, "L"),
 			"binary_mask": Image.fromarray(binary, "L"),
 			"labels_overlay": _labels_overlay(work_bgr, components),
+			"strip_mask": Image.fromarray(strip_mask if strip_mask is not None else np.zeros_like(binary), "L"),
 		}
 	return result
 
@@ -1994,9 +2167,11 @@ def segment_scan(
 		threshold: weighted Lab distance (OpenCV 8-bit units) above which a pixel
 			is foreground.
 		open_mm, close_mm: square morphology kernels (mm; rounded to odd px).
-		debug: attach ``segment_pieces``' debug images, with ``threshold_mask``,
-			``voronoi`` (cell labels as colours) and ``labels_overlay`` (full-res;
-			``segment_pieces`` contour red, scan contour blue) added/replaced.
+		debug: attach ``segment_pieces``' debug images (``strip_mask``
+			included), with ``threshold_mask``, ``scan_strip_mask`` (full-res
+			strip removed from the threshold), ``voronoi`` (cell labels as
+			colours) and ``labels_overlay`` (full-res; ``segment_pieces`` contour
+			red, scan contour blue) added/replaced.
 		**segment_pieces_kwargs: forwarded to :func:`segment_pieces`
 			(``pad_ratio`` and ``normalize_rotation`` are also used here).
 
@@ -2004,7 +2179,9 @@ def segment_scan(
 		The :func:`segment_pieces` dict (``pieces, count, background_lab,
 		background_model, working_scale``) plus ``mm_per_px``, ``method='scan'``
 		and ``scan_background_lab`` (rim estimate, OpenCV 8-bit Lab). Pieces keep
-		the same order, indices and keys, plus ``refined`` (False when the
+		the same order, indices and keys (``touches_strip`` included; ``frame_strip``
+		gains ``width_mm``), plus ``scan_frame_strip`` (the strip(s) found and
+		removed from the full-resolution threshold, or ``None``), ``refined`` (False when the
 		threshold had no pixel in the band, and for ``is_cluster`` records, which
 		keep the ``segment_pieces`` contour and crop) and ``roughness``
 		(perimeter / smoothed perimeter; a diagnostic, never a gate). On failure
@@ -2023,7 +2200,25 @@ def segment_scan(
 	H, W = rgb.shape[:2]
 	lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
 	bg = _rim_background(lab, mm_per_px)
-	thr = _scan_threshold_mask(lab, bg, threshold, _odd_kernel(open_mm, mm_per_px), _odd_kernel(close_mm, mm_per_px))
+	open_px = _odd_kernel(open_mm, mm_per_px)
+	thr = _scan_threshold_mask(lab, bg, threshold, open_px, _odd_kernel(close_mm, mm_per_px))
+	# Paper strip at the scan edge (S3): it is in the threshold too, and the refined
+	# contour of an abutting piece could annex it inside the Voronoi cell. Zero it at
+	# full resolution, then re-open so the leftover colour-blend seam goes too (the
+	# opening is local, so the mask away from the strip is unchanged).
+	strip_dilate = max(_STRIP_DILATE_PX, int(round(_STRIP_DILATE_PX / max(res["working_scale"], 1e-6))))
+	scan_strip, scan_strips = _frame_strip_mask(lab, thr, dilate_px=strip_dilate)
+	if scan_strip is not None:
+		thr[scan_strip > 0] = 0
+		thr = cv2.morphologyEx(thr, cv2.MORPH_OPEN, np.ones((open_px, open_px), np.uint8))
+	if res.get("frame_strip") is not None:
+		fs = res["frame_strip"]
+		fs["width_mm"] = float(fs["width_px"] * mm_per_px)
+		for st in fs["sides"]:
+			st["width_mm"] = float(st["width_px"] * mm_per_px)
+	res["scan_frame_strip"] = [
+		{**st, "width_mm": float(st["width_px"] * mm_per_px)} for st in scan_strips
+	] or None
 	del lab
 	pieces = res["pieces"]
 	seg_contours = [np.asarray(p["contour"]).reshape(-1, 2) for p in pieces]
@@ -2062,6 +2257,7 @@ def segment_scan(
 	if debug:
 		dbg = res.setdefault("debug", {})
 		dbg["threshold_mask"] = Image.fromarray(thr, "L")
+		dbg["scan_strip_mask"] = Image.fromarray(scan_strip if scan_strip is not None else np.zeros_like(thr), "L")
 		palette = np.random.default_rng(12345).integers(60, 256, size=(len(pieces) + 1, 3)).astype(np.uint8)
 		palette[0] = 0
 		dbg["voronoi"] = Image.fromarray(palette[vor], "RGB")

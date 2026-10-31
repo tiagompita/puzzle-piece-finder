@@ -124,3 +124,51 @@ def test_piece_near_frame_is_kept(segment):
 
     for rect in inset:
         assert _find(rect)["touches_frame"] is False
+
+
+@pytest.mark.parametrize("segment", [segment_pieces, segment_scan], ids=["segment_pieces", "segment_scan"])
+def test_piece_touching_white_scan_strip_is_kept(segment):
+    """A piece abutting the white paper strip at the scan edge is kept (defect S3).
+
+    On a flatbed scan the coloured paper often does not cover the full glass, leaving
+    a near-white strip along one edge. That strip is foreground against the green
+    background; a piece touching it used to merge with it and the merged component was
+    dropped (bbox aspect / frame-blob gates). Scene: green background, a full-height
+    white band on the right, one rectangle abutting the band and four away from it.
+    The abutting piece must be found with ``touches_strip`` True and ``touches_frame``
+    False (it does not reach the real image border); the others ``touches_strip`` False.
+    """
+    green, white = (40, 160, 60), (245, 245, 245)
+    band_w = 60
+    bg = np.full((_IMG_H, _IMG_W, 3), green, dtype=np.uint8)
+    bg[:, _IMG_W - band_w:] = white
+    away = [(80, 90, 150, 120, (200, 40, 40)), (400, 70, 150, 120, (40, 60, 200)),
+            (120, 380, 150, 120, (210, 170, 30)), (400, 420, 150, 120, (150, 40, 170))]
+    abut = (_IMG_W - band_w - 150, 260, 150, 120, (200, 90, 40))   # right side touches the band
+    for (x, y, w, h, colour) in away + [abut]:
+        bg[y:y + h, x:x + w] = colour
+    result = segment(Image.fromarray(bg))
+
+    assert "error" not in result, result.get("error")
+    assert result["count"] == 5, f"count {result['count']}"
+    assert all("touches_strip" in p for p in result["pieces"])
+
+    def _find(rect):
+        x, y, w, h = rect[:4]
+        cx, cy = x + w / 2.0, y + h / 2.0
+        hits = [p for p in result["pieces"]
+                if abs(p["bbox"][0] + p["bbox"][2] / 2.0 - cx) <= _CENTER_TOL
+                and abs(p["bbox"][1] + p["bbox"][3] / 2.0 - cy) <= _CENTER_TOL]
+        assert len(hits) == 1, f"rectangle at ({x},{y}) matched {len(hits)} detections"
+        return hits[0]
+
+    p_abut = _find(abut)
+    assert p_abut["touches_strip"] is True
+    assert p_abut["touches_frame"] is False
+    assert p_abut["is_cluster"] is False
+    for rect in away:
+        p = _find(rect)
+        assert p["touches_strip"] is False
+        assert p["touches_frame"] is False
+    assert result["frame_strip"] is not None
+    assert result["frame_strip"]["side"] == "right"

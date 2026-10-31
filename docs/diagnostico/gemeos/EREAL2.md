@@ -8,9 +8,10 @@ Etiquetas: **[V]** verificado (com n e fonte), **[NT]** não testado, **[F]** te
 
 ## Resumo
 
-1. **Há 2 propostas BE → céu e ambas passam o teste da imagem [V, n = 20 consultas; a confirmação física está por fazer].**
-   - **BE(2,4) → f2p1 #4:** gémea na célula (2,61). Forma **ACEITE**: d1 0,408 mm, margem 2,39. ΔE 8,7, a 2.ª melhor cor das 98 peças de céu para essa célula. Vizinho mútuo.
-   - **BE(5,5) → f1p1 #6:** gémea na célula (5,60). Forma **AMBÍGUA**: d1 0,539 mm, única candidata que passa classe + cordas. ΔE 10,8, também a 2.ª melhor de 98. Vizinho mútuo.
+1. **Há 2 propostas BE → céu, ambas passam o teste da imagem e ambas foram confirmadas fisicamente pelo Tiago: precisão 2/2 [V, n = 20 consultas, 2 propostas; §7].**
+   - **BE(2,4) → f2p1 #4:** gémea na célula (2,61). Forma **ACEITE**: d1 0,408 mm, margem 2,39. ΔE 8,7, a 2.ª melhor cor das 98 peças de céu para essa célula. Vizinho mútuo. **ACERTO (2026-10-31):** encaixa na borda e coincide com BE(2,4) rodada 180°.
+   - **BE(5,5) → f1p1 #6:** gémea na célula (5,60). Forma **AMBÍGUA**: d1 0,539 mm, única candidata que passa classe + cordas. ΔE 10,8, também a 2.ª melhor de 98. Vizinho mútuo. **Forma confirmada (2026-10-31):** coincide com BE(5,5) rodada 180°; a posição não é verificável (zona vazia), a peça ficou à parte etiquetada (5,60).
+   - Re-execução com o defeito S3 corrigido (188 soltas, cordas por tipo de lado): as mesmas 2 propostas, com os mesmos números de peça [V, §8].
    - As outras 18 BE ficam **SEM**: d1 entre 0,81 e 1,95 mm, na gama dos não-gémeos da mesma classe do E-sym (p5 0,85, mediana 1,48).
    - É consistente com a maioria das 20 gémeas não estar entre as 100 peças, que foram escolhidas pelo aspeto. Não se mede recall.
 2. **Zero falsos positivos da forma nos negativos conhecidos [V].** Entre 10 472 pares negativos conhecidos há 0 ACEITE e 1 AMBÍGUA. Essa AMBÍGUA é A1(3,3) × B2(1,3), com margem 0,50: o gémeo verdadeiro de A1(3,3) está mais perto, por isso uma consulta nunca a proporia.
@@ -54,7 +55,7 @@ Etiquetas: **[V]** verificado (com n e fonte), **[NT]** não testado, **[F]** te
 
 **Céu:**
 - Nada foi excluído por cluster, `touches_frame`, área ou falta de cantos. A tira branca à direita **não sai como objeto** em nenhuma folha.
-- **f2p1: 40 em vez de 42 [F, defeito de `segment_pieces`].** As 2 peças da coluna da direita (fila 3 e última fila), junto à tira branca do papel, não aparecem na saída.
+- **f2p1: 40 em vez de 42 [F, defeito de `segment_pieces`; corrigido depois, §8].** As 2 peças da coluna da direita (fila 3 e última fila), junto à tira branca do papel, não aparecem na saída.
   - Na `binary_mask` de debug do `segment_pieces` (vista) estão ambas, mas ligadas pela máscara à tira branca do bordo, que é primeiro plano.
   - O componente é descartado sem `touches_frame`. É uma variante do S1 e cai no critério do M3 "peça junto ao bordo do scan não perdida".
   - Não são numeradas e não entram na memória. O `ereal2_propostas.txt` avisa.
@@ -152,7 +153,7 @@ Etiquetas: **[V]** verificado (com n e fonte), **[NT]** não testado, **[F]** te
 
 - Leitura: a cor fixa a banda; a gémea de céu fixa o lado, e o par (relva + céu) localiza-se muito melhor do que a relva sozinha [V].
 - A coluna fica incerta na faixa do céu uniforme (o top-3 dos E-sym fica quase sempre na linha 1).
-- A posição 1 do par BE(2,4) + f2p1 #4 é **n = 1** e está condicionada à confirmação física.
+- A posição 1 do par BE(2,4) + f2p1 #4 é **n = 1**; o par foi confirmado fisicamente (§7). Com o 2.º par confirmado, n = 2: ver §8.
 
 ## 5. Figuras (todas vistas)
 
@@ -167,20 +168,96 @@ Etiquetas: **[V]** verificado (com n e fonte), **[NT]** não testado, **[F]** te
 
 ## 6. Limites e o que NÃO foi verificado
 
-- **Não há recall:** não se sabe quantas das 20 gémeas estão entre as 100 de céu. **As 2 propostas estão por confirmar fisicamente [NT].**
+- **Não há recall:** não se sabe quantas das 20 gémeas estão entre as 100 de céu. As 2 propostas foram depois confirmadas fisicamente (§7).
 - A arte é usada por bbox fixa, sem M2. A fotometria corrige só L\* − 4,8. A imagem é consistência de cor, não identidade.
 - A escolha da erosão de 1 px foi feita nos controlos (A1/B2/BE própria), não nas propostas.
 - A ordem das propostas não depende dela [V: sem erosão dá as mesmas 2, com ΔE 12,5 / 14,7 e pct 0 %].
 - "Negativos conhecidos" que dependem de suposições: BD × céu (supõe-se que as gémeas UL das BD não estão no saco do céu, porque a secção UL está montada) e E-sym × céu.
-- f2p1 perde 2 peças (defeito de `segment_pieces` junto à tira branca) [F]. Correção [NT]: é do `src/` (implementer, M3).
+- f2p1 perde 2 peças (defeito de `segment_pieces` junto à tira branca) [F]. Corrigido depois em `src/segmentation.py` (§8).
 - n pequenos: 20 consultas BE, 2 propostas, 1 par para localizar com GT.
 - O t95/tmax e a margem vêm do E-sym (silhueta↔silhueta, a mesma modalidade).
 - Não testado [NT]: corrigir a\*/b\*; a arte a resolução mais alta; ΔE por cima de uma descrição de textura; `pytest` (não houve alterações em `src/` nem em `tests/`).
+
+## 7. Confirmação física (2026-10-31)
+
+O Tiago verificou as 2 propostas com as peças na mão. O registo fica em `ereal2_confirmacoes.json` (manual, lido pelo `ereal2.py`; a peça é reconhecida pelo centro na folha em mm, por isso sobrevive a renumerações), e o `ereal2_propostas.txt` passa a mostrar o resultado em vez de `ACERTO/ERRO: ____`.
+
+| peça | célula | resultado | nota |
+|---|---|---|---|
+| f2p1 #4 (gémea de BE(2,4)) | (2,61) | **ACERTO** | encaixa na borda; coincide com BE(2,4) rodada 180° |
+| f1p1 #6 (gémea de BE(5,5)) | (5,60) | **forma confirmada, posição não verificável** | coincide com BE(5,5) rodada 180°; zona vazia, a peça ficou à parte etiquetada (5,60) |
+
+- **Precisão das propostas: 2/2 [V].** Uma era ACEITE e a outra AMBÍGUA (d1 0,539 mm, única candidata). n = 2: não chega para calibrar o limiar da AMBÍGUA, mas é a primeira confirmação real da cadeia solta → solta.
+- **Consequência para o produto (M12):** é preciso um estado novo de peça, `posicao_conhecida`. A célula é conhecida (pela gémea), mas a peça ainda não se pode colocar porque não há vizinho montado. O programa deve guardar estas peças e avisar quando uma vizinha da célula for colocada ("ir buscar f1p1 #6 / saco N, vai para (5,60)").
+
+## 8. Re-execução com S3 corrigido (188 soltas, cordas por tipo de lado)
+
+**O que mudou:**
+- `src/segmentation.py`: `_frame_strip_mask` encontra a tira branca do papel ao longo do bordo do scan e tira-a da máscara antes da rotulagem (e do limiar de `segment_scan`). As peças perto dela levam `touches_strip`.
+- `ereal2.py`: regra 2 com `--dl-mode` (por omissão `tipo`: |ΔL| ≤ 2 mm no lado F e nos dois adjacentes, ≤ 1 mm nos outros) e confirmações físicas.
+- Comandos: `ereal2.py --force --dl-mode 1mm` (refaz a memória), depois `ereal2.py --dl-mode tipo` (é esta que fica nas saídas e em `results.json` → `ereal2`). A 1.ª execução fica em `results.json` → `ereal2_v1`.
+
+**Segmentação [V]:**
+- f2p1 dá 42, e as 2 peças recuperadas são as da coluna da direita junto à tira: **f2p1 #18** (fila 3, classe BBBT, 348 mm²) e **f2p1 #42** (última fila, BTTT, 398 mm²). Ambas têm `touches_strip`, não têm `touches_frame` e o contorno é justo (visto).
+- Estavam a ≈ 1,9 mm da tira; foi o fecho morfológico que as colou a ela.
+- Renumeração de f2p1: #1–#17 iguais; a antiga #n (n ≥ 18) passa a #n+1; as novas são #18 e #42.
+- f1p1, f1p2 e f2p2: numeração idêntica.
+- As 2 peças confirmadas mantêm o número (f2p1 #4, f1p1 #6).
+- Todas as outras peças de todas as folhas (BE, BD, E-sym, céu) ficam com o contorno igual ao píxel (área igual).
+
+| | 1.ª execução (`ereal2_v1`) | re-execução, `tipo` |
+|---|---|---|
+| memória | 186 (f2p1 40/42) | **188** (f2p1 42/42) |
+| BE → memória (forma) | 1 ACEITE, 1 AMBÍGUA, 18 SEM | igual |
+| BE(2,4) → f2p1 #4 | ACEITE, d1 0,408, margem 2,39, ΔE 8,7, pct 1,0 % (1 de 98 mais baixa) | ACEITE, d1 0,408, margem 2,395, ΔE 8,7, **pct 2,0 %** (2 de 100 mais baixas) |
+| BE(5,5) → f1p1 #6 | AMBÍGUA, d1 0,539, única, ΔE 10,8, pct 1,0 % | igual (pct 1,0 % de 100) |
+| (ii) céu × célula gémea | n 1 960, p90 50,0 | n 2 000, p90 49,9 |
+| pares negativos conhecidos | 10 472: 0 ACEITE, 1 AMBÍGUA | **10 608: 0 ACEITE, 1 AMBÍGUA** (o mesmo par A1(3,3) × B2(1,3), margem 0,50) |
+| céu × céu | 4 753: 0 | 4 950: 0 |
+| BE × céu | 1 960: 1 ACEITE, 1 AMBÍGUA | 2 000: as mesmas 2 |
+| controlo E-sym (pares) | 17/20 ACEITE | **20/20 ACEITE** (d mediana 0,303, margem mín 1,67) |
+
+**Peças recuperadas [V]:**
+- Nenhuma BE as propõe, e nenhuma passa classe + cordas contra outra peça (consulta SEM, sem candidata).
+- f2p1 #18: entre as BE e as de céu, as mais próximas pela free são de céu (d ≥ 1,04 mm; f2p1 #42: ≥ 0,94 mm). Contra BE(2,2) a classe é diferente (BBTT) e a free dá 2,70 mm.
+- Ambas têm um lado de corda ≈ 20,4 mm. Vi os cantos: o contorno e os cantos estão certos, e 20,4 mm é o p90 da corda máxima das 100 peças de céu. É um lado longo verdadeiro, não um artefacto da tira.
+- **A imagem sozinha teria escolhido mal:**
+  - f2p1 #18 tem ΔE 7,0 contra a célula (2,61), mais baixo do que a gémea confirmada f2p1 #4 (8,7). A #4 passa de 2.ª para **3.ª de 100** por imagem (depois de #18 e f2p2 #4).
+  - f2p1 #18 é também a melhor cor de todas para a célula gémea de BE(2,2) (ΔE 6,8).
+  - Só o filtro de forma põe a #4 à frente. Isto confirma que a imagem é consistência de cor no céu, não identidade.
+- f2p1 #42: o ΔE mínimo é 14,7 (gémea de BE(2,6), pct 17 %).
+
+**Modos de cordas na matriz completa (188 × 187 / 2 = 17 578 pares) [V]:**
+
+| relação (n pares) | `1mm`: passam / ACEITE / AMBÍGUA | `tipo` | `2mm` |
+|---|---|---|---|
+| negativos conhecidos (10 608): BD × tudo, BE × BD, BE × BE, BE × E-sym, E-sym não-gémeos, E-sym × céu | 155 / **0** / 1 | 210 / **0** / 1 | 703 / **0** / 1 |
+| céu × céu (4 950, esperado negativo) | 129 / 0 / 0 | 129 / 0 / 0 | 705 / 0 / **1** |
+| BE × céu (2 000, desconhecido) | 39 / 1 / 1 | 39 / 1 / 1 | 255 / 1 / 1 |
+| gémeos E-sym (20, positivos) | 17 / **17** / 0 | 20 / **20** / 0 | 20 / **20** / 0 |
+| propostas BE → céu | BE(2,4) → f2p1 #4 ACEITE; BE(5,5) → f1p1 #6 AMBÍGUA | iguais | iguais (margem 2,388) |
+
+- **Regra do Tiago cumprida:** com `tipo` continua a haver 0 ACEITE entre os negativos conhecidos (n = 10 608), e entre céu × céu 0 de 4 950. Por isso adota-se `tipo` (é o valor por omissão do script).
+- O E-sym sobe de 17/20 para 20/20.
+- Ao contrário de 2 mm uniforme, `tipo` não deixa passar mais pares entre peças interiores. As 98 + 2 de céu, as BE e as BD não têm lado F, por isso para elas `tipo` é igual a `1mm`. Os 55 pares a mais que passam entre os negativos são todos pares de borda E-sym, e nenhum chega a ACEITE.
+- A AMBÍGUA céu × céu que aparece com 2 mm não aparece com `tipo`.
+- **Limite:** `tipo` só foi posto à prova em peças de borda de uma só aresta (E-sym, borda de cima). Cantos e outras bordas não foram testados [NT].
+
+**Localização conjunta dos pares confirmados (n = 2) [V]:**
+
+| par | célula GT | posição entre as 3008 | entre as 2790 interiores | top-3 compatíveis |
+|---|---|---|---|---|
+| BE(2,4) + f2p1 #4 | (46,4) | 4 | **1** | (46,2), (46,4), (46,3) |
+| BE(5,5) + f1p1 #6 | (43,5) | 14 | **13** | (43,4), (44,4), (44,5) |
+
+- O 2.º par fica na banda certa (linhas 43–44, colunas 4–5). Falha a coluna por 1 e a GT fica na posição 13, mas o par continua muito melhor do que a BE sozinha (mediana 430).
+- Leitura: com n = 2, a imagem do par localiza à banda e a ±1 coluna, não à célula. A cor das duas metades (relva + céu) não chega para fixar a coluna.
 
 ## Reprodução
 
 ```powershell
 $env:PPF_SCRATCH = "C:\...\scratchpad"; $env:PYTHONIOENCODING = "utf-8"   # precisa de gemeos/esym.pkl
 python tools/diagnostico/gemeos/ereal2.py           # 131 s com a memória em cache ($PPF_SCRATCH/ereal2/memoria.pkl)
-python tools/diagnostico/gemeos/ereal2.py --force   # ≈ 170 s, volta a segmentar as 6 folhas
+python tools/diagnostico/gemeos/ereal2.py --force   # ≈ 175 s, volta a segmentar as 6 folhas
+python tools/diagnostico/gemeos/ereal2.py --dl-mode 1mm   # cordas: 1mm | tipo (omissão) | 2mm
 ```
