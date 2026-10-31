@@ -77,3 +77,43 @@ def test_segment_recovers_all_rectangles():
         remaining.remove(matched)
 
     assert remaining == []
+
+
+def test_piece_near_frame_is_kept():
+    """A piece next to (or touching) the image border is kept, not silently dropped (S1).
+
+    One rectangle sits 2 px from the right border (kept, ``touches_frame`` False);
+    another touches the bottom border (kept, ``touches_frame`` True, not a cluster).
+    """
+    bg = np.full((_IMG_H, _IMG_W, 3), _BG, dtype=np.uint8)
+    inset = [(80, 90, 150, 120, (200, 40, 40)), (400, 70, 150, 120, (40, 160, 40)),
+             (120, 380, 150, 120, (210, 170, 30))]
+    near = (_IMG_W - 2 - 150, 300, 150, 120, (40, 60, 200))   # bbox 2 px from the right edge
+    touch = (450, _IMG_H - 120, 150, 120, (150, 40, 170))     # bbox reaches the bottom edge
+    for (x, y, w, h, colour) in inset + [near, touch]:
+        bg[y:y + h, x:x + w] = colour
+    result = segment_pieces(Image.fromarray(bg))
+
+    assert "error" not in result, result.get("error")
+    assert result["count"] == 5
+    assert all("touches_frame" in p for p in result["pieces"])
+
+    def _find(rect):
+        x, y, w, h = rect[:4]
+        cx, cy = x + w / 2.0, y + h / 2.0
+        hits = [p for p in result["pieces"]
+                if abs(p["bbox"][0] + p["bbox"][2] / 2.0 - cx) <= _CENTER_TOL
+                and abs(p["bbox"][1] + p["bbox"][3] / 2.0 - cy) <= _CENTER_TOL]
+        assert len(hits) == 1, f"rectangle at ({x},{y}) matched {len(hits)} detections"
+        return hits[0]
+
+    p_near = _find(near)
+    assert p_near["touches_frame"] is False
+    assert p_near["is_cluster"] is False
+
+    p_touch = _find(touch)
+    assert p_touch["touches_frame"] is True
+    assert p_touch["is_cluster"] is False
+
+    for rect in inset:
+        assert _find(rect)["touches_frame"] is False

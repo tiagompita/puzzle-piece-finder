@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(REPO, "tools", "diagnostico", "forma"))
 S = os.environ.get("PPF_SCRATCH", "scratch")
 SEG = os.path.join(S, "seg")
 OUT = os.path.join(REPO, "docs", "diagnostico", "gemeos")
-PAD = 64
+PAD = 0  # S1 corrigido em 2026-10-31 (segment_pieces já não descarta peças junto ao bordo); PAD = 64 repõe a moldura antiga
 SCANS = {
 	"A1": "images/pieces/coluna5-24_300dpi_folhaA.jpg",
 	"A2": "images/pieces/colunas5-24_300dpi_rot180_folhaA.jpg",
@@ -47,17 +47,21 @@ def segment(name, force=False):
 	im = Image.open(f)
 	im.load()
 	im = im.convert("RGB")
-	# Moldura de PAD px com a cor mediana da orla: o filtro de "toca na moldura" de
-	# _extract_components (_FRAME_MARGIN_FRAC = 0,004 -> ~14 px) descarta peças a < 1,2 mm
-	# do bordo do scan (B2, fila 4, k=4). Contornos e bbox voltam às coordenadas originais.
-	a = np.asarray(im)
-	fr = np.concatenate([a[:20].reshape(-1, 3), a[-20:].reshape(-1, 3), a[:, :20].reshape(-1, 3), a[:, -20:].reshape(-1, 3)])
-	fill = np.median(fr, axis=0).astype(np.uint8)
-	ap = np.empty((a.shape[0] + 2 * PAD, a.shape[1] + 2 * PAD, 3), np.uint8)
-	ap[:] = fill
-	ap[PAD:-PAD, PAD:-PAD] = a
+	# Moldura opcional de PAD px com a cor mediana da orla (contorno do defeito S1, antes de
+	# 2026-10-31: o filtro de "toca na moldura" descartava peças a < 1,2 mm do bordo do scan,
+	# B2 fila 4, k=4). Contornos e bbox voltam às coordenadas originais.
+	if PAD > 0:
+		a = np.asarray(im)
+		fr = np.concatenate([a[:20].reshape(-1, 3), a[-20:].reshape(-1, 3), a[:, :20].reshape(-1, 3), a[:, -20:].reshape(-1, 3)])
+		fill = np.median(fr, axis=0).astype(np.uint8)
+		ap = np.empty((a.shape[0] + 2 * PAD, a.shape[1] + 2 * PAD, 3), np.uint8)
+		ap[:] = fill
+		ap[PAD:-PAD, PAD:-PAD] = a
+		im_in = Image.fromarray(ap)
+	else:
+		im_in = im
 	t = time.time()
-	res = segment_pieces(Image.fromarray(ap), debug=True)
+	res = segment_pieces(im_in, debug=True)
 	dt = time.time() - t
 	if "error" in res:
 		return {"name": name, "file": SCANS[name], "error": res["error"]}

@@ -99,11 +99,15 @@ _SUB_AREA_HI = 1.6
 
 
 # ===== Non-piece component rejection tunables (step 7) =====
-# A component whose bounding box reaches within this fraction of the working long
-# side of the image frame is the photo margin or a crease/fold between backing
-# sheets, not a piece: real pieces sit inset on the surface. Such components are
-# rejected outright (see :func:`_extract_components`). At 1600 px this is ~6 px.
-_FRAME_MARGIN_FRAC = 0.004
+# Components whose bounding box touches the working-image border are NOT dropped
+# (defect S1, fixed 2026-10-31: on a flatbed scan a piece < 1.2 mm from the glass
+# edge is a normal case). They are kept, flagged ``touches_frame`` and excluded
+# from the median-area estimate; photo margins / creases between backing sheets
+# are still removed by the aspect and stroke gates below, and a frame-touching
+# blob larger than ``cluster_ratio`` * median, or spanning more than this many
+# median piece sides, is rejected as margin/floor/lid outline (a piece with tabs
+# spans ~1.5 sides; a 2-piece mated pair at the edge ~2.5).
+_FRAME_BLOB_SPAN = 3.0
 # Jigsaw pieces are near-square: even a rotated piece with tabs rarely exceeds a
 # ~2:1 bounding box. A component whose bbox long/short side ratio exceeds this is
 # a thin sliver (border strip, seam/crease shadow), not a piece. Kept deliberately
@@ -412,6 +416,13 @@ def _morph_clean(binary: np.ndarray, working_dim: int, max_hole_frac: float = 0.
 	self-calibrating discriminator (the image-fraction cap guards denser shots).
 	On framed/zoom shots every hole is tiny, so all are still filled -- behaviour
 	there is unchanged.
+
+	The close and the hole fill run inside a zero (background) frame of the
+	close-kernel size, cropped back afterwards, so the outside of the image counts
+	as background there: a piece a few px from the border is not glued to the
+	border by the closing, and the corner flood fill always starts on background.
+	The open keeps OpenCV's default border so a blob that touches the border is
+	not pulled off it (``touches_frame`` stays truthful).
 	"""
 	k = max(3, int(round(0.003 * working_dim)))
 	if k % 2 == 0:
@@ -420,6 +431,8 @@ def _morph_clean(binary: np.ndarray, working_dim: int, max_hole_frac: float = 0.
 	k2 = k * 2 + 1
 	kern_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k2, k2))
 	m = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kern_open)
+	pad = k2
+	m = cv2.copyMakeBorder(m, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=0)
 	m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, kern_close)
 	# Enclosed background = pixels the corner flood fill cannot reach.
 	h, w = m.shape[:2]
@@ -429,13 +442,13 @@ def _morph_clean(binary: np.ndarray, working_dim: int, max_hole_frac: float = 0.
 	holes = cv2.bitwise_not(ff)
 	# Fill only holes below the smaller of (total foreground) and the image cap.
 	fg_area = int((m > 0).sum())
-	size_cap = min(fg_area, int(max_hole_frac * h * w))
+	size_cap = min(fg_area, int(max_hole_frac * binary.shape[0] * binary.shape[1]))
 	num, lab_h, stats_h, _ = cv2.connectedComponentsWithStats((holes > 0).astype(np.uint8), 8)
 	if num > 1:
 		small = np.nonzero(stats_h[1:, cv2.CC_STAT_AREA] < size_cap)[0] + 1
 		if small.size:
 			m = cv2.bitwise_or(m, (np.isin(lab_h, small).astype(np.uint8) * 255))
-	return m
+	return np.ascontiguousarray(m[pad:-pad, pad:-pad])
 
 
 def _solidity(mask: np.ndarray) -> float:
@@ -898,6 +911,56 @@ def _is_cluster_blob(comp_mask: np.ndarray, median_area: float, marker_ratio: fl
 	return plain[2] < 2
 
 
+def _touches_frame(bbox: tuple[int, int, int, int], w: int, h: int) -> bool:
+	"""Whether a working-coords bbox ``(x, y, bw, bh)`` reaches the ``w`` x ``h`` image border."""
+	x, y, bw, bh = bbox
+	return x <= 0 or y <= 0 or x + bw >= w or y + bh >= h
+
+
+def _raw_touches_frame(
+	bbox: tuple[int, int, int, int], comp_mask: np.ndarray, binary_raw: np.ndarray, reach: int,
+) -> bool:
+	"""Whether a component touches the border, directly or through its PRE-morphology foreground.
+
+	The open of :func:`_morph_clean` can detach a ragged blob from the border by a
+	few px (e.g. a vignetting/shadow blob at a photo edge). Within ``reach`` px of the
+	border, the ``binary_raw`` connected component(s) overlapping ``comp_mask`` (the
+	component's 0/255 crop at ``bbox``) are checked for border contact; unrelated raw
+	foreground nearby (a scanner-edge line) does not count.
+	"""
+	h, w = binary_raw.shape[:2]
+	if _touches_frame(bbox, w, h):
+		return True
+	x, y, bw, bh = bbox
+	if x > reach and y > reach and x + bw < w - reach and y + bh < h - reach:
+		return False
+	x0, y0 = max(0, x - reach), max(0, y - reach)
+	x1, y1 = min(w, x + bw + reach), min(h, y + bh + reach)
+	_, lab = cv2.connectedComponents((binary_raw[y0:y1, x0:x1] > 0).astype(np.uint8), connectivity=8)
+	own = np.unique(lab[y - y0:y - y0 + bh, x - x0:x - x0 + bw][comp_mask > 0])
+	own = own[own > 0]
+	if own.size == 0:
+		return False
+	edge = []
+	if y0 == 0:
+		edge.append(lab[0])
+	if y1 == h:
+		edge.append(lab[-1])
+	if x0 == 0:
+		edge.append(lab[:, 0])
+	if x1 == w:
+		edge.append(lab[:, -1])
+	return any(np.isin(e, own).any() for e in edge)
+
+
+def _frame_reach(working_dim: int) -> int:
+	"""How far (px) :func:`_morph_clean` can move a boundary: its close-kernel size."""
+	k = max(3, int(round(0.003 * working_dim)))
+	if k % 2 == 0:
+		k += 1
+	return 2 * k + 1
+
+
 def _extract_components(
 	binary: np.ndarray,
 	work_bgr: np.ndarray,
@@ -921,17 +984,22 @@ def _extract_components(
 	``is_cluster`` marks a component that triggered a split, could not be
 	separated, and stayed larger than ``cluster_ratio`` * median -- i.e. a genuine
 	touching/assembled cluster the splitter could not resolve into single pieces.
+	Components touching the image border are kept (see :func:`_touches_frame`)
+	unless larger than ``cluster_ratio`` * median or wider than ``_FRAME_BLOB_SPAN``
+	median sides (a photo margin / floor / lid-outline blob); they stay out of the
+	median-area estimate.
 	"""
 	h, w = binary.shape[:2]
 	working_area = h * w
 	working_dim = max(h, w)
 	num, labels, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
 
-	# Reject dust, frame-touching margins/creases and extreme-aspect slivers
-	# BEFORE the median so the surviving-piece median is not polluted by non-pieces.
+	# Reject dust and extreme-aspect slivers BEFORE the median so the surviving-piece
+	# median is not polluted by non-pieces. Frame-touching components are kept but
+	# left out of the median (they may be truncated pieces or photo-margin blobs).
 	dust = 0.0005 * working_area
-	frame_margin = max(1, int(round(_FRAME_MARGIN_FRAC * working_dim)))
 	kept: list[int] = []
+	inset: list[int] = []
 	for lab in range(1, num):
 		if stats[lab, cv2.CC_STAT_AREA] < dust:
 			continue
@@ -939,22 +1007,16 @@ def _extract_components(
 		y0 = int(stats[lab, cv2.CC_STAT_TOP])
 		ww = int(stats[lab, cv2.CC_STAT_WIDTH])
 		hh = int(stats[lab, cv2.CC_STAT_HEIGHT])
-		# Touches the image frame -> photo border / crease between backing sheets.
-		if (
-			x0 <= frame_margin
-			or y0 <= frame_margin
-			or x0 + ww >= w - frame_margin
-			or y0 + hh >= h - frame_margin
-		):
-			continue
 		# Extreme-aspect sliver -> thin border strip / seam shadow, not a piece.
 		if max(ww, hh) / max(1, min(ww, hh)) > _MAX_BBOX_ASPECT:
 			continue
 		kept.append(lab)
+		if not _touches_frame((x0, y0, ww, hh), w, h):
+			inset.append(lab)
 	if not kept:
 		return []
 
-	areas = np.array([stats[lab, cv2.CC_STAT_AREA] for lab in kept], dtype=np.float64)
+	areas = np.array([stats[lab, cv2.CC_STAT_AREA] for lab in (inset or kept)], dtype=np.float64)
 	median_area = float(np.median(areas))
 	if median_area <= 0:
 		return []
@@ -962,9 +1024,17 @@ def _extract_components(
 	# Drop under-area dust AND thin lines/creases that slipped past the bbox-aspect test.
 	# The stroke gate needs the median piece side, so it runs here, after median_area.
 	median_side = float(np.sqrt(median_area))
+	inset_set = set(inset)
 	survivors: list[int] = []
 	for lab in kept:
 		if stats[lab, cv2.CC_STAT_AREA] < min_area_ratio * median_area:
+			continue
+		# A frame-touching blob larger than a cluster is the photo margin, floor or a
+		# crease between backing sheets, not a (possibly truncated) piece near the edge.
+		if lab not in inset_set and (
+			stats[lab, cv2.CC_STAT_AREA] > cluster_ratio * median_area
+			or max(stats[lab, cv2.CC_STAT_WIDTH], stats[lab, cv2.CC_STAT_HEIGHT]) > _FRAME_BLOB_SPAN * median_side
+		):
 			continue
 		x0 = int(stats[lab, cv2.CC_STAT_LEFT])
 		y0 = int(stats[lab, cv2.CC_STAT_TOP])
@@ -1563,9 +1633,12 @@ def segment_pieces(
 		On success ``{'pieces': [...], 'count': int,
 		'background_lab': (L, a, b), 'working_scale': float}``; each piece is a
 		dict with ``index, image, mask, bbox, area_px, angle, contour,
-		is_cluster``. ``is_cluster`` is ``True`` for a blob that could not be
-		confidently split into single pieces (such a record also carries
-		``piece_type='cluster'``); it is ``False`` on every normal piece. On
+		is_cluster, touches_frame``. ``is_cluster`` is ``True`` for a blob that
+		could not be confidently split into single pieces (such a record also
+		carries ``piece_type='cluster'``); it is ``False`` on every normal piece.
+		``touches_frame`` is ``True`` when the piece's working-resolution bbox
+		reaches the image border (the piece may be cut off by the frame, or be
+		a photo-margin artefact); it does not set ``is_cluster``. On
 		failure ``{'error': str, 'count': 0, ...}`` (mirrors ``matching.py``).
 	"""
 	# Watershed marker threshold, split trigger, seam sensitivity and the
@@ -1671,6 +1744,7 @@ def segment_pieces(
 	# --- Steps 9, 10, 11: full-res extraction, rotation, compose ---
 	pieces: list[dict] = []
 	for bbox_w, mask_crop, is_cluster in components:
+		touches_frame = _raw_touches_frame(bbox_w, mask_crop, binary_raw, _frame_reach(working_dim))
 		rec = _extract_piece(
 			mask_crop, bbox_w, inv, original_rgb, normalize_rotation, pad_ratio,
 			bg, luma_weight, chroma_weight,
@@ -1681,6 +1755,7 @@ def segment_pieces(
 			# (never a deformed "piece"). Real pieces score solidity >= ~0.62; garbage <= ~0.55.
 			final_cluster = bool(is_cluster) or _solidity(np.asarray(rec["mask"])) < _SUB_SOLIDITY_MIN
 			rec["is_cluster"] = final_cluster
+			rec["touches_frame"] = touches_frame
 			if final_cluster:
 				# Note: edges.classify_pieces (if run downstream) overwrites
 				# piece_type; is_cluster is the reliable cluster flag.

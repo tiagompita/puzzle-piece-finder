@@ -40,7 +40,7 @@ Constantes afinadas que importam ao ler resultados: `_SEARCH_TARGET_PIECE_PX=46`
 ## 3. Contratos de dados
 
 **Peça** (saída de `segment_pieces`, enriquecida por `classify_pieces`):
-`index, image (PIL RGB, fundo preenchido com a cor média), mask (PIL L), bbox (x,y,w,h em coords da foto), area_px, angle, contour (N×2 em coords da foto), is_cluster, piece_type, straight_sides, sides[4], side_deviations[4], min_area_box`.
+`index, image (PIL RGB, fundo preenchido com a cor média), mask (PIL L), bbox (x,y,w,h em coords da foto), area_px, angle, contour (N×2 em coords da foto), is_cluster, touches_frame, piece_type, straight_sides, sides[4], side_deviations[4], min_area_box`.
 
 **Resultado de matching**: `best_position (x,y)`, `piece_size_final (w,h)`, `rotation ∈ {0,90,180,270}`, `scale`, `refined_similarity ∈ [0,1]`, `candidates` (até 5: `position, size, rotation, similarity, score, cost_comb, d_grad, edge_penalized`), `confidence`, `confidence_reason`, `confidence_gap`, `piece_structure`. Coordenadas no referencial da imagem de referência passada. Erro → `{'error': str}`.
 
