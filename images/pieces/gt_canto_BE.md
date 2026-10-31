@@ -48,3 +48,5 @@ As peças foram escolhidas pelo Tiago **pelo aspeto** da zona do canto superior 
 **Atenção:** o papel verde não cobre a largura toda do scan. Há uma tira fina de bordo à esquerda e/ou à direita que sai como um componente fino e comprido ao longo do bordo (80–1300 mm², sem forma de peça). Não é uma peça: deve ser rejeitado pela forma ou pela flag `touches_frame`.
 
 O Tiago guardou estas 100 peças. As propostas do programa são verificadas por colocação física: encaixa e a imagem bate certo.
+
+Disposição verificada pela imagem em 2026-10-31 (faixa de baixo = coluna j = 1 com o canto em baixo à direita e as escuras à esquerda; colunas da direita com 6, 6, 4, 4 peças); GT legível por máquina em `docs/diagnostico/gemeos/ereal2_gt_BE.json` (verificações automáticas em `tools/diagnostico/gemeos/ereal2.py`; resultados em `docs/diagnostico/gemeos/EREAL2.md`).
