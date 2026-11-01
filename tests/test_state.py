@@ -277,8 +277,8 @@ def test_run_query_with_stubs(proj, stub):
     assert len(pr.pairs) == 1 and stub.pair_calls == 1
     assert {pr.piece(l1).estado, pr.piece(l2).estado} == {"emparelhada"}
     md = open(pr.p("fetch.md"), encoding="utf-8").read()
-    assert "| ordem | lote | nº no lote | id | célula | origem | decisão | margem | ΔE | razões |" in md
-    assert f"| {t1} | (4,5) | gemeo | aceite | 2.10 | 12.5 |" in md
+    assert "| ordem | lote | nº no lote | id | célula | pose | origem | decisão | margem | ΔE | razões |" in md
+    assert f"| {t1} | (4,5) | " in md and "| gemeo | aceite | 2.10 | 12.5 |" in md
     assert "p_twin_placed" in md
     assert os.path.exists(pr.p("fetch_1.jpg"))
     assert any(e["action"] == "fetch_listed" for e in pr.events())

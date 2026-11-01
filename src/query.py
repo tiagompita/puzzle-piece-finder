@@ -22,8 +22,22 @@ A twin query whose only surviving candidate is a lone one (``find_twin`` ->
 ``single_candidate``, decision ``sem`` since 2026-11-01) is not listed; it is kept for
 review in ``fetch.json`` -> ``suprimidas`` and counted in the footer of ``fetch.md``.
 
-``src.twin`` / ``src.locate`` are imported lazily (other milestone); tests replace them in
-``sys.modules``. :func:`run_query` is the callable entry point (future GUI).
+Every entry with a piece also carries what the GUI / the printed sheet need to fetch it and
+put it down (:func:`_enrich`): ``theta_deg`` (board pose of the loose piece, complex
+convention of :mod:`src.shape`, positive = clockwise on screen, wrapped to (-180, 180]) and
+``pose_known`` / ``pose_reason``; for a twin proposal the pose is the chain of
+``src/twin.py`` (``tests/test_twin_real.py`` "orientation chain"): registered board pose of
+the placed query piece (:func:`src.render.registered_theta`; fallback the log
+``theta_deg``) + ``phi_deg`` of the candidate + ``profile.twin_rotation_deg()``. Also
+``scan_id``, ``crop_path``, ``clean_path`` (``render/clean/P####.png`` when it exists),
+``twin_id`` / ``twin_cell`` (the placed piece in ``profile.twin(*cell)``), ``sheet``
+(``render/sheets/S####_P####.jpg``: the numbered scan sheet with the piece highlighted,
+rewritten only when its numbering changes) and ``ghost`` (the twin's contour as it will
+look in the target cell: ``[[x, y], ...]`` in cell units, origin at the target cell centre,
+x right / y down, <= ``GHOST_MAX_PTS`` points). Paths are relative to the project folder.
+
+``src.twin`` / ``src.locate`` / ``src.render`` are imported lazily (other milestone); tests
+replace them in ``sys.modules``. :func:`run_query` is the callable entry point (future GUI).
 ``--lote N`` restricts the loose pieces examined to bag N (step 2 still searches the
 partner among all loose pieces: a pair rarely shares a bag).
 """
@@ -41,7 +55,7 @@ from typing import Optional
 import numpy as np
 
 __all__ = ["ORIGIN_STEP", "MAX_MISSING_BORDER", "MAX_BORDER_CANDIDATES", "run_query", "write_fetch",
-		   "load_fetch", "render_fetch_md", "main"]
+		   "load_fetch", "render_fetch_md", "ghost_contour", "wrap180", "GHOST_MAX_PTS", "main"]
 
 ORIGIN_STEP = {"borda": 0, "gemeo": 1, "par": 2, "posicao_conhecida": 3, "seccao": 4}
 _DECISION_RANK = {"aceite": 0, "colocavel": 0, "ambigua": 1, "proposto": 1, "confirmado": 0, "candidata": 2,
@@ -50,7 +64,12 @@ MAX_MISSING_BORDER = 8        # step 0 runs only when few border cells are missi
 MAX_BORDER_CANDIDATES = 12    # listed candidates per missing border cell without a twin silhouette
 MODALITY = "silhueta_silhueta"
 TOPK = 3
-THUMB = 200                   # px, tile of fetch_<lote>.jpg
+THUMB = 210                   # px, main image of a tile of fetch_<lote>.jpg (the twin beside it at half size)
+TILE_CELLS = 1.8              # cells across THUMB (a piece with its tabs spans <= ~1.6 cells)
+GHOST_MAX_PTS = 120           # points of the twin ghost contour in a fetch entry
+SHEET_MAX_PX = 1400           # long side of render/sheets/*.jpg
+SHEET_QUALITY = 80            # JPEG quality of the sheets (lowered in steps of 10 down to 50 if > SHEET_MAX_BYTES)
+SHEET_MAX_BYTES = 250_000
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -75,6 +94,10 @@ class _Ctx:
 		self.suppressed = []
 		self.art = None
 		self.TwinItem, self.find_twin = _twin_api()
+		self.poses = {}
+		self.placements = None
+		self.sheet_index = None
+		self.sheet_index_dirty = False
 		if use_image:
 			try:
 				from src.locate import CellArt
@@ -107,7 +130,7 @@ def _entry(pr, origin: str, piece_id: Optional[str], cell, decision: str, **kw) 
 	p = pr.piece(piece_id) if piece_id else None
 	e = {"origin": origin, "piece": piece_id, "lote": p.lote if p else None, "n_no_lote": p.n_no_lote if p else None,
 		 "cell": list(cell) if cell else None, "decision": decision, "margin": None, "dE": None, "d1_mm": None,
-		 "reasons": [], "query": None, "pair": None, "rank": None, "score": None}
+		 "reasons": [], "query": None, "pair": None, "rank": None, "score": None, "phi_deg": None}
 	e.update(kw)
 	return e
 
@@ -132,7 +155,7 @@ def _from_candidate(pr, origin: str, res: dict, cell, query_id: Optional[str]) -
 	img = c0.get("image") or {}
 	return _entry(pr, origin, c0["id"], cell, res["decision"], margin=res.get("margin"), dE=img.get("dE"),
 				  d1_mm=c0.get("d1_mm"), reasons=list(res.get("reasons") or []), query=query_id, rank=1,
-				  score=c0.get("d1_mm"))
+				  score=c0.get("d1_mm"), phi_deg=None if c0.get("phi_deg") is None else float(c0["phi_deg"]))
 
 
 # ---------------------------------------------------------------- steps
@@ -289,6 +312,190 @@ def _step_sections(pr) -> list:
 	return out
 
 
+# ---------------------------------------------------------------- pose, ghost, sheet of an entry
+def wrap180(a: float) -> float:
+	"""Angle in degrees wrapped to (-180, 180]."""
+	w = float(a) % 360.0
+	return w - 360.0 if w > 180.0 else w
+
+
+def _pose(ctx, pid: str) -> Optional[dict]:
+	"""Board pose of a placed piece ``{theta_deg, pivot_mm, dx_mm, dy_mm, source}`` (None if unknown).
+
+	Same source as :func:`src.render.registered_theta` (the ``render/placements.json`` entry
+	when its key still matches, else a corner registration without the image), plus the
+	translation needed by the ghost; fallback: the log ``theta_deg`` about the body centre.
+	"""
+	if pid in ctx.poses:
+		return ctx.poses[pid]
+	pr = ctx.pr
+	p = pr.piece(pid)
+	out = None
+	try:
+		from src import render
+		if p.estado == "colocada" and p.celula is not None:
+			if ctx.placements is None:
+				ctx.placements = render.load_placements(pr)["placements"]
+			e = ctx.placements.get(pid)
+			if e is None or e.get("key") != render._entry_key(pr, pid):
+				e = render.register_piece(pr, pid, art=None, image=False)
+				how = "registo (cantos, sem imagem)"
+			else:
+				how = "registo"
+			if "error" not in e:
+				out = {"theta_deg": float(e["theta_deg"]), "pivot_mm": [float(v) for v in e["pivot_mm"]],
+					   "dx_mm": float(e.get("dx_mm") or 0.0), "dy_mm": float(e.get("dy_mm") or 0.0), "source": how}
+	except Exception as ex:  # noqa: BLE001 - render is optional for the list; fall back to the log, reported
+		ctx.notes.append(f"registo de {pid} indisponível ({type(ex).__name__}: {ex})")
+	if out is None and p.theta_deg is not None:
+		sh = pr.shape(pid)
+		piv = _body_center(sh)
+		out = {"theta_deg": float(p.theta_deg), "pivot_mm": None if piv is None else [float(v) for v in piv],
+			   "dx_mm": 0.0, "dy_mm": 0.0, "source": "log"}
+	ctx.poses[pid] = out
+	return out
+
+
+def _body_center(sh):
+	"""Body centre (mean of the 4 corners) of a Shape, else its contour mean; None without a shape."""
+	if sh is None:
+		return None
+	if getattr(sh, "ok", False) and len(getattr(sh, "corners", [])) == 4:
+		return np.asarray(sh.c, float)[np.asarray(sh.corners, int)].mean(0)
+	return np.asarray(sh.c, float).mean(0)
+
+
+def ghost_contour(shape, pose: dict, profile, max_pts: int = GHOST_MAX_PTS) -> Optional[list]:
+	"""Contour of a placed piece moved to its twin cell, in cell units about that cell's centre.
+
+	Board pose of the placed piece: ``R(theta) (c - pivot) + d`` about its own cell centre;
+	the twin cell sees it turned by ``profile.twin_rotation_deg()`` about the centre, so the
+	ghost is ``R(rot) (R(theta) (c - pivot) + d)``, divided by ``cell_mm`` (x by w, y by h).
+	Returns ``[[x, y], ...]`` (<= ``max_pts`` points, 4 decimals) or None.
+	"""
+	from src.shape import transform_contour
+	if shape is None or pose is None:
+		return None
+	c = np.asarray(shape.c, float).reshape(-1, 2)
+	if len(c) < 3:
+		return None
+	piv = np.asarray(pose["pivot_mm"], float) if pose.get("pivot_mm") is not None else _body_center(shape)
+	rot = float(profile.twin_rotation_deg())
+	g = transform_contour(c - piv, float(pose["theta_deg"]) + rot, center=(0.0, 0.0))
+	d = transform_contour(np.array([[pose.get("dx_mm") or 0.0, pose.get("dy_mm") or 0.0]]), rot, center=(0.0, 0.0))
+	g = g + d
+	idx = np.unique(np.linspace(0, len(g), min(max_pts, len(g)), endpoint=False).astype(int))
+	g = g[idx] / np.array([float(profile.cell_mm["w"]), float(profile.cell_mm["h"])])
+	return [[round(float(x), 4), round(float(y), 4)] for x, y in g]
+
+
+def _sheet_signature(pr, scan_id: str, pid: str) -> str:
+	from src.ingest import piece_label
+	labs = sorted((p.id, piece_label(p)) for p in pr.pieces.values() if p.scan_id == scan_id)
+	return json.dumps([pid, SHEET_MAX_PX, labs], separators=(",", ":"))
+
+
+def _sheet(ctx, pid: str, write: bool) -> Optional[str]:
+	"""``render/sheets/<scan>_<pid>.jpg`` (project-relative): the numbered sheet of the piece's scan with
+	the piece highlighted; written only when missing or when the scan's numbering changed."""
+	pr = ctx.pr
+	p = pr.piece(pid)
+	rel = f"render/sheets/{p.scan_id}_{pid}.jpg"
+	fp = pr.p(*rel.split("/"))
+	if ctx.sheet_index is None:
+		ix = pr.p("render", "sheets", "index.json")
+		ctx.sheet_index = {}
+		if os.path.exists(ix):
+			try:
+				with open(ix, encoding="utf-8") as f:
+					ctx.sheet_index = json.load(f)
+			except (OSError, ValueError):
+				ctx.sheet_index = {}
+	sig = _sheet_signature(pr, p.scan_id, pid)
+	if os.path.exists(fp) and ctx.sheet_index.get(rel) == sig:
+		return rel
+	if not write:
+		return rel if os.path.exists(fp) else None
+	import cv2
+	from src.ingest import sheet_overlay
+	try:
+		img = sheet_overlay(pr, p.scan_id, highlight=pid, max_px=SHEET_MAX_PX)
+	except (ValueError, OSError) as ex:
+		ctx.notes.append(f"folha de {pid} ({p.scan_id}) não gerada: {ex}")
+		return None
+	q = SHEET_QUALITY
+	while True:
+		ok, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, q])
+		if not ok or len(buf) <= SHEET_MAX_BYTES or q <= 50:
+			break
+		q -= 10
+	if not ok:
+		ctx.notes.append(f"folha de {pid}: falha a codificar")
+		return None
+	os.makedirs(os.path.dirname(fp), exist_ok=True)
+	buf.tofile(fp)
+	ctx.sheet_index[rel] = sig
+	ctx.sheet_index_dirty = True
+	return rel
+
+
+def _save_sheet_index(ctx) -> None:
+	if getattr(ctx, "sheet_index_dirty", False):
+		with open(ctx.pr.p("render", "sheets", "index.json"), "w", encoding="utf-8", newline="\n") as f:
+			json.dump(ctx.sheet_index, f, ensure_ascii=False, indent=0, sort_keys=True)
+
+
+def _enrich(ctx, e: dict, write: bool) -> dict:
+	"""Add the pose / image / sheet / ghost fields to entry ``e`` (in place; see the module docstring)."""
+	pr = ctx.pr
+	prof = pr.profile
+	pid = e.get("piece")
+	p = pr.piece(pid) if pid and pid in pr.pieces else None
+	cell = _cl(e.get("cell"))
+	tw_cell = prof.twin(*cell) if cell is not None else None
+	twin_id = None
+	if e.get("origin") in ("gemeo", "borda") and e.get("query") and e["query"] in pr.pieces:
+		twin_id = e["query"]
+	elif tw_cell is not None:
+		occ = pr.board[tw_cell]
+		if occ.get("estado") == "colocada" and occ.get("peca_id"):
+			twin_id = occ["peca_id"]
+	tp = pr.piece(twin_id) if twin_id else None
+	if tp is not None and tp.celula is not None:
+		tw_cell = tuple(tp.celula)
+	e.update(scan_id=p.scan_id if p else None, crop_path=p.crop_path if p else None, clean_path=None,
+			 twin_id=twin_id, twin_cell=list(tw_cell) if tw_cell else None, sheet=None, ghost=None)
+	if p is not None and os.path.exists(pr.p("render", "clean", f"{pid}.png")):
+		e["clean_path"] = f"render/clean/{pid}.png"
+	# pose of the loose piece on the board
+	theta, why = None, None
+	tpose = _pose(ctx, twin_id) if tp is not None and tp.estado == "colocada" else None
+	if p is None:
+		why = "sem peça"
+	elif e.get("origin") in ("gemeo", "borda") and e.get("query"):
+		if e.get("phi_deg") is None:
+			why = "pose desconhecida: phi da candidata em falta"
+		elif tpose is None:
+			why = f"pose desconhecida: {twin_id} sem registo nem theta no log"
+		else:
+			theta = tpose["theta_deg"] + float(e["phi_deg"]) + float(prof.twin_rotation_deg())
+			why = f"theta {twin_id} ({tpose['source']}) + phi + rotação do gémeo"
+	elif p.theta_deg is not None:
+		theta, why = float(p.theta_deg), "theta do log"
+	elif e.get("origin") == "par":
+		why = "pose desconhecida: par entre soltas (célula por confirmar)"
+	else:
+		why = "pose desconhecida"
+	e["theta_deg"] = None if theta is None else round(wrap180(theta), 2)
+	e["pose_known"] = theta is not None
+	e["pose_reason"] = why
+	if p is not None:
+		e["sheet"] = _sheet(ctx, pid, write)
+	if tp is not None and tpose is not None and cell is not None:
+		e["ghost"] = ghost_contour(pr.shape(twin_id), tpose, prof)
+	return e
+
+
 # ---------------------------------------------------------------- main entry point
 def _valid_prior(pr, e, only_cells, only_pieces, rej) -> bool:
 	if ORIGIN_STEP.get(e["origin"], 9) >= 3:
@@ -365,6 +572,14 @@ def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, on
 							 -(e["margin"] if isinstance(e.get("margin"), (int, float)) else 0.0), e.get("piece") or ""))
 	for i, e in enumerate(uniq, 1):
 		e["ordem"] = i
+		try:
+			_enrich(ctx, e, write)
+		except Exception as ex:  # noqa: BLE001 - the list must still be written; the entry keeps pose_known False
+			e.setdefault("theta_deg", None)
+			e["pose_known"], e["pose_reason"] = False, f"erro ao calcular a pose ({type(ex).__name__}: {ex})"
+			ctx.notes.append(f"entrada {i}: {e['pose_reason']}")
+	if write:
+		_save_sheet_index(ctx)
 	listed = {e["piece"] for e in uniq if e.get("piece")}
 	rest = [p.id for p in loose if p.id not in listed]
 	seen_s, suppressed = set(), []
@@ -390,6 +605,10 @@ def load_fetch(project) -> dict:
 		return json.load(f)
 
 
+def _pose_txt(e) -> str:
+	return f"{e['theta_deg']:.0f}°" if e.get("pose_known") and e.get("theta_deg") is not None else "?"
+
+
 def _fmt(v, nd=2):
 	if v is None:
 		return "—"
@@ -405,14 +624,17 @@ def render_fetch_md(project, entries: list, rest: list, notes: list, suppressed:
 		 f"Projeto `{project.meta['id']}`; {st['pecas']} peças; por estado {st['por_estado']}; tabuleiro "
 		 f"{st['celulas_ocupadas']} ocupadas / {project.profile.cell_count()}.",
 		 f"p_twin_placed = {st['p_twin_placed']:.3f} ({st['p_twin_placed_formula']}).", "",
-		 "| ordem | lote | nº no lote | id | célula | origem | decisão | margem | ΔE | razões |",
-		 "|---:|---:|---:|---|---|---|---|---:|---:|---|"]
+		 "| ordem | lote | nº no lote | id | célula | pose | origem | decisão | margem | ΔE | razões |",
+		 "|---:|---:|---:|---|---|---:|---|---|---:|---:|---|"]
 	for e in entries:
 		pid = e.get("piece") or e.get("section") or "—"
 		cell = f"({e['cell'][0]},{e['cell'][1]})" if e.get("cell") else "—"
 		why = "; ".join(str(r) for r in (e.get("reasons") or [])).replace("|", "/")
 		L.append(f"| {e['ordem']} | {_fmt(e.get('lote'))} | {_fmt(e.get('n_no_lote'))} | {pid} | {cell} | "
-				 f"{e['origin']} | {e['decision']} | {_fmt(e.get('margin'))} | {_fmt(e.get('dE'), 1)} | {why} |")
+				 f"{_pose_txt(e) if e.get('piece') else '—'} | {e['origin']} | {e['decision']} | {_fmt(e.get('margin'))} | "
+				 f"{_fmt(e.get('dE'), 1)} | {why} |")
+	L += ["", "pose = rotação (graus, positiva no sentido dos ponteiros do relógio) que leva a peça, tal como está "
+		  "na folha do scan, à sua posição no tabuleiro; «?» = desconhecida (ver pose_reason em fetch.json)."]
 	L += ["", f"Ficam na memória: {len(rest)} soltas sem proposta."]
 	for n in notes:
 		L.append(f"- nota: {n}")
@@ -421,35 +643,152 @@ def render_fetch_md(project, entries: list, rest: list, notes: list, suppressed:
 	return "\n".join(L) + "\n"
 
 
+_FONTS = {}
+
+
+def _font(size: int):
+	"""TrueType font (Arial / DejaVu Sans) at ``size`` px, else PIL's default font."""
+	if size not in _FONTS:
+		from PIL import ImageFont
+		f = None
+		for name in ("arial.ttf", "Arial.ttf", "DejaVuSans.ttf", "LiberationSans-Regular.ttf"):
+			try:
+				f = ImageFont.truetype(name, size)
+				break
+			except OSError:
+				continue
+		if f is None:
+			try:
+				f = ImageFont.load_default(size=size)
+			except TypeError:
+				f = ImageFont.load_default()
+		_FONTS[size] = f
+	return _FONTS[size]
+
+
+def _fit_text(draw, xy, text: str, width: int, size: int, fill) -> None:
+	"""Draw ``text`` at ``xy`` with the largest font <= ``size`` that fits in ``width`` px (ellipsis below 10 px)."""
+	s = size
+	while s > 10 and draw.textlength(text, font=_font(s)) > width:
+		s -= 1
+	t = text
+	while len(t) > 3 and draw.textlength(t, font=_font(s)) > width:
+		t = t[:-2] + "…"
+	draw.text(xy, t, font=_font(s), fill=fill)
+
+
+def _piece_image(project, pid: str, theta_deg: float, pivot_mm, size: int, px_per_mm: float):
+	"""The cleaned crop of ``pid`` turned by ``theta_deg`` about ``pivot_mm`` (scan mm), pivot at the
+	centre of a ``size`` x ``size`` canvas: ``(rgb->bgr float, alpha float 0..1)`` or None."""
+	from src import render
+	rgba = render._clean_or_crop(project, pid)
+	if rgba is None:
+		return None
+	p = project.piece(pid)
+	mmpp = render._scan_mmpp(project, p.scan_id)
+	origin = np.asarray(p.bbox[:2], float) if p.bbox else np.zeros(2)
+	if pivot_mm is None:
+		pivot_mm = (origin + np.array(rgba.shape[1::-1]) / 2.0) * mmpp
+	ctr = np.full(2, (size / 2.0 + 0.5) / px_per_mm)
+	A = render._crop_to_out(float(theta_deg), pivot_mm, ctr, (0.0, 0.0), origin, mmpp, (px_per_mm, px_per_mm), (0, 0))
+	bgr = render._warp(np.ascontiguousarray(rgba[..., 2::-1]), A, (size, size)).astype(float)
+	al = render._warp(rgba[..., 3].astype(np.float32) / 255.0, A, (size, size))[..., None]
+	return bgr, np.clip(al, 0.0, 1.0)
+
+
+def _paste(sheet: np.ndarray, x0: int, y0: int, im) -> None:
+	if im is None:
+		return
+	bgr, al = im
+	h, w = al.shape[:2]
+	roi = sheet[y0:y0 + h, x0:x0 + w].astype(float)
+	sheet[y0:y0 + h, x0:x0 + w] = (al * bgr + (1.0 - al) * roi).astype(np.uint8)
+
+
 def _fetch_sheet(project, lote, rows: list) -> np.ndarray:
+	"""Sheet of the pieces to fetch from bag ``lote`` (BGR).
+
+	Each tile: the piece (cleaned crop) turned to its board pose (``theta_deg``; a small red
+	triangle marks the top of the board, the twin ghost is a thin cyan line), the placed twin
+	at half size as it sits on the board, and two label lines ("ordem. lote L · nº N → (l,c)"
+	and origin / decision / pose). Without a known pose the crop is shown as scanned and the
+	label says "pose ?".
+	"""
 	import cv2
+	from PIL import Image, ImageDraw
+	prof = project.profile
+	cw, ch = float(prof.cell_mm["w"]), float(prof.cell_mm["h"])
+	s = THUMB / (TILE_CELLS * max(cw, ch))          # px per mm of the main image
+	half = THUMB // 2
+	tw_w, lab_h, pad, head = THUMB + half + 16, 50, 6, 72
 	n = len(rows)
-	cols = min(6, max(1, n))
+	cols = min(5, max(1, n))
 	nr = (n + cols - 1) // cols
-	cap = 64
-	W, H = cols * THUMB, nr * (THUMB + cap)
-	sheet = np.full((H + 50, W, 3), 255, np.uint8)
-	cv2.putText(sheet, f"lote {lote}: {n} pecas a ir buscar", (10, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 0), 2,
-				cv2.LINE_AA)
+	tile_h = THUMB + lab_h + 2 * pad
+	W, H = cols * tw_w, head + nr * tile_h
+	sheet = np.full((H, W, 3), 255, np.uint8)
+	texts = []
 	for k, e in enumerate(rows):
 		r, c = divmod(k, cols)
-		x0, y0 = c * THUMB, 50 + r * (THUMB + cap)
-		rgba = project.crop_rgba(e["piece"])
-		if rgba is not None:
-			h, w = rgba.shape[:2]
-			s = (THUMB - 10) / max(h, w)
-			im = cv2.resize(rgba, (max(1, int(w * s)), max(1, int(h * s))), interpolation=cv2.INTER_AREA)
-			a = im[..., 3:4].astype(float) / 255.0
-			bgr = im[..., 2::-1].astype(float)
-			yy, xx = y0 + (THUMB - im.shape[0]) // 2, x0 + (THUMB - im.shape[1]) // 2
-			roi = sheet[yy:yy + im.shape[0], xx:xx + im.shape[1]].astype(float)
-			sheet[yy:yy + im.shape[0], xx:xx + im.shape[1]] = (a * bgr + (1 - a) * roi).astype(np.uint8)
+		x0, y0 = c * tw_w, head + r * tile_h
+		cv2.rectangle(sheet, (x0 + 2, y0 + 2), (x0 + tw_w - 3, y0 + tile_h - 3), (215, 215, 215), 1)
+		known = bool(e.get("pose_known")) and e.get("theta_deg") is not None
+		pid = e["piece"]
+		try:
+			im = _piece_image(project, pid, e["theta_deg"] if known else 0.0, _body_center(project.shape(pid)), THUMB, s)
+		except Exception:  # noqa: BLE001 - a broken crop must not drop the sheet
+			im = None
+		_paste(sheet, x0 + pad, y0 + pad, im)
+		if known:
+			g = e.get("ghost")
+			if g:
+				P = np.asarray(g, float) * np.array([cw, ch]) * s + np.array([x0 + pad, y0 + pad]) + THUMB / 2.0
+				cv2.polylines(sheet, [np.round(P * 4).astype(np.int32).reshape(-1, 1, 2)], True, (200, 160, 0), 1,
+							  cv2.LINE_AA, shift=2)
+			tx = x0 + pad + THUMB // 2
+			cv2.fillPoly(sheet, [np.array([[tx, y0 + pad], [tx - 7, y0 + pad + 11], [tx + 7, y0 + pad + 11]], np.int32)],
+						 (0, 0, 200), cv2.LINE_AA)
+		tid = e.get("twin_id")
+		if tid and tid in project.pieces:
+			tim = None
+			try:
+				tp = project.piece(tid)
+				tz = None
+				if tp.estado == "colocada":
+					from src import render
+					tz = render.registered_theta(project, tid)
+				tz = tz if tz is not None else tp.theta_deg
+				tim = _piece_image(project, tid, tz if tz is not None else 0.0, _body_center(project.shape(tid)), half,
+								   s / 2.0)
+			except Exception:  # noqa: BLE001
+				tim = None
+			xt = x0 + pad + THUMB + 4
+			_paste(sheet, xt, y0 + pad + 20, tim)
+			texts.append(((xt, y0 + pad), "gémea colocada", half + 4, 13, (90, 90, 90)))
+			tc = e.get("twin_cell")
+			texts.append(((xt, y0 + pad + 24 + half), f"{tid}" + (f" ({tc[0]},{tc[1]})" if tc else ""), half + 4, 13,
+						  (90, 90, 90)))
 		cell = f"({e['cell'][0]},{e['cell'][1]})" if e.get("cell") else "?"
-		t1 = f"{e['ordem']}. #{e.get('n_no_lote')} {e['piece']}"
-		t2 = f"-> {cell} {e['origin']} {e['decision']}"
-		cv2.putText(sheet, t1, (x0 + 4, y0 + THUMB + 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 0), 2, cv2.LINE_AA)
-		cv2.putText(sheet, t2, (x0 + 4, y0 + THUMB + 48), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 160), 1, cv2.LINE_AA)
-	return sheet
+		t1 = f"{e['ordem']}. lote {_fmt(e.get('lote'))} · nº {_fmt(e.get('n_no_lote'))} → {cell}"
+		t2 = f"{e['origin']} {e['decision']} · pose {_pose_txt(e)} · {pid}"
+		ly = y0 + pad + THUMB + 2
+		texts.append(((x0 + pad, ly), t1, tw_w - 2 * pad, 19, (0, 0, 0)))
+		texts.append(((x0 + pad, ly + 24), t2, tw_w - 2 * pad, 15,
+					  (0, 120, 0) if e["decision"] in ("aceite", "colocavel") else (170, 90, 0)))
+	pil = Image.fromarray(np.ascontiguousarray(sheet[..., ::-1]))
+	d = ImageDraw.Draw(pil)
+	_fit_text(d, (10, 6), f"lote {lote}: {n} peças a ir buscar", W - 20, 24, (0, 0, 0))
+	help_ = ("peça rodada como fica no tabuleiro (triângulo vermelho = topo do tabuleiro; contorno ciano = gémea "
+			 "rodada para a célula); à direita, a gémea colocada como está no tabuleiro")
+	if d.textlength(help_, font=_font(13)) <= W - 20:
+		_fit_text(d, (10, 40), help_, W - 20, 13, (80, 80, 80))
+	else:
+		cut = help_.index("; à direita")
+		_fit_text(d, (10, 36), help_[:cut + 1], W - 20, 13, (80, 80, 80))
+		_fit_text(d, (10, 52), help_[cut + 2:], W - 20, 13, (80, 80, 80))
+	for xy, t, w, size, col in texts:
+		_fit_text(d, xy, t, w, size, col)
+	return np.ascontiguousarray(np.asarray(pil)[..., ::-1])
 
 
 def write_fetch(project, entries: list, rest: list, notes: list, suppressed: Optional[list] = None) -> None:
@@ -481,7 +820,8 @@ def print_summary(project, entries: list) -> None:
 	for e in entries:
 		cell = f"({e['cell'][0]},{e['cell'][1]})" if e.get("cell") else "—"
 		who = e.get("piece") or e.get("section")
-		print(f"{e['ordem']:>3}. lote {_fmt(e.get('lote'))} #{_fmt(e.get('n_no_lote'))} {who} → {cell} "
+		pose = _pose_txt(e) if e.get("piece") else "—"
+		print(f"{e['ordem']:>3}. lote {_fmt(e.get('lote'))} #{_fmt(e.get('n_no_lote'))} {who} → {cell} pose {pose} "
 			  f"[{e['origin']}, {e['decision']}, margem {_fmt(e.get('margin'))}, ΔE {_fmt(e.get('dE'), 1)}]")
 	st = project.stats()
 	print(f"estados: {st['por_estado']}; pares {st['pares']}; buracos {st['buracos']}; borda em falta "
