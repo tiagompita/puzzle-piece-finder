@@ -5,12 +5,11 @@ see images/pieces/gemeos_2026-10-30.md): A1 (sheet A), A2 (sheet A rotated 180 d
 the glass) and B2 (sheet B = the 180 deg twins, rotated). Ground truth by grid
 position: A(f, k) <-> B2(f, 4 - k) are twins; A1(f, k) <-> A2(f, k) is a re-scan.
 
-The shape metric is the corner-free distance of the E-sym diagnostic
-(tools/diagnostico/forma/dist.free_dist): contour smoothed with a circular Gaussian
-(sigma 1.5 samples), resampled to 512 equidistant points, centred, as complex
-numbers; RMS (mm) minimised over cyclic shift and rotation via FFT. The contour
-helpers are imported from tools/diagnostico/forma/shapelib (to be replaced by
-src/shape.py in M4).
+The shape metric is the corner-free distance :func:`src.shape.free_dist` (promoted
+from the E-sym diagnostic tools/diagnostico/forma/dist.free_dist): contour smoothed
+with a circular Gaussian (sigma 1.5 samples), resampled to 512 equidistant points,
+centred, as complex numbers; RMS (mm) minimised over cyclic shift and rotation via
+FFT. Contours are converted to mm with ``segment_scan(...)['mm_per_px']``.
 
 Thresholds (docs/diagnostico/gemeos/RESULTADOS.md, update 2026-10-31): median
 free RMS of the opposite-pose twins A2/B2 <= 0.5 mm (measured 0.38) and top-1
@@ -18,7 +17,6 @@ free RMS of the opposite-pose twins A2/B2 <= 0.5 mm (measured 0.38) and top-1
 """
 
 import os
-import sys
 
 import numpy as np
 import pytest
@@ -26,9 +24,7 @@ from PIL import Image
 
 from conftest import REPO_ROOT
 from src.segmentation import segment_scan
-
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools", "diagnostico", "forma"))
-from shapelib import MM, analyse_v2, resample_closed, smooth_closed  # noqa: E402  (to be replaced by src/shape.py in M4)
+from src.shape import analyse, free_dist
 
 pytestmark = pytest.mark.slow
 
@@ -41,7 +37,6 @@ _MISSING = [p for p in _SCANS.values() if not os.path.exists(os.path.join(REPO_R
 if _MISSING:
     pytest.skip(f"E-sym scans missing: {_MISSING}", allow_module_level=True)
 
-_NF = 512
 _TWIN_MEDIAN_MAX_MM = 0.5
 
 
@@ -63,20 +58,6 @@ def _grid_order(bboxes):
     return [int(i) for r in rows for i in sorted(r, key=lambda j: cx[j])], [len(r) for r in rows]
 
 
-def _free_vec(contour):
-    # as esym.prep: arclength-resample to 1200 points (analyse_v2), smooth, resample to 512
-    c = resample_closed(np.asarray(contour, float).reshape(-1, 2), 1200)
-    z = resample_closed(smooth_closed(c, 1.5), _NF)
-    z = z - z.mean(0)
-    return z[:, 0] + 1j * z[:, 1]
-
-
-def _free_dist(za, zb):
-    corr = np.fft.ifft(np.conj(np.fft.fft(za)) * np.fft.fft(zb))
-    rms2 = (np.sum(np.abs(za) ** 2) + np.sum(np.abs(zb) ** 2) - 2 * np.abs(corr).max()) / len(za)
-    return float(np.sqrt(max(rms2, 0.0))) * MM
-
-
 @pytest.fixture(scope="module")
 def scans():
     out = {}
@@ -88,7 +69,9 @@ def scans():
         assert res["method"] == "scan"
         pieces = res["pieces"]
         order, rows = _grid_order([p["bbox"] for p in pieces])
-        out[name] = dict(res=res, pieces=[pieces[i] for i in order], rows=rows)
+        pieces = [pieces[i] for i in order]
+        shapes = [analyse(p["contour"], res["mm_per_px"]) for p in pieces]
+        out[name] = dict(res=res, pieces=pieces, shapes=shapes, rows=rows)
     return out
 
 
@@ -108,8 +91,8 @@ def test_counts_and_grid(scans):
 
 
 def test_twins_by_free_shape(scans):
-    Z = {n: [_free_vec(p["contour"]) for p in scans[n]["pieces"]] for n in _SCANS}
-    M = {(a, b): np.array([[_free_dist(x, y) for y in Z[b]] for x in Z[a]])
+    Z = {n: scans[n]["shapes"] for n in _SCANS}
+    M = {(a, b): np.array([[free_dist(x, y)[0] for y in Z[b]] for x in Z[a]])
          for a, b in [("A1", "B2"), ("A2", "B2"), ("A1", "A2")]}
     T = np.array([_twin(i) for i in range(20)])
     ar = np.arange(20)
@@ -121,10 +104,9 @@ def test_twins_by_free_shape(scans):
     rough = {n: float(np.median([p["roughness"] for p in scans[n]["pieces"]])) for n in _SCANS}
     chords = []
     for n in _SCANS:
-        for p in scans[n]["pieces"]:
-            a = analyse_v2(dict(contour=np.asarray(p["contour"], float).reshape(-1, 2)))
-            if a["ok"]:
-                chords += list(a["lens"])
+        for s in scans[n]["shapes"]:
+            if s.ok:
+                chords += s.lens
     diag = (f"twin A2/B2 median {np.median(tw22):.3f} mm, A1/B2 {np.median(M[('A1', 'B2')][ar, T]):.3f}, "
             f"rescan A1/A2 {np.median(M[('A1', 'A2')][ar, ar]):.3f}; top-1 A1->B2 {top_a1}, A2->B2 {top_a2}, "
             f"B2->A2 {top_b2}; roughness medians {rough}; side chord median {np.median(chords):.2f} mm")

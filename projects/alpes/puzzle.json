@@ -1,0 +1,19 @@
+{
+  "id": "alpes",
+  "name": "Clementoni 3000 Os Alpes (33545)",
+  "schema_version": 1,
+  "grid": {"cols": 64, "rows": 47},
+  "cell_mm": {"w": 18.5, "h": 17.9},
+  "symmetry": {"type": "rot180"},
+  "background_lab": [79.2, -50.0, 47.0],
+  "dpi": 300,
+  "art": {"file": "images/puzzles/1186441_1.jpg", "bbox": [0, 42, 1600, 1115]},
+  "calibration": {
+    "silhueta_silhueta": {"t95": 0.507, "tmax": 0.637},
+    "celula_silhueta": {"t95": null, "tmax": null, "offset_mm": 0.48},
+    "chord": {"normal_mm": 1.0, "f_adj_mm": 2.0},
+    "margin_min": 1.5
+  },
+  "image_zones": {"ceu": {"dE_p90": 50.0}},
+  "modalities": ["scan300"]
+}
