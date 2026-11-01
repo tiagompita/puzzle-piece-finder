@@ -111,8 +111,7 @@ opencv_contrib/
 # Diagnostic working folder (tools/diagnostico, PPF_SCRATCH default)
 scratch/
 
-# Project state: bulky per-project arrays and images (JSON state and log stay tracked)
+# Project state: bulky per-project arrays and images (JSON state, log and fetch_*.jpg sheets stay tracked)
 projects/*/pieces/
 projects/*/crops/
 projects/*/overlays/
-projects/*/fetch_*.jpg
