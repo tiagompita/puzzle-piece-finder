@@ -9,14 +9,14 @@
   ]
  },
  "anchor": {
-  "anchored": false,
-  "l0": null,
-  "c0": null,
-  "rot": 0,
+  "anchored": true,
+  "l0": 1,
+  "c0": 32,
+  "rot": 180,
   "mirror": false,
-  "fonte": null,
-  "confianca": null,
-  "margin": null
+  "fonte": "legado_scan",
+  "confianca": "baixa",
+  "margin": 1.182
  },
  "candidates": [
   {

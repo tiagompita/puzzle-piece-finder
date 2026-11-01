@@ -26,6 +26,8 @@ Order (each step goes through the project API, so ``log.jsonl`` is the whole his
    a GT conflict (a page piece that is the same physical piece as a GT piece) never moves
    the GT piece; a GT piece kept as ``posicao_conhecida`` (cell not full in the photo) whose
    cell an anchored page fills is placed there and the page piece becomes ``same_as``;
+   then ``border.solve_border`` + ``border.apply_solution`` fill the free border cells (the
+   border is complete except (1,29)) with the border pieces of the sections still unanchored;
 6. ``query.run_query`` (with image) -> ``fetch.md``, ``fetch.json``, ``fetch_<lote>.jpg``;
 7. the M14-vs-scans comparison is in ``m14_compare`` (printed + JSON);
 8. ``check_invariants`` and a determinism check (``Project.open`` on a copy -> same list).
@@ -470,6 +472,29 @@ def stage_solve(pr, summary) -> None:
 		  f"same_as GT colocadas noutra célula {elsewhere} ({time.time() - t0:.0f} s)")
 
 
+def stage_border(pr, summary) -> None:
+	"""Border completion (``src/border.py``): the physical border is complete except (1,29) (Tiago,
+	2026-11-01), so the border pieces of the sections left unanchored fill the free border cells."""
+	from src import border
+	t0 = time.time()
+	sol = border.solve_border(pr)
+	if sol.error:
+		summary["borda"] = {"error": sol.error}
+		print(f"borda: {sol.error}")
+		return
+	ops = border.apply_solution(pr, sol)
+	pr.save()
+	req = [ci for ci in sol.cell_info.values() if ci["required"]]
+	summary["borda"] = {
+		"operacoes": len(ops), "custo": round(sol.cost, 3), "pinos": len(sol.pins),
+		"confianca": {k: sum(1 for ci in req if ci["confianca"] == k) for k in ("alta", "media", "baixa")},
+		"segmentos": [{"nome": sg["name"], "blocos": sg["blocks"], "margem": round(sg["margin"], 3)} for sg in sol.segments],
+		"sobras": [lo["block"] for lo in sol.leftover], "em_falta": pr.missing_border_cells(),
+		"s": round(time.time() - t0, 1)}
+	print(f"borda: {len(ops)} operações, confiança {summary['borda']['confianca']}, sobras {summary['borda']['sobras']}, "
+		  f"em falta {summary['borda']['em_falta']} ({time.time() - t0:.0f} s)")
+
+
 def _origin_of_known(pr, pid: str) -> str:
 	for ev in reversed(pr.events()):
 		if ev["action"] == "position_known" and ev["piece"] == pid:
@@ -521,6 +546,7 @@ def main():
 	stage_sky(pr, summary)
 	stage_pages(pr, summary)
 	stage_solve(pr, summary)
+	stage_border(pr, summary)
 	summary["t_ingestao_s"] = round(time.time() - T0, 1)
 	bad = pr.check_invariants(disk=True)
 	summary["invariantes"] = bad or "OK"
