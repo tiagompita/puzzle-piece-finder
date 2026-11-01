@@ -15,7 +15,7 @@ Order of signals (docs/estado-e-plano.md §0, docs/plano-m10-m12.md §3.2):
    proposal; only a mutual ``aceite`` becomes a pair (``register_pair`` + ``pair_locate``);
    already registered pairs are listed again;
 3. known positions that became placeable;
-4. sections not anchored (their stored top-3);
+4. sections not anchored (their stored top-3; sections made only of ``same_as`` re-scans are skipped);
 5. the rest stays in memory (only counted).
 
 ``src.twin`` / ``src.locate`` are imported lazily (other milestone); tests replace them in
@@ -256,6 +256,8 @@ def _step_sections(pr) -> list:
 	for s in sorted(pr.sections.values(), key=lambda s: s.id):
 		if s.anchor.get("anchored"):
 			continue
+		if s.cells_local and all(pr.piece(pid).same_as for pid in s.cells_local):
+			continue  # re-scan of pieces already in the project (page scanned twice): nothing to anchor
 		cands = s.candidates[:3]
 		cell = _cl(cands[0].get("cell0")) if cands and cands[0].get("cell0") else None
 		out.append(_entry(pr, "seccao", None, cell, "por_ancorar", section=s.id, candidates=cands,

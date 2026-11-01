@@ -1,0 +1,102 @@
+{
+ "id": "G0010",
+ "scan_id": "S0010",
+ "kind": "montado",
+ "cells_local": {
+  "P0239": [
+   0,
+   0
+  ],
+  "P0243": [
+   1,
+   0
+  ],
+  "P0244": [
+   1,
+   1
+  ],
+  "P0249": [
+   2,
+   0
+  ],
+  "P0250": [
+   2,
+   1
+  ],
+  "P0255": [
+   3,
+   0
+  ],
+  "P0256": [
+   3,
+   1
+  ],
+  "P0261": [
+   4,
+   0
+  ],
+  "P0264": [
+   5,
+   0
+  ],
+  "P0269": [
+   6,
+   0
+  ],
+  "P0275": [
+   7,
+   0
+  ],
+  "P0280": [
+   8,
+   0
+  ],
+  "P0281": [
+   8,
+   1
+  ]
+ },
+ "anchor": {
+  "anchored": true,
+  "l0": 1,
+  "c0": 54,
+  "rot": 90,
+  "mirror": false,
+  "fonte": "legado_scan",
+  "confianca": "alta",
+  "margin": 1.09
+ },
+ "candidates": [
+  {
+   "cell0": [
+    1,
+    54
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 8.982,
+   "margin": 1.09
+  },
+  {
+   "cell0": [
+    1,
+    55
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 9.79,
+   "margin": 1.09
+  },
+  {
+   "cell0": [
+    1,
+    56
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 10.352,
+   "margin": 1.09
+  }
+ ],
+ "notes": "montado_p02 comp 1: ambigua; margem 1.09; margem 1.09, ganho 0.8; montado_p02 (peças 3–45, 13 peças): A filas 1–2, colunas 46–54 (rot 90°) ou B filas 1–2, colunas 47–55 (rot 90°) ou C filas 1–2, colunas 48–56 (rot 90°)?"
+}

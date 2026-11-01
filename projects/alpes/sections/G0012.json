@@ -1,0 +1,74 @@
+{
+ "id": "G0012",
+ "scan_id": "S0010",
+ "kind": "montado",
+ "cells_local": {
+  "P0267": [
+   0,
+   0
+  ],
+  "P0268": [
+   0,
+   1
+  ],
+  "P0273": [
+   1,
+   0
+  ],
+  "P0274": [
+   1,
+   1
+  ],
+  "P0278": [
+   2,
+   0
+  ],
+  "P0279": [
+   2,
+   1
+  ]
+ },
+ "anchor": {
+  "anchored": true,
+  "l0": 2,
+  "c0": 40,
+  "rot": 90,
+  "mirror": false,
+  "fonte": "legado_scan",
+  "confianca": "alta",
+  "margin": 0.853
+ },
+ "candidates": [
+  {
+   "cell0": [
+    3,
+    39
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 7.132,
+   "margin": 1.348
+  },
+  {
+   "cell0": [
+    5,
+    24
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 9.615,
+   "margin": 1.348
+  },
+  {
+   "cell0": [
+    4,
+    26
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 10.278,
+   "margin": 1.348
+  }
+ ],
+ "notes": "montado_p02 comp 3: ambigua; margem 1.35; margem 1.35, ganho 2.5; montado_p02 (peças 31–43, 6 peças): A filas 3–4, colunas 37–39 (rot 90°) ou B filas 5–6, colunas 22–24 (rot 90°) ou C filas 4–5, colunas 24–26 (rot 90°)?"
+}

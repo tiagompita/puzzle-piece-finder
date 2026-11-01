@@ -37,6 +37,7 @@ import hashlib
 import json
 import os
 import shutil
+import time
 from dataclasses import dataclass, field, fields
 from typing import Optional
 
@@ -51,6 +52,8 @@ __all__ = [
 ]
 
 SCHEMA_VERSION = 1
+REPLACE_RETRIES = 20          # _write_json: attempts of the atomic rename (transient Windows locks by readers/indexers)
+REPLACE_WAIT_S = 0.1
 PIECE_STATES = ("solta", "emparelhada", "posicao_conhecida", "colocada", "em_seccao", "descartada")
 PAIR_STATES = ("proposto", "confirmado", "rejeitado")
 SECTION_KINDS = ("montado", "blocos", "seccao")
@@ -521,7 +524,14 @@ class Project:
 		with open(tmp, "w", encoding="utf-8", newline="\n") as f:
 			json.dump(obj, f, ensure_ascii=False, indent=1)
 			f.write("\n")
-		os.replace(tmp, fp)
+		for k in range(REPLACE_RETRIES):
+			try:
+				os.replace(tmp, fp)
+				break
+			except PermissionError:   # Windows: another process (indexer, antivirus, a reader) holds fp for a moment
+				if k == REPLACE_RETRIES - 1:
+					raise
+				time.sleep(REPLACE_WAIT_S)
 
 	def save(self) -> None:
 		"""Write the JSON views and pending per-scan arrays (the log is already on disk)."""

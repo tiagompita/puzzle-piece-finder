@@ -1,0 +1,1420 @@
+{
+ "id": "S0005",
+ "file": "images/pieces/ereal2_ceu_f1p1_300dpi.jpg",
+ "sha256": "61889a1046867854e73e56ec11e26abf99cc82b01c5ed576fd848389cb8620db",
+ "dpi": 300.0,
+ "lote": 1,
+ "kind": "soltas",
+ "date": "2026-11-01T05:35:36",
+ "meta": {
+  "n_segmented": 35,
+  "n_rejected": 0,
+  "method": "scan",
+  "mm_per_px": 0.08466666666666667
+ },
+ "pieces": [
+  {
+   "id": "P0094",
+   "scan_id": "S0005",
+   "index_in_scan": 0,
+   "lote": 1,
+   "n_no_lote": 1,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 336.65,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    17.213,
+    18.604,
+    17.76,
+    17.341
+   ],
+   "shape_ok": true,
+   "bbox": [
+    232,
+    113,
+    353,
+    229
+   ],
+   "crop_path": "crops/P0094.png",
+   "mean_lab": [
+    54.56,
+    -11.3,
+    -7.15
+   ]
+  },
+  {
+   "id": "P0095",
+   "scan_id": "S0005",
+   "index_in_scan": 1,
+   "lote": 1,
+   "n_no_lote": 2,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 369.11,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.785,
+    18.578,
+    17.246,
+    17.55
+   ],
+   "shape_ok": true,
+   "bbox": [
+    676,
+    85,
+    299,
+    311
+   ],
+   "crop_path": "crops/P0095.png",
+   "mean_lab": [
+    68.54,
+    -10.07,
+    2.74
+   ]
+  },
+  {
+   "id": "P0096",
+   "scan_id": "S0005",
+   "index_in_scan": 2,
+   "lote": 1,
+   "n_no_lote": 3,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 425.12,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.401,
+    18.936,
+    18.898,
+    16.318
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1095,
+    88,
+    305,
+    376
+   ],
+   "crop_path": "crops/P0096.png",
+   "mean_lab": [
+    57.14,
+    -6.53,
+    11.67
+   ]
+  },
+  {
+   "id": "P0097",
+   "scan_id": "S0005",
+   "index_in_scan": 3,
+   "lote": 1,
+   "n_no_lote": 4,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 355.0,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.391,
+    20.393,
+    15.276,
+    18.059
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1597,
+    162,
+    373,
+    236
+   ],
+   "crop_path": "crops/P0097.png",
+   "mean_lab": [
+    81.38,
+    -10.87,
+    22.63
+   ]
+  },
+  {
+   "id": "P0098",
+   "scan_id": "S0005",
+   "index_in_scan": 4,
+   "lote": 1,
+   "n_no_lote": 5,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 364.82,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    17.055,
+    18.751,
+    17.914,
+    19.052
+   ],
+   "shape_ok": true,
+   "bbox": [
+    2076,
+    156,
+    374,
+    233
+   ],
+   "crop_path": "crops/P0098.png",
+   "mean_lab": [
+    71.87,
+    -9.07,
+    5.55
+   ]
+  },
+  {
+   "id": "P0099",
+   "scan_id": "S0005",
+   "index_in_scan": 5,
+   "lote": 1,
+   "n_no_lote": 6,
+   "estado": "posicao_conhecida",
+   "celula": [
+    5,
+    60
+   ],
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 454.13,
+   "cls": "TTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    16.982,
+    17.004,
+    18.403,
+    17.517
+   ],
+   "shape_ok": true,
+   "bbox": [
+    157,
+    444,
+    352,
+    362
+   ],
+   "crop_path": "crops/P0099.png",
+   "mean_lab": [
+    75.29,
+    2.02,
+    44.93
+   ]
+  },
+  {
+   "id": "P0100",
+   "scan_id": "S0005",
+   "index_in_scan": 6,
+   "lote": 1,
+   "n_no_lote": 7,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 333.01,
+   "cls": "BBBT",
+   "n_flat": 0,
+   "chords_mm": [
+    17.283,
+    18.238,
+    18.864,
+    18.353
+   ],
+   "shape_ok": true,
+   "bbox": [
+    649,
+    564,
+    315,
+    243
+   ],
+   "crop_path": "crops/P0100.png",
+   "mean_lab": [
+    64.69,
+    -13.05,
+    -5.53
+   ]
+  },
+  {
+   "id": "P0101",
+   "scan_id": "S0005",
+   "index_in_scan": 7,
+   "lote": 1,
+   "n_no_lote": 8,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 334.94,
+   "cls": "BBBT",
+   "n_flat": 0,
+   "chords_mm": [
+    19.952,
+    18.857,
+    18.38,
+    18.414
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1167,
+    592,
+    242,
+    316
+   ],
+   "crop_path": "crops/P0101.png",
+   "mean_lab": [
+    81.66,
+    -9.28,
+    40.57
+   ]
+  },
+  {
+   "id": "P0102",
+   "scan_id": "S0005",
+   "index_in_scan": 8,
+   "lote": 1,
+   "n_no_lote": 9,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 426.12,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    17.225,
+    19.668,
+    17.453,
+    18.708
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1675,
+    550,
+    314,
+    359
+   ],
+   "crop_path": "crops/P0102.png",
+   "mean_lab": [
+    53.71,
+    -7.39,
+    8.52
+   ]
+  },
+  {
+   "id": "P0103",
+   "scan_id": "S0005",
+   "index_in_scan": 9,
+   "lote": 1,
+   "n_no_lote": 10,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 413.73,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.894,
+    18.482,
+    19.387,
+    18.786
+   ],
+   "shape_ok": true,
+   "bbox": [
+    2148,
+    585,
+    323,
+    331
+   ],
+   "crop_path": "crops/P0103.png",
+   "mean_lab": [
+    59.6,
+    -7.58,
+    9.45
+   ]
+  },
+  {
+   "id": "P0104",
+   "scan_id": "S0005",
+   "index_in_scan": 10,
+   "lote": 1,
+   "n_no_lote": 11,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 431.75,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.817,
+    18.179,
+    17.204,
+    17.767
+   ],
+   "shape_ok": true,
+   "bbox": [
+    118,
+    926,
+    372,
+    308
+   ],
+   "crop_path": "crops/P0104.png",
+   "mean_lab": [
+    67.11,
+    -7.13,
+    4.29
+   ]
+  },
+  {
+   "id": "P0105",
+   "scan_id": "S0005",
+   "index_in_scan": 11,
+   "lote": 1,
+   "n_no_lote": 12,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 367.23,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    19.387,
+    17.556,
+    17.914,
+    17.91
+   ],
+   "shape_ok": true,
+   "bbox": [
+    693,
+    960,
+    305,
+    305
+   ],
+   "crop_path": "crops/P0105.png",
+   "mean_lab": [
+    58.95,
+    -7.31,
+    3.47
+   ]
+  },
+  {
+   "id": "P0106",
+   "scan_id": "S0005",
+   "index_in_scan": 12,
+   "lote": 1,
+   "n_no_lote": 13,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 432.68,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.367,
+    18.387,
+    16.974,
+    18.699
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1102,
+    1033,
+    313,
+    358
+   ],
+   "crop_path": "crops/P0106.png",
+   "mean_lab": [
+    53.36,
+    -7.28,
+    1.46
+   ]
+  },
+  {
+   "id": "P0107",
+   "scan_id": "S0005",
+   "index_in_scan": 13,
+   "lote": 1,
+   "n_no_lote": 14,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 363.61,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    17.992,
+    17.454,
+    19.161,
+    18.13
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1659,
+    1034,
+    238,
+    382
+   ],
+   "crop_path": "crops/P0107.png",
+   "mean_lab": [
+    58.12,
+    -7.76,
+    13.22
+   ]
+  },
+  {
+   "id": "P0108",
+   "scan_id": "S0005",
+   "index_in_scan": 14,
+   "lote": 1,
+   "n_no_lote": 15,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 413.33,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.074,
+    18.071,
+    18.534,
+    18.849
+   ],
+   "shape_ok": true,
+   "bbox": [
+    2102,
+    1071,
+    351,
+    299
+   ],
+   "crop_path": "crops/P0108.png",
+   "mean_lab": [
+    68.64,
+    -6.85,
+    13.74
+   ]
+  },
+  {
+   "id": "P0109",
+   "scan_id": "S0005",
+   "index_in_scan": 15,
+   "lote": 1,
+   "n_no_lote": 16,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 423.76,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.84,
+    17.169,
+    18.849,
+    17.558
+   ],
+   "shape_ok": true,
+   "bbox": [
+    138,
+    1398,
+    363,
+    308
+   ],
+   "crop_path": "crops/P0109.png",
+   "mean_lab": [
+    66.52,
+    -7.38,
+    13.63
+   ]
+  },
+  {
+   "id": "P0110",
+   "scan_id": "S0005",
+   "index_in_scan": 16,
+   "lote": 1,
+   "n_no_lote": 17,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 388.15,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.922,
+    19.459,
+    18.725,
+    18.224
+   ],
+   "shape_ok": true,
+   "bbox": [
+    681,
+    1485,
+    264,
+    364
+   ],
+   "crop_path": "crops/P0110.png",
+   "mean_lab": [
+    67.65,
+    -8.3,
+    21.35
+   ]
+  },
+  {
+   "id": "P0111",
+   "scan_id": "S0005",
+   "index_in_scan": 17,
+   "lote": 1,
+   "n_no_lote": 18,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 388.09,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.969,
+    17.295,
+    20.525,
+    17.69
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1133,
+    1584,
+    362,
+    262
+   ],
+   "crop_path": "crops/P0111.png",
+   "mean_lab": [
+    61.09,
+    -8.32,
+    16.71
+   ]
+  },
+  {
+   "id": "P0112",
+   "scan_id": "S0005",
+   "index_in_scan": 18,
+   "lote": 1,
+   "n_no_lote": 19,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 432.36,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    19.179,
+    19.03,
+    19.868,
+    17.56
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1644,
+    1532,
+    386,
+    262
+   ],
+   "crop_path": "crops/P0112.png",
+   "mean_lab": [
+    59.41,
+    -8.24,
+    10.12
+   ]
+  },
+  {
+   "id": "P0113",
+   "scan_id": "S0005",
+   "index_in_scan": 19,
+   "lote": 1,
+   "n_no_lote": 20,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 397.37,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.173,
+    18.856,
+    18.883,
+    18.269
+   ],
+   "shape_ok": true,
+   "bbox": [
+    2161,
+    1543,
+    257,
+    391
+   ],
+   "crop_path": "crops/P0113.png",
+   "mean_lab": [
+    59.15,
+    -7.79,
+    10.38
+   ]
+  },
+  {
+   "id": "P0114",
+   "scan_id": "S0005",
+   "index_in_scan": 20,
+   "lote": 1,
+   "n_no_lote": 21,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 413.95,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.535,
+    18.929,
+    18.663,
+    19.319
+   ],
+   "shape_ok": true,
+   "bbox": [
+    110,
+    1863,
+    327,
+    313
+   ],
+   "crop_path": "crops/P0114.png",
+   "mean_lab": [
+    82.92,
+    -7.56,
+    43.23
+   ]
+  },
+  {
+   "id": "P0115",
+   "scan_id": "S0005",
+   "index_in_scan": 21,
+   "lote": 1,
+   "n_no_lote": 22,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 431.56,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.027,
+    18.952,
+    17.965,
+    19.693
+   ],
+   "shape_ok": true,
+   "bbox": [
+    587,
+    1923,
+    396,
+    308
+   ],
+   "crop_path": "crops/P0115.png",
+   "mean_lab": [
+    63.32,
+    -7.37,
+    17.78
+   ]
+  },
+  {
+   "id": "P0116",
+   "scan_id": "S0005",
+   "index_in_scan": 22,
+   "lote": 1,
+   "n_no_lote": 23,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 397.52,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.631,
+    17.903,
+    19.161,
+    16.914
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1160,
+    1970,
+    318,
+    321
+   ],
+   "crop_path": "crops/P0116.png",
+   "mean_lab": [
+    76.76,
+    -8.17,
+    20.32
+   ]
+  },
+  {
+   "id": "P0117",
+   "scan_id": "S0005",
+   "index_in_scan": 23,
+   "lote": 1,
+   "n_no_lote": 24,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 374.09,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    19.308,
+    18.548,
+    18.45,
+    17.675
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1632,
+    1966,
+    293,
+    309
+   ],
+   "crop_path": "crops/P0117.png",
+   "mean_lab": [
+    83.91,
+    -7.6,
+    23.08
+   ]
+  },
+  {
+   "id": "P0118",
+   "scan_id": "S0005",
+   "index_in_scan": 24,
+   "lote": 1,
+   "n_no_lote": 25,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 358.85,
+   "cls": "BBBB",
+   "n_flat": 0,
+   "chords_mm": [
+    20.17,
+    20.646,
+    19.878,
+    17.932
+   ],
+   "shape_ok": true,
+   "bbox": [
+    2138,
+    2066,
+    266,
+    271
+   ],
+   "crop_path": "crops/P0118.png",
+   "mean_lab": [
+    68.58,
+    -8.27,
+    13.31
+   ]
+  },
+  {
+   "id": "P0119",
+   "scan_id": "S0005",
+   "index_in_scan": 25,
+   "lote": 1,
+   "n_no_lote": 26,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 411.53,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    17.188,
+    18.356,
+    18.402,
+    17.847
+   ],
+   "shape_ok": true,
+   "bbox": [
+    81,
+    2352,
+    304,
+    358
+   ],
+   "crop_path": "crops/P0119.png",
+   "mean_lab": [
+    63.25,
+    -9.61,
+    -1.34
+   ]
+  },
+  {
+   "id": "P0120",
+   "scan_id": "S0005",
+   "index_in_scan": 26,
+   "lote": 1,
+   "n_no_lote": 27,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 384.5,
+   "cls": "BBBT",
+   "n_flat": 0,
+   "chords_mm": [
+    19.654,
+    18.976,
+    19.667,
+    18.32
+   ],
+   "shape_ok": true,
+   "bbox": [
+    660,
+    2407,
+    261,
+    328
+   ],
+   "crop_path": "crops/P0120.png",
+   "mean_lab": [
+    57.25,
+    -13.59,
+    -15.62
+   ]
+  },
+  {
+   "id": "P0121",
+   "scan_id": "S0005",
+   "index_in_scan": 27,
+   "lote": 1,
+   "n_no_lote": 28,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 380.44,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    16.981,
+    17.788,
+    17.772,
+    17.744
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1143,
+    2400,
+    356,
+    296
+   ],
+   "crop_path": "crops/P0121.png",
+   "mean_lab": [
+    79.88,
+    -10.48,
+    26.93
+   ]
+  },
+  {
+   "id": "P0122",
+   "scan_id": "S0005",
+   "index_in_scan": 28,
+   "lote": 1,
+   "n_no_lote": 29,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 393.28,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.114,
+    21.614,
+    18.066,
+    19.109
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1711,
+    2507,
+    327,
+    297
+   ],
+   "crop_path": "crops/P0122.png",
+   "mean_lab": [
+    69.95,
+    -10.06,
+    2.82
+   ]
+  },
+  {
+   "id": "P0123",
+   "scan_id": "S0005",
+   "index_in_scan": 29,
+   "lote": 1,
+   "n_no_lote": 30,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 429.05,
+   "cls": "BTTT",
+   "n_flat": 0,
+   "chords_mm": [
+    19.29,
+    17.438,
+    18.949,
+    18.573
+   ],
+   "shape_ok": true,
+   "bbox": [
+    2154,
+    2465,
+    302,
+    381
+   ],
+   "crop_path": "crops/P0123.png",
+   "mean_lab": [
+    66.12,
+    -9.24,
+    -4.78
+   ]
+  },
+  {
+   "id": "P0124",
+   "scan_id": "S0005",
+   "index_in_scan": 30,
+   "lote": 1,
+   "n_no_lote": 31,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 364.73,
+   "cls": "BTBT",
+   "n_flat": 0,
+   "chords_mm": [
+    17.577,
+    19.636,
+    18.746,
+    18.423
+   ],
+   "shape_ok": true,
+   "bbox": [
+    264,
+    2840,
+    259,
+    349
+   ],
+   "crop_path": "crops/P0124.png",
+   "mean_lab": [
+    81.87,
+    -9.07,
+    28.95
+   ]
+  },
+  {
+   "id": "P0125",
+   "scan_id": "S0005",
+   "index_in_scan": 31,
+   "lote": 1,
+   "n_no_lote": 32,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 361.82,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    17.772,
+    16.854,
+    16.287,
+    19.612
+   ],
+   "shape_ok": true,
+   "bbox": [
+    746,
+    2866,
+    326,
+    293
+   ],
+   "crop_path": "crops/P0125.png",
+   "mean_lab": [
+    85.69,
+    -13.11,
+    41.41
+   ]
+  },
+  {
+   "id": "P0126",
+   "scan_id": "S0005",
+   "index_in_scan": 32,
+   "lote": 1,
+   "n_no_lote": 33,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 376.9,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.405,
+    18.851,
+    17.297,
+    17.749
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1253,
+    2922,
+    319,
+    308
+   ],
+   "crop_path": "crops/P0126.png",
+   "mean_lab": [
+    70.79,
+    -8.91,
+    0.35
+   ]
+  },
+  {
+   "id": "P0127",
+   "scan_id": "S0005",
+   "index_in_scan": 33,
+   "lote": 1,
+   "n_no_lote": 34,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 326.72,
+   "cls": "BBBT",
+   "n_flat": 0,
+   "chords_mm": [
+    18.674,
+    17.0,
+    18.967,
+    18.601
+   ],
+   "shape_ok": true,
+   "bbox": [
+    1628,
+    3009,
+    307,
+    256
+   ],
+   "crop_path": "crops/P0127.png",
+   "mean_lab": [
+    84.39,
+    -12.68,
+    37.44
+   ]
+  },
+  {
+   "id": "P0128",
+   "scan_id": "S0005",
+   "index_in_scan": 34,
+   "lote": 1,
+   "n_no_lote": 35,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
+   "seccao_id": null,
+   "same_as": null,
+   "flags": {
+    "touches_frame": false,
+    "touches_strip": false,
+    "is_cluster": false,
+    "objeto_duplo": false
+   },
+   "area_mm2": 380.8,
+   "cls": "BBTT",
+   "n_flat": 0,
+   "chords_mm": [
+    20.233,
+    19.088,
+    16.882,
+    18.854
+   ],
+   "shape_ok": true,
+   "bbox": [
+    2079,
+    2997,
+    314,
+    330
+   ],
+   "crop_path": "crops/P0128.png",
+   "mean_lab": [
+    76.72,
+    -10.4,
+    18.28
+   ]
+  }
+ ]
+}

@@ -1,0 +1,78 @@
+{
+ "id": "G0054",
+ "scan_id": "S0020",
+ "kind": "montado",
+ "cells_local": {
+  "P0630": [
+   0,
+   0
+  ],
+  "P0636": [
+   1,
+   0
+  ],
+  "P0642": [
+   2,
+   0
+  ],
+  "P0648": [
+   3,
+   0
+  ],
+  "P0654": [
+   4,
+   0
+  ],
+  "P0663": [
+   5,
+   0
+  ],
+  "P0664": [
+   6,
+   0
+  ]
+ },
+ "anchor": {
+  "anchored": true,
+  "l0": 20,
+  "c0": 1,
+  "rot": 0,
+  "mirror": false,
+  "fonte": "legado_scan",
+  "confianca": "alta",
+  "margin": 0.981
+ },
+ "candidates": [
+  {
+   "cell0": [
+    21,
+    1
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 14.3,
+   "margin": 1.019
+  },
+  {
+   "cell0": [
+    20,
+    1
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 14.574,
+   "margin": 1.019
+  },
+  {
+   "cell0": [
+    32,
+    64
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 19.32,
+   "margin": 1.019
+  }
+ ],
+ "notes": "montado_p12 comp 1: ambigua; margem 1.02; margem 1.02, ganho 0.3; montado_p12 (peças 3–37, 7 peças): A filas 21–27, colunas 1–1 (rot 0°) ou B filas 20–26, colunas 1–1 (rot 0°) ou C filas 26–32, colunas 64–64 (rot 180°)?"
+}

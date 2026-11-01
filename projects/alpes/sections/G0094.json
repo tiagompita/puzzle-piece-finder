@@ -1,0 +1,54 @@
+{
+ "id": "G0094",
+ "scan_id": "S0025",
+ "kind": "blocos",
+ "cells_local": {
+  "P0897": [
+   0,
+   0
+  ]
+ },
+ "anchor": {
+  "anchored": false,
+  "l0": null,
+  "c0": null,
+  "rot": 0,
+  "mirror": false,
+  "fonte": null,
+  "confianca": null,
+  "margin": null
+ },
+ "candidates": [
+  {
+   "cell0": [
+    16,
+    52
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 11.722,
+   "margin": 1.513
+  },
+  {
+   "cell0": [
+    16,
+    52
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 16.358,
+   "margin": 1.513
+  },
+  {
+   "cell0": [
+    16,
+    52
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 16.588,
+   "margin": 1.513
+  }
+ ],
+ "notes": "blocos_p02 comp 11: ambigua; margem 1.51; 1 peça sem gémea; o espelho ganha (×1.21); blocos_p02 (peça 36, 1 peças): A filas 16–16, colunas 52–52 (rot 270°) ou B filas 16–16, colunas 49–49 (rot 0°) ou C filas 29–29, colunas 57–57 (rot 180°)?"
+}

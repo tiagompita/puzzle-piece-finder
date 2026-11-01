@@ -1,0 +1,54 @@
+{
+ "id": "G0064",
+ "scan_id": "S0020",
+ "kind": "montado",
+ "cells_local": {
+  "P0651": [
+   0,
+   0
+  ]
+ },
+ "anchor": {
+  "anchored": false,
+  "l0": null,
+  "c0": null,
+  "rot": 0,
+  "mirror": false,
+  "fonte": null,
+  "confianca": null,
+  "margin": null
+ },
+ "candidates": [
+  {
+   "cell0": [
+    47,
+    64
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 21.563,
+   "margin": 1.042
+  },
+  {
+   "cell0": [
+    47,
+    1
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 22.46,
+   "margin": 1.042
+  },
+  {
+   "cell0": [
+    1,
+    64
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 32.501,
+   "margin": 1.042
+  }
+ ],
+ "notes": "montado_p12 comp 11: ambigua; margem 1.04; 1 peça sem gémea; margem 1.04, ganho 0.9; montado_p12 (peça 24, 1 peças): A filas 47–47, colunas 64–64 (rot 180°) ou B filas 47–47, colunas 1–1 (rot 270°) ou C filas 1–1, colunas 64–64 (rot 90°)?"
+}

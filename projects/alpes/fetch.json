@@ -1,0 +1,3965 @@
+{
+ "t": "2026-11-01T05:43:43",
+ "entries": [
+  {
+   "origin": "gemeo",
+   "piece": "P0100",
+   "lote": 1,
+   "n_no_lote": 7,
+   "cell": [
+    3,
+    37
+   ],
+   "decision": "aceite",
+   "margin": 8.290939920599916,
+   "dE": 6.968380632456705,
+   "d1_mm": 0.24523104572678778,
+   "reasons": [
+    "93 candidatas; 1 sem 4 cantos; 71 de classe diferente (consulta BBBT); 19 falham as cordas; 2 passam",
+    "forma aceite: d1 0,245 mm <= t95 0,507, margem 8,29 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 7,0 <= p90 50 (ceu), pct 1,1 %"
+   ],
+   "query": "P0549",
+   "pair": null,
+   "rank": 1,
+   "score": 0.24523104572678778,
+   "ordem": 1
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0169",
+   "lote": 1,
+   "n_no_lote": 76,
+   "cell": [
+    2,
+    50
+   ],
+   "decision": "aceite",
+   "margin": 8.087662714137618,
+   "dE": 7.503212888095179,
+   "d1_mm": 0.1624738345913532,
+   "reasons": [
+    "88 candidatas; 1 sem 4 cantos; 63 de classe diferente (consulta BTTT); 20 falham as cordas; 4 passam",
+    "forma aceite: d1 0,162 mm <= t95 0,507, margem 8,09 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 7,5 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0569",
+   "pair": null,
+   "rank": 1,
+   "score": 0.1624738345913532,
+   "ordem": 2
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0105",
+   "lote": 1,
+   "n_no_lote": 12,
+   "cell": [
+    4,
+    43
+   ],
+   "decision": "aceite",
+   "margin": 6.561356903692901,
+   "dE": 7.329722892787695,
+   "d1_mm": 0.18009884700053916,
+   "reasons": [
+    "95 candidatas; 1 sem 4 cantos; 73 de classe diferente (consulta BBTT); 18 falham as cordas; 3 passam",
+    "forma aceite: d1 0,180 mm <= t95 0,507, margem 6,56 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 7,3 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0527",
+   "pair": null,
+   "rank": 1,
+   "score": 0.18009884700053916,
+   "ordem": 3
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0131",
+   "lote": 1,
+   "n_no_lote": 38,
+   "cell": [
+    3,
+    48
+   ],
+   "decision": "aceite",
+   "margin": 5.213598918737837,
+   "dE": 9.832941650355663,
+   "d1_mm": 0.2078149746502649,
+   "reasons": [
+    "83 candidatas; 1 sem 4 cantos; 64 de classe diferente (consulta BBTT); 14 falham as cordas; 4 passam",
+    "forma aceite: d1 0,208 mm <= t95 0,507, margem 5,21 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 9,8 <= p90 50 (ceu), pct 7,2 %"
+   ],
+   "query": "P0580",
+   "pair": null,
+   "rank": 1,
+   "score": 0.2078149746502649,
+   "ordem": 4
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0119",
+   "lote": 1,
+   "n_no_lote": 26,
+   "cell": [
+    2,
+    48
+   ],
+   "decision": "aceite",
+   "margin": 4.5922592756202425,
+   "dE": 6.728828439207334,
+   "d1_mm": 0.17350661757323266,
+   "reasons": [
+    "84 candidatas; 1 sem 4 cantos; 60 de classe diferente (consulta BTTT); 16 falham as cordas; 7 passam",
+    "forma aceite: d1 0,174 mm <= t95 0,507, margem 4,59 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 6,7 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0579",
+   "pair": null,
+   "rank": 1,
+   "score": 0.17350661757323266,
+   "ordem": 5
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0098",
+   "lote": 1,
+   "n_no_lote": 5,
+   "cell": [
+    3,
+    36
+   ],
+   "decision": "aceite",
+   "margin": 3.3916090714291167,
+   "dE": 7.7440313346977785,
+   "d1_mm": 0.3890247679154403,
+   "reasons": [
+    "99 candidatas; 1 sem 4 cantos; 72 de classe diferente (consulta BTBT); 23 falham as cordas; 3 passam",
+    "forma aceite: d1 0,389 mm <= t95 0,507, margem 3,39 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 7,7 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0482",
+   "pair": null,
+   "rank": 1,
+   "score": 0.3890247679154403,
+   "ordem": 6
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0113",
+   "lote": 1,
+   "n_no_lote": 20,
+   "cell": [
+    4,
+    50
+   ],
+   "decision": "aceite",
+   "margin": 3.229824647711863,
+   "dE": 4.692218160190705,
+   "d1_mm": 0.2706181657594643,
+   "reasons": [
+    "87 candidatas; 1 sem 4 cantos; 63 de classe diferente (consulta BTBT); 18 falham as cordas; 5 passam",
+    "forma aceite: d1 0,271 mm <= t95 0,507, margem 3,23 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 4,7 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0571",
+   "pair": null,
+   "rank": 1,
+   "score": 0.2706181657594643,
+   "ordem": 7
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0165",
+   "lote": 1,
+   "n_no_lote": 72,
+   "cell": [
+    3,
+    54
+   ],
+   "decision": "aceite",
+   "margin": 3.13522525698055,
+   "dE": 5.382962329490806,
+   "d1_mm": 0.40093311101529877,
+   "reasons": [
+    "91 candidatas; 1 sem 4 cantos; 66 de classe diferente (consulta BTBT); 17 falham as cordas; 7 passam",
+    "forma aceite: d1 0,401 mm <= t95 0,507, margem 3,14 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 5,4 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0553",
+   "pair": null,
+   "rank": 1,
+   "score": 0.40093311101529877,
+   "ordem": 8
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0112",
+   "lote": 1,
+   "n_no_lote": 19,
+   "cell": [
+    4,
+    49
+   ],
+   "decision": "aceite",
+   "margin": 2.9977993950157718,
+   "dE": 4.546548010433132,
+   "d1_mm": 0.4890900807885013,
+   "reasons": [
+    "85 candidatas; 1 sem 4 cantos; 62 de classe diferente (consulta BTBT); 18 falham as cordas; 4 passam",
+    "forma aceite: d1 0,489 mm <= t95 0,507, margem 3,00 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 4,5 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0577",
+   "pair": null,
+   "rank": 1,
+   "score": 0.4890900807885013,
+   "ordem": 9
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0129",
+   "lote": 1,
+   "n_no_lote": 36,
+   "cell": [
+    2,
+    49
+   ],
+   "decision": "aceite",
+   "margin": 2.6991768628919486,
+   "dE": 9.725521464303535,
+   "d1_mm": 0.34752921400864817,
+   "reasons": [
+    "86 candidatas; 1 sem 4 cantos; 66 de classe diferente (consulta BBBT); 15 falham as cordas; 4 passam",
+    "forma aceite: d1 0,348 mm <= t95 0,507, margem 2,70 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 9,7 <= p90 50 (ceu), pct 4,7 %"
+   ],
+   "query": "P0575",
+   "pair": null,
+   "rank": 1,
+   "score": 0.34752921400864817,
+   "ordem": 10
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0157",
+   "lote": 1,
+   "n_no_lote": 64,
+   "cell": [
+    2,
+    47
+   ],
+   "decision": "aceite",
+   "margin": 2.4558480683881783,
+   "dE": 6.767360351978366,
+   "d1_mm": 0.4941840059355652,
+   "reasons": [
+    "82 candidatas; 1 sem 4 cantos; 63 de classe diferente (consulta BBBT); 15 falham as cordas; 3 passam",
+    "forma aceite: d1 0,494 mm <= t95 0,507, margem 2,46 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 6,8 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0585",
+   "pair": null,
+   "rank": 1,
+   "score": 0.4941840059355652,
+   "ordem": 11
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0176",
+   "lote": 1,
+   "n_no_lote": 83,
+   "cell": [
+    4,
+    53
+   ],
+   "decision": "aceite",
+   "margin": 2.428474566511605,
+   "dE": 6.593954331385797,
+   "d1_mm": 0.4560664193566792,
+   "reasons": [
+    "90 candidatas; 1 sem 4 cantos; 69 de classe diferente (consulta BBBT); 16 falham as cordas; 4 passam",
+    "forma aceite: d1 0,456 mm <= t95 0,507, margem 2,43 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 6,6 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0558",
+   "pair": null,
+   "rank": 1,
+   "score": 0.4560664193566792,
+   "ordem": 12
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0106",
+   "lote": 1,
+   "n_no_lote": 13,
+   "cell": [
+    3,
+    45
+   ],
+   "decision": "aceite",
+   "margin": 2.2349908335935154,
+   "dE": 6.316115414705937,
+   "d1_mm": 0.5067462136573646,
+   "reasons": [
+    "96 candidatas; 1 sem 4 cantos; 69 de classe diferente (consulta BTTT); 23 falham as cordas; 3 passam",
+    "forma aceite: d1 0,507 mm <= t95 0,507, margem 2,23 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 6,3 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0519",
+   "pair": null,
+   "rank": 1,
+   "score": 0.5067462136573646,
+   "ordem": 13
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0094",
+   "lote": 1,
+   "n_no_lote": 1,
+   "cell": [
+    3,
+    29
+   ],
+   "decision": "aceite",
+   "margin": 2.073126979652455,
+   "dE": 8.73874678274416,
+   "d1_mm": 0.4405046507940356,
+   "reasons": [
+    "97 candidatas; 1 sem 4 cantos; 71 de classe diferente (consulta BTBT); 19 falham as cordas; 6 passam",
+    "forma aceite: d1 0,441 mm <= t95 0,507, margem 2,07 >= 1,5",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 8,7 <= p90 50 (ceu), pct 1,0 %"
+   ],
+   "query": "P0514",
+   "pair": null,
+   "rank": 1,
+   "score": 0.4405046507940356,
+   "ordem": 14
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0144",
+   "lote": 1,
+   "n_no_lote": 51,
+   "cell": [
+    2,
+    56
+   ],
+   "decision": "ambigua",
+   "margin": 2.4510012502876655,
+   "dE": 6.368553603800819,
+   "d1_mm": 0.5554300718490801,
+   "reasons": [
+    "80 candidatas; 1 sem 4 cantos; 59 de classe diferente (consulta BTBT); 17 falham as cordas; 3 passam",
+    "forma ambígua: d1 0,555 > t95 0,507",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 6,4 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0623",
+   "pair": null,
+   "rank": 1,
+   "score": 0.5554300718490801,
+   "ordem": 15
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0126",
+   "lote": 1,
+   "n_no_lote": 33,
+   "cell": [
+    4,
+    40
+   ],
+   "decision": "ambigua",
+   "margin": 2.377881650838192,
+   "dE": 7.618024639274547,
+   "d1_mm": 0.5182052057759978,
+   "reasons": [
+    "94 candidatas; 1 sem 4 cantos; 73 de classe diferente (consulta BBTT); 17 falham as cordas; 3 passam",
+    "forma ambígua: d1 0,518 > t95 0,507",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 7,6 <= p90 50 (ceu), pct 2,1 %"
+   ],
+   "query": "P0539",
+   "pair": null,
+   "rank": 1,
+   "score": 0.5182052057759978,
+   "ordem": 16
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0143",
+   "lote": 1,
+   "n_no_lote": 50,
+   "cell": [
+    3,
+    35
+   ],
+   "decision": "ambigua",
+   "margin": 1.710065284528839,
+   "dE": 7.666164607218014,
+   "d1_mm": 0.5203489429129369,
+   "reasons": [
+    "98 candidatas; 1 sem 4 cantos; 70 de classe diferente (consulta BTTT); 19 falham as cordas; 8 passam",
+    "forma ambígua: d1 0,520 > t95 0,507",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 7,7 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0486",
+   "pair": null,
+   "rank": 1,
+   "score": 0.5203489429129369,
+   "ordem": 17
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0104",
+   "lote": 1,
+   "n_no_lote": 11,
+   "cell": [
+    4,
+    37
+   ],
+   "decision": "ambigua",
+   "margin": null,
+   "dE": 5.774182474319393,
+   "d1_mm": 0.2912517533871832,
+   "reasons": [
+    "92 candidatas; 1 sem 4 cantos; 66 de classe diferente (consulta BTTT); 24 falham as cordas; 1 passam",
+    "candidata única P0104: margem indefinida, no máximo 'ambigua'",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 5,8 <= p90 50 (ceu), pct 1,1 %"
+   ],
+   "query": "P0550",
+   "pair": null,
+   "rank": 1,
+   "score": 0.2912517533871832,
+   "ordem": 18
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0162",
+   "lote": 1,
+   "n_no_lote": 69,
+   "cell": [
+    3,
+    52
+   ],
+   "decision": "ambigua",
+   "margin": null,
+   "dE": 3.4199165480129383,
+   "d1_mm": 0.3810480061311831,
+   "reasons": [
+    "89 candidatas; 1 sem 4 cantos; 69 de classe diferente (consulta BBTT); 18 falham as cordas; 1 passam",
+    "candidata única P0162: margem indefinida, no máximo 'ambigua'",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 3,4 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0561",
+   "pair": null,
+   "rank": 1,
+   "score": 0.3810480061311831,
+   "ordem": 19
+  },
+  {
+   "origin": "gemeo",
+   "piece": "P0189",
+   "lote": 1,
+   "n_no_lote": 96,
+   "cell": [
+    4,
+    55
+   ],
+   "decision": "ambigua",
+   "margin": null,
+   "dE": 8.168106744393645,
+   "d1_mm": 0.28075085290140245,
+   "reasons": [
+    "81 candidatas; 1 sem 4 cantos; 59 de classe diferente (consulta BTBT); 20 falham as cordas; 1 passam",
+    "candidata única P0189: margem indefinida, no máximo 'ambigua'",
+    "theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações",
+    "imagem consistente: ΔE 8,2 <= p90 50 (ceu), pct 0,0 %"
+   ],
+   "query": "P0616",
+   "pair": null,
+   "rank": 1,
+   "score": 0.28075085290140245,
+   "ordem": 20
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    43,
+    54
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.832,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([43, 54], 270), ([45, 42], 270), ([45, 41], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0041",
+   "candidates": [
+    {
+     "cell0": [
+      43,
+      54
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 9.617,
+     "margin": 1.832
+    },
+    {
+     "cell0": [
+      45,
+      42
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 17.619,
+     "margin": 1.832
+    },
+    {
+     "cell0": [
+      45,
+      41
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 18.653,
+     "margin": 1.832
+    }
+   ],
+   "ordem": 21
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    2,
+    63
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.825,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([2, 63], 0), ([2, 63], 90), ([2, 63], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0099",
+   "candidates": [
+    {
+     "cell0": [
+      2,
+      63
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 11.187,
+     "margin": 1.825
+    },
+    {
+     "cell0": [
+      2,
+      63
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 11.717,
+     "margin": 1.825
+    },
+    {
+     "cell0": [
+      2,
+      63
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 12.097,
+     "margin": 1.825
+    }
+   ],
+   "ordem": 22
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    8,
+    2
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.705,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([8, 2], 0), ([8, 2], 90), ([8, 2], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0070",
+   "candidates": [
+    {
+     "cell0": [
+      8,
+      2
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 4.285,
+     "margin": 1.705
+    },
+    {
+     "cell0": [
+      8,
+      2
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 5.179,
+     "margin": 1.705
+    },
+    {
+     "cell0": [
+      8,
+      2
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 5.287,
+     "margin": 1.705
+    }
+   ],
+   "ordem": 23
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    43,
+    1
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.665,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([43, 1], 0), ([19, 1], 0), ([42, 64], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0060",
+   "candidates": [
+    {
+     "cell0": [
+      43,
+      1
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 7.408,
+     "margin": 1.665
+    },
+    {
+     "cell0": [
+      19,
+      1
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 12.337,
+     "margin": 1.665
+    },
+    {
+     "cell0": [
+      42,
+      64
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 13.689,
+     "margin": 1.665
+    }
+   ],
+   "ordem": 24
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    2,
+    63
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.647,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([2, 63], 0), ([43, 61], 90), ([43, 60], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0098",
+   "candidates": [
+    {
+     "cell0": [
+      2,
+      63
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 11.468,
+     "margin": 1.647
+    },
+    {
+     "cell0": [
+      43,
+      61
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.891,
+     "margin": 1.647
+    },
+    {
+     "cell0": [
+      43,
+      60
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.905,
+     "margin": 1.647
+    }
+   ],
+   "ordem": 25
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    5,
+    1
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.63,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([5, 1], 180), ([1, 23], 270), ([1, 24], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0069",
+   "candidates": [
+    {
+     "cell0": [
+      5,
+      1
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 5.473,
+     "margin": 1.63
+    },
+    {
+     "cell0": [
+      1,
+      23
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 8.921,
+     "margin": 1.63
+    },
+    {
+     "cell0": [
+      1,
+      24
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 9.027,
+     "margin": 1.63
+    }
+   ],
+   "ordem": 26
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    32,
+    1
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.533,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "3 peças; top-3 [([32, 1], 0), ([35, 64], 180), ([47, 45], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0059",
+   "candidates": [
+    {
+     "cell0": [
+      32,
+      1
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 10.025,
+     "margin": 1.533
+    },
+    {
+     "cell0": [
+      35,
+      64
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 15.365,
+     "margin": 1.533
+    },
+    {
+     "cell0": [
+      47,
+      45
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 15.924,
+     "margin": 1.533
+    }
+   ],
+   "ordem": 27
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    16,
+    52
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.513,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([16, 52], 270), ([16, 52], 180), ([16, 52], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0094",
+   "candidates": [
+    {
+     "cell0": [
+      16,
+      52
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 11.722,
+     "margin": 1.513
+    },
+    {
+     "cell0": [
+      16,
+      52
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 16.358,
+     "margin": 1.513
+    },
+    {
+     "cell0": [
+      16,
+      52
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 16.588,
+     "margin": 1.513
+    }
+   ],
+   "ordem": 28
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    6,
+    14
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.389,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([6, 14], 0), ([6, 14], 270), ([4, 47], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0021",
+   "candidates": [
+    {
+     "cell0": [
+      6,
+      14
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 7.779,
+     "margin": 1.389
+    },
+    {
+     "cell0": [
+      6,
+      14
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 8.708,
+     "margin": 1.389
+    },
+    {
+     "cell0": [
+      4,
+      47
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 10.805,
+     "margin": 1.389
+    }
+   ],
+   "ordem": 29
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    10,
+    25
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.382,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([10, 25], 90), ([10, 25], 180), ([10, 10], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0103",
+   "candidates": [
+    {
+     "cell0": [
+      10,
+      25
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 10.623,
+     "margin": 1.382
+    },
+    {
+     "cell0": [
+      10,
+      25
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 14.2,
+     "margin": 1.382
+    },
+    {
+     "cell0": [
+      10,
+      10
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 14.685,
+     "margin": 1.382
+    }
+   ],
+   "ordem": 30
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    34,
+    64
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.274,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([34, 64], 0), ([44, 64], 0), ([47, 25], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0008",
+   "candidates": [
+    {
+     "cell0": [
+      34,
+      64
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 11.376,
+     "margin": 1.274
+    },
+    {
+     "cell0": [
+      44,
+      64
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 14.493,
+     "margin": 1.274
+    },
+    {
+     "cell0": [
+      47,
+      25
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 15.315,
+     "margin": 1.274
+    }
+   ],
+   "ordem": 31
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    5,
+    24
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.268,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([5, 24], 90), ([6, 23], 0), ([2, 46], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0028",
+   "candidates": [
+    {
+     "cell0": [
+      5,
+      24
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 10.563,
+     "margin": 1.268
+    },
+    {
+     "cell0": [
+      6,
+      23
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 13.1,
+     "margin": 1.268
+    },
+    {
+     "cell0": [
+      2,
+      46
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 13.399,
+     "margin": 1.268
+    }
+   ],
+   "ordem": 32
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    7,
+    13
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.246,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([7, 13], 90), ([7, 13], 0), ([8, 10], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0023",
+   "candidates": [
+    {
+     "cell0": [
+      7,
+      13
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 7.419,
+     "margin": 1.246
+    },
+    {
+     "cell0": [
+      7,
+      13
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 8.687,
+     "margin": 1.246
+    },
+    {
+     "cell0": [
+      8,
+      10
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 9.242,
+     "margin": 1.246
+    }
+   ],
+   "ordem": 33
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    35,
+    1
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.223,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "7 peças; top-3 [([35, 1], 0), ([35, 64], 180), ([29, 64], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0055",
+   "candidates": [
+    {
+     "cell0": [
+      35,
+      1
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 12.252,
+     "margin": 1.223
+    },
+    {
+     "cell0": [
+      35,
+      64
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 14.985,
+     "margin": 1.223
+    },
+    {
+     "cell0": [
+      29,
+      64
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 15.62,
+     "margin": 1.223
+    }
+   ],
+   "ordem": 34
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    3,
+    31
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.222,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([3, 31], 90), ([3, 31], 180), ([6, 19], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0029",
+   "candidates": [
+    {
+     "cell0": [
+      3,
+      31
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 9.303,
+     "margin": 1.222
+    },
+    {
+     "cell0": [
+      3,
+      31
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 10.54,
+     "margin": 1.222
+    },
+    {
+     "cell0": [
+      6,
+      19
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 11.368,
+     "margin": 1.222
+    }
+   ],
+   "ordem": 35
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    42,
+    1
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.198,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([42, 1], 0), ([21, 1], 0), ([26, 64], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0063",
+   "candidates": [
+    {
+     "cell0": [
+      42,
+      1
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 12.204,
+     "margin": 1.198
+    },
+    {
+     "cell0": [
+      21,
+      1
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 14.622,
+     "margin": 1.198
+    },
+    {
+     "cell0": [
+      26,
+      64
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 15.68,
+     "margin": 1.198
+    }
+   ],
+   "ordem": 36
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    16,
+    46
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.178,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([16, 46], 0), ([16, 47], 0), ([12, 2], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0080",
+   "candidates": [
+    {
+     "cell0": [
+      16,
+      46
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 8.24,
+     "margin": 1.178
+    },
+    {
+     "cell0": [
+      16,
+      47
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 9.704,
+     "margin": 1.178
+    },
+    {
+     "cell0": [
+      12,
+      2
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 21.556,
+     "margin": 1.178
+    }
+   ],
+   "ordem": 37
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    3,
+    33
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.169,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([3, 33], 180), ([3, 33], 90), ([3, 33], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0030",
+   "candidates": [
+    {
+     "cell0": [
+      3,
+      33
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 11.059,
+     "margin": 1.169
+    },
+    {
+     "cell0": [
+      3,
+      33
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 12.587,
+     "margin": 1.169
+    },
+    {
+     "cell0": [
+      3,
+      33
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 12.869,
+     "margin": 1.169
+    }
+   ],
+   "ordem": 38
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    3,
+    64
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.162,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([3, 64], 90), ([14, 64], 90), ([47, 38], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0093",
+   "candidates": [
+    {
+     "cell0": [
+      3,
+      64
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.972,
+     "margin": 1.162
+    },
+    {
+     "cell0": [
+      14,
+      64
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 22.039,
+     "margin": 1.162
+    },
+    {
+     "cell0": [
+      47,
+      38
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 22.589,
+     "margin": 1.162
+    }
+   ],
+   "ordem": 39
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    28,
+    57
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.143,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([28, 57], 270), ([26, 53], 270), ([28, 57], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0097",
+   "candidates": [
+    {
+     "cell0": [
+      28,
+      57
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 21.092,
+     "margin": 1.143
+    },
+    {
+     "cell0": [
+      26,
+      53
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 24.117,
+     "margin": 1.143
+    },
+    {
+     "cell0": [
+      28,
+      57
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 24.177,
+     "margin": 1.143
+    }
+   ],
+   "ordem": 40
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    9,
+    2
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.133,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([9, 2], 90), ([9, 2], 180), ([9, 2], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0071",
+   "candidates": [
+    {
+     "cell0": [
+      9,
+      2
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 6.833,
+     "margin": 1.133
+    },
+    {
+     "cell0": [
+      9,
+      2
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 6.868,
+     "margin": 1.133
+    },
+    {
+     "cell0": [
+      9,
+      2
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 7.142,
+     "margin": 1.133
+    }
+   ],
+   "ordem": 41
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    7,
+    64
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.099,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "7 peças; top-3 [([7, 64], 0), ([2, 64], 0), ([8, 64], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0003",
+   "candidates": [
+    {
+     "cell0": [
+      7,
+      64
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 13.538,
+     "margin": 1.099
+    },
+    {
+     "cell0": [
+      2,
+      64
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 14.875,
+     "margin": 1.099
+    },
+    {
+     "cell0": [
+      8,
+      64
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 17.392,
+     "margin": 1.099
+    }
+   ],
+   "ordem": 42
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    16,
+    47
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.085,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([16, 47], 270), ([16, 47], 0), ([43, 60], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0101",
+   "candidates": [
+    {
+     "cell0": [
+      16,
+      47
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 21.641,
+     "margin": 1.085
+    },
+    {
+     "cell0": [
+      16,
+      47
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 22.608,
+     "margin": 1.085
+    },
+    {
+     "cell0": [
+      43,
+      60
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 23.487,
+     "margin": 1.085
+    }
+   ],
+   "ordem": 43
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    16,
+    11
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.076,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([16, 11], 180), ([15, 8], 270), ([16, 12], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0096",
+   "candidates": [
+    {
+     "cell0": [
+      16,
+      11
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 20.37,
+     "margin": 1.076
+    },
+    {
+     "cell0": [
+      15,
+      8
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 21.913,
+     "margin": 1.076
+    },
+    {
+     "cell0": [
+      16,
+      12
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 22.485,
+     "margin": 1.076
+    }
+   ],
+   "ordem": 44
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    18,
+    34
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.069,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([18, 34], 90), ([18, 35], 90), ([17, 24], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0088",
+   "candidates": [
+    {
+     "cell0": [
+      18,
+      34
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 16.832,
+     "margin": 1.069
+    },
+    {
+     "cell0": [
+      18,
+      35
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 17.994,
+     "margin": 1.069
+    },
+    {
+     "cell0": [
+      17,
+      24
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.958,
+     "margin": 1.069
+    }
+   ],
+   "ordem": 45
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    45,
+    49
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.065,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([45, 49], 180), ([46, 56], 0), ([45, 60], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0039",
+   "candidates": [
+    {
+     "cell0": [
+      45,
+      49
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 11.246,
+     "margin": 1.065
+    },
+    {
+     "cell0": [
+      46,
+      56
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 11.978,
+     "margin": 1.065
+    },
+    {
+     "cell0": [
+      45,
+      60
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 11.985,
+     "margin": 1.065
+    }
+   ],
+   "ordem": 46
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    43,
+    53
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.049,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([43, 53], 180), ([43, 54], 180), ([27, 58], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0040",
+   "candidates": [
+    {
+     "cell0": [
+      43,
+      53
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 9.822,
+     "margin": 1.049
+    },
+    {
+     "cell0": [
+      43,
+      54
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 10.3,
+     "margin": 1.049
+    },
+    {
+     "cell0": [
+      27,
+      58
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 16.814,
+     "margin": 1.049
+    }
+   ],
+   "ordem": 47
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    18,
+    33
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.047,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([18, 33], 90), ([18, 34], 90), ([15, 59], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0091",
+   "candidates": [
+    {
+     "cell0": [
+      18,
+      33
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 17.917,
+     "margin": 1.047
+    },
+    {
+     "cell0": [
+      18,
+      34
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.764,
+     "margin": 1.047
+    },
+    {
+     "cell0": [
+      15,
+      59
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.855,
+     "margin": 1.047
+    }
+   ],
+   "ordem": 48
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    37,
+    58
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.044,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([37, 58], 270), ([35, 58], 180), ([37, 58], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0081",
+   "candidates": [
+    {
+     "cell0": [
+      37,
+      58
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 17.594,
+     "margin": 1.044
+    },
+    {
+     "cell0": [
+      35,
+      58
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 18.367,
+     "margin": 1.044
+    },
+    {
+     "cell0": [
+      37,
+      58
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.435,
+     "margin": 1.044
+    }
+   ],
+   "ordem": 49
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    18,
+    33
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.043,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([18, 33], 90), ([17, 14], 180), ([15, 59], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0090",
+   "candidates": [
+    {
+     "cell0": [
+      18,
+      33
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 17.254,
+     "margin": 1.043
+    },
+    {
+     "cell0": [
+      17,
+      14
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 18.003,
+     "margin": 1.043
+    },
+    {
+     "cell0": [
+      15,
+      59
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.048,
+     "margin": 1.043
+    }
+   ],
+   "ordem": 50
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    47,
+    64
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.042,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([47, 64], 180), ([47, 1], 270), ([1, 64], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0064",
+   "candidates": [
+    {
+     "cell0": [
+      47,
+      64
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 21.563,
+     "margin": 1.042
+    },
+    {
+     "cell0": [
+      47,
+      1
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 22.46,
+     "margin": 1.042
+    },
+    {
+     "cell0": [
+      1,
+      64
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 32.501,
+     "margin": 1.042
+    }
+   ],
+   "ordem": 51
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    15,
+    44
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.042,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([15, 44], 90), ([15, 45], 90), ([14, 62], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0087",
+   "candidates": [
+    {
+     "cell0": [
+      15,
+      44
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 14.299,
+     "margin": 1.042
+    },
+    {
+     "cell0": [
+      15,
+      45
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 14.901,
+     "margin": 1.042
+    },
+    {
+     "cell0": [
+      14,
+      62
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 15.183,
+     "margin": 1.042
+    }
+   ],
+   "ordem": 52
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    24,
+    1
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.039,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([24, 1], 270), ([33, 1], 270), ([34, 1], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0082",
+   "candidates": [
+    {
+     "cell0": [
+      24,
+      1
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 19.974,
+     "margin": 1.039
+    },
+    {
+     "cell0": [
+      33,
+      1
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 20.755,
+     "margin": 1.039
+    },
+    {
+     "cell0": [
+      34,
+      1
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 21.695,
+     "margin": 1.039
+    }
+   ],
+   "ordem": 53
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    15,
+    61
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.031,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([15, 61], 270), ([16, 44], 270), ([15, 62], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0078",
+   "candidates": [
+    {
+     "cell0": [
+      15,
+      61
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 12.553,
+     "margin": 1.031
+    },
+    {
+     "cell0": [
+      16,
+      44
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 12.938,
+     "margin": 1.031
+    },
+    {
+     "cell0": [
+      15,
+      62
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 13.092,
+     "margin": 1.031
+    }
+   ],
+   "ordem": 54
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    45,
+    48
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.027,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([45, 48], 0), ([45, 53], 0), ([45, 52], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0044",
+   "candidates": [
+    {
+     "cell0": [
+      45,
+      48
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 20.3,
+     "margin": 1.027
+    },
+    {
+     "cell0": [
+      45,
+      53
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 20.854,
+     "margin": 1.027
+    },
+    {
+     "cell0": [
+      45,
+      52
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 20.982,
+     "margin": 1.027
+    }
+   ],
+   "ordem": 55
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    15,
+    48
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.025,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "4 peças; top-3 [([15, 48], 90), ([15, 47], 90), ([15, 46], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0074",
+   "candidates": [
+    {
+     "cell0": [
+      15,
+      48
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 19.909,
+     "margin": 1.025
+    },
+    {
+     "cell0": [
+      15,
+      47
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 20.403,
+     "margin": 1.025
+    },
+    {
+     "cell0": [
+      15,
+      46
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 21.039,
+     "margin": 1.025
+    }
+   ],
+   "ordem": 56
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    44,
+    56
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.024,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([44, 56], 180), ([44, 54], 180), ([44, 56], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0037",
+   "candidates": [
+    {
+     "cell0": [
+      44,
+      56
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 13.821,
+     "margin": 1.024
+    },
+    {
+     "cell0": [
+      44,
+      54
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 14.146,
+     "margin": 1.024
+    },
+    {
+     "cell0": [
+      44,
+      56
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 14.225,
+     "margin": 1.024
+    }
+   ],
+   "ordem": 57
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    17,
+    49
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.022,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "3 peças; top-3 [([17, 49], 270), ([17, 53], 270), ([16, 61], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0086",
+   "candidates": [
+    {
+     "cell0": [
+      17,
+      49
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 12.763,
+     "margin": 1.022
+    },
+    {
+     "cell0": [
+      17,
+      53
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 13.042,
+     "margin": 1.022
+    },
+    {
+     "cell0": [
+      16,
+      61
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 13.441,
+     "margin": 1.022
+    }
+   ],
+   "ordem": 58
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    8,
+    23
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.021,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([8, 23], 270), ([2, 63], 180), ([2, 63], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0102",
+   "candidates": [
+    {
+     "cell0": [
+      8,
+      23
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 15.029,
+     "margin": 1.021
+    },
+    {
+     "cell0": [
+      2,
+      63
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 15.339,
+     "margin": 1.021
+    },
+    {
+     "cell0": [
+      2,
+      63
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 15.723,
+     "margin": 1.021
+    }
+   ],
+   "ordem": 59
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    13,
+    12
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.015,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "7 peças; top-3 [([13, 12], 270), ([12, 23], 90), ([13, 11], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0084",
+   "candidates": [
+    {
+     "cell0": [
+      13,
+      12
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 19.517,
+     "margin": 1.015
+    },
+    {
+     "cell0": [
+      12,
+      23
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 19.801,
+     "margin": 1.015
+    },
+    {
+     "cell0": [
+      13,
+      11
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 19.809,
+     "margin": 1.015
+    }
+   ],
+   "ordem": 60
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    16,
+    61
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.015,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([16, 61], 0), ([16, 62], 0), ([17, 43], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0100",
+   "candidates": [
+    {
+     "cell0": [
+      16,
+      61
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 17.221,
+     "margin": 1.015
+    },
+    {
+     "cell0": [
+      16,
+      62
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 17.473,
+     "margin": 1.015
+    },
+    {
+     "cell0": [
+      17,
+      43
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 17.522,
+     "margin": 1.015
+    }
+   ],
+   "ordem": 61
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    47,
+    33
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.013,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([47, 33], 0), ([37, 1], 90), ([47, 54], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0050",
+   "candidates": [
+    {
+     "cell0": [
+      47,
+      33
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 21.235,
+     "margin": 1.013
+    },
+    {
+     "cell0": [
+      37,
+      1
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 21.508,
+     "margin": 1.013
+    },
+    {
+     "cell0": [
+      47,
+      54
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 21.831,
+     "margin": 1.013
+    }
+   ],
+   "ordem": 62
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    15,
+    44
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.013,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([15, 44], 90), ([15, 45], 90), ([15, 46], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0089",
+   "candidates": [
+    {
+     "cell0": [
+      15,
+      44
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.271,
+     "margin": 1.013
+    },
+    {
+     "cell0": [
+      15,
+      45
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.505,
+     "margin": 1.013
+    },
+    {
+     "cell0": [
+      15,
+      46
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.546,
+     "margin": 1.013
+    }
+   ],
+   "ordem": 63
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    16,
+    59
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.011,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([16, 59], 270), ([16, 58], 270), ([16, 49], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0095",
+   "candidates": [
+    {
+     "cell0": [
+      16,
+      59
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 19.563,
+     "margin": 1.011
+    },
+    {
+     "cell0": [
+      16,
+      58
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 19.782,
+     "margin": 1.011
+    },
+    {
+     "cell0": [
+      16,
+      49
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 19.962,
+     "margin": 1.011
+    }
+   ],
+   "ordem": 64
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    1,
+    38
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.01,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([1, 38], 90), ([1, 35], 90), ([1, 39], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0022",
+   "candidates": [
+    {
+     "cell0": [
+      1,
+      38
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 6.618,
+     "margin": 1.01
+    },
+    {
+     "cell0": [
+      1,
+      35
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 6.684,
+     "margin": 1.01
+    },
+    {
+     "cell0": [
+      1,
+      39
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 6.747,
+     "margin": 1.01
+    }
+   ],
+   "ordem": 65
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    36,
+    57
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.01,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "4 peças; top-3 [([36, 57], 0), ([30, 55], 0), ([37, 58], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0085",
+   "candidates": [
+    {
+     "cell0": [
+      36,
+      57
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 21.658,
+     "margin": 1.01
+    },
+    {
+     "cell0": [
+      30,
+      55
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 21.881,
+     "margin": 1.01
+    },
+    {
+     "cell0": [
+      37,
+      58
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 21.96,
+     "margin": 1.01
+    }
+   ],
+   "ordem": 66
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    16,
+    42
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.009,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "8 peças; top-3 [([16, 42], 270), ([16, 44], 270), ([16, 45], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0083",
+   "candidates": [
+    {
+     "cell0": [
+      16,
+      42
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 19.207,
+     "margin": 1.009
+    },
+    {
+     "cell0": [
+      16,
+      44
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 19.371,
+     "margin": 1.009
+    },
+    {
+     "cell0": [
+      16,
+      45
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 19.644,
+     "margin": 1.009
+    }
+   ],
+   "ordem": 67
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    8,
+    14
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.008,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "4 peças; top-3 [([8, 14], 0), ([16, 12], 180), ([16, 60], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0073",
+   "candidates": [
+    {
+     "cell0": [
+      8,
+      14
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 23.391,
+     "margin": 1.008
+    },
+    {
+     "cell0": [
+      16,
+      12
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 23.588,
+     "margin": 1.008
+    },
+    {
+     "cell0": [
+      16,
+      60
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 23.9,
+     "margin": 1.008
+    }
+   ],
+   "ordem": 68
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    18,
+    35
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.007,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([18, 35], 90), ([15, 43], 90), ([15, 44], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0076",
+   "candidates": [
+    {
+     "cell0": [
+      18,
+      35
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 15.918,
+     "margin": 1.007
+    },
+    {
+     "cell0": [
+      15,
+      43
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 16.033,
+     "margin": 1.007
+    },
+    {
+     "cell0": [
+      15,
+      44
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 16.749,
+     "margin": 1.007
+    }
+   ],
+   "ordem": 69
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    26,
+    21
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.006,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([26, 21], 270), ([27, 58], 90), ([26, 58], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0032",
+   "candidates": [
+    {
+     "cell0": [
+      26,
+      21
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 21.45,
+     "margin": 1.006
+    },
+    {
+     "cell0": [
+      27,
+      58
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 21.587,
+     "margin": 1.006
+    },
+    {
+     "cell0": [
+      26,
+      58
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 23.138,
+     "margin": 1.006
+    }
+   ],
+   "ordem": 70
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    13,
+    21
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.006,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "5 peças; top-3 [([13, 21], 180), ([13, 14], 0), ([13, 20], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0072",
+   "candidates": [
+    {
+     "cell0": [
+      13,
+      21
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 19.911,
+     "margin": 1.006
+    },
+    {
+     "cell0": [
+      13,
+      14
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 20.023,
+     "margin": 1.006
+    },
+    {
+     "cell0": [
+      13,
+      20
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 20.068,
+     "margin": 1.006
+    }
+   ],
+   "ordem": 71
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    14,
+    63
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.006,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([14, 63], 90), ([15, 61], 0), ([15, 60], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0079",
+   "candidates": [
+    {
+     "cell0": [
+      14,
+      63
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 20.615,
+     "margin": 1.006
+    },
+    {
+     "cell0": [
+      15,
+      61
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 20.744,
+     "margin": 1.006
+    },
+    {
+     "cell0": [
+      15,
+      60
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 22.184,
+     "margin": 1.006
+    }
+   ],
+   "ordem": 72
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    46,
+    34
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.005,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([46, 34], 0), ([46, 48], 0), ([46, 24], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0045",
+   "candidates": [
+    {
+     "cell0": [
+      46,
+      34
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 19.962,
+     "margin": 1.005
+    },
+    {
+     "cell0": [
+      46,
+      48
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 20.068,
+     "margin": 1.005
+    },
+    {
+     "cell0": [
+      46,
+      24
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 20.26,
+     "margin": 1.005
+    }
+   ],
+   "ordem": 73
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    2,
+    46
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.004,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([2, 46], 90), ([2, 45], 270), ([6, 12], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0019",
+   "candidates": [
+    {
+     "cell0": [
+      2,
+      46
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 9.175,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      2,
+      45
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 9.209,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      6,
+      12
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 10.577,
+     "margin": 1.004
+    }
+   ],
+   "ordem": 74
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    47,
+    56
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.004,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([47, 56], 0), ([47, 49], 270), ([47, 52], 270)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0033",
+   "candidates": [
+    {
+     "cell0": [
+      47,
+      56
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 22.777,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      47,
+      49
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 22.873,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      47,
+      52
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 22.997,
+     "margin": 1.004
+    }
+   ],
+   "ordem": 75
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    26,
+    10
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.004,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([26, 10], 0), ([33, 21], 270), ([45, 39], 180)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0049",
+   "candidates": [
+    {
+     "cell0": [
+      26,
+      10
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 16.308,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      33,
+      21
+     ],
+     "rot": 270,
+     "mirror": false,
+     "score": 16.374,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      45,
+      39
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 16.628,
+     "margin": 1.004
+    }
+   ],
+   "ordem": 76
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    10,
+    8
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.004,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([10, 8], 0), ([2, 63], 180), ([2, 62], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0077",
+   "candidates": [
+    {
+     "cell0": [
+      10,
+      8
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 14.618,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      2,
+      63
+     ],
+     "rot": 180,
+     "mirror": false,
+     "score": 14.677,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      2,
+      62
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 15.637,
+     "margin": 1.004
+    }
+   ],
+   "ordem": 77
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    13,
+    16
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.004,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([13, 16], 90), ([13, 17], 90), ([13, 14], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0092",
+   "candidates": [
+    {
+     "cell0": [
+      13,
+      16
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.189,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      13,
+      17
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 18.266,
+     "margin": 1.004
+    },
+    {
+     "cell0": [
+      13,
+      14
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 18.318,
+     "margin": 1.004
+    }
+   ],
+   "ordem": 78
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    7,
+    12
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.003,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([7, 12], 90), ([7, 11], 90), ([6, 13], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0025",
+   "candidates": [
+    {
+     "cell0": [
+      7,
+      12
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 7.578,
+     "margin": 1.003
+    },
+    {
+     "cell0": [
+      7,
+      11
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 7.598,
+     "margin": 1.003
+    },
+    {
+     "cell0": [
+      6,
+      13
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 7.869,
+     "margin": 1.003
+    }
+   ],
+   "ordem": 79
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    45,
+    61
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.0,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "1 peças; top-3 [([45, 61], 90), ([46, 50], 90), ([46, 50], 0)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0038",
+   "candidates": [
+    {
+     "cell0": [
+      45,
+      61
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 12.797,
+     "margin": 1.0
+    },
+    {
+     "cell0": [
+      46,
+      50
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 12.799,
+     "margin": 1.0
+    },
+    {
+     "cell0": [
+      46,
+      50
+     ],
+     "rot": 0,
+     "mirror": false,
+     "score": 12.894,
+     "margin": 1.0
+    }
+   ],
+   "ordem": 80
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    10,
+    38
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.0,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "3 peças; top-3 [([10, 38], 90), ([10, 37], 90), ([9, 41], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0075",
+   "candidates": [
+    {
+     "cell0": [
+      10,
+      38
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 12.953,
+     "margin": 1.0
+    },
+    {
+     "cell0": [
+      10,
+      37
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 12.953,
+     "margin": 1.0
+    },
+    {
+     "cell0": [
+      9,
+      41
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 12.966,
+     "margin": 1.0
+    }
+   ],
+   "ordem": 81
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": null,
+   "decision": "por_ancorar",
+   "margin": null,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "5 peças; top-3 []"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "section": "G0005",
+   "candidates": [],
+   "ordem": 82
+  }
+ ],
+ "rest": [
+  "P0095",
+  "P0096",
+  "P0097",
+  "P0101",
+  "P0102",
+  "P0103",
+  "P0107",
+  "P0108",
+  "P0109",
+  "P0110",
+  "P0111",
+  "P0114",
+  "P0115",
+  "P0116",
+  "P0117",
+  "P0118",
+  "P0120",
+  "P0121",
+  "P0122",
+  "P0123",
+  "P0124",
+  "P0125",
+  "P0127",
+  "P0128",
+  "P0130",
+  "P0132",
+  "P0133",
+  "P0134",
+  "P0135",
+  "P0136",
+  "P0137",
+  "P0138",
+  "P0139",
+  "P0140",
+  "P0141",
+  "P0142",
+  "P0145",
+  "P0146",
+  "P0148",
+  "P0149",
+  "P0150",
+  "P0151",
+  "P0152",
+  "P0153",
+  "P0154",
+  "P0155",
+  "P0156",
+  "P0158",
+  "P0159",
+  "P0160",
+  "P0161",
+  "P0163",
+  "P0164",
+  "P0166",
+  "P0167",
+  "P0168",
+  "P0170",
+  "P0171",
+  "P0172",
+  "P0173",
+  "P0174",
+  "P0175",
+  "P0177",
+  "P0178",
+  "P0179",
+  "P0180",
+  "P0181",
+  "P0182",
+  "P0183",
+  "P0184",
+  "P0185",
+  "P0186",
+  "P0187",
+  "P0188",
+  "P0190",
+  "P0191",
+  "P0192",
+  "P0193",
+  "P0657"
+ ],
+ "notes": [
+  "find_twin P0657: consulta P0657: forma sem 4 cantos"
+ ]
+}

@@ -3,7 +3,7 @@
 Usage::
 
 	python -m src.ingest <scan.jpg> --lote N [--dpi 300] [--kind soltas] [--known-cells gt.json]
-		[--montado pNN | --blocos pNN] [--project projects/alpes] [--profile projects/alpes/puzzle.json]
+		[--montado pNN | --blocos pNN [--no-auto-anchor]] [--project projects/alpes] [--profile projects/alpes/puzzle.json]
 
 Pipeline (:func:`ingest_scan`): ``segment_scan`` (crops kept in the scan frame,
 ``normalize_rotation=False``, so crop, contour and Shape share one frame) → fragments
@@ -18,7 +18,9 @@ the bag).
 (``n_no_lote``). Each such piece is placed (origin ``gt``) if its cell is full in the last
 registered photo, otherwise it becomes ``posicao_conhecida``.
 
-``--montado/--blocos pNN`` delegate to ``src.legacy.ingest_page`` (not written yet).
+``--montado/--blocos pNN`` delegate to ``src.legacy.ingest_page``; ``--no-auto-anchor`` leaves
+every section unanchored (anchor later with ``legacy.solve_project_sections``, which uses the
+twins between pages).
 """
 
 from __future__ import annotations
@@ -249,6 +251,8 @@ def main(argv=None) -> int:
 	g = ap.add_mutually_exclusive_group()
 	g.add_argument("--montado", default=None, metavar="pNN")
 	g.add_argument("--blocos", default=None, metavar="pNN")
+	ap.add_argument("--no-auto-anchor", action="store_true",
+					help="páginas do legado: não ancorar pela própria página (ancorar depois pela solução conjunta)")
 	add_project_args(ap)
 	args = ap.parse_args(argv)
 	try:
@@ -263,7 +267,7 @@ def main(argv=None) -> int:
 			print("erro: src/legacy.py ainda não existe (passo 4 do plano M10+M12); páginas do legado não podem ser ingeridas")
 			return 1
 		kind, page = ("montado", args.montado) if args.montado else ("blocos", args.blocos)
-		r = legacy.ingest_page(pr, args.scan, kind, page)
+		r = legacy.ingest_page(pr, args.scan, kind, page, auto_anchor=not args.no_auto_anchor)
 		if isinstance(r, dict) and "error" in r:
 			print(f"erro: {r['error']}")
 			return 1

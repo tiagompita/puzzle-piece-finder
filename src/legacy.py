@@ -1289,7 +1289,8 @@ def solve_project_sections(project, *, art=None, prior=None, auto_anchor: bool =
 
 	Rebuilds a :class:`PageResult` per section from the project (shapes, crops, local cells),
 	locates it, treats anchored sections as fixed, runs :func:`solve_pages`, and anchors the
-	sections that became ``alta`` (fonte ``legado_scan``). Returns ``{'anchored': [...],
+	sections that became ``alta`` (fonte ``legado_scan``). Sections whose pieces are all
+	``same_as`` (a page scanned twice) are skipped. Returns ``{'anchored': [...],
 	'ambiguous': [...], 'pairs': n}``.
 	"""
 	profile = project.profile
@@ -1300,6 +1301,8 @@ def solve_project_sections(project, *, art=None, prior=None, auto_anchor: bool =
 	for gid, s in sorted(project.sections.items()):
 		if s.kind != "montado":
 			continue
+		if s.cells_local and all(project.piece(pid).same_as for pid in s.cells_local):
+			continue  # every piece is a re-scan (``same_as``) of a project piece: nothing new to place
 		pids = sorted(s.cells_local, key=lambda k: s.cells_local[k])
 		pieces = []
 		for k, pid in enumerate(pids):

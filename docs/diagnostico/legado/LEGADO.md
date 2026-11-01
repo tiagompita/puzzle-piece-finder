@@ -137,3 +137,7 @@ python -m pytest tests/test_legacy.py -q                         # sintético, ~
 ```
 
 Ingestão num projeto: `python -m src.ingest images/pieces/legado/montado_p01_300dpi.jpg --montado p01` (uma por página, depois `legacy.solve_project_sections(project)`). Saídas: `legado_resultados.json` (células por página, top-3, razões, perguntas, GT, pares, M14), `montado_pNN_overlay.jpg`, `montado_pNN_zona.jpg`, `blocos_pNN_grupos.jpg`, `tabuleiro_legado.jpg` (versões grandes em `$PPF_SCRATCH/legado/fig`).
+
+## Ingestão no projeto (2026-11-01)
+
+`tools/diagnostico/legado/ingest_all.py` regenera `projects/alpes/` com a foto F0001, a GT (A1, B2, BE, BD), o lote 1, as 2 confirmações do E-real-2 e as 18 páginas (`auto_anchor=False`, depois `solve_project_sections`): 39 secções ancoradas = 540 peças (453 colocadas `legado_scan` + 87 que são as próprias peças GT, que prevalecem: `same_as`, 56 já pela forma + cor, 30 pela ancoragem e 1 por a GT P0043 estar só como posição conhecida (célula (45,6) incerta na foto) e a p11 a mostrar montada; 0 em desacordo), 30 secções `montado` e 32 `blocos` por ancorar, p13 inteira `same_as` da p04 (44/44) **[V]**. Comparação do tabuleiro final com o M14 (0 colocadas em células vazias na foto, 13 em incertas, 53 cheias sem peça: 24 em top-1 ambíguo + 29 sem explicação): [`M14_vs_scans.md`](M14_vs_scans.md).

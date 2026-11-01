@@ -1,0 +1,78 @@
+{
+ "id": "G0003",
+ "scan_id": "S0009",
+ "kind": "montado",
+ "cells_local": {
+  "P0200": [
+   0,
+   0
+  ],
+  "P0205": [
+   1,
+   0
+  ],
+  "P0210": [
+   2,
+   0
+  ],
+  "P0215": [
+   3,
+   0
+  ],
+  "P0220": [
+   4,
+   0
+  ],
+  "P0225": [
+   5,
+   0
+  ],
+  "P0230": [
+   6,
+   0
+  ]
+ },
+ "anchor": {
+  "anchored": false,
+  "l0": null,
+  "c0": null,
+  "rot": 0,
+  "mirror": false,
+  "fonte": null,
+  "confianca": null,
+  "margin": null
+ },
+ "candidates": [
+  {
+   "cell0": [
+    7,
+    64
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 13.538,
+   "margin": 1.099
+  },
+  {
+   "cell0": [
+    2,
+    64
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 14.875,
+   "margin": 1.099
+  },
+  {
+   "cell0": [
+    8,
+    64
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 17.392,
+   "margin": 1.099
+  }
+ ],
+ "notes": "montado_p01 comp 2: ambigua; margem 1.10; margem 1.10, ganho 1.3; montado_p01 (peças 7–37, 7 peças): A filas 7–13, colunas 64–64 (rot 0°) ou B filas 2–8, colunas 64–64 (rot 0°) ou C filas 8–14, colunas 64–64 (rot 0°)?"
+}

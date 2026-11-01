@@ -1,0 +1,58 @@
+{
+ "id": "G0060",
+ "scan_id": "S0020",
+ "kind": "montado",
+ "cells_local": {
+  "P0639": [
+   0,
+   0
+  ],
+  "P0645": [
+   1,
+   0
+  ]
+ },
+ "anchor": {
+  "anchored": false,
+  "l0": null,
+  "c0": null,
+  "rot": 0,
+  "mirror": false,
+  "fonte": null,
+  "confianca": null,
+  "margin": null
+ },
+ "candidates": [
+  {
+   "cell0": [
+    43,
+    1
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 7.408,
+   "margin": 1.665
+  },
+  {
+   "cell0": [
+    19,
+    1
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 12.337,
+   "margin": 1.665
+  },
+  {
+   "cell0": [
+    42,
+    64
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 13.689,
+   "margin": 1.665
+  }
+ ],
+ "notes": "montado_p12 comp 7: alta; margem 1.67; "
+}

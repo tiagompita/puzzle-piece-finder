@@ -1,0 +1,90 @@
+{
+ "id": "G0035",
+ "scan_id": "S0014",
+ "kind": "montado",
+ "cells_local": {
+  "P0432": [
+   0,
+   0
+  ],
+  "P0433": [
+   0,
+   1
+  ],
+  "P0434": [
+   0,
+   2
+  ],
+  "P0435": [
+   0,
+   3
+  ],
+  "P0436": [
+   0,
+   4
+  ],
+  "P0437": [
+   0,
+   5
+  ],
+  "P0438": [
+   1,
+   0
+  ],
+  "P0439": [
+   1,
+   1
+  ],
+  "P0440": [
+   1,
+   2
+  ],
+  "P0441": [
+   1,
+   3
+  ]
+ },
+ "anchor": {
+  "anchored": true,
+  "l0": 47,
+  "c0": 53,
+  "rot": 270,
+  "mirror": false,
+  "fonte": "legado_scan",
+  "confianca": "alta",
+  "margin": 0.918
+ },
+ "candidates": [
+  {
+   "cell0": [
+    47,
+    55
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 16.343,
+   "margin": 1.011
+  },
+  {
+   "cell0": [
+    47,
+    49
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 16.522,
+   "margin": 1.011
+  },
+  {
+   "cell0": [
+    47,
+    54
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 16.889,
+   "margin": 1.011
+  }
+ ],
+ "notes": "montado_p06 comp 1: ambigua; margem 1.01; margem 1.01, ganho 0.2; montado_p06 (peças 37–46, 10 peças): A filas 42–47, colunas 55–56 (rot 270°) ou B filas 42–47, colunas 49–50 (rot 270°) ou C filas 42–47, colunas 54–55 (rot 270°)?"
+}

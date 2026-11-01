@@ -1,0 +1,82 @@
+{
+ "id": "G0083",
+ "scan_id": "S0025",
+ "kind": "blocos",
+ "cells_local": {
+  "P0882": [
+   0,
+   0
+  ],
+  "P0883": [
+   0,
+   1
+  ],
+  "P0886": [
+   1,
+   0
+  ],
+  "P0887": [
+   1,
+   1
+  ],
+  "P0891": [
+   2,
+   0
+  ],
+  "P0892": [
+   2,
+   1
+  ],
+  "P0895": [
+   3,
+   0
+  ],
+  "P0896": [
+   3,
+   1
+  ]
+ },
+ "anchor": {
+  "anchored": false,
+  "l0": null,
+  "c0": null,
+  "rot": 0,
+  "mirror": false,
+  "fonte": null,
+  "confianca": null,
+  "margin": null
+ },
+ "candidates": [
+  {
+   "cell0": [
+    16,
+    42
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 19.207,
+   "margin": 1.009
+  },
+  {
+   "cell0": [
+    16,
+    44
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 19.371,
+   "margin": 1.009
+  },
+  {
+   "cell0": [
+    16,
+    45
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 19.644,
+   "margin": 1.009
+  }
+ ],
+ "notes": "blocos_p02 comp 0: ambigua; margem 1.01; margem 1.01, ganho 0.2; blocos_p02 (peças 21–35, 8 peças): A filas 15–16, colunas 42–45 (rot 270°) ou B filas 15–16, colunas 44–47 (rot 270°) ou C filas 15–16, colunas 45–48 (rot 270°)?"
+}

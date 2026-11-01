@@ -1,0 +1,39 @@
+{
+ "id": "G0005",
+ "scan_id": "S0009",
+ "kind": "montado",
+ "cells_local": {
+  "P0198": [
+   0,
+   0
+  ],
+  "P0203": [
+   1,
+   0
+  ],
+  "P0208": [
+   2,
+   0
+  ],
+  "P0213": [
+   3,
+   0
+  ],
+  "P0218": [
+   4,
+   0
+  ]
+ },
+ "anchor": {
+  "anchored": false,
+  "l0": null,
+  "c0": null,
+  "rot": 0,
+  "mirror": false,
+  "fonte": null,
+  "confianca": null,
+  "margin": null
+ },
+ "candidates": [],
+ "notes": "montado_p01 comp 4: ambigua; margem nan; nenhuma colocação respeita os lados F"
+}

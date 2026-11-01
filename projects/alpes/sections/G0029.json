@@ -1,0 +1,54 @@
+{
+ "id": "G0029",
+ "scan_id": "S0012",
+ "kind": "montado",
+ "cells_local": {
+  "P0332": [
+   0,
+   0
+  ]
+ },
+ "anchor": {
+  "anchored": false,
+  "l0": null,
+  "c0": null,
+  "rot": 0,
+  "mirror": false,
+  "fonte": null,
+  "confianca": null,
+  "margin": null
+ },
+ "candidates": [
+  {
+   "cell0": [
+    3,
+    31
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 9.303,
+   "margin": 1.222
+  },
+  {
+   "cell0": [
+    3,
+    31
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 10.54,
+   "margin": 1.222
+  },
+  {
+   "cell0": [
+    6,
+    19
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 11.368,
+   "margin": 1.222
+  }
+ ],
+ "notes": "montado_p04 comp 2: ambigua; margem 1.22; 1 peça sem gémea; margem 1.22, ganho 2.1; montado_p04 (peça 32, 1 peças): A filas 3–3, colunas 31–31 (rot 90°) ou B filas 6–6, colunas 19–19 (rot 270°) ou C filas 7–7, colunas 8–8 (rot 270°)?"
+}

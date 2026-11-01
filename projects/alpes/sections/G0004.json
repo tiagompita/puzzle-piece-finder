@@ -1,0 +1,74 @@
+{
+ "id": "G0004",
+ "scan_id": "S0009",
+ "kind": "montado",
+ "cells_local": {
+  "P0231": [
+   0,
+   0
+  ],
+  "P0232": [
+   0,
+   1
+  ],
+  "P0233": [
+   0,
+   2
+  ],
+  "P0234": [
+   0,
+   3
+  ],
+  "P0235": [
+   0,
+   4
+  ],
+  "P0236": [
+   0,
+   5
+  ]
+ },
+ "anchor": {
+  "anchored": true,
+  "l0": 6,
+  "c0": 64,
+  "rot": 270,
+  "mirror": false,
+  "fonte": "legado_scan",
+  "confianca": "alta",
+  "margin": 3.674
+ },
+ "candidates": [
+  {
+   "cell0": [
+    6,
+    64
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 11.351,
+   "margin": 3.674
+  },
+  {
+   "cell0": [
+    42,
+    1
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 41.707,
+   "margin": 3.674
+  },
+  {
+   "cell0": [
+    47,
+    59
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 47.104,
+   "margin": 3.674
+  }
+ ],
+ "notes": "montado_p01 comp 3: alta; margem 3.67; "
+}

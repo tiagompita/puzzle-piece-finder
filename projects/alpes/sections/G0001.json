@@ -1,0 +1,86 @@
+{
+ "id": "G0001",
+ "scan_id": "S0009",
+ "kind": "montado",
+ "cells_local": {
+  "P0194": [
+   0,
+   0
+  ],
+  "P0195": [
+   0,
+   1
+  ],
+  "P0196": [
+   0,
+   2
+  ],
+  "P0201": [
+   1,
+   2
+  ],
+  "P0206": [
+   2,
+   2
+  ],
+  "P0211": [
+   3,
+   2
+  ],
+  "P0216": [
+   4,
+   2
+  ],
+  "P0221": [
+   5,
+   2
+  ],
+  "P0226": [
+   6,
+   2
+  ]
+ },
+ "anchor": {
+  "anchored": true,
+  "l0": 14,
+  "c0": 62,
+  "rot": 0,
+  "mirror": false,
+  "fonte": "legado_scan",
+  "confianca": "alta",
+  "margin": 1.169
+ },
+ "candidates": [
+  {
+   "cell0": [
+    14,
+    62
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 8.146,
+   "margin": 1.169
+  },
+  {
+   "cell0": [
+    15,
+    62
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 9.526,
+   "margin": 1.169
+  },
+  {
+   "cell0": [
+    16,
+    62
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 9.693,
+   "margin": 1.169
+  }
+ ],
+ "notes": "montado_p01 comp 0: ambigua; margem 1.17; margem 1.17, ganho 1.4; montado_p01 (peças 1–33, 9 peças): A filas 14–20, colunas 62–64 (rot 0°) ou B filas 15–21, colunas 62–64 (rot 0°) ou C filas 16–22, colunas 62–64 (rot 0°)?"
+}
