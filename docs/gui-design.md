@@ -1,206 +1,116 @@
-# Desenho da GUI — "mesa de montagem" (proposta para aprovação do Tiago)
+# GUI "mesa de montagem" — o que está construído
 
-Escrito em 2026-11-01. É só desenho: nenhum código da GUI nova existe. Etiqueta **[V]** = visto no código/ficheiros hoje; **[NT]** = não testado; **[P]** = proposta. Fontes: `CLAUDE.md`, `docs/estado-e-plano.md` §0 e §10, `docs/plano-m10-m12.md`, `src/gui.py`, `src/profile.py`, `projects/alpes/puzzle.json`.
+Atualizado em 2026-11-01 (substitui a proposta da ronda anterior e a maquete estática, que não foi aprovada). Etiquetas: **[V]** verificado (teste ou captura vista), **[NT]** não testado, **[F]** testado e a falhar. Como correr e o que mostram as capturas: [`docs/gui/README.md`](gui/README.md).
 
-## 1. Objetivo e utilizador
+## 1. Objetivo
 
-Uma só pessoa (Tiago), junto ao tapete, com sacos numerados de ≈ 32 peças. O programa não é "um matcher com botões": é a **vista do estado do projeto** e a **lista do que fazer a seguir**. Fluxo do §0 do plano:
+Uma pessoa (Tiago) junto ao tapete, com sacos numerados. A GUI é a **vista do estado do projeto** e a **lista do que fazer a seguir**: o tabuleiro tem de parecer o puzzle físico; cada sugestão diz de que saco e com que número vem a peça, como fica rodada e onde vai; um toque confirma e a lista regenera-se.
 
-1. Importa um scan de um saco (lote N) no PC.
-2. O programa sugere, por força do sinal: gémea colocada, par de soltas, buraco, caixa (só textura).
-3. Vai ao saco, pega na peça pela imagem ("lote 3, peça 17"), coloca, toca **Coloquei**.
-4. O mapa atualiza-se e a lista regenera-se.
+## 2. Stack (decidido e construído)
 
-Estado de hoje: `src/gui.py` [V] é uma janela Tkinter para uma foto/scan de peças contra a imagem da caixa (Load / Segment / Match / Match All / Export JSON...). Não conhece lotes, mapa, gémeas nem confirmação. `src/state.py` ainda **não existe** [V: ausente em `src/`]; `src/profile.py` existe e expõe `twin(l, c)` e `twin_rotation_deg()` [V], e `projects/alpes/puzzle.json` tem a arte (`art.bbox`) e a calibração [V].
-
-## 2. Tkinter vs PySide vs web local
-
-| Critério | Tkinter (hoje) | PySide6 | Web local (FastAPI + browser) |
-|---|---|---|---|
-| Zoom/pan com 3008 recortes | `Canvas` redesenha em Python; PIL a reamostrar por nível de zoom; fluidez fraca [NT] | `QGraphicsView` bom | SVG/CSS no browser, com GPU; zoom por `viewBox` [NT, alvo 60 fps] |
-| Alfa (arte a 20 %, fantasmas) | Canvas sem alfa real; só compondo bitmaps PIL à mão | Nativo | Nativo (`opacity`, `stroke-opacity`) |
-| Toque / telemóvel | Sem toque, sem telemóvel | Só no PC | Pinça e toque nativos; o telemóvel fica junto ao saco |
-| Dependências | Já cá estão | +~200 MB | `fastapi`, `uvicorn` (leves); frontend sem build |
-| Empacotamento | Trivial | Pesado (PyInstaller, licença LGPL a ler) | Nenhum: `python -m src.server` |
-| Reutiliza `state.py` | Sim | Sim | Sim (processo Python único) |
-| Esforço | Médio, resultado fraco | Alto | Médio; duas linguagens |
-| Risco | Qualidade visual e desempenho não chegam | Complexidade/empacotamento para um só utilizador | Sem autenticação (LAN), browser moderno, JS a manter |
-
-**Recomendação [P]: interface web local.** Razões: o ecrã mais importante (tabuleiro 64 × 47 com arte translúcida, recortes e fantasmas) é composição com alfa + zoom/pan, onde o browser é nativo e o Tkinter penoso; a lista "vai buscar" é útil **no telemóvel ao lado do saco**, o que nenhum toolkit desktop dá; o servidor reutiliza `Project` diretamente e o telemóvel não precisa de instalação.
-
-**Contra-argumentos honestos:**
-- Dois idiomas (Python + JS); o JS fica pequeno e sem framework, mas é mais uma coisa a manter.
-- **Sem autenticação**: quem estiver na tua Wi-Fi vê e altera o estado. Por omissão escuta em `127.0.0.1`; `--lan` abre à rede e fica documentado com este aviso.
-- Precisa de browser moderno (Safari/Chrome recentes).
-- SVG com 3008 `<image>` pode engasgar [NT]; mitigação no §7 (miniaturas, só montar no DOM o que está no viewBox).
-
-**Fallback:** se recusares a web, um Tkinter mínimo (lista "vai buscar" + Coloquei / Não encaixa + importar) sobre o mesmo `state.py`; o tabuleiro fica como imagem estática gerada com PIL. Perde-se zoom suave, fantasmas interativos e o telemóvel.
-
-## 3. Arquitetura
+Web local: `python -m src.server` (FastAPI + uvicorn) + `src/web/` (`index.html`, `app.js`, `app.css`; JS sem framework nem build). Por omissão escuta em `127.0.0.1:8765`; `--lan` abre a `0.0.0.0` com aviso escrito na consola (**sem login**). O Tkinter (`src/gui.py`) fica como está até ser removido; não conhece lotes, mapa nem gémeas.
 
 ```
- telemóvel / PC  --HTTP + SSE-->  FastAPI (src/server.py)  -->  Project (src/state.py)
-   HTML/CSS/JS estático                :8765                      log.jsonl (append-only)
-   (maquete em docs/gui/)                                         board == replay(log)
+ browser (PC / telemóvel)  --HTTP + SSE-->  src/server.py (Gui + rotas)  -->  src/confirm.py / Project (src/state.py)
+   src/web (estático)                         caches: raster do tabuleiro,       log.jsonl (fonte de verdade)
+                                              fantasmas, folhas, recortes        render.compose_board / query / ingest
 ```
-Servidor: `python -m src.server --project projects/alpes [--lan]`, em `http://<pc>:8765`. Frontend estático, sem build. O servidor é **fino**: valida, chama `Project`, devolve JSON. Nenhuma regra do puzzle no frontend.
+
+- **Escritas**: só por `src.confirm.confirm` (colocar, rejeitar, posição conhecida, ancorar, desancorar, descartar; a mesma reconsulta incremental da CLI), `Project.unplace` (+ reconsulta da célula e da gémea) e `ingest.ingest_scan` + `query.run_query` completo. Um lock (`Gui.wlock`) serializa-as; uma escrita durante um trabalho em curso (importação, preparação) responde 409. Depois de cada escrita: invariantes verificadas por `confirm` (`check_invariants(disk=True)`), recorte limpo e registo fino (com a imagem) das peças acabadas de colocar escritos em `render/clean/` e `render/placements.json`, eventos SSE `board_changed` e `fetch_changed` [V: `tests/test_server.py`].
+- **Leituras**: sem lock; uma leitura que apanhe um dicionário a mudar é repetida. Se o `log.jsonl` mudar por fora (CLI), o projeto é reaberto no pedido seguinte.
+- **Regra do arranque**: se `pieces/`, `crops/`, `overlays/` ou `render/` faltarem ou estiverem vazias (não estão no git), `render.rebuild_assets` corre numa thread com progresso na consola e na página "A preparar o projeto" (SSE `prepare_progress`, `ready`); a API de dados responde 503 até acabar [V: teste com `rebuild_assets` substituído; NT: num clone real — a regeneração completa do `projects/alpes` não foi cronometrada nesta ronda]. As folhas com a peça destacada (`render/sheets`, também fora do git) são geradas a pedido.
+
+## 3. Endpoints (implementados)
 
 | Endpoint | Devolve / faz |
 |---|---|
-| `GET /api/board` | 47 × 64 células: `estado` (`vazia`/`ocupada_legado`/`colocada`), `peca_id`, `fonte` (`log`/`foto`/`legado_scan`); progresso (n/3008, por origem) |
-| `GET /api/pieces/{id}` | contorno em mm, 4 lados (tipo, corda), estado, lote, `n_no_lote`, célula; recorte PNG em `/api/pieces/{id}.png` |
-| `GET /api/fetch` | lista "vai buscar" ordenada por sinal: `{peca, lote, n_no_lote, celula, origem, confianca, razoes}` |
-| `GET /api/ghosts` | gémeas pendentes: `{celula_gemea, peca_origem, path_mm}` com o contorno já transformado pelo perfil (§5) |
-| `GET /api/holes` | buracos (≥ 2 vizinhas colocadas) com o molde (lados livres das vizinhas) |
-| `GET /api/lots` | por lote: nº de peças, colocadas, pendentes, folha numerada (overlay PNG) |
-| `GET /api/sections` | grupos soltos (`blocos_pNN`, secções por ancorar): miniatura, top-3 de zona com confiança |
-| `GET /api/cell/{l}/{c}` | tudo do popup: estado, peça, gémea (célula/peça), fantasma, molde, recorte da arte |
-| `POST /api/confirm` | `{acao: place \| reject \| position_known \| anchor, peca, celula, origem, rank}` |
-| `POST /api/ingest` | multipart: scan + `lote` + `dpi`; devolve `job_id`; progresso por SSE |
-| `GET /api/events` | SSE: `board_changed`, `fetch_changed`, `ingest_progress` → o cliente refresca só o que mudou |
+| `GET /api/status` | `{estado: pronto\|a_preparar, job, prep_log, job_log, versao}` |
+| `GET /api/board` | grelha `cells[l][c] = {estado, peca_id, fonte}`, posições conhecidas, borda em falta, progresso, `stats`, `legend` (a tabela da §5), calibração (t95, margem mínima), `hr = h/w` |
+| `GET /api/board.jpg?ppc=60[&region=l0,c0,l1,c1]` | raster `compose_board` (camadas `art` + `pieces`). Tabuleiro inteiro a 60 px/célula em cache (memória + `render/gui/board_60.jpg`), invalidada pelo tamanho do log; abaixo de 60 é reduzido dessa imagem; com `region=` é composto a pedido até 240 px/célula (LRU). Inteiro acima de 80 → 400 |
+| `GET /api/cell/{l}/{c}` | estado, peça (e como chegou), gémea (célula + peça), fantasma, propostas para a célula, posições conhecidas, vizinhas N/E/S/O, URLs do zoom |
+| `GET /api/cell/{l}/{c}/zoom.jpg?side=render\|art\|both&dpi=300` | 3 × 3 células a 300 dpi: o render, a arte, ou `compose_zone_vs_art` |
+| `GET /api/pieces/{id}` | resumo da peça, pose no tabuleiro e a sua origem, propostas, URLs |
+| `GET /api/pieces/{id}.png?pose=board\|scan&size=220` | recorte limpo (RGBA) centrado no corpo, 1,8 células de lado; `pose=board`: colocada → θ do registo; proposta → `theta_deg` do `fetch.json`; posição conhecida → θ do log; senão como digitalizada. Cabeçalho `X-Pose` diz qual foi usada |
+| `GET /api/fetch` | entradas do `fetch.json` + `razoes_txt` (frases simples), `origem_txt`, `estado_atual`; `suprimidas`, `notes` |
+| `GET /api/sheets/{scan}.jpg?highlight=P####&max=1400` | `ingest.sheet_overlay` (folha numerada, peça a âmbar), cache em `render/gui/sheets/` até a numeração do scan mudar |
+| `GET /api/ghosts` | fantasma de cada gémea pendente: `{cell (alvo), piece (colocada), from, path}`; `path` = `query.ghost_contour` em unidades de célula em torno do centro da célula alvo, com `profile.twin_rotation_deg()` |
+| `GET /api/lots` | saco → folhas (scans) → peças com `n_no_lote`, estado, célula; `lote = null` = legado/GT |
+| `GET /api/sections`, `GET /api/sections/{G}.png` | grupos por ancorar com o top-3 (`cell0`, rot, espelho, margem, pegada em células, "fora da grelha", células já colocadas) e miniatura (recortes nas posições do scan) |
+| `POST /api/confirm` | `{acao: place\|reject\|position_known\|anchor\|unanchor\|discard\|unplace, piece, cell, section, rot, mirror, reason, origin}` → `{ok, mensagens, invariantes, n_propostas, segundos, celulas_mudadas}` ou 400 `{error}` / 409 |
+| `POST /api/ingest` | multipart `file` + `lote` + `dpi` → grava em `images/pieces/lotes/loteNN_<data>_<nome>`, trabalho em fundo (segmentar → `run_query` completo), progresso por SSE `ingest_progress` |
+| `GET /api/events` | SSE: `hello`, `board_changed`, `fetch_changed`, `ingest_progress`, `prepare_progress`, `ready` |
 
-Escritas: **todas** passam por `Project` e acabam em `log.jsonl`; o servidor nunca edita `board.json` diretamente (invariante `board == replay(log)`, §10 do plano). Um lock simples serializa as escritas (utilizador único).
+`unplace` não estava na lista pedida; foi acrescentado porque um toque errado em "Coloquei" precisa de desfazer (só para peças colocadas pelo log; as de secções desfazem-se com "Desancorar grupo").
 
 ## 4. Ecrãs
 
-Navegação (barra de cima; em telemóvel, barra de baixo): **Progresso · Vai buscar · Lotes · Mesa · Importar**. A célula é um popup sobre qualquer vista.
+Uma página: tabuleiro à esquerda, painel à direita com separadores **Vai buscar · Lotes · Mesa · Importar**, e o painel **Célula** que abre ao tocar numa célula (botão "← voltar"). Legenda fixa em baixo.
 
-### (a) Progresso (`index.html`)
-```
-+- Progresso ------------------------------------ 641/3008 [###.......] -+
-| gémea 212 · buraco 18 · par 6 · legado 405     [x] fantasmas [x] legado |
-|                                                [x] vai buscar [ ] arte |
-| +------------------------------------------------------------------+ |
-| | arte da caixa a ~20 % de opacidade                               | |
-| |  ... ... ... ... . . . ┈┈┈ ┈┈┈ . . .      (┈ = fantasma da gémea)| |
-| |  ... ... ... ... . . . . . [O] . . . .     ([O] = vai buscar)    | |
-| |  ### ### ### ### ### ### ### ### ###       (# = recorte real)     | |
-| |  /// /// /// ///                          (/ = legado, hachura)   | |
-| +------------------------------------------------------------------+ |
-| roda/pinça: zoom · arrastar: pan · toque/clique numa célula: popup    |
-+-----------------------------------------------------------------------+
-```
-- Camadas SVG, de baixo para cima: arte (opacidade ajustável), hachura do legado, recortes das colocadas, fantasmas, realce "vai buscar", grelha só com zoom suficiente.
-- `ocupada_legado` = ocupada por foto/legado sem silhueta: hachura fina, sem recorte (honesto: não há forma).
-- Barra de progresso n/3008 e por origem (gémea / buraco / par / legado / manual).
-- Toggles guardados em `localStorage`.
+- **Tabuleiro**: `<img>` raster + overlay SVG no mesmo `viewBox` (unidades de célula: x = coluna, y = linha × h/w); zoom/pan por roda, arrasto e pinça; duplo clique aproxima; botões + / − / ajustar. Com zoom acima de ~66 px/célula reais, a região visível é pedida de novo ao servidor a mais resolução (até 240 px/célula ≈ 300 dpi) e sobreposta: com zoom, vê-se o recorte real a alta resolução [V: `progresso_zoom_relva.jpg`]. A grelha só aparece a partir de ~22 px/célula; os fantasmas a partir de ~7 px/célula (e com o interruptor ligado).
+- **Vai buscar**: cartões agrupados por saco, pela ordem do `fetch.json`. Cada cartão: "Saco N · nº X" grande; célula alvo e decisão em palavra (aceite / ambígua); a peça **rodada como fica** (`theta_deg`), com ▲ = topo do tabuleiro, quadrado tracejado = célula e o fantasma da gémea por cima; minimapa com a célula; a folha do saco com a peça a âmbar (toque amplia); razões em frases (forma: diferença X mm (limite t95); margem para a 2.ª candidata (mínimo); imagem: ΔE); botões **Coloquei / Não encaixa / Guardar posição / Ver no tabuleiro**; "razões técnicas" recolhidas. Estado vazio: "Nada a ir buscar agora" + botão Importar. Sugestões suprimidas (candidata única) numa nota recolhida.
+- **Célula**: o tabuleiro a 300 dpi (3 × 3) ao lado da arte, com o fantasma e as marcas da célula; estado, gémea (clicável), peça e como chegou; propostas com os mesmos cartões; vizinhas; "Desfazer colocação" ou "Desancorar grupo".
+- **Lotes**: um bloco por saco com as folhas (miniaturas, toque amplia) e a grelha de peças (miniatura como digitalizada, nº, célula ou estado; chave de cores dos estados no topo). Tocar numa peça colocada/posição conhecida abre a célula; numa solta abre o painel da peça (propostas, folha, "Descartar").
+- **Mesa**: grupos por ancorar (ordenados pela margem do 1.º candidato), miniatura, top-3; "Ver" desenha a pegada a violeta e aproxima; "Ancorar aqui" (com confirmação) usa `confirm(anchor=…)`. Candidatos com peças fora da grelha ficam desativados; células já colocadas são avisadas.
+- **Importar** (pensado para o PC): ficheiro, nº do saco (proposta: o seguinte ao maior), dpi; progresso em linhas; no fim, ligações para "Vai buscar" e para o saco.
+- **Telemóvel** (`max-width: 700px`): tabuleiro em cima (40 % da altura), legenda compacta (só rótulos, em várias linhas, sempre visível), painel como folha inferior com pega; tocar na pega expande a folha e reduz o tabuleiro. Alvos de toque ≥ 44 px (botões de zoom 40 px no telemóvel).
 
-### (b) Vai buscar (`fetch.html`)
-```
-+- Vai buscar (14) --------------------------------------------------+
-| +--------+ Lote 3, peça 17            origem: gémea de (44,3)      |
-| | recorte| -> célula (4, 62)          confiança: ●●●○ aceite       |
-| | peça   | forma 0,31 mm · margem 2,4 · imagem ΔE 38 ≤ p90 50       |
-| +--------+ [ Coloquei ] [ Não encaixa ] [ Guardar (posição conhecida) ] |
-| +--------+ Lote 5, peça 02  -> (5, 60) ...                          |
-+--------------------------------------------------------------------+
-```
-Ordem = força do sinal (gémea → par → buraco → caixa). Tocar no cartão realça a célula no tabuleiro e abre o popup. Alvos ≥ 44 px. Lista vazia: "Nada a ir buscar. Importa um scan para começar."
+## 5. Legenda (tabela única)
 
-### (c) Lotes / sacos (`lotes.html`)
-```
- Lote   Peças  Colocadas  Pendentes  Folha
-  1      32       9          23      [ver folha numerada]
-  3      31       4          27      [ver folha numerada]
-```
-Clicar num lote lista as suas peças (miniatura, número, estado). A folha é o overlay numerado devolvido pelo `ingest`, para guardar com o saco.
+A tabela `LEGEND` de `src/server.py` é a única fonte: o servidor devolve-a em `/api/board`, a página desenha a legenda a partir dela com amostras que usam **as mesmas classes CSS** do tabuleiro (as linhas "raster" mostram um pedaço real do raster), e `tests/test_server.py` falha se alguma classe `b-*` usada em `src/web` não tiver linha ou se alguma linha não tiver estilo.
 
-### (d) Mesa de apoio (`mesa.html`)
-```
-+- Grupo blocos_p02 (14 peças) ---------------------------+
-| [miniatura do grupo]   top-3 de zona:                    |
-|                        1) (20..23, 31..35)  conf. 0,62   |
-|                        2) ...                            |
-| [ Ancorar em (l, c) ]  [ Ver na caixa ]  [ Descartar ]   |
-+----------------------------------------------------------+
-```
-Grupos soltos ainda sem posição. Ancorar (`anchor`) é sempre confirmado por ti; o programa nunca ancora em silêncio com confiança baixa (§10 do plano: "perguntar, não adivinhar").
-
-### (e) Célula (`celula.html`, popup)
-```
-+- Célula (4, 62) ------------------------------- [x] -+
-| estado: vazia · gémea: (44, 3) colocada (P0187)       |
-| +-- arte --+ +- fantasma -+ +- molde (vizinhas) -+     |
-| | recorte  | | contorno   | | lados livres      |     |
-| +----------+ +------------+ +-------------------+     |
-| coincidência fantasma/molde: 0,31 mm  * dupla         |
-| Sugestão: lote 3, peça 17 (gémea)                     |
-| [ Colocar aqui ] [ escolher outra peça v ]            |
-+-------------------------------------------------------+
-```
-Célula colocada mostra a peça (recorte, lote), a gémea e "Desfazer colocação" (`unplaced`).
-
-### (f) Importar scan
-```
-+- Importar scan -----------------------------------+
-| Ficheiro: [escolher...]  Lote: [ 4 ]  dpi: [300]  |
-| [#######...] segmentar > forma > gémeas > pares   |
-| Resultado: 31 peças, 3 propostas · [ver folha]    |
-| (overlay numerado com os números do saco)         |
-+---------------------------------------------------+
-```
-Só no PC (ficheiros grandes). No fim abre "Vai buscar".
-
-## 5. O fantasma da gémea
-
-**Ideia (Tiago):** para cada peça conhecida cuja gémea ainda não está montada, desenhar na célula da gémea o contorno exato do recorte rodado 180°, como pré-visualização para procurar a peça à mão (forma + imagem da célula).
-
-- **Dados:** contorno em mm da peça colocada (campo da peça no §10 do plano), centrado na sua célula. O servidor calcula `celula_gemea = profile.twin(l, c)` [V] e roda o contorno por `profile.twin_rotation_deg()` [V] em torno do centro da célula gémea. **Nada fixo no código**: outro puzzle com outra simetria muda o perfil, não o frontend. O frontend recebe só `path_mm` já transformado.
-- **Desenho:** `<path>` com traço claro de 1,5 px semitransparente (`vector-effect: non-scaling-stroke` para não engrossar com o zoom), preenchimento ≈ 0. Só existem fantasmas de gémeas pendentes (célula gémea vazia); ao colocar, o fantasma desaparece.
-- **Molde do buraco:** quando a célula gémea tem vizinhas colocadas, o servidor calcula também o contorno-molde (lados livres das vizinhas, `GET /api/holes`). Se os dois contornos coincidem dentro de ≈ 0,5 mm (limiar vindo do perfil/calibração, não do frontend) → **confirmação dupla**: cor própria e estrela no popup. Se discordam, mostram-se ambos e a distância: sinal de peça mal colocada ou mal ancorada.
-- **Toggle** no Progresso; por omissão só visível com zoom suficiente para se ver, para não poluir.
-- **Ressalva [NT]:** o fantasma mostra a forma esperada, não prova que a peça existe; a prova continua a ser o `find_twin` (forma + imagem obrigatória). Depende também de a silhueta da peça estar no índice (regra de produto: toda a peça passa solta pelo scanner; o legado só ganha silhueta depois de ingerido).
-
-## 6. Linguagem visual
-
-- **Fundo neutro escuro** (≈ #16181b): a arte colorida lê-se melhor.
-- **Uma só cor de destaque** (âmbar ≈ #ffb000) reservada a "vai buscar"; confirmação dupla em ciano; avisos em vermelho discreto. Nada mais compete.
-- Fantasmas em traço claro (branco ~60 %); legado com hachura fina a 45° em cinza-azulado; vazias sem cobertura (só a arte por baixo).
-- Tipografia do sistema (`Inter, "Segoe UI", system-ui`), números tabulares em "lote N, peça X".
-- Alvos de toque ≥ 44 px; zoom por roda (PC) e pinça (telemóvel); duplo toque ajusta à vista.
-- Estados vazios com uma frase útil ("Importa um scan para começar.", "Nada a ir buscar: tudo colocado ou sem sugestões.").
-- No telemóvel só **Vai buscar** e o tabuleiro em ecrã inteiro; importar fica no PC.
-
-## 7. Plano de implementação (ronda seguinte)
-
-Cada etapa fica utilizável sozinha.
-
-| # | Etapa | Utilizável como |
+| Símbolo | Classe | Significa |
 |---|---|---|
-| 1 | `src/server.py` + tabuleiro só leitura (arte, colocadas, legado, zoom/pan, popup simples) | ver o progresso |
-| 2 | Vai buscar + `POST /api/confirm` (place / reject / position_known) + SSE | ciclo buscar, colocar, confirmar |
-| 3 | Fantasmas + popup completo da célula (gémea, molde, confirmação dupla) | procurar peças à mão |
-| 4 | Importar scan (`ingest`, progresso, overlay numerado) | dispensa a CLI |
-| 5 | Lotes e mesa de apoio (`anchor`) | gestão de sacos e grupos |
-| 6 | Layout estreito para telemóvel (barra inferior, cartões grandes) | usar ao lado do saco |
+| peça com imagem | (raster) | Peça colocada: recorte real do scan, limpo da franja e registado na célula |
+| arte esbatida | (raster) | Célula vazia: só a arte da caixa a 34 % |
+| tracejado cinza-azulado | `b-legado` | Ocupada sem silhueta: cheia na foto do tabuleiro, peça ainda não digitalizada solta |
+| quadrado vermelho | `b-borda-falta` | Borda em falta: célula de borda vazia |
+| quadrado âmbar cheio | `b-buscar` | Vai buscar: peça proposta, aceite |
+| âmbar tracejado | `b-buscar-ambigua` | Vai buscar com dúvida: confirmar pela imagem |
+| âmbar pontilhado | `b-buscar-par` | Par de soltas: célula só provável |
+| quadrado ciano | `b-conhecida` | Posição conhecida: peça guardada à espera de vizinha |
+| contorno branco tracejado com a forma da peça | `b-fantasma` | Fantasma: contorno da gémea colocada rodado por `profile.twin_rotation_deg()` (180° neste puzzle) |
+| violeta tracejado | `b-mesa` | Onde um grupo solto ficaria (pré-visualização da Mesa) |
+| linhas finas | `b-grelha` | Grelha (com zoom) |
+| quadrado branco grosso | `b-selecionada` | Célula aberta no painel |
 
-Dependências: as etapas 2 em diante precisam de `src/state.py` (M12) e `src/twin.py` (M10) do plano M10–M12; a etapa 1 pode arrancar com dados de `projects/alpes/` e a maquete (§8).
+Dentro dos cartões há três marcas próprias (▲ topo, quadrado tracejado = célula, contorno claro = fantasma), explicadas numa frase no topo da lista e do painel da célula.
 
-**Critérios de aceitação:**
-- lista "vai buscar" regenera em **< 1 s** após uma confirmação;
-- tabuleiro com 3008 recortes faz zoom a **≈ 60 fps** [NT, a medir]: recortes em miniatura ≤ 48 px, `<image href>` por peça, só os visíveis montados no DOM;
-- **`board == replay(log)`** após cada ação (teste automático);
-- funciona no **Safari e no Chrome do telemóvel** na LAN (teste manual teu);
-- escuta em `127.0.0.1` por omissão; `--lan` documentado com o aviso de segurança.
+## 6. Decisões desta ronda
 
-## 8. Maquete estática em `docs/gui/` (a produzir noutro passo)
+1. **Raster do servidor, não SVG com 3000 imagens.** O aspeto "puzzle físico" vem de `render.compose_board` (recortes limpos, registo fino, prioridade por profundidade, sangria), que o browser não consegue reproduzir. O SVG fica só para o que é símbolo (e por isso tem legenda). Tabuleiro inteiro a 60 px/célula: 3840 × 2729, ≈ 1,5 MB JPEG.
+2. **Atualização incremental do raster.** Depois de uma escrita, as células cujo `(estado, peça)` mudou são recompostas com ±1 célula de margem e coladas na imagem em cache (mais de 40 → recomposição completa). O desalinhamento vertical máximo da colagem é meio píxel (a altura da célula a 60 px/célula não é inteira) [V: sem costura visível nas capturas; não medido].
+3. **Fantasma.** Contorno da peça colocada com a pose do registo fino (`render/placements.json`), rodado por `profile.twin_rotation_deg()` em torno do centro da célula gémea (`query.ghost_contour`); nada da simetria está no JS. Mostrado no tabuleiro (interruptor "Fantasmas", lembrado no browser), no cartão (sobre a peça rodada) e no zoom da célula. É uma ajuda para procurar à mão; a prova continua a ser o `find_twin`.
+4. **Pose das imagens.** Colocadas: θ do registo; propostas: `theta_deg` do `fetch.json` (cadeia do `twin.py`); sem pose: como digitalizada e o cartão diz "rotação desconhecida".
+5. **Scans importados vão para `images/pieces/lotes/`** (dentro do repositório) para que o outro PC regenere os recortes a partir do git.
+6. **Interface em português, só modo escuro**, âmbar reservado a "vai buscar".
 
-| Ficheiro | Mostra |
+## 7. Desempenho medido (cópia de `projects/alpes`, 575 colocadas, este PC)
+
+| Operação | Tempo |
 |---|---|
-| `index.html` | Progresso: arte a 20 %, recortes, hachura, fantasmas, realce, barra, toggles funcionais, zoom/pan |
-| `fetch.html` | Vai buscar com 4–6 cartões de exemplo; botões só demonstram o estado |
-| `lotes.html` | Tabela de lotes e folha de exemplo |
-| `mesa.html` | Dois grupos soltos de exemplo com top-3 |
-| `celula.html` | Popup da célula (estado, arte, fantasma, molde, dupla) |
-| `board.svg` | Tabuleiro gerado por `tools/gui_mock/make_mock.py` a partir de `projects/alpes/` (grelha 64 × 47, arte, células de exemplo) |
-| `style.css`, `app.js` | Estilo e zoom/pan/toggles partilhados |
+| `/api/board.jpg?ppc=60` a frio (composição completa) | 8,4 s (uma vez; depois da cache em disco, arranque sem recompor) |
+| `/api/board.jpg?ppc=60` em cache | 5 ms |
+| região 8 × 10 células a 200 px/célula | 1,3 s |
+| `/api/ghosts` a frio / em cache | 0,66 s / 12 ms |
+| `POST /api/confirm` place P0100 → (3, 37), ida e volta (inclui reconsulta incremental com imagem e registo fino) | 2,7 s |
+| raster depois da escrita (1 célula recomposta) | 0,25 s |
+| `POST /api/confirm` unplace | 2,0 s |
 
-Dados reais onde existam (arte e grelha do `puzzle.json` [V]); o resto marcado "exemplo". Total ≤ 2 MB (miniaturas ≤ 48 px, arte reduzida). Abre-se com duplo clique, sem servidor.
+## 8. Ainda não feito
 
-## 9. Perguntas ao Tiago
+- **M11**: molde do buraco e a **confirmação dupla** fantasma × molde (`/api/holes` não existe; o painel da célula não mostra o molde).
+- Fronteira / encaixe solta-solta (M6) e localização na caixa: não aparecem na lista porque ainda não existem no `query`.
+- Seleção manual de uma peça qualquer para uma célula ("escolher outra peça"), mudar uma folha de saco pela página (`confirm --relot`) e registar foto do tabuleiro (`src.photo`) continuam só na CLI.
+- Teste num telemóvel real pela LAN (Safari / Chrome) [NT]; regeneração completa num clone limpo [NT]; importação de um scan real pela página [NT] (testada só com um scan sintético).
 
-1. **Web local aprovada?** Aceitas FastAPI + browser (porta 8765, só LAN, sem login)? Se não, avançamos com o fallback Tkinter mínimo.
-2. **Telemóvel:** qual (Android/iPhone) e que browser? Importa para o layout estreito e para o teste Safari/Chrome.
-3. **Rede:** PC e telemóvel na mesma Wi-Fi, e o firewall do Windows deixa abrir a porta 8765?
-4. **Aspeto:** só modo escuro, ou queres também claro (útil à luz do dia junto ao tapete)?
-5. **Fantasmas:** ligados por omissão ou só quando os ligas? E a confirmação dupla a 0,5 mm, concordas ou preferes mais estrito?
+## 9. Achado desta ronda (fora da GUI)
+
+Depois de "Desfazer" P0100 de (3, 37), a reconsulta incremental (`run_query(only_cells=…)`) deixou P0100 como **suprimida** ("candidata única") em vez de voltar a "aceite": no modo incremental, as peças já propostas noutras células saem do conjunto de candidatas, por isso sobra uma só e a regra de 2026-11-01 suprime-a. O mesmo pode acontecer depois de "Não encaixa". É comportamento de `src/query.py` (não alterado aqui); uma reconsulta completa (`python -m src.query`) repõe a lista.
+
+## 10. Perguntas ao Tiago
+
+1. O tabuleiro parece o puzzle físico nas capturas (`docs/gui/screenshots/`)? A arte a 34 % por baixo das células vazias está bem, ou preferes mais clara/escura?
+2. Telemóvel: qual (Android / iPhone) e que browser? Consegues abrir `http://<pc>:8765` com `--lan` (firewall)?
+3. Fantasmas ligados por omissão — ficam?
+4. A lista deve agrupar por saco (como agora) ou seguir só a ordem de confiança?
+5. "Ancorar aqui" na Mesa coloca o grupo todo de uma vez: queres um passo intermédio (ver as peças sobre a arte antes de confirmar)?

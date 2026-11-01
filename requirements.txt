@@ -4,3 +4,8 @@
 opencv-python==4.11.0.86
 numpy>=2.0,<2.3
 Pillow>=10.0,<12
+# Web GUI (src/server.py, docs/gui-design.md): local FastAPI server + static frontend in src/web.
+# Ranges start at the versions the GUI was built and tested with (2026-11-01).
+fastapi>=0.162,<1.0
+uvicorn[standard]>=0.54,<1.0
+python-multipart>=0.0.33,<0.1

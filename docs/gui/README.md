@@ -1,27 +1,35 @@
-# Maquete da GUI "mesa de montagem"
+# GUI "mesa de montagem" (interface web local)
 
-Maquete estática do desenho em `docs/gui-design.md` (§8). Páginas HTML + CSS + JS sem framework nem build; abrem com duplo clique (`file://`), sem servidor.
+Servidor FastAPI fino sobre `src/state.py` + página estática sem build (`src/web/`). Desenho, decisões e o que falta: [`docs/gui-design.md`](../gui-design.md).
 
-## Como gerar
+## Como correr
 
 ```
-python tools/gui_mock/make_mock.py --project projects/alpes --out docs/gui
+pip install -r requirements.txt
+python -m src.server --project projects/alpes            # só neste PC: http://127.0.0.1:8765
+python -m src.server --project projects/alpes --lan      # telemóvel na mesma Wi-Fi: http://<ip-do-pc>:8765
 ```
 
-Idempotente. Lê o estado real do projeto (`src/state.py`: peças, tabuleiro, `pending_twins()`, secções, `fetch.json` se existir) e o perfil (`puzzle.json`: grelha, `cell_mm`, `twin()`, `twin_rotation_deg()`, arte). Escreve `board.svg`, `art.jpg`, `crops/`, `groups/`, `overlays/`, `mock_data.json`, `preview.png` e substitui os marcadores `<!--BOARD-->` e `<script id="mock-data">` nos HTML (os dados ficam embutidos para funcionar offline, sem `fetch()`).
+- `--lan` escuta em `0.0.0.0` e escreve o endereço na consola. **Sem login**: qualquer pessoa nessa rede vê e altera o projeto. O firewall do Windows pode pedir autorização para a porta.
+- `--port N` muda a porta; `--no-image` faz as reconsultas sem desempate pela imagem (mais rápidas); `--no-prepare` não regenera recursos no arranque; `--uploads DIR` muda a pasta dos scans importados (por omissão `images/pieces/lotes/`).
+- **Arranque num PC novo**: `pieces/`, `crops/`, `overlays/` e `render/` não estão no git. Se faltarem (ou estiverem vazias), o servidor corre `render.rebuild_assets` numa thread (segmentação dos scans do log, recortes, folhas numeradas, limpeza, registo) com progresso na consola e na página "A preparar o projeto"; a página abre sozinha quando acaba. Precisa dos scans em `images/pieces/` (que estão no git).
+- Escritas (Coloquei / Não encaixa / Guardar posição / Ancorar / Desancorar / Descartar / Desfazer) passam por `src/confirm.py` e `Project`, sob um lock; o log continua a ser a fonte de verdade (`board == replay(log)`). Se o `log.jsonl` mudar por fora (CLI), o servidor reabre o projeto no pedido seguinte.
 
-## Como abrir
+## Capturas (`screenshots/`)
 
-Abrir `index.html` no browser. Navegação: Progresso, Vai buscar, Lotes, Mesa. `celula.html?c=l,c` é o painel da célula para telemóvel. `preview.png` é um render PIL do tabuleiro para verificação sem browser.
+Geradas por `python tools/gui/screenshot.py` (Chromium headless; `pip install -r requirements-dev.txt` e `python -m playwright install chromium`) sobre uma **cópia** de `projects/alpes` (`$PPF_SCRATCH/g_alpes`), estado de 2026-11-01: 575 colocadas, 18 propostas, 51 grupos por ancorar. Cada ficheiro ≤ 300 KB (PNG, ou JPEG quando o PNG passa do limite).
 
-## O que é real e o que é maquete
+| Ficheiro | Mostra |
+|---|---|
+| `progresso.jpg` | 1400 × 900. Tabuleiro inteiro: recortes reais limpos e registados sobre a arte a 34 %; caixas âmbar no céu (vai buscar), (1,29) a vermelho (borda em falta), (5,60) a ciano (posição conhecida), tracejado nas células cheias na foto sem silhueta, fantasmas brancos na relva (gémeas das peças de céu colocadas). Painel "Vai buscar" com o primeiro cartão; legenda em baixo. |
+| `progresso_zoom_relva.jpg` | Zoom na relva (filas 42–47, colunas 1–8): o raster da região recomposto a 120 px/célula; vê-se o corte real das peças e as juntas. |
+| `progresso_zoom_ceu.jpg` | Zoom no céu (filas 1–6, colunas 5–24; a vista cobre mais filas por causa da proporção do ecrã): peças de céu colocadas, células tracejadas sem silhueta, grelha. |
+| `celula.jpg` | Painel da célula (3, 37): o tabuleiro a 300 dpi com o fantasma e a caixa âmbar ao lado da arte da caixa, a gémea (45, 28) colocada, a proposta (saco 1, nº 7) com os botões. |
+| `vai_buscar.jpg` | Filas 1–7 do céu com as 18 caixas âmbar e o 2.º cartão da lista: peça rodada como fica, fantasma, minimapa, folha do saco com a peça a âmbar, razões em linguagem simples. |
+| `lotes.jpg` | Saco 1 (2 folhas, 50 peças): miniaturas das folhas e das peças com número e estado. |
+| `mesa.jpg` | Grupos soltos com o top-3 de zonas; "Ver" do 1.º candidato de G0041 desenha a pegada a violeta em (43, 54). |
+| `importar.jpg` | Formulário: ficheiro, nº do saco (próximo livre), dpi. |
+| `telemovel_progresso.png` | 390 × 844: tabuleiro em cima, legenda compacta, painel como folha inferior. |
+| `telemovel_vai_buscar.png` | 390 × 844 com a folha inferior expandida (pega no topo): cartão "Saco 1 · nº 7". |
 
-- **Real:** arte, grelha 64 × 47, peças colocadas com o recorte e a posição do projeto, hachura das células `ocupada_legado`, fantasmas (contorno da peça rodado por `profile.twin_rotation_deg()` na célula `profile.twin()` vazia), progresso, lotes, grupos soltos com o top-3 de zona. Nenhuma regra do puzzle está no JS: a célula gémea e o fantasma vêm calculados.
-- **Maquete:** todos os botões ("Coloquei aqui", "Coloquei", "Não encaixa", "Guardar...", "Ancorar...") não gravam nada. Se não existir `fetch.json` (ou tiver menos de 5 entradas), a lista "vai buscar" é completada com exemplos (gémeas pendentes sem peça), marcados `exemplo`.
-
-## Limitações
-
-- Unidade do SVG = largura de uma célula; a altura da célula é `cell_h / cell_w` (≈ 0,968) para os recortes não ficarem deformados.
-- No máximo 400 peças colocadas com recorte (`MAX_PIECES`, miniaturas ≤ 48 px); acima disso as restantes aparecem só como estado. O tamanho de `docs/gui/` cresce com o nº de recortes (≈ 1,5 KB por recorte medido com 64 recortes; com 400, estimativa +0,5 MB) e o `index.html` repete o SVG e os dados: pode passar de 2 MB com o projeto cheio (não testado).
-- A rotação de uma peça no tabuleiro é `theta_deg` se existir, senão a `rot` da secção ancorada (sem espelho); depende da convenção de `section_cell` (90° = sentido horário).
-- JS verificado só por leitura: não havia browser nem node no ambiente de geração.
+Não verificado: uso real num telemóvel pela LAN (Safari/Chrome), importação de um scan real pela página (só testada com um scan sintético em `tests/test_server.py`).

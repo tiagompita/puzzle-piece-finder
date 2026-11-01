@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141619">
+<title>Mesa de montagem</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div class="brand">
+      <span class="brand-name" id="puzzle-name">Mesa de montagem</span>
+      <span class="brand-sub" id="progress-txt">a carregar…</span>
+    </div>
+    <div class="progress" title="colocadas (cor da peça) e ocupadas sem silhueta (tracejado) em relação ao total">
+      <div class="progress-bar"><span id="pb-placed"></span><span id="pb-legacy"></span></div>
+    </div>
+    <div class="tools">
+      <span class="job" id="job-pill" hidden></span>
+      <label class="toggle"><input type="checkbox" id="tg-ghost" checked><span>Fantasmas</span></label>
+      <label class="toggle"><input type="checkbox" id="tg-grid" checked><span>Grelha</span></label>
+    </div>
+  </header>
+
+  <main id="board-wrap">
+    <svg id="board" xmlns="http://www.w3.org/2000/svg" aria-label="Tabuleiro">
+      <defs>
+        <pattern id="hatch" patternUnits="userSpaceOnUse" width="0.2" height="0.2" patternTransform="rotate(45)">
+          <rect class="hatch-bg" x="0" y="0" width="0.2" height="0.2"></rect>
+          <line class="hatch-line" x1="0.05" y1="0" x2="0.05" y2="0.2"></line>
+        </pattern>
+      </defs>
+      <rect id="board-bg" x="0" y="0" width="1" height="1"></rect>
+      <image id="raster" x="0" y="0" preserveAspectRatio="none"></image>
+      <image id="detail" x="0" y="0" preserveAspectRatio="none" visibility="hidden"></image>
+      <g id="lyr-legado"></g>
+      <g id="lyr-borda"></g>
+      <g id="lyr-conhecida"></g>
+      <g id="lyr-fantasma"></g>
+      <g id="lyr-buscar"></g>
+      <g id="lyr-mesa"></g>
+      <g id="lyr-grelha"></g>
+      <g id="lyr-sel"></g>
+    </svg>
+    <div class="zoom-ui">
+      <button type="button" id="z-in" aria-label="Aproximar">+</button>
+      <button type="button" id="z-out" aria-label="Afastar">−</button>
+      <button type="button" id="z-fit" aria-label="Ver o tabuleiro inteiro" title="Ver o tabuleiro inteiro">⤢</button>
+    </div>
+    <div class="board-hint" id="board-hint">roda ou pinça: zoom · arrastar: mover · toque numa célula: abrir</div>
+  </main>
+
+  <aside id="panel">
+    <button type="button" class="sheet-handle" id="sheet-handle" aria-label="Expandir o painel"><span></span></button>
+    <nav id="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="buscar" class="on">Vai buscar <b id="n-buscar"></b></button>
+      <button type="button" role="tab" data-tab="lotes">Lotes</button>
+      <button type="button" role="tab" data-tab="mesa">Mesa <b id="n-mesa"></b></button>
+      <button type="button" role="tab" data-tab="importar">Importar</button>
+    </nav>
+    <section class="tab on" id="tab-buscar"></section>
+    <section class="tab" id="tab-lotes"></section>
+    <section class="tab" id="tab-mesa"></section>
+    <section class="tab" id="tab-importar"></section>
+    <section class="tab" id="tab-celula"></section>
+  </aside>
+
+  <footer id="legend" aria-label="Legenda"></footer>
+</div>
+
+<div id="prep" hidden>
+  <div class="prep-box">
+    <h1>A preparar o projeto</h1>
+    <p>Faltam recursos que não estão no git (recortes, formas, folhas numeradas, render). Estão a ser
+      regenerados a partir dos scans; a página abre sozinha quando acabar.</p>
+    <ol id="prep-log"></ol>
+  </div>
+</div>
+
+<div id="lightbox" hidden>
+  <button type="button" class="lb-close" id="lb-close">Fechar</button>
+  <div class="lb-body"><img id="lb-img" alt=""></div>
+  <div class="lb-cap" id="lb-cap"></div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

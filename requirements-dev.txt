@@ -1,3 +1,8 @@
 # Development dependencies (trimmed in M0: only what is actually used)
 -r requirements.txt
 pytest>=8.0
+# FastAPI TestClient (tests/test_server.py)
+httpx>=0.28,<1.0
+# GUI screenshots (tools/gui/screenshot.py); after installing also run once:
+#   python -m playwright install chromium
+playwright>=1.64,<2.0
