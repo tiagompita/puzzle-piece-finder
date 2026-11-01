@@ -14,7 +14,7 @@ description: Desenho e implementação do gémeo (M10), molde do buraco (M11) e 
 - Escala em **mm a partir do dpi do scanner** (1 px = 0,0847 mm a 300 dpi), não px/cm da GUI.
 
 ## Lado como unidade
-Cada lado: tipo F/T/B, corda em mm, perfil normalizado (64 pontos). Compatível: F com nada, T só com B; perfil A contra B invertido e negado (RMS em mm) e |ΔL| em mm. Filtro de cordas ≈ 1 mm por lado. Cada lado digitalizado entra na memória de cortes (~2953 cortes distintos).
+Cada lado: tipo F/T/B, corda em mm, perfil normalizado (64 pontos). Compatível: F com nada, T só com B; perfil A contra B invertido e negado (RMS em mm) e |ΔL| em mm. Filtro de cordas por tipo de lado: 2 mm no lado F e nos adjacentes a F, 1 mm nos restantes (E-real-2 §8). Cada lado digitalizado entra na memória de cortes (~2953 cortes distintos).
 
 ## Compatibilidade: a forma não chega
 - Cada lado tem **≥ 2 parceiros físicos** (o vizinho verdadeiro e o gémeo do vizinho). E4/E5 contam o gémeo do vizinho como acerto.
@@ -31,4 +31,5 @@ A célula gémea é `perfil.simetria(l, c)` (perfil do puzzle, M13, §11 do plan
 
 ## Regras
 - Módulo puro (sem Tkinter/I/O), testável com contornos sintéticos (par tab/blank gerado = melhor custo; F rejeitado) e com GT (E-sym, E-real, E-buraco).
+- A simetria e a rotação do fantasma vêm do perfil (`profile.twin`, `profile.twin_rotation_deg`).
 - Módulos críticos: desenho ou revisão do `implementer` (`CLAUDE.md`). Verificação: skill `cv-visual-verification`.

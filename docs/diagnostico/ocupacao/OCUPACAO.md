@@ -109,6 +109,8 @@ dois blocos da fila 1 (1.º mosaico de `ocupacao_a_celulas.jpg` e de `ocupacao_b
 está completa. Por isso o script tem `GT_VISUAL = {(1,29): 0}` e reporta também a GT corrigida. **O Tiago tem de
 confirmar fisicamente.**
 
+> Confirmado pelo Tiago em 2026-11-01: (1,29) vazia, (1,34) cheia.
+
 **GT corrigida** ((1,29) vazia; regra B):
 
 | foto | cheia→cheia | cheia→incerta | vazia→vazia | vazia→incerta | erros duros | exatidão |
@@ -196,5 +198,5 @@ ou vazias; lista em `ocupacao_2026-10-31.json`). A fila 41 só tem a borda.
   - regra B no lugar da regra A, que falha [F].
 - **Desvio da grelha.** O desvio de 0,15 a 0,17 célula em relação à grelha uniforme é real. Num canto (BD) chega a ≈ 0,3
   célula. A correção linear interpolada a partir do anel de borda **não sabe nada do interior** [NT].
-- **(1,29)** pede confirmação física; o README deve ser atualizado se se confirmar.
+- **(1,29)** pede confirmação física; o README deve ser atualizado se se confirmar. Confirmado pelo Tiago em 2026-11-01: (1,29) vazia, (1,34) cheia.
 - **Foto ≠ forma:** a foto não dá a silhueta, por isso não substitui o scanner (regra de produto).

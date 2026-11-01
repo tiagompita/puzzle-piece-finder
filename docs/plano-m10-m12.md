@@ -24,6 +24,8 @@ Promoção de `tools/diagnostico/forma/shapelib.py` e `dist.py` (protótipos val
 | `corner_dist(a, b) -> (d_mm, best_k, R)` | `shapelib.shape_dist` | Kabsch sobre os 4 deslocamentos cíclicos; `best_k` alinha os lados |
 | `side_tolerance(a, b, k, mode) -> bool` | `ereal2.chord_matrix` | filtro de cordas por lado homólogo; modo `tipo` (2 mm nos lados F e adjacentes a F, 1 mm nos restantes) se o §8 do EREAL2 o confirmar com 0 falsos positivos |
 | `mm_per_px(dpi)` | — | 25,4 / dpi; **nunca** px/cm da GUI |
+| `side_complement(a, b)` | `cortes.neg_inv` | perfil complementar tab↔blank (invertido e negado) de dois lados, para o RMS do encaixe |
+| `transform_contour(shape, T)` | — | fantasma da gémea: contorno transformado (rotação/simetria do perfil) a partir do perfil, para o teste 1-contra-1 |
 
 Testes: sintéticos (par tab/blank gerado = melhor custo, F rejeitado, cordas fora de tolerância rejeitadas) e `tests/test_segment_scan_esym.py` passa a usar `src.shape` em vez do `shapelib` de `tools/`. `src/edges.py` fica obsoleto (a GUI deixa de o chamar) e é removido quando `shape.py` entrar.
 
@@ -73,6 +75,7 @@ Para um par `aceite` entre duas soltas: varrer as células (l, c) compatíveis (
 - `scans/S0001.json` + `pieces/S0001.npz`: caminho relativo + sha256, dpi, **`lote`** (= número do saco), tipo ∈ {`soltas`, `bloco_relva`}, método/versão de segmentação, lista de peças.
 - **Peça** `P0001`: scan, índice, `lote`, `n_no_lote` (numeração `grid_order`, a mesma das folhas de propostas), contorno px e mm, bbox, recorte RGBA, `Shape` (§1), assinatura Lab, flags `touches_frame`/`touches_strip`, **estado** ∈ {`solta`, `emparelhada`, `posicao_conhecida`, `colocada`, `em_seccao`, `descartada`}, `celula` se colocada ou com posição conhecida, `same_as`.
 - **Par** `T0001`: A, B, d₁, margem, imagem, células candidatas conjuntas.
+- **Secção legada** (página `montado_pNN`): células locais vindas da vista explodida; ancoragem automática quando a confiança é alta (lados F + gémeas entre páginas + arte), senão fica por ancorar e pergunta-se ao Tiago.
 - **Mapa** `board.json`: 47 × 64 de `{estado ∈ vazia | ocupada_legado | colocada, peca_id | null, fonte ∈ log | foto, foto_id}`; derivados em memória: gémeas pendentes, buracos, células de `posicao_conhecida` à espera de vizinha.
 - **Foto** `photos/F0001.json`: ficheiro, sha256, data, homografia, residual, mapa 47 × 64 de 1/0/−1 (saída do M14).
 - `log.jsonl` (só acrescentar): ações do §10 (`placed`, `unplaced`, `twin_confirmed/rejected`, `hole_confirmed/rejected`, `pair_registered/rejected`, `fetch_listed`, `section_*`, `piece_discarded`) + `photo_registered`, `cell_occupied_by_photo`, `cell_cleared_by_photo`, `position_known`, `position_placeable`.
@@ -80,7 +83,7 @@ Para um par `aceite` entre duas soltas: varrer as células (l, c) compatíveis (
 
 ### 3.2 Comandos (CLI primeiro; GUI M8 depois)
 - `python -m src.ingest <scan.jpg> --lote N` — soltas ao acaso: `segment_scan`, `shape.analyse`, cria peças `solta`, numera por `grid_order`, grava recortes; devolve o overlay numerado (a folha que o Tiago guarda com o saco).
-- `python -m src.ingest <scan.jpg> --bloco c02-09 --ficha relva_bloco_c02-09.md` — bloco de relva legada em vista explodida (§8.1 (i)): grelha por posição → (l, c), verificações como `ereal.loose_pieces` (contagens por coluna/fila, 4 cantos, classe compatível com borda/interior), células vazias da ficha; peças ficam `colocada` com silhueta e o mapa passa essas células de `ocupada_legado` a `colocada`.
+- `python -m src.ingest <página.jpg> --montado pNN | --blocos pNN` — página do legado em vista explodida (`src/legacy.py`): estrutura da grelha → células locais → registo contra a arte + lados F + gémeas entre páginas; ancoragem automática se a confiança for alta, senão a secção fica por ancorar e pergunta-se ao Tiago. Células ancoradas passam de `ocupada_legado` (foto) a `colocada` com silhueta.
 - `python -m src.photo <foto.jpg>` — mapa de ocupação (M14) e **reconciliação**: `colocada` no log mas vazia na foto → aviso; ocupada na foto sem log → `ocupada_legado`; `posicao_conhecida` com vizinha agora ocupada → `position_placeable` e entra na lista.
 - `python -m src.query [--lote N]` — reavalia a memória pela ordem do §0: (1) gémea já colocada (silhueta conhecida) → `find_twin` sobre as soltas; (2) pares entre soltas + `pair_locate`; (3) buracos/fronteira (M11/M6, quando existirem); (4) caixa só com textura; (5) resto fica. Escreve `fetch.md` + imagem por lote ("lote N, peça X → (l, c), origem, confiança") e regista `fetch_listed`.
 - `python -m src.confirm P0123 --cell 2 61 | --reject | --position-known 5 60` — grava no log, atualiza o mapa, **re-executa `query` só nas células e peças afetadas** (a gémea da célula agora ocupada; vizinhas das células novas).
@@ -95,7 +98,7 @@ Para um par `aceite` entre duas soltas: varrer as células (l, c) compatíveis (
 | 1 | `src/shape.py` + testes sintéticos + E-sym a usar `src.shape` | implementer | 1 sessão | — |
 | 2 | `src/twin.py` (`find_twin`, `pair_locate`, calibração por modalidade) + testes `slow` E-sym/E-real-2 | implementer | 1–2 sessões | 1; modo de cordas do EREAL2 §8 |
 | 3 | `src/state.py` + `ingest`/`photo`/`query`/`confirm` + round-trip do log; perfil `puzzle.json` (M13 entra aqui) | implementer (modelo e invariantes) + helper (CLI, ficheiros, fichas) | 1–2 sessões | 2; M14 para `photo` |
-| 4 | Blocos de relva legada digitalizados e ingeridos (§8.1 (i)) | Tiago (scans) + `ingest --bloco` | ≈ 8 sessões curtas do Tiago | 3 |
+| 4 | Páginas do legado localizadas e ingeridas (`src/legacy.py`) | implementer + Tiago (confirma overlays) | 1–2 sessões | 3 |
 | 5 | **E-real-3**: 3 lotes de 32 ao acaso; relatório `docs/diagnostico/gemeos/EREAL3.md` | Tiago + implementer | 1 sessão | 3 (4 aumenta o rendimento mas não bloqueia) |
 
 Não precisa do planner (Fable): o caminho está traçado pelos diagnósticos; só se escala se a calibração `celula↔silhueta` ou a reconciliação por foto levantarem uma decisão de arquitetura nova.
@@ -103,6 +106,6 @@ Não precisa do planner (Fable): o caminho está traçado pelos diagnósticos; s
 ## 5. Riscos e decisões já tomadas
 - **Imagem fraca no céu** (EREAL2 §3: célula certa em 1.º só 3/20): a imagem não promove; aceitar só com forma `aceite` (margem ≥ 1,5) e ΔE ≤ p90. Peças de céu sem gémea colocada ficam na memória até a relva legada ser digitalizada (passo 4).
 - **Renumeração entre scans**: ids `P0001` estáveis; o `n_no_lote` é só para o Tiago; as confirmações referem o id.
-- **Legado não digitalizado**: bloqueia apenas as gémeas da relva (as que mais interessam ao céu); o fluxo (2)–(5) funciona sem ele. Estimativa do Tiago, [NT]: ~1 em 4 peças de céu de um saco com posição imediata depois do passo 4.
+- **Legado não digitalizado**: bloqueia apenas as gémeas da relva (as que mais interessam ao céu); o fluxo (2)–(5) funciona sem ele. Estimativa: P(peça solta ao acaso tem a gémea colocada) = |células colocadas cuja célula gémea está vazia| / |peças por colocar|; provisório pelas contagens do legado (`images/pieces/legado/README.md`): ≤ 416 / (3008 − 633) = ≤ 17,5 % ≈ 1 em 6 [NT, majorante; o valor exato sai do `query` depois da ingestão do legado]. Segunda via: pares entre soltas, esperado ≈ M(M−1)/2 / 3007 (M = 200 → ≈ 6,6 pares). A estimativa «~1 em 4» era otimista.
 - **Modalidade `celula↔silhueta`**: só para secções de céu legadas (regra de produto); calibração com o E-real (25 pares) — se não chegar a 20/20 fora da amostra, fica `ambigua` por omissão.
 - **Dois scans da mesma peça** (`same_as`): detetar por forma (d < ruído de re-scan 0,27 mm) e perguntar; não fundir em silêncio.

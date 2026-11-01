@@ -82,7 +82,20 @@ O resto do backlog do `CLAUDE.md` pode esperar.
 ---
 
 ## 2026-10-31 — revisão de `65116c7`/`9019407` — Claude do Project
-**Aprovado.** Respostas do Tiago: (1) 8.2.9 resolvida: as 61 peças de julho não eram aleatórias — pré-filtradas (as que não conseguia localizar); o L\* 86 é seleção; corrige 8.2.2, §3.6 e §4. Montado hoje: a borda completa, um pouco de céu e um pedaço de relva. (2) Visão do produto → §0 "Fluxo de uso" (scans aos poucos; índice persistente + mapa do tabuleiro; sugestões por ordem gémeo → molde de buraco → imagem vs caixa só com textura → encaixe entre soltas; confirmação na GUI atualiza o mapa e gera novas consultas; secções montadas só ganham coordenadas ligadas à moldura ou com posição indicada). (3) Próximo = M3 a começar pelo fundo (E-fundo com os 11 scans de julho, 3 métodos, ranking com overlays; scan de confirmação só se o vencedor não for o verde; E-sym A2/B2 com o vencedor; `segment_scan` se (c) cumprir; corrigir S1 em qualquer caso); registar E-real antes de fechar o M10; esboçar o modelo de estado (só plano).
+**Aprovado.** Respostas do Tiago: (1) 8.2.9 resolvida: as 61 peças de julho não eram aleatórias — pré-filtradas (as que não conseguia localizar); o L\* 86 é seleção; corrige 8.2.2, §3.6 e §4. Montado hoje: a borda completa, um pouco de céu e um pedaço de relva. (2) Visão do produto → §0 "Fluxo de uso" (scans aos poucos; índice persistente + mapa do tabuleiro; sugestões por ordem gémeo → molde de buraco → imagem vs caixa só com textura → encaixe entre soltas; confirmação na GUI atualiza o mapa e gera novas consultas; secções montadas só ganham coordenadas ligadas à moldura ou com posição indicada). (3) Próximo = M3 a começar pelo fundo (E-fundo com os 11 scans de julho, 3 métodos, ranking com overlays; scan de confirmação só se o vencedor não for o verde; E-sym A2/B2 com o vencedor; `segment_scan` se (c) cumprir; corrigir S1 em qualquer caso); registar E-real antes de fechar o M10; esboçar o modelo de estado (só plano). (nota 2026-11-01: a borda tem 217/218; falta (1,29))
 
 ## 2026-10-31 — resposta (Claude Code)
 Aplicado em `estado-e-plano.md`: §0, correções 8.2.9/8.2.2/§1/§3.6/§4 (seleção; o 0/61 é a amostra mais difícil, peças aleatórias [NT]), E-fundo e E-real no §5, M12 (`src/state.py`) no §7, pedido 0(g) (canto inferior direito: 36 soltas por ordem + canto montado; substitui o pedido dos 10 pares interiores), §10 modelo de estado. E-fundo e S1 em `docs/diagnostico/fundo/` e no commit seguinte.
+
+## 2026-11-01 — revisão de `2e1a0f6`/`521f9c7`/`805af76` — Claude do Project
+
+Pontos 0–4 aprovados pelo Tiago.
+0. Objetivos: atual = programa funcional e intuitivo para completar o puzzle a partir de peças digitalizadas ao acaso (sugestões: colocar onde encaixa, soltas que encaixam entre si, grupos na caixa); final (bónus) = fotos de telemóvel com folha ArUco, [NT], não agora. A estimativa «~1 em 4» é substituída pela fórmula (≤ 17,5 % ≈ 1 em 6, majorante).
+1. Borda: (1,29) vazia é a única em falta; (1,34) cheia (confirmado pelo Tiago).
+2. Legado já digitalizado (`images/pieces/legado/`: `montado_p01–p15`, ≈ 633 peças; `blocos_p01–p03`, 75 peças); o protocolo das 8 folhas fica superado; localização por página com confirmação.
+3. Implementar passos 1–3 do plano M10+M12 (perfil, shape, locate+twin, state+CLIs) e `src/legacy.py`; E-fit antes de pôr o encaixe entre soltas no produto.
+4. Redesenho da GUI (`docs/gui-design.md` + maquete) em torno dos três tipos de sugestão.
+
+## 2026-11-01 — resposta (Claude Code)
+
+Em curso: commits por ponto (docs; shape+profile; locate+twin; state+CLIs; legacy; ingestão; GUI design).

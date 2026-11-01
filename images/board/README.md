@@ -7,7 +7,7 @@
 
 Estado do tabuleiro nas duas fotos (verdade de terreno para `tools/diagnostico/ocupacao/ocupacao.py`):
 
-- **Borda quase completa**: 217 das 218 células de borda estão cheias. **(1,29) está vazia nas duas fotos** (vê-se feltro entre dois blocos de céu da fila 1; `docs/diagnostico/ocupacao/ocupacao_a_celulas.jpg`) — a GT inicial dizia 218; **a confirmar fisicamente pelo Tiago**.
+- **Borda quase completa**: 217 das 218 células de borda estão cheias. **(1,29) está vazia nas duas fotos** (vê-se feltro entre dois blocos de céu da fila 1; `docs/diagnostico/ocupacao/ocupacao_a_celulas.jpg`) — a GT inicial dizia 218; **vazia confirmada pelo Tiago em 2026-11-01 (única borda em falta)**; (1,34) cheia (confirmado).
 - **(2,61) cheia**: peça `f2p1 #4` do E-real-2 colocada em 2026-10-31 (gémea de BE(2,4) = global (46,4)).
 - **(5,60) vazia**: a gémea de BE(5,5) tem a forma confirmada mas está guardada à parte (zona sem vizinhas montadas).
 - **Canto inferior direito (BD)** vazias: (42,58), (42,59), (41,58)–(41,63) (`images/pieces/gt_canto_BD.md`).
