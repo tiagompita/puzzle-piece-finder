@@ -7,11 +7,13 @@
 (b) E-real-2 (docs/diagnostico/gemeos/EREAL2.md §8): the 188 loose pieces of the E-real-2
     memory (contours from ``segment_scan``, cached in ``$PPF_SCRATCH/ereal2/memoria.pkl`` by
     ``tools/diagnostico/gemeos/ereal2.py``; the decisions here are all ``src.twin``'s):
-    BE(2,4) -> f2p1 #4 ``aceite`` (d1 ~0.41, margin ~2.4) and BE(5,5) -> f1p1 #6 ``ambigua``
-    (d1 ~0.54, single candidate), both consistent with the art on the twin cells (2,61) /
-    (5,60) (dE ~8.7 / ~10.8, pose by the orientation chain of EREAL2 §3), the other 18 BE
-    ``sem``, and 0 ``aceite`` among the known-negative pairs. The orientation chain is checked
-    on the 20 E-sym pairs (A1 with its F side up -> predicted B2 pose has its F side down).
+    BE(2,4) -> f2p1 #4 ``aceite`` (d1 ~0.41, margin ~2.4) and BE(5,5) -> f1p1 #6 (d1 ~0.54,
+    single candidate: ``ambigua`` until 2026-11-01, now ``sem`` with ``decision_shape``
+    ``ambigua`` and ``single_candidate`` set, product decision 2026-11-01), both consistent
+    with the art on the twin cells (2,61) / (5,60) (dE ~8.7 / ~10.8, pose by the orientation
+    chain of EREAL2 §3; the lone candidate's image is computed here, find_twin skips it), the
+    other 18 BE ``sem``, and 0 ``aceite`` among the known-negative pairs. The orientation chain
+    is checked on the 20 E-sym pairs (A1 with its F side up -> predicted B2 pose has its F side down).
 
 Numbers are printed (run with ``-s``) and written to ``$PPF_SCRATCH/twin/twin_real.json``.
 Skips if the scans, ``PPF_SCRATCH`` or the memory are missing.
@@ -31,7 +33,7 @@ from conftest import REPO_ROOT
 from src.locate import CellArt, body_center_mm, snap_theta, wrap_deg
 from src.profile import PuzzleProfile
 from src.shape import analyse
-from src.twin import TwinItem, find_twin
+from src.twin import TwinItem, _image_test, find_twin
 
 pytestmark = pytest.mark.slow
 
@@ -136,24 +138,28 @@ def test_esym_find_twin(profile):
             top = r["candidates"][0]["id"] if r["candidates"] else None
             top_ok += top == want
             decs.append(r["decision"] if top == want else f"{r['decision']} (top {top})")
-            if top != want and r["decision"] != "sem":
-                wrong.append((q.id, top, r["decision"]))
+            if top != want and r["decision_shape"] != "sem":    # lone candidates included (now 'sem', 2026-11-01)
+                wrong.append((q.id, top, r["decision_shape"]))
             if top == want:
                 d_twin.append(r["candidates"][0]["d1_mm"])
                 margins.append(r["margin"] if r["margin"] is not None else np.inf)
-                # prototype semantics (ereal2.query): a single candidate has margin inf -> ACEITE if d1 <= t95
-                single_ok += r["decision"] == "ambigua" and r["margin"] is None and r["candidates"][0]["d1_mm"] <= t95
+                # prototype semantics (ereal2.query): a single candidate has margin inf -> ACEITE if d1 <= t95;
+                # since 2026-11-01 find_twin returns it as 'sem' with decision_shape 'aceite' and single_candidate set
+                single_ok += r["single_candidate"] is not None and r["decision_shape"] == "aceite"
+            assert r["single_candidate"] is None or r["decision"] == "sem", r
         n_acc = sum(d == "aceite" for d in decs)
-        out[f"{qn}->B2"] = dict(aceite=n_acc, aceite_if_single_counted=n_acc + single_ok, top1=top_ok, wrong_proposals=wrong,
+        out[f"{qn}->B2"] = dict(aceite=n_acc, aceite_if_single_counted=n_acc + single_ok, single_suppressed=int(single_ok),
+                                top1=top_ok, wrong_proposals=wrong,
                                 d_twin_median=float(np.median(d_twin)), d_twin_max=float(np.max(d_twin)),
                                 margin_min_finite=float(np.min([m for m in margins if np.isfinite(m)])), decisions=decs)
-        print(f"[E-sym] {qn}->B2: aceite {n_acc}/20 (+{single_ok} single-candidate ambigua with d1 <= t95 = "
+        print(f"[E-sym] {qn}->B2: aceite {n_acc}/20 (+{single_ok} lone candidates not proposed with d1 <= t95 = "
               f"{n_acc + single_ok}/20 with the prototype's margin=inf rule), top-1 {top_ok}/20, wrong proposals {wrong}, "
               f"twin d median {np.median(d_twin):.3f} max {np.max(d_twin):.3f} mm; decisions {decs}")
     REPORT["esym"] = dict(out, seconds=round(time.time() - t0, 1))
-    # contract rule "a single candidate is at most ambigua" (plano §2.2): in a pool of only the 20 B2, 4 of the 5
-    # classes have one member, so 20/20 'aceite' is not reachable; asserted: no wrong proposal, every A1 twin first,
-    # and every A1 non-aceite is a single candidate with d1 <= t95
+    # contract rule "a single candidate is never proposed" (plano §2.2, 2026-11-01; before: "at most ambigua"): in a
+    # pool of only the 20 B2, 4 of the 5 classes have one member, so 20/20 'aceite' is not reachable; asserted: no
+    # wrong proposal (lone candidates included), every A1 twin first, and every A1 non-aceite is a single candidate
+    # with d1 <= t95
     for k, v in out.items():
         assert v["wrong_proposals"] == [], (k, v)
         assert v["d_twin_median"] <= 0.5, (k, v)
@@ -212,12 +218,18 @@ def test_ereal2_find_twin(profile, memory):
         res[q.id] = r
     t_shape = time.time() - t0
     by_id = {it.id: it for it in items}
-    pair_dec = {}
-    for qid, r in res.items():
-        if r["decision"] != "sem" and r["candidates"]:
-            key = frozenset((qid, r["candidates"][0]["id"]))
-            old = pair_dec.get(key)
-            pair_dec[key] = "aceite" if "aceite" in (old, r["decision"]) else "ambigua"
+    def pairs(field):
+        out = {}
+        for qid, r in res.items():
+            if r[field] != "sem" and r["candidates"]:
+                key = frozenset((qid, r["candidates"][0]["id"]))
+                old = out.get(key)
+                out[key] = "aceite" if "aceite" in (old, r[field]) else "ambigua"
+        return out
+
+    pair_dec = pairs("decision")
+    # without the 2026-11-01 lone-candidate rule (decision_shape: a lone candidate gets margin = inf)
+    pair_shape = pairs("decision_shape")
     n_rel, dec_rel = {}, {}
     for i in range(N):
         for j in range(i + 1, N):
@@ -228,22 +240,33 @@ def test_ereal2_find_twin(profile, memory):
         k = _rel(a, b, src, profile)
         dec_rel.setdefault(k, {}).setdefault(d, []).append(sorted(key))
     counts = {k: {d: len(v) for d, v in dd.items()} for k, dd in dec_rel.items()}
-    print(f"[E-real-2] {N} queries (shape only) in {t_shape:.1f} s; pairs by GT relation {n_rel}; proposals by relation {counts}")
+    counts_shape = {}
+    for key, d in pair_shape.items():
+        a, b = (by_id[x] for x in key)
+        k = _rel(a, b, src, profile)
+        counts_shape.setdefault(k, {}).setdefault(d, 0)
+        counts_shape[k][d] += 1
+    print(f"[E-real-2] {N} queries (shape only) in {t_shape:.1f} s; pairs by GT relation {n_rel}; proposals by relation {counts}"
+          f"; without the lone-candidate rule {counts_shape}")
     for k in ("neg", "ceuceu"):
         for d, lst in dec_rel.get(k, {}).items():
             print(f"   {k} {d}: {lst}")
-    REPORT["ereal2_pairs"] = dict(n=n_rel, proposals=counts, detail={k: {d: v for d, v in dd.items()} for k, dd in dec_rel.items()
+    REPORT["ereal2_pairs"] = dict(n=n_rel, proposals=counts, proposals_without_single_rule=counts_shape, detail={k: {d: v for d, v in dd.items()} for k, dd in dec_rel.items()
                                                                     if k != "pos"}, seconds=round(t_shape, 1))
     assert dec_rel.get("neg", {}).get("aceite", []) == [], dec_rel["neg"]
     assert dec_rel.get("ceuceu", {}).get("aceite", []) == [], dec_rel["ceuceu"]
+    # the 20 E-sym twin pairs are all found by shape; since 2026-11-01 those found only through lone candidates are 'sem'
+    pos_shape = counts_shape.get("pos", {})
+    assert pos_shape.get("aceite", 0) + pos_shape.get("ambigua", 0) == 20, pos_shape
     pos = counts.get("pos", {})
-    assert pos.get("aceite", 0) + pos.get("ambigua", 0) == 20, pos
-    single_pos = [qid for qid, r in res.items() if r["decision"] == "ambigua" and r["margin"] is None
-                  and src[qid] == "ES" and r["candidates"][0]["d1_mm"] <= profile.calibration["silhueta_silhueta"]["t95"]]
-    single_neg = [(qid, r["candidates"][0]["id"]) for qid, r in res.items() if r["decision"] == "ambigua" and r["margin"] is None
-                  and r["candidates"][0]["d1_mm"] <= profile.calibration["silhueta_silhueta"]["t95"]
+    assert pos.get("aceite", 0) == 15 and pos.get("ambigua", 0) == 0, pos   # measured 2026-11-01
+    assert all(r["decision"] == "sem" for r in res.values() if r["single_candidate"] is not None)
+    single_pos = [qid for qid, r in res.items() if r["single_candidate"] is not None and r["decision_shape"] == "aceite"
+                  and src[qid] == "ES"]
+    single_neg = [(qid, r["candidates"][0]["id"]) for qid, r in res.items() if r["single_candidate"] is not None
+                  and r["decision_shape"] == "aceite"
                   and _rel(by_id[qid], by_id[r["candidates"][0]["id"]], src, profile) in ("neg", "ceuceu")]
-    print(f"   single-candidate ambigua with d1 <= t95: E-sym queries {len(single_pos)}, on negative pairs {single_neg}")
+    print(f"   lone candidates (not proposed) with d1 <= t95: E-sym queries {len(single_pos)}, on negative pairs {single_neg}")
     REPORT["ereal2_pairs"].update(single_candidate_esym=single_pos, single_candidate_negative=single_neg)
 
     # --- BE -> memory with the image (BE upright = scan turned 90 deg clockwise, EREAL2 §3)
@@ -256,12 +279,14 @@ def test_ereal2_find_twin(profile, memory):
         rows[q.id] = r
         c0 = r["candidates"][0] if r["candidates"] else None
         im = c0["image"] if c0 else None
-        print(f"   {q.id} -> twin {r['twin_cell']}: {r['decision']:8s} (shape {r['decision_shape']}) "
+        print(f"   {q.id} -> twin {r['twin_cell']}: {r['decision']:8s} (shape {r['decision_shape']}"
+              f"{', lone candidate' if r['single_candidate'] else ''}) "
               + (f"{c0['id']} d1 {c0['d1_mm']:.3f} margin {r['margin'] if r['margin'] is None else round(r['margin'], 3)}" if c0 else "-")
               + (f" dE {im['dE']:.1f} ncc {im['ncc']:.2f} pct {im['pctl']} theta {im['theta_deg']:.1f} resid {im['resid_deg']:.1f}"
                  if im else ""))
     t_img = time.time() - t1
     REPORT["ereal2_BE"] = {k: dict(decision=v["decision"], decision_shape=v["decision_shape"], margin=v["margin"],
+                                   single_candidate=v["single_candidate"],
                                    twin_cell=v["twin_cell"], candidates=v["candidates"], reasons=v["reasons"]) for k, v in rows.items()}
     r24, r55 = rows["BE(2,4)"], rows["BE(5,5)"]
     assert r24["twin_cell"] == (2, 61) and r55["twin_cell"] == (5, 60)
@@ -269,16 +294,26 @@ def test_ereal2_find_twin(profile, memory):
     assert r24["candidates"][0]["d1_mm"] == pytest.approx(0.408, abs=0.01)
     assert r24["margin"] == pytest.approx(2.39, abs=0.05)
     assert r24["candidates"][0]["image"]["dE"] == pytest.approx(8.7, abs=1.0)
-    assert r55["decision"] == "ambigua" and r55["candidates"][0]["id"] == "f1p1 #6" and r55["margin"] is None, r55
-    assert r55["candidates"][0]["d1_mm"] == pytest.approx(0.539, abs=0.01)
-    assert r55["candidates"][0]["image"]["dE"] == pytest.approx(10.8, abs=1.0)
+    # BE(5,5): lone candidate -> not proposed since 2026-11-01 (was 'ambigua'; physically confirmed as the right
+    # shape, EREAL2.md); find_twin no longer computes its image, so it is checked here with the same pose rule
+    assert r55["decision"] == "sem" and r55["decision_shape"] == "ambigua" and r55["margin"] is None, r55
+    sc = r55["single_candidate"]
+    assert sc is not None and sc["id"] == "f1p1 #6" and r55["candidates"][0]["id"] == "f1p1 #6", r55
+    assert sc["d1_mm"] == pytest.approx(0.539, abs=0.01) and sc["image"] is None
+    im55 = _image_test(by_id[sc["id"]], 90.0, sc["phi_deg"], r55["twin_cell"], profile, art, profile.mm_per_px())
+    print(f"   BE(5,5) lone candidate {sc['id']}: dE {im55['dE']:.1f} (computed by the test)")
+    assert im55["dE"] == pytest.approx(10.8, abs=1.0), im55
     others = {k: v["decision"] for k, v in rows.items() if k not in ("BE(2,4)", "BE(5,5)")}
     assert all(d == "sem" for d in others.values()), others
+    others_single = {k: v["single_candidate"]["id"] for k, v in rows.items() if k not in ("BE(2,4)", "BE(5,5)")
+                     and v["single_candidate"] is not None}
+    print(f"   other BE with a lone candidate (not proposed): {others_single}")
+    REPORT["ereal2_BE_other_single"] = others_single
 
     # --- orientation chain on the E-sym pairs: A1 with its F side up -> predicted B2 pose has its F side down
     t2 = time.time()
     a1 = [it for it in items if it.id.startswith("A1(")]
-    ok_down, resid_p, resid_m, n = 0, [], [], 0
+    ok_down, resid_p, resid_m, n, n_single = 0, [], [], 0, 0
     for q in a1:
         nu = _f_normal_deg(q.shape)
         th_q = snap_theta(q.shape, -90.0 - nu)[0]          # F normal -> up (-90 deg)
@@ -288,13 +323,18 @@ def test_ereal2_find_twin(profile, memory):
         b = by_id[c0["id"]]
         assert profile.twin(*q.cell) == b.cell, (q.id, c0["id"])
         n += 1
-        th_b = c0["image"]["theta_deg"]
+        if c0["image"] is not None:
+            th_b, res_b = c0["image"]["theta_deg"], c0["image"]["resid_deg"]
+        else:   # lone candidate (not proposed, image skipped): the same predicted pose as src.twin._image_test
+            assert r["single_candidate"] is not None and r["single_candidate"]["id"] == c0["id"], r
+            n_single += 1
+            th_b, _, res_b = snap_theta(b.shape, th_q + c0["phi_deg"] + profile.twin_rotation_deg())
         ok_down += abs(wrap_deg(_f_normal_deg(b.shape) + th_b - 90.0)) < 45
-        resid_p.append(abs(c0["image"]["resid_deg"]))
+        resid_p.append(abs(res_b))
         resid_m.append(abs(snap_theta(b.shape, th_q - c0["phi_deg"] + profile.twin_rotation_deg())[2]))
-    print(f"[orientation] E-sym A1 F up -> B2 F down {ok_down}/{n}; |residual to the body axis| median +phi "
+    print(f"[orientation] E-sym A1 F up -> B2 F down {ok_down}/{n} ({n_single} lone candidates); |residual to the body axis| median +phi "
           f"{np.median(resid_p):.2f} deg (max {np.max(resid_p):.2f}) vs -phi {np.median(resid_m):.2f} deg ({time.time() - t2:.1f} s)")
-    REPORT["orientation"] = dict(F_down=int(ok_down), n=n, resid_plus_median=float(np.median(resid_p)),
+    REPORT["orientation"] = dict(F_down=int(ok_down), n=n, n_single=n_single, resid_plus_median=float(np.median(resid_p)),
                                  resid_plus_max=float(np.max(resid_p)), resid_minus_median=float(np.median(resid_m)))
     REPORT["seconds_image_BE"] = round(t_img, 1)
     assert ok_down == n == 20

@@ -18,6 +18,10 @@ Order of signals (docs/estado-e-plano.md §0, docs/plano-m10-m12.md §3.2):
 4. sections not anchored (their stored top-3; sections made only of ``same_as`` re-scans are skipped);
 5. the rest stays in memory (only counted).
 
+A twin query whose only surviving candidate is a lone one (``find_twin`` ->
+``single_candidate``, decision ``sem`` since 2026-11-01) is not listed; it is kept for
+review in ``fetch.json`` -> ``suprimidas`` and counted in the footer of ``fetch.md``.
+
 ``src.twin`` / ``src.locate`` are imported lazily (other milestone); tests replace them in
 ``sys.modules``. :func:`run_query` is the callable entry point (future GUI).
 ``--lote N`` restricts the loose pieces examined to bag N (step 2 still searches the
@@ -68,6 +72,7 @@ class _Ctx:
 		self.use_image = use_image
 		self.items = {}
 		self.notes = []
+		self.suppressed = []
 		self.art = None
 		self.TwinItem, self.find_twin = _twin_api()
 		if use_image:
@@ -107,6 +112,18 @@ def _entry(pr, origin: str, piece_id: Optional[str], cell, decision: str, **kw) 
 	return e
 
 
+def _suppressed(pr, origin: str, res: dict, cell, query_id: Optional[str]) -> Optional[dict]:
+	"""Review record of a twin query not proposed because it had a lone candidate (None otherwise)."""
+	sc = res.get("single_candidate")
+	if not sc:
+		return None
+	p = pr.piece(sc["id"]) if sc["id"] in pr.pieces else None
+	reason = next((r for r in res.get("reasons") or [] if r.startswith("candidata única")), "candidata única")
+	return {"origin": origin, "query": query_id, "piece": sc["id"], "lote": p.lote if p else None,
+			"n_no_lote": p.n_no_lote if p else None, "cell": list(cell) if cell else None, "candidate": dict(sc),
+			"d1_mm": sc.get("d1_mm"), "decision_shape": res.get("decision_shape"), "reason": reason}
+
+
 def _from_candidate(pr, origin: str, res: dict, cell, query_id: Optional[str]) -> Optional[dict]:
 	cands = res.get("candidates") or []
 	if not cands or res.get("decision") not in ("aceite", "ambigua"):
@@ -143,6 +160,9 @@ def _step_border(ctx, loose, only_cells, proposed, rej) -> list:
 			if "error" in res:
 				ctx.notes.append(f"find_twin borda {m}: {res['error']}")
 				continue
+			s_ = _suppressed(pr, "borda", res, m, q.id)
+			if s_:
+				ctx.suppressed.append(s_)
 			e = _from_candidate(pr, "borda", res, m, q.id)
 			if e:
 				out.append(e)
@@ -173,6 +193,9 @@ def _step_twins(ctx, loose, only_cells, only_pieces, proposed, rej) -> list:
 		if "error" in res:
 			ctx.notes.append(f"find_twin {q.id}: {res['error']}")
 			continue
+		s_ = _suppressed(pr, "gemeo", res, tw, q.id)
+		if s_:
+			ctx.suppressed.append(s_)
 		e = _from_candidate(pr, "gemeo", res, tw, q.id)
 		if e:
 			out.append(e)
@@ -283,6 +306,16 @@ def _valid_prior(pr, e, only_cells, only_pieces, rej) -> bool:
 	return True
 
 
+def _valid_prior_suppressed(pr, s, only_cells, only_pieces, rej) -> bool:
+	"""A previous ``suprimidas`` record still stands if nothing it depends on was re-queried or changed."""
+	pid, cell = s.get("piece"), _cl(s.get("cell"))
+	if pid is None or pid not in pr.pieces or pr.piece(pid).estado not in ("solta", "emparelhada"):
+		return False
+	if cell is not None and (pr.board[cell]["estado"] != "vazia" or (pid, cell) in rej or cell in only_cells):
+		return False
+	return pid not in only_pieces and s.get("query") not in only_pieces
+
+
 def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, only_cells=None, only_pieces=None,
 			  write: bool = True, log: bool = True) -> list:
 	"""Run the signal steps and (``write``) rewrite ``fetch.md``/``fetch.json``/``fetch_<lote>.jpg``.
@@ -307,6 +340,9 @@ def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, on
 		entries = [e for e in prior if _valid_prior(pr, e, oc or set(), op or set(), rej)
 				   and (lote is None or e.get("lote") == lote)]
 		proposed = {e["piece"] for e in entries if e["decision"] in ("aceite", "ambigua")}
+		ctx.suppressed = [s for s in load_fetch(pr).get("suprimidas", [])
+						  if _valid_prior_suppressed(pr, s, oc or set(), op or set(), rej)
+						  and (lote is None or s.get("lote") == lote)]
 	entries += _step_border(ctx, loose, oc if incremental else None, proposed, rej) if (not incremental or oc) else []
 	entries += _step_twins(ctx, loose, oc, op, proposed, rej)
 	if not incremental or op:
@@ -331,8 +367,14 @@ def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, on
 		e["ordem"] = i
 	listed = {e["piece"] for e in uniq if e.get("piece")}
 	rest = [p.id for p in loose if p.id not in listed]
+	seen_s, suppressed = set(), []
+	for s in ctx.suppressed:
+		k = (s.get("origin"), s.get("query"), s.get("piece"), tuple(s["cell"]) if s.get("cell") else None)
+		if k not in seen_s and s.get("piece") not in listed:
+			seen_s.add(k)
+			suppressed.append(s)
 	if write:
-		write_fetch(pr, uniq, rest, ctx.notes)
+		write_fetch(pr, uniq, rest, ctx.notes, suppressed)
 	if log:
 		pr.fetch_listed(uniq)
 	pr.save()
@@ -356,7 +398,7 @@ def _fmt(v, nd=2):
 	return str(v)
 
 
-def render_fetch_md(project, entries: list, rest: list, notes: list) -> str:
+def render_fetch_md(project, entries: list, rest: list, notes: list, suppressed: Optional[list] = None) -> str:
 	"""Markdown of the "go fetch" list (table + stats with the p_twin_placed formula)."""
 	st = project.stats()
 	L = [f"# Lista «ir buscar» — {_dt.datetime.now().isoformat(timespec='seconds')}", "",
@@ -374,6 +416,8 @@ def render_fetch_md(project, entries: list, rest: list, notes: list) -> str:
 	L += ["", f"Ficam na memória: {len(rest)} soltas sem proposta."]
 	for n in notes:
 		L.append(f"- nota: {n}")
+	if suppressed:
+		L.append(f"- nota: {len(suppressed)} propostas suprimidas por candidata única (ver fetch.json → suprimidas)")
 	return "\n".join(L) + "\n"
 
 
@@ -408,14 +452,20 @@ def _fetch_sheet(project, lote, rows: list) -> np.ndarray:
 	return sheet
 
 
-def write_fetch(project, entries: list, rest: list, notes: list) -> None:
-	"""Write ``fetch.md``, ``fetch.json`` and one ``fetch_<lote>.jpg`` per bag with entries."""
+def write_fetch(project, entries: list, rest: list, notes: list, suppressed: Optional[list] = None) -> None:
+	"""Write ``fetch.md``, ``fetch.json`` and one ``fetch_<lote>.jpg`` per bag with entries.
+
+	``suppressed``: twin queries not proposed because of a lone candidate (``fetch.json`` ->
+	``suprimidas``, records ``{origin, query, piece, lote, n_no_lote, cell, candidate, d1_mm,
+	decision_shape, reason}``); they get no tile in the sheets.
+	"""
 	import cv2
+	suppressed = list(suppressed or [])
 	with open(project.p("fetch.md"), "w", encoding="utf-8", newline="\n") as f:
-		f.write(render_fetch_md(project, entries, rest, notes))
+		f.write(render_fetch_md(project, entries, rest, notes, suppressed))
 	with open(project.p("fetch.json"), "w", encoding="utf-8", newline="\n") as f:
 		json.dump({"t": _dt.datetime.now().isoformat(timespec="seconds"), "entries": entries, "rest": rest,
-				   "notes": notes}, f, ensure_ascii=False, indent=1, default=float)
+				   "notes": notes, "suprimidas": suppressed}, f, ensure_ascii=False, indent=1, default=float)
 	for old in glob.glob(project.p("fetch_*.jpg")):
 		os.remove(old)
 	by_lote = {}

@@ -8,8 +8,11 @@ Pipeline of :func:`find_twin` (docs/plano-m10-m12.md §2.2, order = increasing c
 3. corner-free distance :func:`src.shape.free_dist` -> d1, d2, margin = d2 / d1 among the
    candidates that pass 1-2;
 4. shape decision per modality (``profile.calibration[modality]``): ``aceite`` if
-   d1 <= t95 and margin >= ``margin_min``; ``ambigua`` if d1 <= tmax; else ``sem``; a
-   single candidate (no d2) is at most ``ambigua``. ``celula_silhueta`` (cut-line cell
+   d1 <= t95 and margin >= ``margin_min``; ``ambigua`` if d1 <= tmax; else ``sem``. A
+   single candidate (no d2, margin undefined) is never proposed (product decision
+   2026-11-01): ``decision = 'sem'``, ``decision_shape`` keeps what it would have been with
+   margin = inf (``aceite`` if d1 <= t95, else ``ambigua``) and ``single_candidate`` keeps
+   the row for later review; its image is not tested. ``celula_silhueta`` (cut-line cell
    against a loose silhouette) first shrinks each silhouette by ``offset_mm`` along its
    normal (EREAL.md: +0.48 mm isotropic), and never accepts while its t95 is uncalibrated;
 5. image, mandatory when the query cell and the art are known: each top candidate is
@@ -160,8 +163,11 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 	'pctl', 'theta_deg', 'p90'} | None, 'twin_cell'}] (top-k of those passing class + chords,
 	best first), 'decision': 'aceite' | 'ambigua' | 'sem', 'decision_shape', 'margin':
 	d2/d1 | None, 'twin_cell': (l, c) | None, 'n_class', 'n_pass', 'modality', 'reasons':
-	[str]}`` or ``{'error': str}``. ``zone`` selects the image p90 in ``profile.image_zones``
-	(unknown -> the largest p90).
+	[str], 'single_candidate': {'id', 'd1_mm', 'phi_deg', 'chord_ok', 'image'} | None}`` or
+	``{'error': str}``. ``single_candidate`` is set when exactly one candidate passes class +
+	chords with d1 <= tmax: the decision is then ``'sem'`` (not proposed, 2026-11-01) and
+	``decision_shape`` holds the shape decision without that rule. ``zone`` selects the image
+	p90 in ``profile.image_zones`` (unknown -> the largest p90).
 	"""
 	if modality not in MODALITIES:
 		return {"error": f"modalidade desconhecida: {modality!r} (use {MODALITIES})"}
@@ -220,7 +226,7 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 	if not passed:
 		reasons.append("sem candidata que passe classe + cordas")
 		return dict(candidates=[], decision="sem", decision_shape="sem", margin=None, twin_cell=twin_cell,
-					n_class=len(same_cls), n_pass=0, modality=modality, reasons=reasons)
+					n_class=len(same_cls), n_pass=0, modality=modality, reasons=reasons, single_candidate=None)
 	cl = [c for c, _, _ in passed]
 	d, phi = shape_distances(query.shape, [shp[c.id] for c in cl])
 	order = np.argsort(d, kind="stable")
@@ -229,8 +235,12 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 	margin = (d2 / d1 if d1 > 0 else float("inf")) if d2 is not None else None
 	# (4) shape decision
 	dec = decide(d1, margin, t95, tmax, margin_min)
-	if margin is None and d1 <= tmax:
-		reasons.append(f"candidata única {cl[order[0]].id}: margem indefinida, no máximo 'ambigua'")
+	single = margin is None and dec != "sem"
+	if single:
+		# product decision 2026-11-01: a lone candidate is not proposed; decision_shape keeps the
+		# decision with margin = inf (the prototype's rule) so the case can be reviewed later
+		dec = decide(d1, float("inf"), t95, tmax, margin_min)
+		reasons.append(f"candidata única {cl[order[0]].id}: d1 {_fmt(d1, 3)} mm, não proposta (decisão 2026-11-01)")
 	elif dec == "ambigua":
 		why = []
 		if t95 is None or d1 > t95:
@@ -247,8 +257,10 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 	rows = [dict(id=cl[o].id, d1_mm=float(d[o]), phi_deg=float(phi[o]), chord_ok=True, image=None, twin_cell=twin_cell)
 			for o in top]
 
-	# (5) image, mandatory when the query cell and the art are known
-	if twin_cell is None:
+	# (5) image, mandatory when the query cell and the art are known (skipped for a lone candidate: never proposed)
+	if single:
+		reasons.append("imagem não testada: candidata única, não proposta")
+	elif twin_cell is None:
 		reasons.append("imagem não testada: célula da consulta desconhecida" if query.cell is None
 					   else "imagem não testada: o perfil não tem gémea para esta célula")
 	elif art is None:
@@ -304,6 +316,12 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 			else:
 				reasons.append(f"imagem consistente: ΔE {_fmt(im0['dE'], 1)} <= p90 {_fmt(p90, 0)} ({zname})"
 							   + (f", pct {_fmt(im0['pctl'], 1)} %" if im0["pctl"] is not None else ""))
+	single_row = None
+	if single:
+		r0 = rows[0]
+		single_row = dict(id=r0["id"], d1_mm=r0["d1_mm"], phi_deg=r0["phi_deg"], chord_ok=r0["chord_ok"],
+						  image=r0["image"])
+		dec = "sem"
 	return dict(candidates=rows[:topk], decision=dec, decision_shape=dec_shape, margin=margin,
 				twin_cell=twin_cell, n_class=len(same_cls), n_pass=len(passed),
-				modality=modality, reasons=reasons)
+				modality=modality, reasons=reasons, single_candidate=single_row)

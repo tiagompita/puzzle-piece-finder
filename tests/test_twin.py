@@ -84,13 +84,42 @@ def test_altered_side_not_accepted(alpes_like):
     assert res3["decision"] == "sem" and any("classe diferente" in r for r in res3["reasons"]), res3["reasons"]
 
 
-def test_single_candidate_at_most_ambiguous(alpes_like):
+def test_single_candidate_not_proposed(alpes_like):
+    """Product decision 2026-11-01: a lone candidate is never proposed, but is kept for review."""
     rng = np.random.default_rng(3)
     cont = synth.body_mm(KINDS, deltas=DELTAS)
     q = TwinItem(id="Q", shape=_shape_from_mm(cont))
     t = TwinItem(id="T", shape=_shape_from_mm(transform_contour(cont, 180, center=(0, 0)) + rng.normal(0, 0.1, cont.shape)))
-    res = find_twin(q, [t], profile=alpes_like)
-    assert res["decision"] == "ambigua" and res["margin"] is None, res
+    # the only other candidate of the same class fails the chord filter (side 0 longer by 1.5 mm)
+    long_top = synth.make_piece(KINDS, corners=[(0, 0), (synth.L0 + 1.5, 0), (synth.L0, synth.L0), (0, synth.L0)],
+                                deltas=DELTAS) * MMPP
+    e = TwinItem(id="E", shape=_shape_from_mm(long_top))
+    res = find_twin(q, [t, e], profile=alpes_like)
+    assert res["n_pass"] == 1 and res["margin"] is None, res
+    assert res["decision"] == "sem", res
+    assert res["decision_shape"] in ("aceite", "ambigua"), res
+    assert res["decision_shape"] == "aceite"              # d1 ~0.1 mm <= t95: what margin = inf would give
+    sc = res["single_candidate"]
+    assert sc is not None and sc["id"] == "T" and sc["chord_ok"] is True
+    assert sc["d1_mm"] == pytest.approx(res["candidates"][0]["d1_mm"]) and sc["d1_mm"] < 0.3
+    assert sc["image"] is None
+    assert res["candidates"][0]["id"] == "T"              # still listed
+    assert any(r.startswith("candidata única T: d1 ") and "não proposta (decisão 2026-11-01)" in r
+               for r in res["reasons"]), res["reasons"]
+    # two candidates passing -> the rule does not apply
+    res2 = find_twin(q, _decoys(30, rng) + [t], profile=alpes_like)
+    assert res2["single_candidate"] is None and res2["decision"] == "aceite", res2["reasons"]
+    # a lone candidate beyond tmax is a plain 'sem', not a suppressed proposal
+    cal = alpes_like.calibration["silhueta_silhueta"]
+    far = TwinItem(id="F", shape=_shape_from_mm(synth.body_mm(KINDS, deltas=(2.0, -2.0, 0.0, 2.0))))
+    res3 = find_twin(q, [far], profile=alpes_like)
+    assert res3["n_pass"] == 1 and res3["candidates"][0]["d1_mm"] > cal["tmax"], res3
+    assert res3["decision"] == res3["decision_shape"] == "sem" and res3["single_candidate"] is None, res3
+    # a lone candidate between t95 and tmax: decision_shape 'ambigua', still not proposed
+    mid = TwinItem(id="M", shape=_shape_from_mm(synth.body_mm(KINDS, deltas=(1.6, -1.4, 0.0, 1.2))))
+    res4 = find_twin(q, [mid], profile=alpes_like)
+    assert cal["t95"] < res4["candidates"][0]["d1_mm"] <= cal["tmax"], res4
+    assert res4["decision"] == "sem" and res4["decision_shape"] == "ambigua" and res4["single_candidate"]["id"] == "M"
 
 
 def test_errors(alpes_like):
@@ -201,6 +230,11 @@ def test_image_demotes_wrong_colour_and_never_promotes():
     assert res2["candidates"][0]["image"]["dE"] > 15.0
     assert res2["decision"] == "ambigua", res2["reasons"]
     assert any("> p90" in r for r in res2["reasons"])
+    # right shape, right colour, but alone -> not proposed and the image is not tested
+    res1 = find_twin(q, [good], profile=prof, art=art)
+    assert res1["decision"] == "sem" and res1["decision_shape"] == "aceite", res1["reasons"]
+    assert res1["single_candidate"]["id"] == "T" and res1["single_candidate"]["image"] is None
+    assert res1["candidates"][0]["image"] is None
     # wrong shape (sem), perfect colour -> stays sem
     far = synth.body_mm("TBTB", deltas=(2.8, 1.5, -1.5, 2.0))
     far = synth.twin_board_contour(far, prof)

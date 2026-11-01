@@ -253,6 +253,20 @@ O Tiago verificou as 2 propostas com as peças na mão. O registo fica em `ereal
 - O 2.º par fica na banda certa (linhas 43–44, colunas 4–5). Falha a coluna por 1 e a GT fica na posição 13, mas o par continua muito melhor do que a BE sozinha (mediana 430).
 - Leitura: com n = 2, a imagem do par localiza à banda e a ±1 coluna, não à célula. A cor das duas metades (relva + céu) não chega para fixar a coluna.
 
+## 9. Regra da candidata única (2026-11-01)
+
+Decisão do Tiago (2026-11-01): quando só uma candidata passa classe + cordas, a margem é indefinida e a consulta **não é proposta** (`sem`). Até aqui era «no máximo `ambigua`». `find_twin` guarda o caso em `single_candidate` e põe em `decision_shape` o que a margem infinita daria (`aceite` se d₁ ≤ t₉₅, senão `ambigua`). A imagem da candidata única deixa de ser testada.
+
+Efeito medido com `tests/test_twin_real.py` (memória de 188 soltas, `$PPF_SCRATCH/ereal2/memoria.pkl`) [V]:
+
+- **BE(5,5) → f1p1 #6 passa de AMBÍGUA a `sem`** (candidata única, d₁ 0,539 mm, `decision_shape` `ambigua`). É a proposta cuja forma foi confirmada fisicamente no §7. Com a regra nova, esse acerto já não aparece na lista. O ΔE na célula (5,60), calculado à parte pelo teste com a mesma pose, continua em 10,7.
+- BE(2,4) → f2p1 #4 continua ACEITE (d₁ 0,408 mm, margem 2,39, ΔE 8,7). As outras 18 BE continuam `sem`, e nenhuma delas tinha candidata única dentro de t_max.
+- Pares (consultas só por forma, 188 × 187): os 20 gémeos E-sym passam de 20 propostos a **15 `aceite` + 5 suprimidos**. Sem a regra (`decision_shape`), os 20 seriam `aceite`. Entre BE × céu ficam 1 `aceite` e 0 `ambigua` (era 1 + 1). Entre os negativos conhecidos (10 608) e céu × céu (4 950) continua a haver 0 `aceite`. Há 0 candidatas únicas com d₁ ≤ t₉₅ em pares negativos: a regra não estava a esconder nenhum falso positivo nesta amostra.
+- E-sym isolado, com o pool das 20 B2 (4 das 5 classes têm um só membro): A1 → B2 dá **14 `aceite` + 6 suprimidas** (antes 14 + 6 `ambigua`), top-1 20/20. A2 → B2 dá 12 `aceite` + 2 `ambigua` + 5 suprimidas + 1 `sem` pelas cordas (antes 12 + 7 `ambigua` + 1). Não há propostas erradas, nem contando as suprimidas.
+- Cadeia de orientação: continua 20/20. Em 5 dos 20 casos a pose da candidata única é calculada pelo teste, porque o `find_twin` já não a testa.
+
+Leitura: nesta amostra a regra só retira acertos (1 confirmado fisicamente e os gémeos E-sym) e não retira nenhum erro. É um custo de recall assumido em troca de nunca propor sem margem. Os casos ficam em `fetch.json` → `suprimidas` para serem revistos.
+
 ## Reprodução
 
 ```powershell
