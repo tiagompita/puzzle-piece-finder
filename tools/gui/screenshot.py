@@ -11,6 +11,7 @@ here), waits until it is ready, and captures:
 * ``progresso.png`` (1400 x 900, whole board), ``progresso_zoom_relva.png`` (rows 42-47, cols 1-8),
   ``progresso_zoom_ceu.png`` (rows 1-6, cols 5-24), ``celula.png`` (cell drawer of (3, 37)),
   ``vai_buscar.png`` (the sky rows with the proposals, list scrolled to the 2nd card), ``lotes.png``, ``mesa.png``, ``importar.png``;
+* ``desktop_{1366,1920}_{100,125,150}.jpg`` (Windows scaling matrix), ``ver_no_tabuleiro.jpg``;
 * ``telemovel_progresso.png`` and ``telemovel_vai_buscar.png`` at 390 x 844.
 
 Each file is kept <= 300 KB: PNG, else JPEG (same name, ``.jpg``; a 256-colour PNG was tried and
@@ -58,10 +59,10 @@ def save_small(png: bytes, out_dir: str, name: str) -> str:
     """Write ``name`` (.png) under ``out_dir`` within MAX_BYTES; returns the path written."""
     from PIL import Image
     path = os.path.join(out_dir, name)
-    for old in (path, path[:-4] + ".jpg"):
+    for old in (path[:-4] + ".png", path[:-4] + ".jpg"):
         if os.path.exists(old):
             os.remove(old)
-    if len(png) <= MAX_BYTES:
+    if name.endswith(".png") and len(png) <= MAX_BYTES:
         with open(path, "wb") as f:
             f.write(png)
         return path
@@ -117,13 +118,23 @@ def main(argv=None) -> int:
                 written.append(save_small(page.screenshot(), args.out, name))
                 print(f"  {written[-1]} ({os.path.getsize(written[-1]) // 1024} KB)")
 
-            def open_page(w, h):
-                pg = br.new_page(viewport={"width": w, "height": h}, device_scale_factor=1)
+            def open_page(w, h, dsf=1.0, mobile=False):
+                kw = {"is_mobile": True, "has_touch": True} if mobile else {}
+                pg = br.new_page(viewport={"width": w, "height": h}, device_scale_factor=dsf, **kw)
                 pg.goto(base + "/")
                 pg.wait_for_selector("body[data-ready='1']", timeout=120_000)
                 pg.wait_for_selector("body[data-raster]", timeout=120_000)
                 settle(pg, 800)
                 return pg
+
+            # Windows scaling matrix: the CSS viewport is W/dsf x H/dsf (1366x768 at 125 % -> 1093x614)
+            for W, H in ((1366, 768), (1920, 1080)):
+                for dsf in (1.0, 1.25, 1.5):
+                    d = open_page(round(W / dsf), round(H / dsf), dsf)
+                    d.evaluate("zoomCells(1, 26, 7, 58, 0.02)")
+                    settle(d, 1200)
+                    shot(d, f"desktop_{W}_{round(dsf * 100)}.jpg")
+                    d.close()
 
             pg = open_page(1400, 900)
             shot(pg, "progresso.png")
@@ -140,6 +151,11 @@ def main(argv=None) -> int:
             pg.evaluate("document.querySelectorAll('#tab-buscar .card')[1].scrollIntoView({block: 'start'})")
             settle(pg, 1200)
             shot(pg, "vai_buscar.png")
+            pg.evaluate("showTab('buscar'); fitBoard()")
+            settle(pg, 800)
+            pg.evaluate("document.querySelector('#tab-buscar .card .btn.slim').click()")
+            settle(pg, 3000)
+            shot(pg, "ver_no_tabuleiro.jpg")
             pg.evaluate("showTab('lotes')")
             pg.wait_for_selector("#tab-lotes details.lot", timeout=60_000)
             settle(pg, 1500)
@@ -154,7 +170,7 @@ def main(argv=None) -> int:
             shot(pg, "importar.png")
             pg.close()
 
-            ph = open_page(390, 844)
+            ph = open_page(390, 844, 3.0, mobile=True)
             shot(ph, "telemovel_progresso.png")
             ph.evaluate("document.getElementById('app').classList.add('sheet-up'); setView(S.vb)")
             settle(ph, 1200)

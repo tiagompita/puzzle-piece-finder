@@ -174,6 +174,7 @@ function initPointer() {
   const ptrs = new Map();
   let start = null, pinch = null, moved = false;
   el.addEventListener("wheel", (e) => {
+    if (e.ctrlKey || e.metaKey) return;   // Ctrl+wheel / trackpad pinch = browser page zoom
     e.preventDefault();
     const f = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0018));
     zoomAt(f, e.clientX, e.clientY);
@@ -477,7 +478,7 @@ function proposalCard(e, opts = {}) {
       acts.append(h("button", { class: "btn", type: "button", title: "a peça fica guardada à parte, à espera de uma vizinha", onclick: (ev) => act({ acao: "position_known", piece: e.piece, cell: e.cell, origin: e.origin }, ev.currentTarget) }, "Guardar posição"));
     }
   }
-  if (!opts.noLocate && e.cell) acts.append(h("button", { class: "btn slim", type: "button", onclick: () => { openCell(e.cell[0], e.cell[1], { zoom: true }); } }, "Ver no tabuleiro"));
+  if (!opts.noLocate && e.cell) acts.append(h("button", { class: "btn slim", type: "button", onclick: () => showCellOnBoard(e.cell[0], e.cell[1]) }, "Ver no tabuleiro"));
   card.append(acts);
   card.append(h("details", { class: "tech" }, h("summary", {}, "razões técnicas"), h("ul", {}, (e.reasons || []).map((t) => h("li", {}, t)))));
   return card;
@@ -511,6 +512,13 @@ function renderBuscar() {
 }
 
 // ------------------------------------------------------------ célula drawer
+/** Centre and highlight a cell on the board WITHOUT leaving the current tab (list stays visible). */
+function showCellOnBoard(l, c) {
+  $("#app").classList.remove("sheet-up");   // phone: collapse the sheet so the board is visible
+  S.sel = [l, c];
+  zoomCells(Math.max(1, l - 3), Math.max(1, c - 5), Math.min(S.rows, l + 3), Math.min(S.cols, c + 5));
+  drawSel();
+}
 async function openCell(l, c, opts = {}) {
   S.sel = [l, c]; drawSel();
   if (opts.zoom) zoomCells(Math.max(1, l - 3), Math.max(1, c - 5), Math.min(S.rows, l + 3), Math.min(S.cols, c + 5));
@@ -777,6 +785,10 @@ async function boot() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { if (!$("#lightbox").hidden) $("#lightbox").hidden = true; else if (S.tab === "celula") showTab(S.prevTab); }
   });
+  const lg = $("#legend-box");
+  const stored = localStorage.getItem("legend-open");
+  lg.open = stored === null ? window.innerHeight >= 900 : stored === "1";
+  lg.addEventListener("toggle", () => { localStorage.setItem("legend-open", lg.open ? "1" : "0"); setView(S.vb); });
   initPointer();
   connectEvents();
   const st = await api("/api/status");

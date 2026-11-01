@@ -29,7 +29,9 @@ Geradas por `python tools/gui/screenshot.py` (Chromium headless; `pip install -r
 | `lotes.jpg` | Saco 1 (2 folhas, 50 peças): miniaturas das folhas e das peças com número e estado. |
 | `mesa.jpg` | Grupos soltos com o top-3 de zonas; "Ver" do 1.º candidato de G0041 desenha a pegada a violeta em (43, 54). |
 | `importar.jpg` | Formulário: ficheiro, nº do saco (próximo livre), dpi. |
-| `telemovel_progresso.png` | 390 × 844: tabuleiro em cima, legenda compacta, painel como folha inferior. |
-| `telemovel_vai_buscar.png` | 390 × 844 com a folha inferior expandida (pega no topo): cartão "Saco 1 · nº 7". |
+| `telemovel_progresso.jpg` | 390 × 844: tabuleiro em cima, legenda compacta, painel como folha inferior. |
+| `telemovel_vai_buscar.jpg` | 390 × 844 com a folha inferior expandida (pega no topo): cartão "Saco 1 · nº 7". |
+| `desktop_{1366,1920}_{100,125,150}.jpg` | Matriz de escala do Windows (viewport CSS = largura/escala): tabuleiro + lista "Vai buscar"; legenda recolhível (aberta por omissão só com altura >= 900 px, escolha guardada em localStorage). |
+| `ver_no_tabuleiro.jpg` | "Ver no tabuleiro" aproxima e destaca a célula sem sair da lista. |
 
 Não verificado: uso real num telemóvel pela LAN (Safari/Chrome), importação de um scan real pela página (só testada com um scan sintético em `tests/test_server.py`).
