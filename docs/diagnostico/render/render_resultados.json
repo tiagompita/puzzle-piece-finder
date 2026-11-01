@@ -1,0 +1,325 @@
+{
+ "project": "projects/alpes",
+ "calibracao_verde": {
+  "n_pieces": 53,
+  "interior_p1": 24.254505157470703,
+  "interior_p5": 29.496742248535156,
+  "interior_p50": 50.745872497558594,
+  "ring_p50": 25.019489288330078,
+  "ring_below_thr": 0.6827884691444521,
+  "BG_DIST_MAX": 29.5,
+  "PIECE_P5_FRAC": 0.8
+ },
+ "sombra": {
+  "relva_gt": {
+   "E": 1096,
+   "S": 4561,
+   "W": 11358,
+   "N": 2653,
+   "frac_of_band": 0.0331,
+   "lit_over_shadow": 0.236
+  },
+  "relva_p05_p11": {
+   "E": 4656,
+   "S": 6118,
+   "W": 2893,
+   "N": 3021,
+   "frac_of_band": 0.0057,
+   "lit_over_shadow": 0.852
+  },
+  "ceu_p14_p15": {
+   "E": 1428,
+   "S": 9091,
+   "W": 1587,
+   "N": 103,
+   "frac_of_band": 0.0102,
+   "lit_over_shadow": 0.143
+  }
+ },
+ "verde": {
+  "n": 542,
+  "removed_frac": {
+   "p5": 0.057,
+   "p25": 0.069,
+   "p50": 0.083,
+   "p75": 0.153,
+   "p95": 0.172,
+   "p99": 0.184
+  },
+  "removed_frac_mean": 0.10786073664276855,
+  "deep_removed": 0,
+  "dE_removed_vs_interior_mean": {
+   "p5": 30.89,
+   "p50": 45.303,
+   "p95": 63.37
+  },
+  "dE_removed_vs_background": {
+   "p5": 25.672,
+   "p50": 27.973,
+   "p95": 44.149
+  },
+  "por_grupo": {
+   "relva_gt": {
+    "removed_of_band": 0.362,
+    "outer_0.5mm_left": 0.546,
+    "thr_median": 29.5,
+    "thr_max": 37.1,
+    "dE_band_kept_vs_interior_before": 31.04,
+    "dE_band_kept_vs_interior_after": 31.04,
+    "n_light": 1
+   },
+   "relva_p05_p11": {
+    "removed_of_band": 0.352,
+    "outer_0.5mm_left": 0.557,
+    "thr_median": 29.5,
+    "thr_max": 43.3,
+    "dE_band_kept_vs_interior_before": 30.6,
+    "dE_band_kept_vs_interior_after": 30.6,
+    "n_light": 3
+   },
+   "ceu_p14_p15": {
+    "removed_of_band": 0.471,
+    "outer_0.5mm_left": 0.196,
+    "thr_median": 66.6,
+    "thr_max": 76.4,
+    "dE_band_kept_vs_interior_before": 22.19,
+    "dE_band_kept_vs_interior_after": 20.22,
+    "n_light": 95
+   }
+  },
+  "n_claras": 259,
+  "claras_em_relva": [
+   "P0049",
+   "P0431",
+   "P0500",
+   "P0582"
+  ],
+  "papel_fundo_interior": [
+   {
+    "piece": "P0778",
+    "cell": [
+     4,
+     10
+    ],
+    "area_mm2": 12.65
+   }
+  ]
+ },
+ "t_clean_s": 12.6,
+ "t_register_s": 16.4,
+ "registo": {
+  "n": 542,
+  "methods": {
+   "corners": 539,
+   "image": 1,
+   "none": 2
+  },
+  "residual_nominal_mm": {
+   "p5": 0.429,
+   "p25": 0.626,
+   "p50": 0.816,
+   "p75": 1.047,
+   "p95": 1.349,
+   "p99": 1.627
+  },
+  "n_residual_nominal_gt_1": 154,
+  "shape_residual_mm": {
+   "p5": 0.164,
+   "p25": 0.296,
+   "p50": 0.405,
+   "p75": 0.532,
+   "p95": 0.746,
+   "p99": 0.934
+  },
+  "n_shape_residual_gt_1": 3,
+  "dtheta_corner_vs_initial_deg": {
+   "p50": 0.024,
+   "p90": 0.098,
+   "p99": 0.237,
+   "p100": 0.284
+  },
+  "image_shift_mm_all": {
+   "p25": 5.994,
+   "p50": 8.915,
+   "p75": 10.742,
+   "p90": 12.24
+  },
+  "image_at_edge": 540,
+  "image_accepted": 1,
+  "image_ncc": {
+   "p25": 0.109,
+   "p50": 0.222,
+   "p75": 0.337
+  }
+ },
+ "junta": {
+  "antes_make_mock": {
+   "todas": {
+    "n": 849,
+    "median_gap": 0.118,
+    "median_abs": 0.44,
+    "p95_abs": 1.216,
+    "frac_abs_gt_0.8": 0.201
+   },
+   "ceu_1_7": {
+    "n": 349,
+    "median_gap": 0.073,
+    "median_abs": 0.422,
+    "p95_abs": 1.187,
+    "frac_abs_gt_0.8": 0.195
+   },
+   "relva_41_47": {
+    "n": 455,
+    "median_gap": 0.154,
+    "median_abs": 0.459,
+    "p95_abs": 1.241,
+    "frac_abs_gt_0.8": 0.213
+   },
+   "bordas": {
+    "n": 295,
+    "median_gap": 0.246,
+    "median_abs": 0.458,
+    "p95_abs": 1.353,
+    "frac_abs_gt_0.8": 0.264
+   }
+  },
+  "depois_cantos": {
+   "todas": {
+    "n": 849,
+    "median_gap": 0.011,
+    "median_abs": 0.192,
+    "p95_abs": 0.585,
+    "frac_abs_gt_0.8": 0.02
+   },
+   "ceu_1_7": {
+    "n": 349,
+    "median_gap": -0.046,
+    "median_abs": 0.183,
+    "p95_abs": 0.554,
+    "frac_abs_gt_0.8": 0.009
+   },
+   "relva_41_47": {
+    "n": 455,
+    "median_gap": 0.055,
+    "median_abs": 0.193,
+    "p95_abs": 0.59,
+    "frac_abs_gt_0.8": 0.024
+   },
+   "bordas": {
+    "n": 295,
+    "median_gap": -0.004,
+    "median_abs": 0.22,
+    "p95_abs": 0.603,
+    "frac_abs_gt_0.8": 0.024
+   }
+  },
+  "depois_cantos_imagem": {
+   "todas": {
+    "n": 849,
+    "median_gap": 0.011,
+    "median_abs": 0.192,
+    "p95_abs": 0.585,
+    "frac_abs_gt_0.8": 0.02
+   },
+   "ceu_1_7": {
+    "n": 349,
+    "median_gap": -0.046,
+    "median_abs": 0.183,
+    "p95_abs": 0.554,
+    "frac_abs_gt_0.8": 0.009
+   },
+   "relva_41_47": {
+    "n": 455,
+    "median_gap": 0.055,
+    "median_abs": 0.193,
+    "p95_abs": 0.59,
+    "frac_abs_gt_0.8": 0.024
+   },
+   "bordas": {
+    "n": 295,
+    "median_gap": -0.004,
+    "median_abs": 0.22,
+    "p95_abs": 0.603,
+    "frac_abs_gt_0.8": 0.024
+   }
+  }
+ },
+ "figuras_verde": {
+  "gt": [
+   "P0055",
+   "P0051",
+   "P0056",
+   "P0061"
+  ],
+  "paginas": [
+   "P0562",
+   "P0581",
+   "P0554",
+   "P0564"
+  ],
+  "ceu": [
+   "P0721",
+   "P0722",
+   "P0723"
+  ]
+ },
+ "t_zone_s": {
+  "grass": 2.3,
+  "sky": 7.1
+ },
+ "zona_pixeis": {
+  "grass": {
+   "n_cells_interiores": 10,
+   "antes_make_mock": {
+    "gap_px_per_mil": 6.47,
+    "green_px_per_mil": 95.99
+   },
+   "cantos_limpo": {
+    "gap_px_per_mil": 3.27,
+    "green_px_per_mil": 51.28
+   },
+   "cantos_limpo_prioridade": {
+    "gap_px_per_mil": 3.27,
+    "green_px_per_mil": 50.97
+   },
+   "final_com_sangria": {
+    "gap_px_per_mil": 0.0,
+    "green_px_per_mil": 51.52
+   }
+  },
+  "sky": {
+   "n_cells_interiores": 57,
+   "antes_make_mock": {
+    "gap_px_per_mil": 15.26,
+    "green_px_per_mil": 58.29
+   },
+   "cantos_limpo": {
+    "gap_px_per_mil": 38.55,
+    "green_px_per_mil": 0.0
+   },
+   "cantos_limpo_prioridade": {
+    "gap_px_per_mil": 38.55,
+    "green_px_per_mil": 0.0
+   },
+   "final_com_sangria": {
+    "gap_px_per_mil": 3.18,
+    "green_px_per_mil": 0.0
+   }
+  }
+ },
+ "ceu_banda_larga": {
+  "banda_0.7_todas": {
+   "gap_px_per_mil": 0.78,
+   "green_px_per_mil": 0.67
+  },
+  "padrao_1.2_claras": {
+   "gap_px_per_mil": 3.18,
+   "green_px_per_mil": 0.0
+  },
+  "relva_banda_0.7_todas": {
+   "gap_px_per_mil": 0.0,
+   "green_px_per_mil": 51.52
+  }
+ },
+ "t_total_s": 116.4
+}
