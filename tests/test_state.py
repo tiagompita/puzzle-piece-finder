@@ -415,3 +415,104 @@ def test_ingest_known_cells(tmp_path):
     assert by_n[1].estado == "colocada" and by_n[1].celula == (1, 1)      # full in the last photo
     assert by_n[2].estado == "posicao_conhecida" and by_n[2].celula == (2, 2)
     assert pr.check_invariants(disk=True) == []
+
+
+# ---------------------------------------------------------------- lotes (bags)
+def _sheet(pr, n, lote):
+    """A scan of ``lote`` whose pieces are numbered like ingest does (continuing the bag)."""
+    sid = pr.add_scan(None, dpi=300, lote=lote)
+    n0 = max([p.n_no_lote or 0 for p in pr.pieces.values() if p.lote == lote] or [0])
+    # index_in_scan deliberately not in reading order: renumbering must follow n_no_lote
+    ids = [pr.add_piece(sid, {"index_in_scan": n - 1 - i, "n_no_lote": n0 + i + 1, "shape": _RECT}) for i in range(n)]
+    return sid, ids
+
+
+def _nums(pr, ids):
+    return [(pr.piece(p).lote, pr.piece(p).n_no_lote) for p in ids]
+
+
+def test_relot_replay_and_invariants(proj):
+    s1, a = _sheet(proj, 3, 1)
+    s2, b = _sheet(proj, 2, 1)
+    s3, c = _sheet(proj, 4, 1)
+    s4, d = _sheet(proj, 1, 1)
+    assert _nums(proj, a + b + c + d) == [(1, k) for k in range(1, 11)]
+    proj.place(c[1], (1, 1))
+    ev = proj.set_lote([s3, s4], 2)
+    assert ev["action"] == "lote_changed" and ev["scan_ids"] == [s3, s4] and ev["lote"] == 2
+    assert _nums(proj, c + d) == [(2, 1), (2, 2), (2, 3), (2, 4), (2, 5)]
+    assert _nums(proj, a + b) == [(1, k) for k in range(1, 6)]           # the sheets that stay keep their numbers
+    assert proj.model.scans[s3]["lote"] == 2 and proj.model.scans[s1]["lote"] == 1
+    assert proj.piece(c[1]).estado == "colocada" and proj.piece(c[1]).celula == (1, 1)
+    _ok(proj)
+    proj.save()
+    assert proj.check_invariants(disk=True) == []
+    with open(proj.p("scans", f"{s3}.json"), encoding="utf-8") as f:
+        js = json.load(f)
+    assert js["lote"] == 2 and sorted(p["n_no_lote"] for p in js["pieces"]) == [1, 2, 3, 4]
+    q = Project.open(proj.path)                                          # replay reproduces it
+    assert _nums(q, a + b + c + d) == _nums(proj, a + b + c + d)
+    assert q.model.scans[s4]["lote"] == 2
+    rb, rp = replay(proj.log_path, proj.profile)
+    assert rb == q.board and rp == q.model.pieces_state()
+    assert q.check_invariants() == []
+    with pytest.raises(StateError):
+        proj.set_lote(["S9999"], 2)
+    with pytest.raises(StateError):
+        proj.set_lote([s1], 2, renumber=False)                            # #1-3 clash with lote 2 #1-3
+
+
+def test_relot_continuous_across_sheets_and_into_used_bag(proj):
+    s1, a = _sheet(proj, 3, 1)
+    s2, b = _sheet(proj, 2, 5)
+    s3, c = _sheet(proj, 2, 5)
+    proj.set_lote([s3, s2], 1)        # scan order given by the caller: s3 first, then s2
+    assert _nums(proj, a) == [(1, 1), (1, 2), (1, 3)]
+    assert _nums(proj, c) == [(1, 4), (1, 5)] and _nums(proj, b) == [(1, 6), (1, 7)]
+    _ok(proj)
+
+
+def test_relot_stable_when_a_sheet_leaves(proj):
+    s1, a = _sheet(proj, 2, 1)
+    s2, b = _sheet(proj, 3, 1)
+    s3, c = _sheet(proj, 2, 1)
+    proj.set_lote([s2], 3)
+    assert _nums(proj, a + c) == [(1, 1), (1, 2), (1, 6), (1, 7)]     # gap left, no renumbering of the stayers
+    assert _nums(proj, b) == [(3, 1), (3, 2), (3, 3)]
+    s4, d = _sheet(proj, 1, 1)                                        # a new sheet continues after the max
+    assert _nums(proj, d) == [(1, 8)]
+    _ok(proj)
+
+
+def test_invariant_duplicate_number_in_bag(proj):
+    sid = proj.add_scan(None, dpi=300, lote=1)
+    proj.add_piece(sid, {"index_in_scan": 0, "n_no_lote": 1, "shape": _RECT})
+    proj.add_piece(sid, {"index_in_scan": 1, "n_no_lote": 1, "shape": _RECT})
+    assert any("repetido" in e for e in proj.check_invariants())
+
+
+def test_relot_cli_rewrites_overlays(tmp_path):
+    from src.confirm import main as cmain
+    from src.ingest import main as imain, sheet_overlay
+    bg = np.full((1000, 1400, 3), (40, 160, 60), np.uint8)
+    for x, y in ((300, 320), (620, 330)):
+        bg[y:y + 210, x:x + 220] = (200, 40, 40)
+    scan = tmp_path / "scan.png"
+    Image.fromarray(bg).save(scan)
+    proj, pp = str(tmp_path / "proj"), _profile_path(tmp_path)
+    for _ in range(3):
+        assert imain([str(scan), "--lote", "1", "--project", proj, "--profile", pp]) == 0
+    ov = os.path.join(proj, "overlays", "S0003.jpg")
+    t0 = os.path.getmtime(ov)
+    os.utime(ov, (t0 - 100, t0 - 100))
+    assert cmain(["--relot", "S0003", "--lote", "2", "--project", proj]) == 0
+    assert os.path.getmtime(ov) > t0 - 50
+    pr = Project.open(proj)
+    assert sorted(_nums(pr, [p.id for p in pr.pieces.values() if p.scan_id == "S0003"])) == [(2, 1), (2, 2)]
+    assert pr.check_invariants(disk=True) == []
+    pid = next(p.id for p in pr.pieces.values() if p.scan_id == "S0003")
+    a = sheet_overlay(pr, "S0003", highlight=pid, max_px=500)
+    assert a.shape == (357, 500, 3)
+    assert cmain(["--relot", "S0003", "--project", proj]) == 1        # --lote required
+    amber = lambda im: int((np.abs(im.astype(int) - (0, 191, 255)).sum(-1) < 12).sum())
+    assert amber(a) > 3 * amber(sheet_overlay(pr, "S0003", max_px=500))   # border pieces are orange, close to amber

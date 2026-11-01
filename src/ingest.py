@@ -34,12 +34,16 @@ from typing import Optional
 import numpy as np
 
 __all__ = ["MIN_PIECE_MM2", "DOUBLE_AREA_FACTOR", "grid_order", "local_mean_lab", "ingest_scan",
-		   "draw_overlay", "open_project", "add_project_args", "main"]
+		   "draw_overlay", "sheet_overlay", "write_overlay", "open_project", "add_project_args", "main"]
 
 MIN_PIECE_MM2 = 150.0        # below this a component is a fragment (strip remnant, dust), never a piece
 DOUBLE_AREA_FACTOR = 1.6     # area > 1.6 x median of the scan -> objeto_duplo (two mated pieces?)
 ROW_BREAK_FRAC = 0.5         # grid_order: new row when the centre y jumps > 0.5 x median bbox height
 OVERLAY_MAX_W = 2400         # px, width of the saved overlay
+HIGHLIGHT_RGB = (255, 191, 0)  # amber: the highlighted piece of sheet_overlay
+COL_DOUBLE = (255, 0, 255)     # objeto_duplo
+COL_BORDER = (255, 160, 0)     # piece with a flat side
+COL_PIECE = (0, 255, 255)
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_PROJECT = os.path.join("projects", "alpes")
 DEFAULT_PROFILE = os.path.join(REPO, "projects", "alpes", "puzzle.json")
@@ -96,26 +100,42 @@ def _mean_lab(rgba: np.ndarray) -> list:
 		return local_mean_lab(rgba)
 
 
-def draw_overlay(rgb: np.ndarray, items: list, title: str = "") -> np.ndarray:
-	"""Scan with each piece contour and a large number; ``items`` = [{contour, n, colour}] (RGB)."""
+def draw_overlay(rgb: np.ndarray, items: list, title: str = "", *, max_w: Optional[float] = OVERLAY_MAX_W,
+				 max_px: Optional[float] = None) -> np.ndarray:
+	"""Scan (RGB) with each piece contour and a large number, returned as BGR.
+
+	``items`` = [{contour (scan px), n, colour (RGB), highlight (opt.)}]; a highlighted item
+	gets a thicker amber contour and a larger, thicker label. Downscale so the width is
+	<= ``max_w`` and the long side <= ``max_px`` (None = no limit); labels scale with the
+	output width.
+	"""
 	import cv2
 	img = np.ascontiguousarray(rgb[..., ::-1]).copy()
 	H, W = img.shape[:2]
-	s = min(1.0, OVERLAY_MAX_W / float(W))
+	s = 1.0
+	if max_w:
+		s = min(s, float(max_w) / W)
+	if max_px:
+		s = min(s, float(max_px) / max(H, W))
 	if s < 1.0:
-		img = cv2.resize(img, (int(W * s), int(H * s)), interpolation=cv2.INTER_AREA)
+		img = cv2.resize(img, (max(1, int(W * s)), max(1, int(H * s))), interpolation=cv2.INTER_AREA)
 	lw = max(2, int(round(img.shape[1] / 600)))
 	fs = img.shape[1] / 900.0
-	for it in items:
+	for it in sorted(items, key=lambda t: bool(t.get("highlight"))):   # highlight drawn last (on top)
 		cnt = (np.asarray(it["contour"], float).reshape(-1, 2) * s).astype(np.int32)
-		col = tuple(int(v) for v in it.get("colour", (0, 255, 255))[::-1])
-		cv2.polylines(img, [cnt], True, col, lw, cv2.LINE_AA)
+		if len(cnt) == 0:
+			continue
+		hl = bool(it.get("highlight"))
+		col = tuple(int(v) for v in (HIGHLIGHT_RGB if hl else it.get("colour", COL_PIECE))[::-1])
+		w, f = (3 * lw, 1.4 * fs) if hl else (lw, fs)
+		cv2.polylines(img, [cnt], True, col, w, cv2.LINE_AA)
 		txt = str(it["n"])
-		(tw, th), _ = cv2.getTextSize(txt, cv2.FONT_HERSHEY_SIMPLEX, fs, 3 * lw)
+		tt = (5 if hl else 3) * lw
+		(tw, th), _ = cv2.getTextSize(txt, cv2.FONT_HERSHEY_SIMPLEX, f, tt)
 		cx, cy = cnt.mean(0)
 		org = (int(cx - tw / 2), int(cy + th / 2))
-		cv2.putText(img, txt, org, cv2.FONT_HERSHEY_SIMPLEX, fs, (0, 0, 0), 3 * lw + 4, cv2.LINE_AA)
-		cv2.putText(img, txt, org, cv2.FONT_HERSHEY_SIMPLEX, fs, (255, 255, 255), 3 * lw, cv2.LINE_AA)
+		cv2.putText(img, txt, org, cv2.FONT_HERSHEY_SIMPLEX, f, (0, 0, 0), tt + 4, cv2.LINE_AA)
+		cv2.putText(img, txt, org, cv2.FONT_HERSHEY_SIMPLEX, f, col if hl else (255, 255, 255), tt, cv2.LINE_AA)
 	if title:
 		cv2.putText(img, title, (20, int(40 * fs) + 10), cv2.FONT_HERSHEY_SIMPLEX, fs * 0.8, (0, 0, 0), 2 * lw + 4,
 					cv2.LINE_AA)
@@ -124,7 +144,66 @@ def draw_overlay(rgb: np.ndarray, items: list, title: str = "") -> np.ndarray:
 	return img
 
 
+def piece_label(p) -> int:
+	"""Number printed for a piece on its sheet: ``n_no_lote``, else ``index_in_scan + 1``."""
+	return int(p.n_no_lote) if p.n_no_lote is not None else int(p.index_in_scan) + 1
+
+
+def _piece_colour(p) -> tuple:
+	if p.flags.get("objeto_duplo"):
+		return COL_DOUBLE
+	return COL_BORDER if p.n_flat else COL_PIECE
+
+
 # ---------------------------------------------------------------- service
+def _scan_path(scan: dict) -> str:
+	f = scan.get("file") or ""
+	return f if os.path.isabs(f) else os.path.join(REPO, f)
+
+
+def sheet_overlay(project, scan_id: str, *, highlight: Optional[str] = None, max_px: Optional[float] = None,
+				  max_w: Optional[float] = None) -> np.ndarray:
+	"""Numbered sheet of ``scan_id`` (BGR): the scan re-read from ``scans[sid]["file"]`` (repo
+	relative or absolute), each piece's contour (:meth:`Project.contour_px`) and its
+	:func:`piece_label` (the bag number, as written on the sheet kept with the bag).
+
+	``highlight`` = piece id drawn in amber with a thicker label; ``max_px`` / ``max_w`` cap
+	the long side / width. Raises ``ValueError`` if the scan or its image is missing.
+	"""
+	from PIL import Image
+	scan = project.model.scans.get(scan_id)
+	if scan is None:
+		raise ValueError(f"scan desconhecido {scan_id}")
+	fp = _scan_path(scan)
+	if not os.path.exists(fp):
+		raise ValueError(f"imagem do scan {scan_id} não encontrada: {fp}")
+	with Image.open(fp) as im:
+		rgb = np.asarray(im.convert("RGB"))
+	pcs = sorted((p for p in project.pieces.values() if p.scan_id == scan_id), key=lambda q: (piece_label(q), q.id))
+	items = []
+	for p in pcs:
+		cnt = project.contour_px(p.id)
+		if cnt is None:
+			continue
+		items.append({"contour": cnt, "n": piece_label(p), "colour": _piece_colour(p), "highlight": p.id == highlight})
+	lote = scan.get("lote")
+	title = f"{scan_id} lote {lote}: {len(pcs)} pecas" if lote is not None else f"{scan_id}: {len(pcs)} pecas"
+	return draw_overlay(rgb, items, title=title, max_w=max_w, max_px=max_px)
+
+
+def write_overlay(project, scan_id: str) -> str:
+	"""Write ``overlays/<scan_id>.jpg`` (:func:`sheet_overlay`, width <= ``OVERLAY_MAX_W``); returns its path."""
+	import cv2
+	ov = sheet_overlay(project, scan_id, max_w=OVERLAY_MAX_W)
+	os.makedirs(project.p("overlays"), exist_ok=True)
+	ov_path = project.p("overlays", f"{scan_id}.jpg")
+	ok, buf = cv2.imencode(".jpg", ov, [cv2.IMWRITE_JPEG_QUALITY, 88])
+	if not ok:
+		raise ValueError(f"falha a codificar o overlay de {scan_id}")
+	buf.tofile(ov_path)
+	return ov_path
+
+
 def ingest_scan(project, scan_path: str, lote: Optional[int], *, dpi: float = 300, kind: str = "soltas",
 				known_cells: Optional[dict] = None, segment=None) -> dict:
 	"""Segment ``scan_path`` and add its pieces to ``project`` (then ``project.save()``).
@@ -133,7 +212,6 @@ def ingest_scan(project, scan_path: str, lote: Optional[int], *, dpi: float = 30
 	overlay, known: [...], n_segmented}`` or ``{'error': str}``. ``segment`` overrides
 	``segment_scan`` (tests).
 	"""
-	import cv2
 	from PIL import Image
 	from src.segmentation import piece_to_rgba
 	from src.shape import analyse
@@ -165,7 +243,7 @@ def ingest_scan(project, scan_path: str, lote: Optional[int], *, dpi: float = 30
 	n0 = max([q.n_no_lote or 0 for q in project.pieces.values() if lote is not None and q.lote == lote
 			  and q.scan_id != sid] or [0])
 	os.makedirs(project.p("crops"), exist_ok=True)
-	ids, numbers, double, items = [], {}, [], []
+	ids, numbers, double = [], {}, []
 	for (p, area), n in sorted(zip(kept, order), key=lambda t: t[1]):
 		cnt = np.asarray(p["contour"]).reshape(-1, 2)
 		shape = analyse(cnt, mmpp)
@@ -186,12 +264,7 @@ def ingest_scan(project, scan_path: str, lote: Optional[int], *, dpi: float = 30
 		numbers[pid] = n0 + n
 		if dup:
 			double.append(pid)
-		colour = (255, 0, 255) if dup else ((255, 160, 0) if shape.n_flat else (0, 255, 255))
-		items.append({"contour": cnt, "n": n0 + n, "colour": colour})
-	ov = draw_overlay(np.asarray(photo), items, title=f"{sid} lote {lote}: {len(ids)} pecas")
-	os.makedirs(project.p("overlays"), exist_ok=True)
-	ov_path = project.p("overlays", f"{sid}.jpg")
-	cv2.imencode(".jpg", ov, [cv2.IMWRITE_JPEG_QUALITY, 88])[1].tofile(ov_path)
+	ov_path = write_overlay(project, sid)
 
 	known = []
 	if known_cells:

@@ -63,7 +63,7 @@ ACTIONS = (
 	"scan_added", "piece_added", "placed", "unplaced", "twin_confirmed", "twin_rejected", "hole_confirmed",
 	"hole_rejected", "pair_registered", "pair_confirmed", "pair_rejected", "fetch_listed", "section_registered",
 	"section_anchored", "section_unanchored", "piece_discarded", "photo_registered", "cell_occupied_by_photo",
-	"cell_cleared_by_photo", "position_known", "position_placeable", "same_as",
+	"cell_cleared_by_photo", "position_known", "position_placeable", "same_as", "lote_changed",
 )
 ID_PREFIXES = ("S", "P", "T", "G", "F")
 LOOSE_STATES = ("solta", "emparelhada")
@@ -143,7 +143,7 @@ class Piece:
 	def dynamic(self) -> dict:
 		"""The part of the piece the log changes (compared by the invariants)."""
 		return {"estado": self.estado, "celula": self.celula, "theta_deg": self.theta_deg,
-				"seccao_id": self.seccao_id, "same_as": self.same_as}
+				"seccao_id": self.seccao_id, "same_as": self.same_as, "lote": self.lote, "n_no_lote": self.n_no_lote}
 
 
 @dataclass
@@ -420,6 +420,19 @@ def apply(m: Model, ev: dict) -> None:
 		m.board.set(_cell(ev["cell"]), {"estado": "vazia", "peca_id": None, "fonte": "foto", "foto_id": ev["photo"]})
 	elif a == "same_as":
 		_piece(m, ev["piece"]).same_as = ev["other"]
+	elif a == "lote_changed":
+		lote = ev.get("lote")
+		sids = set(ev["scan_ids"])
+		for sid in sids:
+			if sid not in m.scans:
+				raise StateError(f"scan desconhecido {sid}")
+			m.scans[sid]["lote"] = lote
+		nums = ev.get("pieces") or {}
+		for p in m.pieces.values():
+			if p.scan_id in sids:
+				p.lote = lote
+				if p.id in nums:
+					p.n_no_lote = None if nums[p.id] is None else int(nums[p.id])
 	elif a in ("twin_confirmed", "hole_confirmed", "fetch_listed", "position_placeable"):
 		pass  # informative events (metrics / notifications); no state change
 	else:
@@ -707,6 +720,52 @@ class Project:
 		self._emit("piece_added", piece=piece.to_dict())
 		return pid
 
+	def set_lote(self, scan_ids, lote: Optional[int], *, renumber: bool = True) -> dict:
+		"""Move whole scans (sheets) to bag ``lote``; logs ``lote_changed`` and returns the event.
+
+		With ``renumber`` the pieces get continuous numbers in the target bag: scans in the
+		given order, within each scan by the current ``n_no_lote`` (the ingest reading order,
+		ties / missing by ``index_in_scan``), starting after the largest number already used in
+		the target bag by scans not in ``scan_ids`` (same rule as :func:`src.ingest.ingest_scan`).
+		``lote=None`` numbers each scan from 1. Scans left behind keep their numbers (stable).
+		Without ``renumber`` the numbers are kept and a clash in the target bag is an error.
+		"""
+		sids = [str(s) for s in scan_ids]
+		if not sids:
+			raise StateError("set_lote: nenhum scan indicado")
+		if len(set(sids)) != len(sids):
+			raise StateError(f"set_lote: scans repetidos {sids}")
+		for sid in sids:
+			if sid not in self.model.scans:
+				raise StateError(f"scan desconhecido {sid}")
+		lote = None if lote is None else int(lote)
+		inf = float("inf")
+		by_scan = {sid: sorted((p for p in self.pieces.values() if p.scan_id == sid),
+							   key=lambda q: (q.n_no_lote if q.n_no_lote is not None else inf, q.index_in_scan, q.id))
+				   for sid in sids}
+		nums = {}
+		if renumber:
+			n0 = 0
+			if lote is not None:
+				n0 = max([q.n_no_lote or 0 for q in self.pieces.values() if q.lote == lote and q.scan_id not in sids]
+						 or [0])
+			for sid in sids:
+				if lote is None:
+					n0 = 0
+				for q in by_scan[sid]:
+					n0 += 1
+					nums[q.id] = n0
+		else:
+			nums = {q.id: q.n_no_lote for sid in sids for q in by_scan[sid]}
+			if lote is not None:
+				used = {q.n_no_lote for q in self.pieces.values()
+						if q.lote == lote and q.scan_id not in sids and q.n_no_lote is not None}
+				mine = [n for n in nums.values() if n is not None]
+				clash = sorted((used & set(mine)) | {n for n in mine if mine.count(n) > 1})
+				if clash:
+					raise StateError(f"set_lote sem renumerar: números {clash} repetidos no lote {lote}")
+		return self._emit("lote_changed", scan_ids=sids, lote=lote, pieces=nums)
+
 	def place(self, piece_id: str, cell, *, origin: str = "manual", rank=None, score=None, fonte: str = "log",
 			  theta_deg: Optional[float] = None) -> dict:
 		"""Place a piece in ``cell`` (vazia or ocupada_legado; never over another piece)."""
@@ -976,7 +1035,8 @@ class Project:
 		"""List of violated invariants (empty = all hold).
 
 		board == replay(log); pieces' dynamic state == replay; a cell holds <= 1 piece; a
-		``colocada`` piece has exactly one cell and that cell points back to it; ids unique.
+		``colocada`` piece has exactly one cell and that cell points back to it; ids unique;
+		``n_no_lote`` unique within a bag; a piece's ``lote`` is its scan's ``lote``.
 		With ``disk=True`` also ``board.json`` == replay (call after :meth:`save`).
 		"""
 		errs = []
@@ -1012,4 +1072,16 @@ class Project:
 		ids = [ev["piece"]["id"] for ev in self.events() if ev["action"] == "piece_added"]
 		if len(ids) != len(set(ids)):
 			errs.append("ids de peça repetidos no log")
+		num = {}
+		for p in sorted(self.pieces.values(), key=lambda q: q.id):
+			scan = self.model.scans.get(p.scan_id)
+			if scan is None:
+				errs.append(f"{p.id}: scan {p.scan_id} desconhecido")
+			elif p.lote != scan.get("lote"):
+				errs.append(f"{p.id}: lote {p.lote} != lote {scan.get('lote')} do scan {p.scan_id}")
+			if p.lote is not None:
+				k = (p.lote, p.n_no_lote)
+				if k in num:
+					errs.append(f"lote {p.lote} nº {p.n_no_lote} repetido ({num[k]}, {p.id})")
+				num[k] = p.id
 		return errs

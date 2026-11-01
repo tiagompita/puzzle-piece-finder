@@ -8,6 +8,7 @@ Usage::
 	python -m src.confirm --anchor G0003 L C --rot R [--mirror]
 	python -m src.confirm --unanchor G0003
 	python -m src.confirm P0123 --discard
+	python -m src.confirm --relot S0007 S0008 --lote 2
 
 After the change the invariants are checked and :func:`src.query.run_query` is re-run
 incrementally on the affected cells (the changed cells and their twins) and pieces
@@ -16,6 +17,11 @@ incrementally on the affected cells (the changed cells and their twins) and piec
 
 Pair rule: placing a piece of an active pair confirms the pair and gives the partner its
 cell (``profile.twin`` of the new cell) as ``posicao_conhecida``, origin ``par``.
+
+``--relot`` (:func:`relot`) moves whole sheets to another bag (``Project.set_lote``: continuous
+renumbering in the target bag, the sheets left behind keep their numbers) and rewrites their
+numbered overlays. It does not re-query: the twin/pair steps do not depend on the bag, only the
+``lote`` / ``n_no_lote`` printed in ``fetch.md`` do, so re-run ``python -m src.query`` to refresh it.
 """
 
 from __future__ import annotations
@@ -24,7 +30,7 @@ import argparse
 import sys
 from typing import Optional
 
-__all__ = ["confirm", "main"]
+__all__ = ["confirm", "relot", "main"]
 
 _CONFIRM_ACTION = {"gemeo": "twin_confirmed", "borda": "twin_confirmed", "par": "twin_confirmed",
 				   "buraco": "hole_confirmed", "fronteira": "hole_confirmed"}
@@ -140,6 +146,31 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			"affected_pieces": sorted(pieces), "entries": entries, "invariants": bad}
 
 
+def relot(pr, scan_ids, lote, *, overlays: bool = True) -> dict:
+	"""Move ``scan_ids`` to bag ``lote`` (renumbered), save, rewrite their overlays.
+
+	Returns ``{event, numbers: {pid: (old_lote, old_n, new_lote, new_n)}, overlays, invariants}``
+	or ``{'error': str}`` (nothing logged).
+	"""
+	from src.ingest import write_overlay
+	old = {p.id: (p.lote, p.n_no_lote) for p in pr.pieces.values() if p.scan_id in set(scan_ids)}
+	try:
+		ev = pr.set_lote(scan_ids, lote, renumber=True)
+	except ValueError as e:
+		return {"error": str(e)}
+	pr.save()
+	paths, errs = [], []
+	if overlays:
+		for sid in ev["scan_ids"]:
+			try:
+				paths.append(write_overlay(pr, sid))
+			except ValueError as e:
+				errs.append(f"overlay {sid}: {e}")
+	nums = {pid: (*old[pid], pr.piece(pid).lote, pr.piece(pid).n_no_lote) for pid in sorted(old)}
+	return {"event": ev, "numbers": nums, "overlays": paths, "overlay_errors": errs,
+			"invariants": pr.check_invariants(disk=True)}
+
+
 def main(argv=None) -> int:
 	from src.ingest import add_project_args, open_project
 	ap = argparse.ArgumentParser(prog="python -m src.confirm", description="Confirma/rejeita uma sugestão.")
@@ -151,6 +182,8 @@ def main(argv=None) -> int:
 	g.add_argument("--anchor", nargs=3, metavar=("G", "L", "C"))
 	g.add_argument("--unanchor", metavar="G")
 	g.add_argument("--discard", action="store_true")
+	g.add_argument("--relot", nargs="+", metavar="S", help="scans (folhas) a mudar de lote; exige --lote")
+	ap.add_argument("--lote", type=int, default=None, help="lote de destino de --relot")
 	ap.add_argument("--origin", default=None, help="gemeo | par | borda | buraco | manual (omissão: a da lista)")
 	ap.add_argument("--rot", type=int, default=0)
 	ap.add_argument("--mirror", action="store_true")
@@ -159,6 +192,29 @@ def main(argv=None) -> int:
 	ap.add_argument("--no-requery", action="store_true")
 	add_project_args(ap)
 	args = ap.parse_args(argv)
+	if args.relot:
+		if args.lote is None:
+			print("erro: --relot exige --lote N")
+			return 1
+		pr = open_project(args)
+		r = relot(pr, args.relot, args.lote)
+		if "error" in r:
+			print(f"erro: {r['error']}")
+			return 1
+		for sid in r["event"]["scan_ids"]:
+			ns = [v[3] for pid, v in r["numbers"].items() if pr.piece(pid).scan_id == sid]
+			print(f"{sid} -> lote {args.lote}: {len(ns)} peças #{min(ns)}-{max(ns)}" if ns else f"{sid}: sem peças")
+		for pid, (l0, n0, l1, n1) in r["numbers"].items():
+			print(f"  {pid}: lote {l0} #{n0} -> lote {l1} #{n1}")
+		for pth in r["overlays"]:
+			print(f"overlay: {pth}")
+		for e in r["overlay_errors"]:
+			print(f"AVISO: {e}")
+		if r["invariants"]:
+			print("INVARIANTES VIOLADAS: " + "; ".join(r["invariants"]))
+			return 1
+		print("fetch.md/fetch.json ainda têm os números antigos: corre `python -m src.query` para os atualizar")
+		return 0
 	needs_piece = args.cell or args.reject or args.position_known or args.discard
 	if needs_piece and not args.piece_id:
 		print("erro: falta o id da peça")

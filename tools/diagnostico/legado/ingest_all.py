@@ -63,9 +63,9 @@ GT_SCANS = {
 	"BD": "images/pieces/gt_canto_BD_soltas_300dpi.jpg",
 }
 GT_THETA_EXPECTED = {"A1": 0, "B2": 180, "BE": 90, "BD": 90}   # docs: A1 F up; B2 rotated in place; BE/BD block 90 deg anticlockwise
-SKY = [("f1p1", "images/pieces/ereal2_ceu_f1p1_300dpi.jpg"), ("f1p2", "images/pieces/ereal2_ceu_f1p2_300dpi.jpg"),
-	   ("f2p1", "images/pieces/ereal2_ceu_f2p1_300dpi.jpg"), ("f2p2", "images/pieces/ereal2_ceu_f2p2_300dpi.jpg")]
-SKY_LOTE = 1
+# (sheet, scan, lote): the bags are physical (Tiago, 2026-11-01): lote 1 = f1p1 + f1p2, lote 2 = f2p1 + f2p2
+SKY = [("f1p1", "images/pieces/ereal2_ceu_f1p1_300dpi.jpg", 1), ("f1p2", "images/pieces/ereal2_ceu_f1p2_300dpi.jpg", 1),
+	   ("f2p1", "images/pieces/ereal2_ceu_f2p1_300dpi.jpg", 2), ("f2p2", "images/pieces/ereal2_ceu_f2p2_300dpi.jpg", 2)]
 CONFIRMATIONS = {"BE(2,4)": {"sheet": "f2p1", "cell": (2, 61), "kind": "cell"},
 				 "BE(5,5)": {"sheet": "f1p1", "cell": (5, 60), "kind": "position_known"}}
 CONF_MM = 3.0                 # same tolerance as ereal2.find_by_centre
@@ -272,16 +272,16 @@ def stage_sky(pr, summary) -> None:
 	mm = pr.profile.mm_per_px()
 	summary["lote1"] = {"scans": {}}
 	by_sheet = {}
-	for sheet, rel in SKY:
+	for sheet, rel, lote in SKY:
 		t0 = time.time()
-		r = ingest_scan(pr, os.path.join(REPO, rel), SKY_LOTE, dpi=pr.profile.dpi, kind="soltas")
+		r = ingest_scan(pr, os.path.join(REPO, rel), lote, dpi=pr.profile.dpi, kind="soltas")
 		if "error" in r:
-			raise SystemExit(f"lote 1 {sheet}: {r['error']}")
+			raise SystemExit(f"lote {lote} {sheet}: {r['error']}")
 		by_sheet[sheet] = r["pieces"]
 		ns = [r["numbers"][p] for p in r["pieces"]]
-		summary["lote1"]["scans"][sheet] = {"scan": r["scan_id"], "n": len(r["pieces"]), "n_no_lote": [min(ns), max(ns)],
+		summary["lote1"]["scans"][sheet] = {"scan": r["scan_id"], "lote": lote, "n": len(r["pieces"]), "n_no_lote": [min(ns), max(ns)],
 											"rejeitados": r["rejected"], "duplos": r["double"]}
-		print(f"lote 1 {sheet}: {r['scan_id']} {len(r['pieces'])} peças #{min(ns)}-{max(ns)} rejeitados "
+		print(f"lote {lote} {sheet}: {r['scan_id']} {len(r['pieces'])} peças #{min(ns)}-{max(ns)} rejeitados "
 			  f"{len(r['rejected'])} duplos {len(r['double'])} ({time.time() - t0:.0f} s)")
 	conf = json.load(open(os.path.join(GEM, "ereal2_confirmacoes.json"), encoding="utf-8"))
 	summary["confirmacoes"] = []
