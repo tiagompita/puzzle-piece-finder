@@ -208,7 +208,7 @@
   "mirror": false,
   "fonte": "legado_scan",
   "confianca": "alta",
-  "margin": 1.318
+  "margin": 1.822
  },
  "candidates": [
   {
@@ -218,8 +218,8 @@
    ],
    "rot": 90,
    "mirror": false,
-   "score": 21.411,
-   "margin": 1.318
+   "score": 15.375,
+   "margin": 1.822
   },
   {
    "cell0": [
@@ -228,8 +228,8 @@
    ],
    "rot": 180,
    "mirror": false,
-   "score": 28.221,
-   "margin": 1.318
+   "score": 28.019,
+   "margin": 1.822
   },
   {
    "cell0": [
@@ -238,9 +238,9 @@
    ],
    "rot": 0,
    "mirror": false,
-   "score": 58.539,
-   "margin": 1.318
+   "score": 58.488,
+   "margin": 1.822
   }
  ],
- "notes": "montado_p05 comp 0: alta; margem 1.32; "
+ "notes": "montado_p05 comp 0: alta; margem 1.82; "
 }

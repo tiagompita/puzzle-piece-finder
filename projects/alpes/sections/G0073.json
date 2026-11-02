@@ -3,21 +3,13 @@
  "scan_id": "S0024",
  "kind": "blocos",
  "cells_local": {
-  "P0849": [
+  "P0834": [
    0,
-   1
-  ],
-  "P0851": [
-   1,
    0
   ],
-  "P0852": [
-   1,
+  "P0835": [
+   0,
    1
-  ],
-  "P0853": [
-   1,
-   2
   ]
  },
  "anchor": {
@@ -33,34 +25,34 @@
  "candidates": [
   {
    "cell0": [
-    8,
-    14
+    17,
+    36
    ],
-   "rot": 0,
+   "rot": 90,
    "mirror": false,
-   "score": 23.391,
-   "margin": 1.008
+   "score": 10.63,
+   "margin": 1.322
   },
   {
    "cell0": [
-    16,
-    12
+    17,
+    37
    ],
-   "rot": 180,
+   "rot": 90,
    "mirror": false,
-   "score": 23.588,
-   "margin": 1.008
+   "score": 14.048,
+   "margin": 1.322
   },
   {
    "cell0": [
-    16,
-    60
+    14,
+    61
    ],
-   "rot": 180,
+   "rot": 90,
    "mirror": false,
-   "score": 23.9,
-   "margin": 1.008
+   "score": 15.108,
+   "margin": 1.322
   }
  ],
- "notes": "blocos_p01 comp 1: ambigua; margem 1.01; margem 1.01, ganho 0.2; blocos_p01 (peças 16–20, 4 peças): A filas 8–9, colunas 14–16 (rot 0°) ou B filas 15–16, colunas 10–12 (rot 180°) ou C filas 15–16, colunas 58–60 (rot 180°)?"
+ "notes": "blocos_p01 comp 4: ambigua; margem 1.32; margem 1.32, ganho 3.4; blocos_p01 (peças 1–2, 2 peças): A filas 17–18, colunas 36–36 (rot 90°) ou B filas 17–18, colunas 37–37 (rot 90°) ou C filas 14–15, colunas 61–61 (rot 90°)?"
 }

@@ -5,7 +5,7 @@
  "dpi": 300.0,
  "lote": null,
  "kind": "montado",
- "date": "2026-11-01T05:38:36",
+ "date": "2026-11-02T00:45:03",
  "meta": {
   "n_segmented": 44,
   "n_rejected": 0,
@@ -22,7 +22,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0301",
    "flags": {
     "touches_frame": false,
@@ -62,7 +62,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0302",
    "flags": {
     "touches_frame": false,
@@ -102,7 +102,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0303",
    "flags": {
     "touches_frame": false,
@@ -142,7 +142,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0304",
    "flags": {
     "touches_frame": false,
@@ -182,7 +182,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0305",
    "flags": {
     "touches_frame": false,
@@ -222,7 +222,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0306",
    "flags": {
     "touches_frame": false,
@@ -262,7 +262,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0307",
    "flags": {
     "touches_frame": false,
@@ -302,7 +302,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0308",
    "flags": {
     "touches_frame": false,
@@ -342,7 +342,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0309",
    "flags": {
     "touches_frame": false,
@@ -382,7 +382,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0310",
    "flags": {
     "touches_frame": false,
@@ -422,7 +422,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0311",
    "flags": {
     "touches_frame": false,
@@ -462,7 +462,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0312",
    "flags": {
     "touches_frame": false,
@@ -502,7 +502,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0313",
    "flags": {
     "touches_frame": false,
@@ -542,7 +542,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0314",
    "flags": {
     "touches_frame": false,
@@ -582,7 +582,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0315",
    "flags": {
     "touches_frame": false,
@@ -622,7 +622,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0020",
    "flags": {
     "touches_frame": false,
@@ -662,7 +662,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0317",
    "flags": {
     "touches_frame": false,
@@ -702,7 +702,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0318",
    "flags": {
     "touches_frame": false,
@@ -742,7 +742,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0319",
    "flags": {
     "touches_frame": false,
@@ -782,7 +782,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0320",
    "flags": {
     "touches_frame": false,
@@ -822,7 +822,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0321",
    "flags": {
     "touches_frame": false,
@@ -862,7 +862,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0322",
    "flags": {
     "touches_frame": false,
@@ -902,7 +902,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0323",
    "flags": {
     "touches_frame": false,
@@ -942,7 +942,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0324",
    "flags": {
     "touches_frame": false,
@@ -982,7 +982,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0325",
    "flags": {
     "touches_frame": false,
@@ -1022,7 +1022,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0326",
    "flags": {
     "touches_frame": false,
@@ -1062,7 +1062,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0327",
    "flags": {
     "touches_frame": false,
@@ -1102,7 +1102,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0018",
    "flags": {
     "touches_frame": false,
@@ -1142,7 +1142,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0329",
    "flags": {
     "touches_frame": false,
@@ -1182,7 +1182,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0330",
    "flags": {
     "touches_frame": false,
@@ -1222,7 +1222,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0331",
    "flags": {
     "touches_frame": false,
@@ -1262,7 +1262,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0332",
    "flags": {
     "touches_frame": false,
@@ -1302,7 +1302,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0333",
    "flags": {
     "touches_frame": false,
@@ -1342,7 +1342,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0017",
    "flags": {
     "touches_frame": false,
@@ -1382,7 +1382,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0335",
    "flags": {
     "touches_frame": false,
@@ -1422,7 +1422,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0336",
    "flags": {
     "touches_frame": false,
@@ -1462,7 +1462,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0337",
    "flags": {
     "touches_frame": false,
@@ -1502,7 +1502,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0338",
    "flags": {
     "touches_frame": false,
@@ -1542,7 +1542,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0016",
    "flags": {
     "touches_frame": false,
@@ -1582,7 +1582,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0340",
    "flags": {
     "touches_frame": false,
@@ -1622,7 +1622,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0341",
    "flags": {
     "touches_frame": false,
@@ -1662,7 +1662,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0342",
    "flags": {
     "touches_frame": false,
@@ -1702,7 +1702,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0343",
    "flags": {
     "touches_frame": false,
@@ -1742,7 +1742,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0066",
+   "seccao_id": "G0064",
    "same_as": "P0344",
    "flags": {
     "touches_frame": false,

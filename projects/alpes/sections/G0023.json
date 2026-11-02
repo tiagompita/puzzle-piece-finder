@@ -26,8 +26,19 @@
    ],
    "rot": 90,
    "mirror": false,
-   "score": 7.419,
-   "margin": 1.246
+   "score": 7.56,
+   "margin": 1.071
+  },
+  {
+   "cell0": [
+    3,
+    32
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 8.1,
+   "margin": 1.071,
+   "origem": "pista"
   },
   {
    "cell0": [
@@ -36,19 +47,9 @@
    ],
    "rot": 0,
    "mirror": false,
-   "score": 8.687,
-   "margin": 1.246
-  },
-  {
-   "cell0": [
-    8,
-    10
-   ],
-   "rot": 90,
-   "mirror": false,
-   "score": 9.242,
-   "margin": 1.246
+   "score": 8.484,
+   "margin": 1.071
   }
  ],
- "notes": "montado_p03 comp 7: ambigua; margem 1.25; 1 peça sem gémea; margem 1.25, ganho 1.8; montado_p03 (peça 12, 1 peças): A filas 7–7, colunas 13–13 (rot 90°) ou B filas 8–8, colunas 10–10 (rot 90°) ou C filas 7–7, colunas 14–14 (rot 0°)?"
+ "notes": "montado_p03 comp 7: ambigua; margem 1.07; 1 peça sem gémea; margem 1.07, ganho 2.1; G0023 (peça 12, 1 peças): A filas 7–7, colunas 13–13 (rot 90°) ou B filas 3–3, colunas 32–32 (rot 90°) ou C filas 3–3, colunas 33–33 (rot 90°)?"
 }

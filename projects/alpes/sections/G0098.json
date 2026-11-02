@@ -3,7 +3,7 @@
  "scan_id": "S0026",
  "kind": "blocos",
  "cells_local": {
-  "P0899": [
+  "P0904": [
    0,
    0
   ]
@@ -21,34 +21,34 @@
  "candidates": [
   {
    "cell0": [
-    2,
-    63
+    42,
+    59
    ],
-   "rot": 0,
+   "rot": 180,
    "mirror": false,
-   "score": 11.468,
-   "margin": 1.647
+   "score": 22.644,
+   "margin": 1.003
   },
   {
    "cell0": [
-    43,
-    61
+    42,
+    57
    ],
-   "rot": 90,
+   "rot": 180,
    "mirror": false,
-   "score": 18.891,
-   "margin": 1.647
+   "score": 22.715,
+   "margin": 1.003
   },
   {
    "cell0": [
-    43,
-    60
+    42,
+    57
    ],
    "rot": 90,
    "mirror": false,
-   "score": 18.905,
-   "margin": 1.647
+   "score": 23.354,
+   "margin": 1.003
   }
  ],
- "notes": "blocos_p03 comp 3: ambigua; margem 1.65; 1 peça sem gémea; blocos_p03 (peça 2, 1 peças): A filas 2–2, colunas 63–63 (rot 0°) ou B filas 43–43, colunas 61–61 (rot 90°) ou C filas 43–43, colunas 60–60 (rot 90°)?"
+ "notes": "blocos_p03 comp 6: ambigua; margem 1.00; 1 peça sem gémea; margem 1.00, ganho 0.1; blocos_p03 (peça 7, 1 peças): A filas 42–42, colunas 59–59 (rot 180°) ou B filas 42–42, colunas 57–57 (rot 180°) ou C filas 31–31, colunas 13–13 (rot 90°)?"
 }

@@ -5,7 +5,7 @@
  "dpi": 300.0,
  "lote": null,
  "kind": "montado",
- "date": "2026-11-01T05:36:30",
+ "date": "2026-11-02T00:42:32",
  "meta": {
   "n_segmented": 44,
   "n_rejected": 0,
@@ -1343,8 +1343,11 @@
    "index_in_scan": 31,
    "lote": null,
    "n_no_lote": 32,
-   "estado": "em_seccao",
-   "celula": null,
+   "estado": "colocada",
+   "celula": [
+    5,
+    22
+   ],
    "theta_deg": null,
    "seccao_id": "G0029",
    "same_as": null,
@@ -1383,8 +1386,11 @@
    "index_in_scan": 32,
    "lote": null,
    "n_no_lote": 33,
-   "estado": "em_seccao",
-   "celula": null,
+   "estado": "colocada",
+   "celula": [
+    6,
+    22
+   ],
    "theta_deg": null,
    "seccao_id": "G0030",
    "same_as": null,
@@ -1804,8 +1810,11 @@
    "index_in_scan": 42,
    "lote": null,
    "n_no_lote": 43,
-   "estado": "em_seccao",
-   "celula": null,
+   "estado": "colocada",
+   "celula": [
+    5,
+    20
+   ],
    "theta_deg": null,
    "seccao_id": "G0028",
    "same_as": null,
@@ -1844,8 +1853,11 @@
    "index_in_scan": 43,
    "lote": null,
    "n_no_lote": 44,
-   "estado": "em_seccao",
-   "celula": null,
+   "estado": "colocada",
+   "celula": [
+    6,
+    20
+   ],
    "theta_deg": null,
    "seccao_id": "G0028",
    "same_as": null,

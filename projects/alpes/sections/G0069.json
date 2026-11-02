@@ -1,11 +1,27 @@
 {
  "id": "G0069",
- "scan_id": "S0023",
- "kind": "montado",
+ "scan_id": "S0024",
+ "kind": "blocos",
  "cells_local": {
-  "P0777": [
+  "P0857": [
    0,
    0
+  ],
+  "P0858": [
+   0,
+   1
+  ],
+  "P0859": [
+   0,
+   2
+  ],
+  "P0860": [
+   0,
+   3
+  ],
+  "P0861": [
+   0,
+   4
   ]
  },
  "anchor": {
@@ -21,34 +37,34 @@
  "candidates": [
   {
    "cell0": [
-    5,
-    1
+    13,
+    20
    ],
    "rot": 180,
    "mirror": false,
-   "score": 5.473,
-   "margin": 1.63
+   "score": 19.457,
+   "margin": 1.03
   },
   {
    "cell0": [
-    1,
+    13,
+    18
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 20.044,
+   "margin": 1.03
+  },
+  {
+   "cell0": [
+    8,
     23
    ],
-   "rot": 270,
+   "rot": 180,
    "mirror": false,
-   "score": 8.921,
-   "margin": 1.63
-  },
-  {
-   "cell0": [
-    1,
-    24
-   ],
-   "rot": 270,
-   "mirror": false,
-   "score": 9.027,
-   "margin": 1.63
+   "score": 20.607,
+   "margin": 1.03
   }
  ],
- "notes": "montado_p15 comp 1: ambigua; margem 1.63; 1 peça sem gémea; montado_p15 (peça 3, 1 peças): A filas 5–5, colunas 1–1 (rot 180°) ou B filas 1–1, colunas 23–23 (rot 270°) ou C filas 1–1, colunas 24–24 (rot 270°)?"
+ "notes": "blocos_p01 comp 0: ambigua; margem 1.03; margem 1.03, ganho 0.6; blocos_p01 (peças 24–28, 5 peças): A filas 13–13, colunas 16–20 (rot 180°) ou B filas 13–13, colunas 14–18 (rot 180°) ou C filas 8–8, colunas 19–23 (rot 180°)?"
 }

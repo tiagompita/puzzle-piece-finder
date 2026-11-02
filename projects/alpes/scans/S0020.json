@@ -5,7 +5,7 @@
  "dpi": 300.0,
  "lote": null,
  "kind": "montado",
- "date": "2026-11-01T05:38:23",
+ "date": "2026-11-02T00:44:50",
  "meta": {
   "n_segmented": 48,
   "n_rejected": 0,
@@ -25,7 +25,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0056",
+   "seccao_id": "G0057",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -154,7 +154,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0058",
+   "seccao_id": "G0059",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -240,7 +240,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0063",
+   "seccao_id": "G0062",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -283,7 +283,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0056",
+   "seccao_id": "G0057",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -412,7 +412,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0058",
+   "seccao_id": "G0059",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -498,7 +498,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0060",
+   "seccao_id": "G0056",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -541,7 +541,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0056",
+   "seccao_id": "G0057",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -670,7 +670,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0058",
+   "seccao_id": "G0059",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -756,7 +756,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0060",
+   "seccao_id": "G0056",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -799,7 +799,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0056",
+   "seccao_id": "G0057",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -928,7 +928,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0058",
+   "seccao_id": "G0059",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1010,39 +1010,47 @@
    "n_no_lote": 24,
    "estado": "colocada",
    "celula": [
-    45,
+    44,
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0064",
+   "seccao_id": "G0056",
    "same_as": null,
    "flags": {
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      25
+     ],
+     "confianca": "baixa",
+     "metodo": "watershed",
+     "alterado": true
+    }
    },
-   "area_mm2": 352.2,
-   "cls": "FFTT",
-   "n_flat": 2,
+   "area_mm2": 435.3,
+   "cls": "FTTT",
+   "n_flat": 1,
    "chords_mm": [
-    18.382,
-    18.565,
-    15.47,
-    14.476
+    18.253,
+    19.186,
+    18.896,
+    18.203
    ],
    "shape_ok": true,
    "bbox": [
-    2202,
-    1146,
-    262,
-    301
+    2199,
+    1101,
+    312,
+    346
    ],
    "crop_path": "crops/P0651.png",
    "mean_lab": [
-    54.49,
-    -16.4,
-    38.6
+    55.29,
+    -16.9,
+    38.73
    ]
   },
   {
@@ -1057,7 +1065,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0056",
+   "seccao_id": "G0057",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1186,7 +1194,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0059",
+   "seccao_id": "G0060",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1268,34 +1276,47 @@
    "n_no_lote": 30,
    "estado": "colocada",
    "celula": [
-    44,
+    45,
     1
    ],
    "theta_deg": null,
-   "seccao_id": null,
+   "seccao_id": "G0056",
    "same_as": null,
    "flags": {
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      23
+     ],
+     "confianca": "baixa",
+     "metodo": "watershed",
+     "alterado": true
+    }
    },
-   "area_mm2": 246.75,
-   "cls": "",
-   "n_flat": 0,
-   "chords_mm": [],
-   "shape_ok": false,
+   "area_mm2": 345.83,
+   "cls": "BFBT",
+   "n_flat": 1,
+   "chords_mm": [
+    16.677,
+    19.375,
+    16.387,
+    18.757
+   ],
+   "shape_ok": true,
    "bbox": [
-    2214,
-    1425,
-    281,
-    250
+    2196,
+    1422,
+    324,
+    254
    ],
    "crop_path": "crops/P0657.png",
    "mean_lab": [
-    43.55,
-    -13.82,
-    26.8
+    45.84,
+    -16.87,
+    28.88
    ]
   },
   {
@@ -1353,7 +1374,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0065",
+   "seccao_id": "G0063",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1611,7 +1632,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0059",
+   "seccao_id": "G0060",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1654,7 +1675,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0059",
+   "seccao_id": "G0060",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1783,7 +1804,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0062",
+   "seccao_id": "G0056",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1826,7 +1847,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0062",
+   "seccao_id": "G0056",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1869,7 +1890,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0057",
+   "seccao_id": "G0058",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1912,7 +1933,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0057",
+   "seccao_id": "G0058",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1955,7 +1976,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0057",
+   "seccao_id": "G0058",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -1998,7 +2019,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0057",
+   "seccao_id": "G0058",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -2041,7 +2062,7 @@
     1
    ],
    "theta_deg": null,
-   "seccao_id": "G0057",
+   "seccao_id": "G0058",
    "same_as": null,
    "flags": {
     "touches_frame": false,

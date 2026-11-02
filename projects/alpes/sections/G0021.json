@@ -21,34 +21,36 @@
  "candidates": [
   {
    "cell0": [
-    6,
-    14
+    3,
+    32
    ],
-   "rot": 0,
+   "rot": 90,
    "mirror": false,
-   "score": 7.779,
-   "margin": 1.389
+   "score": 7.248,
+   "margin": 1.042,
+   "origem": "pista"
+  },
+  {
+   "cell0": [
+    3,
+    33
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 7.556,
+   "margin": 1.042,
+   "origem": "pista"
   },
   {
    "cell0": [
     6,
     14
    ],
-   "rot": 270,
-   "mirror": false,
-   "score": 8.708,
-   "margin": 1.389
-  },
-  {
-   "cell0": [
-    4,
-    47
-   ],
    "rot": 0,
    "mirror": false,
-   "score": 10.805,
-   "margin": 1.389
+   "score": 7.837,
+   "margin": 1.042
   }
  ],
- "notes": "montado_p03 comp 5: ambigua; margem 1.39; 1 peça sem gémea; margem 1.39, ganho 3.0; montado_p03 (peça 9, 1 peças): A filas 6–6, colunas 14–14 (rot 0°) ou B filas 4–4, colunas 47–47 (rot 0°) ou C filas 4–4, colunas 48–48 (rot 90°)?"
+ "notes": "montado_p03 comp 5: ambigua; margem 1.04; margem 1.04, ganho 0.3; G0021 (peça 9, 1 peças): A filas 3–3, colunas 32–32 (rot 90°) ou B filas 3–3, colunas 33–33 (rot 90°) ou C filas 6–6, colunas 14–14 (rot 0°)?"
 }

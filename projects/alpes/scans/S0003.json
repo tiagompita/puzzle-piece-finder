@@ -5,7 +5,7 @@
  "dpi": 300.0,
  "lote": null,
  "kind": "gt",
- "date": "2026-11-01T05:35:23",
+ "date": "2026-11-02T00:41:14",
  "meta": {
   "n_segmented": 25,
   "n_rejected": 0,
@@ -751,24 +751,36 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      18,
+      20,
+      22,
+      23,
+      24
+     ],
+     "confianca": "baixa",
+     "metodo": "watershed",
+     "alterado": true
+    }
    },
-   "area_mm2": 540.91,
+   "area_mm2": 646.54,
    "cls": "",
    "n_flat": 0,
    "chords_mm": [],
    "shape_ok": false,
    "bbox": [
-    2165,
-    2035,
-    248,
-    510
+    2159,
+    1998,
+    256,
+    555
    ],
    "crop_path": "crops/P0058.png",
    "mean_lab": [
-    35.39,
-    -19.08,
-    21.01
+    35.82,
+    -19.96,
+    21.69
    ]
   },
   {
@@ -786,24 +798,36 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      17,
+      20,
+      22,
+      23,
+      24
+     ],
+     "confianca": "baixa",
+     "metodo": "watershed",
+     "alterado": true
+    }
    },
-   "area_mm2": 208.66,
+   "area_mm2": 171.33,
    "cls": "",
    "n_flat": 0,
    "chords_mm": [],
    "shape_ok": false,
    "bbox": [
-    2190,
-    2440,
-    199,
-    259
+    2208,
+    2438,
+    182,
+    248
    ],
    "crop_path": "crops/P0059.png",
    "mean_lab": [
-    34.63,
-    -16.31,
-    20.27
+    35.12,
+    -16.36,
+    20.49
    ]
   },
   {
@@ -867,7 +891,19 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      17,
+      18,
+      22,
+      23,
+      24
+     ],
+     "confianca": "baixa",
+     "metodo": "watershed",
+     "alterado": true
+    }
    },
    "area_mm2": 428.06,
    "cls": "BBTT",
@@ -953,7 +989,19 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      17,
+      18,
+      20,
+      23,
+      24
+     ],
+     "confianca": "baixa",
+     "metodo": "watershed",
+     "alterado": true
+    }
    },
    "area_mm2": 417.61,
    "cls": "BBTT",
@@ -993,29 +1041,36 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      17,
+      18,
+      20,
+      22,
+      24
+     ],
+     "confianca": "baixa",
+     "metodo": "watershed",
+     "alterado": true
+    }
    },
-   "area_mm2": 333.45,
-   "cls": "FFFT",
-   "n_flat": 3,
-   "chords_mm": [
-    16.95,
-    15.495,
-    19.259,
-    15.704
-   ],
-   "shape_ok": true,
+   "area_mm2": 429.38,
+   "cls": "",
+   "n_flat": 0,
+   "chords_mm": [],
+   "shape_ok": false,
    "bbox": [
-    2169,
-    2625,
-    208,
-    327
+    2090,
+    2510,
+    291,
+    458
    ],
    "crop_path": "crops/P0064.png",
    "mean_lab": [
-    26.91,
-    -15.81,
-    14.95
+    29.8,
+    -17.82,
+    17.37
    ]
   },
   {
@@ -1033,29 +1088,36 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": true,
-    "objeto_duplo": true
+    "objeto_duplo": true,
+    "contacto": {
+     "com": [
+      17,
+      18,
+      20,
+      22,
+      23
+     ],
+     "confianca": "baixa",
+     "metodo": "watershed",
+     "alterado": true
+    }
    },
-   "area_mm2": 2426.23,
-   "cls": "BBTT",
+   "area_mm2": 2944.9,
+   "cls": "",
    "n_flat": 0,
-   "chords_mm": [
-    15.688,
-    20.008,
-    15.047,
-    15.412
-   ],
-   "shape_ok": true,
+   "chords_mm": [],
+   "shape_ok": false,
    "bbox": [
-    815,
-    2891,
-    1566,
-    482
+    743,
+    2726,
+    1647,
+    654
    ],
    "crop_path": "crops/P0065.png",
    "mean_lab": [
-    32.13,
-    -11.22,
-    20.68
+    34.42,
+    -12.95,
+    22.17
    ]
   }
  ]

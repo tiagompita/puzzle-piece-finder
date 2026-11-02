@@ -16,9 +16,19 @@
   "mirror": false,
   "fonte": "legado_scan",
   "confianca": "baixa",
-  "margin": 1.182
+  "margin": 1.16
  },
  "candidates": [
+  {
+   "cell0": [
+    1,
+    32
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 6.509,
+   "margin": 0.993
+  },
   {
    "cell0": [
     1,
@@ -26,18 +36,8 @@
    ],
    "rot": 90,
    "mirror": false,
-   "score": 6.618,
-   "margin": 1.01
-  },
-  {
-   "cell0": [
-    1,
-    35
-   ],
-   "rot": 90,
-   "mirror": false,
-   "score": 6.684,
-   "margin": 1.01
+   "score": 6.46,
+   "margin": 0.993
   },
   {
    "cell0": [
@@ -46,9 +46,9 @@
    ],
    "rot": 90,
    "mirror": false,
-   "score": 6.747,
-   "margin": 1.01
+   "score": 6.467,
+   "margin": 0.993
   }
  ],
- "notes": "montado_p03 comp 6: ambigua; margem 1.01; 1 peça sem gémea; margem 1.01, ganho 0.1; o espelho ganha (×1.13); montado_p03 (peça 10, 1 peças): A filas 1–1, colunas 38–38 (rot 90°) ou B filas 1–1, colunas 35–35 (rot 90°) ou C filas 1–1, colunas 39–39 (rot 90°)?"
+ "notes": "montado_p03 comp 6: ambigua; margem 0.99; 1 peça sem gémea; margem 0.99, ganho 4.0; G0022 (peça 10, 1 peças): A filas 1–1, colunas 32–32 (rot 90°) ou B filas 1–1, colunas 38–38 (rot 90°) ou C filas 1–1, colunas 39–39 (rot 90°)?"
 }

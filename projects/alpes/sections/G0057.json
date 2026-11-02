@@ -3,68 +3,68 @@
  "scan_id": "S0020",
  "kind": "montado",
  "cells_local": {
-  "P0671": [
+  "P0628": [
    0,
    0
   ],
-  "P0672": [
-   0,
-   1
+  "P0634": [
+   1,
+   0
   ],
-  "P0673": [
-   0,
-   2
+  "P0640": [
+   2,
+   0
   ],
-  "P0674": [
-   0,
-   3
+  "P0646": [
+   3,
+   0
   ],
-  "P0675": [
-   0,
-   4
+  "P0652": [
+   4,
+   0
   ]
  },
  "anchor": {
   "anchored": true,
-  "l0": 1,
+  "l0": 6,
   "c0": 1,
-  "rot": 90,
+  "rot": 0,
   "mirror": false,
   "fonte": "legado_scan",
   "confianca": "alta",
-  "margin": 8.59
+  "margin": 1.113
  },
  "candidates": [
   {
    "cell0": [
-    1,
-    1
-   ],
-   "rot": 90,
-   "mirror": false,
-   "score": 5.848,
-   "margin": 8.59
-  },
-  {
-   "cell0": [
-    1,
-    64
-   ],
-   "rot": 180,
-   "mirror": false,
-   "score": 50.235,
-   "margin": 8.59
-  },
-  {
-   "cell0": [
-    47,
+    6,
     1
    ],
    "rot": 0,
    "mirror": false,
-   "score": 66.182,
-   "margin": 8.59
+   "score": 4.964,
+   "margin": 1.113
+  },
+  {
+   "cell0": [
+    7,
+    1
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 5.527,
+   "margin": 1.113
+  },
+  {
+   "cell0": [
+    5,
+    1
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 11.133,
+   "margin": 1.113
   }
  ],
- "notes": "montado_p12 comp 4: alta; margem 8.59; "
+ "notes": "montado_p12 comp 4: ambigua; margem 1.11; margem 1.11, ganho 0.6; montado_p12 (peças 1–25, 5 peças): A filas 6–10, colunas 1–1 (rot 0°) ou B filas 7–11, colunas 1–1 (rot 0°) ou C filas 5–9, colunas 1–1 (rot 0°)?"
 }

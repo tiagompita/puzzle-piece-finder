@@ -3,56 +3,52 @@
  "scan_id": "S0020",
  "kind": "montado",
  "cells_local": {
-  "P0669": [
+  "P0633": [
    0,
-   0
-  ],
-  "P0670": [
-   1,
    0
   ]
  },
  "anchor": {
   "anchored": true,
-  "l0": 46,
+  "l0": 41,
   "c0": 1,
   "rot": 0,
   "mirror": false,
   "fonte": "legado_scan",
   "confianca": "alta",
-  "margin": 1.003
+  "margin": null
  },
  "candidates": [
   {
    "cell0": [
-    46,
+    41,
     1
    ],
    "rot": 0,
    "mirror": false,
-   "score": 22.864,
-   "margin": 1.003
+   "score": 11.681,
+   "margin": 1.319
   },
   {
    "cell0": [
-    47,
-    63
-   ],
-   "rot": 270,
-   "mirror": false,
-   "score": 22.932,
-   "margin": 1.003
-  },
-  {
-   "cell0": [
-    2,
+    25,
     64
    ],
    "rot": 180,
    "mirror": false,
-   "score": 34.296,
-   "margin": 1.003
+   "score": 15.402,
+   "margin": 1.319
+  },
+  {
+   "cell0": [
+    26,
+    64
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 15.787,
+   "margin": 1.319
   }
  ],
- "notes": "montado_p12 comp 9: ambigua; margem 1.00; margem 1.00, ganho 0.1; montado_p12 (peças 42–43, 2 peças): A filas 46–47, colunas 1–1 (rot 0°) ou B filas 47–47, colunas 63–64 (rot 270°) ou C filas 1–2, colunas 64–64 (rot 180°)?"
+ "notes": "montado_p12 comp 9: ambigua; margem 1.32; 1 peça sem gémea; G0062 (peça 6, 1 peças): A filas 41–41, colunas 1–1 (rot 0°) ou B filas 25–25, colunas 64–64 (rot 180°) ou C filas 26–26, colunas 64–64 (rot 180°)?"
 }

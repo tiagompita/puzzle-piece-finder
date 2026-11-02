@@ -9,16 +9,36 @@
   ]
  },
  "anchor": {
-  "anchored": false,
-  "l0": null,
-  "c0": null,
-  "rot": 0,
+  "anchored": true,
+  "l0": 6,
+  "c0": 22,
+  "rot": 180,
   "mirror": false,
-  "fonte": null,
-  "confianca": null,
-  "margin": null
+  "fonte": "legado_scan+pista",
+  "confianca": "alta",
+  "margin": 1.044
  },
  "candidates": [
+  {
+   "cell0": [
+    6,
+    20
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 9.71,
+   "margin": 1.211
+  },
+  {
+   "cell0": [
+    6,
+    20
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 9.93,
+   "margin": 1.211
+  },
   {
    "cell0": [
     3,
@@ -26,29 +46,9 @@
    ],
    "rot": 180,
    "mirror": false,
-   "score": 11.059,
-   "margin": 1.169
-  },
-  {
-   "cell0": [
-    3,
-    33
-   ],
-   "rot": 90,
-   "mirror": false,
-   "score": 12.587,
-   "margin": 1.169
-  },
-  {
-   "cell0": [
-    3,
-    33
-   ],
-   "rot": 0,
-   "mirror": false,
-   "score": 12.869,
-   "margin": 1.169
+   "score": 11.757,
+   "margin": 1.211
   }
  ],
- "notes": "montado_p04 comp 3: ambigua; margem 1.17; 1 peça sem gémea; margem 1.17, ganho 1.9; montado_p04 (peça 33, 1 peças): A filas 3–3, colunas 33–33 (rot 180°) ou B filas 6–6, colunas 24–24 (rot 0°) ou C filas 7–7, colunas 7–7 (rot 180°)?"
+ "notes": "montado_p04 comp 3: ambigua; margem 1.21; 1 peça sem gémea; margem 1.21, ganho 2.0; montado_p04 (peça 33, 1 peças): A filas 6–6, colunas 20–20 (rot 180°) ou B filas 3–3, colunas 33–33 (rot 180°) ou C filas 6–6, colunas 18–18 (rot 90°)?"
 }

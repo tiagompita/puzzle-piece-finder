@@ -13,26 +13,16 @@
   ]
  },
  "anchor": {
-  "anchored": false,
-  "l0": null,
-  "c0": null,
-  "rot": 0,
+  "anchored": true,
+  "l0": 2,
+  "c0": 32,
+  "rot": 90,
   "mirror": false,
-  "fonte": null,
-  "confianca": null,
-  "margin": null
+  "fonte": "legado_scan+pista",
+  "confianca": "alta",
+  "margin": 1.05
  },
  "candidates": [
-  {
-   "cell0": [
-    2,
-    46
-   ],
-   "rot": 90,
-   "mirror": false,
-   "score": 9.175,
-   "margin": 1.004
-  },
   {
    "cell0": [
     2,
@@ -40,8 +30,18 @@
    ],
    "rot": 270,
    "mirror": false,
-   "score": 9.209,
-   "margin": 1.004
+   "score": 9.139,
+   "margin": 1.002
+  },
+  {
+   "cell0": [
+    2,
+    46
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 9.158,
+   "margin": 1.002
   },
   {
    "cell0": [
@@ -50,9 +50,9 @@
    ],
    "rot": 90,
    "mirror": false,
-   "score": 10.577,
-   "margin": 1.004
+   "score": 10.781,
+   "margin": 1.002
   }
  ],
- "notes": "montado_p03 comp 3: ambigua; margem 1.00; margem 1.00, ganho 0.0; montado_p03 (peças 11–14, 2 peças): A filas 2–2, colunas 45–46 (rot 90°) ou B filas 2–2, colunas 45–46 (rot 270°) ou C filas 6–6, colunas 11–12 (rot 90°)?"
+ "notes": "montado_p03 comp 3: ambigua; margem 1.00; margem 1.00, ganho 0.0; montado_p03 (peças 11–14, 2 peças): A filas 2–2, colunas 45–46 (rot 270°) ou B filas 2–2, colunas 45–46 (rot 90°) ou C filas 6–6, colunas 11–12 (rot 90°)?"
 }

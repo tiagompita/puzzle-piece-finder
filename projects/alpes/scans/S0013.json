@@ -5,7 +5,7 @@
  "dpi": 300.0,
  "lote": null,
  "kind": "montado",
- "date": "2026-11-01T05:36:46",
+ "date": "2026-11-02T00:42:54",
  "meta": {
   "n_segmented": 51,
   "n_rejected": 0,
@@ -1015,7 +1015,15 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      30
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 339.17,
    "cls": "BTBT",
@@ -1255,7 +1263,15 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      24
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 461.55,
    "cls": "BBTT",
@@ -1455,7 +1471,15 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      40
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 406.16,
    "cls": "BBTT",
@@ -1658,7 +1682,15 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      35
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 399.03,
    "cls": "BTTT",
@@ -1901,8 +1933,11 @@
    "index_in_scan": 46,
    "lote": null,
    "n_no_lote": 47,
-   "estado": "em_seccao",
-   "celula": null,
+   "estado": "colocada",
+   "celula": [
+    42,
+    56
+   ],
    "theta_deg": null,
    "seccao_id": "G0032",
    "same_as": null,

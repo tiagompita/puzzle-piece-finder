@@ -5,7 +5,7 @@
  "dpi": 300.0,
  "lote": null,
  "kind": "montado",
- "date": "2026-11-01T05:37:01",
+ "date": "2026-11-02T00:43:14",
  "meta": {
   "n_segmented": 48,
   "n_rejected": 0,
@@ -240,7 +240,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      5,
+      11,
+      12
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 368.51,
    "cls": "BTBT",
@@ -280,7 +290,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      6,
+      11,
+      12
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 417.17,
    "cls": "BTFT",
@@ -492,7 +512,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      5,
+      6,
+      12
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 422.21,
    "cls": "BTBT",
@@ -535,7 +565,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      5,
+      6,
+      11
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 377.67,
    "cls": "BBTT",
@@ -1042,7 +1082,15 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      29
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 395.81,
    "cls": "BTTT",
@@ -1251,7 +1299,15 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      24
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 370.25,
    "cls": "BBTT",
@@ -2001,8 +2057,11 @@
    "index_in_scan": 46,
    "lote": null,
    "n_no_lote": 48,
-   "estado": "em_seccao",
-   "celula": null,
+   "estado": "colocada",
+   "celula": [
+    42,
+    54
+   ],
    "theta_deg": null,
    "seccao_id": "G0041",
    "same_as": null,

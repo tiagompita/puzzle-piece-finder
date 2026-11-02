@@ -3,68 +3,72 @@
  "scan_id": "S0020",
  "kind": "montado",
  "cells_local": {
-  "P0628": [
+  "P0639": [
    0,
    0
   ],
-  "P0634": [
+  "P0645": [
    1,
    0
   ],
-  "P0640": [
+  "P0651": [
    2,
    0
   ],
-  "P0646": [
+  "P0657": [
    3,
    0
   ],
-  "P0652": [
+  "P0669": [
    4,
+   0
+  ],
+  "P0670": [
+   5,
    0
   ]
  },
  "anchor": {
   "anchored": true,
-  "l0": 6,
+  "l0": 42,
   "c0": 1,
   "rot": 0,
   "mirror": false,
   "fonte": "legado_scan",
   "confianca": "alta",
-  "margin": 0.838
+  "margin": 3.578
  },
  "candidates": [
   {
    "cell0": [
-    7,
+    42,
     1
    ],
    "rot": 0,
    "mirror": false,
-   "score": 5.466,
-   "margin": 1.193
+   "score": 11.645,
+   "margin": 3.578
   },
   {
    "cell0": [
     6,
-    1
+    64
    ],
-   "rot": 0,
+   "rot": 180,
    "mirror": false,
-   "score": 6.519,
-   "margin": 1.193
+   "score": 41.668,
+   "margin": 3.578
   },
   {
    "cell0": [
-    5,
-    1
+    1,
+    6
    ],
-   "rot": 0,
+   "rot": 90,
    "mirror": false,
-   "score": 12.663,
-   "margin": 1.193
+   "score": 72.687,
+   "margin": 3.578
   }
  ],
- "notes": "montado_p12 comp 3: ambigua; margem 1.19; margem 1.19, ganho 1.1; montado_p12 (peças 1–25, 5 peças): A filas 7–11, colunas 1–1 (rot 0°) ou B filas 6–10, colunas 1–1 (rot 0°) ou C filas 5–9, colunas 1–1 (rot 0°)?"
+ "notes": "montado_p12 comp 3: alta; margem 3.58; "
 }

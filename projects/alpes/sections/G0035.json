@@ -52,9 +52,29 @@
   "mirror": false,
   "fonte": "legado_scan",
   "confianca": "alta",
-  "margin": 0.918
+  "margin": 1.335
  },
  "candidates": [
+  {
+   "cell0": [
+    47,
+    53
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 10.116,
+   "margin": 1.335
+  },
+  {
+   "cell0": [
+    47,
+    56
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 13.5,
+   "margin": 1.335
+  },
   {
    "cell0": [
     47,
@@ -62,29 +82,9 @@
    ],
    "rot": 270,
    "mirror": false,
-   "score": 16.343,
-   "margin": 1.011
-  },
-  {
-   "cell0": [
-    47,
-    49
-   ],
-   "rot": 270,
-   "mirror": false,
-   "score": 16.522,
-   "margin": 1.011
-  },
-  {
-   "cell0": [
-    47,
-    54
-   ],
-   "rot": 270,
-   "mirror": false,
-   "score": 16.889,
-   "margin": 1.011
+   "score": 13.826,
+   "margin": 1.335
   }
  ],
- "notes": "montado_p06 comp 1: ambigua; margem 1.01; margem 1.01, ganho 0.2; montado_p06 (peças 37–46, 10 peças): A filas 42–47, colunas 55–56 (rot 270°) ou B filas 42–47, colunas 49–50 (rot 270°) ou C filas 42–47, colunas 54–55 (rot 270°)?"
+ "notes": "montado_p06 comp 1: ambigua; margem 1.33; margem 1.33, ganho 3.4; montado_p06 (peças 37–46, 10 peças): A filas 42–47, colunas 53–54 (rot 270°) ou B filas 42–47, colunas 56–57 (rot 270°) ou C filas 42–47, colunas 55–56 (rot 270°)?"
 }

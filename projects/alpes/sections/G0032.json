@@ -9,46 +9,46 @@
   ]
  },
  "anchor": {
-  "anchored": false,
-  "l0": null,
-  "c0": null,
-  "rot": 0,
+  "anchored": true,
+  "l0": 42,
+  "c0": 56,
+  "rot": 90,
   "mirror": false,
-  "fonte": null,
-  "confianca": null,
-  "margin": null
+  "fonte": "legado_scan",
+  "confianca": "alta",
+  "margin": 1.132
  },
  "candidates": [
   {
    "cell0": [
-    26,
-    21
-   ],
-   "rot": 270,
-   "mirror": false,
-   "score": 21.45,
-   "margin": 1.006
-  },
-  {
-   "cell0": [
-    27,
-    58
+    44,
+    42
    ],
    "rot": 90,
    "mirror": false,
-   "score": 21.587,
-   "margin": 1.006
+   "score": 20.216,
+   "margin": 1.053
   },
   {
    "cell0": [
-    26,
-    58
+    23,
+    49
    ],
    "rot": 90,
    "mirror": false,
-   "score": 23.138,
-   "margin": 1.006
+   "score": 21.28,
+   "margin": 1.053
+  },
+  {
+   "cell0": [
+    23,
+    49
+   ],
+   "rot": 180,
+   "mirror": false,
+   "score": 21.764,
+   "margin": 1.053
   }
  ],
- "notes": "montado_p05 comp 1: ambigua; margem 1.01; 1 peça sem gémea; margem 1.01, ganho 0.1; montado_p05 (peça 47, 1 peças): A filas 26–26, colunas 21–21 (rot 270°) ou B filas 27–27, colunas 58–58 (rot 90°) ou C filas 26–26, colunas 58–58 (rot 90°)?"
+ "notes": "montado_p05 comp 1: ambigua; margem 1.05; 1 peça sem gémea; margem 1.05, ganho 1.1; montado_p05 (peça 47, 1 peças): A filas 44–44, colunas 42–42 (rot 90°) ou B filas 23–23, colunas 49–49 (rot 90°) ou C filas 26–26, colunas 58–58 (rot 270°)?"
 }

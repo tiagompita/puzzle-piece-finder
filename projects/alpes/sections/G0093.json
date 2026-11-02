@@ -1,10 +1,14 @@
 {
  "id": "G0093",
- "scan_id": "S0025",
+ "scan_id": "S0026",
  "kind": "blocos",
  "cells_local": {
-  "P0879": [
+  "P0905": [
    0,
+   0
+  ],
+  "P0907": [
+   1,
    0
   ]
  },
@@ -21,34 +25,34 @@
  "candidates": [
   {
    "cell0": [
-    3,
-    64
-   ],
-   "rot": 90,
-   "mirror": false,
-   "score": 18.972,
-   "margin": 1.162
-  },
-  {
-   "cell0": [
-    14,
-    64
-   ],
-   "rot": 90,
-   "mirror": false,
-   "score": 22.039,
-   "margin": 1.162
-  },
-  {
-   "cell0": [
-    47,
-    38
+    15,
+    63
    ],
    "rot": 180,
    "mirror": false,
-   "score": 22.589,
-   "margin": 1.162
+   "score": 22.842,
+   "margin": 1.055
+  },
+  {
+   "cell0": [
+    15,
+    61
+   ],
+   "rot": 90,
+   "mirror": false,
+   "score": 24.097,
+   "margin": 1.055
+  },
+  {
+   "cell0": [
+    15,
+    59
+   ],
+   "rot": 270,
+   "mirror": false,
+   "score": 24.364,
+   "margin": 1.055
   }
  ],
- "notes": "blocos_p02 comp 10: ambigua; margem 1.16; 1 peça sem gémea; margem 1.16, ganho 3.1; blocos_p02 (peça 18, 1 peças): A filas 3–3, colunas 64–64 (rot 90°) ou B filas 14–14, colunas 64–64 (rot 90°) ou C filas 47–47, colunas 38–38 (rot 180°)?"
+ "notes": "blocos_p03 comp 1: ambigua; margem 1.05; margem 1.05, ganho 1.3; blocos_p03 (peças 8–10, 2 peças): A filas 14–15, colunas 63–63 (rot 180°) ou B filas 15–15, colunas 60–61 (rot 90°) ou C filas 15–15, colunas 59–60 (rot 270°)?"
 }

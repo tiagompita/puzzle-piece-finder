@@ -1,6 +1,6 @@
 # GUI "mesa de montagem" — o que está construído
 
-Atualizado em 2026-11-01 (substitui a proposta da ronda anterior e a maquete estática, que não foi aprovada). Etiquetas: **[V]** verificado (teste ou captura vista), **[NT]** não testado, **[F]** testado e a falhar. Como correr e o que mostram as capturas: [`docs/gui/README.md`](gui/README.md).
+Atualizado em 2026-11-02 (ronda «GUI não aprovada»; substitui a proposta da ronda anterior e a maquete estática, que não foi aprovada). Etiquetas: **[V]** verificado (teste ou captura vista), **[NT]** não testado, **[F]** testado e a falhar. Como correr e o que mostram as capturas: [`docs/gui/README.md`](gui/README.md).
 
 ## 1. Objetivo
 
@@ -16,7 +16,7 @@ Web local: `python -m src.server` (FastAPI + uvicorn) + `src/web/` (`index.html`
                                               fantasmas, folhas, recortes        render.compose_board / query / ingest
 ```
 
-- **Escritas**: só por `src.confirm.confirm` (colocar, rejeitar, posição conhecida, ancorar, desancorar, descartar; a mesma reconsulta incremental da CLI), `Project.unplace` (+ reconsulta da célula e da gémea) e `ingest.ingest_scan` + `query.run_query` completo. Um lock (`Gui.wlock`) serializa-as; uma escrita durante um trabalho em curso (importação, preparação) responde 409. Depois de cada escrita: invariantes verificadas por `confirm` (`check_invariants(disk=True)`), recorte limpo e registo fino (com a imagem) das peças acabadas de colocar escritos em `render/clean/` e `render/placements.json`, eventos SSE `board_changed` e `fetch_changed` [V: `tests/test_server.py`].
+- **Escritas**: só por `src.confirm.confirm` (colocar, rejeitar, posição conhecida, ancorar, desancorar, descartar, `cell_full`/`cell_empty`; a mesma reconsulta incremental da CLI), `Project.unplace` (+ reconsulta da célula e da gémea) e `ingest.ingest_scan` + `query.run_query` completo. Um lock (`Gui.wlock`) serializa-as; uma escrita durante um trabalho em curso (importação, preparação) responde 409. Depois de cada escrita: invariantes verificadas por `confirm` (`check_invariants(disk=True)`), recorte limpo e registo fino (com a imagem) das peças acabadas de colocar escritos em `render/clean/` e `render/placements.json`, eventos SSE `board_changed` e `fetch_changed` [V: `tests/test_server.py`].
 - **Leituras**: sem lock; uma leitura que apanhe um dicionário a mudar é repetida. Se o `log.jsonl` mudar por fora (CLI), o projeto é reaberto no pedido seguinte.
 - **Regra do arranque**: se `pieces/`, `crops/`, `overlays/` ou `render/` faltarem ou estiverem vazias (não estão no git), `render.rebuild_assets` corre numa thread com progresso na consola e na página "A preparar o projeto" (SSE `prepare_progress`, `ready`); a API de dados responde 503 até acabar [V: teste com `rebuild_assets` substituído; NT: num clone real — a regeneração completa do `projects/alpes` não foi cronometrada nesta ronda]. As folhas com a peça destacada (`render/sheets`, também fora do git) são geradas a pedido.
 
@@ -36,7 +36,7 @@ Web local: `python -m src.server` (FastAPI + uvicorn) + `src/web/` (`index.html`
 | `GET /api/ghosts` | fantasma de cada gémea pendente: `{cell (alvo), piece (colocada), from, path}`; `path` = `query.ghost_contour` em unidades de célula em torno do centro da célula alvo, com `profile.twin_rotation_deg()` |
 | `GET /api/lots` | saco → folhas (scans) → peças com `n_no_lote`, estado, célula; `lote = null` = legado/GT |
 | `GET /api/sections`, `GET /api/sections/{G}.png` | grupos por ancorar com o top-3 (`cell0`, rot, espelho, margem, pegada em células, "fora da grelha", células já colocadas) e miniatura (recortes nas posições do scan) |
-| `POST /api/confirm` | `{acao: place\|reject\|position_known\|anchor\|unanchor\|discard\|unplace, piece, cell, section, rot, mirror, reason, origin}` → `{ok, mensagens, invariantes, n_propostas, segundos, celulas_mudadas}` ou 400 `{error}` / 409 |
+| `POST /api/confirm` | `{acao: place\|reject\|position_known\|anchor\|unanchor\|discard\|unplace\|cell_full\|cell_empty, piece, cell, section, rot, mirror, reason, origin}` → `{ok, mensagens, invariantes, n_propostas, segundos, celulas_mudadas}` ou 400 `{error}` / 409 |
 | `POST /api/ingest` | multipart `file` + `lote` + `dpi` → grava em `images/pieces/lotes/loteNN_<data>_<nome>`, trabalho em fundo (segmentar → `run_query` completo), progresso por SSE `ingest_progress` |
 | `POST /api/report` | `{tipo: mal_lida\|mal_colocada\|nao_encaixa\|outro, texto, piece, cell, vista}` → o servidor grava a captura (zoom 3×3 da célula, ou o recorte da peça) em `projects/<id>/reports/R####.jpg\|png` e acrescenta o relatório a `reports.jsonl` (§11); SSE `report_added` |
 | `GET /api/reports[?todos=1]` | relatórios abertos (ou todos) |
@@ -46,12 +46,12 @@ Web local: `python -m src.server` (FastAPI + uvicorn) + `src/web/` (`index.html`
 
 ## 4. Ecrãs
 
-Uma página: tabuleiro à esquerda, painel à direita com separadores **Vai buscar · Lotes · Mesa · Importar**, e o painel **Célula** que abre ao tocar numa célula (botão "← voltar"). Legenda fixa em baixo.
+Uma página: tabuleiro à esquerda, painel compacto de 360 px à direita com separadores **Vai buscar · Lotes · Mesa · Importar**, e o painel **Célula** que abre ao tocar numa célula (botão "← voltar"). A legenda é um rodapé recolhível (`<details>`), aberta por omissão só com viewport de altura ≥ 900 px; o estado fica lembrado no browser. **Nota de viewport:** a escala do Windows a 125/150 % encolhe o viewport CSS (1366×768 → 1093×614 → 911×512), por isso o CSS tem regras para alturas ≤ 740 e ≤ 650 px; abaixo de 900 px de largura o painel passa a folha inferior. Cabeçalho com o contador «N por confirmar (foto) · M marcadas por ti» [V: capturas Playwright 1366×768 e 1920×1080 a 100/125/150 % + telemóvel, `tests/test_gui_layout.py` (slow)].
 
-- **Tabuleiro**: `<img>` raster + overlay SVG no mesmo `viewBox` (unidades de célula: x = coluna, y = linha × h/w); zoom/pan por roda, arrasto e pinça; duplo clique aproxima; botões + / − / ajustar. Com zoom acima de ~66 px/célula reais, a região visível é pedida de novo ao servidor a mais resolução (até 240 px/célula ≈ 300 dpi) e sobreposta: com zoom, vê-se o recorte real a alta resolução [V: `progresso_zoom_relva.jpg`]. A grelha só aparece a partir de ~22 px/célula; os fantasmas a partir de ~7 px/célula (e com o interruptor ligado).
-- **Vai buscar**: cartões agrupados por saco, pela ordem do `fetch.json`. Cada cartão: "Saco N · nº X" grande; célula alvo e decisão em palavra (aceite / ambígua); a peça **rodada como fica** (`theta_deg`), com ▲ = topo do tabuleiro, quadrado tracejado = célula e o fantasma da gémea por cima; minimapa com a célula; a folha do saco com a peça a âmbar (toque amplia); razões em frases (forma: diferença X mm (limite t95); margem para a 2.ª candidata (mínimo); imagem: ΔE); botões **Coloquei / Não encaixa / Guardar posição / Ver no tabuleiro**; "razões técnicas" recolhidas. Estado vazio: "Nada a ir buscar agora" + botão Importar. Sugestões suprimidas (candidata única) numa nota recolhida.
-- **Célula**: o tabuleiro a 300 dpi (3 × 3) ao lado da arte, com o fantasma e as marcas da célula; estado, gémea (clicável), peça e como chegou; propostas com os mesmos cartões; vizinhas; "Desfazer colocação" ou "Desancorar grupo".
-- **Lotes**: um bloco por saco com as folhas (miniaturas, toque amplia) e a grelha de peças (miniatura como digitalizada, nº, célula ou estado; chave de cores dos estados no topo). Tocar numa peça colocada/posição conhecida abre a célula; numa solta abre o painel da peça (propostas, folha, "Descartar").
+- **Tabuleiro**: `<img>` raster + overlay SVG no mesmo `viewBox` (unidades de célula: x = coluna, y = linha × h/w); zoom/pan por roda simples e pinça **só dentro do tabuleiro** (Ctrl/Meta+roda fica para o browser, que faz zoom à página), arrasto; duplo clique aproxima; botões + / − / ajustar. Com zoom acima de ~66 px/célula reais, a região visível é pedida de novo ao servidor a mais resolução (até 240 px/célula ≈ 300 dpi) e sobreposta: com zoom, vê-se o recorte real a alta resolução [V: `progresso_zoom_relva.jpg`]. A grelha só aparece a partir de ~22 px/célula; os fantasmas a partir de ~7 px/célula (e com o interruptor ligado).
+- **Vai buscar**: cartões agrupados por saco, pela ordem do `fetch.json`. Cada cartão: "Saco N · nº X" grande; célula alvo e decisão em palavra (aceite / ambígua); a peça **rodada como fica** (`theta_deg`), com ▲ = topo do tabuleiro, quadrado tracejado = célula e o fantasma da gémea por cima; minimapa com a célula; a folha do saco com a peça a âmbar (toque amplia); razões em frases (forma: diferença X mm (limite t95); margem para a 2.ª candidata (mínimo); imagem: ΔE); botões **Coloquei / Não encaixa / Guardar posição / Ver no tabuleiro / Reportar**; "razões técnicas" recolhidas. A lista tem duas partes: **«Coloca agora (n)»** (≥ 1 vizinha 4-conexa montada, isto é, `colocada` ou marcada pelo Tiago; «só foto» não conta), onde o encaixe é verificável à mão, e a seguir **«Guarda com posição (n)»**, cujo botão é **«Guardei num saquinho (l, c)»** (→ `posicao_conhecida`, sem «Coloquei»); quando uma posição guardada passa a colocável aparece um aviso (toast) e um emblema. «Ver no tabuleiro» só faz zoom e realça a célula: não muda de separador, a lista fica ao lado. A peça nos cartões, nas folhas e nas miniaturas da Mesa vem de um só pipeline de exibição (§6.8). Estado vazio: "Nada a ir buscar agora" + botão Importar. Sugestões suprimidas (candidata única) numa nota recolhida.
+- **Célula**: o tabuleiro a 300 dpi (3 × 3) ao lado da arte, com o fantasma e as marcas da célula; estado, gémea (clicável), peça e como chegou; propostas com os mesmos cartões; vizinhas; "Desfazer colocação" ou "Desancorar grupo"; botões **«Está montada» / «Está vazia»** (pista do Tiago: `cell_full`/`cell_empty`, com desfazer) e **Reportar**. Textos de estado: «cheia na foto, por confirmar» (só foto) e «marcada por ti» (pista).
+- **Lotes**: um bloco por saco com as folhas (miniaturas, toque amplia) e a grelha de peças (miniatura como digitalizada, nº, célula ou estado; chave de cores dos estados no topo). Tocar numa peça colocada/posição conhecida abre a célula; numa solta abre o painel da peça (propostas, folha, "Descartar", "Reportar").
 - **Mesa**: grupos por ancorar (ordenados pela margem do 1.º candidato), miniatura, top-3; "Ver" desenha a pegada a violeta e aproxima; "Ancorar aqui" (com confirmação) usa `confirm(anchor=…)`. Candidatos com peças fora da grelha ficam desativados; células já colocadas são avisadas.
 - **Importar** (pensado para o PC): ficheiro, nº do saco (proposta: o seguinte ao maior), dpi; progresso em linhas; no fim, ligações para "Vai buscar" e para o saco.
 - **Telemóvel** (`max-width: 700px`): tabuleiro em cima (40 % da altura), legenda compacta (só rótulos, em várias linhas, sempre visível), painel como folha inferior com pega; tocar na pega expande a folha e reduz o tabuleiro. Alvos de toque ≥ 44 px (botões de zoom 40 px no telemóvel).
@@ -64,7 +64,7 @@ A tabela `LEGEND` de `src/server.py` é a única fonte: o servidor devolve-a em 
 |---|---|---|
 | peça com imagem | (raster) | Peça colocada: recorte real do scan, limpo da franja e registado na célula |
 | arte esbatida | (raster) | Célula vazia: só a arte da caixa a 34 % |
-| tracejado cinza-azulado | `b-legado` | Ocupada sem silhueta: cheia na foto do tabuleiro, peça ainda não digitalizada solta |
+| tracejado cinza-azulado | `b-legado` | Cheia na foto, por confirmar (dúvida: não bloqueia gémeas, buracos nem borda). Uma célula marcada pelo Tiago tem o mesmo tracejado e o painel diz «marcada por ti» |
 | quadrado vermelho | `b-borda-falta` | Borda em falta: célula de borda vazia |
 | quadrado âmbar cheio | `b-buscar` | Vai buscar: peça proposta, aceite |
 | âmbar tracejado | `b-buscar-ambigua` | Vai buscar com dúvida: confirmar pela imagem |
@@ -85,8 +85,17 @@ Dentro dos cartões há três marcas próprias (▲ topo, quadrado tracejado = c
 4. **Pose das imagens.** Colocadas: θ do registo; propostas: `theta_deg` do `fetch.json` (cadeia do `twin.py`); sem pose: como digitalizada e o cartão diz "rotação desconhecida".
 5. **Scans importados vão para `images/pieces/lotes/`** (dentro do repositório) para que o outro PC regenere os recortes a partir do git.
 6. **Interface em português, só modo escuro**, âmbar reservado a "vai buscar".
+7. **Pose de uma colocação confirmada** vem da proposta (`theta_deg`) e fica gravada no log (antes as duas colocações feitas pela GUI eram as únicas com `theta` nulo e o render usava a orientação do scan); o servidor re-regista e re-cola a célula quando só a pose muda; o cartão devolve `X-Pose-Theta` [V: testes de `test_state`/`test_server`/`test_render`].
+8. **Um só pipeline de exibição das peças** (`render.piece_rgba_for_display`: recorte limpo, cor sob alfa 0 substituída pela da peça mais próxima, rotação/redimensionamento pré-multiplicados) para cartões, folhas `fetch_<lote>.jpg` e miniaturas da Mesa. Regra de orla de sombra só de exibição (`DISPLAY_SHADOW`, 0,4 mm), nunca no índice nem no tabuleiro (`RENDER.md` §6/§6.1).
+9. **Arte registada contra as peças colocadas** (`art.registration` em `puzzle.json`; uma só transformação aplicada em `locate.load_art_rectified`). A fila 47 não tem arte no ficheiro: cinzento, «sem arte» (`ARTREG.md`).
+10. **Ocupação só da foto é dúvida, não cheia**: não bloqueia propostas; as pistas do Tiago (`cell_full`/`cell_empty`) são a verdade e contam como ocupada sem silhueta.
+11. **Ctrl/Meta+roda pertence ao browser**; a roda simples e a pinça só atuam dentro do tabuleiro.
+12. **«Vai buscar» em duas listas** («Coloca agora» / «Guarda com posição»), §4 e §11.
+13. **Relatórios** em `projects/<id>/reports.jsonl` como lista de trabalho para o Claude Code (§11).
 
 ## 7. Desempenho medido (cópia de `projects/alpes`, 575 colocadas, este PC)
+
+[NT nesta ronda: não re-medido]
 
 | Operação | Tempo |
 |---|---|
@@ -103,6 +112,11 @@ Dentro dos cartões há três marcas próprias (▲ topo, quadrado tracejado = c
 - **M11**: molde do buraco e a **confirmação dupla** fantasma × molde (`/api/holes` não existe; o painel da célula não mostra o molde).
 - Fronteira / encaixe solta-solta (M6) e localização na caixa: não aparecem na lista porque ainda não existem no `query`.
 - Seleção manual de uma peça qualquer para uma célula ("escolher outra peça"), mudar uma folha de saco pela página (`confirm --relot`) e registar foto do tabuleiro (`src.photo`) continuam só na CLI.
+- (3,32)/(3,33) por decidir (P0291 vs P0294, margem 1,12) **[NT físico]**.
+- Verificação física das novas âncoras: P0807 → (7,2), P0833 → (8,2), P0297 → (3,31), P0333 → (6,22) **[NT]**.
+- A nota do saquinho não é gravada no log (`set_position_known` não tem o campo).
+- A reconsulta incremental pode deixar peças em `suprimidas` (§9).
+- Estilo distinto para células marcadas pelo utilizador (hoje o mesmo tracejado de «cheia na foto»).
 - Teste num telemóvel real pela LAN (Safari / Chrome) [NT]; regeneração completa num clone limpo [NT]; importação de um scan real pela página [NT] (testada só com um scan sintético).
 
 ## 9. Achado desta ronda (fora da GUI)
@@ -111,11 +125,11 @@ Depois de "Desfazer" P0100 de (3, 37), a reconsulta incremental (`run_query(only
 
 ## 10. Perguntas ao Tiago
 
-1. O tabuleiro parece o puzzle físico nas capturas (`docs/gui/screenshots/`)? A arte a 34 % por baixo das células vazias está bem, ou preferes mais clara/escura?
-2. Telemóvel: qual (Android / iPhone) e que browser? Consegues abrir `http://<pc>:8765` com `--lan` (firewall)?
-3. Fantasmas ligados por omissão — ficam?
-4. A lista deve agrupar por saco (como agora) ou seguir só a ordem de confiança?
-5. "Ancorar aqui" na Mesa coloca o grupo todo de uma vez: queres um passo intermédio (ver as peças sobre a arte antes de confirmar)?
+1. (3,32)/(3,33): é P0291 ou P0294?
+2. A confirmação física das 6 células de borda e do par (1,33) ↔ (47,32) continua pendente.
+3. As 4 âncoras novas (P0807 → (7,2), P0833 → (8,2), P0297 → (3,31), P0333 → (6,22)) conferem à mão?
+4. A legenda recolhida por omissão em ecrãs baixos está bem?
+5. A regra da orla de sombra nas miniaturas (`DISPLAY_SHADOW`) agrada?
 
 ## 11. Reportar
 

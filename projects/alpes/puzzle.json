@@ -8,7 +8,7 @@
   "background_lab": [79.2, -50.0, 47.0],
   "dpi": 300,
   "art": {"file": "images/puzzles/1186441_1.jpg", "bbox": [0, 42, 1600, 1115],
-    "registration": {"matrix": [[1.351104, 0.003409, -2.250993], [-0.002686, 1.353713, 43.210203]], "units": "board_mm->art_px", "n_points": 224, "content_bbox": [0, 42, 1600, 1115], "rows_with_art": [1, 46], "cols_with_art": [1, 64], "residual_cells": {"before": {"median": 0.9011, "p95": 0.9682}, "after": {"median": 0.0453, "p95": 0.1008}}, "date": "2026-11-01"}},
+    "registration": {"matrix": [[1.351203, 0.003448, -2.324996], [-0.002683, 1.353722, 43.203471]], "units": "board_mm->art_px", "n_points": 221, "content_bbox": [0, 42, 1600, 1115], "rows_with_art": [1, 46], "cols_with_art": [1, 64], "residual_cells": {"before": {"median": 0.9046, "p95": 0.9698}, "after": {"median": 0.0457, "p95": 0.1046}}, "date": "2026-11-02"}},
   "calibration": {
     "silhueta_silhueta": {"t95": 0.507, "tmax": 0.637},
     "celula_silhueta": {"t95": null, "tmax": null, "offset_mm": 0.48},

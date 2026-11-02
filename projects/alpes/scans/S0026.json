@@ -5,7 +5,7 @@
  "dpi": 300.0,
  "lote": null,
  "kind": "blocos",
- "date": "2026-11-01T05:39:57",
+ "date": "2026-11-02T00:46:32",
  "meta": {
   "n_segmented": 11,
   "n_rejected": 0,
@@ -22,7 +22,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0097",
+   "seccao_id": "G0094",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -62,7 +62,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0098",
+   "seccao_id": "G0095",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -102,7 +102,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0099",
+   "seccao_id": "G0096",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -142,7 +142,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0095",
+   "seccao_id": "G0092",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -182,7 +182,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0095",
+   "seccao_id": "G0092",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -222,7 +222,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0100",
+   "seccao_id": "G0097",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -262,7 +262,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0101",
+   "seccao_id": "G0098",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -302,7 +302,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0096",
+   "seccao_id": "G0093",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -342,7 +342,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0102",
+   "seccao_id": "G0099",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -382,7 +382,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0096",
+   "seccao_id": "G0093",
    "same_as": null,
    "flags": {
     "touches_frame": false,
@@ -422,7 +422,7 @@
    "estado": "em_seccao",
    "celula": null,
    "theta_deg": null,
-   "seccao_id": "G0103",
+   "seccao_id": "G0100",
    "same_as": null,
    "flags": {
     "touches_frame": false,

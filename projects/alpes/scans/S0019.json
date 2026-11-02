@@ -5,7 +5,7 @@
  "dpi": 300.0,
  "lote": null,
  "kind": "montado",
- "date": "2026-11-01T05:38:09",
+ "date": "2026-11-02T00:44:34",
  "meta": {
   "n_segmented": 38,
   "n_rejected": 0,
@@ -477,7 +477,15 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      15
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 410.11,
    "cls": "BTTT",
@@ -640,7 +648,15 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "contacto": {
+     "com": [
+      11
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
    "area_mm2": 366.75,
    "cls": "BTFT",

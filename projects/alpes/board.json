@@ -570,16 +570,16 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0296",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0293",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -830,10 +830,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0777",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -956,22 +956,22 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0297",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "ocupada_legado",
     "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "fonte": "tiago",
+    "foto_id": null
    },
    {
     "estado": "ocupada_legado",
     "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "fonte": "tiago",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -1662,10 +1662,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0343",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -1674,10 +1674,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0332",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -2048,10 +2048,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0344",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "vazia",
@@ -2060,10 +2060,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0333",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -2326,10 +2326,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0807",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -2712,10 +2712,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0833",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "vazia",
@@ -16148,10 +16148,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0443",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "ocupada_legado",
@@ -16160,10 +16160,10 @@
     "foto_id": "F0001"
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0391",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -16603,7 +16603,7 @@
   [
    {
     "estado": "colocada",
-    "peca_id": "P0657",
+    "peca_id": "P0651",
     "fonte": "legado_scan",
     "foto_id": null
    },
@@ -16989,7 +16989,7 @@
   [
    {
     "estado": "colocada",
-    "peca_id": "P0651",
+    "peca_id": "P0657",
     "fonte": "legado_scan",
     "foto_id": null
    },

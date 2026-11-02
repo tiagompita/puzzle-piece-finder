@@ -25,34 +25,34 @@
  "candidates": [
   {
    "cell0": [
-    45,
+    44,
+    55
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 21.745,
+   "margin": 0.868
+  },
+  {
+   "cell0": [
+    44,
+    47
+   ],
+   "rot": 0,
+   "mirror": false,
+   "score": 18.869,
+   "margin": 0.868
+  },
+  {
+   "cell0": [
+    44,
     48
    ],
    "rot": 0,
    "mirror": false,
-   "score": 20.3,
-   "margin": 1.027
-  },
-  {
-   "cell0": [
-    45,
-    53
-   ],
-   "rot": 0,
-   "mirror": false,
-   "score": 20.854,
-   "margin": 1.027
-  },
-  {
-   "cell0": [
-    45,
-    52
-   ],
-   "rot": 0,
-   "mirror": false,
-   "score": 20.982,
-   "margin": 1.027
+   "score": 19.738,
+   "margin": 0.868
   }
  ],
- "notes": "montado_p08 comp 1: ambigua; margem 1.03; margem 1.03, ganho 0.6; montado_p08 (peças 22–27, 2 peças): A filas 45–46, colunas 48–48 (rot 0°) ou B filas 45–46, colunas 53–53 (rot 0°) ou C filas 45–46, colunas 52–52 (rot 0°)?"
+ "notes": "montado_p08 comp 1: ambigua; margem 0.87; margem 0.87, ganho 4.3; G0044 (peças 22–27, 2 peças): A filas 44–45, colunas 55–55 (rot 0°) ou B filas 44–45, colunas 47–47 (rot 0°) ou C filas 44–45, colunas 48–48 (rot 0°)?"
 }

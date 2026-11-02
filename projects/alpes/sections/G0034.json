@@ -136,18 +136,18 @@
   "mirror": false,
   "fonte": "legado_scan",
   "confianca": "alta",
-  "margin": 0.988
+  "margin": 1.258
  },
  "candidates": [
   {
    "cell0": [
     47,
-    50
+    47
    ],
    "rot": 270,
    "mirror": false,
-   "score": 17.403,
-   "margin": 1.001
+   "score": 10.18,
+   "margin": 1.258
   },
   {
    "cell0": [
@@ -156,19 +156,19 @@
    ],
    "rot": 270,
    "mirror": false,
-   "score": 17.415,
-   "margin": 1.001
+   "score": 12.809,
+   "margin": 1.258
   },
   {
    "cell0": [
     47,
-    52
+    49
    ],
    "rot": 270,
    "mirror": false,
-   "score": 17.529,
-   "margin": 1.001
+   "score": 13.118,
+   "margin": 1.258
   }
  ],
- "notes": "montado_p06 comp 0: ambigua; margem 1.00; margem 1.00, ganho 0.0; montado_p06 (peças 1–36, 31 peças): A filas 42–47, colunas 50–55 (rot 270°) ou B filas 42–47, colunas 48–53 (rot 270°) ou C filas 42–47, colunas 52–57 (rot 270°)?"
+ "notes": "montado_p06 comp 0: ambigua; margem 1.26; margem 1.26, ganho 2.6; montado_p06 (peças 1–36, 31 peças): A filas 42–47, colunas 47–52 (rot 270°) ou B filas 42–47, colunas 48–53 (rot 270°) ou C filas 42–47, colunas 49–54 (rot 270°)?"
 }
