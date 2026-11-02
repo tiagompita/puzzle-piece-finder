@@ -218,3 +218,84 @@ def test_ingest_page_end_to_end(world, tmp_path):
     assert pr.check_invariants() == []
     out = legacy.solve_project_sections(pr, art=art)
     assert out["anchored"] == [] and out["ambiguous"] == []
+
+
+# ---------------------------------------------------------------- user hints (bug 5)
+def _singleton_project(tmp_path, prof, mean_lab, n=1):
+    """Project with ``n`` loose pieces (mean Lab only: no shape, no crop) each in its own ``montado`` section."""
+    from src.profile import PuzzleProfile
+    from src.state import Project
+    pp = tmp_path / "puzzle.json"
+    PuzzleProfile.from_dict(dict(prof.to_dict(), id="syn")).save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    sid = pr.add_scan(None, dpi=300, kind="montado")
+    gids, pids = [], []
+    for i in range(n):
+        pid = pr.add_piece(sid, {"index_in_scan": i, "n_no_lote": i + 1, "mean_lab": [float(x) for x in mean_lab]})
+        gids.append(pr.register_section(sid, "montado", {pid: (0, 0)}))
+        pids.append(pid)
+    return pr, gids, pids
+
+
+def _two_cells(art, rows, cols):
+    """(F, H, t): F is the nearest cell of the colour lab(F)(1-t) + lab(H)t, H the second, and dE(H) - dE(F) = 1."""
+    M = art.cell_lab_mean
+    for f in [(l, c) for l in range(2, rows) for c in range(2, cols)]:
+        for h in [(l, c) for l in range(2, rows) for c in range(2, cols) if (l, c) != f]:
+            a, b = M[f[0] - 1, f[1] - 1], M[h[0] - 1, h[1] - 1]
+            D = float(np.linalg.norm(a - b))
+            if D < 10:
+                continue
+            t = 0.5 - 0.5 / D
+            x = a * (1 - t) + b * t
+            d = np.linalg.norm(M - x[None, None, :], axis=-1)
+            order = np.argsort(d.ravel())
+            if tuple(np.unravel_index(order[0], d.shape)) == (f[0] - 1, f[1] - 1) and \
+                    tuple(np.unravel_index(order[1], d.shape)) == (h[0] - 1, h[1] - 1) and d.ravel()[order[2]] > d.ravel()[order[1]] + 3:
+                return f, h, x
+    raise AssertionError("no suitable pair of cells in the synthetic art")
+
+
+def test_hint_beats_a_free_cell_with_a_better_raw_score(world, tmp_path):
+    rgb, art, prof = world
+    f, h, lab = _two_cells(art, ROWS, COLS)
+    pr, (gid,), (pid,) = _singleton_project(tmp_path, prof, lab)
+    # without a hint: the single piece goes to F by colour but stays ambiguous (no twin)
+    out = legacy.solve_project_sections(pr, art=art)
+    assert out["anchored"] == [] and [a["section"] for a in out["ambiguous"]] == [gid]
+    assert tuple(pr.sections[gid].candidates[0]["cell0"]) == f        # refreshed candidates
+    # Tiago says H is assembled: H wins over the free F (raw dE 1 better) and is anchored 'alta'
+    pr.mark_cell_full(h)
+    out = legacy.solve_project_sections(pr, art=art)
+    assert out["anchored"] == [gid], out
+    assert pr.piece(pid).celula == h and pr.board[h]["estado"] == "colocada"
+    a = pr.sections[gid].anchor
+    assert a["fonte"] == legacy.HINT_FONTE and a["confianca"] == "alta"
+    assert out["hinted"] and out["hinted"][0]["cells"] == [list(h)]
+    assert pr.check_invariants() == []
+
+
+def test_section_never_placed_on_a_placed_cell_and_takes_the_hint(world, tmp_path):
+    rgb, art, prof = world
+    f, h, lab = _two_cells(art, ROWS, COLS)
+    pr, (gid,), (pid,) = _singleton_project(tmp_path, prof, lab)
+    other = pr.add_piece(pr.add_scan(None, dpi=300, kind="montado"), {"index_in_scan": 0, "n_no_lote": 1})
+    g2 = pr.register_section(None, "montado", {other: (0, 0)})
+    pr.anchor_section(g2, f[0], f[1], fonte="legado_scan", confianca="alta")   # F holds an anchored section
+    out = legacy.solve_project_sections(pr, art=art)
+    assert out["anchored"] == []
+    assert all(tuple(cd["cell0"]) != f for cd in pr.sections[gid].candidates)
+    pr.mark_cell_full(h)
+    out = legacy.solve_project_sections(pr, art=art)
+    assert out["anchored"] == [gid] and pr.piece(pid).celula == h
+    assert pr.check_invariants() == []
+
+
+def test_hint_with_two_plausible_sections_is_not_decided_by_the_hint_alone(world, tmp_path):
+    rgb, art, prof = world
+    f, h, lab = _two_cells(art, ROWS, COLS)
+    pr, gids, _ = _singleton_project(tmp_path, prof, lab, n=2)     # two identical pieces: both claim H
+    pr.mark_cell_full(h)
+    out = legacy.solve_project_sections(pr, art=art)
+    assert out["anchored"] == []
+    assert pr.check_invariants() == []

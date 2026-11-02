@@ -44,6 +44,20 @@ gap, or an energy gap >= ``TWIN_GAP_MIN`` x ``W_TWIN``, no conflict with compone
 ``alta``, the mirror not better, and (when given) the GT all right; otherwise ``ambigua`` with
 the top-3 and a concrete question. Never guess: ``ambigua`` does not anchor.
 
+User hints (cells Tiago marked assembled, ``fonte='tiago'`` in the board, see the doubt
+policy in :mod:`src.state`): every unit also gets the placements that put one of its
+members on a hint cell (origin ``pista``), the energy gets ``- W_HINT`` per member on a hint
+cell, and a unit whose chosen placement covers a hint cell may be ``alta`` as a single piece
+(the hint replaces the missing twin) when its image margin passes ``margin_min`` or when it is
+the only unit that can cover that hint cell: its placement scores within ``margin_min`` x
+its own image best and every other undecided unit scores >= ``margin_min`` x worse on that
+cell (units decided ``alta`` elsewhere are no rivals, so the hint units are decided again
+until stable); a section whose ``alta`` needed the hint (single piece without a twin, or
+margin/gain short) is anchored with fonte ``legado_scan+pista``. On the
+project side the image search (``locate_group`` ``allowed``) avoids the cells of the pieces of
+anchored sections (never the cells of GT / loose pieces placed from the log: a page piece there
+is the same physical piece, see :func:`_section_allowed`).
+
 Project side (:func:`ingest_page`, :func:`solve_project_sections`). Order of calls::
 
 	python -m src.ingest montado_p01.jpg --montado p01      # each page: scan + pieces + sections
@@ -80,7 +94,8 @@ __all__ = [
 	"TWIN_ROT_TOL", "MIN_PLACE_PIECES", "N_IMPLY", "W_OVERLAP", "MIRROR_WIN", "MIN_LINK", "DUP_FRAC", "W_PRIOR",
 	"duplicate_pages", "page_rotation", "label_sides", "side_compat", "build_components", "group_by_proximity",
 	"crop_rgba", "analyse_pieces", "analyse_page", "placement_score", "distinct_margin", "twin_pairs",
-	"solve_pages", "match_gt", "load_prior", "ingest_page", "solve_project_sections", "component_cells",
+	"solve_pages", "match_gt", "load_prior", "ingest_page", "solve_project_sections", "component_cells", "W_HINT",
+	"HINT_FONTE",
 ]
 
 # ---------------------------------------------------------------- constants
@@ -99,6 +114,8 @@ DUP_FRAC = 0.5              # share of same-piece matches that makes a page a re
 W_PRIOR = 2.0               # solve_pages: dE units per member on a cell the occupancy map contradicts (0 for montado, 1 for blocos)
 DISTINCT_CELLS = 1.0        # placements count as distinct if member cells move >= this (mean Chebyshev); 1, not 2: p14 was off by 1 column
 W_TWIN = 3.0                # dE units per net satisfied twin pair in the cross-page solve
+W_HINT = 2.0                # solve_pages: dE units of bonus per member on a cell the user marked full (= W_PRIOR)
+HINT_FONTE = "legado_scan+pista"   # anchor fonte of a section decided with a user hint
 TWIN_GAP_MIN = 2            # an energy gap of this many twin pairs (x W_TWIN) decides without the image margin
 TWIN_ROT_TOL = 45.0         # deg: a twin pair agrees on the rotation if the board poses differ by < this
 GROUP_GAP_MM = 3.0          # blocos: proximity groups (contour to contour), reported only: the groups come from the sides
@@ -165,6 +182,8 @@ class Component:
 	questions: list = field(default_factory=list)
 	energy_gap: float = float("nan")
 	mirror_ratio: float = 0.0
+	hint: list = field(default_factory=list)       # user hint cells covered by the chosen placement
+	hint_used: bool = False                         # the hint was needed for 'alta' (lone piece or margin)
 
 	@property
 	def best(self) -> Optional[dict]:
@@ -452,7 +471,9 @@ def placement_score(comp: Component, pieces: list, profile, art, cells: dict, ro
 		if key not in cache:
 			cache[key] = render_item(p.rgba, p.shape, float(p.theta_deg) + rot, art, mmpp, mirror=mirror)
 		vals.append(de_cell(cache[key], l, c, art)["dE"])
-	sc = float(np.median(vals))
+	v = np.asarray(vals, float)
+	v = v[np.isfinite(v)]                  # members on cells without art (NaN / inf) do not count
+	sc = float(np.median(v)) if len(v) else float("inf")
 	if prior is not None:
 		pr = np.asarray(prior)
 		sc += PRIOR_WEIGHT * float(np.mean([pr[l - 1, c - 1] == (1 - prior_expect) for (l, c) in cells.values()]))
@@ -480,13 +501,15 @@ def distinct_margin(placements: list, key: str = "score") -> tuple:
 	return float("inf"), None
 
 
-def _locate_component(comp: Component, pieces: list, profile, art, prior, prior_expect: int, mm_per_px: float) -> None:
-	"""Fill ``comp.placements`` (top ``TOPK``, mirror placements tested and flagged)."""
+def _locate_component(comp: Component, pieces: list, profile, art, prior, prior_expect: int, mm_per_px: float,
+					  constraints: Optional[dict] = None) -> None:
+	"""Fill ``comp.placements`` (top ``TOPK``, mirror placements tested and flagged); ``constraints``
+	go to :func:`src.locate.locate_group` (``{'allowed': (rows, cols) bool}``)."""
 	items = _items(comp, pieces)
 	if any(it["mean_lab"] is None for it in items):
 		comp.reasons.append("sem cor média")
 		return
-	res = locate_group(items, profile, art, prior=prior, topk=TOPK, mirror=True, refine=True,
+	res = locate_group(items, profile, art, constraints=constraints, prior=prior, topk=TOPK, mirror=True, refine=True,
 					   prior_expect=prior_expect, mm_per_px=mm_per_px)
 	pl = []
 	for r in res:
@@ -498,7 +521,8 @@ def _locate_component(comp: Component, pieces: list, profile, art, prior, prior_
 		comp.reasons.append("nenhuma colocação respeita os lados F")
 
 
-def _decide(comp: Component, margin_min: float, gt: Optional[dict] = None, gap: Optional[float] = None) -> None:
+def _decide(comp: Component, margin_min: float, gt: Optional[dict] = None, gap: Optional[float] = None,
+			hint_cells: Optional[list] = None, hint_sole: bool = False) -> None:
 	"""``alta`` / ``ambigua`` for the first placement (the chosen one; energy in ``adj``).
 
 	Image margin = lowest image score among the distinct alternatives (mean Chebyshev
@@ -510,6 +534,10 @@ def _decide(comp: Component, margin_min: float, gt: Optional[dict] = None, gap: 
 	units already decided ``alta``: ``twin_viol_fixed`` / ``overlap_fixed``); the best mirror
 	placement not better than the image-best non-mirror one by ``MIRROR_WIN`` or more; more
 	than one piece unless a twin supports it; and the GT (if given) all right.
+
+	``hint_cells`` (user hint cells the chosen placement covers, :func:`solve_pages`): a
+	single piece needs no twin, and ``hint_sole`` (the only unit that can plausibly cover
+	one of them) passes the margin/gain rule; the other rules still apply.
 	"""
 	comp.reasons = [r for r in comp.reasons if r.startswith("sem ") or r.startswith("nenhuma")]
 	comp.questions = []
@@ -532,10 +560,16 @@ def _decide(comp: Component, margin_min: float, gt: Optional[dict] = None, gap: 
 	comp.mirror_ratio = float(img_best / min(p["score"] for p in mirrors)) if mirrors else 0.0
 	comp.mirror_best = comp.mirror_ratio >= MIRROR_WIN
 	ok = (m >= margin_min and gap > 0) or gap >= TWIN_GAP_MIN * W_TWIN
+	comp.hint = [tuple(h) for h in (hint_cells or [])]
+	g0 = gap - W_HINT * len(comp.hint)          # the gain without the chosen placement's hint bonus (upper bound)
+	ok0 = (m >= margin_min and g0 > 0) or g0 >= TWIN_GAP_MIN * W_TWIN
+	comp.hint_used = bool(comp.hint) and (not ok0 or (len(comp.members) < 2 and best.get("twin_sat", 0) == 0))
+	if comp.hint and hint_sole:
+		ok = True
 	viol = best.get("twin_viol_fixed", best.get("twin_viol", 0))
 	ov = best.get("overlap_fixed", best.get("overlap", 0))
 	why = []
-	if len(comp.members) < 2 and best.get("twin_sat", 0) == 0:
+	if len(comp.members) < 2 and best.get("twin_sat", 0) == 0 and not comp.hint:
 		why.append("1 peça sem gémea")
 	if not ok:
 		why.append(f"margem {m:.2f}, ganho {gap:.1f}")
@@ -841,7 +875,8 @@ def duplicate_pages(results: list, pairs: list, *, same_de: float = SAME_PIECE_D
 	return out
 
 
-def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max_iter: int = 30, log=None) -> dict:
+def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max_iter: int = 30, log=None,
+				hints=None, allowed=None) -> dict:
 	"""Cross-page consistency (step 5): image + silhouette twins + no two sections on one cell.
 
 	Units = located components of every page (``montado`` and ``blocos``) except pages that
@@ -860,7 +895,13 @@ def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max
 	the components (placements sorted with the chosen one first; ``adj`` = its share of the
 	energy; ``twin_sat``, ``twin_viol``, ``overlap``). Returns ``{'pairs', 'duplicates',
 	'iterations', 'moves'}``.
+
+	``hints``: cells the user marked full (see the module docstring: ``pista`` placements,
+	``- W_HINT`` per member on one, single-piece ``alta`` rule). ``allowed``: per result, a
+	``(rows, cols)`` bool mask (or None) of the cells its members may use; new placements
+	(twin-implied, hint) outside it are dropped.
 	"""
+	hint_set = {tuple(h) for h in (hints or ())}
 	allp = [(pi, k) for pi, r in enumerate(results) for k in range(len(r.pieces))]
 	shapes = [results[pi].pieces[k].shape if not results[pi].pieces[k].excluded else None for pi, k in allp]
 	if pairs is None:
@@ -909,6 +950,9 @@ def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max
 		cells = component_cells(comp, cell0, rot)
 		if not _valid_placement(comp, results[pi].pieces, profile, cells, rot, False):
 			return None
+		am = None if allowed is None else allowed[pi]
+		if am is not None and not all(am[l - 1, c - 1] for (l, c) in cells.values()):
+			return None
 		sc = float("inf")
 		if art is not None:
 			sc = placement_score(comp, results[pi].pieces, profile, art, cells, rot, False, prior=prior,
@@ -931,9 +975,22 @@ def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max
 				pl = _implied(profile, comp, piece(own), own[1], piece(other), (q["cells"][other[1]], q["rot"]), phi)
 				if pl is not None:
 					make_placement(u, pl[0], pl[1], "gémea")
+	# (1b) placements that put a member on a user hint cell
+	if hint_set:
+		for u, (pi, comp) in enumerate(units):
+			if len(comp.placements) == 1 and comp.placements[0].get("origin") == "ancorada":
+				continue
+			for rot in (0, 90, 180, 270):
+				off = component_cells(comp, (0, 0), rot)
+				for k in comp.members:
+					for h in sorted(hint_set):
+						make_placement(u, (h[0] - off[k][0], h[1] - off[k][1]), rot, "pista")
 
 	def cands(u):
 		return [p for p in units[u][1].placements if not p["mirror"] and np.isfinite(p["score"])]
+
+	def n_hint(p):
+		return sum(1 for cell in p["cells"].values() if cell in hint_set) if hint_set else 0
 
 	pr = None if prior is None else np.asarray(prior)
 
@@ -946,7 +1003,8 @@ def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max
 		return int(sum(1 for (l, c) in p["cells"].values() if pr[l - 1, c - 1] == bad))
 
 	fixed = {u for u, (_, c) in enumerate(units) if len(c.placements) == 1 and c.placements[0].get("origin") == "ancorada"}
-	choice = {u: (min(cands(u), key=lambda p: p["score"]) if cands(u) else None) for u in range(len(units))}
+	choice = {u: (min(cands(u), key=lambda p: p["score"] - W_HINT * n_hint(p)) if cands(u) else None)
+			  for u in range(len(units))}
 	occ = {}
 
 	def occupy(p, s):
@@ -1000,7 +1058,8 @@ def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max
 		S = set(conf)
 		old = {w: choice[w] for w in S}
 		e_img = sum(conf[w]["score"] - (old[w]["score"] if old[w] is not None else 0.0)
-					+ W_PRIOR * (prior_bad(w, conf[w]) - (prior_bad(w, old[w]) if old[w] is not None else 0)) for w in S)
+					+ W_PRIOR * (prior_bad(w, conf[w]) - (prior_bad(w, old[w]) if old[w] is not None else 0))
+					- W_HINT * (n_hint(conf[w]) - (n_hint(old[w]) if old[w] is not None else 0)) for w in S)
 		e_pair = pair_terms(S, lambda w: conf.get(w, choice[w])) - pair_terms(S, lambda w: choice[w])
 		touched = {}
 		for w in S:
@@ -1043,17 +1102,41 @@ def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max
 				changed = True
 		if not changed:
 			break
+	# hint competitors: the best image score of every unit on a placement covering each hint cell
+	best_img = {u: min((p["score"] for p in cands(u)), default=float("inf")) for u in range(len(units))}
+	cover_best = {}
+	for u in range(len(units)):
+		if u in fixed:
+			continue
+		for p in cands(u):
+			for cell in p["cells"].values():
+				if cell in hint_set and p["score"] < cover_best.get((u, cell), float("inf")):
+					cover_best[(u, cell)] = float(p["score"])
+
+	def hint_sole(u, ch, covered, decided):
+		"""u is the only unit that can cover one of ``covered``: its placement is plausible for itself
+		(score <= margin_min x its image best) and every other undecided unit scores >= margin_min x
+		worse on that cell."""
+		if not covered or ch["score"] > margin_min * best_img[u]:
+			return False
+		for h in covered:
+			rivals = [s for (v, cell), s in cover_best.items() if cell == h and v != u and v not in decided]
+			if all(s >= margin_min * ch["score"] for s in rivals):
+				return True
+		return False
+
 	# (3) decide with the final neighbourhood, largest units first: a conflict (violated twin
 	# pair, shared cell) counts against a unit only if the other unit is already 'alta' (or is
 	# the unit itself); conflicts with undecided units are kept as information
 	decided = set(fixed)
 	dorder = sorted(range(len(units)), key=lambda u: (u not in fixed, -len(units[u][1].members)))
-	for u in dorder:
+
+	def decide_unit(u):
 		pi, comp = units[u]
 		ch = choice.get(u)
 		if ch is None:
 			_decide(comp, margin_min)
-			continue
+			return
 		alta_cells = {}
 		for w in decided:
 			if w != u and choice.get(w) is not None:
@@ -1080,7 +1163,7 @@ def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max
 			pb = prior_bad(u, p)
 			p.update(twin_sat=sat, twin_viol=viol, overlap=ov, prior_bad=pb, twin_viol_fixed=vfix,
 					 overlap_fixed=sum(1 for cell in p["cells"].values() if cell in alta_cells))
-			p["adj"] = float(p["score"]) - W_TWIN * (sat - viol) + W_OVERLAP * ov + W_PRIOR * pb
+			p["adj"] = float(p["score"]) - W_TWIN * (sat - viol) + W_OVERLAP * ov + W_PRIOR * pb - W_HINT * n_hint(p)
 		# cheapest move (with the tied partners) to a distinct placement
 		gap = float("inf")
 		if u not in fixed:
@@ -1091,13 +1174,25 @@ def solve_pages(results: list, profile, art=None, prior=None, *, pairs=None, max
 				if conf is not None:
 					gap = min(gap, delta(conf))
 		comp.placements.sort(key=lambda p: (p is not ch, p["adj"], p["mirror"]))
-		_decide(comp, margin_min, gap=gap)
+		covered = sorted({cell for cell in ch["cells"].values() if cell in hint_set}) if u not in fixed else []
+		_decide(comp, margin_min, gap=gap, hint_cells=covered, hint_sole=hint_sole(u, ch, covered, decided))
 		if comp.decision == "alta":
 			decided.add(u)
 			if log:
 				b = comp.best
 				log(f"{results[pi].name} c{comp.id}: alta {b['cell0']} rot {b['rot']} (gémeas {b['twin_sat']}/{b['twin_viol']}, "
-					f"ganho {gap:.1f})")
+					f"ganho {gap:.1f}{', pista ' + str(covered) if covered else ''})")
+
+	for u in dorder:
+		decide_unit(u)
+	# a unit decided with a hint removes a rival of the other hint units: decide those again until stable
+	for _ in range(len(units) if hint_set else 0):
+		again = [u for u in dorder if u not in decided and choice.get(u) is not None and n_hint(choice[u])]
+		n0 = len(decided)
+		for u in again:
+			decide_unit(u)
+		if len(decided) == n0:
+			break
 	for u, (pi, comp) in enumerate(units):
 		if comp.decision != "alta" and comp.placements:
 			comp.questions = [_question(results[pi].name, comp, results[pi].pieces)]
@@ -1185,8 +1280,53 @@ def _project_art(project, art):
 
 
 def _project_prior(project):
+	"""Last photo map with the user's cells on top (``fonte='tiago'``: full -> 1, empty -> 0)."""
 	ph = project.last_photo()
-	return None if ph is None else np.array(ph.map, int)
+	user = [(lc, cell["estado"]) for lc, cell in project.board.iter_cells() if cell["fonte"] == "tiago"
+			and cell["estado"] != "colocada"]
+	if ph is None and not user:
+		return None
+	m = np.array(ph.map, int) if ph is not None else -np.ones((project.profile.rows, project.profile.cols), int)
+	for (l, c), est in user:
+		m[l - 1, c - 1] = 1 if est == "ocupada_legado" else 0
+	return m
+
+
+def _section_allowed(project, pids) -> np.ndarray:
+	"""Cells a section may use: every cell except those holding a piece of an anchored section
+	(``fonte='legado_scan'``), plus the cells of the placed pieces its members are ``same_as``.
+
+	Cells of pieces placed from the log (GT, loose scans) stay allowed: a legacy page often holds
+	the same physical piece (not yet ``same_as``), and the conflict on anchoring is what marks it
+	(``tools/diagnostico/legado/ingest_all.py`` ``stage_solve``). Masking them displaced whole
+	sections in the rebuild (46 -> 26 anchored, border solve failing)."""
+	prof = project.profile
+	m = np.ones((prof.rows, prof.cols), bool)
+	for (l, c), cell in project.board.iter_cells():
+		if cell["estado"] == "colocada" and cell["fonte"] == "legado_scan":
+			m[l - 1, c - 1] = False
+	for pid in pids:
+		o = project.piece(pid).same_as
+		q = project.pieces.get(o) if o else None
+		if q is not None and q.estado == "colocada" and q.celula:
+			m[q.celula[0] - 1, q.celula[1] - 1] = True
+	return m
+
+
+def _candidates(comp: Component, n: int = 3) -> list:
+	"""Stored top placements of a section (non-mirror, the chosen one first)."""
+	out = []
+	for p in comp.placements:
+		if p["mirror"] or not np.isfinite(p["score"]):
+			continue
+		d = {"cell0": list(p["cell0"]), "rot": int(p["rot"]), "mirror": False, "score": round(float(p["score"]), 3),
+			 "margin": None if not np.isfinite(comp.margin) else round(float(comp.margin), 3)}
+		if p.get("origin") == "pista":
+			d["origem"] = "pista"
+		out.append(d)
+		if len(out) == n:
+			break
+	return out
 
 
 def ingest_page(project, scan_path: str, kind: str, page, *, auto_anchor: bool = True, art=None, prior=None,
@@ -1290,14 +1430,19 @@ def solve_project_sections(project, *, art=None, prior=None, auto_anchor: bool =
 	Rebuilds a :class:`PageResult` per section from the project (shapes, crops, local cells),
 	locates it, treats anchored sections as fixed, runs :func:`solve_pages`, and anchors the
 	sections that became ``alta`` (fonte ``legado_scan``). Sections whose pieces are all
-	``same_as`` (a page scanned twice) are skipped. Returns ``{'anchored': [...],
-	'ambiguous': [...], 'pairs': n}``.
+	``same_as`` (a page scanned twice) are skipped. The image search avoids the cells of
+	anchored sections (:func:`_section_allowed`) and the user hint cells (``Project.hint_cells``) go to
+	:func:`solve_pages`; a section decided with a hint is anchored with fonte ``HINT_FONTE``.
+	The stored ``candidates`` / ``notes`` of the sections left unanchored are refreshed
+	(``section_candidates_updated``) when they changed. Returns ``{'anchored': [...],
+	'ambiguous': [...], 'pairs': n, 'hinted': [...]}``.
 	"""
 	profile = project.profile
 	art = _project_art(project, art)
 	if prior is None:
 		prior = _project_prior(project)
-	results, sec_of = [], []
+	hints = list(project.hint_cells()) if hasattr(project, "hint_cells") else []
+	results, sec_of, allowed = [], [], []
 	for gid, s in sorted(project.sections.items()):
 		if s.kind != "montado":
 			continue
@@ -1331,25 +1476,41 @@ def solve_project_sections(project, *, art=None, prior=None, auto_anchor: bool =
 			comp.placements = [dict(cell0=(a["l0"], a["c0"]), rot=int(a["rot"]), mirror=bool(a["mirror"]), score=0.0, cells=cells,
 									origin="ancorada", twin_sat=0, twin_viol=0, adj=0.0)]
 			comp.decision = "alta"
+			allowed.append(None)
 		elif art is not None:
-			_locate_component(comp, pieces, profile, art, prior, 1, profile.mm_per_px())
+			am = _section_allowed(project, pids)
+			_locate_component(comp, pieces, profile, art, prior, 1, profile.mm_per_px(), constraints={"allowed": am})
 			_decide(comp, float(profile.calibration.get("margin_min", 1.5)))
+			allowed.append(am)
+		else:
+			allowed.append(None)
 		results.append(pr)
 		sec_of.append(gid)
 	if not results:
-		return {"anchored": [], "ambiguous": [], "pairs": 0}
+		return {"anchored": [], "ambiguous": [], "pairs": 0, "hinted": []}
 	was = {gid for gid, s in project.sections.items() if s.anchor.get("anchored")}
-	out = solve_pages(results, profile, art, prior)
-	anchored, ambiguous = [], []
+	out = solve_pages(results, profile, art, prior, hints=hints, allowed=allowed)
+	anchored, ambiguous, hinted = [], [], []
 	for gid, r in zip(sec_of, results):
 		comp = r.components[0]
 		if gid in was:
 			continue
 		if comp.decision == "alta" and comp.placements and auto_anchor:
 			b = comp.placements[0]
-			project.anchor_section(gid, b["cell0"][0], b["cell0"][1], rot=b["rot"], fonte="legado_scan", confianca="alta",
+			project.anchor_section(gid, b["cell0"][0], b["cell0"][1], rot=b["rot"],
+								   fonte=HINT_FONTE if comp.hint_used else "legado_scan", confianca="alta",
 								   margin=None if not np.isfinite(comp.margin) else round(comp.margin, 3))
 			anchored.append(gid)
+			if comp.hint_used:
+				hinted.append({"section": gid, "cells": [list(h) for h in comp.hint], "cell0": list(b["cell0"]),
+							   "rot": int(b["rot"]), "margin": None if not np.isfinite(comp.margin) else round(comp.margin, 3)})
 		else:
 			ambiguous.append({"section": gid, "questions": comp.questions, "reasons": comp.reasons})
-	return {"anchored": anchored, "ambiguous": ambiguous, "pairs": len(out["pairs"])}
+			s = project.sections[gid]
+			cands = _candidates(comp)
+			prefix = s.notes.split(":")[0] if s.notes else gid
+			notes = (f"{prefix}: {comp.decision}; margem {comp.margin:.2f}; " + "; ".join(comp.reasons)
+					 + ("; " + " ".join(comp.questions) if comp.questions else ""))
+			if cands and (cands != s.candidates or notes != s.notes) and hasattr(project, "update_section_candidates"):
+				project.update_section_candidates(gid, cands, notes=notes)
+	return {"anchored": anchored, "ambiguous": ambiguous, "pairs": len(out["pairs"]), "hinted": hinted}
