@@ -102,3 +102,7 @@ The user has a tight **weekly limit on the Fable model**, so Fable must be used 
 - `src/` uses tab indentation, `__all__` exports, and docstrings; pure helpers are kept separate from I/O; functions return `{'error': str, ...}` on failure (contract of `matching.py`/`segmentation.py`).
 - Critical modules requiring implementer design/review for any algorithmic change: `src/matching.py`, `src/segmentation.py`, and the geometry/fit modules to be created (`src/shape.py`, `src/fit.py`, `src/twin.py`).
 - Reports to the user label every claim as verified (with evidence), not tested, or tested-and-failing; external claims carry a link. Commit messages in Portuguese, no Co-Authored-By line.
+
+## Reports
+
+At the start of every session run `python -m src.reports --project projects/alpes --list`, treat the open reports as the work list, and close each one (`--close R#### --nota`) with what was done.

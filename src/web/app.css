@@ -316,3 +316,12 @@ details.tech li { margin: 2px 0; }
   .who { font-size: 19px; }
   #tabs button { font-size: 13.5px; }
 }
+
+/* grupos da lista "vai buscar" e reportar */
+.grupo-head { font-size: 16px; margin: 18px 0 4px; }
+.grupo-head .muted { font-weight: 400; }
+#n-buscar.aviso { background: var(--amber); color: var(--amber-ink); border-radius: 8px; padding: 0 5px; }
+#report-dlg { background: #1c1f24; color: inherit; border: 1px solid var(--line); border-radius: 12px; max-width: 420px; width: calc(100% - 32px); }
+#report-dlg::backdrop { background: rgba(0, 0, 0, .6); }
+#report-dlg fieldset { border: 0; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
+#report-dlg textarea { width: 100%; box-sizing: border-box; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 10px; }

@@ -85,6 +85,24 @@
   <div class="lb-cap" id="lb-cap"></div>
 </div>
 
+<dialog id="report-dlg">
+  <form id="report-form" method="dialog">
+    <h3>Reportar um problema</h3>
+    <p class="muted small" id="report-where"></p>
+    <fieldset>
+      <label><input type="radio" name="tipo" value="mal_lida"> mal lida / mal recortada</label>
+      <label><input type="radio" name="tipo" value="mal_colocada"> mal colocada</label>
+      <label><input type="radio" name="tipo" value="nao_encaixa"> não encaixa</label>
+      <label><input type="radio" name="tipo" value="outro"> outro</label>
+    </fieldset>
+    <textarea id="report-text" rows="3" placeholder="O que viste (opcional)"></textarea>
+    <div class="actions">
+      <button type="submit" class="btn primary" id="report-send">Enviar</button>
+      <button type="button" class="btn" onclick="document.getElementById('report-dlg').close()">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
 </body>

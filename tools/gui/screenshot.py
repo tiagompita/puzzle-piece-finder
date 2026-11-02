@@ -10,7 +10,7 @@ here), waits until it is ready, and captures:
 
 * ``progresso.png`` (1400 x 900, whole board), ``progresso_zoom_relva.png`` (rows 42-47, cols 1-8),
   ``progresso_zoom_ceu.png`` (rows 1-6, cols 5-24), ``celula.png`` (cell drawer of (3, 37)),
-  ``vai_buscar.png`` (the sky rows with the proposals, list scrolled to the 2nd card), ``lotes.png``, ``mesa.png``, ``importar.png``;
+  ``vai_buscar_ceu.png`` (the sky rows with the proposals, list scrolled to the 2nd card); ``--so-lista``: only ``vai_buscar.jpg`` (both lists), ``guarda_posicao.jpg``, ``reportar.jpg`` (dialog), ``lotes.png``, ``mesa.png``, ``importar.png``;
 * ``desktop_{1366,1920}_{100,125,150}.jpg`` (Windows scaling matrix), ``ver_no_tabuleiro.jpg``;
 * ``telemovel_progresso.png`` and ``telemovel_vai_buscar.png`` at 390 x 844.
 
@@ -99,6 +99,10 @@ def main(argv=None) -> int:
     ap.add_argument("--project", default=os.path.join(scratch, "g_alpes"))
     ap.add_argument("--out", default=os.path.join(REPO, "docs", "gui", "screenshots"))
     ap.add_argument("--port", type=int, default=0)
+    ap.add_argument("--so-pista", action="store_true",
+                    help="only celula_pista.jpg (cell (3, 10) marked as assembled by the user; undone afterwards)")
+    ap.add_argument("--so-lista", action="store_true",
+                    help="only vai_buscar.jpg, guarda_posicao.jpg and reportar.jpg (the two lists + the report dialog)")
     args = ap.parse_args(argv)
     from playwright.sync_api import sync_playwright
 
@@ -127,6 +131,44 @@ def main(argv=None) -> int:
                 settle(pg, 800)
                 return pg
 
+            if args.so_lista:
+                pg = open_page(1400, 900)
+                pg.evaluate("showTab('buscar'); fitBoard()")
+                settle(pg, 800)
+                # both lists: the "Guarda com posição" header in the middle of the panel, the last "Coloca agora" cards above it
+                pg.evaluate("document.querySelector('#tab-buscar .grupo-head[data-grupo=guarda_posicao]')"
+                            ".scrollIntoView({block: 'center'})")
+                settle(pg, 1200)
+                shot(pg, "vai_buscar.jpg")
+                pg.evaluate("document.querySelector('#tab-buscar .grupo-head[data-grupo=guarda_posicao]')"
+                            ".scrollIntoView({block: 'start'})")
+                settle(pg, 1200)
+                shot(pg, "guarda_posicao.jpg")
+                pg.evaluate("document.querySelector('#tab-buscar .grupo-head[data-grupo=coloca_agora]')"
+                            ".scrollIntoView({block: 'start'})")
+                pg.click("#tab-buscar .card .btn:has-text('Reportar')")
+                pg.wait_for_selector("#report-dlg[open]")
+                pg.fill("#report-text", "o recorte está cortado ao meio")
+                settle(pg, 600)
+                shot(pg, "reportar.jpg")
+                pg.close()
+                br.close()
+                return 0
+
+            if args.so_pista:
+                pg = open_page(1400, 900)
+                pg.evaluate("openCell(3, 10, {zoom: true})")
+                pg.wait_for_selector("#tab-celula .zoomrow", timeout=60_000)
+                pg.click("#tab-celula .btn:has-text('Está montada')")
+                pg.wait_for_selector("#tab-celula :text('marcada por ti')", timeout=60_000)
+                settle(pg, 1500)
+                shot(pg, "celula_pista.jpg")
+                pg.click("#tab-celula .btn:has-text('Está vazia')")   # leave the copy as found
+                settle(pg, 800)
+                pg.close()
+                br.close()
+                return 0
+
             # Windows scaling matrix: the CSS viewport is W/dsf x H/dsf (1366x768 at 125 % -> 1093x614)
             for W, H in ((1366, 768), (1920, 1080)):
                 for dsf in (1.0, 1.25, 1.5):
@@ -150,7 +192,7 @@ def main(argv=None) -> int:
             zoom_wait(pg, "zoomCells(1, 26, 7, 58, 0.02)")
             pg.evaluate("document.querySelectorAll('#tab-buscar .card')[1].scrollIntoView({block: 'start'})")
             settle(pg, 1200)
-            shot(pg, "vai_buscar.png")
+            shot(pg, "vai_buscar_ceu.png")
             pg.evaluate("showTab('buscar'); fitBoard()")
             settle(pg, 800)
             pg.evaluate("document.querySelector('#tab-buscar .card .btn.slim').click()")

@@ -276,8 +276,11 @@ function drawProgress() {
   const p = S.board.progresso;
   $("#puzzle-name").textContent = S.board.puzzle || "Mesa de montagem";
   const pct = (100 * p.colocadas / p.total);
-  $("#progress-txt").textContent =
-    `${p.colocadas} colocadas · ${p.sem_silhueta} ocupadas sem silhueta · ${p.total - p.ocupadas} por colocar (de ${p.total})`;
+  const st = S.board.stats || {};
+  const semSil = st.celulas_so_foto !== undefined
+    ? `${st.celulas_so_foto} por confirmar (foto)` + (st.celulas_pista ? ` · ${st.celulas_pista} marcadas por ti` : "")
+    : `${p.sem_silhueta} ocupadas sem silhueta`;
+  $("#progress-txt").textContent = `${p.colocadas} colocadas · ${semSil} · ${p.total - p.ocupadas} por colocar (de ${p.total})`;
   $("#pb-placed").style.width = pct + "%";
   $("#pb-legacy").style.width = (100 * p.sem_silhueta / p.total) + "%";
 }
@@ -365,8 +368,22 @@ async function loadBoard() {
 }
 async function loadFetch() {
   S.fetch = await api("/api/fetch");
+  warnPlaceable();
   drawFetchLayer();
   renderBuscar();
+}
+/** A stored position (saquinho) whose cell now has a mounted neighbour: tell Tiago to fetch the bag. */
+function warnPlaceable() {
+  const now = new Set(fetchPieces().filter((e) => e.estado_atual === "posicao_conhecida" && e.grupo === "coloca_agora").map((e) => e.piece));
+  if (S.placeable) {
+    for (const e of fetchPieces()) {
+      if (now.has(e.piece) && !S.placeable.has(e.piece)) {
+        toast(`Peça ${e.piece} (saquinho ${cellTxt(e.cell)}) já tem vizinha montada: vai buscar o saquinho`);
+        $("#n-buscar").classList.add("aviso");
+      }
+    }
+  }
+  S.placeable = now;
 }
 const fetchPieces = () => (S.fetch ? S.fetch.entries.filter((e) => e.piece) : []);
 async function loadLots() { S.lots = await api("/api/lots"); renderLotes(); }
@@ -383,6 +400,7 @@ async function loadAll() {
 // ------------------------------------------------------------ tabs
 function showTab(t) {
   if (t !== "celula") S.prevTab = t;
+  if (t === "buscar") $("#n-buscar").classList.remove("aviso");
   S.tab = t;
   $$("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t));
   $$(".tab").forEach((el) => el.classList.toggle("on", el.id === `tab-${t}`));
@@ -471,13 +489,18 @@ function proposalCard(e, opts = {}) {
       h("div", { class: "sheet-cap" }, `folha ${e.scan_id}: nº ${e.n_no_lote ?? "?"} a âmbar (toca para ampliar)`)) : h("div"));
   card.append(mid);
   const acts = h("div", { class: "actions" });
-  if (e.cell) {
+  if (e.cell && e.grupo === "guarda_posicao") {
+    acts.append(h("button", { class: "btn primary", type: "button", title: "sem vizinha montada para confirmar o encaixe: guarda a peça num saquinho com esta posição",
+      onclick: (ev) => act({ acao: "position_known", piece: e.piece, cell: e.cell, origin: e.origin, nota: "saquinho" }, ev.currentTarget) }, `Guardei num saquinho ${cellTxt(e.cell)}`));
+    acts.append(h("button", { class: "btn", type: "button", onclick: (ev) => act({ acao: "reject", piece: e.piece }, ev.currentTarget) }, "Não encaixa"));
+  } else if (e.cell) {
     acts.append(h("button", { class: "btn primary", type: "button", onclick: (ev) => act({ acao: "place", piece: e.piece, cell: e.cell, origin: e.origin }, ev.currentTarget) }, "Coloquei"));
     if (e.origin !== "posicao_conhecida") {
       acts.append(h("button", { class: "btn", type: "button", onclick: (ev) => act({ acao: "reject", piece: e.piece }, ev.currentTarget) }, "Não encaixa"));
       acts.append(h("button", { class: "btn", type: "button", title: "a peça fica guardada à parte, à espera de uma vizinha", onclick: (ev) => act({ acao: "position_known", piece: e.piece, cell: e.cell, origin: e.origin }, ev.currentTarget) }, "Guardar posição"));
     }
   }
+  acts.append(reportButton({ piece: e.piece, cell: e.cell, vista: "cartao" }));
   if (!opts.noLocate && e.cell) acts.append(h("button", { class: "btn slim", type: "button", onclick: () => showCellOnBoard(e.cell[0], e.cell[1]) }, "Ver no tabuleiro"));
   card.append(acts);
   card.append(h("details", { class: "tech" }, h("summary", {}, "razões técnicas"), h("ul", {}, (e.reasons || []).map((t) => h("li", {}, t)))));
@@ -493,22 +516,56 @@ function renderBuscar() {
       h("div", { class: "actions", style: "justify-content:center" }, h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, "Importar scan"))));
     return;
   }
-  const by = new Map();
-  for (const e of es) { const k = e.lote ?? "—"; if (!by.has(k)) by.set(k, []); by.get(k).push(e); }
   const nAc = es.filter((e) => e.decision === "aceite" || e.decision === "colocavel").length;
-  T.append(h("p", { class: "summary" }, `${es.length} peças para ir buscar em ${by.size} saco${by.size > 1 ? "s" : ""}: ` +
+  T.append(h("p", { class: "summary" }, `${es.length} peças para ir buscar em ${new Set(es.map((e) => e.lote ?? "—")).size} saco(s): ` +
     `${nAc} aceites, ${es.length - nAc} com dúvida. Pela ordem: as mais seguras primeiro.`),
     h("p", { class: "summary small" }, CARD_KEY));
-  const keys = [...by.keys()].sort((a, b) => (a === "—") - (b === "—") || a - b);
-  for (const k of keys) {
-    T.append(h("div", { class: "lot-head" }, h("span", { class: "bag" }, k === "—" ? "Sem saco" : `Saco ${k}`), h("span", { class: "muted small" }, `${by.get(k).length} peças`)));
-    for (const e of by.get(k).sort((a, b) => a.ordem - b.ordem)) T.append(proposalCard(e));
+  const sections = [
+    ["coloca_agora", "Coloca agora", "têm uma vizinha montada para confirmar o encaixe"],
+    ["guarda_posicao", "Guarda com posição", "sem vizinha montada: guarda num saquinho com a célula"],
+  ];
+  for (const [g, title, sub] of sections) {
+    const gs = es.filter((e) => (e.grupo || "coloca_agora") === g);
+    if (!gs.length) continue;
+    T.append(h("h2", { class: "grupo-head", "data-grupo": g }, `${title} (${gs.length})`, h("span", { class: "muted small" }, ` ${sub}`)));
+    const by = new Map();
+    for (const e of gs) { const k = e.lote ?? "—"; if (!by.has(k)) by.set(k, []); by.get(k).push(e); }
+    const keys = [...by.keys()].sort((a, b) => (a === "—") - (b === "—") || a - b);
+    for (const k of keys) {
+      T.append(h("div", { class: "lot-head" }, h("span", { class: "bag" }, k === "—" ? "Sem saco" : `Saco ${k}`), h("span", { class: "muted small" }, `${by.get(k).length} peças`)));
+      for (const e of by.get(k).sort((a, b) => a.ordem - b.ordem)) T.append(proposalCard(e));
+    }
   }
   const sup = S.fetch.suprimidas || [];
   if (sup.length) {
     T.append(h("details", { class: "tech" }, h("summary", {}, `${sup.length} sugestões não mostradas (candidata única, por política)`),
       h("ul", {}, sup.map((x) => h("li", {}, `saco ${x.lote ?? "—"} nº ${x.n_no_lote ?? "—"} (${x.piece}) → ${cellTxt(x.cell)}: ${x.reason || ""}`)))));
   }
+}
+
+// ------------------------------------------------------------ reportar
+function reportButton(ctx) {
+  return h("button", { class: "btn slim", type: "button", title: "avisar de um problema: fica guardado com uma captura do que vês", onclick: () => openReport(ctx) }, "Reportar");
+}
+function openReport(ctx) {
+  const dlg = $("#report-dlg");
+  const where = [ctx.piece ? `peça ${ctx.piece}` : null, ctx.cell ? `célula ${cellTxt(ctx.cell)}` : null].filter(Boolean).join(" · ");
+  const form = $("#report-form");
+  form.reset();
+  $("#report-where").textContent = where || "geral";
+  form.querySelector("input[value=mal_lida]").checked = true;
+  form.onsubmit = async (ev) => {
+    ev.preventDefault();
+    const btn = $("#report-send"); btn.disabled = true;
+    const tipo = (form.querySelector("input[name=tipo]:checked") || {}).value || "outro";
+    try {
+      const r = await api("/api/report", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo, texto: $("#report-text").value, piece: ctx.piece || null, cell: ctx.cell || null, vista: ctx.vista || null }) });
+      toast(`Reportado ${r.id}`);
+      dlg.close();
+    } catch (e) { toast(e.message, true); } finally { btn.disabled = false; }
+  };
+  dlg.showModal();
 }
 
 // ------------------------------------------------------------ célula drawer
@@ -572,6 +629,16 @@ function renderCell(d) {
   }
   if (d.fantasma) kv.append(h("dt", {}, "fantasma"), h("dd", {}, `contorno de ${d.fantasma.piece} (em ${cellTxt(d.fantasma.from)}) rodado ${S.rotGemea}°: procura uma peça com esta forma`));
   wrap.append(kv);
+  const hintBtns = [];
+  if (!d.peca && (d.estado === "vazia" || d.por_confirmar)) {
+    hintBtns.push(h("button", { class: "btn slim", type: "button", title: "marcar a célula como montada (sem peça no índice)",
+      onclick: (ev) => act({ acao: "cell_full", cell: d.cell }, ev.currentTarget) }, "Está montada"));
+  }
+  if (!d.peca && d.estado === "ocupada_legado") {
+    hintBtns.push(h("button", { class: "btn slim", type: "button", title: "marcar a célula como vazia",
+      onclick: (ev) => act({ acao: "cell_empty", cell: d.cell }, ev.currentTarget) }, "Está vazia"));
+  }
+  wrap.append(h("div", { class: "actions" }, ...hintBtns, reportButton({ piece: d.peca ? d.peca.id : null, cell: d.cell, vista: "celula" })));
   if (d.peca) {
     const p = d.peca;
     wrap.append(h("div", { class: "card" }, h("div", { class: "card-top" },
@@ -614,6 +681,7 @@ async function openPiece(pid) {
     h("div", {}, pieceImage({ piece: d.id, pose_known: d.pose_tabuleiro !== null, ghost: null }), h("div", { class: "pimg-cap" }, d.pose_tabuleiro !== null ? "rodada como ficará" : "como foi digitalizada")),
     h("div", {}, h("div", { class: "small muted" }, `${d.id} · ${d.estado_txt}`), h("div", { class: "small muted" }, `classe ${d.cls || "?"} · ${d.n_flat} lado(s) liso(s)` + (d.seccao_id ? ` · grupo ${d.seccao_id}` : "")),
       h("button", { class: "linkish", type: "button", onclick: () => lightbox(`${d.folha}&max=1400&v=${S.ver}`, `Folha ${d.scan_id}`) }, "ver na folha do scan")))));
+  T.append(h("div", { class: "actions" }, reportButton({ piece: d.id, cell: null, vista: "peca" })));
   if (d.propostas.length) for (const e of d.propostas) T.append(proposalCard(e));
   else T.append(h("p", { class: "note" }, "Sem proposta para esta peça por agora: fica na memória e volta a ser testada sempre que algo é colocado."));
   if (["solta", "emparelhada"].includes(d.estado)) {

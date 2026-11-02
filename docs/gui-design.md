@@ -38,7 +38,9 @@ Web local: `python -m src.server` (FastAPI + uvicorn) + `src/web/` (`index.html`
 | `GET /api/sections`, `GET /api/sections/{G}.png` | grupos por ancorar com o top-3 (`cell0`, rot, espelho, margem, pegada em células, "fora da grelha", células já colocadas) e miniatura (recortes nas posições do scan) |
 | `POST /api/confirm` | `{acao: place\|reject\|position_known\|anchor\|unanchor\|discard\|unplace, piece, cell, section, rot, mirror, reason, origin}` → `{ok, mensagens, invariantes, n_propostas, segundos, celulas_mudadas}` ou 400 `{error}` / 409 |
 | `POST /api/ingest` | multipart `file` + `lote` + `dpi` → grava em `images/pieces/lotes/loteNN_<data>_<nome>`, trabalho em fundo (segmentar → `run_query` completo), progresso por SSE `ingest_progress` |
-| `GET /api/events` | SSE: `hello`, `board_changed`, `fetch_changed`, `ingest_progress`, `prepare_progress`, `ready` |
+| `POST /api/report` | `{tipo: mal_lida\|mal_colocada\|nao_encaixa\|outro, texto, piece, cell, vista}` → o servidor grava a captura (zoom 3×3 da célula, ou o recorte da peça) em `projects/<id>/reports/R####.jpg\|png` e acrescenta o relatório a `reports.jsonl` (§11); SSE `report_added` |
+| `GET /api/reports[?todos=1]` | relatórios abertos (ou todos) |
+| `GET /api/events` | SSE: `hello`, `board_changed`, `fetch_changed`, `ingest_progress`, `prepare_progress`, `report_added`, `ready` |
 
 `unplace` não estava na lista pedida; foi acrescentado porque um toque errado em "Coloquei" precisa de desfazer (só para peças colocadas pelo log; as de secções desfazem-se com "Desancorar grupo").
 
@@ -114,3 +116,12 @@ Depois de "Desfazer" P0100 de (3, 37), a reconsulta incremental (`run_query(only
 3. Fantasmas ligados por omissão — ficam?
 4. A lista deve agrupar por saco (como agora) ou seguir só a ordem de confiança?
 5. "Ancorar aqui" na Mesa coloca o grupo todo de uma vez: queres um passo intermédio (ver as peças sobre a arte antes de confirmar)?
+
+## 11. Reportar
+
+Botão "Reportar" em cada cartão, no painel da peça e no da célula: abre um `<dialog>` com 4 tipos (mal lida / mal recortada, mal colocada, não encaixa, outro) e texto opcional. Endpoints: `POST /api/report`, `GET /api/reports` (§3).
+
+- **Ficheiro** `projects/<id>/reports.jsonl`, uma linha por relatório: `{id: "R0001", t, tipo, texto, piece, cell, scan_id, n_no_lote, lote, crop_path, captura, vista, estado: "aberto"}`; ao fechar: `estado: "fechado"`, `fechado_em`, `nota`. Capturas em `projects/<id>/reports/R####.jpg|png` (zoom 3×3 da célula se há célula, senão o recorte da peça).
+- **Log**: eventos informativos `report` e `report_closed` (sem efeito no estado; o replay ignora-os). A escrita atualiza `_known_stat` e não emite `board_changed`/`fetch_changed`.
+- **CLI** (`src/reports.py`): `python -m src.reports --project projects/alpes --list` e `--close R0001 --nota "..."`.
+- **"Vai buscar" em dois grupos** (item 6): `fetch.json` ganha, só na resposta de `/api/fetch`, `vizinhas_montadas` (vizinhas 4-conexas `colocada` ou `ocupada_legado` com fonte `tiago`; `foto` não conta) e `grupo` (`coloca_agora` com ≥ 1, ou posição conhecida que passou a colocável; senão `guarda_posicao`, cujo botão é "Guardei num saquinho (l, c)" = `position_known` com `nota: "saquinho"`, ainda não guardada no log).
