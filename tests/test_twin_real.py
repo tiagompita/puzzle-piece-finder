@@ -313,7 +313,7 @@ def test_ereal2_find_twin(profile, memory):
     # --- orientation chain on the E-sym pairs: A1 with its F side up -> predicted B2 pose has its F side down
     t2 = time.time()
     a1 = [it for it in items if it.id.startswith("A1(")]
-    ok_down, resid_p, resid_m, n, n_single = 0, [], [], 0, 0
+    ok_down, resid_p, resid_m, n, n_single, n_no_art = 0, [], [], 0, 0, 0
     for q in a1:
         nu = _f_normal_deg(q.shape)
         th_q = snap_theta(q.shape, -90.0 - nu)[0]          # F normal -> up (-90 deg)
@@ -325,16 +325,21 @@ def test_ereal2_find_twin(profile, memory):
         n += 1
         if c0["image"] is not None:
             th_b, res_b = c0["image"]["theta_deg"], c0["image"]["resid_deg"]
-        else:   # lone candidate (not proposed, image skipped): the same predicted pose as src.twin._image_test
-            assert r["single_candidate"] is not None and r["single_candidate"]["id"] == c0["id"], r
-            n_single += 1
+        else:   # image skipped: lone candidate (not proposed) or twin cell without art (row 47 is beyond the art
+            # file, docs/diagnostico/arte/ARTREG.md): the same predicted pose as src.twin._image_test
+            no_art = any("sem arte na célula" in x for x in r["reasons"])
+            if no_art:      # mandatory image tie-break: a shape 'aceite' without art is 'ambigua'
+                assert r["decision"] in ("ambigua", "sem") and r["decision_shape"] in ("aceite", "ambigua", "sem"), r
+            assert no_art or (r["single_candidate"] is not None and r["single_candidate"]["id"] == c0["id"]), r
+            n_single += r["single_candidate"] is not None
+            n_no_art += no_art
             th_b, _, res_b = snap_theta(b.shape, th_q + c0["phi_deg"] + profile.twin_rotation_deg())
         ok_down += abs(wrap_deg(_f_normal_deg(b.shape) + th_b - 90.0)) < 45
         resid_p.append(abs(res_b))
         resid_m.append(abs(snap_theta(b.shape, th_q - c0["phi_deg"] + profile.twin_rotation_deg())[2]))
-    print(f"[orientation] E-sym A1 F up -> B2 F down {ok_down}/{n} ({n_single} lone candidates); |residual to the body axis| median +phi "
+    print(f"[orientation] E-sym A1 F up -> B2 F down {ok_down}/{n} ({n_single} lone candidates, {n_no_art} twin cells without art); |residual to the body axis| median +phi "
           f"{np.median(resid_p):.2f} deg (max {np.max(resid_p):.2f}) vs -phi {np.median(resid_m):.2f} deg ({time.time() - t2:.1f} s)")
-    REPORT["orientation"] = dict(F_down=int(ok_down), n=n, n_single=n_single, resid_plus_median=float(np.median(resid_p)),
+    REPORT["orientation"] = dict(F_down=int(ok_down), n=n, n_single=n_single, n_no_art=n_no_art, resid_plus_median=float(np.median(resid_p)),
                                  resid_plus_max=float(np.max(resid_p)), resid_minus_median=float(np.median(resid_m)))
     REPORT["seconds_image_BE"] = round(t_img, 1)
     assert ok_down == n == 20

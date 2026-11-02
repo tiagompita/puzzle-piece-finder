@@ -21,6 +21,8 @@ import json
 from dataclasses import dataclass, field
 from typing import Optional
 
+import numpy as np
+
 __all__ = ["PuzzleProfile", "SCHEMA_VERSION", "SYMMETRY_TYPES"]
 
 SCHEMA_VERSION = 1
@@ -46,7 +48,9 @@ class PuzzleProfile:
 	``{'w', 'h'}``, ``symmetry`` = ``{'type': 'rot180'|'none'|'translate', 'cols': N}``
 	(``cols`` only for ``translate``), ``background_lab`` = ``[L, a, b]`` (CIE Lab,
 	L in 0..100), ``dpi`` (scan resolution), ``art`` = ``{'file', 'bbox': [x, y, w, h]}``
-	(file relative to the repository root, bbox in art-file pixels), ``calibration``
+	(file relative to the repository root, bbox in art-file pixels; optional
+	``registration`` = ``{'matrix': [[a, b, tx], [c, d, ty]], 'units': 'board_mm->art_px', ...}``
+	written by :mod:`src.artreg`, see :meth:`art_matrix`), ``calibration``
 	(twin-search thresholds per modality, chord tolerances, minimum margin d2/d1),
 	``image_zones`` (per-zone image-consistency distributions), ``modalities``
 	(documentation only).
@@ -167,6 +171,30 @@ class PuzzleProfile:
 					return (l, cc)
 			return None
 		return None
+
+	def art_matrix(self) -> Optional[np.ndarray]:
+		"""2x3 affine board mm -> art-file px (continuous: pixel ``i`` covers ``[i, i+1)``), or None.
+
+		Board mm: cell ``(l, c)`` spans ``[(c-1) w, c w] x [(l-1) h, l h]`` (``w, h`` = ``cell_mm``).
+		From ``art['registration']['matrix']`` when present (measured by :mod:`src.artreg`), else
+		derived from ``art['bbox'] = [x, y, bw, bh]`` (the bbox spans the whole grid):
+		``x = bbox.x + mm_x * bw / (cols * w)``, ``y = bbox.y + mm_y * bh / (rows * h)``.
+		None if the profile has neither.
+		"""
+		art = self.art or {}
+		reg = art.get("registration")
+		if reg and reg.get("matrix") is not None:
+			M = np.asarray(reg["matrix"], np.float64)
+			if M.shape != (2, 3):
+				raise ValueError(f"art.registration.matrix must be 2x3, got {M.shape}")
+			return M
+		bb = art.get("bbox")
+		if bb is None:
+			return None
+		x, y, bw, bh = (float(v) for v in bb)
+		sx = bw / (self.cols * float(self.cell_mm["w"]))
+		sy = bh / (self.rows * float(self.cell_mm["h"]))
+		return np.array([[sx, 0.0, x], [0.0, sy, y]])
 
 	def twin_rotation_deg(self) -> float:
 		"""Rotation (deg) that maps a piece onto its twin's pose: 180 for ``rot180``, 0 otherwise."""

@@ -6,7 +6,9 @@ Order (each step goes through the project API, so ``log.jsonl`` is the whole his
 
 1. ``Project.create`` (the versioned ``puzzle.json`` is kept);
 2. photo F0001 = M14 map ``docs/diagnostico/ocupacao/ocupacao_2026-10-31.json`` with the
-   fixes confirmed by Tiago ((1,29) empty, (1,34) full);
+   fixes confirmed by Tiago ((1,29) empty, (1,34) full); then the cells Tiago says are assembled
+   (``HINTS_TIAGO``, ``Project.mark_cell_full``: ground truth ``fonte='tiago'``, hints for the
+   legacy solve of step 5);
 3. ground truth with silhouette (``ingest_scan`` + known cells; a GT piece is ``colocada``
    if its cell is full in the photo, else ``posicao_conhecida``):
    E-sym A1 (top border c5-24, grid order), E-sym B2 (bottom border, twins of A1 with the
@@ -23,6 +25,7 @@ Order (each step goes through the project API, so ``log.jsonl`` is the whole his
    (a re-scan of p04) marked ``same_as`` p04 piece by piece (shape + colour with mutual nearest
    neighbours, then the local grid cells, then the nearest shape without the mutual rule), then
    ``legacy.solve_project_sections`` anchors the components that are ``alta`` across pages;
+   ``artreg.run`` registers the art against the placed pieces (``art.registration`` in ``puzzle.json``);
    a GT conflict (a page piece that is the same physical piece as a GT piece) never moves
    the GT piece; a GT piece kept as ``posicao_conhecida`` (cell not full in the photo) whose
    cell an anchored page fills is placed there and the page piece becomes ``same_as``;
@@ -57,6 +60,8 @@ from src.state import Project, section_cell  # noqa: E402
 PROJECT = os.path.join(REPO, "projects", "alpes")
 OCC = os.path.join(REPO, "docs", "diagnostico", "ocupacao", "ocupacao_2026-10-31.json")
 OCC_FIX = [((1, 29), 0), ((1, 34), 1)]     # confirmed by Tiago (estado-e-plano §0)
+# cells Tiago has assembled that the program did not show (bug 5, 2026-11-01): user hints, fonte 'tiago'
+HINTS_TIAGO = [(3, 10), (7, 2), (8, 2), (5, 20), (6, 20), (5, 22), (6, 22), (2, 31), (2, 32), (3, 31), (3, 32), (3, 33)]
 GEM = os.path.join(REPO, "docs", "diagnostico", "gemeos")
 GT_SCANS = {
 	"A1": "images/pieces/coluna5-24_300dpi_folhaA.jpg",
@@ -241,11 +246,17 @@ def stage_gt(pr, art, summary) -> None:
 		bt = tt["by_theta"]
 		exp = GT_THETA_EXPECTED[tag]
 		best = max(bt, key=lambda t: (bt[t]["F_ok"] + bt[t]["TB_ok"], t == exp))
-		img = min((t for t in bt if bt[t]["dE_mean"] is not None), key=lambda t: bt[t]["dE_mean"])
+		with_img = [t for t in bt if bt[t]["dE_mean"] is not None]
 		if best != exp:
 			notes.append(f"{tag}: F + T<->B preferem theta {best}, esperado {exp} (usado {best})")
-		if img != best:
-			notes.append(f"{tag}: a imagem sozinha preferia theta {img} (dE {bt[img]['dE_mean']} vs {bt[best]['dE_mean']})")
+		if not with_img:
+			# the GT cells are beyond the art file (B2 = row 47, docs/diagnostico/arte/ARTREG.md): the rotation is the
+			# side-based one anyway; there is no image check to report
+			notes.append(f"{tag}: imagem: sem arte nas células GT")
+		else:
+			img = min(with_img, key=lambda t: bt[t]["dE_mean"])
+			if img != best:
+				notes.append(f"{tag}: a imagem sozinha preferia theta {img} (dE {bt[img]['dE_mean']} vs {bt[best]['dE_mean']})")
 		gt = {"cells": [{"index": r["numbers"][pid], "cell": list(cell),
 						 "theta_deg": round(tt["per_piece"][pid][best][2], 2) if pid in tt["per_piece"] else float(best)}
 						for pid, cell in cells.items()]}
@@ -268,6 +279,15 @@ def stage_gt(pr, art, summary) -> None:
 		print(f"GT {tag}: {r['scan_id']} {len(r['pieces'])} objetos, {len(cells)} GT, theta {best} "
 			  f"{ {k: (v['F_ok'], v['TB_ok'], v['n_adj'], v['dE_mean'], v['dE_wins']) for k, v in bt.items()} } estados {est} "
 			  f"descartadas {len(discarded)} {notes} ({time.time() - t0:.0f} s)")
+
+
+def stage_hints(pr, summary) -> None:
+	"""User hints (``HINTS_TIAGO``): cells marked assembled before the sections are solved."""
+	evs = [pr.mark_cell_full(cell) for cell in HINTS_TIAGO]
+	pr.save()
+	summary["pistas"] = {"celulas": [list(c) for c in HINTS_TIAGO],
+						 "novas": sum(1 for e in evs if e.get("action") == "cell_occupied_by_user")}
+	print(f"pistas do Tiago: {summary['pistas']['novas']}/{len(HINTS_TIAGO)} células marcadas cheias")
 
 
 def stage_sky(pr, summary) -> None:
@@ -461,7 +481,7 @@ def stage_solve(pr, summary) -> None:
 			elsewhere.append({"piece": p.id, "cell": list(p.celula), "same_as": p.same_as,
 							  "cell_gt": list(pr.piece(p.same_as).celula)})
 	pr.save()
-	summary["solve"] = {"anchored": out["anchored"], "n_anchored": len(out["anchored"]),
+	summary["solve"] = {"anchored": out["anchored"], "n_anchored": len(out["anchored"]), "com_pista": out.get("hinted", []),
 						"ambiguous": [{"section": a["section"], "reasons": a["reasons"], "questions": a["questions"]}
 									  for a in out["ambiguous"]],
 						"pairs": out["pairs"], "placed": placed, "conflicts": conflicts, "conflitos_same_as": conf_same,
@@ -470,6 +490,23 @@ def stage_solve(pr, summary) -> None:
 	print(f"solve: {len(out['anchored'])} secções ancoradas ({placed} peças), {len(out['ambiguous'])} ambíguas, "
 		  f"{out['pairs']} pares; conflitos com GT {len(conflicts)} {conf_same}; correções GT {len(fixed)}; "
 		  f"same_as GT colocadas noutra célula {elsewhere} ({time.time() - t0:.0f} s)")
+
+
+def stage_artreg(pr, summary) -> None:
+	"""Art registration (``src/artreg.py``): the placed pieces fix the board mm -> art px affine,
+	written to ``puzzle.json`` (``art.registration``) before the border and the query use the art."""
+	from src import artreg
+	t0 = time.time()
+	res = artreg.run(pr, progress=None)
+	if "error" in res:
+		summary["arte"] = {"error": res["error"]}
+		print(f"arte: {res['error']}")
+		return
+	summary["arte"] = {"escrito": res["written"], **res["registration"], "decomposicao": res["decomposition"],
+					   "s": round(time.time() - t0, 1)}
+	rc = res["registration"]["residual_cells"]
+	print(f"arte: {res['n_points']} pontos, resíduo {rc['before']['median']} -> {rc['after']['median']} célula "
+		  f"(mediana), escrito {res['written']} ({time.time() - t0:.0f} s)")
 
 
 def stage_border(pr, summary) -> None:
@@ -541,11 +578,13 @@ def main():
 	r = register(pr, photo_from_json(OCC, OCC_FIX))
 	summary["foto"] = r
 	print(f"foto: {r['photo_id']} {r['changes']}")
+	stage_hints(pr, summary)
 	art = CellArt.load(pr.profile, REPO)
 	stage_gt(pr, art, summary)
 	stage_sky(pr, summary)
 	stage_pages(pr, summary)
 	stage_solve(pr, summary)
+	stage_artreg(pr, summary)
 	stage_border(pr, summary)
 	summary["t_ingestao_s"] = round(time.time() - T0, 1)
 	bad = pr.check_invariants(disk=True)

@@ -265,6 +265,12 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 					   else "imagem não testada: o perfil não tem gémea para esta célula")
 	elif art is None:
 		reasons.append("imagem não testada: sem arte")
+	elif hasattr(art, "has_art") and not art.has_art(*twin_cell):
+		# the art file does not reach this cell (e.g. row 47 of the Alpes): no image evidence, never a bogus dE;
+		# the image tie-break is mandatory (project rule, decided 2026-11-02): the shape alone never gives 'aceite'
+		reasons.append(f"imagem não testada: sem arte na célula {tuple(twin_cell)} (fora do ficheiro da arte)")
+		if dec == "aceite":
+			dec = "ambigua"
 	else:
 		mmpp = profile.mm_per_px()
 		if query.theta_deg is None:

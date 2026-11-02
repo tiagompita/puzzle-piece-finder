@@ -20,7 +20,8 @@ Conventions:
 	* scan Lab is compared to art Lab after subtracting a uniform L* shift (``l_shift``,
 	  scanner ~ art + 4.8 L*, docs/diagnostico/gemeos/SECCAO.md §C); a*/b* are not corrected.
 
-Pure module except :meth:`CellArt.load` (reads the artwork file).
+Pure module except :func:`load_art_rectified_masked` / :func:`load_art_rectified` /
+:meth:`CellArt.load` (read the artwork file).
 """
 
 from __future__ import annotations
@@ -33,9 +34,9 @@ import cv2
 import numpy as np
 
 __all__ = [
-	"CellArt", "piece_render", "render_item", "de_cell", "cell_scores", "piece_mean_lab", "locate_group",
+	"CellArt", "rectify_art", "rectified_size", "load_art_rectified", "load_art_rectified_masked", "piece_render", "render_item", "de_cell", "cell_scores", "piece_mean_lab", "locate_group",
 	"pair_locate", "body_center_mm", "body_beta_deg", "snap_theta", "wrap_deg", "rotate_dir",
-	"CANVAS", "CANVAS_CELLS", "JIT", "ERODE_PX", "L_SHIFT", "MASK_FULL", "MIN_OVERLAP", "PRIOR_WEIGHT",
+	"CANVAS", "CANVAS_CELLS", "JIT", "ERODE_PX", "L_SHIFT", "MASK_FULL", "MIN_OVERLAP", "MIN_CELL_ART", "PRIOR_WEIGHT",
 	"REFINE_TOP", "DIRS",
 ]
 
@@ -47,6 +48,7 @@ ERODE_PX = 1                # piece mask eroded by 1 art px (~0.76 mm): removes 
 L_SHIFT = 4.8               # L*scan ~ L*art + 4.8 (subtracted from the scan)
 MASK_FULL = 0.99            # an art px belongs to the mask if >= 99 % of it is piece
 MIN_OVERLAP = 0.6           # a window position counts if >= 60 % of the mask falls inside the art
+MIN_CELL_ART = 0.5          # a cell has art if >= 50 % of its px fall inside the art file (else cell_lab_mean NaN)
 PRIOR_WEIGHT = 2.0          # locate_group: dE units added per unit fraction of items on cells against the occupancy prior
 REFINE_TOP = 20             # locate_group: placements re-scored with the full crops (de_cell)
 DIRS = ("N", "E", "S", "W")  # clockwise order; a +90 deg (clockwise) rotation maps N->E->S->W->N
@@ -103,20 +105,136 @@ def snap_theta(shape, theta_deg: float):
 	return float(b + 90.0 * m), m, float(wrap_deg(theta_deg - (b + 90.0 * m)))
 
 
+def _finite_median(a, axis=None):
+	"""Median over the finite values (NaN / inf = no art evidence); inf where there is none."""
+	b = np.asarray(a, float)
+	ok = np.isfinite(b)
+	if axis is None:
+		return float(np.median(b[ok])) if ok.any() else float("inf")
+	srt = np.sort(np.where(ok, b, np.inf), axis=axis)
+	n = ok.sum(axis=axis)
+	lo = np.take_along_axis(srt, np.expand_dims(np.maximum((n - 1) // 2, 0), axis), axis).squeeze(axis)
+	hi = np.take_along_axis(srt, np.expand_dims(np.maximum(n // 2, 0), axis), axis).squeeze(axis)
+	return np.where(n > 0, 0.5 * (lo + hi), np.inf)
+
+
 def _lab(rgb_u8: np.ndarray) -> np.ndarray:
 	"""Float Lab (L* 0..100) of an RGB uint8 image."""
 	return cv2.cvtColor(np.ascontiguousarray(rgb_u8).astype(np.float32) / 255.0, cv2.COLOR_RGB2LAB)
 
 
+# ---------------------------------------------------------------- art -> cell grid (the single board -> art transform)
+def rectified_size(matrix, rows: int, cols: int, cell_mm) -> tuple:
+	"""Raster size ``(W, H)`` that keeps the art's native resolution along each grid axis.
+
+	``W = cols * w * |column x of the matrix|`` (art px per board mm along x), same for ``H``;
+	for a bbox-derived matrix this is exactly ``(bbox.w, bbox.h)``.
+	"""
+	M = np.asarray(matrix, np.float64)
+	W = int(round(cols * float(cell_mm[0]) * float(np.hypot(M[0, 0], M[1, 0]))))
+	H = int(round(rows * float(cell_mm[1]) * float(np.hypot(M[0, 1], M[1, 1]))))
+	return max(W, 1), max(H, 1)
+
+
+def rectify_art(art_rgb: np.ndarray, matrix, rows: int, cols: int, cell_mm, size=None, content_bbox=None, *,
+				return_valid: bool = False):
+	"""Art image -> raster that covers exactly ``rows x cols`` cells (pure).
+
+	``matrix`` = 2x3 affine board mm -> art px (continuous, pixel ``i`` covers ``[i, i+1)``);
+	``cell_mm`` = ``(w, h)``; ``size`` = output ``(W, H)`` (default :func:`rectified_size`).
+	Raster pixel ``(u, v)`` samples the art at ``matrix @ ((u + 0.5) kx, (v + 0.5) ky, 1) - 0.5``
+	with ``kx = cols w / W``, ``ky = rows h / H`` (bilinear; outside the art: replicated edge).
+	A matrix that is an integer translation of a pure per-axis scale whose output size equals
+	the scaled grid (the ``bbox`` case) reproduces the plain bbox crop exactly.
+	``content_bbox`` = ``[x, y, w, h]`` region of the file that holds the art (the rest is a
+	margin): the file is cropped to it first, so grid cells the art does not reach get the
+	replicated edge of the art, never the margin colour. ``return_valid``: also return the
+	``(H, W)`` bool mask of raster px that fall inside the art (False = no art there: the
+	replicated colour is filler, never evidence).
+	"""
+	M = np.asarray(matrix, np.float64)
+	if content_bbox is not None:
+		x, y, w, h = (int(v) for v in content_bbox)
+		art_rgb = art_rgb[y:y + h, x:x + w]
+		M = M.copy()
+		M[:, 2] -= (x, y)
+	W, H = size if size is not None else rectified_size(M, rows, cols, cell_mm)
+	kx, ky = cols * float(cell_mm[0]) / W, rows * float(cell_mm[1]) / H
+	# raster index -> board mm: mm = (idx + 0.5) * k ; art index = M @ mm - 0.5
+	S = np.array([[kx, 0.0, 0.5 * kx], [0.0, ky, 0.5 * ky], [0.0, 0.0, 1.0]])
+	A = M @ S
+	A[:, 2] -= 0.5
+	if np.allclose(A[:, :2], np.eye(2), atol=1e-9) and np.allclose(A[:, 2], np.round(A[:, 2]), atol=1e-6):
+		x0, y0 = int(round(A[0, 2])), int(round(A[1, 2]))
+		h, w = art_rgb.shape[:2]
+		if 0 <= x0 and 0 <= y0 and x0 + W <= w and y0 + H <= h:
+			out = np.ascontiguousarray(art_rgb[y0:y0 + H, x0:x0 + W])
+			return (out, np.ones((int(H), int(W)), bool)) if return_valid else out
+	out = cv2.warpAffine(np.ascontiguousarray(art_rgb), A, (int(W), int(H)), flags=cv2.INTER_LINEAR | cv2.WARP_INVERSE_MAP,
+						 borderMode=cv2.BORDER_REPLICATE)
+	if not return_valid:
+		return out
+	ones = np.ones(art_rgb.shape[:2], np.float32)
+	v = cv2.warpAffine(ones, A, (int(W), int(H)), flags=cv2.INTER_LINEAR | cv2.WARP_INVERSE_MAP,
+					   borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+	return out, v >= 0.5
+
+
+def load_art_rectified_masked(profile, repo_root) -> tuple:
+	"""``(rgb, valid)``: the art of ``profile`` rectified to the cell grid and the mask of raster px that have art.
+
+	The single entry point for "the art under the board" (:meth:`CellArt.load`,
+	:func:`load_art_rectified`, :func:`src.render._art_rgb`): :func:`rectify_art` with
+	``profile.art_matrix()``, the file first cropped to ``art['bbox']`` (its art content,
+	without the white margin). Grid px beyond the art (row 47 of the Alpes: the digital file
+	stops ~1 row short of the print, docs/diagnostico/arte/ARTREG.md) are ``valid = False``
+	(their colour is the replicated edge, filler only). Raises ``ValueError`` / ``FileNotFoundError``.
+	"""
+	art = profile.art or {}
+	if not art.get("file"):
+		raise ValueError("profile has no art file")
+	path = Path(repo_root) / art["file"]
+	if not path.exists():
+		raise FileNotFoundError(str(path))
+	im = cv2.imdecode(np.fromfile(str(path), np.uint8), cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
+	if im is None:
+		raise ValueError(f"cannot decode {path}")
+	rgb = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+	M = profile.art_matrix()
+	cell = (float(profile.cell_mm["w"]), float(profile.cell_mm["h"]))
+	if M is None:
+		M = np.array([[rgb.shape[1] / (profile.cols * cell[0]), 0.0, 0.0], [0.0, rgb.shape[0] / (profile.rows * cell[1]), 0.0]])
+	bb = art.get("bbox")
+	if bb is not None:     # the bbox = the art content of the file (prior of the registration and the crop margin)
+		x, y, w, h = (int(v) for v in bb)
+		if x < 0 or y < 0 or x + w > rgb.shape[1] or y + h > rgb.shape[0]:
+			raise ValueError(f"art bbox {bb} outside the {rgb.shape[1]}x{rgb.shape[0]} image")
+	return rectify_art(rgb, M, profile.rows, profile.cols, cell, content_bbox=bb, return_valid=True)
+
+
+def load_art_rectified(profile, repo_root, *, fill=None) -> np.ndarray:
+	"""RGB uint8 art rectified to the cell grid (:func:`load_art_rectified_masked`); px without art are
+	painted ``fill`` (RGB) if given, else keep the replicated edge of the art."""
+	rgb, valid = load_art_rectified_masked(profile, repo_root)
+	if fill is not None and not valid.all():
+		rgb = rgb.copy()
+		rgb[~valid] = np.asarray(fill, np.uint8)
+	return rgb
+
+
 # ---------------------------------------------------------------- the artwork
 @dataclass
 class CellArt:
-	"""Reference artwork cropped to the puzzle (profile bbox), in Lab, with the cell grid.
+	"""Reference artwork rectified to the puzzle grid (profile ``art_matrix``), in Lab, with the cell grid.
 
 	lab: ``(H, W, 3)`` float32 Lab. cell_px: ``(w, h)`` art px per cell (``W / cols``,
 	``H / rows``). cell_lab_mean: ``(rows, cols, 3)`` mean Lab per cell. pitch_mm: physical
 	``(w, h)`` mm per cell used to bring scan crops to the art scale (default: the profile's
 	``cell_mm``). l_shift: L* subtracted from scan crops. rgb: the art crop (uint8, for figures).
+	valid: ``(H, W)`` bool, px that have art (None = all). Px without art stay finite in ``lab``
+	(replicated filler, so whole-raster filters never see NaN) but are NaN in the padded art used
+	by :meth:`cell_crop`, :func:`de_cell` and :func:`cell_scores` (they never count); a cell with
+	less than ``MIN_CELL_ART`` of its px valid has ``cell_lab_mean`` NaN (:meth:`has_art` False).
 	"""
 
 	lab: np.ndarray
@@ -125,51 +243,52 @@ class CellArt:
 	pitch_mm: tuple = (1.0, 1.0)
 	l_shift: float = L_SHIFT
 	rgb: np.ndarray | None = None
+	valid: np.ndarray | None = None
 	_pad: dict = field(default=None, init=False, repr=False)
 
 	@classmethod
-	def from_rgb(cls, rgb: np.ndarray, rows: int, cols: int, *, pitch_mm=(1.0, 1.0), l_shift: float = L_SHIFT) -> "CellArt":
-		"""Build from an RGB uint8 art crop that covers exactly ``rows x cols`` cells."""
+	def from_rgb(cls, rgb: np.ndarray, rows: int, cols: int, *, pitch_mm=(1.0, 1.0), l_shift: float = L_SHIFT,
+				 valid=None) -> "CellArt":
+		"""Build from an RGB uint8 art crop that covers exactly ``rows x cols`` cells (``valid``: px with art, None = all)."""
 		rgb = np.ascontiguousarray(rgb[..., :3]).astype(np.uint8)
 		lab = _lab(rgb)
 		H, W = lab.shape[:2]
+		if valid is not None:
+			valid = np.asarray(valid, bool)
+			if valid.shape != (H, W):
+				raise ValueError(f"valid mask {valid.shape} != art {(H, W)}")
+			if valid.all():
+				valid = None
 		cw, ch = W / float(cols), H / float(rows)
 		mean = np.zeros((rows, cols, 3), np.float64)
 		for i in range(rows):
 			y0, y1 = int(round(i * ch)), max(int(round((i + 1) * ch)), int(round(i * ch)) + 1)
 			for j in range(cols):
 				x0, x1 = int(round(j * cw)), max(int(round((j + 1) * cw)), int(round(j * cw)) + 1)
-				mean[i, j] = lab[y0:y1, x0:x1].reshape(-1, 3).mean(0)
+				px = lab[y0:y1, x0:x1].reshape(-1, 3)
+				if valid is None:
+					mean[i, j] = px.mean(0)
+					continue
+				v = valid[y0:y1, x0:x1].reshape(-1)
+				mean[i, j] = px[v].mean(0) if v.mean() >= MIN_CELL_ART else np.nan
 		return cls(lab=lab, cell_px=(cw, ch), cell_lab_mean=mean, pitch_mm=(float(pitch_mm[0]), float(pitch_mm[1])),
-				   l_shift=float(l_shift), rgb=rgb)
+				   l_shift=float(l_shift), rgb=rgb, valid=valid)
 
 	@classmethod
 	def load(cls, profile, repo_root, *, pitch_mm=None, l_shift: float = L_SHIFT) -> "CellArt":
-		"""Read ``profile.art['file']`` (relative to ``repo_root``) and crop it to ``profile.art['bbox']``.
+		"""Read ``profile.art['file']`` (relative to ``repo_root``) rectified to the cell grid.
 
-		EXIF orientation is ignored (the pixels of the project's art files are already
-		upright). ``pitch_mm`` defaults to ``(profile.cell_mm['w'], profile.cell_mm['h'])``.
+		The art is mapped to a raster that covers exactly ``rows x cols`` cells through
+		:meth:`src.profile.PuzzleProfile.art_matrix` (the measured ``art.registration`` if the
+		profile has one, else the ``bbox``; see :func:`load_art_rectified`), so every consumer
+		of the cell grid uses the same board -> art transform. EXIF orientation is ignored.
+		``pitch_mm`` defaults to ``(profile.cell_mm['w'], profile.cell_mm['h'])``.
 		Raises ``FileNotFoundError`` / ``ValueError`` (loader, not a pipeline step).
 		"""
-		art = profile.art or {}
-		if not art.get("file"):
-			raise ValueError("profile has no art file")
-		path = Path(repo_root) / art["file"]
-		if not path.exists():
-			raise FileNotFoundError(str(path))
-		im = cv2.imdecode(np.fromfile(str(path), np.uint8), cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
-		if im is None:
-			raise ValueError(f"cannot decode {path}")
-		rgb = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-		bbox = art.get("bbox")
-		if bbox is not None:
-			x, y, w, h = (int(v) for v in bbox)
-			if x < 0 or y < 0 or x + w > rgb.shape[1] or y + h > rgb.shape[0]:
-				raise ValueError(f"art bbox {bbox} outside the {rgb.shape[1]}x{rgb.shape[0]} image")
-			rgb = rgb[y:y + h, x:x + w]
+		rgb, valid = load_art_rectified_masked(profile, repo_root)
 		if pitch_mm is None:
 			pitch_mm = (float(profile.cell_mm["w"]), float(profile.cell_mm["h"]))
-		return cls.from_rgb(rgb, profile.rows, profile.cols, pitch_mm=pitch_mm, l_shift=l_shift)
+		return cls.from_rgb(rgb, profile.rows, profile.cols, pitch_mm=pitch_mm, l_shift=l_shift, valid=valid)
 
 	@property
 	def rows(self) -> int:
@@ -195,10 +314,16 @@ class CellArt:
 			h, w = self.lab.shape[:2]
 			labp = np.full((h + 2 * pad, w + 2 * pad, 3), np.nan)
 			labp[pad:pad + h, pad:pad + w] = self.lab
+			if self.valid is not None:
+				labp[pad:pad + h, pad:pad + w][~self.valid] = np.nan     # no art there: never evidence
 			V = (~np.isnan(labp[..., 0])).astype(np.float64)
 			A0 = np.nan_to_num(labp)
 			self._pad = dict(pad=pad, labp=labp, V=V, AV=[A0[..., ch] * V for ch in range(3)], A2V=(A0 ** 2).sum(-1) * V)
 		return self._pad
+
+	def has_art(self, l: int, c: int) -> bool:
+		"""True if cell ``(l, c)`` has art (>= ``MIN_CELL_ART`` of its px inside the art file)."""
+		return bool(np.isfinite(self.cell_lab_mean[int(l) - 1, int(c) - 1]).all())
 
 	def cell_tl(self, l, c, canvas=None):
 		"""Top-left corner (padded-art px) of the window ``canvas`` centred on cell ``(l, c)`` (arrays allowed)."""
@@ -420,7 +545,7 @@ def locate_group(items, profile, art: CellArt, *, constraints=None, prior=None, 
 					valid &= nfl[Li[i], Ci[i]] == int(it["n_flat"])
 				if allowed is not None:
 					valid &= np.asarray(allowed, bool)[Li[i], Ci[i]]
-			score = np.median(per, axis=0)
+			score = _finite_median(per, axis=0)     # members on cells without art do not count
 			if prior is not None:
 				pr = np.asarray(prior)
 				bad = np.mean(np.stack([pr[Li[i], Ci[i]] == (1 - prior_expect) for i in range(len(items))]), axis=0)
@@ -452,7 +577,7 @@ def locate_group(items, profile, art: CellArt, *, constraints=None, prior=None, 
 					cache[key] = render_item(it["rgba"], it.get("shape"), float(it.get("theta_deg") or 0.0) + rot, art, mmpp,
 											 mirror=mir)
 				vals.append(de_cell(cache[key], cells[i][0], cells[i][1], art)["dE"])
-			sc = float(np.median(vals))
+			sc = float(_finite_median(np.asarray(vals, float)))
 			if prior is not None:
 				pr = np.asarray(prior)
 				sc += PRIOR_WEIGHT * float(np.mean([pr[cells[i][0] - 1, cells[i][1] - 1] == (1 - prior_expect) for i in cells]))

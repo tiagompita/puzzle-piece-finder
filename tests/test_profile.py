@@ -66,3 +66,7 @@ def test_save_load_round_trip(alpes, tmp_path):
     assert again == alpes
     assert again.to_dict() == alpes.to_dict()
     assert PuzzleProfile.from_dict(alpes.to_dict()) == alpes
+    # the art registration (src/artreg.py) survives the round trip and is what art_matrix() returns
+    assert np.allclose(again.art_matrix(), alpes.art_matrix())
+    if "registration" in alpes.art:
+        assert np.allclose(alpes.art_matrix(), alpes.art["registration"]["matrix"])
