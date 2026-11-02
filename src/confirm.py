@@ -9,6 +9,12 @@ Usage::
 	python -m src.confirm --unanchor G0003
 	python -m src.confirm P0123 --discard
 	python -m src.confirm --relot S0007 S0008 --lote 2
+	python -m src.confirm --cheia L,C [L,C ...]      # the user says these cells are assembled
+	python -m src.confirm --vazia L,C [L,C ...]      # the user says these cells are empty
+
+``--cheia`` / ``--vazia`` (also ``python -m src.photo --cheia/--vazia``) log
+``cell_occupied_by_user`` / ``cell_cleared_by_user`` (ground truth, ``fonte='tiago'``; see the
+doubt policy in :mod:`src.state`) and re-query the cells and their twins.
 
 After the change the invariants are checked and :func:`src.query.run_query` is re-run
 incrementally on the affected cells (the changed cells and their twins) and pieces
@@ -17,6 +23,12 @@ incrementally on the affected cells (the changed cells and their twins) and piec
 
 Pair rule: placing a piece of an active pair confirms the pair and gives the partner its
 cell (``profile.twin`` of the new cell) as ``posicao_conhecida``, origin ``par``.
+
+Pose rule: placing (or keeping aside) a piece for a cell the list proposed stores the list's
+board pose (``theta_deg`` of the fetch entry, only when ``pose_known``) in the ``placed`` /
+``position_known`` event, so the board render starts from it (:func:`src.render.initial_theta`).
+A pair partner gets a pose only if the list has one for it in the twin cell (pair entries carry
+no pose today).
 
 ``--relot`` (:func:`relot`) moves whole sheets to another bag (``Project.set_lote``: continuous
 renumbering in the target bag, the sheets left behind keep their numbers) and rewrites their
@@ -30,7 +42,7 @@ import argparse
 import sys
 from typing import Optional
 
-__all__ = ["confirm", "relot", "main"]
+__all__ = ["confirm", "relot", "parse_cells", "main"]
 
 _CONFIRM_ACTION = {"gemeo": "twin_confirmed", "borda": "twin_confirmed", "par": "twin_confirmed",
 				   "buraco": "hole_confirmed", "fronteira": "hole_confirmed"}
@@ -41,6 +53,19 @@ _REJECT_ACTION = {"gemeo": "twin_rejected", "borda": "twin_rejected", "buraco": 
 def _fetch_entries(pr, pid: str) -> list:
 	from src.query import load_fetch
 	return [e for e in load_fetch(pr).get("entries", []) if e.get("piece") == pid]
+
+
+def _entry_theta(e: dict):
+	"""Board pose of a fetch entry (``theta_deg``) when the list knows it, else None (never invented)."""
+	if e and e.get("pose_known") and e.get("theta_deg") is not None:
+		return float(e["theta_deg"])
+	return None
+
+
+def _cell_entry(pr, pid: str, cell) -> dict:
+	"""The fetch entry of ``pid`` proposed for ``cell`` ({} if none)."""
+	ent = [e for e in _fetch_entries(pr, pid) if e.get("cell") and tuple(e["cell"]) == tuple(cell)]
+	return ent[0] if ent else {}
 
 
 def _active_pair(pr, pid: str):
@@ -59,20 +84,45 @@ def _around(pr, cell) -> set:
 	return out
 
 
+def parse_cells(items) -> list:
+	"""``["3,10", "7,2"]`` (or ``"3,10 7,2"``) -> ``[(3, 10), (7, 2)]``."""
+	out = []
+	for s in items:
+		for tok in str(s).replace(";", " ").split():
+			try:
+				l, c = tok.split(",")
+				out.append((int(l), int(c)))
+			except ValueError:
+				raise ValueError(f"célula inválida {tok!r} (formato L,C)") from None
+	return out
+
+
 def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[str] = None, reject: bool = False,
 			position_known=None, anchor=None, rot: int = 0, mirror: bool = False, unanchor: Optional[str] = None,
-			discard: bool = False, reason: str = "", requery: bool = True, use_image: bool = True) -> dict:
+			discard: bool = False, reason: str = "", cell_full=None, cell_empty=None, requery: bool = True,
+			use_image: bool = True) -> dict:
 	"""Apply one confirmation; returns ``{messages, affected_cells, affected_pieces, entries, invariants}``
-	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error)."""
+	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error).
+
+	``cell_full`` / ``cell_empty``: a list of cells the user marks assembled / empty
+	(:meth:`src.state.Project.mark_cell_full` / ``mark_cell_empty``)."""
 	msgs, cells, pieces = [], set(), set()
 	try:
-		if cell is not None:
+		if cell_full is not None or cell_empty is not None:
+			for lst, full in ((cell_full or [], True), (cell_empty or [], False)):
+				for cl in lst:
+					cl = (int(cl[0]), int(cl[1]))
+					ev = pr.mark_cell_full(cl) if full else pr.mark_cell_empty(cl)
+					what = "cheia" if full else "vazia"
+					msgs.append(f"{cl} já estava marcada {what}" if ev.get("action") == "noop"
+								else f"{cl} marcada {what} (pista do utilizador)")
+					cells |= _around(pr, cl)
+		elif cell is not None:
 			cell = (int(cell[0]), int(cell[1]))
-			ent = [e for e in _fetch_entries(pr, piece_id) if e.get("cell") and tuple(e["cell"]) == cell]
-			e0 = ent[0] if ent else {}
+			e0 = _cell_entry(pr, piece_id, cell)
 			org = origin or e0.get("origin") or "manual"
 			pair = _active_pair(pr, piece_id)
-			pr.place(piece_id, cell, origin=org, rank=e0.get("rank"), score=e0.get("score"))
+			pr.place(piece_id, cell, origin=org, rank=e0.get("rank"), score=e0.get("score"), theta_deg=_entry_theta(e0))
 			msgs.append(f"{piece_id} colocada em {cell} (origem {org})")
 			if org in _CONFIRM_ACTION:
 				pr.log_event(_CONFIRM_ACTION[org], piece=piece_id, cell=cell, origin=org, query=e0.get("query"))
@@ -84,8 +134,8 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 				if pair.estado == "proposto":
 					pr.confirm_pair(pair.id)
 				tw = pr.profile.twin(*cell)
-				if tw and pr.board[tw]["estado"] == "vazia" and pr.piece(other).estado in ("solta", "emparelhada"):
-					pr.set_position_known(other, tw, origin="par")
+				if tw and not pr.board.occupied(tw) and pr.piece(other).estado in ("solta", "emparelhada"):
+					pr.set_position_known(other, tw, origin="par", theta_deg=_entry_theta(_cell_entry(pr, other, tw)))
 					msgs.append(f"par {pair.id}: {other} fica com posição conhecida {tw}")
 					cells |= _around(pr, tw)
 		elif reject:
@@ -107,7 +157,7 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			pieces.add(piece_id)
 		elif position_known is not None:
 			pc = (int(position_known[0]), int(position_known[1]))
-			pr.set_position_known(piece_id, pc, origin=origin or "manual")
+			pr.set_position_known(piece_id, pc, origin=origin or "manual", theta_deg=_entry_theta(_cell_entry(pr, piece_id, pc)))
 			msgs.append(f"{piece_id} posição conhecida {pc}")
 			pieces.add(piece_id)
 			cells |= _around(pr, pc)
@@ -183,6 +233,8 @@ def main(argv=None) -> int:
 	g.add_argument("--unanchor", metavar="G")
 	g.add_argument("--discard", action="store_true")
 	g.add_argument("--relot", nargs="+", metavar="S", help="scans (folhas) a mudar de lote; exige --lote")
+	g.add_argument("--cheia", nargs="+", metavar="L,C", help="células que o utilizador diz estarem montadas")
+	g.add_argument("--vazia", nargs="+", metavar="L,C", help="células que o utilizador diz estarem vazias")
 	ap.add_argument("--lote", type=int, default=None, help="lote de destino de --relot")
 	ap.add_argument("--origin", default=None, help="gemeo | par | borda | buraco | manual (omissão: a da lista)")
 	ap.add_argument("--rot", type=int, default=0)
@@ -220,10 +272,16 @@ def main(argv=None) -> int:
 		print("erro: falta o id da peça")
 		return 1
 	try:
+		full = parse_cells(args.cheia) if args.cheia else None
+		empty = parse_cells(args.vazia) if args.vazia else None
+	except ValueError as e:
+		print(f"erro: {e}")
+		return 1
+	try:
 		pr = open_project(args)
 		r = confirm(pr, args.piece_id, cell=args.cell, origin=args.origin, reject=args.reject,
 					position_known=args.position_known, anchor=args.anchor, rot=args.rot, mirror=args.mirror,
-					unanchor=args.unanchor, discard=args.discard, reason=args.reason,
+					unanchor=args.unanchor, discard=args.discard, reason=args.reason, cell_full=full, cell_empty=empty,
 					requery=not args.no_requery, use_image=not args.no_image)
 	except ImportError as e:
 		print(f"aplicado, mas a nova consulta falhou: {e}")

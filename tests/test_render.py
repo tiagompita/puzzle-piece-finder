@@ -11,6 +11,8 @@
   2 x 2 board leave no background pixel inside the block.
 """
 
+import os
+
 import cv2
 import numpy as np
 import pytest
@@ -126,6 +128,8 @@ def test_clean_crop_green_not_touching_boundary_stays():
     rgba[inner, :3] = _bg_rgb()
     out = R.clean_crop(rgba, BG_LAB, MMPP)
     assert (out[..., 3] == rgba[..., 3]).all()
+    vis = rgba[..., 3] > 0
+    assert np.array_equal(out[..., :3][vis], rgba[..., :3][vis])     # colour of visible pixels untouched too
 
 
 # ---------------------------------------------------------------- composition
@@ -225,3 +229,145 @@ def test_light_band_only_on_light_pieces():
             assert removed[rim].all()                                 # the whole 1.0 mm rim goes on sky
         else:
             assert not removed[depth > R.BAND_MM / MMPP].any()        # grass: never beyond 0.7 mm
+
+
+# ---------------------------------------------------------------- pose of a GUI placement
+def test_confirmed_placement_renders_in_proposal_pose(tmp_path):
+    """'Coloquei' on a twin proposal: the piece is drawn in the list's pose. A dark mark painted
+    halfway between the body centre and a corner (scan frame) must land where that pose puts it, not 180 deg away
+    (where the corner assignment with the lowest residual put it when the pose was dropped)."""
+    from src.confirm import confirm
+    from src.query import _body_center, load_fetch, run_query
+    from test_query import _project
+    pr, placed, tw, dec = _project(tmp_path)
+    run_query(pr, use_image=False)
+    e = next(x for x in load_fetch(pr)["entries"] if x["piece"] == tw)
+    assert e["pose_known"]
+    p = pr.piece(tw)
+    sh = pr.shape(tw)
+    piv = _body_center(sh)
+    mark_mm = piv + 0.5 * (sh.c[sh.corners[0]] - piv)                 # halfway to a corner: always inside the body
+    fp = pr.p(p.crop_path)
+    rgba = np.asarray(Image.open(fp).convert("RGBA")).copy()
+    cx, cy = np.round(mark_mm / MMPP - np.asarray(p.bbox[:2], float)).astype(int)
+    r = int(round(1.5 / MMPP))
+    rgba[cy - r:cy + r, cx - r:cx + r, :3] = 0
+    Image.fromarray(rgba).save(fp)
+    out = confirm(pr, tw, cell=(3, 4), use_image=False)
+    assert "error" not in out
+    assert rgba[cy, cx, 3] == 255
+    cell = (3, 4)
+    ppc = 200.0
+    img = R.compose_board(pr, ppc, region=(cell[0], cell[1], cell[0], cell[1]), layers=("pieces",))
+    ppm = ppc / float(pr.profile.cell_mm["w"])
+    ys, xs = np.nonzero(img.max(-1) < 20)
+    assert len(xs) > 100
+    got = np.array([xs.mean(), ys.mean()]) / ppm                       # mm in the cell's box
+    origin = np.array([(cell[1] - 1) * pr.profile.cell_mm["w"], (cell[0] - 1) * pr.profile.cell_mm["h"]])
+    want = R._R(e["theta_deg"]) @ (mark_mm - piv) + R.cell_centre_mm(pr.profile, *cell) - origin
+    assert np.linalg.norm(got - want) < 1.5, (got, want)
+
+
+# ---------------------------------------------------------------- display of single pieces (cards, sheets)
+def _bg_lab_dist(rgb_u8):
+    return np.linalg.norm(R._lab(rgb_u8) - np.array(BG_LAB, np.float32), axis=-1)
+
+
+def _disc_project(tmp_path, colour=(70, 120, 190), patch=False):
+    """Project with one loose disc piece: green under alpha 0, a 0.5 mm green band inside alpha > 0
+    at the boundary (the scan fringe) and, optionally, a green patch > 1.5 mm inside (grass)."""
+    prof = _profile(4, 4)
+    pp = tmp_path / "puzzle.json"
+    prof.save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    sid = pr.add_scan(None, dpi=300)
+    H = W = 340
+    a = np.zeros((H, W), np.uint8)
+    cv2.circle(a, (170, 170), 140, 255, -1)
+    a = cv2.GaussianBlur(a, (3, 3), 0)                                # anti-aliased edge like a real crop
+    rgba = np.dstack([np.zeros((H, W, 3), np.uint8) + _bg_rgb(), a])
+    inside = a > 0
+    depth = R._depth_px(inside)
+    rgba[inside & (depth > 0.5 / MMPP), :3] = colour
+    pmask = np.zeros((H, W), bool)
+    if patch:
+        pmask[150:190, 150:190] = True                                # ~3.4 mm square, > 9 mm from the edge
+        assert depth[pmask].min() > 1.5 / MMPP
+        rgba[pmask, :3] = _bg_rgb()
+    os.makedirs(pr.p("crops"), exist_ok=True)
+    Image.fromarray(rgba).save(pr.p("crops", "P0001.png"))
+    cnt = max(cv2.findContours((a > 127).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0],
+              key=cv2.contourArea).reshape(-1, 2).astype(float) + [500, 400]
+    pid = pr.add_piece(sid, {"index_in_scan": 0, "shape": analyse(cnt, MMPP), "contour": cnt.astype(np.int32),
+                             "bbox": [500, 400, W, H], "crop_path": "crops/P0001.png"})
+    pr.save()
+    return pr, pid, rgba, pmask
+
+
+@pytest.mark.parametrize("px_per_mm", [4.0, 1.0 / MMPP])
+def test_piece_image_no_green_rim(tmp_path, px_per_mm):
+    """Cards / fetch sheets: the piece turned by 37 deg keeps no background-coloured pixel where alpha > 0."""
+    from src.query import _piece_image
+    pr, pid, rgba, _ = _disc_project(tmp_path)
+    size = int(np.ceil(rgba.shape[0] * MMPP * px_per_mm)) + 8
+    bgr, al = _piece_image(pr, pid, 37.0, None, size, px_per_mm)
+    vis = al[..., 0] >= 1.0 / 255
+    assert vis.sum() > 100
+    rgb = np.clip(bgr[..., ::-1] + 0.5, 0, 255).astype(np.uint8)
+    bad = vis & (_bg_lab_dist(rgb) < 20)
+    assert bad.sum() == 0, f"{bad.sum()} rim pixels with dE < 20 to the background"
+    # the public helper returns straight RGBA uint8 of the same image
+    out = R.piece_rgba_for_display(pr, pid, theta_deg=37.0, size=size, px_per_mm=px_per_mm)
+    assert out.dtype == np.uint8 and out.shape == (size, size, 4)
+    assert ((out[..., 3] > 0) & (_bg_lab_dist(out[..., :3]) < 20)).sum() == 0
+
+
+def test_display_keeps_interior_green(tmp_path):
+    """Grass: a green patch > 1.5 mm inside the piece survives the display pipeline (>= 99 %)."""
+    pr, pid, rgba, pmask = _disc_project(tmp_path, colour=(95, 140, 60), patch=True)
+    out = R.piece_rgba_for_display(pr, pid)
+    kept = pmask & (out[..., 3] == 255) & (_bg_lab_dist(out[..., :3]) < 20)
+    assert kept.sum() >= 0.99 * pmask.sum()
+    assert ((out[..., 3] > 0) & ~pmask & (_bg_lab_dist(out[..., :3]) < 20)).sum() == 0
+
+
+def _lab_to_rgb(L, a, b):
+    lab = np.array([[[L, a, b]]], np.float32)
+    return np.clip(cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)[0, 0] * 255 + 0.5, 0, 255).astype(np.uint8)
+
+
+def test_display_drops_shadow_darkened_paper(tmp_path):
+    """Display only: a 0.3 mm dark-green band (paper darkened by the cast shadow: L* 52, a* -33,
+    distance ~31 to the paper, above BG_DIST_MAX so the cleaning keeps it) on the left and bottom
+    sides goes; the grass-textured interior (with some paper-like green deep inside) and the lit
+    sides stay; the cleaning used by the index / board (``clean_crop``) is not changed."""
+    prof = _profile(4, 4)
+    pp = tmp_path / "puzzle.json"
+    prof.save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    sid = pr.add_scan(None, dpi=300)
+    H = W = 300
+    a = np.zeros((H, W), np.uint8)
+    cv2.rectangle(a, (30, 30), (270, 270), 255, -1)
+    rng = np.random.default_rng(5)
+    tex = np.where(rng.random((H, W, 1)) < 0.5, _lab_to_rgb(60, -15, 45), _lab_to_rgb(30, -10, 20))
+    deep_green = rng.random((H, W)) < 0.02                            # paper-like green inside the grass
+    tex[deep_green] = _lab_to_rgb(50, -34, 32)
+    rgba = np.dstack([tex.astype(np.uint8), a])
+    yy, xx = np.mgrid[0:H, 0:W]
+    band_px = 0.3 / MMPP                                               # within the 0.4 mm display band (depth counts from 1 px)
+    shadow = (a > 0) & (((xx - 30) < band_px) | ((270 - yy) < band_px))   # left and bottom sides
+    rgba[shadow, :3] = _lab_to_rgb(52, -33, 30)
+    os.makedirs(pr.p("crops"), exist_ok=True)
+    Image.fromarray(rgba).save(pr.p("crops", "P0001.png"))
+    pid = pr.add_piece(sid, {"index_in_scan": 0, "bbox": [100, 100, W, H], "crop_path": "crops/P0001.png"})
+    pr.save()
+    clean = R.clean_crop(rgba, BG_LAB, MMPP)
+    assert (clean[shadow, 3] > 0).mean() > 0.9                        # the cleaning keeps it (index / board)
+    out = R.piece_rgba_for_display(pr, pid)
+    assert (out[shadow, 3] > 0).mean() < 0.05                         # gone from the thumbnails
+    depth = R._depth_px(a > 0)
+    inner = (a > 0) & (depth > 0.4 / MMPP)
+    assert (out[inner, 3] == 255).all() and np.array_equal(out[inner, :3], rgba[inner, :3])
+    lit = (a > 0) & ~shadow & (depth <= 0.4 / MMPP) & ((xx - 30) > 1.0 / MMPP) & ((270 - yy) > 1.0 / MMPP)
+    assert (out[lit, 3] > 0).mean() > 0.99                            # lit sides (grass texture) stay

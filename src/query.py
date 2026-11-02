@@ -55,7 +55,8 @@ from typing import Optional
 import numpy as np
 
 __all__ = ["ORIGIN_STEP", "MAX_MISSING_BORDER", "MAX_BORDER_CANDIDATES", "run_query", "write_fetch",
-		   "load_fetch", "render_fetch_md", "ghost_contour", "wrap180", "GHOST_MAX_PTS", "main"]
+		   "load_fetch", "render_fetch_md", "ghost_contour", "wrap180", "GHOST_MAX_PTS", "mounted_neighbours", "fetch_group",
+		   "main"]
 
 ORIGIN_STEP = {"borda": 0, "gemeo": 1, "par": 2, "posicao_conhecida": 3, "seccao": 4}
 _DECISION_RANK = {"aceite": 0, "colocavel": 0, "ambigua": 1, "proposto": 1, "confirmado": 0, "candidata": 2,
@@ -292,6 +293,27 @@ def _step_pairs(ctx, loose, only_pieces, proposed, lote) -> list:
 	return out
 
 
+def mounted_neighbours(pr, cell) -> int:
+	"""4-neighbours of ``cell`` that Tiago really assembled: ``colocada``, or ``ocupada_legado`` whose
+	source is ``tiago`` (``foto`` occupancy is a doubt and does not count)."""
+	n = 0
+	for nb in pr.board.neighbours(tuple(cell)):
+		c = pr.board[nb]
+		if c["estado"] == "colocada" or (c["estado"] == "ocupada_legado" and c.get("fonte") == "tiago"):
+			n += 1
+	return n
+
+
+def fetch_group(pr, entry: dict) -> Optional[str]:
+	"""``coloca_agora`` (a mounted neighbour to verify the fit, or a stored position that became placeable)
+	or ``guarda_posicao`` (keep it in a small bag with its cell); None for entries without a cell."""
+	if not entry.get("cell"):
+		return None
+	if entry.get("origin") == "posicao_conhecida" or entry.get("decision") == "colocavel":
+		return "coloca_agora"
+	return "coloca_agora" if mounted_neighbours(pr, entry["cell"]) >= 1 else "guarda_posicao"
+
+
 def _step_known(pr, lote) -> list:
 	return [_entry(pr, "posicao_conhecida", p.id, cell, "colocavel", reasons=["vizinha ocupada"])
 			for p, cell in pr.placeable_known_positions() if lote is None or p.lote == lote]
@@ -506,7 +528,7 @@ def _valid_prior(pr, e, only_cells, only_pieces, rej) -> bool:
 	if e["origin"] == "par":
 		t = pr.pairs.get(e.get("pair"))
 		return t is not None and t.estado != "rejeitado"
-	if cell is not None and (pr.board[cell]["estado"] != "vazia" or (pid, cell) in rej):
+	if cell is not None and (pr.board.occupied(cell) or (pid, cell) in rej):
 		return False
 	if pid in only_pieces or (e.get("query") in only_pieces) or (cell is not None and cell in only_cells):
 		return False
@@ -518,7 +540,7 @@ def _valid_prior_suppressed(pr, s, only_cells, only_pieces, rej) -> bool:
 	pid, cell = s.get("piece"), _cl(s.get("cell"))
 	if pid is None or pid not in pr.pieces or pr.piece(pid).estado not in ("solta", "emparelhada"):
 		return False
-	if cell is not None and (pr.board[cell]["estado"] != "vazia" or (pid, cell) in rej or cell in only_cells):
+	if cell is not None and (pr.board.occupied(cell) or (pid, cell) in rej or cell in only_cells):
 		return False
 	return pid not in only_pieces and s.get("query") not in only_pieces
 
@@ -679,21 +701,15 @@ def _fit_text(draw, xy, text: str, width: int, size: int, fill) -> None:
 
 def _piece_image(project, pid: str, theta_deg: float, pivot_mm, size: int, px_per_mm: float):
 	"""The cleaned crop of ``pid`` turned by ``theta_deg`` about ``pivot_mm`` (scan mm), pivot at the
-	centre of a ``size`` x ``size`` canvas: ``(rgb->bgr float, alpha float 0..1)`` or None."""
+	centre of a ``size`` x ``size`` canvas: ``(rgb->bgr float, alpha float 0..1)`` or None.
+	Same pipeline as the GUI cards and the Mesa (:func:`src.render.piece_rgba_for_display`:
+	premultiplied resampling, so no paper green in the rim)."""
 	from src import render
-	rgba = render._clean_or_crop(project, pid)
-	if rgba is None:
+	out = render.piece_rgba_for_display(project, pid, theta_deg=float(theta_deg), pivot_mm=pivot_mm, size=int(size),
+										px_per_mm=float(px_per_mm))
+	if out is None:
 		return None
-	p = project.piece(pid)
-	mmpp = render._scan_mmpp(project, p.scan_id)
-	origin = np.asarray(p.bbox[:2], float) if p.bbox else np.zeros(2)
-	if pivot_mm is None:
-		pivot_mm = (origin + np.array(rgba.shape[1::-1]) / 2.0) * mmpp
-	ctr = np.full(2, (size / 2.0 + 0.5) / px_per_mm)
-	A = render._crop_to_out(float(theta_deg), pivot_mm, ctr, (0.0, 0.0), origin, mmpp, (px_per_mm, px_per_mm), (0, 0))
-	bgr = render._warp(np.ascontiguousarray(rgba[..., 2::-1]), A, (size, size)).astype(float)
-	al = render._warp(rgba[..., 3].astype(np.float32) / 255.0, A, (size, size))[..., None]
-	return bgr, np.clip(al, 0.0, 1.0)
+	return out[..., 2::-1].astype(float), out[..., 3:4].astype(float) / 255.0
 
 
 def _paste(sheet: np.ndarray, x0: int, y0: int, im) -> None:

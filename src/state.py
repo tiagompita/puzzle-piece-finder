@@ -19,6 +19,14 @@ the in-memory model by :func:`apply`, the same function :func:`replay` uses, so
 :meth:`Project.check_invariants`). Events carry everything replay needs (piece static
 metadata, previous cell states for undo), so the JSON views are rebuildable caches.
 
+Cell sources and the doubt policy: a ``ocupada_legado`` cell (full, no silhouette) with
+``fonte='foto'`` comes only from the occupancy photo (M14, ~99.6 % per cell) and is *not
+confirmed*: it is drawn hatched but counts as empty for every derived query
+(:meth:`Board.occupied`: pending twins, holes, neighbours, known positions, missing border).
+``fonte='tiago'`` (:meth:`Project.mark_cell_full` / :meth:`Project.mark_cell_empty`, events
+``cell_occupied_by_user`` / ``cell_cleared_by_user``) is ground truth from the user: it
+counts as occupied (resp. empty) and a later photo never overrides it.
+
 Cell convention: ``(l, c)``, 1-based, row ``l`` from the top. The die symmetry is only
 ever obtained from :meth:`src.profile.PuzzleProfile.twin`. Ids (``S``, ``P``, ``T``,
 ``G``, ``F`` + 4 digits) are allocated once and never reused.
@@ -47,6 +55,7 @@ from src.profile import PuzzleProfile
 
 __all__ = [
 	"SCHEMA_VERSION", "PIECE_STATES", "PAIR_STATES", "SECTION_KINDS", "CELL_STATES", "CELL_SOURCES", "ACTIONS",
+	"PHOTO_SOURCE", "USER_SOURCE",
 	"StateError", "Piece", "Pair", "Section", "Photo", "Board", "Model", "apply", "replay", "read_log",
 	"Project", "file_sha256", "section_cell",
 ]
@@ -58,12 +67,16 @@ PIECE_STATES = ("solta", "emparelhada", "posicao_conhecida", "colocada", "em_sec
 PAIR_STATES = ("proposto", "confirmado", "rejeitado")
 SECTION_KINDS = ("montado", "blocos", "seccao")
 CELL_STATES = ("vazia", "ocupada_legado", "colocada")
-CELL_SOURCES = ("log", "foto", "legado_scan")
+CELL_SOURCES = ("log", "foto", "legado_scan", "tiago")
+PHOTO_SOURCE = "foto"         # ocupada_legado from the occupancy photo: unconfirmed, counts as empty (doubt policy)
+USER_SOURCE = "tiago"         # cell marked full/empty by the user: ground truth, never overridden by a photo
 ACTIONS = (
 	"scan_added", "piece_added", "placed", "unplaced", "twin_confirmed", "twin_rejected", "hole_confirmed",
 	"hole_rejected", "pair_registered", "pair_confirmed", "pair_rejected", "fetch_listed", "section_registered",
 	"section_anchored", "section_unanchored", "piece_discarded", "photo_registered", "cell_occupied_by_photo",
 	"cell_cleared_by_photo", "position_known", "position_placeable", "same_as", "lote_changed",
+	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
+	"report", "report_closed",
 )
 ID_PREFIXES = ("S", "P", "T", "G", "F")
 LOOSE_STATES = ("solta", "emparelhada")
@@ -258,7 +271,15 @@ class Board:
 		cell.update(copy.deepcopy(value))
 
 	def occupied(self, lc) -> bool:
-		return self[lc]["estado"] != "vazia"
+		"""Occupied for the derived queries: ``colocada``, or ``ocupada_legado`` confirmed (not only
+		from the photo). A photo-only cell (``fonte='foto'``) counts as empty (doubt policy)."""
+		cell = self[lc]
+		return cell["estado"] == "colocada" or (cell["estado"] == "ocupada_legado" and cell["fonte"] != PHOTO_SOURCE)
+
+	def unconfirmed(self, lc) -> bool:
+		"""Full in the occupancy photo only (``ocupada_legado`` / ``fonte='foto'``): drawn, not trusted."""
+		cell = self[lc]
+		return cell["estado"] == "ocupada_legado" and cell["fonte"] == PHOTO_SOURCE
 
 	def iter_cells(self):
 		"""Yield ``((l, c), cell)`` row by row."""
@@ -364,6 +385,7 @@ def apply(m: Model, ev: dict) -> None:
 		p = _piece(m, ev["piece"])
 		m.board.set(_cell(ev["cell"]), ev["restore"])
 		p.estado, p.celula = ev.get("to", "solta"), None
+		p.theta_deg = None      # the pose belonged to that placement
 	elif a == "position_known":
 		p = _piece(m, ev["piece"])
 		p.estado, p.celula = "posicao_conhecida", _cell(ev["cell"])
@@ -418,6 +440,15 @@ def apply(m: Model, ev: dict) -> None:
 										"foto_id": ev["photo"]})
 	elif a == "cell_cleared_by_photo":
 		m.board.set(_cell(ev["cell"]), {"estado": "vazia", "peca_id": None, "fonte": "foto", "foto_id": ev["photo"]})
+	elif a == "cell_occupied_by_user":
+		m.board.set(_cell(ev["cell"]), {"estado": "ocupada_legado", "peca_id": None, "fonte": USER_SOURCE, "foto_id": None})
+	elif a == "cell_cleared_by_user":
+		m.board.set(_cell(ev["cell"]), {"estado": "vazia", "peca_id": None, "fonte": USER_SOURCE, "foto_id": None})
+	elif a == "section_candidates_updated":
+		s = m.sections[ev["section"]]
+		s.candidates = copy.deepcopy(ev["candidates"])
+		if ev.get("notes") is not None:
+			s.notes = ev["notes"]
 	elif a == "same_as":
 		_piece(m, ev["piece"]).same_as = ev["other"]
 	elif a == "lote_changed":
@@ -433,7 +464,7 @@ def apply(m: Model, ev: dict) -> None:
 				p.lote = lote
 				if p.id in nums:
 					p.n_no_lote = None if nums[p.id] is None else int(nums[p.id])
-	elif a in ("twin_confirmed", "hole_confirmed", "fetch_listed", "position_placeable"):
+	elif a in ("twin_confirmed", "hole_confirmed", "fetch_listed", "position_placeable", "report", "report_closed"):
 		pass  # informative events (metrics / notifications); no state change
 	else:
 		raise StateError(f"ação desconhecida no log: {a!r}")
@@ -909,7 +940,8 @@ class Project:
 
 		Full in the photo and ``vazia`` → ``ocupada_legado``; empty in the photo and
 		``ocupada_legado`` → ``vazia``; ``colocada`` but empty in the photo → warning only;
-		uncertain (-1) → nothing. A ``posicao_conhecida`` whose cell gains an occupied
+		uncertain (-1) → nothing. A cell the user marked (``fonte='tiago'``) is never changed
+		by a photo (a disagreement is a warning). A ``posicao_conhecida`` whose cell gains an occupied
 		neighbour → ``position_placeable`` event.
 		"""
 		R, C = self.profile.rows, self.profile.cols
@@ -926,6 +958,11 @@ class Project:
 		changes = []
 		for (l, c), cell in self.board.iter_cells():
 			v = photo.value(l, c)
+			if cell["fonte"] == USER_SOURCE and cell["estado"] != "colocada":
+				if v in (0, 1) and (v == 1) != (cell["estado"] == "ocupada_legado"):
+					warnings.append(f"({l},{c}) {'cheia' if v == 1 else 'vazia'} na foto {fid} mas marcada "
+									f"{'cheia' if cell['estado'] == 'ocupada_legado' else 'vazia'} pelo utilizador (prevalece)")
+				continue
 			if v == 1 and cell["estado"] == "vazia":
 				changes.append(("cell_occupied_by_photo", (l, c)))
 				kn = [q.id for q in self.pieces.values() if q.estado == "posicao_conhecida" and q.celula == (l, c)]
@@ -941,6 +978,47 @@ class Project:
 			self._emit(action, cell=cell, photo=fid)
 		self._emit_placeable(before)
 		return warnings
+
+	def mark_cell_full(self, cell) -> dict:
+		"""The user says ``cell`` is assembled (no silhouette yet): ``ocupada_legado`` / ``fonte='tiago'``.
+
+		Ground truth: blocks twin proposals for the cell, counts as an occupied neighbour, is a
+		hint for anchoring legacy sections (:func:`src.legacy.solve_project_sections`). Idempotent
+		(``{'action': 'noop'}`` when already marked); a ``colocada`` cell is an error.
+		"""
+		cell = self._check_cell(cell)
+		cur = self.board[cell]
+		if cur["estado"] == "colocada":
+			raise StateError(f"célula {cell} já tem a peça {cur['peca_id']}")
+		if cur["estado"] == "ocupada_legado" and cur["fonte"] == USER_SOURCE:
+			return {"action": "noop", "cell": list(cell)}
+		before = self._placeable_set()
+		ev = self._emit("cell_occupied_by_user", cell=cell, prev=copy.deepcopy(cur))
+		self._emit_placeable(before)
+		return ev
+
+	def mark_cell_empty(self, cell) -> dict:
+		"""The user says ``cell`` is empty: ``vazia`` / ``fonte='tiago'`` (a later photo does not refill it).
+
+		A ``colocada`` cell is an error (unplace / unanchor first). Idempotent."""
+		cell = self._check_cell(cell)
+		cur = self.board[cell]
+		if cur["estado"] == "colocada":
+			raise StateError(f"célula {cell} tem a peça {cur['peca_id']} colocada (retira-a primeiro)")
+		if cur["estado"] == "vazia" and cur["fonte"] == USER_SOURCE:
+			return {"action": "noop", "cell": list(cell)}
+		return self._emit("cell_cleared_by_user", cell=cell, prev=copy.deepcopy(cur))
+
+	def hint_cells(self) -> list:
+		"""Cells the user marked full that still have no piece (``ocupada_legado`` / ``fonte='tiago'``)."""
+		return [lc for lc, cell in self.board.iter_cells()
+				if cell["estado"] == "ocupada_legado" and cell["fonte"] == USER_SOURCE]
+
+	def update_section_candidates(self, section_id: str, candidates: list, notes: Optional[str] = None) -> dict:
+		"""Replace the stored top placements of an unanchored section (re-solve with new evidence)."""
+		if section_id not in self.sections:
+			raise StateError(f"secção desconhecida {section_id}")
+		return self._emit("section_candidates_updated", section=section_id, candidates=list(candidates), notes=notes)
 
 	def discard(self, piece_id: str, reason: str = "") -> dict:
 		p = self.piece(piece_id)
@@ -968,22 +1046,23 @@ class Project:
 		return {p.celula for p in self.pieces.values() if p.estado == "posicao_conhecida" and p.celula}
 
 	def pending_twins(self) -> list:
-		"""[(placed Piece, twin cell)] with the twin cell ``vazia`` and not already a known position."""
+		"""[(placed Piece, twin cell)] with the twin cell not occupied (:meth:`Board.occupied`: empty or
+		full in the photo only) and not already a known position."""
 		claimed = self._claimed_cells()
 		out = []
 		for p in sorted(self.pieces.values(), key=lambda q: q.id):
 			if p.estado != "colocada" or p.celula is None:
 				continue
 			tw = self.profile.twin(*p.celula)
-			if tw is None or tw in claimed or self.board[tw]["estado"] != "vazia":
+			if tw is None or tw in claimed or self.board.occupied(tw):
 				continue
 			out.append((p, tw))
 		return out
 
 	def holes(self) -> list:
-		"""Empty cells with >= 2 occupied 4-neighbours."""
+		"""Not-occupied cells (:meth:`Board.occupied`) with >= 2 occupied 4-neighbours."""
 		return [lc for lc, cell in self.board.iter_cells()
-				if cell["estado"] == "vazia" and self.board.n_occupied_neighbours(lc) >= 2]
+				if not self.board.occupied(lc) and self.board.n_occupied_neighbours(lc) >= 2]
 
 	def _placeable_set(self) -> set:
 		return {(p.id, p.celula) for p, _ in self.placeable_known_positions()}
@@ -992,7 +1071,7 @@ class Project:
 		"""[(Piece, cell)] for ``posicao_conhecida`` pieces whose empty cell has an occupied neighbour."""
 		out = []
 		for p in sorted(self.pieces.values(), key=lambda q: q.id):
-			if p.estado == "posicao_conhecida" and p.celula and self.board[p.celula]["estado"] == "vazia" \
+			if p.estado == "posicao_conhecida" and p.celula and not self.board.occupied(p.celula) \
 					and self.board.n_occupied_neighbours(p.celula) >= 1:
 				out.append((p, p.celula))
 		return out
@@ -1003,9 +1082,9 @@ class Project:
 				self._emit("position_placeable", piece=p.id, cell=cell)
 
 	def missing_border_cells(self) -> list:
-		"""Empty border cells (flat sides from the profile)."""
+		"""Not-occupied border cells (flat sides from the profile; photo-only cells count as empty)."""
 		return [lc for lc, cell in self.board.iter_cells()
-				if cell["estado"] == "vazia" and self.profile.is_border(*lc)]
+				if not self.board.occupied(lc) and self.profile.is_border(*lc)]
 
 	def loose_pieces(self, lote: Optional[int] = None) -> list:
 		"""Pieces in the loose pool (``solta``/``emparelhada``, not a re-scan), optionally of one bag."""
@@ -1017,12 +1096,14 @@ class Project:
 		by_state = {s: 0 for s in PIECE_STATES}
 		for p in self.pieces.values():
 			by_state[p.estado] = by_state.get(p.estado, 0) + 1
-		n_occ = sum(1 for _, c in self.board.iter_cells() if c["estado"] != "vazia")
+		n_occ = sum(1 for lc, _ in self.board.iter_cells() if self.board.occupied(lc))
+		n_foto = sum(1 for lc, _ in self.board.iter_cells() if self.board.unconfirmed(lc))
 		n_todo = self.profile.cell_count() - n_occ
 		pend = len(self.pending_twins())
 		return {
 			"pecas": len(self.pieces), "por_estado": by_state, "celulas": self.board.counts(),
-			"celulas_ocupadas": n_occ, "n_por_colocar": n_todo, "gemeas_pendentes": pend,
+			"celulas_ocupadas": n_occ, "celulas_so_foto": n_foto, "celulas_pista": len(self.hint_cells()),
+			"n_por_colocar": n_todo, "gemeas_pendentes": pend,
 			"p_twin_placed": (pend / n_todo) if n_todo else 0.0,
 			"p_twin_placed_formula": f"len(pending_twins) / n_por_colocar = {pend} / {n_todo}",
 			"pares": {s: sum(1 for t in self.pairs.values() if t.estado == s) for s in PAIR_STATES},
@@ -1066,6 +1147,8 @@ class Project:
 					errs.append(f"célula {lc} aponta para {pid} que não está lá colocada")
 			elif cell["peca_id"] is not None:
 				errs.append(f"célula {lc} '{cell['estado']}' com peca_id {cell['peca_id']}")
+			if cell["estado"] == "ocupada_legado" and cell["fonte"] not in (PHOTO_SOURCE, USER_SOURCE):
+				errs.append(f"célula {lc} ocupada_legado com fonte {cell['fonte']!r} (só foto | tiago)")
 		for p in self.pieces.values():
 			if p.estado == "colocada" and seen.get(p.id) != p.celula:
 				errs.append(f"{p.id} colocada sem célula consistente ({p.celula})")

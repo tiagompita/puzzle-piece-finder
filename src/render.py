@@ -68,6 +68,8 @@ __all__ = [
 	"initial_theta", "baseline_placement", "image_refine", "register_piece", "register_all", "registered_theta",
 	"seam_gaps", "relax", "bg_distance", "fringe_masks", "decontaminate", "clean_crop", "clean_all", "compose_board",
 	"compose_zone_vs_art", "rebuild_assets", "load_placements", "save_placements", "main",
+	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "shadow_paper_mask", "DISPLAY_SHADOW",
+	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
 ]
 
 # ---------------------------------------------------------------- constants
@@ -92,6 +94,13 @@ BG_LUMA_WEIGHT = 0.5           # weight of dL^2 in the background distance (as s
 SHADOW_L_DELTA = 12.0          # shadow pass: band pixel with L* < interior median - this ...
 SHADOW_CHROMA_MAX = 12.0       # ... and chroma below this, connected to the outside
 SHADOW_DEFAULT = False         # shadow pass off by default (RENDER.md §2: it eats dark grass)
+# display only (thumbnails: cards, fetch sheets, Mesa; never the index, the board or render/clean/):
+# paper darkened by the cast shadow, left by the cleaning because it is just above BG_DIST_MAX (RENDER.md §6.1)
+DISPLAY_SHADOW = True          # on (decision 2026-11-01, RENDER.md §6.1)
+DISPLAY_SHADOW_BAND_MM = 0.4   # only within this distance of the alpha boundary
+DISPLAY_SHADOW_A_MAX = -30.0   # a* below this (paper-like green; grass interior median a* ~ -6 .. -18)
+DISPLAY_SHADOW_DIST_MAX = 40.0 # bg_distance to background_lab below this
+DISPLAY_SHADOW_L_MAX = 62.0    # L* below this (darkened; the paper is L* ~ 79)
 INTERIOR_MM = 1.5              # pixels deeper than this are the piece interior (reference statistics)
 SEAM_TRIM = 0.15               # fraction of a side ignored at each end in the seam metric (corners)
 SEAM_BAND_MM = 5.0             # fallback (no corners): contour points within this of the shared edge
@@ -410,7 +419,9 @@ def image_refine(rgba: np.ndarray, origin_px, mmpp: float, pivot_mm, cell, theta
 	s0 = float(res[i0][1][Sy, Sx])
 	return {"dtheta_deg": float(r0 + fr), "ddx_mm": float((ix + fx - Sx) / sx), "ddy_mm": float((iy + fy - Sy) / sy),
 			"score": float(S[iy, ix]), "score0": s0, "dE": float(res[ib][2][iy, ix]), "ncc": float(res[ib][3][iy, ix]),
-			"at_edge": bool(ix in (0, S.shape[1] - 1) or iy in (0, S.shape[0] - 1) or ib in (0, len(best) - 1)),
+			# a single rotation sample (rot_deg=0, translation only) is not a minimum at the edge of the rotation range
+			"at_edge": bool(ix in (0, S.shape[1] - 1) or iy in (0, S.shape[0] - 1)
+							or (len(best) > 1 and ib in (0, len(best) - 1))),
 			"curve": [round(v, 3) for v in best]}
 
 
@@ -850,21 +861,26 @@ def _clean(rgba: np.ndarray, background_lab, mm_per_px: float, *, band_mm: float
 	band_mm = min(float(band_mm), BAND_MM)
 	m = fringe_masks(rgba, background_lab, mm_per_px, band_mm=band_mm, bg_dist_max=bg_dist_max, shadow=shadow)
 	if light_band_mm and float(light_band_mm) > band_mm and is_light(m):
-		m = fringe_masks(rgba, background_lab, mm_per_px, band_mm=min(float(light_band_mm), LIGHT_BAND_MAX_MM),
-						 bg_dist_max=bg_dist_max, shadow=shadow)
+		band_mm = min(float(light_band_mm), LIGHT_BAND_MAX_MM)
+		m = fringe_masks(rgba, background_lab, mm_per_px, band_mm=band_mm, bg_dist_max=bg_dist_max, shadow=shadow)
 	out = np.array(rgba, np.uint8, copy=True)
 	if decont and is_light(m):
 		out[..., :3], share = decontaminate(rgba, m, background_lab, return_share=True)
 		a = out[..., 3].astype(np.float32) * (1.0 - share)
 		out[..., 3] = np.clip(a + 0.5, 0, 255).astype(np.uint8)
 	out[..., 3][m["removed"]] = 0
-	return out, m
+	# the paper colour under the now transparent pixels must not leak into a resampled rim
+	return _fill_transparent(out, band_mm / float(mm_per_px)), m
 
 
 def clean_crop(rgba: np.ndarray, background_lab, mm_per_px: float, *, band_mm: float = BAND_MM,
 			   shadow: bool = SHADOW_DEFAULT, bg_dist_max: float = BG_DIST_MAX, decont: bool = True,
 			   light_band_mm: Optional[float] = LIGHT_BAND_MM) -> np.ndarray:
 	"""RGBA crop with the green fringe (and optionally the shadow) made transparent.
+
+	The colour under every transparent pixel is replaced by the colour of the nearest visible
+	pixel deeper than the band (:func:`_fill_transparent`): alpha 0 keeps no paper green that a
+	straight-alpha resampler could blend into the rim.
 
 	Only pixels within ``band_mm`` (<= 0.7 mm) of the alpha boundary can change, by
 	construction (:func:`fringe_masks`): alpha is zeroed on the fringe and, on pieces whose
@@ -927,20 +943,16 @@ def _clean_or_crop(project, pid: str) -> Optional[np.ndarray]:
 
 
 def _art_rgb(profile) -> Optional[np.ndarray]:
-	art = profile.art or {}
-	if not art.get("file"):
+	"""Art under the board (BGR uint8), rectified to the cell grid by :func:`src.locate.load_art_rectified`
+	(the same board -> art transform as :class:`src.locate.CellArt`); grid px the art file does not
+	reach are painted the default ``base_bgr`` grey of :func:`compose_board` (no replicated streaks).
+	None if there is no readable art."""
+	from src.locate import load_art_rectified
+	try:
+		rgb = load_art_rectified(profile, REPO, fill=(40, 40, 40))
+	except (ValueError, FileNotFoundError):
 		return None
-	path = os.path.join(REPO, art["file"])
-	if not os.path.exists(path):
-		return None
-	im = cv2.imdecode(np.fromfile(path, np.uint8), cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
-	if im is None:
-		return None
-	bb = art.get("bbox")
-	if bb:
-		x, y, w, h = (int(v) for v in bb)
-		im = im[y:y + h, x:x + w]
-	return im
+	return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
 
 
 def _hatch(img: np.ndarray, x0: int, y0: int, x1: int, y1: int, step: int, colour, lw: int) -> None:
@@ -948,6 +960,101 @@ def _hatch(img: np.ndarray, x0: int, y0: int, x1: int, y1: int, step: int, colou
 		p0 = (x0 + j, y0)
 		p1 = (x0 + j + (y1 - y0), y1)
 		cv2.line(img, p0, p1, colour, lw, cv2.LINE_AA)
+
+
+def _nearest_colour(rgb: np.ndarray, src: np.ndarray, where: np.ndarray) -> np.ndarray:
+	"""Colours (``(n, 3)``) of the nearest ``src`` pixel for each ``where`` pixel (row-major order)."""
+	_, lab = cv2.distanceTransformWithLabels((~src).astype(np.uint8), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+	lut = np.zeros((int(lab.max()) + 1, 3), np.uint8)
+	lut[lab[src]] = rgb[src]
+	return lut[lab[where]]
+
+
+def _fill_transparent(rgba: np.ndarray, deep_px: float = 0.0) -> np.ndarray:
+	"""Copy of ``rgba`` whose colour under alpha == 0 is that of the nearest visible pixel deeper than
+	``deep_px`` (any visible pixel if none). Visible pixels and alpha are unchanged."""
+	out = np.array(rgba, np.uint8, copy=True)
+	vis = out[..., 3] > 0
+	if not vis.any() or vis.all():
+		return out
+	src = vis & (_depth_px(vis) > deep_px) if deep_px > 0 else vis
+	if not src.any():
+		src = vis
+	out[..., :3][~vis] = _nearest_colour(out[..., :3], src, ~vis)
+	return out
+
+
+def _unpremultiply(w: np.ndarray) -> np.ndarray:
+	a = np.clip(w[..., 3], 0.0, 1.0)
+	col = w[..., :3] / np.maximum(a, 1e-6)[..., None]
+	return _fill_transparent(np.dstack([np.clip(col + 0.5, 0, 255), np.clip(a * 255.0 + 0.5, 0, 255)]).astype(np.uint8))
+
+
+def _premultiply(rgba: np.ndarray) -> np.ndarray:
+	al = rgba[..., 3].astype(np.float32) / 255.0
+	return np.dstack([rgba[..., :3].astype(np.float32) * al[..., None], al])
+
+
+def warp_rgba(rgba: np.ndarray, A: np.ndarray, size) -> np.ndarray:
+	"""Straight RGBA uint8 warped by the 2x3 ``A`` (source px -> output px) into ``size = (w, h)``,
+	resampled with premultiplied alpha (:func:`_warp`: INTER_AREA pre-reduction when shrinking), so
+	the colour of transparent pixels never reaches the rim; transparent output pixels get the
+	nearest visible colour."""
+	return _unpremultiply(_warp(_premultiply(rgba), A, size))
+
+
+def resize_rgba(rgba: np.ndarray, size) -> np.ndarray:
+	"""Straight RGBA uint8 resized to ``size = (w, h)`` with premultiplied alpha (INTER_AREA when shrinking)."""
+	w, h = int(size[0]), int(size[1])
+	interp = cv2.INTER_AREA if w < rgba.shape[1] or h < rgba.shape[0] else cv2.INTER_LINEAR
+	return _unpremultiply(cv2.resize(_premultiply(rgba), (w, h), interpolation=interp))
+
+
+def shadow_paper_mask(rgba: np.ndarray, background_lab, mm_per_px: float, *, band_mm: float = DISPLAY_SHADOW_BAND_MM,
+					  a_max: float = DISPLAY_SHADOW_A_MAX, dist_max: float = DISPLAY_SHADOW_DIST_MAX,
+					  l_max: float = DISPLAY_SHADOW_L_MAX) -> np.ndarray:
+	"""Visible pixels within ``band_mm`` of the alpha boundary that look like paper darkened by the cast
+	shadow (a* < ``a_max``, :func:`bg_distance` < ``dist_max``, L* < ``l_max``), in components touching
+	the boundary. Pure; used only for display (:func:`piece_rgba_for_display`)."""
+	alpha = np.asarray(rgba)[..., 3] > 0
+	depth = _depth_px(alpha)
+	band = alpha & (depth <= float(band_mm) / float(mm_per_px))
+	lab = _lab(np.asarray(rgba)[..., :3])
+	cand = band & (lab[..., 1] < a_max) & (bg_distance(lab, background_lab) < dist_max) & (lab[..., 0] < l_max)
+	return _touching(cand, alpha & (depth <= 1.5))
+
+
+def piece_rgba_for_display(project, pid: str, *, theta_deg: Optional[float] = None, pivot_mm=None,
+						   size: Optional[int] = None, px_per_mm: Optional[float] = None) -> Optional[np.ndarray]:
+	"""The piece as every thumbnail shows it (cards, fetch sheets, Mesa): straight RGBA uint8 (RGB order).
+
+	Cleaned crop (``render/clean/`` or :func:`clean_crop` on the fly, the same as the board) with the
+	colour under alpha 0 replaced by the nearest piece colour and, if ``DISPLAY_SHADOW``, the
+	shadow-darkened paper of the outer 0.4 mm dropped (:func:`shadow_paper_mask`, display only: the
+	board and the index keep their silhouettes); without ``size`` that crop is returned
+	at scan resolution. With ``size`` (``px_per_mm`` default: the scan resolution) it is turned by
+	``theta_deg`` (default 0) about ``pivot_mm`` (scan mm; default the crop centre), the pivot at the
+	centre of a ``size`` x ``size`` canvas, resampled with premultiplied alpha (:func:`warp_rgba`).
+	None when the crop is missing.
+	"""
+	rgba = _clean_or_crop(project, pid)
+	if rgba is None:
+		return None
+	p = project.piece(pid)
+	mmpp = _scan_mmpp(project, p.scan_id)
+	if DISPLAY_SHADOW:
+		rgba = np.array(rgba, np.uint8, copy=True)
+		rgba[..., 3][shadow_paper_mask(rgba, project.profile.background_lab, mmpp)] = 0
+	rgba = _fill_transparent(rgba, BAND_MM / mmpp)
+	if size is None:
+		return rgba
+	ppm = float(px_per_mm) if px_per_mm else 1.0 / mmpp
+	origin = np.asarray(p.bbox[:2], float) if p.bbox else np.zeros(2)
+	if pivot_mm is None:
+		pivot_mm = (origin + np.array(rgba.shape[1::-1]) / 2.0) * mmpp
+	ctr = np.full(2, (int(size) / 2.0 + 0.5) / ppm)
+	A = _crop_to_out(float(theta_deg or 0.0), pivot_mm, ctr, (0.0, 0.0), origin, mmpp, (ppm, ppm), (0, 0))
+	return warp_rgba(rgba, A, (int(size), int(size)))
 
 
 def _bleed_rgba(rgba: np.ndarray, r_px: int, deep_px: float = 0.0):
@@ -961,11 +1068,8 @@ def _bleed_rgba(rgba: np.ndarray, r_px: int, deep_px: float = 0.0):
 	src = inside & (_depth_px(inside) > deep_px) if deep_px > 0 else inside
 	if not src.any():
 		src = inside
-	_, lab = cv2.distanceTransformWithLabels((~src).astype(np.uint8), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
-	lut = np.zeros((int(lab.max()) + 1, 3), np.uint8)
-	lut[lab[src]] = a[..., :3][src]
 	out = a.copy()
-	out[..., :3][~inside] = lut[lab[~inside]]
+	out[..., :3][~inside] = _nearest_colour(a[..., :3], src, ~inside)
 	k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r_px + 1, 2 * r_px + 1))
 	out[..., 3] = cv2.dilate(inside.astype(np.uint8) * 255, k)
 	return out, r_px

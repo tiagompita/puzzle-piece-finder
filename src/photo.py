@@ -4,6 +4,7 @@ Usage::
 
 	python -m src.photo <foto.jpg> [--fix "1,29=0" "1,34=1"] [--project projects/alpes]
 	python -m src.photo --from-json ocupacao.json [--fix ...]
+	python -m src.photo --cheia 3,10 7,2 [--vazia 1,29] [--project projects/alpes]
 
 With an image, the M14 prototype ``tools/diagnostico/ocupacao/ocupacao.py`` is loaded by
 path and its ``run(name, art, gt)`` is called with the photo path injected in
@@ -11,6 +12,12 @@ path and its ``run(name, art, gt)`` is called with the photo path injected in
 ``docs/``). With ``--from-json`` the ``celulas`` matrix (``celulas[l-1][c-1]`` ∈ {1, 0, -1})
 is read. ``--fix L,C=V`` overrides cells (manual confirmation). Then
 :meth:`src.state.Project.register_photo` reconciles and the warnings are printed.
+
+``--cheia`` / ``--vazia`` (without a photo) are the user's own word about cells: logged as
+``cell_occupied_by_user`` / ``cell_cleared_by_user`` (``fonte='tiago'``, ground truth that
+a later photo never overrides; same as ``python -m src.confirm --cheia/--vazia``), then the
+cells and their twins are re-queried. A ``fonte='foto'`` cell (photo only, no piece) counts
+as empty for the queries (doubt policy, :mod:`src.state`).
 """
 
 from __future__ import annotations
@@ -111,10 +118,18 @@ def main(argv=None) -> int:
 	ap.add_argument("image", nargs="?", default=None)
 	ap.add_argument("--from-json", default=None)
 	ap.add_argument("--fix", nargs="*", default=[], help='correções "L,C=V" (V = 1, 0 ou -1)')
+	ap.add_argument("--cheia", nargs="+", default=None, metavar="L,C", help="células que sabes estarem montadas (sem foto)")
+	ap.add_argument("--vazia", nargs="+", default=None, metavar="L,C", help="células que sabes estarem vazias (sem foto)")
+	ap.add_argument("--no-requery", action="store_true")
 	add_project_args(ap)
 	args = ap.parse_args(argv)
+	if (args.cheia or args.vazia) and not (args.image or args.from_json):
+		return _hints_main(args)
 	if bool(args.image) == bool(args.from_json):
-		print("erro: indica uma foto OU --from-json")
+		print("erro: indica uma foto OU --from-json (ou --cheia/--vazia)")
+		return 1
+	if args.cheia or args.vazia:
+		print("erro: --cheia/--vazia vão sem foto (corre-os à parte)")
 		return 1
 	try:
 		fixes = [parse_fix(s) for s in args.fix]
@@ -149,6 +164,33 @@ def main(argv=None) -> int:
 	bad = pr.check_invariants(disk=True)
 	if bad:
 		print("INVARIANTES VIOLADAS: " + "; ".join(bad))
+		return 1
+	return 0
+
+
+def _hints_main(args) -> int:
+	from src.confirm import confirm, parse_cells
+	from src.ingest import open_project
+	try:
+		full = parse_cells(args.cheia) if args.cheia else None
+		empty = parse_cells(args.vazia) if args.vazia else None
+		pr = open_project(args)
+		for l, c in (full or []) + (empty or []):
+			if not pr.profile.in_grid(l, c):
+				raise ValueError(f"({l},{c}) fora da grelha")
+	except (ValueError, OSError) as e:
+		print(f"erro: {e}")
+		return 1
+	r = confirm(pr, cell_full=full, cell_empty=empty, requery=not args.no_requery)
+	if "error" in r:
+		print(f"erro: {r['error']}")
+		return 1
+	for m in r["messages"]:
+		print(m)
+	st = pr.stats()
+	print(f"tabuleiro: {st['celulas']}; pistas {st['celulas_pista']}, só na foto {st['celulas_so_foto']}")
+	if r["invariants"]:
+		print("INVARIANTES VIOLADAS: " + "; ".join(r["invariants"]))
 		return 1
 	return 0
 

@@ -141,19 +141,74 @@ def test_register_photo_reconciles(proj):
     proj.place(a, (2, 2))
     proj.set_position_known(b, (3, 4))
     assert proj.placeable_known_positions() == []
-    # (1,1) full without log -> ocupada_legado; (2,2) placed but empty -> warning; (3,3) full -> b placeable
+    # (1,1) full without log -> ocupada_legado; (2,2) placed but empty -> warning; (3,3) full in the photo
+    # only: drawn, but not a neighbour (doubt policy) -> b not placeable yet
     w = proj.register_photo(_photo(proj, full=[(1, 1), (3, 3)]))
     assert proj.board[(1, 1)]["estado"] == "ocupada_legado" and proj.board[(1, 1)]["fonte"] == "foto"
     assert proj.board[(2, 2)]["estado"] == "colocada"
     assert len(w) == 1 and "(2,2)" in w[0]
+    assert [e for e in proj.events() if e["action"] == "position_placeable"] == []
+    assert proj.placeable_known_positions() == []
+    # Tiago confirms (3,3) is assembled -> b placeable
+    proj.mark_cell_full((3, 3))
     ev = [e for e in proj.events() if e["action"] == "position_placeable"]
     assert [(e["piece"], tuple(e["cell"])) for e in ev] == [(b, (3, 4))]
     assert [(p.id, c) for p, c in proj.placeable_known_positions()] == [(b, (3, 4))]
-    # second photo: (1,1) empty -> cleared back to vazia
-    proj.register_photo(_photo(proj, full=[(3, 3)]))
+    # second photo: (1,1) empty -> cleared back to vazia; (3,3) empty too, but the user's word prevails
+    w = proj.register_photo(_photo(proj, full=[]))
     assert proj.board[(1, 1)]["estado"] == "vazia"
+    assert proj.board[(3, 3)] == {"estado": "ocupada_legado", "peca_id": None, "fonte": "tiago", "foto_id": None}
+    assert any("(3,3)" in x and "utilizador" in x for x in w)
     assert len([e for e in proj.events() if e["action"] == "position_placeable"]) == 1  # no repeat
     _ok(proj)
+
+
+def test_photo_only_cell_does_not_block_twin_nor_count_as_neighbour(proj):
+    a, b = _add(proj, 2)
+    proj.place(a, (1, 2))                          # twin cell (4, 5) under rot180 on 6 x 4
+    proj.register_photo(_photo(proj, full=[(4, 5), (3, 2)], empty_all=False))
+    assert proj.board[(4, 5)]["estado"] == "ocupada_legado" and proj.board.unconfirmed((4, 5))
+    assert not proj.board.occupied((4, 5))
+    # photo only -> the twin is still pending; (3,2) does not count as a neighbour
+    assert [(p.id, c) for p, c in proj.pending_twins()] == [(a, (4, 5))]
+    assert proj.board.n_occupied_neighbours((3, 3)) == 0
+    assert (4, 5) in proj.missing_border_cells()
+    # the user marks both full -> twin blocked, neighbour counted, border no longer missing
+    proj.mark_cell_full((4, 5))
+    proj.mark_cell_full((3, 2))
+    assert proj.board.occupied((4, 5)) and proj.board[(4, 5)]["fonte"] == "tiago"
+    assert proj.pending_twins() == []
+    assert proj.board.n_occupied_neighbours((3, 3)) == 1
+    assert (4, 5) not in proj.missing_border_cells()
+    assert proj.hint_cells() == [(3, 2), (4, 5)]
+    st = proj.stats()
+    assert st["celulas_pista"] == 2 and st["celulas_so_foto"] == 0 and st["celulas_ocupadas"] == 3
+    # idempotent; placing a piece over a hint cell is allowed and unplace restores the hint
+    assert proj.mark_cell_full((4, 5))["action"] == "noop"
+    proj.place(b, (4, 5))
+    with pytest.raises(StateError):
+        proj.mark_cell_full((4, 5))
+    with pytest.raises(StateError):
+        proj.mark_cell_empty((4, 5))
+    proj.unplace(b)
+    assert proj.board[(4, 5)]["fonte"] == "tiago" and proj.board[(4, 5)]["estado"] == "ocupada_legado"
+    # cleared by the user -> vazia/tiago, a later photo does not refill it
+    proj.mark_cell_empty((3, 2))
+    proj.register_photo(_photo(proj, full=[(3, 2)]))
+    assert proj.board[(3, 2)] == {"estado": "vazia", "peca_id": None, "fonte": "tiago", "foto_id": None}
+    _ok(proj)
+    # replay round-trip (fresh open)
+    q = Project.open(proj.path)
+    assert q.board == proj.board and q.hint_cells() == [(4, 5)]
+    assert q.check_invariants() == []
+
+
+def test_invariant_rejects_foreign_ocupada_legado_source(proj):
+    proj.mark_cell_full((2, 2))
+    _ok(proj)
+    proj.board[(2, 2)]["fonte"] = "log"            # corrupt the in-memory view
+    errs = proj.check_invariants()
+    assert any("ocupada_legado com fonte" in e for e in errs)
 
 
 def test_anchor_and_unanchor_section(proj):
@@ -180,7 +235,12 @@ def test_missing_border_cells_and_holes(proj):
     border = pr.missing_border_cells()
     assert len(border) == 6 * 4 - 4 * 2          # 16 border cells on a 6x4 grid
     assert (2, 2) not in border
-    pr.register_photo(_photo(pr, full=[lc for lc in border if lc != (1, 4)] + [(2, 2)]))
+    full = [lc for lc in border if lc != (1, 4)] + [(2, 2)]
+    pr.register_photo(_photo(pr, full=full))
+    assert pr.missing_border_cells() == border         # photo only: still missing (doubt policy)
+    assert pr.holes() == []
+    for lc in full:
+        pr.mark_cell_full(lc)
     assert pr.missing_border_cells() == [(1, 4)]
     assert (2, 3) in pr.holes() and (1, 4) in pr.holes()
     _ok(pr)
@@ -340,6 +400,62 @@ def test_confirm_pair_gives_partner_position(proj, stub):
                for e in r["entries"])
     assert any(e["action"] == "position_placeable" and e["piece"] == b for e in pr.events())
     _ok(pr)
+
+
+def _set_entry_pose(pr, pid, cell, theta):
+    """Give the fetch.json entry of ``pid`` in ``cell`` a known board pose (as ``query._enrich`` does)."""
+    fp = pr.p("fetch.json")
+    with open(fp, encoding="utf-8") as f:
+        js = json.load(f)
+    hit = 0
+    for e in js["entries"]:
+        if e.get("piece") == pid and e.get("cell") and tuple(e["cell"]) == tuple(cell):
+            e.update(theta_deg=theta, pose_known=True, phi_deg=180.0)
+            hit += 1
+    assert hit == 1
+    with open(fp, "w", encoding="utf-8") as f:
+        json.dump(js, f)
+
+
+def test_confirm_place_keeps_proposal_pose(proj, stub):
+    from src.confirm import confirm
+    from src.query import run_query
+    pr = proj
+    placed, t1, other = _add(pr, 3)
+    pr.place(placed, (1, 2))
+    stub.twin_of.update({placed: t1})
+    run_query(pr)
+    _set_entry_pose(pr, t1, (4, 5), 91.0)
+    r = confirm(pr, t1, cell=(4, 5))
+    assert "error" not in r and r["invariants"] == []
+    assert pr.piece(t1).theta_deg == pytest.approx(91.0)
+    ev = [e for e in pr.events() if e["action"] == "placed" and e["piece"] == t1][-1]
+    assert ev["theta_deg"] == pytest.approx(91.0)
+    assert Project.open(pr.path).piece(t1).theta_deg == pytest.approx(91.0)      # replayed from the log
+    # a proposal without a known pose places without theta (nothing invented)
+    r = confirm(pr, other, cell=(2, 2), origin="manual")
+    assert "error" not in r and pr.piece(other).theta_deg is None
+    # unplace: the pose goes with the placement, live and on replay
+    pr.unplace(t1)
+    pr.save()
+    assert pr.piece(t1).theta_deg is None
+    assert Project.open(pr.path).piece(t1).theta_deg is None
+    _ok(pr)
+
+
+def test_confirm_position_known_keeps_proposal_pose(proj, stub):
+    from src.confirm import confirm
+    from src.query import run_query
+    pr = proj
+    placed, t1 = _add(pr, 2)
+    pr.place(placed, (1, 2))
+    stub.twin_of.update({placed: t1})
+    run_query(pr)
+    _set_entry_pose(pr, t1, (4, 5), -33.5)
+    r = confirm(pr, t1, position_known=(4, 5))
+    assert "error" not in r
+    assert pr.piece(t1).theta_deg == pytest.approx(-33.5)
+    assert Project.open(pr.path).piece(t1).theta_deg == pytest.approx(-33.5)
 
 
 # ---------------------------------------------------------------- ingest / photo CLI
@@ -516,3 +632,20 @@ def test_relot_cli_rewrites_overlays(tmp_path):
     assert cmain(["--relot", "S0003", "--project", proj]) == 1        # --lote required
     amber = lambda im: int((np.abs(im.astype(int) - (0, 191, 255)).sum(-1) < 12).sum())
     assert amber(a) > 3 * amber(sheet_overlay(pr, "S0003", max_px=500))   # border pieces are orange, close to amber
+
+
+def test_photo_and_confirm_cli_hints(proj, capsys):
+    from src.confirm import main as confirm_main, parse_cells
+    from src.photo import main as photo_main
+    assert parse_cells(["3,10", "7,2 8,2"]) == [(3, 10), (7, 2), (8, 2)]
+    with pytest.raises(ValueError):
+        parse_cells(["3;"])
+    proj.save()
+    assert photo_main(["--cheia", "2,2", "3,3", "--no-requery", "--project", proj.path]) == 0
+    assert confirm_main(["--vazia", "3,3", "--no-requery", "--project", proj.path]) == 0
+    q = Project.open(proj.path)
+    assert q.board[(2, 2)]["fonte"] == "tiago" and q.board[(2, 2)]["estado"] == "ocupada_legado"
+    assert q.board[(3, 3)]["fonte"] == "tiago" and q.board[(3, 3)]["estado"] == "vazia"
+    assert q.check_invariants(disk=True) == []
+    assert photo_main(["--cheia", "9,9", "--no-requery", "--project", proj.path]) == 1
+    assert "pista" in capsys.readouterr().out

@@ -148,6 +148,27 @@ def test_confirm_place_then_unplace(env):
     assert pr.board[(3, 4)]["estado"] == "vazia" and pr.piece(tw).estado == "solta"
 
 
+def test_confirm_place_applies_proposal_pose(env):
+    """'Coloquei' keeps the list's pose: the log, the registration and the card all show it."""
+    from src.query import wrap180
+    gui, cl, placed, tw, dec = env
+    e = next(x for x in cl.get("/api/fetch").json()["entries"] if x["piece"] == tw)
+    assert e["pose_known"] and e["theta_deg"] is not None
+    r = cl.post("/api/confirm", json={"acao": "place", "piece": tw, "cell": [3, 4]})
+    assert r.status_code == 200, r.text
+    pr = _ok_on_disk(gui.path)
+    ev = [x for x in pr.events() if x["action"] == "placed" and x["piece"] == tw][-1]
+    assert ev["theta_deg"] == pytest.approx(e["theta_deg"])
+    png = cl.get(f"/api/pieces/{tw}.png?pose=board&size=120")
+    assert png.headers["x-pose"] == "board"
+    assert abs(wrap180(float(png.headers["x-pose-theta"]) - e["theta_deg"])) <= 2.0
+    p = cl.get(f"/api/pieces/{tw}").json()
+    assert p["pose_origem"] == "registo" and abs(wrap180(p["pose_tabuleiro"] - e["theta_deg"])) <= 2.0
+    # undo: the pose goes with the placement
+    assert cl.post("/api/confirm", json={"acao": "unplace", "piece": tw}).status_code == 200
+    assert Project.open(gui.path).piece(tw).theta_deg is None
+
+
 def test_confirm_reject_position_known_discard_and_errors(env):
     gui, cl, placed, tw, dec = env
     r = cl.post("/api/confirm", json={"acao": "position_known", "piece": tw, "cell": [3, 4]})
@@ -164,6 +185,74 @@ def test_confirm_reject_position_known_discard_and_errors(env):
     assert cl.post("/api/confirm", json={"acao": "discard", "piece": tw}).status_code == 409
     gui.job = None
     _ok_on_disk(gui.path)
+
+
+def test_confirm_cell_full_and_empty(env):
+    """User hints: 'cell_full' blocks the twin proposal of that cell, 'cell_empty' gives it back."""
+    gui, cl, placed, tw, dec = env
+    assert any(e["piece"] == tw and e["cell"] == [3, 4] for e in cl.get("/api/fetch").json()["entries"])
+    r = cl.post("/api/confirm", json={"acao": "cell_full", "cell": [3, 4]})
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert j["celula"]["estado"] == "ocupada_legado" and j["celula"]["pista"] and not j["celula"]["por_confirmar"]
+    assert "marcada por ti" in j["celula"]["estado_txt"]
+    assert [3, 4] in j["celulas_mudadas"]
+    assert {v["dir"] for v in j["vizinhas"]} == {"N", "E", "S", "O"}
+    assert next(v for v in j["vizinhas"] if v["cell"] == [2, 4])["ocupada"] is False
+    pr = _ok_on_disk(gui.path)
+    assert pr.board[(3, 4)] == {"estado": "ocupada_legado", "peca_id": None, "fonte": "tiago", "foto_id": None}
+    assert not any(e["piece"] == tw and e["cell"] == [3, 4] for e in cl.get("/api/fetch").json()["entries"])
+    assert cl.get("/api/board").json()["cells"][2][3]["fonte"] == "tiago"
+    # empty again (the user's word): the twin proposal comes back
+    r = cl.post("/api/confirm", json={"acao": "cell_empty", "cell": [3, 4]})
+    assert r.status_code == 200, r.text
+    assert r.json()["celula"]["estado"] == "vazia" and "marcada por ti" in r.json()["celula"]["estado_txt"]
+    assert any(e["piece"] == tw and e["cell"] == [3, 4] for e in cl.get("/api/fetch").json()["entries"])
+    # errors: a placed cell cannot be marked empty; the cell is required and must be in the grid
+    assert cl.post("/api/confirm", json={"acao": "cell_empty", "cell": [2, 3]}).status_code == 400
+    assert cl.post("/api/confirm", json={"acao": "cell_full"}).status_code == 400
+    assert cl.post("/api/confirm", json={"acao": "cell_full", "cell": [9, 9]}).status_code == 400
+    _ok_on_disk(gui.path)
+
+
+def test_legend_row_legado_says_unconfirmed():
+    row = next(r for r in S.LEGEND if r["id"] == "legado")
+    assert row["texto"] == "cheia na foto, por confirmar" and "marcada por ti" in row["detalhe"]
+    assert S.cell_text({"estado": "ocupada_legado", "fonte": "foto"}).startswith("cheia na foto, por confirmar")
+    assert S.cell_text({"estado": "ocupada_legado", "fonte": "tiago"}).startswith("montada, marcada por ti")
+
+
+def test_section_png_no_green_fringe(tmp_path):
+    """Mesa thumbnails: the crops of a group come cleaned (no 0.5 mm green rim of the scan)."""
+    import json
+    from src.render import _depth_px, _lab
+    from test_query import BG
+    from test_shape import MMPP
+    pr, placed, tw, dec = _project(tmp_path)
+    bg_lab = _lab(np.array([[BG]], np.uint8))[0, 0]
+    fp = pr.p("puzzle.json")
+    with open(fp, encoding="utf-8") as f:
+        js = json.load(f)
+    js["background_lab"] = [float(v) for v in bg_lab]                 # the paper of the synthetic scan
+    with open(fp, "w", encoding="utf-8") as f:
+        json.dump(js, f)
+    for pid in (tw, dec):                                             # scan fringe: 0.5 mm of paper inside alpha
+        cp = pr.p(pr.piece(pid).crop_path)
+        rgba = np.asarray(Image.open(cp).convert("RGBA")).copy()
+        rim = (rgba[..., 3] > 0) & (_depth_px(rgba[..., 3] > 0) <= 0.5 / MMPP)
+        rgba[rim, :3] = BG
+        Image.fromarray(rgba).save(cp)
+    pr = Project.open(pr.path)
+    gid = pr.register_section(None, "blocos", {tw: (1, 1), dec: (1, 2)})
+    pr.save()
+    gui = S.Gui(pr.path, prepare=False, use_image=False, uploads=str(tmp_path / "uploads"), log=None)
+    cl = TestClient(S.create_app(gui))
+    r = cl.get(f"/api/sections/{gid}.png?max=1000")
+    assert r.status_code == 200 and r.content[:4] == b"\x89PNG"
+    img = cv2.imdecode(np.frombuffer(r.content, np.uint8), cv2.IMREAD_COLOR)
+    d = np.linalg.norm(_lab(img[..., ::-1]) - bg_lab, axis=-1)
+    assert (d < 20).sum() == 0, f"{(d < 20).sum()} background-coloured pixels in the thumbnail"
+    assert (img.max(-1) > 80).sum() > 1000                            # the pieces are there
 
 
 def test_ingest_endpoint(env, tmp_path):
@@ -229,3 +318,73 @@ def test_legend_covers_every_board_class():
     for i in re.findall(r'cls\("([a-z_]+)"\)', js):
         assert i in ids, f"app.js uses legend id {i!r} not in LEGEND"
     assert all(row["rotulo"] and row["texto"] for row in S.LEGEND)
+
+
+# ---------------------------------------------------------------- item 6: coloca agora / guarda com posição
+def _twin_entry(client):
+    es = [e for e in client.get("/api/fetch").json()["entries"] if e.get("piece")]
+    assert es
+    return es[0]
+
+
+def test_fetch_group_guarda_posicao_without_neighbour(env):
+    gui, client, placed, tw, dec = env
+    e = _twin_entry(client)
+    assert e["vizinhas_montadas"] == 0
+    assert e["grupo"] == "guarda_posicao"
+
+
+def test_fetch_group_foto_neighbour_does_not_count(env):
+    gui, client, placed, tw, dec = env
+    e = _twin_entry(client)
+    l, c = e["cell"]
+    nb = gui.pr.board.neighbours((l, c))[0]
+    gui.pr.log_event("cell_occupied_by_photo", cell=list(nb), photo="F0001")
+    assert gui.pr.board[nb]["estado"] == "ocupada_legado"
+    gui._known_stat = gui._log_stat()
+    e = _twin_entry(client)
+    assert e["vizinhas_montadas"] == 0 and e["grupo"] == "guarda_posicao"
+
+
+def test_fetch_group_coloca_agora_with_placed_neighbour(env):
+    gui, client, placed, tw, dec = env
+    e = _twin_entry(client)
+    l, c = e["cell"]
+    nb = [n for n in gui.pr.board.neighbours((l, c)) if gui.pr.board[n]["estado"] == "vazia"][0]
+    gui.pr.place(dec, nb, theta_deg=0.0)
+    gui.pr.save()
+    gui._known_stat = gui._log_stat()
+    e = _twin_entry(client)
+    assert e["vizinhas_montadas"] >= 1 and e["grupo"] == "coloca_agora"
+
+
+# ---------------------------------------------------------------- item 9: reportar
+def test_report_roundtrip(env):
+    from src import reports
+    gui, client, placed, tw, dec = env
+    ver = gui.version()
+    r = client.post("/api/report", json={"tipo": "mal_lida", "texto": "recorte cortado", "piece": placed,
+                                         "cell": [2, 3], "vista": "celula"})
+    assert r.status_code == 200, r.text
+    rep = r.json()
+    assert rep["id"] == "R0001" and rep["estado"] == "aberto" and rep["piece"] == placed
+    assert os.path.exists(gui.pr.p(rep["captura"]))
+    assert os.path.exists(os.path.join(gui.path, "reports.jsonl"))
+    acts = [ev["action"] for ev in gui.pr.events()]
+    assert "report" in acts
+    assert gui.version() > ver and gui._known_stat == gui._log_stat()     # our own write: no reopen
+    got = client.get("/api/reports").json()["reports"]
+    assert [x["id"] for x in got] == ["R0001"]
+    assert client.post("/api/report", json={"tipo": "xx"}).status_code == 400
+    # a second report of a piece without cell uses the piece crop
+    r2 = client.post("/api/report", json={"tipo": "outro", "piece": tw}).json()
+    assert r2["id"] == "R0002" and r2["captura"].endswith(".png")
+    # close
+    c = reports.close_report(gui.pr, "R0001", "feito")
+    assert c["estado"] == "fechado" and c["nota"] == "feito"
+    assert "report_closed" in [ev["action"] for ev in gui.pr.events()]
+    assert [x["id"] for x in reports.list_reports(gui.pr)] == ["R0002"]
+    assert "error" in reports.close_report(gui.pr, "R0001")
+    # reopen and replay with report events
+    pr = _ok_on_disk(gui.path)
+    assert len(reports.list_reports(pr, only_open=False)) == 2

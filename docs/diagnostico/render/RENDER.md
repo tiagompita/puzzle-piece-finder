@@ -169,3 +169,48 @@ Extrapolação para os 26 scans: ≈ 3 min + 32 s [NT]. O caminho de abortar por
 - Pose de P0147 [NT].
 - Banda de 1,2 mm fora das zonas vistas: só os 4 casos de relva clara e o céu das figuras foram vistos [NT].
 - Render de peças `posicao_conhecida` (não desenhadas) [NT].
+
+## 6. Orla verde nas miniaturas (2026-11-01)
+
+(Pedido como «§3»; o §3 já é a composição, por isso fica aqui.)
+
+**Causa [V].** O tabuleiro (`compose_board`) reamostra com alfa pré-multiplicado e não mostra orla; as miniaturas não: `query._piece_image` (cartões «vai buscar» via `/api/pieces/{pid}.png`, folhas `fetch_<lote>.jpg`, incluindo a gémea) rodava RGB e alfa em separado, e `_clean` deixava o verde do papel por baixo dos píxeis com alfa 0, que a interpolação puxava para a orla semitransparente; `Gui.section_png` (Mesa) usava o recorte cru (`crop_rgba`, sem limpeza nenhuma) com `cv2.resize` sem pré-multiplicar.
+
+**Correção.** Um só caminho: `render.piece_rgba_for_display` (recorte limpo de `render/clean/` ou limpo na hora, cor sob alfa 0 = cor da peça mais próxima, rotação/escala com alfa pré-multiplicado via `warp_rgba` / `resize_rgba`); `query._piece_image` e `Gui.section_png` passam por ele (Mesa com LRU por grupo, tamanho e versão do log). `_clean` também neutraliza a cor dos píxeis removidos (os `render/clean/*.png` novos já não guardam verde sob alfa 0).
+
+**Medido** (cópia de `projects/alpes` no scratch; cartão do GUI 220 px, 1,8 células, rodado 37°; script em scratch, não versionado). «ΔE<20» = píxeis visíveis a ΔE < 20 do `background_lab`; «esverdeado» = a\* < −30 e distância ao fundo < 40 (apanha também o verde escurecido pela sombra; nas peças de relva conta também a própria relva, por isso só é informativo no céu e na Mesa):
+
+| peça / grupo | ΔE<20 antes → depois | esverdeado antes → depois | interior > 1,5 mm inalterado |
+|---|---|---|---|
+| P0100 (céu, solta) | 0 → 0 | 50 → 0 | 100 % |
+| P0105 (céu, solta) | 0 → 0 | 69 → 0 | 100 % |
+| P0131 (céu, solta) | 0 → 0 | 81 → 3 | 100 % |
+| P0047 (relva, S0003) | 0 → 0 | 1002 → 955 | 100 % (14/14 px verdes do interior mantidos) |
+| P0051 (relva, S0003) | 0 → 0 | 956 → 912 | 100 % |
+| P0055 (relva, S0003) | 0 → 0 | 872 → 894 | 100 % |
+| G0041 Mesa (1 peça, 360 px) | 186 → 0 | 5576 → 1962 | — |
+| G0083 Mesa (8 peças, 360 px) | 0 → 0 | 1328 → 6 | — |
+
+Figura: `orla_antes_depois.jpg` (cartões sobre branco, antes | depois | zoom 4× antes | depois; em baixo as miniaturas da Mesa sobre cinzento). **Visto:** na Mesa a orla verde clara desaparece (G0083: o rebordo verde do zoom 4× some por completo; G0041: a orla larga do lado da sombra fica muito mais fina). Nos cartões de céu a diferença é ténue (a orla era de 1 px misturado). **Resíduo (resolvido em §6.1 para a visualização):** nas peças de relva e no lado da sombra de G0041 continua visível um rebordo verde-escuro de ≈ 0,2–0,4 mm, antes e depois: em P0443 (G0041) os píxeis da faixa 0–0,2 mm têm L\* ≈ 55, a\* mediano −29 e distância ao fundo 28–34, acima do limiar `BG_DIST_MAX` = 29,5, ou seja papel escurecido pela sombra projetada (S2), que a limpeza não remove em lado nenhum (no tabuleiro fica tapado pelas vizinhas). Não é o defeito de reamostragem corrigido aqui; tirá-lo exige mexer no limiar ou no passe de sombra (medido OFF no §2 porque come relva escura), decisão a medir à parte.
+
+### 6.1 Papel escurecido pela sombra: regra só de visualização, LIGADA (2026-11-01)
+
+**Regra** (`render.shadow_paper_mask`, aplicada só em `piece_rgba_for_display`: cartões, folhas «vai buscar», Mesa; nunca nas silhuetas do índice, no `compose_board` nem nos `render/clean/` do `clean_all` / registo): na faixa exterior de `DISPLAY_SHADOW_BAND_MM` = 0,4 mm, descartar os píxeis com a\* < `DISPLAY_SHADOW_A_MAX` = −30, `bg_distance` ao `background_lab` < `DISPLAY_SHADOW_DIST_MAX` = 40 e L\* < `DISPLAY_SHADOW_L_MAX` = 62, em componentes ligadas ao bordo. Interruptor: `DISPLAY_SHADOW = True`. Teste: `test_display_drops_shadow_darkened_paper` (faixa de 0,3 mm verde-escura em dois lados, interior com textura de relva e verde tipo papel no fundo; falha com a regra desligada, passa ligada; verifica também que `clean_crop` não muda).
+
+**Mudança de porta.** A primeira medição usava «nenhuma peça perde > 1,5 % dos píxeis visíveis». Essa porta nunca podia admitir uma orla de sombra real: 0,4 mm em dois lados valem ≈ 2–4 % da área de uma peça. Porta nova (decisão do coordenador, 2026-11-01), por peça: perda total ≤ 4,5 %, **e** ≥ 65 % do descartado na metade de sombra do scan (esquerda/baixo em relação ao centróide; não se aplica com < 50 px descartados), **e** perda nos lados iluminados ≤ 1,5 %, **e** interior (> 0,4 mm) 100 % igual (alfa e cor).
+
+**Medido** (59 objetos: 53 de S0003/S0004, incluindo 5 `descartada`; 3 de céu; 3 de relva escura p05–p11) [V]:
+
+| conjunto | resíduo «esverdeado» na faixa de 0,7 mm | perda total máx. / mediana | quota na sombra (mín. / mediana) | perda nos lados iluminados máx. | interior igual |
+|---|---|---|---|---|---|
+| relva GT (53) | 85 527 → 12 831 (−85 %) | 4,12 % / 2,82 % | 0,05 / 0,77 | 1,57 % | 100 % |
+| céu (3) | 6 → 0 | 0,01 % / 0,00 % | — (< 50 px) | 0,01 % | 100 % |
+| relva escura p05–p11 (P0604, P0609, P0563) | 2 344 → 59 | 2,00 % / 1,92 % | 0,80 / 0,81 | 0,38 % | 100 % |
+
+**Falham a porta 4 de 59 [F]:**
+- P0059, P0064, P0065 (`descartada`; quota na sombra 0,52 / 0,55 / 0,05; perda total ≤ 1,6 %). Não são peças: são blocos/tiras de várias peças cortados pela segmentação (vistos), sem cartão nem miniatura de peça.
+- **P0087** (colocada): perda nos lados iluminados 1,57 % (porta 1,5 %), quota na sombra 0,58, perda total 3,73 %. Visto a 2×: o descartado do lado iluminado é a orla verde-clara do papel no lado direito da patilha direita, não relva. A porta falha à justa (+0,07 pp).
+
+Regra ligada na mesma (decisão do coordenador). Desliga-se com `DISPLAY_SHADOW = False`.
+
+**Figuras.** `orla_antes_depois.jpg` regenerada (antes = HEAD; depois = pipeline de visualização com a regra). Em P0047, P0051 e P0055 a faixa verde-escura dos lados esquerdo/inferior desaparece no zoom 4×. O «esverdeado» dos cartões desce 1002 → 195, 956 → 125 e 872 → 85; G0041 desce 5576 → 298 e o lado da sombra fica limpo; G0083 desce 1328 → 0. Fica um fio verde-claro (L\* > 62) no lado iluminado de algumas peças de relva, que a regra não visa. `orla_sombra_regra.jpg` (avaliação da regra: atual | descartado a magenta | regra | variante fraca) mantém-se. Não verificado [NT]: céu fora das 3 peças; cartões rodados e reduzidos (a porta foi medida à resolução do scan).

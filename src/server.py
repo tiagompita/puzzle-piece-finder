@@ -30,7 +30,7 @@ Design (docs/gui-design.md):
   background thread, with progress in the terminal and on the "a preparar" page (SSE
   ``prepare_progress``); the data endpoints answer 503 until it ends.
 * **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``,
-  ``ingest_progress``, ``prepare_progress``, ``ready``.
+  ``ingest_progress``, ``prepare_progress``, ``report_added``, ``ready``.
 
 Pure helpers (legend, cell diff, patch regions, plain-language reasons) are separate from
 the :class:`Gui` state object and from :func:`create_app` (routes).
@@ -53,11 +53,12 @@ from typing import Optional
 import cv2
 import numpy as np
 
+from src.query import fetch_group, mounted_neighbours
 from src.state import Project, StateError
 
 __all__ = [
 	"LEGEND", "legend_for", "BOARD_PPC", "DEFAULT_PORT", "SPAN_CELLS", "missing_assets", "changed_cells", "patch_regions",
-	"plain_reasons", "Gui", "create_app", "main",
+	"plain_reasons", "cell_text", "Gui", "create_app", "main",
 ]
 
 DEFAULT_PORT = 8765
@@ -72,6 +73,7 @@ SHEET_MAX_PX = 1400
 JPEG_Q = 86
 REGION_LRU = 24
 PIECE_LRU = 600
+SECTION_LRU = 64
 EVENTS_KEEP = 500
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -85,8 +87,10 @@ LEGEND = [
 	 "detalhe": "o recorte real do scan, limpo da franja verde e registado na sua célula"},
 	{"id": "vazia", "tipo": "raster", "classe": None, "rotulo": "Célula vazia", "texto": "só a arte da caixa (34 %)",
 	 "detalhe": "célula sem peça: vê-se a arte da caixa a 34 % de opacidade"},
-	{"id": "legado", "tipo": "svg", "classe": "b-legado", "rotulo": "Ocupada sem silhueta", "texto": "cheia na foto, sem scan solto",
-	 "detalhe": "cheia na foto do tabuleiro, mas a peça ainda não passou solta pelo scanner (não há recorte)"},
+	{"id": "legado", "tipo": "svg", "classe": "b-legado", "rotulo": "Ocupada sem silhueta", "texto": "cheia na foto, por confirmar",
+	 "detalhe": "cheia na foto do tabuleiro, por confirmar: conta como vazia nas sugestões até a marcares; marcada por ti "
+				"como montada (mesmo tracejado, o painel diz «marcada por ti») conta como ocupada; em ambos os casos a "
+				"peça ainda não passou solta pelo scanner (não há recorte)"},
 	{"id": "borda", "tipo": "svg", "classe": "b-borda-falta", "rotulo": "Borda em falta", "texto": "célula de borda vazia",
 	 "detalhe": "célula de borda ainda vazia"},
 	{"id": "buscar", "tipo": "svg", "classe": "b-buscar", "rotulo": "Vai buscar", "texto": "peça proposta (aceite)",
@@ -117,6 +121,15 @@ ESTADO_TXT = {"solta": "solta", "emparelhada": "emparelhada (par de gémeas solt
 			  "posicao_conhecida": "posição conhecida (guardada à parte)", "colocada": "colocada",
 			  "em_seccao": "num grupo por ancorar", "descartada": "descartada"}
 CELL_TXT = {"vazia": "vazia", "ocupada_legado": "ocupada (sem silhueta)", "colocada": "colocada"}
+CELL_SOURCE_TXT = {("ocupada_legado", "foto"): "cheia na foto, por confirmar (conta como vazia nas sugestões)",
+				   ("ocupada_legado", "tiago"): "montada, marcada por ti (sem silhueta)",
+				   ("vazia", "tiago"): "vazia, marcada por ti"}
+HINT_ACTIONS = {"cell_full": "cell_full", "cell_empty": "cell_empty"}   # POST /api/confirm acao -> confirm() kwarg
+
+
+def cell_text(cell: dict) -> str:
+	"""Plain text of a board cell: state plus who says so (photo only vs the user)."""
+	return CELL_SOURCE_TXT.get((cell["estado"], cell.get("fonte")), CELL_TXT.get(cell["estado"], cell["estado"]))
 ORIGIN_TXT = {"gemeo": "gémea colocada", "borda": "borda", "par": "par de soltas",
 			  "posicao_conhecida": "posição conhecida", "seccao": "grupo por ancorar"}
 
@@ -138,9 +151,18 @@ def missing_assets(project) -> list:
 	return out
 
 
-def board_snapshot(board) -> list:
-	"""``[(estado, peca_id), ...]`` row-major: what the raster depends on per cell."""
-	return [(cell["estado"], cell["peca_id"]) for _, cell in board.iter_cells()]
+def board_snapshot(board, pieces: Optional[dict] = None) -> list:
+	"""``[(estado, peca_id[, theta_deg]), ...]`` row-major: what the raster depends on per cell.
+
+	With ``pieces`` (``Project.pieces``) each entry also carries the log pose of the cell's piece,
+	so a pose change alone (same piece, same cell) is a changed cell too."""
+	if pieces is None:
+		return [(cell["estado"], cell["peca_id"]) for _, cell in board.iter_cells()]
+	out = []
+	for _, cell in board.iter_cells():
+		p = pieces.get(cell["peca_id"]) if cell["peca_id"] else None
+		out.append((cell["estado"], cell["peca_id"], None if p is None else p.theta_deg))
+	return out
 
 
 def changed_cells(old: list, new: list, cols: int) -> list:
@@ -248,6 +270,7 @@ class Gui:
 		self._small = {}              # ppc -> (ver, bytes)
 		self._regions = collections.OrderedDict()
 		self._pieces = collections.OrderedDict()
+		self._sections = collections.OrderedDict()
 		self._ghosts = None           # (ver, list)
 		self._fetch = None            # (mtime, dict)
 		self._placements = None       # (ver, dict)
@@ -362,7 +385,12 @@ class Gui:
 		from src import render
 		ver = self.version()
 		if self._placements is None or self._placements[0] != ver:
-			self._placements = (ver, render.load_placements(self.pr).get("placements") or {})
+			raw = render.load_placements(self.pr).get("placements") or {}
+			# an entry registered for another cell / pose (log changed outside the server) is dropped:
+			# compose_board then registers the piece on the fly from its current log pose
+			fresh = {pid: e for pid, e in raw.items()
+					 if pid in self.pr.pieces and e.get("key") == render._entry_key(self.pr, pid)}
+			self._placements = (ver, fresh)
 		return self._placements[1]
 
 	def board_pose(self, pid: str) -> tuple:
@@ -396,7 +424,7 @@ class Gui:
 		"""The full-board raster at ``BOARD_PPC`` for the current log (composed / patched / from disk)."""
 		ver = self.version()
 		plm = self._pl_mtime()
-		snap = self.read(lambda: board_snapshot(self.pr.board))
+		snap = self.read(lambda: board_snapshot(self.pr.board, self.pr.pieces))
 		b = self._board
 		if b is not None and b["ver"] == ver:
 			return b
@@ -547,7 +575,7 @@ class Gui:
 		"""PNG (RGBA) of the cleaned crop: ``pose='board'`` turned as it sits / will sit on the board
 		(placed: its registration; proposed: ``theta_deg`` of the list), else as scanned. The canvas
 		spans ``SPAN_CELLS`` cell widths with the body centre in the middle. Returns
-		``(bytes, pose_used)``."""
+		``(bytes, pose_used, why, theta_deg | None)``."""
 		from src.query import _body_center, _piece_image
 		size = int(min(max(size, 32), PIECE_PX_MAX))
 		theta, why = (None, "scan")
@@ -565,7 +593,7 @@ class Gui:
 		bgr, al = im
 		rgba = np.dstack([np.clip(bgr + 0.5, 0, 255).astype(np.uint8), np.clip(al[..., 0] * 255 + 0.5, 0, 255).astype(np.uint8)])
 		ok, buf = cv2.imencode(".png", rgba)
-		out = (buf.tobytes(), "board" if theta is not None else "scan", why)
+		out = (buf.tobytes(), "board" if theta is not None else "scan", why, theta)
 		self._pieces[key] = out
 		while len(self._pieces) > PIECE_LRU:
 			self._pieces.popitem(last=False)
@@ -594,20 +622,36 @@ class Gui:
 		return data
 
 	def section_png(self, gid: str, max_px: int = 360) -> bytes:
-		"""Thumbnail of a group: its pieces' crops at their scan positions (the exploded view), on dark grey."""
+		"""Thumbnail of a group: its pieces' crops at their scan positions (the exploded view), on dark grey.
+
+		Crops through the same display pipeline as the cards (:func:`src.render.piece_rgba_for_display`:
+		fringe cleaned, premultiplied resize); kept in a small LRU per (group, size, log version)."""
 		s = self.pr.sections.get(gid)
 		if s is None:
 			raise FileNotFoundError(f"secção desconhecida {gid}")
+		key = (gid, int(max_px), self.version())
+		c = self._sections.get(key)
+		if c is not None:
+			self._sections.move_to_end(key)
+			return c
+		data = self.read(lambda: self._section_png(s, max_px))
+		self._sections[key] = data
+		while len(self._sections) > SECTION_LRU:
+			self._sections.popitem(last=False)
+		return data
+
+	def _section_png(self, s, max_px: int) -> bytes:
+		from src import render
 		items = []
 		for pid in s.cells_local:
 			p = self.pr.piece(pid)
 			if not p.bbox:
 				continue
-			rgba = self.pr.crop_rgba(pid)
+			rgba = render.piece_rgba_for_display(self.pr, pid)
 			if rgba is not None:
 				items.append((p.bbox, rgba))
 		if not items:
-			raise FileNotFoundError(f"{gid}: sem recortes")
+			raise FileNotFoundError(f"{s.id}: sem recortes")
 		x0 = min(b[0] for b, _ in items)
 		y0 = min(b[1] for b, _ in items)
 		x1 = max(b[0] + r.shape[1] for b, r in items)
@@ -618,7 +662,7 @@ class Gui:
 		for (bx, by, _, _), rgba in items:
 			hh, ww = rgba.shape[:2]
 			nw, nh = max(1, int(round(ww * s_))), max(1, int(round(hh * s_))),
-			r = cv2.resize(rgba, (nw, nh), interpolation=cv2.INTER_AREA).astype(np.float32)
+			r = render.resize_rgba(rgba, (nw, nh)).astype(np.float32)
 			ox, oy = int((bx - x0) * s_), int((by - y0) * s_)
 			nh, nw = min(nh, H - oy), min(nw, W - ox)
 			a = r[:nh, :nw, 3:4] / 255.0
@@ -665,6 +709,9 @@ class Gui:
 			e = dict(e)
 			e["razoes_txt"] = plain_reasons(e, prof)
 			e["origem_txt"] = ORIGIN_TXT.get(e.get("origin"), e.get("origin"))
+			if e.get("cell"):
+				e["vizinhas_montadas"] = mounted_neighbours(self.pr, e["cell"])
+				e["grupo"] = fetch_group(self.pr, e)
 			pid = e.get("piece")
 			if pid and pid in self.pr.pieces:
 				e["estado_atual"] = self.pr.piece(pid).estado
@@ -688,7 +735,8 @@ class Gui:
 		for (a, b), d in zip(((l - 1, c), (l, c + 1), (l + 1, c), (l, c - 1)), ("N", "E", "S", "O")):
 			if prof.in_grid(a, b):
 				nc = pr.board[(a, b)]
-				neigh.append({"dir": d, "cell": [a, b], "estado": nc["estado"], "peca_id": nc["peca_id"]})
+				neigh.append({"dir": d, "cell": [a, b], "estado": nc["estado"], "peca_id": nc["peca_id"], "fonte": nc["fonte"],
+							  "ocupada": pr.board.occupied((a, b))})
 		origin = None
 		if pid:
 			for ev in reversed(pr.events()):
@@ -700,7 +748,8 @@ class Gui:
 					break
 		reg = (max(1, l - 1), max(1, c - 1), min(prof.rows, l + 1), min(prof.cols, c + 1))
 		return {
-			"cell": [l, c], "estado": cell["estado"], "estado_txt": CELL_TXT.get(cell["estado"], cell["estado"]),
+			"cell": [l, c], "estado": cell["estado"], "estado_txt": cell_text(cell),
+			"por_confirmar": pr.board.unconfirmed((l, c)), "pista": cell["fonte"] == "tiago",
 			"fonte": cell["fonte"], "borda": prof.is_border(l, c), "peca": self.piece_summary(pid) if pid else None,
 			"origem": origin, "pode_desfazer": bool(pid and origin and not str(origin).startswith("secção")),
 			"gemea": {"cell": list(tw) if tw else None, "estado": tcell["estado"] if tcell else None,
@@ -771,7 +820,7 @@ class Gui:
 		self._placements = None
 		if placed:
 			self._refresh_render_assets(placed)
-		snap = board_snapshot(self.pr.board)
+		snap = board_snapshot(self.pr.board, self.pr.pieces)
 		ch = changed_cells(before_snap, snap, self.pr.profile.cols)
 		self.emit("board_changed", {"versao": self.version(), "celulas": [list(x) for x in ch]})
 		self.emit("fetch_changed", {})
@@ -824,7 +873,7 @@ class Gui:
 				raise Busy(self.job)
 			self.sync_locked()
 			pr = self.pr
-			before = board_snapshot(pr.board)
+			before = board_snapshot(pr.board, pr.pieces)
 			if pid is not None and pid not in pr.pieces:
 				return {"error": f"peça desconhecida {pid}"}
 			kw = {"use_image": self.use_image}
@@ -853,17 +902,80 @@ class Gui:
 				r = confirm(pr, pid, discard=True, reason=str(body.get("reason") or "gui"), **kw)
 			elif acao == "unplace":
 				r = self._unplace(pid, _around)
+			elif acao in HINT_ACTIONS:
+				try:
+					hc = (int(cell[0]), int(cell[1]))
+				except (TypeError, ValueError, IndexError):
+					return {"error": "falta a célula"}
+				if not pr.profile.in_grid(*hc):
+					return {"error": f"célula {hc} fora da grelha"}
+				r = confirm(pr, **{HINT_ACTIONS[acao]: [hc]}, **kw)
 			else:
 				return {"error": f"ação desconhecida {acao!r}"}
 			if "error" in r:
 				self._known_stat = self._log_stat()
 				return {"error": r["error"]}
+			# newly placed pieces and placed pieces whose pose changed: re-clean and re-register
+			now = board_snapshot(pr.board, pr.pieces)
 			placed = [p.id for p in pr.pieces.values() if p.estado == "colocada"
-					  and before[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1] != ("colocada", p.id)]
+					  and before[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]
+					  != now[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]]
 			extra = self._after_write(before, placed)
+			if acao in HINT_ACTIONS:
+				# the hatch may stay the same (photo -> user): tell the clients the cell changed anyway
+				if list(hc) not in extra["celulas_mudadas"]:
+					extra["celulas_mudadas"].append(list(hc))
+					self.emit("board_changed", {"versao": self.version(), "celulas": [list(hc)]})
+				extra["celula"] = self.cell_json(*hc)
+				extra["vizinhas"] = extra["celula"]["vizinhas"]
 			return {"ok": True, "mensagens": r.get("messages", []), "invariantes": r.get("invariants", []),
 					"n_propostas": len([e for e in r.get("entries", []) if e.get("piece")]),
 					"segundos": round(time.time() - t0, 2), **extra}
+		finally:
+			self.wlock.release()
+
+	def add_report(self, body: dict) -> dict:
+		"""``POST /api/report``: save a capture of what is on screen and append the report.
+
+		The log grows by an informative event only, so ``_known_stat`` is refreshed here and no
+		cache is invalidated (no ``board_changed`` / ``fetch_changed``)."""
+		from src import reports
+		piece, cell = body.get("piece"), body.get("cell")
+		if piece is not None and piece not in self.pr.pieces:
+			return {"error": f"peça desconhecida {piece}"}
+		if cell is not None:
+			try:
+				cell = (int(cell[0]), int(cell[1]))
+			except (TypeError, ValueError, IndexError):
+				return {"error": "célula inválida"}
+			if not self.pr.profile.in_grid(*cell):
+				return {"error": f"célula {cell} fora da grelha"}
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			self.sync_locked()
+			rid = reports.next_report_id(reports.read_reports(self.pr))
+			data, ext = None, "jpg"
+			try:
+				if cell:
+					data = self.read(lambda: self.zoom_jpg(cell[0], cell[1], "both"))
+				elif piece:
+					data, ext = self.read(lambda: self.piece_png(piece, "scan", 400))[0], "png"
+			except Exception as e:  # noqa: BLE001 - the report is worth more than its capture
+				self.log(f"[servidor] captura do relatório falhou: {e}")
+				data = None
+			cap = None
+			if data:
+				os.makedirs(self.pr.p("reports"), exist_ok=True)
+				cap = f"reports/{rid}.{ext}"
+				with open(self.pr.p(cap), "wb") as f:
+					f.write(data)
+			rep = reports.add_report(self.pr, tipo=str(body.get("tipo") or ""), texto=str(body.get("texto") or ""),
+									 piece=piece, cell=cell, scan_id=None, vista=body.get("vista"), captura_path=cap)
+			self._known_stat = self._log_stat()
+			if "error" not in rep:
+				self.emit("report_added", {"id": rep["id"]})
+			return rep
 		finally:
 			self.wlock.release()
 
@@ -1020,9 +1132,11 @@ def create_app(gui: Gui):
 		ready()
 		if pid not in gui.pr.pieces:
 			raise HTTPException(404, detail=f"peça desconhecida {pid}")
-		data, used, why = guard(lambda: gui.piece_png(pid, pose, size))
+		data, used, why, theta = guard(lambda: gui.piece_png(pid, pose, size))
 		r = img(data, "image/png", cache=v is not None)
 		r.headers["X-Pose"] = used
+		if theta is not None:
+			r.headers["X-Pose-Theta"] = f"{float(theta):.2f}"
 		return r
 
 	@app.get("/api/pieces/{pid}")
@@ -1087,6 +1201,24 @@ def create_app(gui: Gui):
 		if "error" in r:
 			return JSON(r, status_code=400)
 		return JSON(r)
+
+	@app.post("/api/report")
+	async def post_report(request: Request):
+		ready()
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		r = await asyncio.to_thread(lambda: guard(lambda: gui.add_report(body)))
+		if "error" in r:
+			return JSON(r, status_code=400)
+		return JSON(r)
+
+	@app.get("/api/reports")
+	def get_reports(todos: bool = False):
+		ready()
+		from src import reports
+		return JSON({"reports": reports.list_reports(gui.pr, only_open=not todos)})
 
 	@app.post("/api/ingest")
 	async def post_ingest(file: UploadFile = File(...), lote: int = Form(...), dpi: float = Form(300)):
