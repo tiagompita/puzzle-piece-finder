@@ -19,9 +19,12 @@
    "index_in_scan": 0,
    "lote": 1,
    "n_no_lote": 1,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    29
+   ],
+   "theta_deg": -0.92,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -179,9 +182,12 @@
    "index_in_scan": 4,
    "lote": 1,
    "n_no_lote": 5,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    36
+   ],
+   "theta_deg": 178.2,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -262,9 +268,12 @@
    "index_in_scan": 6,
    "lote": 1,
    "n_no_lote": 7,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    37
+   ],
+   "theta_deg": 90.59,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -502,9 +511,12 @@
    "index_in_scan": 12,
    "lote": 1,
    "n_no_lote": 13,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    45
+   ],
+   "theta_deg": -169.1,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1022,9 +1034,12 @@
    "index_in_scan": 25,
    "lote": 1,
    "n_no_lote": 26,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    2,
+    48
+   ],
+   "theta_deg": 90.22,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1062,9 +1077,12 @@
    "index_in_scan": 26,
    "lote": 1,
    "n_no_lote": 27,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    2,
+    28
+   ],
+   "theta_deg": -97.7,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1302,9 +1320,12 @@
    "index_in_scan": 32,
    "lote": 1,
    "n_no_lote": 33,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    40
+   ],
+   "theta_deg": -100.52,
    "seccao_id": null,
    "same_as": null,
    "flags": {

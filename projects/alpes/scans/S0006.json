@@ -19,9 +19,12 @@
    "index_in_scan": 0,
    "lote": 1,
    "n_no_lote": 36,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    2,
+    49
+   ],
+   "theta_deg": 120.06,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -99,9 +102,12 @@
    "index_in_scan": 2,
    "lote": 1,
    "n_no_lote": 38,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    48
+   ],
+   "theta_deg": 84.12,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -579,9 +585,12 @@
    "index_in_scan": 14,
    "lote": 1,
    "n_no_lote": 50,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    35
+   ],
+   "theta_deg": -115.42,
    "seccao_id": null,
    "same_as": null,
    "flags": {
