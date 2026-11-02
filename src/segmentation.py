@@ -1808,16 +1808,26 @@ def _odd_kernel(mm: float, mm_per_px: float) -> int:
 	return k if k % 2 == 1 else k + 1
 
 
+def _scan_open_mask(lab: np.ndarray, bg: np.ndarray, threshold: float, open_px: int) -> np.ndarray:
+	"""Opened-only full-res foreground of a scan (first half of :func:`_scan_threshold_mask`).
+
+	Distance ``sqrt(0.5 dL^2 + da^2 + db^2)`` in OpenCV 8-bit Lab units above
+	``threshold``, then a square-kernel opening (``open_px``). Returns uint8 0/255.
+	Kept separately because the closing bridges sub-millimetre gaps between pieces.
+	"""
+	wts = np.asarray(_SCAN_LAB_WEIGHTS, np.float32)
+	d = np.sqrt((((lab - np.asarray(bg, np.float32)) ** 2) * wts).sum(-1))
+	m = (d > threshold).astype(np.uint8) * 255
+	return cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((open_px, open_px), np.uint8))
+
+
 def _scan_threshold_mask(lab: np.ndarray, bg: np.ndarray, threshold: float, open_px: int, close_px: int) -> np.ndarray:
 	"""Full-res foreground of a scan: weighted Lab distance to ``bg`` above ``threshold``.
 
 	Distance ``sqrt(0.5 dL^2 + da^2 + db^2)`` in OpenCV 8-bit Lab units, then a
 	square-kernel opening (``open_px``) and closing (``close_px``). Returns uint8 0/255.
 	"""
-	wts = np.asarray(_SCAN_LAB_WEIGHTS, np.float32)
-	d = np.sqrt((((lab - np.asarray(bg, np.float32)) ** 2) * wts).sum(-1))
-	m = (d > threshold).astype(np.uint8) * 255
-	m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((open_px, open_px), np.uint8))
+	m = _scan_open_mask(lab, bg, threshold, open_px)
 	return cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((close_px, close_px), np.uint8))
 
 
@@ -1866,6 +1876,484 @@ def _contour_roughness(contour: np.ndarray) -> float:
 
 	ps = _per(rs)
 	return _per(r) / ps if ps > 0 else 1.0
+
+
+# ===== Contact groups on scans (interlocked / touching pieces) =====
+# Two pieces are a contact pair when their bboxes are closer than _CONTACT_BBOX_GAP_MM
+# (negative gap = overlapping bboxes) or their masks, each dilated by
+# _CONTACT_DILATE_MM, overlap (contour distance <= 2 x that).
+_CONTACT_DILATE_MM = 0.6
+_CONTACT_BBOX_GAP_MM = 1.0
+# Core of a member = its old mask AND the threshold, eroded by this much (largest
+# component): the body that surely belongs to it. 2 mm cuts the thin shadow bridges that
+# join a neighbour's tab to it, and is far below the half-width of a piece body.
+_CONTACT_CORE_MM = 2.0
+# Black-hat structuring element (mm) of the watershed landscape: wider than the dark
+# gap/shadow line between abutting pieces (~0.3..1 mm), narrower than a tab neck.
+_CONTACT_BLACKHAT_MM = 1.5
+# Opening radius (mm) that strips thin flood spurs (a shadow line along the neighbour)
+# from a watershed region; the removed pixels go to the nearest kept region.
+_CONTACT_SPUR_MM = 0.5
+# Holes of a member's foreground smaller than this (mm^2) are filled before its core is
+# eroded (dark texture spots under the threshold), larger ones (a blank's green hole) are not.
+_CONTACT_HOLE_MM2 = 4.0
+# A foreground component counts as a piece in the connectivity bijection when its area is
+# at least this fraction of the median piece area of the scan.
+_CONTACT_MIN_AREA_FRAC = 0.3
+# The new region of a member is clipped to the usual band around the low-res contours
+# when that keeps at least this fraction of it (same shadow extent as the normal path).
+_CONTACT_BAND_KEEP = 0.95
+# A member whose new mask has IoU >= this with its old one is "unchanged".
+_CONTACT_SAME_IOU = 0.98
+# Shape validation of a partition (src.shape.analyse): admissible side chord range, and an
+# F side shorter than _CONTACT_FALSE_FLAT_MM is a false flat (a cut tab or a straight cut).
+_CONTACT_CHORD_MM = (15.5, 21.0)
+_CONTACT_FALSE_FLAT_MM = 17.0
+# Violation count of a piece whose 4 corners are not found.
+_CONTACT_NOT_OK = 3
+
+
+def _bbox_gap(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> float:
+	"""Gap (px) between two ``(x, y, w, h)`` boxes: max axis separation, negative when they overlap."""
+	ax, ay, aw, ah = a
+	bx, by, bw, bh = b
+	return float(max(bx - (ax + aw), ax - (bx + bw), by - (ay + ah), ay - (by + bh)))
+
+
+def _contour_distance(a: np.ndarray, b: np.ndarray) -> float:
+	"""Minimum distance (px) between two closed contours (``(n, 2)``); 0 if the filled shapes overlap."""
+	a = np.asarray(a, np.int32).reshape(-1, 2)
+	b = np.asarray(b, np.int32).reshape(-1, 2)
+	x0, y0 = np.minimum(a.min(0), b.min(0)) - 2
+	x1, y1 = np.maximum(a.max(0), b.max(0)) + 3
+	ma = np.zeros((y1 - y0, x1 - x0), np.uint8)
+	mb = np.zeros_like(ma)
+	cv2.drawContours(ma, [(a - [x0, y0]).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+	cv2.drawContours(mb, [(b - [x0, y0]).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+	if (ma & mb).any():
+		return 0.0
+	d = cv2.distanceTransform((1 - ma).astype(np.uint8), cv2.DIST_L2, 5)
+	return float(d[mb > 0].min())
+
+
+def _contact_groups(contours: list[np.ndarray], eligible: list[bool], mm_per_px: float) -> list[list[int]]:
+	"""Groups (connected components of the contact-pair graph) of size >= 2, as sorted index lists.
+
+	A pair (both ``eligible``) is in contact when the bbox gap is below
+	``_CONTACT_BBOX_GAP_MM`` or the contours are within ``2 * _CONTACT_DILATE_MM``.
+	"""
+	n = len(contours)
+	boxes = [cv2.boundingRect(np.asarray(c).astype(np.int32).reshape(-1, 1, 2)) for c in contours]
+	gap_px = _CONTACT_BBOX_GAP_MM / mm_per_px
+	near_px = 2.0 * _CONTACT_DILATE_MM / mm_per_px
+	parent = list(range(n))
+
+	def find(i: int) -> int:
+		while parent[i] != i:
+			parent[i] = parent[parent[i]]
+			i = parent[i]
+		return i
+
+	for i in range(n):
+		if not eligible[i]:
+			continue
+		for j in range(i + 1, n):
+			if not eligible[j]:
+				continue
+			g = _bbox_gap(boxes[i], boxes[j])
+			if g > max(gap_px, near_px):
+				continue
+			if g < gap_px or _contour_distance(contours[i], contours[j]) <= near_px:
+				parent[find(i)] = find(j)
+	groups: dict[int, list[int]] = {}
+	for i in range(n):
+		if eligible[i]:
+			groups.setdefault(find(i), []).append(i)
+	return sorted((sorted(g) for g in groups.values() if len(g) >= 2), key=lambda g: g[0])
+
+
+def _priority_flood(height: np.ndarray, markers: np.ndarray, region: np.ndarray) -> np.ndarray:
+	"""Marker watershed by priority flood (4-connected) of ``height`` inside ``region``.
+
+	``markers`` (int32) holds labels > 0 on the seeds and 0 elsewhere; every pixel of
+	``region`` reachable from a seed gets the label of the seed whose flood reaches it at
+	the lowest water level (the max of ``height`` along the path). Unlike
+	``cv2.watershed``, which floods by the colour difference between neighbours, this
+	floods the given landscape itself. Returns the label image (0 where not reached).
+	"""
+	import heapq
+	h, w = height.shape
+	lab = markers.astype(np.int32).copy().ravel()
+	reg = region.ravel()
+	hf = height.astype(np.float64).ravel()
+	unl = (region & (markers == 0)).astype(np.uint8)
+	cross = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]], np.uint8)
+	front = (markers > 0) & (cv2.dilate(unl, cross) > 0)
+	heap: list[tuple[float, int, int, int]] = []
+	cnt = 0
+	for idx in np.flatnonzero(front.ravel()):
+		heap.append((-np.inf, cnt, int(idx), int(lab[idx])))
+		cnt += 1
+	heapq.heapify(heap)
+	done = (lab > 0) & ~front.ravel()   # seeds behind the front never expand
+	while heap:
+		lev, _, idx, lbl = heapq.heappop(heap)
+		if done[idx]:
+			continue
+		done[idx] = True
+		lab[idx] = lbl
+		y, x = divmod(idx, w)
+		for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+			if 0 <= ny < h and 0 <= nx < w:
+				n_idx = ny * w + nx
+				if reg[n_idx] and not done[n_idx]:
+					cnt += 1
+					heapq.heappush(heap, (max(lev, hf[n_idx]), cnt, n_idx, lbl))
+	return lab.reshape(h, w)
+
+
+def _largest_filled(mask: np.ndarray) -> tuple[np.ndarray | None, np.ndarray | None]:
+	"""Largest external contour of a 0/1 mask and its filled mask (uint8 0/255); ``(None, None)`` if empty."""
+	cnts, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	if not cnts:
+		return None, None
+	c = max(cnts, key=cv2.contourArea)
+	m = np.zeros(mask.shape, np.uint8)
+	cv2.drawContours(m, [c], -1, 255, thickness=cv2.FILLED)
+	return c.reshape(-1, 2), m
+
+
+def _shape_violations(contours: list[np.ndarray], mm_per_px: float, interlocked: bool) -> tuple[list[int], list[dict]]:
+	"""Per-member shape violations of a partition and a short description per member.
+
+	Each member is analysed with :func:`src.shape.analyse`: no 4 corners counts
+	``_CONTACT_NOT_OK``; each side chord outside ``_CONTACT_CHORD_MM`` and each F side
+	shorter than ``_CONTACT_FALSE_FLAT_MM`` counts 1. With ``interlocked`` (the members
+	touch, no visible gap), the side of each member facing its nearest other member must
+	be complementary (T against B, :func:`src.shape.side_complement`), else 1 more.
+	"""
+	from .shape import analyse, side_complement
+	shapes = [analyse(c, mm_per_px) for c in contours]
+	viol, info = [], []
+	for s in shapes:
+		if not s.ok:
+			viol.append(_CONTACT_NOT_OK)
+			info.append({"ok": False})
+			continue
+		v = 0
+		for sd in s.sides:
+			if not (_CONTACT_CHORD_MM[0] <= sd.chord_mm <= _CONTACT_CHORD_MM[1]):
+				v += 1
+			if sd.kind == "F" and sd.chord_mm < _CONTACT_FALSE_FLAT_MM:
+				v += 1
+		viol.append(v)
+		info.append({"ok": True, "cls": s.cls, "chords_mm": [round(float(x), 2) for x in s.lens]})
+	if interlocked and len(contours) >= 2:
+		pts_mm = [np.asarray(c, np.float64).reshape(-1, 2) * mm_per_px for c in contours]
+
+		def facing(k: int, j: int) -> int:
+			"""Side of member ``k`` closest (mean point distance) to member ``j``'s contour."""
+			s = shapes[k]
+			other = pts_mm[j][::4]
+			best, best_i = np.inf, 0
+			for i in range(4):
+				a, b = int(s.corners[i]), int(s.corners[(i + 1) % 4])
+				seg = s.c[a:b + 1] if b > a else np.vstack([s.c[a:], s.c[:b + 1]])
+				d = float(np.sqrt(((seg[::4, None, :] - other[None, :, :]) ** 2).sum(-1)).min(1).mean())
+				if d < best:
+					best, best_i = d, i
+			return best_i
+
+		for k in range(len(contours)):
+			if not shapes[k].ok:
+				continue
+			ck = pts_mm[k].mean(0)
+			others = [j for j in range(len(contours)) if j != k and shapes[j].ok]
+			if not others:
+				continue
+			j = min(others, key=lambda q: float(np.linalg.norm(pts_mm[q].mean(0) - ck)))
+			ik, ij = facing(k, j), facing(j, k)
+			rms, _ = side_complement(shapes[k].sides[ik], shapes[j].sides[ij])
+			info[k]["face"] = {"com": j, "kinds": shapes[k].sides[ik].kind + shapes[j].sides[ij].kind,
+							   "rms_mm": None if not np.isfinite(rms) else round(float(rms), 3)}
+			if not np.isfinite(rms):
+				viol[k] += 1
+	return viol, info
+
+
+def _fill_small_holes(mask: np.ndarray, max_area_px: float) -> np.ndarray:
+	"""``mask`` (bool) with its holes smaller than ``max_area_px`` filled (dark texture spots)."""
+	holes = (~mask).astype(np.uint8)
+	n, cc, st, _ = cv2.connectedComponentsWithStats(holes, connectivity=4)
+	out = mask.copy()
+	h, w = mask.shape
+	for r in range(1, n):
+		x, y, bw, bh, a = st[r]
+		if a < max_area_px and x > 0 and y > 0 and x + bw < w and y + bh < h:
+			out[cc == r] = True
+	return out
+
+
+def _match_components(overlap: np.ndarray) -> list[int] | None:
+	"""Bijection component -> member maximising the total overlap (``overlap[r, k]``), or ``None``.
+
+	Exhaustive over permutations up to 6 members, greedy beyond. ``None`` when some
+	component would get a member it does not overlap at all.
+	"""
+	import itertools
+	n = overlap.shape[0]
+	if n <= 6:
+		best, best_p = -1.0, None
+		for perm in itertools.permutations(range(n)):
+			s = float(sum(overlap[r, perm[r]] for r in range(n)))
+			if s > best:
+				best, best_p = s, list(perm)
+		assign = best_p
+	else:
+		assign = [-1] * n
+		used: set[int] = set()
+		for flat in np.argsort(-overlap, axis=None):
+			r, k = divmod(int(flat), n)
+			if assign[r] < 0 and k not in used:
+				assign[r] = k
+				used.add(k)
+	if assign is None or any(overlap[r, assign[r]] <= 0 for r in range(n)):
+		return None
+	return assign
+
+
+def _resolve_contact_group(
+	members: list[int],
+	contours: list[np.ndarray],
+	thr: np.ndarray,
+	thr_open: np.ndarray,
+	lab: np.ndarray,
+	vor: np.ndarray,
+	band: np.ndarray,
+	mm_per_px: float,
+	close_px: int,
+	min_area_px: float,
+) -> dict | None:
+	"""Re-partition the foreground of one contact group among its members.
+
+	Window = union of the members' Voronoi cells (without the band, so a piece the
+	low-resolution split cut badly is recovered whole). Foreground = the opened-only
+	threshold (the closing would bridge sub-millimetre gaps), 4-connected components.
+
+	(a) Connectivity: when the components of at least ``min_area_px`` are exactly as
+	many as the members, each goes to the member whose old mask it overlaps (best
+	bijection); this fixes a tab sitting in a neighbour's blank with a visible gap.
+	Otherwise each component is handled alone against the member cores (old mask AND
+	foreground, small holes filled, eroded by ``_CONTACT_CORE_MM``, largest
+	component): touching exactly one core it goes to that member, touching none it keeps
+	the Voronoi assignment. (b) A component touching >= 2 cores (no visible gap) is
+	split by a priority-flood watershed from the cores over black-hat(L*) + Lab
+	gradient (each normalised by its 99th percentile in the component): the boundary
+	follows the dark gap/shadow line and the colour edge, not the tab neck (a distance
+	transform would cut there); thin flood spurs (a shadow line along the neighbour)
+	are then opened away (``_CONTACT_SPUR_MM``) and handed to the nearest region.
+	Each member's region is finally closed (``close_px``), clipped to ``band`` (the
+	``band_mm`` band of the low-res contours, as the normal boundary; skipped for a member
+	when it would remove more than ``1 - _CONTACT_BAND_KEEP`` of the region, i.e. the
+	low-res contours missed part of the piece) and its largest external contour filled.
+
+	Returns ``None`` when a needed core or a new region is empty (group left as is),
+	else ``{'contours': [new contours, photo px], 'iou': [IoU new vs old per member],
+	'metodo': 'conectividade'|'watershed'}``.
+	"""
+	pts = [np.asarray(contours[q]).reshape(-1, 2).astype(np.int32) for q in members]
+	H, W = thr.shape
+	ids = np.array([q + 1 for q in members])
+	ys, xs = np.nonzero(np.isin(vor, ids))
+	allp = np.vstack(pts)
+	pad = close_px + 2
+	x0 = max(0, min(int(xs.min()), int(allp[:, 0].min())) - pad)
+	y0 = max(0, min(int(ys.min()), int(allp[:, 1].min())) - pad)
+	x1 = min(W, max(int(xs.max()), int(allp[:, 0].max())) + pad + 1)
+	y1 = min(H, max(int(ys.max()), int(allp[:, 1].max())) + pad + 1)
+	org = np.array([x0, y0])
+	vor_c = vor[y0:y1, x0:x1]
+	win = np.isin(vor_c, ids)
+	band_c = band[y0:y1, x0:x1]
+	fg = (thr_open[y0:y1, x0:x1] > 0) & win
+	shp = fg.shape
+	old_masks = []
+	for p in pts:
+		m = np.zeros(shp, np.uint8)
+		cv2.drawContours(m, [(p - org).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+		old_masks.append(m > 0)
+	# Voronoi member (1-based position in ``members``) of every window pixel.
+	lut = np.zeros(int(vor_c.max()) + 2, np.int32)
+	lut[ids] = np.arange(1, len(members) + 1)
+	vor_k = lut[vor_c]
+	n, cc, st, _ = cv2.connectedComponentsWithStats(fg.astype(np.uint8), connectivity=4)
+	sig = [r for r in range(1, n) if st[r, cv2.CC_STAT_AREA] >= min_area_px]
+	new_lbl = np.zeros(shp, np.int32)
+	metodo = "conectividade"
+	assign = None
+	if len(sig) == len(members):
+		ov = np.array([[float((old_masks[k] & (cc == r)).sum()) for k in range(len(members))] for r in sig])
+		assign = _match_components(ov)
+	if assign is not None:
+		for r in range(1, n):
+			new_lbl[cc == r] = vor_k[cc == r]
+		for r, k in zip(sig, assign):
+			new_lbl[cc == r] = k + 1
+	else:
+		core_lbl = np.zeros(shp, np.int32)
+		core_r = int(round(_CONTACT_CORE_MM / mm_per_px))
+		kcore = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * core_r + 1, 2 * core_r + 1))
+		hole_px = _CONTACT_HOLE_MM2 / (mm_per_px * mm_per_px)
+		for k in range(len(members)):
+			body = _fill_small_holes(old_masks[k] & fg, hole_px)
+			er = cv2.erode(body.astype(np.uint8), kcore)
+			nn, ccc, sst, _ = cv2.connectedComponentsWithStats(er, connectivity=4)
+			if nn < 2:
+				return None
+			core_lbl[ccc == 1 + int(np.argmax(sst[1:, cv2.CC_STAT_AREA]))] = k + 1
+		bh = grad = None
+		for r in range(1, n):
+			comp = cc == r
+			touched = np.unique(core_lbl[comp])
+			touched = touched[touched > 0]
+			if len(touched) == 0:
+				new_lbl[comp] = vor_k[comp]
+			elif len(touched) == 1:
+				new_lbl[comp] = int(touched[0])
+			else:
+				metodo = "watershed"
+				if bh is None:
+					L = np.clip(lab[y0:y1, x0:x1, 0], 0, 255).astype(np.uint8)
+					bk = max(3, int(round(_CONTACT_BLACKHAT_MM / mm_per_px)) | 1)
+					bh = cv2.morphologyEx(L, cv2.MORPH_BLACKHAT,
+										  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (bk, bk))).astype(np.float32)
+					sm = cv2.GaussianBlur(np.ascontiguousarray(lab[y0:y1, x0:x1], np.float32), (0, 0), 1.0)
+					grad = np.zeros(shp, np.float32)
+					for ch in range(3):
+						gx = cv2.Sobel(sm[:, :, ch], cv2.CV_32F, 1, 0, ksize=3)
+						gy = cv2.Sobel(sm[:, :, ch], cv2.CV_32F, 0, 1, ksize=3)
+						grad = np.maximum(grad, np.sqrt(gx * gx + gy * gy))
+				height = (bh / max(float(np.percentile(bh[comp], 99)), 1.0)
+						  + grad / max(float(np.percentile(grad[comp], 99)), 1.0))
+				fl = _priority_flood(height, np.where(comp, core_lbl, 0), comp)
+				new_lbl[comp] = fl[comp]
+	# Thin spurs: the flood can run along a shadow line hugging the neighbour (a cast
+	# shadow is foreground and belongs to neither body). Open each member's region by
+	# _CONTACT_SPUR_MM and hand every removed pixel to the nearest kept region.
+	if metodo == "watershed":
+		sr = max(1, int(round(_CONTACT_SPUR_MM / mm_per_px)))
+		kspur = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * sr + 1, 2 * sr + 1))
+		kept = np.zeros(shp, np.int32)
+		for k in range(len(members)):
+			kept[cv2.morphologyEx((new_lbl == k + 1).astype(np.uint8), cv2.MORPH_OPEN, kspur) > 0] = k + 1
+		removed = (new_lbl > 0) & (kept == 0)
+		if removed.any() and (kept > 0).any():
+			_, near = cv2.distanceTransformWithLabels((kept == 0).astype(np.uint8), cv2.DIST_L2, 5,
+													  labelType=cv2.DIST_LABEL_PIXEL)
+			zero = np.flatnonzero(kept.ravel() > 0)
+			lut2 = np.zeros(int(near.max()) + 1, np.int32)
+			lut2[np.arange(1, len(zero) + 1)] = kept.ravel()[zero]
+			new_lbl = np.where(removed, lut2[near], new_lbl)
+	kclose = np.ones((close_px, close_px), np.uint8)
+	new_contours, ious = [], []
+	for k in range(len(members)):
+		own = new_lbl == k + 1
+		m = (cv2.morphologyEx(own.astype(np.uint8), cv2.MORPH_CLOSE, kclose) > 0) & win
+		m &= ~((new_lbl > 0) & ~own)
+		mb = m & band_c
+		if mb.sum() >= _CONTACT_BAND_KEEP * m.sum():
+			m = mb
+		c, filled = _largest_filled(m)
+		if c is None:
+			return None
+		fm = filled > 0
+		new_contours.append(c + org)
+		union = float((fm | old_masks[k]).sum())
+		ious.append(float((fm & old_masks[k]).sum()) / union if union else 1.0)
+	return {"contours": new_contours, "iou": ious, "metodo": metodo}
+
+
+def _scan_record(c: np.ndarray, rgb: np.ndarray, pad_ratio: float, normalize_rotation: bool) -> dict | None:
+	"""Piece record (``_compose_piece_fullres`` keys) of a full-res contour ``c`` (photo px)."""
+	H, W = rgb.shape[:2]
+	c = np.asarray(c).reshape(-1, 2)
+	ox, oy, ow, oh = cv2.boundingRect(c.astype(np.int32).reshape(-1, 1, 2))
+	pad = int(round(pad_ratio * max(ow, oh)))
+	ox, oy = max(0, ox - pad), max(0, oy - pad)
+	ow, oh = min(W - ox, ow + 2 * pad), min(H - oy, oh + 2 * pad)
+	local = (c - np.array([ox, oy])).astype(np.int32)
+	mask_full = np.zeros((oh, ow), np.uint8)
+	cv2.drawContours(mask_full, [local.reshape(-1, 1, 2)], -1, 255, thickness=cv2.FILLED)
+	return _compose_piece_fullres(mask_full, rgb[oy:oy + oh, ox:ox + ow].copy(), ox, oy, W, H, local, normalize_rotation)
+
+
+def _split_scan_contacts(
+	pieces: list[dict],
+	thr: np.ndarray,
+	thr_open: np.ndarray,
+	lab: np.ndarray,
+	vor: np.ndarray,
+	band: np.ndarray,
+	rgb: np.ndarray,
+	mm_per_px: float,
+	close_px: int,
+	pad_ratio: float,
+	normalize_rotation: bool,
+) -> None:
+	"""Re-partition each contact group of ``pieces`` in place and flag its members ``contacto``.
+
+	Groups (:func:`_contact_groups`, every piece eligible, ``is_cluster`` ones included)
+	are re-partitioned by :func:`_resolve_contact_group`. The new partition is adopted
+	only if some member changed (IoU < ``_CONTACT_SAME_IOU``) and it has no more shape
+	violations (:func:`_shape_violations`) than the old one; otherwise the old records are
+	kept bit for bit (and, inside an adopted group, so are the members that did not
+	change). An adopted member is ``refined``; an ``is_cluster`` member whose new
+	shape has no violation stops being a cluster. Every member gets ``contacto = {'com':
+	[index of the other members], 'confianca': 'alta'|'baixa', 'metodo':
+	'conectividade'|'watershed'|'nenhum' (group left as is: empty core), 'alterado':
+	bool}``; ``baixa`` when the members touch
+	(watershed) or the partition changed, and the final partition still has a shape
+	violation.
+	"""
+	contours = [np.asarray(p["contour"]).reshape(-1, 2) for p in pieces]
+	areas = [float(p["area_px"]) for p in pieces if not p["is_cluster"]]
+	if not areas:
+		return
+	min_area = _CONTACT_MIN_AREA_FRAC * float(np.median(areas))
+	for g in _contact_groups(contours, [True] * len(pieces), mm_per_px):
+		r = _resolve_contact_group(g, contours, thr, thr_open, lab, vor, band, mm_per_px, close_px, min_area)
+		interlocked = r is not None and r["metodo"] == "watershed"
+		changed = r is not None and min(r["iou"]) < _CONTACT_SAME_IOU
+		final_c = [contours[q] for q in g]
+		if changed:
+			v_old, _ = _shape_violations(final_c, mm_per_px, interlocked)
+			v_new, _ = _shape_violations(r["contours"], mm_per_px, interlocked)
+			recs = [_scan_record(c, rgb, pad_ratio, normalize_rotation) for c in r["contours"]]
+			if sum(v_new) <= sum(v_old) and all(rec is not None for rec in recs):
+				for q, rec, v, iou in zip(g, recs, v_new, r["iou"]):
+					if iou >= _CONTACT_SAME_IOU:
+						continue   # this member did not change: keep its record bit for bit
+					p = pieces[q]
+					p.update(rec)
+					p["refined"] = True
+					p["roughness"] = _contour_roughness(p["contour"])
+					if p["is_cluster"] and v == 0:
+						p["is_cluster"] = False
+						p.pop("piece_type", None)
+				final_c = [c if iou < _CONTACT_SAME_IOU else contours[q] for q, c, iou in zip(g, r["contours"], r["iou"])]
+			else:
+				changed = False
+		baixa = False
+		if changed or interlocked:
+			v_fin, _ = _shape_violations(final_c, mm_per_px, interlocked)
+			baixa = sum(v_fin) > 0
+		for q in g:
+			pieces[q]["contacto"] = {
+				"com": [int(pieces[o]["index"]) for o in g if o != q],
+				"confianca": "baixa" if baixa else "alta",
+				"metodo": r["metodo"] if r is not None else "nenhum",
+				"alterado": bool(changed),
+			}
 
 
 # ===== Public API =====
@@ -2123,6 +2611,7 @@ def segment_scan(
 	threshold: float = 28.0,
 	open_mm: float = 0.42,
 	close_mm: float = 0.76,
+	split_contacts: bool = True,
 	debug: bool = False,
 	**segment_pieces_kwargs,
 ) -> dict:
@@ -2167,6 +2656,11 @@ def segment_scan(
 		threshold: weighted Lab distance (OpenCV 8-bit units) above which a pixel
 			is foreground.
 		open_mm, close_mm: square morphology kernels (mm; rounded to odd px).
+		split_contacts: re-partition contact groups (pieces closer than ~1 mm,
+			e.g. a tab sitting in a neighbour's blank) by full-res connectivity,
+			then by a seam watershed, validated by shape (:func:`_split_scan_contacts`,
+			docs/diagnostico/segmentacao/CONTACTOS.md). ``False`` reproduces the
+			previous output bit for bit. Never changes the number of pieces.
 		debug: attach ``segment_pieces``' debug images (``strip_mask``
 			included), with ``threshold_mask``, ``scan_strip_mask`` (full-res
 			strip removed from the threshold), ``voronoi`` (cell labels as
@@ -2184,7 +2678,9 @@ def segment_scan(
 		removed from the full-resolution threshold, or ``None``), ``refined`` (False when the
 		threshold had no pixel in the band, and for ``is_cluster`` records, which
 		keep the ``segment_pieces`` contour and crop) and ``roughness``
-		(perimeter / smoothed perimeter; a diagnostic, never a gate). On failure
+		(perimeter / smoothed perimeter; a diagnostic, never a gate); members of a
+		contact group also carry ``contacto`` (``com``, ``confianca`` alta/baixa,
+		``metodo``, ``alterado``). On failure
 		the ``segment_pieces`` error dict with ``method`` and ``mm_per_px`` added.
 	"""
 	mm_per_px = 25.4 / float(dpi)
@@ -2201,7 +2697,9 @@ def segment_scan(
 	lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
 	bg = _rim_background(lab, mm_per_px)
 	open_px = _odd_kernel(open_mm, mm_per_px)
-	thr = _scan_threshold_mask(lab, bg, threshold, open_px, _odd_kernel(close_mm, mm_per_px))
+	close_px = _odd_kernel(close_mm, mm_per_px)
+	thr_open = _scan_open_mask(lab, bg, threshold, open_px)
+	thr = cv2.morphologyEx(thr_open, cv2.MORPH_CLOSE, np.ones((close_px, close_px), np.uint8))
 	# Paper strip at the scan edge (S3): it is in the threshold too, and the refined
 	# contour of an abutting piece could annex it inside the Voronoi cell. Zero it at
 	# full resolution, then re-open so the leftover colour-blend seam goes too (the
@@ -2211,6 +2709,8 @@ def segment_scan(
 	if scan_strip is not None:
 		thr[scan_strip > 0] = 0
 		thr = cv2.morphologyEx(thr, cv2.MORPH_OPEN, np.ones((open_px, open_px), np.uint8))
+		thr_open[scan_strip > 0] = 0
+		thr_open = cv2.morphologyEx(thr_open, cv2.MORPH_OPEN, np.ones((open_px, open_px), np.uint8))
 	if res.get("frame_strip") is not None:
 		fs = res["frame_strip"]
 		fs["width_mm"] = float(fs["width_px"] * mm_per_px)
@@ -2219,7 +2719,6 @@ def segment_scan(
 	res["scan_frame_strip"] = [
 		{**st, "width_mm": float(st["width_px"] * mm_per_px)} for st in scan_strips
 	] or None
-	del lab
 	pieces = res["pieces"]
 	seg_contours = [np.asarray(p["contour"]).reshape(-1, 2) for p in pieces]
 	vor, dist = _voronoi_from_contours((H, W), seg_contours)
@@ -2238,20 +2737,20 @@ def segment_scan(
 			cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 			if cnts:
 				c = max(cnts, key=cv2.contourArea).reshape(-1, 2) + np.array([x0, y0])
-				ox, oy, ow, oh = cv2.boundingRect(c.astype(np.int32).reshape(-1, 1, 2))
-				pad = int(round(pad_ratio * max(ow, oh)))
-				ox, oy = max(0, ox - pad), max(0, oy - pad)
-				ow, oh = min(W - ox, ow + 2 * pad), min(H - oy, oh + 2 * pad)
-				local = (c - np.array([ox, oy])).astype(np.int32)
-				mask_full = np.zeros((oh, ow), np.uint8)
-				cv2.drawContours(mask_full, [local.reshape(-1, 1, 2)], -1, 255, thickness=cv2.FILLED)
-				rec = _compose_piece_fullres(
-					mask_full, rgb[oy:oy + oh, ox:ox + ow].copy(), ox, oy, W, H, local, normalize_rotation,
-				)
+				rec = _scan_record(c, rgb, pad_ratio, normalize_rotation)
 				if rec is not None:
 					p.update(rec)
 					p["refined"] = True
 		p["roughness"] = _contour_roughness(p["contour"])
+
+	# Contact groups (interlocked / touching pieces): the Voronoi cell of the low-res
+	# separation can hand a tab to the neighbour whose blank it sits in; re-partition the
+	# group's foreground by connectivity, then by a seam watershed, validated by shape.
+	if split_contacts:
+		_split_scan_contacts(
+			pieces, thr, thr_open, lab, vor, band, rgb, mm_per_px, close_px, pad_ratio, normalize_rotation,
+		)
+	del lab
 
 	res["scan_background_lab"] = (float(bg[0]), float(bg[1]), float(bg[2]))
 	if debug:

@@ -12,6 +12,8 @@ every placed rectangle is recovered as one detected bbox with a matching centre
 and near-equal size (a few px of symmetric padding is expected and tolerated).
 """
 
+import os
+
 import numpy as np
 import pytest
 from PIL import Image
@@ -172,3 +174,91 @@ def test_piece_touching_white_scan_strip_is_kept(segment):
         assert p["touches_frame"] is False
     assert result["frame_strip"] is not None
     assert result["frame_strip"]["side"] == "right"
+
+
+# ---------------------------------------------------------------- contact groups (interlocked pieces)
+def _match_gt(result, gts):
+    """For each GT mask, the segment_scan piece with the highest IoU and that IoU."""
+    from synth import mask_iou
+    out = []
+    for gt in gts:
+        best = max(result["pieces"], key=lambda p: mask_iou(p["contour"], gt))
+        out.append((best, mask_iou(best["contour"], gt)))
+    return out
+
+
+def test_segment_scan_interlocked_tab_with_gap():
+    """A tab inside the neighbour's blank, 1 px of background around it, is given back to its piece.
+
+    Synthetic 300 dpi scan on the project green (tests/synth.interlocked_scan): the low-res
+    separation plus the Voronoi-cell boundary used to hand the tab to the neighbour (a false
+    flat side on the owner). With the contact step both pieces are recovered (IoU >= 0.95),
+    neither has an F side, and both carry ``contacto``.
+    """
+    from synth import interlocked_scan
+    from src.shape import analyse
+    img, gts = interlocked_scan(gap_px=1)
+    result = segment_scan(img, dpi=300, normalize_rotation=False)
+    assert "error" not in result, result.get("error")
+    assert result["count"] == 4
+    (pa, ia), (pb, ib) = _match_gt(result, gts[:2])
+    assert pa["index"] != pb["index"]
+    assert ia >= 0.95 and ib >= 0.95, (ia, ib)
+    for p in (pa, pb):
+        s = analyse(p["contour"], result["mm_per_px"])
+        assert s.ok and s.n_flat == 0, (s.cls, s.lens)
+        assert p["contacto"]["com"] == [(pb if p is pa else pa)["index"]]
+        assert p["is_cluster"] is False
+
+
+def test_segment_scan_interlocked_tab_touching():
+    """Same pair with no gap at all: either recovered (IoU >= 0.95) or both flagged ``contacto`` baixa."""
+    from synth import interlocked_scan
+    img, gts = interlocked_scan(gap_px=0)
+    result = segment_scan(img, dpi=300, normalize_rotation=False)
+    assert "error" not in result, result.get("error")
+    assert result["count"] == 4
+    (pa, ia), (pb, ib) = _match_gt(result, gts[:2])
+    good = pa["index"] != pb["index"] and ia >= 0.95 and ib >= 0.95
+    flagged = all((p.get("contacto") or {}).get("confianca") == "baixa" for p in (pa, pb))
+    assert good or flagged, (ia, ib, pa.get("contacto"), pb.get("contacto"))
+
+
+def test_segment_scan_split_contacts_no_effect_when_separated():
+    """Well-separated pieces: the contact step changes nothing and flags nothing."""
+    from synth import interlocked_scan
+    img, _ = interlocked_scan(gap_px=1, body_gap_mm=9.0)
+    on = segment_scan(img, dpi=300, normalize_rotation=False)
+    off = segment_scan(img, dpi=300, normalize_rotation=False, split_contacts=False)
+    assert on["count"] == off["count"] == 4
+    for a, b in zip(on["pieces"], off["pieces"]):
+        assert "contacto" not in a
+        assert np.array_equal(np.asarray(a["contour"]), np.asarray(b["contour"]))
+        assert tuple(a["bbox"]) == tuple(b["bbox"])
+
+
+def test_ingest_propagates_contacto(tmp_path):
+    """``ingest_scan`` copies ``contacto`` into the piece flags (the overlay draws ``baixa`` in red)."""
+    from synth import interlocked_scan
+    from src.ingest import COL_CONTACT_LOW, _piece_colour, ingest_scan
+    from src.profile import PuzzleProfile
+    from src.state import Project
+    img, _ = interlocked_scan(gap_px=0)
+    scan = tmp_path / "scan.png"
+    img.save(scan)
+    pp = tmp_path / "puzzle.json"
+    PuzzleProfile(id="t", grid={"cols": 6, "rows": 4}, symmetry={"type": "rot180"}).save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    r = ingest_scan(pr, str(scan), 1)
+    assert "error" not in r, r
+    pr = Project.open(str(tmp_path / "proj"))
+    flagged = [p for p in pr.pieces.values() if p.flags.get("contacto")]
+    assert len(flagged) == 2
+    idx = {p.index_in_scan for p in flagged}
+    for p in flagged:
+        c = p.flags["contacto"]
+        assert c["com"] == sorted(idx - {p.index_in_scan})
+        assert c["confianca"] in ("alta", "baixa")
+        if c["confianca"] == "baixa" and not p.flags.get("objeto_duplo"):
+            assert _piece_colour(p) == COL_CONTACT_LOW
+    assert os.path.exists(pr.p("overlays", "S0001.jpg"))

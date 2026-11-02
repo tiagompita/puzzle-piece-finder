@@ -1,0 +1,1773 @@
+{
+ "totais": {
+  "pares": 20,
+  "pares_fisicos_watershed": 7,
+  "pares_alterados": 7,
+  "pares_baixa": 6,
+  "folhas": 26,
+  "contagem_mudou": [],
+  "numeracao_mudou": [],
+  "t_antes_s": 66.5,
+  "t_depois_s": 75.2
+ },
+ "pares_bbox_projeto": {
+  "total": 42,
+  "detetados": 20,
+  "watershed": 7,
+  "alterados": 7,
+  "dist_le_0_3mm": 4
+ },
+ "folhas": [
+  {
+   "sid": "S0001",
+   "file": "images/pieces/coluna5-24_300dpi_folhaA.jpg",
+   "kind": "gt",
+   "n_antes": 20,
+   "t_antes_s": 1.9,
+   "n_depois": 20,
+   "t_depois_s": 1.8,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0002",
+   "file": "images/pieces/coluna5-24_folhaB_300dpi_rot180.jpg",
+   "kind": "gt",
+   "n_antes": 20,
+   "t_antes_s": 1.9,
+   "n_depois": 20,
+   "t_depois_s": 1.9,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0003",
+   "file": "images/pieces/gt_canto_BE_soltas_300dpi.jpg",
+   "kind": "gt",
+   "n_antes": 25,
+   "t_antes_s": 3.7,
+   "n_depois": 25,
+   "t_depois_s": 9.3,
+   "contagem_igual": true,
+   "pares": 5,
+   "pares_fisicos_watershed": 5,
+   "pares_alterados": 5,
+   "pares_baixa": 5,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": [
+    {
+     "i": 17,
+     "j": 18,
+     "n_i": 18,
+     "n_j": 19,
+     "dist_antes_mm": 0.08,
+     "dist_depois_mm": 0.08,
+     "metodo": "watershed",
+     "confianca": "baixa",
+     "alterado": true,
+     "iou": [
+      0.8129,
+      0.8143
+     ],
+     "flag_ok": true,
+     "forma_antes": [
+      {
+       "ok": false
+      },
+      {
+       "ok": false
+      }
+     ],
+     "forma_depois": [
+      {
+       "ok": false
+      },
+      {
+       "ok": false
+      }
+     ]
+    },
+    {
+     "i": 18,
+     "j": 23,
+     "n_i": 19,
+     "n_j": 24,
+     "dist_antes_mm": 0.08,
+     "dist_depois_mm": 0.08,
+     "metodo": "watershed",
+     "confianca": "baixa",
+     "alterado": true,
+     "iou": [
+      0.8143,
+      0.7123
+     ],
+     "flag_ok": true,
+     "forma_antes": [
+      {
+       "ok": false
+      },
+      {
+       "ok": true,
+       "cls": "FFFT",
+       "tipos": "FTFF",
+       "cordas_mm": [
+        16.95,
+        15.49,
+        19.26,
+        15.7
+       ]
+      }
+     ],
+     "forma_depois": [
+      {
+       "ok": false
+      },
+      {
+       "ok": false
+      }
+     ]
+    },
+    {
+     "i": 20,
+     "j": 24,
+     "n_i": 21,
+     "n_j": 25,
+     "dist_antes_mm": 10.14,
+     "dist_depois_mm": 6.39,
+     "metodo": "watershed",
+     "confianca": "baixa",
+     "alterado": true,
+     "iou": [
+      1.0,
+      0.8235
+     ],
+     "flag_ok": true,
+     "forma_antes": [
+      {
+       "ok": true,
+       "cls": "BBTT",
+       "tipos": "BBTT",
+       "cordas_mm": [
+        19.52,
+        19.14,
+        19.96,
+        19.86
+       ]
+      },
+      {
+       "ok": true,
+       "cls": "BBTT",
+       "tipos": "BBTT",
+       "cordas_mm": [
+        15.69,
+        20.01,
+        15.05,
+        15.41
+       ]
+      }
+     ],
+     "forma_depois": [
+      {
+       "ok": true,
+       "cls": "BBTT",
+       "tipos": "BBTT",
+       "cordas_mm": [
+        19.52,
+        19.14,
+        19.96,
+        19.86
+       ]
+      },
+      {
+       "ok": false
+      }
+     ]
+    },
+    {
+     "i": 22,
+     "j": 24,
+     "n_i": 23,
+     "n_j": 25,
+     "dist_antes_mm": 15.66,
+     "dist_depois_mm": 10.54,
+     "metodo": "watershed",
+     "confianca": "baixa",
+     "alterado": true,
+     "iou": [
+      1.0,
+      0.8235
+     ],
+     "flag_ok": true,
+     "forma_antes": [
+      {
+       "ok": true,
+       "cls": "BBTT",
+       "tipos": "TBBT",
+       "cordas_mm": [
+        19.25,
+        19.43,
+        18.46,
+        19.58
+       ]
+      },
+      {
+       "ok": true,
+       "cls": "BBTT",
+       "tipos": "BBTT",
+       "cordas_mm": [
+        15.69,
+        20.01,
+        15.05,
+        15.41
+       ]
+      }
+     ],
+     "forma_depois": [
+      {
+       "ok": true,
+       "cls": "BBTT",
+       "tipos": "TBBT",
+       "cordas_mm": [
+        19.25,
+        19.43,
+        18.46,
+        19.58
+       ]
+      },
+      {
+       "ok": false
+      }
+     ]
+    },
+    {
+     "i": 23,
+     "j": 24,
+     "n_i": 24,
+     "n_j": 25,
+     "dist_antes_mm": 0.08,
+     "dist_depois_mm": 0.0,
+     "metodo": "watershed",
+     "confianca": "baixa",
+     "alterado": true,
+     "iou": [
+      0.7123,
+      0.8235
+     ],
+     "flag_ok": true,
+     "forma_antes": [
+      {
+       "ok": true,
+       "cls": "FFFT",
+       "tipos": "FTFF",
+       "cordas_mm": [
+        16.95,
+        15.49,
+        19.26,
+        15.7
+       ]
+      },
+      {
+       "ok": true,
+       "cls": "BBTT",
+       "tipos": "BBTT",
+       "cordas_mm": [
+        15.69,
+        20.01,
+        15.05,
+        15.41
+       ]
+      }
+     ],
+     "forma_depois": [
+      {
+       "ok": false
+      },
+      {
+       "ok": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "sid": "S0004",
+   "file": "images/pieces/gt_canto_BD_soltas_300dpi.jpg",
+   "kind": "gt",
+   "n_antes": 28,
+   "t_antes_s": 2.2,
+   "n_depois": 28,
+   "t_depois_s": 2.2,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0005",
+   "file": "images/pieces/ereal2_ceu_f1p1_300dpi.jpg",
+   "kind": "soltas",
+   "n_antes": 35,
+   "t_antes_s": 2.6,
+   "n_depois": 35,
+   "t_depois_s": 2.8,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0006",
+   "file": "images/pieces/ereal2_ceu_f1p2_300dpi.jpg",
+   "kind": "soltas",
+   "n_antes": 15,
+   "t_antes_s": 1.9,
+   "n_depois": 15,
+   "t_depois_s": 2.0,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0007",
+   "file": "images/pieces/ereal2_ceu_f2p1_300dpi.jpg",
+   "kind": "soltas",
+   "n_antes": 42,
+   "t_antes_s": 3.0,
+   "n_depois": 42,
+   "t_depois_s": 3.0,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0008",
+   "file": "images/pieces/ereal2_ceu_f2p2_300dpi.jpg",
+   "kind": "soltas",
+   "n_antes": 8,
+   "t_antes_s": 1.6,
+   "n_depois": 8,
+   "t_depois_s": 1.7,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0009",
+   "file": "images/pieces/legado/montado_p01_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 43,
+   "t_antes_s": 2.6,
+   "n_depois": 43,
+   "t_depois_s": 2.6,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0010",
+   "file": "images/pieces/legado/montado_p02_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 46,
+   "t_antes_s": 2.7,
+   "n_depois": 46,
+   "t_depois_s": 2.9,
+   "contagem_igual": true,
+   "pares": 1,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": [
+    {
+     "i": 9,
+     "j": 13,
+     "n_i": 10,
+     "n_j": 15,
+     "dist_antes_mm": 13.82,
+     "dist_depois_mm": 13.82,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    }
+   ]
+  },
+  {
+   "sid": "S0011",
+   "file": "images/pieces/legado/montado_p03_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 18,
+   "t_antes_s": 2.0,
+   "n_depois": 18,
+   "t_depois_s": 2.0,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0012",
+   "file": "images/pieces/legado/montado_p04_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 44,
+   "t_antes_s": 3.0,
+   "n_depois": 44,
+   "t_depois_s": 2.9,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0013",
+   "file": "images/pieces/legado/montado_p05_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 51,
+   "t_antes_s": 2.9,
+   "n_depois": 51,
+   "t_depois_s": 3.0,
+   "contagem_igual": true,
+   "pares": 2,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": [
+    {
+     "i": 24,
+     "j": 30,
+     "n_i": 25,
+     "n_j": 31,
+     "dist_antes_mm": 15.02,
+     "dist_depois_mm": 15.02,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    },
+    {
+     "i": 35,
+     "j": 40,
+     "n_i": 36,
+     "n_j": 41,
+     "dist_antes_mm": 12.83,
+     "dist_depois_mm": 12.83,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    }
+   ]
+  },
+  {
+   "sid": "S0014",
+   "file": "images/pieces/legado/montado_p06_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 48,
+   "t_antes_s": 2.9,
+   "n_depois": 48,
+   "t_depois_s": 3.2,
+   "contagem_igual": true,
+   "pares": 4,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": [
+    {
+     "i": 5,
+     "j": 6,
+     "n_i": 7,
+     "n_j": 6,
+     "dist_antes_mm": 2.17,
+     "dist_depois_mm": 2.17,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    },
+    {
+     "i": 6,
+     "j": 11,
+     "n_i": 6,
+     "n_j": 12,
+     "dist_antes_mm": 7.19,
+     "dist_depois_mm": 7.19,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    },
+    {
+     "i": 6,
+     "j": 12,
+     "n_i": 6,
+     "n_j": 13,
+     "dist_antes_mm": 5.63,
+     "dist_depois_mm": 5.63,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    },
+    {
+     "i": 24,
+     "j": 29,
+     "n_i": 25,
+     "n_j": 30,
+     "dist_antes_mm": 5.77,
+     "dist_depois_mm": 5.77,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    }
+   ]
+  },
+  {
+   "sid": "S0015",
+   "file": "images/pieces/legado/montado_p07_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 36,
+   "t_antes_s": 2.4,
+   "n_depois": 36,
+   "t_depois_s": 2.4,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0016",
+   "file": "images/pieces/legado/montado_p08_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 37,
+   "t_antes_s": 3.5,
+   "n_depois": 37,
+   "t_depois_s": 3.0,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0017",
+   "file": "images/pieces/legado/montado_p09_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 34,
+   "t_antes_s": 2.4,
+   "n_depois": 34,
+   "t_depois_s": 2.4,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0018",
+   "file": "images/pieces/legado/montado_p10_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 39,
+   "t_antes_s": 2.6,
+   "n_depois": 39,
+   "t_depois_s": 2.7,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0019",
+   "file": "images/pieces/legado/montado_p11_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 38,
+   "t_antes_s": 2.7,
+   "n_depois": 38,
+   "t_depois_s": 2.8,
+   "contagem_igual": true,
+   "pares": 1,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": [
+    {
+     "i": 11,
+     "j": 15,
+     "n_i": 12,
+     "n_j": 16,
+     "dist_antes_mm": 12.3,
+     "dist_depois_mm": 12.3,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    }
+   ]
+  },
+  {
+   "sid": "S0020",
+   "file": "images/pieces/legado/montado_p12_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 48,
+   "t_antes_s": 2.8,
+   "n_depois": 48,
+   "t_depois_s": 3.9,
+   "contagem_igual": true,
+   "pares": 1,
+   "pares_fisicos_watershed": 1,
+   "pares_alterados": 1,
+   "pares_baixa": 1,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": [
+    {
+     "i": 23,
+     "j": 25,
+     "n_i": 24,
+     "n_j": 30,
+     "dist_antes_mm": 1.29,
+     "dist_depois_mm": 0.08,
+     "metodo": "watershed",
+     "confianca": "baixa",
+     "alterado": true,
+     "iou": [
+      0.8021,
+      0.7135
+     ],
+     "flag_ok": true,
+     "forma_antes": [
+      {
+       "ok": true,
+       "cls": "FFTT",
+       "tipos": "TTFF",
+       "cordas_mm": [
+        18.38,
+        18.57,
+        15.47,
+        14.48
+       ]
+      },
+      {
+       "ok": false
+      }
+     ],
+     "forma_depois": [
+      {
+       "ok": true,
+       "cls": "FTTT",
+       "tipos": "TTFT",
+       "cordas_mm": [
+        18.25,
+        19.19,
+        18.9,
+        18.2
+       ]
+      },
+      {
+       "ok": true,
+       "cls": "BFBT",
+       "tipos": "TBFB",
+       "cordas_mm": [
+        16.68,
+        19.37,
+        16.39,
+        18.76
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "sid": "S0021",
+   "file": "images/pieces/legado/montado_p13_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 44,
+   "t_antes_s": 2.8,
+   "n_depois": 44,
+   "t_depois_s": 2.7,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0022",
+   "file": "images/pieces/legado/montado_p14_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 55,
+   "t_antes_s": 2.9,
+   "n_depois": 55,
+   "t_depois_s": 3.0,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0023",
+   "file": "images/pieces/legado/montado_p15_300dpi.jpg",
+   "kind": "montado",
+   "n_antes": 59,
+   "t_antes_s": 3.2,
+   "n_depois": 59,
+   "t_depois_s": 4.6,
+   "contagem_igual": true,
+   "pares": 6,
+   "pares_fisicos_watershed": 1,
+   "pares_alterados": 1,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": [
+    {
+     "i": 2,
+     "j": 3,
+     "n_i": 3,
+     "n_j": 4,
+     "dist_antes_mm": 0.08,
+     "dist_depois_mm": 0.08,
+     "metodo": "watershed",
+     "confianca": "alta",
+     "alterado": true,
+     "iou": [
+      0.9433,
+      0.9102
+     ],
+     "flag_ok": true,
+     "forma_antes": [
+      {
+       "ok": true,
+       "cls": "BFTT",
+       "tipos": "FTTB",
+       "cordas_mm": [
+        15.96,
+        18.26,
+        17.23,
+        18.82
+       ]
+      },
+      {
+       "ok": true,
+       "cls": "BTTT",
+       "tipos": "TTTB",
+       "cordas_mm": [
+        18.41,
+        18.57,
+        16.41,
+        17.96
+       ]
+      }
+     ],
+     "forma_depois": [
+      {
+       "ok": true,
+       "cls": "BTTT",
+       "tipos": "TTTB",
+       "cordas_mm": [
+        15.94,
+        18.25,
+        17.22,
+        18.8
+       ]
+      },
+      {
+       "ok": true,
+       "cls": "BBTT",
+       "tipos": "TTBB",
+       "cordas_mm": [
+        18.41,
+        18.54,
+        16.44,
+        17.94
+       ]
+      }
+     ]
+    },
+    {
+     "i": 25,
+     "j": 29,
+     "n_i": 26,
+     "n_j": 31,
+     "dist_antes_mm": 14.34,
+     "dist_depois_mm": 14.34,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    },
+    {
+     "i": 26,
+     "j": 30,
+     "n_i": 27,
+     "n_j": 33,
+     "dist_antes_mm": 9.6,
+     "dist_depois_mm": 9.6,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    },
+    {
+     "i": 31,
+     "j": 34,
+     "n_i": 30,
+     "n_j": 35,
+     "dist_antes_mm": 13.98,
+     "dist_depois_mm": 13.98,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    },
+    {
+     "i": 41,
+     "j": 48,
+     "n_i": 42,
+     "n_j": 49,
+     "dist_antes_mm": 13.99,
+     "dist_depois_mm": 13.99,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    },
+    {
+     "i": 43,
+     "j": 50,
+     "n_i": 44,
+     "n_j": 51,
+     "dist_antes_mm": 8.93,
+     "dist_depois_mm": 8.93,
+     "metodo": "conectividade",
+     "confianca": "alta",
+     "alterado": false,
+     "iou": [
+      1.0,
+      1.0
+     ],
+     "flag_ok": true
+    }
+   ]
+  },
+  {
+   "sid": "S0024",
+   "file": "images/pieces/legado/blocos_p01_300dpi.jpg",
+   "kind": "blocos",
+   "n_antes": 29,
+   "t_antes_s": 2.2,
+   "n_depois": 29,
+   "t_depois_s": 2.3,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0025",
+   "file": "images/pieces/legado/blocos_p02_300dpi.jpg",
+   "kind": "blocos",
+   "n_antes": 36,
+   "t_antes_s": 2.4,
+   "n_depois": 36,
+   "t_depois_s": 2.4,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  },
+  {
+   "sid": "S0026",
+   "file": "images/pieces/legado/blocos_p03_300dpi.jpg",
+   "kind": "blocos",
+   "n_antes": 11,
+   "t_antes_s": 1.7,
+   "n_depois": 11,
+   "t_depois_s": 1.7,
+   "contagem_igual": true,
+   "pares": 0,
+   "pares_fisicos_watershed": 0,
+   "pares_alterados": 0,
+   "pares_baixa": 0,
+   "pecas_alteradas_fora_de_pares": [],
+   "numeracao_igual": true,
+   "numeracao_diferencas": {},
+   "detalhe": []
+  }
+ ],
+ "bbox_pares": [
+  {
+   "sid": "S0003",
+   "n": [
+    5,
+    6
+   ],
+   "idx": [
+    4,
+    5
+   ],
+   "gap_bbox_mm": 0.25,
+   "detetado": false,
+   "dist_antes_mm": 3.4,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0003",
+   "n": [
+    18,
+    19
+   ],
+   "idx": [
+    17,
+    18
+   ],
+   "gap_bbox_mm": -8.89,
+   "detetado": true,
+   "dist_antes_mm": 0.08,
+   "metodo": "watershed",
+   "alterado": true,
+   "confianca": "baixa"
+  },
+  {
+   "sid": "S0003",
+   "n": [
+    19,
+    24
+   ],
+   "idx": [
+    18,
+    23
+   ],
+   "gap_bbox_mm": -6.27,
+   "detetado": true,
+   "dist_antes_mm": 0.08,
+   "metodo": "watershed",
+   "alterado": true,
+   "confianca": "baixa"
+  },
+  {
+   "sid": "S0003",
+   "n": [
+    21,
+    25
+   ],
+   "idx": [
+    20,
+    24
+   ],
+   "gap_bbox_mm": -5.25,
+   "detetado": true,
+   "dist_antes_mm": 10.14,
+   "metodo": "watershed",
+   "alterado": true,
+   "confianca": "baixa"
+  },
+  {
+   "sid": "S0003",
+   "n": [
+    22,
+    25
+   ],
+   "idx": [
+    21,
+    24
+   ],
+   "gap_bbox_mm": -1.69,
+   "detetado": false,
+   "dist_antes_mm": 15.41,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0003",
+   "n": [
+    23,
+    25
+   ],
+   "idx": [
+    22,
+    24
+   ],
+   "gap_bbox_mm": -3.13,
+   "detetado": true,
+   "dist_antes_mm": 15.66,
+   "metodo": "watershed",
+   "alterado": true,
+   "confianca": "baixa"
+  },
+  {
+   "sid": "S0003",
+   "n": [
+    24,
+    25
+   ],
+   "idx": [
+    23,
+    24
+   ],
+   "gap_bbox_mm": -5.16,
+   "detetado": true,
+   "dist_antes_mm": 0.08,
+   "metodo": "watershed",
+   "alterado": true,
+   "confianca": "baixa"
+  },
+  {
+   "sid": "S0009",
+   "n": [
+    5,
+    10
+   ],
+   "idx": [
+    4,
+    6
+   ],
+   "gap_bbox_mm": 0.59,
+   "detetado": false,
+   "dist_antes_mm": 2.56,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0010",
+   "n": [
+    10,
+    15
+   ],
+   "idx": [
+    9,
+    13
+   ],
+   "gap_bbox_mm": -0.42,
+   "detetado": true,
+   "dist_antes_mm": 13.82,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0010",
+   "n": [
+    30,
+    31
+   ],
+   "idx": [
+    29,
+    30
+   ],
+   "gap_bbox_mm": 0.85,
+   "detetado": false,
+   "dist_antes_mm": 2.12,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0012",
+   "n": [
+    30,
+    31
+   ],
+   "idx": [
+    29,
+    30
+   ],
+   "gap_bbox_mm": 0.76,
+   "detetado": false,
+   "dist_antes_mm": 2.89,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0013",
+   "n": [
+    3,
+    10
+   ],
+   "idx": [
+    2,
+    9
+   ],
+   "gap_bbox_mm": 0.0,
+   "detetado": false,
+   "dist_antes_mm": 9.75,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0013",
+   "n": [
+    25,
+    31
+   ],
+   "idx": [
+    24,
+    30
+   ],
+   "gap_bbox_mm": -0.85,
+   "detetado": true,
+   "dist_antes_mm": 15.02,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0013",
+   "n": [
+    36,
+    41
+   ],
+   "idx": [
+    35,
+    40
+   ],
+   "gap_bbox_mm": -0.34,
+   "detetado": true,
+   "dist_antes_mm": 12.83,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0014",
+   "n": [
+    7,
+    6
+   ],
+   "idx": [
+    5,
+    6
+   ],
+   "gap_bbox_mm": -6.35,
+   "detetado": true,
+   "dist_antes_mm": 2.17,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0014",
+   "n": [
+    6,
+    12
+   ],
+   "idx": [
+    6,
+    11
+   ],
+   "gap_bbox_mm": -1.95,
+   "detetado": true,
+   "dist_antes_mm": 7.19,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0014",
+   "n": [
+    6,
+    13
+   ],
+   "idx": [
+    6,
+    12
+   ],
+   "gap_bbox_mm": -4.66,
+   "detetado": true,
+   "dist_antes_mm": 5.63,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0014",
+   "n": [
+    25,
+    30
+   ],
+   "idx": [
+    24,
+    29
+   ],
+   "gap_bbox_mm": -3.81,
+   "detetado": true,
+   "dist_antes_mm": 5.77,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0014",
+   "n": [
+    35,
+    36
+   ],
+   "idx": [
+    31,
+    32
+   ],
+   "gap_bbox_mm": 0.85,
+   "detetado": false,
+   "dist_antes_mm": 3.39,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0014",
+   "n": [
+    37,
+    38
+   ],
+   "idx": [
+    36,
+    41
+   ],
+   "gap_bbox_mm": 0.93,
+   "detetado": false,
+   "dist_antes_mm": 3.57,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0016",
+   "n": [
+    14,
+    13
+   ],
+   "idx": [
+    12,
+    15
+   ],
+   "gap_bbox_mm": 0.51,
+   "detetado": false,
+   "dist_antes_mm": 1.86,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0016",
+   "n": [
+    28,
+    29
+   ],
+   "idx": [
+    27,
+    28
+   ],
+   "gap_bbox_mm": 0.51,
+   "detetado": false,
+   "dist_antes_mm": 2.03,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0017",
+   "n": [
+    13,
+    18
+   ],
+   "idx": [
+    12,
+    17
+   ],
+   "gap_bbox_mm": 0.42,
+   "detetado": false,
+   "dist_antes_mm": 16.95,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0018",
+   "n": [
+    2,
+    3
+   ],
+   "idx": [
+    1,
+    2
+   ],
+   "gap_bbox_mm": 0.51,
+   "detetado": false,
+   "dist_antes_mm": 1.94,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0018",
+   "n": [
+    28,
+    29
+   ],
+   "idx": [
+    27,
+    29
+   ],
+   "gap_bbox_mm": 0.51,
+   "detetado": false,
+   "dist_antes_mm": 2.61,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0018",
+   "n": [
+    29,
+    34
+   ],
+   "idx": [
+    29,
+    33
+   ],
+   "gap_bbox_mm": 0.76,
+   "detetado": false,
+   "dist_antes_mm": 11.8,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0019",
+   "n": [
+    2,
+    3
+   ],
+   "idx": [
+    1,
+    2
+   ],
+   "gap_bbox_mm": 0.68,
+   "detetado": false,
+   "dist_antes_mm": 2.52,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0019",
+   "n": [
+    12,
+    16
+   ],
+   "idx": [
+    11,
+    15
+   ],
+   "gap_bbox_mm": -0.25,
+   "detetado": true,
+   "dist_antes_mm": 12.3,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0020",
+   "n": [
+    24,
+    30
+   ],
+   "idx": [
+    23,
+    25
+   ],
+   "gap_bbox_mm": -1.86,
+   "detetado": true,
+   "dist_antes_mm": 1.29,
+   "metodo": "watershed",
+   "alterado": true,
+   "confianca": "baixa"
+  },
+  {
+   "sid": "S0020",
+   "n": [
+    33,
+    31
+   ],
+   "idx": [
+    30,
+    35
+   ],
+   "gap_bbox_mm": 0.59,
+   "detetado": false,
+   "dist_antes_mm": 4.15,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0022",
+   "n": [
+    20,
+    21
+   ],
+   "idx": [
+    19,
+    20
+   ],
+   "gap_bbox_mm": 0.42,
+   "detetado": false,
+   "dist_antes_mm": 1.78,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0022",
+   "n": [
+    51,
+    52
+   ],
+   "idx": [
+    50,
+    51
+   ],
+   "gap_bbox_mm": 0.59,
+   "detetado": false,
+   "dist_antes_mm": 2.74,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0023",
+   "n": [
+    3,
+    4
+   ],
+   "idx": [
+    2,
+    3
+   ],
+   "gap_bbox_mm": -1.69,
+   "detetado": true,
+   "dist_antes_mm": 0.08,
+   "metodo": "watershed",
+   "alterado": true,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0023",
+   "n": [
+    26,
+    31
+   ],
+   "idx": [
+    25,
+    29
+   ],
+   "gap_bbox_mm": -0.17,
+   "detetado": true,
+   "dist_antes_mm": 14.34,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0023",
+   "n": [
+    27,
+    33
+   ],
+   "idx": [
+    26,
+    30
+   ],
+   "gap_bbox_mm": -0.93,
+   "detetado": true,
+   "dist_antes_mm": 9.6,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0023",
+   "n": [
+    30,
+    35
+   ],
+   "idx": [
+    31,
+    34
+   ],
+   "gap_bbox_mm": -2.29,
+   "detetado": true,
+   "dist_antes_mm": 13.98,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0023",
+   "n": [
+    42,
+    49
+   ],
+   "idx": [
+    41,
+    48
+   ],
+   "gap_bbox_mm": -0.42,
+   "detetado": true,
+   "dist_antes_mm": 13.99,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0023",
+   "n": [
+    44,
+    51
+   ],
+   "idx": [
+    43,
+    50
+   ],
+   "gap_bbox_mm": -0.51,
+   "detetado": true,
+   "dist_antes_mm": 8.93,
+   "metodo": "conectividade",
+   "alterado": false,
+   "confianca": "alta"
+  },
+  {
+   "sid": "S0023",
+   "n": [
+    54,
+    55
+   ],
+   "idx": [
+    53,
+    54
+   ],
+   "gap_bbox_mm": 0.34,
+   "detetado": false,
+   "dist_antes_mm": 2.29,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0023",
+   "n": [
+    57,
+    58
+   ],
+   "idx": [
+    56,
+    57
+   ],
+   "gap_bbox_mm": 0.51,
+   "detetado": false,
+   "dist_antes_mm": 1.78,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0024",
+   "n": [
+    15,
+    14
+   ],
+   "idx": [
+    14,
+    15
+   ],
+   "gap_bbox_mm": 0.68,
+   "detetado": false,
+   "dist_antes_mm": 2.25,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  },
+  {
+   "sid": "S0025",
+   "n": [
+    3,
+    4
+   ],
+   "idx": [
+    2,
+    3
+   ],
+   "gap_bbox_mm": 0.25,
+   "detetado": false,
+   "dist_antes_mm": 2.3,
+   "metodo": null,
+   "alterado": false,
+   "confianca": null
+  }
+ ]
+}

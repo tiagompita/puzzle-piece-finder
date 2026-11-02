@@ -8,7 +8,9 @@ Usage::
 Pipeline (:func:`ingest_scan`): ``segment_scan`` (crops kept in the scan frame,
 ``normalize_rotation=False``, so crop, contour and Shape share one frame) → fragments
 rejected (area < ``MIN_PIECE_MM2``) → ``is_cluster`` or area > ``DOUBLE_AREA_FACTOR`` ×
-median flagged ``objeto_duplo`` → ``shape.analyse`` → :func:`grid_order` numbering
+median flagged ``objeto_duplo``, ``contacto`` (interlocked/touching pieces re-partitioned by
+``segment_scan``; ``com`` = ``index_in_scan`` of the others) copied into ``flags`` and drawn in red on the
+overlay when ``confianca == 'baixa'`` → ``shape.analyse`` → :func:`grid_order` numbering
 (``n_no_lote``, continuing the bag's numbering if the bag already has pieces) → RGBA crop in
 ``crops/`` → ``mean_lab`` → numbered overlay ``overlays/<scan>.jpg`` (the sheet kept with
 the bag).
@@ -44,6 +46,7 @@ HIGHLIGHT_RGB = (255, 191, 0)  # amber: the highlighted piece of sheet_overlay
 COL_DOUBLE = (255, 0, 255)     # objeto_duplo
 COL_BORDER = (255, 160, 0)     # piece with a flat side
 COL_PIECE = (0, 255, 255)
+COL_CONTACT_LOW = (255, 0, 0)  # contacto with confianca 'baixa' (interlocked pieces, partition uncertain)
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_PROJECT = os.path.join("projects", "alpes")
 DEFAULT_PROFILE = os.path.join(REPO, "projects", "alpes", "puzzle.json")
@@ -152,6 +155,8 @@ def piece_label(p) -> int:
 def _piece_colour(p) -> tuple:
 	if p.flags.get("objeto_duplo"):
 		return COL_DOUBLE
+	if (p.flags.get("contacto") or {}).get("confianca") == "baixa":
+		return COL_CONTACT_LOW
 	return COL_BORDER if p.n_flat else COL_PIECE
 
 
@@ -249,6 +254,13 @@ def ingest_scan(project, scan_path: str, lote: Optional[int], *, dpi: float = 30
 		shape = analyse(cnt, mmpp)
 		dup = bool(p.get("is_cluster")) or area > DOUBLE_AREA_FACTOR * med
 		rgba = np.asarray(piece_to_rgba(p["image"], p["mask"]))
+		flags = {"touches_frame": bool(p.get("touches_frame")), "touches_strip": bool(p.get("touches_strip")),
+				 "is_cluster": bool(p.get("is_cluster")), "objeto_duplo": dup}
+		if p.get("contacto"):
+			flags["contacto"] = {"com": [int(i) for i in p["contacto"].get("com", [])],
+								 "confianca": str(p["contacto"].get("confianca", "alta")),
+								 "metodo": str(p["contacto"].get("metodo", "")),
+								 "alterado": bool(p["contacto"].get("alterado"))}
 		pid_next = f"P{int(project.meta['next_ids']['P']):04d}"
 		crop_rel = f"crops/{pid_next}.png"
 		Image.fromarray(np.ascontiguousarray(rgba)).save(project.p(crop_rel))
@@ -256,8 +268,7 @@ def ingest_scan(project, scan_path: str, lote: Optional[int], *, dpi: float = 30
 			"index_in_scan": int(p["index"]), "n_no_lote": n0 + n, "shape": shape, "contour": cnt,
 			"bbox": [int(v) for v in p["bbox"]], "crop_path": crop_rel, "mean_lab": _mean_lab(rgba),
 			"area_mm2": round(area, 2),
-			"flags": {"touches_frame": bool(p.get("touches_frame")), "touches_strip": bool(p.get("touches_strip")),
-					  "is_cluster": bool(p.get("is_cluster")), "objeto_duplo": dup},
+			"flags": flags,
 		})
 		assert pid == pid_next, (pid, pid_next)
 		ids.append(pid)
