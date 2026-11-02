@@ -195,14 +195,16 @@ def main(argv=None) -> int:
             shot(pg, "vai_buscar_ceu.png")
             pg.evaluate("showTab('buscar'); fitBoard()")
             settle(pg, 800)
-            pg.evaluate("document.querySelector('#tab-buscar .card .btn.slim').click()")
+            # the first ".btn.slim" of a card is now "Reportar"; pick the button by its text
+            pg.evaluate("[...document.querySelectorAll('#tab-buscar .card .btn')]"
+                        ".find(b => b.textContent.trim() === 'Ver no tabuleiro').click()")
             settle(pg, 3000)
             shot(pg, "ver_no_tabuleiro.jpg")
             pg.evaluate("showTab('lotes')")
             pg.wait_for_selector("#tab-lotes details.lot", timeout=60_000)
             settle(pg, 1500)
             shot(pg, "lotes.png")
-            pg.evaluate("showTab('mesa')")
+            pg.evaluate("document.querySelectorAll('dialog[open]').forEach(d => d.close()); showTab('mesa')")
             pg.wait_for_selector("#tab-mesa .cand button", timeout=60_000)
             pg.click("#tab-mesa .cand button")
             settle(pg, 1500)
