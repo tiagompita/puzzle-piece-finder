@@ -393,6 +393,7 @@ async function loadAll() {
   await loadBoard();
   await loadFetch();
   loadSections().catch((e) => toast(e.message, true));
+  loadReports().catch(() => {});
   if (S.tab === "lotes") loadLots().catch((e) => toast(e.message, true));
   renderImportar();
 }
@@ -405,6 +406,7 @@ function showTab(t) {
   $$("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t));
   $$(".tab").forEach((el) => el.classList.toggle("on", el.id === `tab-${t}`));
   if (t === "lotes" && !S.lots) loadLots().catch((e) => toast(e.message, true));
+  if (t === "reports") loadReports().catch((e) => toast(e.message, true));
   if (t === "mesa" && !S.sections) loadSections().catch((e) => toast(e.message, true));
   if (t !== "celula" && S.sel) { S.sel = null; drawSel(); }
   if (t !== "mesa" && S.mesa) { S.mesa = null; drawMesa(); }
@@ -556,6 +558,36 @@ function renderGuardadas() {
     h("summary", {}, `Guardadas com posição, ainda sem vizinha (${gs.length})`));
   for (const e of gs.sort((a, b) => a.ordem - b.ordem)) d.append(proposalCard(e));
   T.append(d);
+}
+
+// ------------------------------------------------------------ reports (só leitura: fecham-se no ficheiro)
+async function loadReports() {
+  const r = await api("/api/reports?todos=true");
+  S.reports = r.reports || [];
+  S.reportFilter = S.reportFilter || "aberto";
+  renderReports();
+}
+function renderReports() {
+  const T = $("#tab-reports"); T.replaceChildren();
+  const all = S.reports || [];
+  const nOpen = all.filter((r) => r.estado === "aberto").length;
+  $("#n-reports").textContent = nOpen ? String(nOpen) : "";
+  const f = S.reportFilter || "aberto";
+  T.append(h("p", { class: "summary", id: "reports-count" }, `${nOpen} aberto${nOpen === 1 ? "" : "s"} · ${all.length - nOpen} resolvido${all.length - nOpen === 1 ? "" : "s"}`));
+  const bar = h("div", { class: "actions", id: "reports-filter" });
+  for (const [k, t] of [["aberto", "Abertos"], ["fechado", "Resolvidos"]]) {
+    bar.append(h("button", { class: "btn slim" + (f === k ? " primary" : ""), type: "button", "data-filter": k, onclick: () => { S.reportFilter = k; renderReports(); } }, t));
+  }
+  T.append(bar);
+  const rows = all.filter((r) => r.estado === f);
+  if (!rows.length) { T.append(h("div", { class: "empty" }, h("strong", {}, f === "aberto" ? "Sem reports abertos." : "Sem reports resolvidos."))); return; }
+  for (const r of rows) {
+    const where = [r.piece, r.cell ? cellTxt(r.cell) : null].filter(Boolean).join(" · ") || "geral";
+    T.append(h("div", { class: "card report-row", "data-report": r.id },
+      h("div", { class: "small" }, h("b", {}, r.id), ` · ${r.estado === "aberto" ? "aberto" : "resolvido"} · ${r.tipo} · ${where}`),
+      h("div", {}, r.texto || h("span", { class: "muted" }, "(sem texto)")),
+      r.nota ? h("div", { class: "small muted" }, `nota: ${r.nota}`) : null));
+  }
 }
 
 // ------------------------------------------------------------ reportar
