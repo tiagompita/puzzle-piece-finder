@@ -58,7 +58,7 @@ M0 (measurement base: tests green on OpenCV 4.11 and 5.0, pinned requirements, c
 | `src/confirm.py` | ~247 | Functional | `python -m src.confirm`: place / reject / position known / anchor / unanchor / discard / `--relot` (move a piece to another lote, stable renumbering), then incremental re-query. **2026-11-02:** passes the proposal `theta_deg` to `place`/`set_position_known` (bug: GUI placements had null pose); `--cheia/--vazia`. |
 | `src/render.py` | ~1284 | Functional (verified 2026-11-01, `docs/diagnostico/render/RENDER.md`) | Board render for the GUI: rigid corner-based registration (Kabsch) of every placed piece (seam \|gap\| median 0.44 → 0.19 mm, p95 1.22 → 0.59 mm on 849 seams [V]); image refinement measured on this art (0.75 mm/px, translation only, 0 refinements accepted: not worth it [V]); green fringe removed only in the outer band connected to the background (0.7 mm; 1.2 mm on light pieces: deviation from the ≈ 0.5–0.7 rule decided this round, evidence in RENDER.md §2.5); depth priority on overlaps, 0.3 mm bleed; `compose_board`, `compose_zone_vs_art`; `rebuild_assets` regenerates npz/crops/overlays/clean/placements from `scans/*.json` without touching the log. Shadow pass measured and OFF (eats dark grass on p05–p11). Not segmentation: does not alter shapes in the index. **2026-11-02:** `piece_rgba_for_display` (clean crop, RGB under alpha 0 replaced, premultiplied warp, display-only shadow-rim rule `DISPLAY_SHADOW` 0.4 mm: grass rim residual −85 %, interior 100 % kept) used by cards, fetch sheets and Mesa; `_art_rgb` rectified; `image_refine` `at_edge` fixed. |
 | `src/border.py` | ~1366 | Functional (verified 2026-11-01, `docs/diagnostico/legado/BORDA.md`) | Border solve under the 217 ↔ 217 constraint: inventory (219 pieces with F, 2 false F), 9 twin pins (each confirmed by the chain without the pin), exact DP per segment + branch-and-bound across segments (consecutive-side fit, art, soft F, twin coupling), damaged pieces at neutral cost. 32 border cells filled in `projects/alpes/` (28 `alta`, 1 `media`, 3 `baixa`); only (1,29) missing. 6 cells to check physically (list in BORDA.md) [NT: not confirmed physically]. |
-| `src/server.py`, `src/web/` | ~1300 + 3 files | Functional (verified 2026-11-02 in Chromium/Playwright) | FastAPI local server + browser GUI (`docs/gui-design.md`, screenshots in `docs/gui/screenshots/`): board raster + SVG overlay, «Vai buscar» in two lists (`coloca_agora` / `guarda_posicao`), confirmed placements keep the proposal pose, «Ver no tabuleiro» zooms without changing tab, Ctrl+wheel left to the browser, compact panel + collapsible legend (layout tested at 1366×768 and 1920×1080 × 100/125/150 % + phone), «Reportar» (`/api/report`, `reports.jsonl`), cell hints «Está montada»/«Está vazia». Tests: `tests/test_server.py` (TestClient), `tests/test_gui_layout.py`, `tests/test_gui_flows.py` (Playwright, `slow`). The Tkinter `src/gui.py` stays as the legacy matching GUI. |
+| `src/server.py`, `src/web/` | ~1300 + 3 files | Functional (verified 2026-11-02 in Chromium/Playwright) | FastAPI local server + browser GUI (`docs/gui-design.md`, screenshots in `docs/gui/screenshots/`): board raster + SVG overlay, «Vai buscar» (only pieces with a mounted orthogonal neighbour) + «Guardadas» tab (`guarda_posicao`, collapsed, «não procurar ainda») + read-only «Reports» tab, confirmed placements keep the proposal pose, «Ver no tabuleiro» zooms without changing tab, Ctrl+wheel left to the browser, compact panel + collapsible legend (layout tested at 1366×768 and 1920×1080 × 100/125/150 % + phone), «Reportar» (`/api/report`, `reports.jsonl`), cell hints «Está montada»/«Está vazia». Tests: `tests/test_server.py` (TestClient), `tests/test_gui_layout.py`, `tests/test_gui_flows.py` (Playwright, `slow`). The Tkinter `src/gui.py` stays as the legacy matching GUI. |
 | `src/matching.py` | ~1087 | Functional, limited by the art and by photometry | `multi_scale_template_match`: zonal Lab 4×4 signature at ≈ 46 px/piece, scale band from `num_pieces`, 4 rotations, local minima + NMS, texture re-rank, border prior, differential confidence gap → `high`/`ambiguous`. Assumes the artwork fills the reference (false for `images/puzzles/PuzzleOriginal.jpeg`, a photo of the box). Legacy `compare_images`/`sliding_window_search` only used by the CLI. `use_gpu` accepted and ignored. |
 | `src/texture.py` | ~233 | Functional | Per-cell Sobel gradient-orientation signature used by the engine's re-rank. |
 | `src/visualization.py` | ~185 | Functional | Red-dot annotated result image (`annotate_results`, `save_annotated_image`). JSON export lives in the GUI. |
@@ -72,36 +72,46 @@ Dependencies: `opencv-python==4.11.0.86`, `numpy<2.3`, `Pillow<12` (pinned in `r
 
 ## Subagents & Model Routing
 
-Three subagents are defined in `.claude/agents/`:
+**Configuração atual (2026-11-05):** o Tiago trabalha só com Claude Code: o gestor (sessão principal) corre em **Sonnet**; os agentes **implementer (Opus)** e **helper (Sonnet)** são usados conforme o implementer decide. O **Fable já não está ativo**: não se invoca o planner e as decisões de arquitetura ficam com o implementer, registadas em `docs/decisoes.md`. O histórico abaixo (planner/Fable, cadeia helper → implementer → planner) mantém-se como registo da configuração anterior (até 2026-11-04) e `.claude/agents/planner.md` fica por referência.
 
-| Subagent | Model | Role | Limits |
+Agentes definidos em `.claude/agents/`:
+
+| Subagente | Modelo | Papel | Limites |
 |---|---|---|---|
-| **planner** | Fable | Architecture and deep-planning specialist. Read-only tools (Read, Grep, Glob, WebSearch, WebFetch). | Never writes or edits code — plans and decisions only. Invoked ONLY for genuinely complex problems the implementer cannot chart alone (e.g. choosing between fundamentally different algorithmic strategies, cross-module architecture decisions). Expensive and weekly-limited — last resort, used as rarely as possible. None of the current milestones needs it. |
-| **implementer** | Opus | Primary workhorse. Full editing tools. | Handles complex logic needing real reasoning but with a clear path: image algorithms, shape/fit geometry, segmentation, scoring/metrics, non-trivial bug fixes. Owns all changes to the critical modules (`src/matching.py`, `src/segmentation.py`, the future `src/shape.py`/`src/fit.py`/`src/twin.py`) and reviews the helper's algorithmic edits. Default tier for substantive coding work. |
-| **helper** | Sonnet | Cheapest, first-choice tier. Full editing tools. | Handles simple, low-risk work: GUI/UI tweaks, mechanical refactors, formatting, renames, documentation, requirements edits, simple tests, small fixes. Hard limit: must NOT change algorithmic logic in the critical modules without the implementer designing or reviewing the change. Escalates instead of guessing. |
+| **implementer** | Opus | Cavalo de batalha. Ferramentas de edição completas. | Lógica complexa mas com caminho claro: algoritmos de imagem, geometria de forma/encaixe, segmentação, métricas, correções não triviais. Dono de todas as alterações aos módulos críticos (`src/matching.py`, `src/segmentation.py`, `src/shape.py`/`src/fit.py`/`src/twin.py`) e revê as edições algorítmicas do helper. Nível por omissão para trabalho de código substantivo. |
+| **helper** | Sonnet | Nível mais barato, primeira escolha. Ferramentas de edição completas. | Trabalho simples e de baixo risco: GUI/UI, refactors mecânicos, formatação, renomear, documentação, requirements, testes simples, correções pequenas. Limite duro: não altera lógica algorítmica dos módulos críticos sem o implementer a desenhar/rever. Escala em vez de adivinhar. |
+| ~~planner~~ | ~~Fable~~ | *(histórico, inativo desde 2026-11-05)* Arquitetura e planeamento profundo, só leitura. | Nunca escreveu código. Era o último recurso por causa do limite semanal do Fable. |
 
-### Routing chain and rules
+### Routing
 
-- Routing chain, cheapest first: **helper (Sonnet) → implementer (Opus) → planner (Fable)**.
-- Always start at the cheapest tier that can plausibly do the task. Only escalate to the implementer when the helper is not enough. Only escalate to the planner when the implementer hits a genuine architecture/strategy wall it cannot resolve itself.
-- Subagents cannot spawn other subagents. "Escalation" means the subagent stops and reports clearly what it needs and why, so the main orchestrator routes the work to the right tier.
-- Hand-off pattern: planner produces a plan → implementer executes it → helper does the surrounding simple/mechanical work. The implementer reviews any helper edits that touch critical modules.
-- Concrete mapping for the current milestones: data wrangling, tooling, docs and GUI wiring → helper; analyses that define a metric (E-sym, cut lines, margin extrapolation), M2–M4, M10, M11 and M6 algorithms → implementer; planner not needed.
+- Cadeia atual: **helper (Sonnet) → implementer (Opus)**. Começa-se no nível mais barato que consiga fazer a tarefa; só se escala para o implementer quando o helper não chega.
+- Subagentes não lançam subagentes: «escalar» é parar e dizer ao gestor o que falta e porquê.
+- Mapeamento para os marcos atuais: dados, ferramentas, docs e GUI → helper; análises que definem uma métrica (E-sym, linhas de corte, extrapolação da margem), M2–M4, M10, M11 e M6 → implementer.
+- *(Histórico, até 2026-11-04: cadeia helper → implementer → planner (Fable); o planner produzia o plano, o implementer executava, o helper fazia o trabalho mecânico à volta; nenhum marco chegou a precisar dele.)*
 
 ## Cost-Saving Principle
 
-The user has a tight **weekly limit on the Fable model**, so Fable must be used sparingly — only for planning/deep analysis of genuinely complex problems. The bulk of the work must fall on Opus (complex implementation) and Sonnet (simple tasks).
-
-- Always use the cheapest model sufficient for the task.
-- Reserve Fable (planner) strictly for complex problem planning; invoke it as little as possible.
-- Let Opus (implementer) and Sonnet (helper) carry the bulk of the work.
-- This is the user's primary cost-saving mechanism and must be respected in all work.
+Manter o princípio de usar o modelo mais barato que chegue: o grosso do trabalho no **Sonnet** (gestor, helper) e no **Opus** (implementer, só quando há raciocínio real). *(Histórico: até 2026-11-04 havia também um limite semanal apertado no Fable, que por isso só se usava em planeamento de problemas genuinamente complexos; já não está ativo.)*
 
 ## Conventions
 
 - `src/` uses tab indentation, `__all__` exports, and docstrings; pure helpers are kept separate from I/O; functions return `{'error': str, ...}` on failure (contract of `matching.py`/`segmentation.py`).
 - Critical modules requiring implementer design/review for any algorithmic change: `src/matching.py`, `src/segmentation.py`, and the geometry/fit modules to be created (`src/shape.py`, `src/fit.py`, `src/twin.py`).
 - Reports to the user label every claim as verified (with evidence), not tested, or tested-and-failing; external claims carry a link. Commit messages in Portuguese, no Co-Authored-By line.
+
+## Pendentes (por esta ordem; registados 2026-11-05, nada disto foi corrigido nesta ronda)
+
+O estado corrente e a «Próxima sessão» vivem em `docs/HANDOFF.md`; esta é a lista técnica. Os reports R0013–R0020 continuam **abertos**.
+
+1. **Recorte «comido» em (3,64) P0234 e (4,64) P0233** (R0018–R0020, coluna 64): cor da peça removida na parte de cima e verde visível em baixo; é recorte/limpeza, não escala.
+2. **Baseline de buracos e erro de pose** (alvo para melhorar o encaixe visual): no desenho do tabuleiro sem trim, 131 células com > 5 % de buraco e 39 com > 10 % (de 589 colocadas); erro de pose ~1 mm; rotação das 588 peças com forma: 363 com desvio > 1,5° de um múltiplo de 90° (mediana 2,1°). Medidas e variantes refutadas (trim 0,48 mm, alinhar o lado reto) em `docs/decisoes.md`.
+3. **(26,1) / (25,1):** os contornos ficam a 0,06 mm um do outro, mas o Tiago vê (26,1) por baixo de (25,1): verificar a ordem de desenho dos tabs (prioridade de profundidade na sobreposição).
+4. **(1,63) P0240 e (47,2) P0590 inclinadas:** o lado reto fica a 4,6° e 4,3° da linha da borda (a rotação sai dos 4 cantos, que é ruidosa).
+5. **Coordenadas nos reports:** as células (44,55) e (40,63) que o Tiago indicou não têm peça (a primeira é só ocupação vinda da foto); o P0778 está em (4,10) e o P0224 em (40,64). Usar **IDs P0xxx** nos reports e não só a célula.
+
+## Sessões
+
+**No início ler `docs/HANDOFF.md`; no fim atualizá-lo e fechar o ficheiro do prompt em `docs/prompts/`** (formato em `docs/prompts/README.md`: Porquê / Decisões / Prompt verbatim / Resultado).
 
 ## Reports
 

@@ -140,3 +140,7 @@ Botão "Reportar" em cada cartão, no painel da peça e no da célula: abre um `
 - **Log**: eventos informativos `report` e `report_closed` (sem efeito no estado; o replay ignora-os). A escrita atualiza `_known_stat` e não emite `board_changed`/`fetch_changed`.
 - **CLI** (`src/reports.py`): `python -m src.reports --project projects/alpes --list` e `--close R0001 --nota "..."`.
 - **"Vai buscar" em dois grupos** (item 6): `fetch.json` ganha, só na resposta de `/api/fetch`, `vizinhas_montadas` (vizinhas 4-conexas `colocada` ou `ocupada_legado` com fonte `tiago`; `foto` não conta) e `grupo` (`coloca_agora` com ≥ 1, ou posição conhecida que passou a colocável; senão `guarda_posicao`, cujo botão é "Guardei num saquinho (l, c)" = `position_known` com `nota: "saquinho"`, ainda não guardada no log).
+
+## 12. Abas «Guardadas» e «Reports» (2026-11-05)
+
+«Vai buscar» só mostra peças com ≥ 1 vizinha ortogonal montada (`fetch_group`: diagonais e moldura não contam; borda colocada conta; sem exceção para `posicao_conhecida`). As restantes estão na aba **Guardadas**: aviso «Não procurar ainda» e a secção «Guardadas com posição, ainda sem vizinha» recolhida por omissão; saem também do realce do tabuleiro. A aba **Reports** é só de leitura (`GET /api/reports?todos=true`): ID, estado (aberto / resolvido), tipo, peça e célula, texto; filtro aberto/resolvido e contagem de abertos no separador. Os reports fecham-se no ficheiro (`python -m src.reports --close`).
