@@ -148,3 +148,71 @@ Botão "Reportar" em cada cartão, no painel da peça e no da célula: abre um `
 ## 13. Abas no topo e «Editar report» (2026-11-05)
 
 As 6 abas estão na barra de topo (`header#top > nav#tabs`), ao lado do nome e do progresso; abaixo de 1181 px ocupam uma 2.ª linha e abaixo de 900 px usam rótulos curtos (sem scroll horizontal; testado de 360 a 1920 px). O botão de report de um cartão, da célula ou da peça passa a **«Editar report»** quando já existe um report **aberto** dessa peça (ou dessa célula, se o report não tem peça): abre o mesmo diálogo preenchido («Editar R####», «Guardar edição»). `reports.jsonl` é append-only: editar acrescenta uma linha `{"evento": "edicao", "id", "t", "tipo"?, "texto"?}` (`POST /api/report/{id}/edit`; evento de log `report_edited`); a lista de Reports marca «editado N×». Só se editam reports abertos.
+
+
+## 14. Mesa — propostas (2026-11-05; **nada implementado, à espera de decisão**)
+
+O Tiago acha a aba «Mesa» confusa: «muita informação», muitos botões ver/ancorar, demasiado texto. Esta secção audita a aba com os dados reais do alpes e propõe duas alternativas **mais simples**. As alternativas são **protótipos descartáveis** desenhados por JavaScript injetado na página (`tools/gui/mesa_mockups.py`, nada em `src/`), sobre `S.sections` reais; as capturas e as métricas (`docs/gui/screenshots/mesa_*.jpg`, `mesa_metricas.json`) saem do mesmo script. A pesquisa por id/peça/célula (commit `70eae0a`) está feita e vale para qualquer das alternativas.
+
+### 14.1 Auditoria da aba atual (38 grupos por ancorar: 31 blocos, 7 montados)
+
+Captura: [`mesa_atual_1366.jpg`](screenshots/mesa_atual_1366.jpg), [`mesa_atual_390.jpg`](screenshots/mesa_atual_390.jpg).
+
+Por grupo, hoje: miniatura (130 px) · título «Grupo G0077» · «blocos · 2 peças · folha S0024» · «notas da ingestão» (recolhido) · **3 linhas** de zona, cada uma com «1) (15, 59) rot 0° · margem 3,32», os avisos «parte fica fora da grelha» / «n célula(s) já colocadas» e **2 botões** («Ver» e «Ancorar aqui»). Mais um parágrafo de 3 linhas no topo da aba.
+
+| medida (real) | 1366×768 | 390×844 |
+|---|---|---|
+| na aba inteira (38 grupos) | **228 botões**, ≈ 9 060 caracteres | idem |
+| no ecrã sem fazer scroll | **2 grupos** (o 2.º cortado), **10 botões**, ≈ 540 caracteres | **1 grupo**, 6 botões, ≈ 380 caracteres |
+
+Achados (dos dados, [V]):
+1. **A «margem» é do grupo, não da zona**: em **38 de 38** grupos as 3 zonas têm exatamente a mesma margem (3,32, 3,32, 3,32 na captura). A coluna «margem» repete o mesmo número três vezes e não ajuda a escolher entre zonas.
+2. **Só 7 de 38 grupos passam `margin_min` (1,5)**; a mediana da margem é 1,07. Para os outros 31 o próprio programa diz «ambígua, não ancora»: a aba oferece **93 botões «Ancorar aqui» a laranja** (3 por grupo) para decisões que o programa não fez. O botão mais forte do ecrã é o que menos deve ser carregado sem olhar.
+3. **11 grupos têm 2 zonas na mesma célula e só muda a rotação** (ex.: (28, 57) rot 270° e rot 180°): a 2.ª e a 3.ª linhas parecem repetidas.
+4. As **notas da ingestão** (38/38 têm, ≈ 205 caracteres) são técnicas («comp 2: ambigua; margem 1.02; 1 peça sem gémea; …»); já estão recolhidas, mas o cabeçalho «notas da ingestão ˅» ocupa uma linha em todos os cartões.
+5. O texto de ajuda (3 linhas) repete-se sempre no topo; a miniatura ocupa 130 px × 130 px para 1–2 peças.
+6. Falta uma pista de **qual ação é a principal**: «Ver» e «Ancorar aqui» têm o mesmo peso nas 3 linhas, e «Ancorar» não exige ter visto a zona.
+
+### 14.2 Alternativa A — «Fila de decisão» (um grupo de cada vez)
+
+Captura: [`mesa_a_fila_1366.jpg`](screenshots/mesa_a_fila_1366.jpg), [`mesa_a_fila_390.jpg`](screenshots/mesa_a_fila_390.jpg).
+
+Um único cartão: miniatura (84 px), «G0077 · 2 peças», «Melhor zona: (15, 59)» com um selo (segura / a confirmar, pela margem do grupo), a zona **já pré-visualizada** no tabuleiro (violeta), e **duas ações**: **«Ancorar aqui»** (principal) e «Seguinte →». «Outras zonas (2)» e as notas ficam recolhidas. Ordem: das mais seguras às menos; contador «1 de 38». A caixa de pesquisa salta para um grupo.
+
+| | |
+|---|---|
+| **Sai do ecrã** | os 38 cartões em lista, as 3 zonas em linha, os 6 botões por grupo, a margem repetida, o parágrafo de ajuda, as notas |
+| **Fica** | miniatura, id, nº de peças, melhor zona + selo, Ancorar, Seguinte; zonas alternativas e pesquisa a 1 toque |
+| **Métricas** | 4 botões e ≈ 120 caracteres (em vez de 228 e 9 060 no total / 10 e 540 no ecrã); 1 grupo em ecrã em ambos os tamanhos |
+| **Custo** | pequeno em código (≈ 60–80 linhas JS no lugar de `renderMesa`/`mesaCard`; sem backend; reutiliza `/api/sections`, `drawMesa`, `zoomCells`); testes: reescrever o de pesquisa e acrescentar «Seguinte» e a pré-visualização; layout testado já cobre a aba |
+| **Riscos** | perde-se a **visão geral** (não se vê que há 7 seguras e 31 duvidosas; não se compara grupos); «Seguinte» de 38 em 38 é lento se o Tiago quer procurar um grupo específico (a pesquisa ajuda); o botão Ancorar fica sempre à mão, é preciso decidir o que fazer nos grupos «a confirmar» (confirmação extra? esconder?) |
+
+### 14.3 Alternativa B — «Lista compacta» (uma linha por grupo, abre-se uma de cada vez)
+
+Captura: [`mesa_b_lista_1366.jpg`](screenshots/mesa_b_lista_1366.jpg), [`mesa_b_lista_aberta_1366.jpg`](screenshots/mesa_b_lista_aberta_1366.jpg) e as de 390 px.
+
+Uma linha por grupo: miniatura 44 px, «G0071 · 4 peças», «melhor zona (17, 35)» com selo e **um só botão, «Ver»** (laranja). «Ver» pré-visualiza a zona no tabuleiro e **abre** a linha, onde aparece a ação principal **«Ancorar em (17, 35)»** e, em letra pequena, «ou (15, 48) · Ver», «ou (15, 46) · Ver». A pesquisa fica por cima. Só uma linha aberta de cada vez.
+
+| | |
+|---|---|
+| **Sai do ecrã** | os 3 cartões abertos por grupo, 5 dos 6 botões, a margem repetida, as notas, o parágrafo de ajuda; «Ancorar» deixa de estar visível sem ter visto a zona |
+| **Fica** | todos os grupos numa lista visível, a ordem por margem, pesquisa, selo, as 3 zonas (1 principal + 2 «ou»), pré-visualização |
+| **Métricas** | 38 botões (1 por grupo) + 3 na linha aberta; ≈ 2 000 caracteres no total; **11 grupos no ecrã** a 1366×768 e **6** a 390 px (hoje 2 e 1) |
+| **Custo** | pequeno a médio (≈ 80–100 linhas JS; sem backend; estado «linha aberta»; teste da pesquisa continua válido, acrescentar abrir/fechar e Ancorar só depois de Ver); layout a 390 px a verificar |
+| **Riscos** | a linha aberta empurra a lista (scroll); o selo mostra só 2 níveis; precisa de uma regra para o «Ancorar» dos grupos «a confirmar» (ver 14.4) |
+
+Nota sobre os protótipos: nas capturas as zonas alternativas mostram o selo do **grupo** (a margem é do grupo, achado 1); um desenho final não deve repetir o selo por zona.
+
+### 14.4 O que as duas alternativas partilham (decisões pequenas, a confirmar)
+
+- **Selo único por grupo** (segura se margem ≥ `margin_min` = 1,5; «a confirmar» caso contrário: 7 seguras / 31 a confirmar) em vez da «margem» em cada zona.
+- **Zonas duplicadas só pela rotação juntam-se numa linha** («(28, 57), rot 270° ou 180°»): 11 grupos.
+- **«Ancorar» só depois de «Ver»** (a zona tem de ter sido pré-visualizada) e, nos «a confirmar», o texto da confirmação avisa que o programa não decidiu.
+- **Notas da ingestão** passam para um «ⓘ» no cabeçalho (já estão recolhidas), o parágrafo de ajuda passa a uma linha.
+- Qualquer das duas mantém a pesquisa (`70eae0a`) e não mexe no backend nem no log.
+
+### 14.5 Recomendação
+
+**Recomendo a B (lista compacta).** Razões: (1) a **visão geral** é o que falta ao Tiago quando procura um grupo (acabou de pedir pesquisa por id/célula, o que pressupõe uma lista em que se navega), e a B mostra 11 grupos no ecrã em vez de 2; (2) corta o ruído tanto como a A (de 228 botões para 38 + 3, de ≈ 9 000 para ≈ 2 000 caracteres), com **uma ação por linha** («Ver») e a ação principal só depois de ver a zona, o que evita ancorar às cegas; (3) o custo é do mesmo tamanho da A e não perde nenhum caso de uso; (4) a A é melhor num único fluxo «despachar por ordem» (os 7 seguros), mas obriga a 38 passos para ver o resto, e na prática 31 dos 38 grupos são «a confirmar» e pedem comparação, não despacho em fila. Se o Tiago quiser só despachar os 7 seguros, a B com um filtro «só seguras (7)» dá-lhe a fila sem perder a lista.
+
+**Por decidir (Tiago):** A ou B (ou outra); o que fazer com os 31 grupos «a confirmar» (escondidos atrás de um filtro, ou visíveis com «Ancorar» a pedir confirmação); se as zonas que só diferem na rotação se juntam. **Não implementado** até haver decisão.
