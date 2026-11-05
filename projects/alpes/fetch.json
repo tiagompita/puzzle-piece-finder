@@ -1,5 +1,5 @@
 {
- "t": "2026-11-02T14:39:54",
+ "t": "2026-11-05T20:52:35",
  "entries": [
   {
    "origin": "gemeo",
@@ -5298,75 +5298,6 @@
    "lote": null,
    "n_no_lote": null,
    "cell": [
-    14,
-    61
-   ],
-   "decision": "por_ancorar",
-   "margin": 1.197,
-   "dE": null,
-   "d1_mm": null,
-   "reasons": [
-    "2 peças; top-3 [([14, 61], 90), ([14, 62], 90), ([15, 44], 90)]"
-   ],
-   "query": null,
-   "pair": null,
-   "rank": null,
-   "score": null,
-   "phi_deg": null,
-   "section": "G0084",
-   "candidates": [
-    {
-     "cell0": [
-      14,
-      61
-     ],
-     "rot": 90,
-     "mirror": false,
-     "score": 13.871,
-     "margin": 1.197
-    },
-    {
-     "cell0": [
-      14,
-      62
-     ],
-     "rot": 90,
-     "mirror": false,
-     "score": 16.607,
-     "margin": 1.197
-    },
-    {
-     "cell0": [
-      15,
-      44
-     ],
-     "rot": 90,
-     "mirror": false,
-     "score": 16.909,
-     "margin": 1.197
-    }
-   ],
-   "ordem": 18,
-   "scan_id": null,
-   "crop_path": null,
-   "clean_path": null,
-   "twin_id": null,
-   "twin_cell": [
-    34,
-    4
-   ],
-   "sheet": null,
-   "ghost": null,
-   "theta_deg": null,
-   "pose_known": false,
-   "pose_reason": "sem peça"
-  },
-  {
-   "origin": "seccao",
-   "piece": null,
-   "lote": null,
-   "n_no_lote": null,
-   "cell": [
     43,
     56
    ],
@@ -5415,7 +5346,7 @@
      "margin": 1.164
     }
    ],
-   "ordem": 19,
+   "ordem": 18,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5965,7 +5896,7 @@
      "margin": 1.15
     }
    ],
-   "ordem": 20,
+   "ordem": 19,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6515,7 +6446,7 @@
      "margin": 1.139
     }
    ],
-   "ordem": 21,
+   "ordem": 20,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7065,7 +6996,7 @@
      "margin": 1.136
     }
    ],
-   "ordem": 22,
+   "ordem": 21,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7134,7 +7065,7 @@
      "margin": 1.116
     }
    ],
-   "ordem": 23,
+   "ordem": 22,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7203,7 +7134,7 @@
      "margin": 1.08
     }
    ],
-   "ordem": 24,
+   "ordem": 23,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7272,7 +7203,7 @@
      "margin": 1.076
     }
    ],
-   "ordem": 25,
+   "ordem": 24,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7822,7 +7753,7 @@
      "margin": 1.074
     }
    ],
-   "ordem": 26,
+   "ordem": 25,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7891,7 +7822,7 @@
      "margin": 1.073
     }
    ],
-   "ordem": 27,
+   "ordem": 26,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7961,7 +7892,7 @@
      "margin": 1.071
     }
    ],
-   "ordem": 28,
+   "ordem": 27,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8030,7 +7961,7 @@
      "margin": 1.067
     }
    ],
-   "ordem": 29,
+   "ordem": 28,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8099,7 +8030,7 @@
      "margin": 1.059
     }
    ],
-   "ordem": 30,
+   "ordem": 29,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8168,7 +8099,7 @@
      "margin": 1.057
     }
    ],
-   "ordem": 31,
+   "ordem": 30,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8237,7 +8168,7 @@
      "margin": 1.055
     }
    ],
-   "ordem": 32,
+   "ordem": 31,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8306,7 +8237,7 @@
      "margin": 1.045
     }
    ],
-   "ordem": 33,
+   "ordem": 32,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8377,7 +8308,7 @@
      "margin": 1.042
     }
    ],
-   "ordem": 34,
+   "ordem": 33,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8927,7 +8858,7 @@
      "margin": 1.039
     }
    ],
-   "ordem": 35,
+   "ordem": 34,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8996,7 +8927,7 @@
      "margin": 1.031
     }
    ],
-   "ordem": 36,
+   "ordem": 35,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9065,7 +8996,7 @@
      "margin": 1.03
     }
    ],
-   "ordem": 37,
+   "ordem": 36,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9134,7 +9065,7 @@
      "margin": 1.02
     }
    ],
-   "ordem": 38,
+   "ordem": 37,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9684,7 +9615,7 @@
      "margin": 1.017
     }
    ],
-   "ordem": 39,
+   "ordem": 38,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9753,7 +9684,7 @@
      "margin": 1.011
     }
    ],
-   "ordem": 40,
+   "ordem": 39,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9822,7 +9753,7 @@
      "margin": 1.007
     }
    ],
-   "ordem": 41,
+   "ordem": 40,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9891,7 +9822,7 @@
      "margin": 1.005
     }
    ],
-   "ordem": 42,
+   "ordem": 41,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -10441,7 +10372,7 @@
      "margin": 1.003
     }
    ],
-   "ordem": 43,
+   "ordem": 42,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -10510,7 +10441,7 @@
      "margin": 1.001
     }
    ],
-   "ordem": 44,
+   "ordem": 43,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -10579,7 +10510,7 @@
      "margin": 1.001
     }
    ],
-   "ordem": 45,
+   "ordem": 44,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -10648,7 +10579,7 @@
      "margin": 0.874
     }
    ],
-   "ordem": 46,
+   "ordem": 45,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -10717,7 +10648,7 @@
      "margin": 0.868
     }
    ],
-   "ordem": 47,
+   "ordem": 46,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -11267,7 +11198,7 @@
      "margin": 0.835
     }
    ],
-   "ordem": 48,
+   "ordem": 47,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
