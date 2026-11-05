@@ -962,15 +962,15 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "tiago",
+    "estado": "colocada",
+    "peca_id": "P0294",
+    "fonte": "legado_scan",
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "tiago",
+    "estado": "colocada",
+    "peca_id": "P0291",
+    "fonte": "legado_scan",
     "foto_id": null
    },
    {
