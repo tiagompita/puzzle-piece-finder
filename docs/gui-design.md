@@ -144,3 +144,7 @@ Botão "Reportar" em cada cartão, no painel da peça e no da célula: abre um `
 ## 12. Abas «Guardadas» e «Reports» (2026-11-05)
 
 «Vai buscar» só mostra peças com ≥ 1 vizinha ortogonal montada (`fetch_group`: diagonais e moldura não contam; borda colocada conta; sem exceção para `posicao_conhecida`). As restantes estão na aba **Guardadas**: aviso «Não procurar ainda» e a secção «Guardadas com posição, ainda sem vizinha» recolhida por omissão; saem também do realce do tabuleiro. A aba **Reports** é só de leitura (`GET /api/reports?todos=true`): ID, estado (aberto / resolvido), tipo, peça e célula, texto; filtro aberto/resolvido e contagem de abertos no separador. Os reports fecham-se no ficheiro (`python -m src.reports --close`).
+
+## 13. Abas no topo e «Editar report» (2026-11-05)
+
+As 6 abas estão na barra de topo (`header#top > nav#tabs`), ao lado do nome e do progresso; abaixo de 1181 px ocupam uma 2.ª linha e abaixo de 900 px usam rótulos curtos (sem scroll horizontal; testado de 360 a 1920 px). O botão de report de um cartão, da célula ou da peça passa a **«Editar report»** quando já existe um report **aberto** dessa peça (ou dessa célula, se o report não tem peça): abre o mesmo diálogo preenchido («Editar R####», «Guardar edição»). `reports.jsonl` é append-only: editar acrescenta uma linha `{"evento": "edicao", "id", "t", "tipo"?, "texto"?}` (`POST /api/report/{id}/edit`; evento de log `report_edited`); a lista de Reports marca «editado N×». Só se editam reports abertos.

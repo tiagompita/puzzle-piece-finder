@@ -31,13 +31,14 @@ b, .num { font-variant-numeric: tabular-nums; }
   grid-template-areas: "top top" "board panel" "legend legend"; }
 
 /* ------------------------------------------------------------ header */
-#top { grid-area: top; display: flex; align-items: center; gap: 18px; padding: 8px 14px;
+#top { grid-area: top; display: flex; align-items: center; gap: 14px; padding: 0 14px;
   background: var(--bg2); border-bottom: 1px solid var(--line); min-height: 52px; }
-.brand { display: flex; flex-direction: column; min-width: 0; }
-.brand-name { font-weight: 650; letter-spacing: .01em; font-size: 16px; white-space: nowrap; }
+.brand { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; padding: 8px 0; }
+.brand-name { font-weight: 650; letter-spacing: .01em; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brand-sub { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; }
-.progress { flex: 1; min-width: 80px; max-width: 420px; }
+.progress { flex: 1 1 60px; min-width: 40px; max-width: 360px; }
+.tools { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .progress-bar { height: 8px; border-radius: 4px; background: var(--bg3); overflow: hidden; display: flex; }
 #pb-placed { background: linear-gradient(90deg, #8fb3d9, #c9d8b0); }
 #pb-legacy { background: repeating-linear-gradient(45deg, #7f93a8 0 3px, #3a4350 3px 6px); }
@@ -89,9 +90,12 @@ b, .num { font-variant-numeric: tabular-nums; }
 .tab > *, .card, .lot, .lot-body, .card-top > *, .card-mid > *, .cand > *, .grp-top > *, .form > * { min-width: 0; }
 .tab { overflow-wrap: anywhere; }
 .sheet-handle { display: none; }
-#tabs { display: flex; gap: 2px; padding: 6px 6px 0; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-#tabs button { flex: 1; min-height: var(--tap); border: 0; background: transparent; border-radius: 8px 8px 0 0;
-  color: var(--muted); cursor: pointer; font-weight: 550; font-size: 13px; white-space: nowrap; padding: 0 6px; }
+/* tabs live in the top bar (next to name / progress); never a horizontal scroll */
+#tabs { display: flex; gap: 2px; align-self: stretch; flex: 0 0 auto; }
+#tabs button { min-height: var(--tap); border: 0; background: transparent; border-radius: 8px 8px 0 0;
+  color: var(--muted); cursor: pointer; font-weight: 550; font-size: 13px; white-space: nowrap; padding: 0 10px; }
+#tabs button:hover { color: var(--text); }
+.t-short { display: none; }
 #tabs button.on { color: var(--text); background: var(--bg3); box-shadow: inset 0 -3px 0 var(--amber); }
 #tabs button b { color: var(--amber); font-weight: 700; margin-left: 2px; }
 .tab { display: none; overflow-y: auto; overflow-x: hidden; min-width: 0; padding: 12px 14px 24px; flex: 1; min-height: 0; overscroll-behavior: contain; }
@@ -316,8 +320,6 @@ details.tech li { margin: 2px 0; }
   .sheet-handle { display: flex; justify-content: center; align-items: center; height: 22px; border: 0;
     background: transparent; cursor: pointer; flex-shrink: 0; }
   .sheet-handle span { width: 44px; height: 5px; border-radius: 3px; background: var(--faint); }
-  #tabs { padding-top: 0; }
-  #tabs button { padding: 0 4px; }
   .tab { padding: 10px 10px 30px; }
 }
 @media (max-width: 900px) and (pointer: coarse) {
@@ -353,3 +355,18 @@ details.tech li { margin: 2px 0; }
 .aviso-box { background: rgba(230, 160, 40, .12); border: 1px solid var(--amber); border-radius: 8px; padding: 8px 10px; font-size: 13px; margin: 0 0 10px; }
 details.guardadas > summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
 .report-row { padding: 8px 10px; }
+
+/* tabs in the top bar: below 1181 px the tabs take a second row (never overlapping the tools), short labels on phones */
+@media (max-width: 1180px) {
+  .progress { display: none; }
+  #top { flex-wrap: wrap; row-gap: 0; padding: 0 10px; }
+  .brand { order: 1; flex: 1 1 0; padding: 6px 0 2px; }
+  .tools { order: 2; margin-left: 0; }
+  #tabs { order: 3; flex: 1 1 100%; align-self: auto; justify-content: space-between; gap: 0; }
+  #tabs button { flex: 1 1 auto; min-height: 36px; padding: 0 3px; }
+}
+@media (max-width: 900px) {
+  #tabs button { font-size: 12px; }
+  .t-full { display: none; }
+  .t-short { display: inline; }
+}

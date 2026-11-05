@@ -111,3 +111,73 @@ def test_layout(base, browser, w, h, dsf):
         pg.evaluate("showTab('buscar')")
     finally:
         pg.close()
+
+
+TAB_VIEWPORTS = [(1366, 768), (1920, 1080), (911, 512), (1024, 768), (768, 1024), (390, 844), (360, 640)]
+
+
+@pytest.mark.parametrize("w,h", TAB_VIEWPORTS)
+def test_tabs_in_top_bar(base, browser, w, h):
+    """The six tabs live in the top bar (not in the side panel): all fully inside the viewport, no
+    horizontal scroll, on the same row as the name on wide screens, and each one opens its section."""
+    pg = browser.new_page(viewport={"width": w, "height": h})
+    try:
+        pg.goto(base + "/")
+        pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+        pg.wait_for_timeout(300)
+        assert pg.evaluate("!!document.querySelector('#top #tabs') && !document.querySelector('#panel #tabs')")
+        rects = pg.evaluate("[...document.querySelectorAll('#tabs button')].map((b) => { const r = b.getBoundingClientRect();"
+                            " return [b.dataset.tab, r.left, r.right, r.top, r.bottom, r.width]; })")
+        assert [r[0] for r in rects] == ["buscar", "guardadas", "lotes", "mesa", "importar", "reports"]
+        for tab, left, right, top, bottom, width in rects:
+            assert width > 20 and left >= 0 and right <= w and top >= 0 and bottom <= h, (tab, left, right, w)
+        assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        top_h = pg.evaluate("document.querySelector('#top').getBoundingClientRect().height")
+        if w >= 1181:     # one row: tabs next to the name / progress
+            assert top_h <= 64, top_h
+            nm = pg.evaluate("document.querySelector('.brand').getBoundingClientRect().right")
+            assert rects[0][1] >= nm - 1, "tabs overlap the brand"
+        else:             # phone / tablet: second row, never more than 2 rows
+            assert top_h <= 110, top_h
+        for tab in ("reports", "guardadas", "lotes", "mesa", "importar", "buscar"):
+            pg.click(f"#tabs button[data-tab={tab}]")
+            assert pg.evaluate(f"document.querySelector('#tab-{tab}').classList.contains('on')"), tab
+            assert pg.evaluate(f"document.querySelector('#tabs button[data-tab={tab}]').classList.contains('on')"), tab
+        assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    finally:
+        pg.close()
+
+
+@pytest.mark.parametrize("w", [1100, 1180, 1181, 1280, 1366, 1440])
+def test_top_bar_no_overlap_with_job_pill_and_big_badges(base, browser, w):
+    """Worst case of the top bar: the job pill visible and realistic badges (Vai buscar 3 digits, Guardadas 2,
+    Mesa 2, Reports 22): no two items overlap, everything inside the viewport, no horizontal scroll."""
+    pg = browser.new_page(viewport={"width": w, "height": 800})
+    try:
+        pg.goto(base + "/")
+        pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+        pg.evaluate("""() => {
+          const j = document.querySelector('#job-pill'); j.hidden = false; j.textContent = 'a importar o saco 3 · 45 %';
+          for (const [id, t] of [['n-buscar', '123'], ['n-guardadas', '12'], ['n-mesa', '41'], ['n-reports', '22']])
+            document.getElementById(id).textContent = t;
+        }""")
+        pg.wait_for_timeout(300)
+        items = pg.evaluate("""() => {
+          const r = (e) => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
+          const out = [['brand', r(document.querySelector('#top .brand'))]];
+          for (const b of document.querySelectorAll('#tabs button')) out.push(['tab ' + b.dataset.tab, r(b)]);
+          for (const e of document.querySelectorAll('#top .tools > *')) if (!e.hidden) out.push(['tool ' + (e.id || e.className), r(e)]);
+          return out;
+        }""")
+        names = [n for n, _ in items]
+        assert "tool job-pill" in " ".join(names) or any(n.startswith("tool job") for n in names), names
+        eps = 0.5
+        for i, (na, a) in enumerate(items):
+            assert a[0] >= -eps and a[2] <= w + eps, (w, na, a)
+            for nb, b in items[i + 1:]:
+                inter_w = min(a[2], b[2]) - max(a[0], b[0])
+                inter_h = min(a[3], b[3]) - max(a[1], b[1])
+                assert not (inter_w > eps and inter_h > eps), (w, na, nb, a, b)
+        assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), w
+    finally:
+        pg.close()

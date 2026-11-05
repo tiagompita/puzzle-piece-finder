@@ -17,6 +17,14 @@
     <div class="progress" title="colocadas (cor da peça) e ocupadas sem silhueta (tracejado) em relação ao total">
       <div class="progress-bar"><span id="pb-placed"></span><span id="pb-legacy"></span></div>
     </div>
+    <nav id="tabs" role="tablist" aria-label="Separadores">
+      <button type="button" role="tab" data-tab="buscar" class="on"><span class="t-full">Vai buscar</span><span class="t-short">Buscar</span> <b id="n-buscar"></b></button>
+      <button type="button" role="tab" data-tab="guardadas">Guardadas <b id="n-guardadas"></b></button>
+      <button type="button" role="tab" data-tab="lotes">Lotes</button>
+      <button type="button" role="tab" data-tab="mesa">Mesa <b id="n-mesa"></b></button>
+      <button type="button" role="tab" data-tab="importar">Importar</button>
+      <button type="button" role="tab" data-tab="reports">Reports <b id="n-reports"></b></button>
+    </nav>
     <div class="tools">
       <span class="job" id="job-pill" hidden></span>
       <label class="toggle"><input type="checkbox" id="tg-ghost" checked><span>Fantasmas</span></label>
@@ -54,14 +62,6 @@
 
   <aside id="panel">
     <button type="button" class="sheet-handle" id="sheet-handle" aria-label="Expandir o painel"><span></span></button>
-    <nav id="tabs" role="tablist">
-      <button type="button" role="tab" data-tab="buscar" class="on">Vai buscar <b id="n-buscar"></b></button>
-      <button type="button" role="tab" data-tab="guardadas">Guardadas <b id="n-guardadas"></b></button>
-      <button type="button" role="tab" data-tab="lotes">Lotes</button>
-      <button type="button" role="tab" data-tab="mesa">Mesa <b id="n-mesa"></b></button>
-      <button type="button" role="tab" data-tab="importar">Importar</button>
-      <button type="button" role="tab" data-tab="reports">Reports <b id="n-reports"></b></button>
-    </nav>
     <section class="tab on" id="tab-buscar"></section>
     <section class="tab" id="tab-guardadas"></section>
     <section class="tab" id="tab-lotes"></section>
