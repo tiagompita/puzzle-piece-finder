@@ -82,5 +82,31 @@ def test_layout(base, browser, w, h, dsf):
         pg.evaluate("document.querySelector('#board').dispatchEvent(new WheelEvent('wheel', "
                     "{deltaY: -400, bubbles: true, cancelable: true, clientX: 300, clientY: 200}))")
         assert pg.get_attribute("#board", "viewBox") != vb0
+        # no horizontal scroll anywhere (document, panel, every tab), vertical scroll only inside the panel
+        for tab in ("buscar", "lotes", "mesa", "importar"):
+            pg.evaluate(f"showTab('{tab}')")
+            pg.wait_for_timeout(300)
+            assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), tab
+            assert pg.evaluate("document.documentElement.scrollHeight <= innerHeight"), tab
+            assert pg.evaluate(f"(() => {{ const t = document.querySelector('#tab-{tab}');"
+                               " return t.scrollWidth <= t.clientWidth + 1; })()"), tab
+        pg.evaluate("showTab('buscar')")
+        ov = pg.evaluate("(() => { const t = document.querySelector('#tab-buscar');"
+                         " return [getComputedStyle(t).overflowY, getComputedStyle(document.body).overflowY]; })()")
+        assert ov[0] in ("auto", "scroll") and ov[1] == "hidden", ov
+        # collapsible legend: pointer cursor, opens and closes
+        cur = pg.evaluate("getComputedStyle(document.querySelector('#legend-box > summary')).cursor")
+        assert cur == "pointer", cur
+        pg.evaluate("document.querySelector('#legend-box').open = false")
+        pg.click("#legend-box > summary")
+        assert pg.evaluate("document.querySelector('#legend-box').open") is True
+        pg.click("#legend-box > summary")
+        assert pg.evaluate("document.querySelector('#legend-box').open") is False
+        # one arrow on each side of the word
+        pseudo = pg.evaluate("[getComputedStyle(document.querySelector('#legend-box > summary'), '::before').content,"
+                             " getComputedStyle(document.querySelector('#legend-box > summary'), '::after').content]")
+        assert all(p not in ('none', 'normal', '""') for p in pseudo), pseudo
+        # Reportar is red
+        pg.evaluate("showTab('buscar')")
     finally:
         pg.close()

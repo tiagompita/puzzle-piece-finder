@@ -19,13 +19,13 @@
   --tap: 44px;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font);
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font);
   font-size: 13.5px; line-height: 1.4; -webkit-font-smoothing: antialiased; }
 button, input, select { font: inherit; color: inherit; }
 b, .num { font-variant-numeric: tabular-nums; }
 [hidden] { display: none !important; }
 
-#app { display: grid; height: 100vh; height: 100dvh;
+#app { display: grid; overflow: hidden; max-width: 100vw; height: 100vh; height: 100dvh;
   grid-template-columns: minmax(0, 1fr) var(--panel-w);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas: "top top" "board panel" "legend legend"; }
@@ -84,14 +84,17 @@ b, .num { font-variant-numeric: tabular-nums; }
 
 /* ------------------------------------------------------------ panel */
 #panel { grid-area: panel; background: var(--bg2); border-left: 1px solid var(--line); display: flex;
-  flex-direction: column; min-height: 0; }
+  flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }
+#panel img, #panel svg, #panel canvas { max-width: 100%; }
+.tab > *, .card, .lot, .lot-body, .card-top > *, .card-mid > *, .cand > *, .grp-top > *, .form > * { min-width: 0; }
+.tab { overflow-wrap: anywhere; }
 .sheet-handle { display: none; }
 #tabs { display: flex; gap: 2px; padding: 6px 6px 0; border-bottom: 1px solid var(--line); flex-shrink: 0; }
 #tabs button { flex: 1; min-height: var(--tap); border: 0; background: transparent; border-radius: 8px 8px 0 0;
   color: var(--muted); cursor: pointer; font-weight: 550; font-size: 13px; white-space: nowrap; padding: 0 6px; }
 #tabs button.on { color: var(--text); background: var(--bg3); box-shadow: inset 0 -3px 0 var(--amber); }
 #tabs button b { color: var(--amber); font-weight: 700; margin-left: 2px; }
-.tab { display: none; overflow-y: auto; padding: 12px 14px 24px; flex: 1; min-height: 0; overscroll-behavior: contain; }
+.tab { display: none; overflow-y: auto; overflow-x: hidden; min-width: 0; padding: 12px 14px 24px; flex: 1; min-height: 0; overscroll-behavior: contain; }
 .tab.on { display: block; }
 h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 16px 0 8px;
   font-weight: 650; }
@@ -154,6 +157,13 @@ h3 { margin: 0; font-size: 17px; font-weight: 650; }
 .sheet-cap { font-size: 12px; color: var(--muted); margin-top: 3px; }
 details.tech { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
 details.tech summary { cursor: pointer; min-height: 28px; }
+summary.fold, details.tech > summary, .lot > summary, #legend-box > summary { cursor: pointer; }
+details.tech > summary:hover, .lot > summary:hover, #legend-box > summary:hover { color: var(--text); }
+details.tech > summary { list-style: none; display: flex; align-items: center; gap: 6px; }
+details.tech > summary::-webkit-details-marker { display: none; }
+details.tech > summary::after, .lot > summary::after, #legend-box > summary::after {
+  content: "˅"; margin-left: auto; font-weight: 700; font-size: 1.15em; line-height: 1; color: var(--muted); }
+details.tech[open] > summary::after, .lot[open] > summary::after, #legend-box[open] > summary::after { content: "˄"; }
 details.tech li { margin: 2px 0; }
 
 /* lots */
@@ -224,8 +234,9 @@ details.tech li { margin: 2px 0; }
 
 /* ------------------------------------------------------------ legend (collapsible, state remembered) */
 #legend-wrap { grid-area: legend; background: var(--bg2); border-top: 1px solid var(--line); }
-#legend-box > summary { cursor: pointer; padding: 3px 14px; font-size: 11px; text-transform: uppercase;
+#legend-box > summary { list-style: none; padding: 3px 14px; font-size: 11px; text-transform: uppercase;
   letter-spacing: .1em; color: var(--muted); font-weight: 700; min-height: 24px; display: flex; align-items: center; }
+#legend-box > summary::-webkit-details-marker { display: none; }
 #legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0 14px;
   padding: 2px 14px 6px; font-size: 12px; align-items: center; max-height: 30vh; overflow-y: auto; }
 #legend .lg-title { display: none; }
@@ -325,3 +336,15 @@ details.tech li { margin: 2px 0; }
 #report-dlg::backdrop { background: rgba(0, 0, 0, .6); }
 #report-dlg fieldset { border: 0; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
 #report-dlg textarea { width: 100%; box-sizing: border-box; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 10px; }
+
+/* legenda: uma seta de cada lado da palavra, mão ao passar */
+#legend-box > summary { justify-content: center; gap: 8px; cursor: pointer; }
+#legend-box > summary::before { content: "˅"; font-weight: 700; font-size: 1.15em; line-height: 1; color: var(--muted); }
+#legend-box[open] > summary::before { content: "˄"; }
+#legend-box > summary::after { margin-left: 0; }
+/* Reportar: vermelho; afastado da pré-visualização da peça */
+.btn.report { background: #8f1d1d; border-color: #c0392b; color: #fff; }
+.btn.report:hover { background: #a82525; border-color: #e0584a; }
+.card .actions, #tab-celula .actions, #tab-peca .actions { margin-top: 14px; }
+.card-top + .actions, .card-top ~ .actions { margin-top: 16px; }
+.btn .ico { display: inline-flex; margin-right: 6px; vertical-align: middle; }

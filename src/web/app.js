@@ -543,9 +543,15 @@ function renderBuscar() {
   }
 }
 
+// locate icon (target with a crosshair): the button takes the view to the piece
+function locateIcon() {
+  const i = h("span", { class: "ico", "aria-hidden": "true" });
+  i.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';
+  return i;
+}
 // ------------------------------------------------------------ reportar
 function reportButton(ctx) {
-  return h("button", { class: "btn slim", type: "button", title: "avisar de um problema: fica guardado com uma captura do que vês", onclick: () => openReport(ctx) }, "Reportar");
+  return h("button", { class: "btn slim report", type: "button", title: "avisar de um problema: fica guardado com uma captura do que vês", "aria-label": "Reportar um problema", onclick: () => openReport(ctx) }, "⚠ Reportar");
 }
 function openReport(ctx) {
   const dlg = $("#report-dlg");
@@ -617,7 +623,7 @@ function renderCell(d) {
   wrap.append(h("div", { class: "cell-head" },
     h("button", { class: "btn slim", type: "button", onclick: () => showTab(S.prevTab || "buscar") }, "← voltar"),
     h("h3", {}, `Célula ${cellTxt(d.cell)}`),
-    h("button", { class: "btn slim", type: "button", onclick: () => zoomCells(Math.max(1, d.cell[0] - 3), Math.max(1, d.cell[1] - 5), Math.min(S.rows, d.cell[0] + 3), Math.min(S.cols, d.cell[1] + 5)) }, "Centrar")));
+    h("button", { class: "btn slim", type: "button", onclick: () => zoomCells(Math.max(1, d.cell[0] - 3), Math.max(1, d.cell[1] - 5), Math.min(S.rows, d.cell[0] + 3), Math.min(S.cols, d.cell[1] + 5)), title: "levar a vista até esta peça / célula", "aria-label": "Localizar peça" }, locateIcon(), "Localizar peça")));
   wrap.append(zoomFigure(d));
   const kv = h("dl", { class: "kv" },
     h("dt", {}, "estado"), h("dd", {}, d.estado_txt + (d.borda ? " · borda" : "") + (d.fonte ? ` · fonte ${d.fonte}` : "")),

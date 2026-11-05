@@ -92,6 +92,7 @@ Dentro dos cartões há três marcas próprias (▲ topo, quadrado tracejado = c
 11. **Ctrl/Meta+roda pertence ao browser**; a roda simples e a pinça só atuam dentro do tabuleiro.
 12. **«Vai buscar» em duas listas** («Coloca agora» / «Guarda com posição»), §4 e §11.
 13. **Relatórios** em `projects/<id>/reports.jsonl` como lista de trabalho para o Claude Code (§11).
+14. **Escala/zoom.** Se a página abrir ampliada (p. ex. 133 %) é o zoom do browser guardado para `localhost:porta`: **Ctrl+0** repõe os 100 %.
 
 ## 7. Desempenho medido (cópia de `projects/alpes`, 575 colocadas, este PC)
 

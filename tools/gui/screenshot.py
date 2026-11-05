@@ -146,7 +146,7 @@ def main(argv=None) -> int:
                 shot(pg, "guarda_posicao.jpg")
                 pg.evaluate("document.querySelector('#tab-buscar .grupo-head[data-grupo=coloca_agora]')"
                             ".scrollIntoView({block: 'start'})")
-                pg.click("#tab-buscar .card .btn:has-text('Reportar')")
+                pg.click("#tab-buscar .card .btn[aria-label='Reportar um problema']")
                 pg.wait_for_selector("#report-dlg[open]")
                 pg.fill("#report-text", "o recorte está cortado ao meio")
                 settle(pg, 600)
