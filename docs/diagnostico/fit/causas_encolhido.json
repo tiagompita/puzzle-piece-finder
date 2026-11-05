@@ -1,0 +1,40 @@
+{
+ "e4_top1": {
+  "n": 1325,
+  "causas": {
+   "quase-empate por acaso (vencedor melhor/igual em RMS, lado diferente do verdadeiro)": 1016,
+   "gémeo/equivalente geométrico (lado vencedor ≈ verdadeiro, <= 0,5 mm)": 278,
+   "forma mal lida: cordas/tipo": 22,
+   "forma mal lida: RMS >= 2 mm": 9
+  }
+ },
+ "e4_top3": {
+  "n": 1195,
+  "causas": {
+   "quase-empate por acaso (vencedor melhor/igual em RMS, lado diferente do verdadeiro)": 947,
+   "gémeo/equivalente geométrico (lado vencedor ≈ verdadeiro, <= 0,5 mm)": 218,
+   "forma mal lida: cordas/tipo": 22,
+   "forma mal lida: RMS >= 2 mm": 8
+  }
+ },
+ "e5_top1": {
+  "n": 896,
+  "causas": {
+   "gémeo/equivalente geométrico (lado vencedor ≈ verdadeiro, <= 0,5 mm)": 121,
+   "quase-empate por acaso (vencedor melhor/igual em RMS, lado diferente do verdadeiro)": 662,
+   "forma mal lida: cordas/tipo": 22,
+   "imagem enganadora": 81,
+   "forma mal lida: RMS >= 2 mm": 10
+  }
+ },
+ "e5_top3": {
+  "n": 596,
+  "causas": {
+   "gémeo/equivalente geométrico (lado vencedor ≈ verdadeiro, <= 0,5 mm)": 63,
+   "quase-empate por acaso (vencedor melhor/igual em RMS, lado diferente do verdadeiro)": 457,
+   "forma mal lida: cordas/tipo": 22,
+   "imagem enganadora": 44,
+   "forma mal lida: RMS >= 2 mm": 10
+  }
+ }
+}

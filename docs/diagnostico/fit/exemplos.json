@@ -1,0 +1,178 @@
+[
+ {
+  "a": "P0796",
+  "side_a": 0,
+  "b": "P0797",
+  "side_b": 2,
+  "e4": 9,
+  "e5": 1,
+  "zone": "céu",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 1.1082332979175642
+ },
+ {
+  "a": "P0254",
+  "side_a": 1,
+  "b": "P0260",
+  "side_b": 3,
+  "e4": 87,
+  "e5": 1,
+  "zone": "céu",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 1.57099891626397
+ },
+ {
+  "a": "P0320",
+  "side_a": 1,
+  "b": "P0326",
+  "side_b": 3,
+  "e4": 18,
+  "e5": 1,
+  "zone": "céu",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 1.0280905533846671
+ },
+ {
+  "a": "P0487",
+  "side_a": 1,
+  "b": "P0491",
+  "side_b": 3,
+  "e4": 33,
+  "e5": 1,
+  "zone": "relva",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 1.0032595937903181
+ },
+ {
+  "a": "P0663",
+  "side_a": 1,
+  "b": "P0664",
+  "side_b": 3,
+  "e4": 29,
+  "e5": 1,
+  "zone": "montanha/floresta",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 0.7399440967966898
+ },
+ {
+  "a": "P0797",
+  "side_a": 3,
+  "b": "P0790",
+  "side_b": 1,
+  "e4": 26,
+  "e5": 1,
+  "zone": "céu",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 0.9291215040158942
+ },
+ {
+  "a": "P0459",
+  "side_a": 0,
+  "b": "P0460",
+  "side_b": 2,
+  "e4": null,
+  "e5": null,
+  "zone": "relva",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 1.9608598481926505,
+  "winner": "P0027",
+  "winner_side": 0,
+  "winner_vs_true_mm": 1.813117052623687
+ },
+ {
+  "a": "P0460",
+  "side_a": 2,
+  "b": "P0459",
+  "side_b": 0,
+  "e4": null,
+  "e5": null,
+  "zone": "relva",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 1.9608598481926505,
+  "winner": "P0497",
+  "winner_side": 0,
+  "winner_vs_true_mm": 1.6146572281558873
+ },
+ {
+  "a": "P0083",
+  "side_a": 2,
+  "b": "P0082",
+  "side_b": 0,
+  "e4": null,
+  "e5": null,
+  "zone": "relva",
+  "prov": [
+   "b",
+   "a"
+  ],
+  "true_rms": 1.8276693111291076,
+  "winner": "P0656",
+  "winner_side": 3,
+  "winner_vs_true_mm": 0.5198293064574742
+ },
+ {
+  "a": "P0306",
+  "side_a": 2,
+  "b": "P0305",
+  "side_b": 0,
+  "e4": 89,
+  "e5": 970,
+  "zone": "céu",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 0.7684777024303963,
+  "winner": "P0265",
+  "winner_side": 1,
+  "winner_vs_true_mm": 0.8924137741236472
+ },
+ {
+  "a": "P0082",
+  "side_a": 0,
+  "b": "P0083",
+  "side_b": 2,
+  "e4": 833,
+  "e5": 943,
+  "zone": "relva",
+  "prov": [
+   "b",
+   "a"
+  ],
+  "true_rms": 1.8276693111291076,
+  "winner": "P0084",
+  "winner_side": 0,
+  "winner_vs_true_mm": 2.025206501449337
+ },
+ {
+  "a": "P0636",
+  "side_a": 3,
+  "b": "P0630",
+  "side_b": 1,
+  "e4": 240,
+  "e5": 857,
+  "zone": "montanha/floresta",
+  "prov": [
+   "a"
+  ],
+  "true_rms": 1.1350168538242165,
+  "winner": "P0216",
+  "winner_side": 3,
+  "winner_vs_true_mm": 1.2892077794679797
+ }
+]
