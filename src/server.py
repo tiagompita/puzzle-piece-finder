@@ -30,7 +30,7 @@ Design (docs/gui-design.md):
   background thread, with progress in the terminal and on the "a preparar" page (SSE
   ``prepare_progress``); the data endpoints answer 503 until it ends.
 * **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``,
-  ``ingest_progress``, ``prepare_progress``, ``report_added``, ``ready``.
+  ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``ready``.
 
 Pure helpers (legend, cell diff, patch regions, plain-language reasons) are separate from
 the :class:`Gui` state object and from :func:`create_app` (routes).
@@ -979,6 +979,22 @@ class Gui:
 		finally:
 			self.wlock.release()
 
+	def edit_report(self, rid: str, body: dict) -> dict:
+		"""``POST /api/report/{rid}/edit``: append an edit event to an open report (``reports.jsonl`` stays
+		append-only); like :meth:`add_report` it changes no cache."""
+		from src import reports
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			self.sync_locked()
+			rep = reports.edit_report(self.pr, rid, tipo=body.get("tipo"), texto=body.get("texto"))
+			self._known_stat = self._log_stat()
+			if "error" not in rep:
+				self.emit("report_edited", {"id": rid})
+			return rep
+		finally:
+			self.wlock.release()
+
 	def sync_locked(self) -> None:
 		st = self._log_stat()
 		if st != self._known_stat:
@@ -1212,6 +1228,23 @@ def create_app(gui: Gui):
 		r = await asyncio.to_thread(lambda: guard(lambda: gui.add_report(body)))
 		if "error" in r:
 			return JSON(r, status_code=400)
+		return JSON(r)
+
+	@app.post("/api/report/{rid}/edit")
+	async def post_report_edit(rid: str, request: Request):
+		ready()
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		if not isinstance(body, dict):
+			return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		for k in ("tipo", "texto"):
+			if body.get(k) is not None and not isinstance(body[k], str):
+				return JSON({"error": f"{k} deve ser texto"}, status_code=400)
+		r = await asyncio.to_thread(lambda: guard(lambda: gui.edit_report(rid, body)))
+		if "error" in r:
+			return JSON(r, status_code=404 if "relatório desconhecido" in r["error"] else 400)
 		return JSON(r)
 
 	@app.get("/api/reports")

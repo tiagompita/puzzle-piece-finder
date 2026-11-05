@@ -16,7 +16,7 @@ import os
 import sys
 from typing import Optional
 
-__all__ = ["TIPOS", "reports_path", "read_reports", "next_report_id", "add_report", "list_reports", "close_report"]
+__all__ = ["TIPOS", "reports_path", "read_reports", "next_report_id", "add_report", "list_reports", "close_report", "edit_report"]
 
 TIPOS = {"mal_lida": "mal lida / mal recortada", "mal_colocada": "mal colocada",
 		 "nao_encaixa": "não encaixa", "outro": "outro"}
@@ -43,7 +43,8 @@ def reports_path(project) -> str:
 	return os.path.join(project.path, "reports.jsonl")
 
 
-def read_reports(project) -> list:
+def _read_raw(project) -> list:
+	"""Every line of ``reports.jsonl``: the reports and the edit events (``evento == "edicao"``)."""
 	fp = reports_path(project)
 	if not os.path.exists(fp):
 		return []
@@ -53,6 +54,26 @@ def read_reports(project) -> list:
 			line = line.strip()
 			if line:
 				out.append(json.loads(line))
+	return out
+
+
+def read_reports(project) -> list:
+	"""The reports with their edit events applied in order (``tipo`` / ``texto`` replaced, ``editado_em`` and
+	``n_edicoes`` set); the edit events themselves are not reports."""
+	out, by_id = [], {}
+	for r in _read_raw(project):
+		if r.get("evento") == "edicao":
+			t = by_id.get(r.get("id"))
+			if t is None:
+				continue
+			for k in ("tipo", "texto"):
+				if r.get(k) is not None:
+					t[k] = r[k]
+			t["editado_em"] = r.get("t")
+			t["n_edicoes"] = int(t.get("n_edicoes") or 0) + 1
+		else:
+			by_id[r.get("id")] = r
+			out.append(r)
 	return out
 
 
@@ -89,17 +110,45 @@ def list_reports(project, only_open: bool = True) -> list:
 
 
 def close_report(project, report_id: str, nota: str = "") -> dict:
-	"""Mark a report closed (rewrites its line) and log ``report_closed``."""
-	rows = read_reports(project)
-	for r in rows:
-		if r.get("id") == report_id:
+	"""Mark a report closed (rewrites its line, the edit events are kept) and log ``report_closed``."""
+	raw = _read_raw(project)
+	for r in raw:
+		if r.get("id") == report_id and r.get("evento") != "edicao":
 			if r.get("estado") == "fechado":
 				return {"error": f"{report_id} já está fechado"}
 			r.update(estado="fechado", fechado_em=_now(), nota=nota or "")
-			_write_all(project, rows)
+			_write_all(project, raw)
 			project.log_event("report_closed", report_id=report_id, nota=nota or "")
-			return r
+			return next(x for x in read_reports(project) if x.get("id") == report_id)
 	return {"error": f"relatório desconhecido {report_id}"}
+
+
+def edit_report(project, report_id: str, *, tipo: Optional[str] = None, texto: Optional[str] = None) -> dict:
+	"""Edit an OPEN report: appends an edit event line (``{"evento": "edicao", "id", "t", "tipo"?, "texto"?}``)
+	to ``reports.jsonl`` (append-only: the original line is never rewritten) and logs ``report_edited``.
+	Returns the report as edited, or ``{'error': str}``."""
+	if tipo is not None and not isinstance(tipo, str):
+		return {"error": "tipo deve ser texto"}
+	if texto is not None and not isinstance(texto, str):
+		return {"error": "texto deve ser texto"}
+	if tipo is not None and tipo not in TIPOS:
+		return {"error": f"tipo desconhecido {tipo!r} (um de {', '.join(TIPOS)})"}
+	cur = next((r for r in read_reports(project) if r.get("id") == report_id), None)
+	if cur is None:
+		return {"error": f"relatório desconhecido {report_id}"}
+	if cur.get("estado") != "aberto":
+		return {"error": f"{report_id} já está fechado"}
+	if tipo is None and texto is None:
+		return {"error": "nada para editar"}
+	ev = {"evento": "edicao", "id": report_id, "t": _now()}
+	if tipo is not None:
+		ev["tipo"] = tipo
+	if texto is not None:
+		ev["texto"] = texto
+	with open(reports_path(project), "a", encoding="utf-8", newline="\n") as f:
+		f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+	project.log_event("report_edited", report_id=report_id, campos=[k for k in ("tipo", "texto") if k in ev])
+	return next(r for r in read_reports(project) if r.get("id") == report_id)
 
 
 def main(argv=None) -> int:

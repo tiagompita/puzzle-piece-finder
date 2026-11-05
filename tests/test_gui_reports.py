@@ -54,3 +54,49 @@ def test_reports_panel(synth):
         br.close()
     from src import reports
     assert [r["estado"] for r in reports.read_reports(gui.pr)] == ["aberto", "aberto", "fechado"]
+
+
+def test_edit_report_button_instead_of_duplicate(tmp_path):
+    """A piece that already has an open report shows «Editar report» (not «Reportar»); the dialog is prefilled
+    and saving appends an edit event to ``reports.jsonl`` instead of creating a second report."""
+    import os
+    from src import reports
+    from src.query import run_query
+    pr, placed, tw, dec = _project(tmp_path)
+    run_query(pr, use_image=False)
+    # the proposal card of the twin piece (stored: no mounted neighbour) is in «Guardadas»
+    gui, server, th, base = _serve(pr.path, str(tmp_path / "uploads"))
+    try:
+        with sync_api.sync_playwright() as pw:
+            br, pg = _page(pw)
+            pg.goto(base + "/")
+            pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+            pg.wait_for_selector("#tab-guardadas .card", state="attached", timeout=30_000)
+            pg.evaluate("showTab('guardadas'); document.querySelector('#tab-guardadas details.guardadas').open = true")
+            assert pg.locator("#tab-guardadas .card .btn.report", has_text="Reportar").count() == 1
+            assert pg.locator("#tab-guardadas .card .btn.report", has_text="Editar report").count() == 0
+            pg.click("#tab-guardadas .card .btn.report")                        # first report
+            pg.wait_for_selector("#report-dlg[open]")
+            assert pg.inner_text("#report-title") == "Reportar um problema"
+            pg.fill("#report-text", "primeira versão")
+            pg.click("#report-send")
+            pg.wait_for_selector("#toast :text('Reportado R0001')", timeout=15_000)
+            pg.wait_for_selector("#tab-guardadas .card .btn.report:has-text('Editar report')", timeout=15_000)
+            assert pg.locator("#tab-guardadas .card .btn.report", has_text="Reportar").count() == 0
+            n_lines = len(open(reports.reports_path(gui.pr), encoding="utf-8").read().splitlines())
+            pg.click("#tab-guardadas .card .btn.report")                        # now edits R0001
+            pg.wait_for_selector("#report-dlg[open]")
+            assert pg.inner_text("#report-title") == "Editar R0001"
+            assert pg.input_value("#report-text") == "primeira versão"
+            assert pg.inner_text("#report-send") == "Guardar edição"
+            pg.fill("#report-text", "segunda versão")
+            pg.click("#report-send")
+            pg.wait_for_selector("#toast :text('Report R0001 editado')", timeout=15_000)
+            got = pg.evaluate("fetch('/api/reports?todos=true').then((r) => r.json())")["reports"]
+            assert [(r["id"], r["texto"], r.get("n_edicoes")) for r in got] == [("R0001", "segunda versão", 1)]
+            assert len(open(reports.reports_path(gui.pr), encoding="utf-8").read().splitlines()) == n_lines + 1
+            assert os.path.getsize(reports.reports_path(gui.pr)) > 0
+            br.close()
+    finally:
+        server.should_exit = True
+        th.join(10)

@@ -549,7 +549,9 @@ function locateIcon() {
 }
 // ------------------------------------------------------------ guardadas (sem vizinha ortogonal montada)
 function renderGuardadas() {
-  const T = $("#tab-guardadas"); T.replaceChildren();
+  const T = $("#tab-guardadas");
+  const wasOpen = !!(T.querySelector("details.guardadas") || {}).open;   // a re-render (new report, new fetch) keeps it as it was
+  T.replaceChildren();
   const gs = pendingPieces().filter(isStored);
   $("#n-guardadas").textContent = gs.length ? String(gs.length) : "";
   T.append(h("p", { class: "aviso-box" }, "Não procurar ainda: estas peças têm posição provável mas nenhuma vizinha ortogonal montada (diagonais e moldura não contam), por isso o encaixe ainda não se pode confirmar. Só aparecem em «Vai buscar» quando uma vizinha for montada."));
@@ -557,6 +559,7 @@ function renderGuardadas() {
   const d = h("details", { class: "guardadas", "data-grupo": "guarda_posicao" },
     h("summary", {}, `Guardadas com posição, ainda sem vizinha (${gs.length})`));
   for (const e of gs.sort((a, b) => a.ordem - b.ordem)) d.append(proposalCard(e));
+  d.open = wasOpen;
   T.append(d);
 }
 
@@ -566,6 +569,8 @@ async function loadReports() {
   S.reports = r.reports || [];
   S.reportFilter = S.reportFilter || "aberto";
   renderReports();
+  renderBuscar();               // the cards' button is «Editar report» for pieces that already have one
+  if (S.tab === "celula" && S.sel) openCell(S.sel[0], S.sel[1], { keep: true });
 }
 function renderReports() {
   const T = $("#tab-reports"); T.replaceChildren();
@@ -584,32 +589,54 @@ function renderReports() {
   for (const r of rows) {
     const where = [r.piece, r.cell ? cellTxt(r.cell) : null].filter(Boolean).join(" · ") || "geral";
     T.append(h("div", { class: "card report-row", "data-report": r.id },
-      h("div", { class: "small" }, h("b", {}, r.id), ` · ${r.estado === "aberto" ? "aberto" : "resolvido"} · ${r.tipo} · ${where}`),
+      h("div", { class: "small" }, h("b", {}, r.id), ` · ${r.estado === "aberto" ? "aberto" : "resolvido"} · ${r.tipo} · ${where}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "")),
       h("div", {}, r.texto || h("span", { class: "muted" }, "(sem texto)")),
       r.nota ? h("div", { class: "small muted" }, `nota: ${r.nota}`) : null));
   }
 }
 
 // ------------------------------------------------------------ reportar
+// the open report of this piece / cell (the latest one), if any: the button then edits it instead of adding a duplicate
+function openReportsFor(ctx) {
+  const same = (x, y) => x && y && x[0] === y[0] && x[1] === y[1];
+  return (S.reports || []).filter((r) => r.estado === "aberto"
+    && ((ctx.piece && r.piece === ctx.piece) || ((!ctx.piece || !r.piece) && same(r.cell, ctx.cell)))).sort((p, q) => (p.id < q.id ? 1 : -1));
+}
 function reportButton(ctx) {
+  const ex = openReportsFor(ctx);
+  if (ex.length) {
+    return h("button", { class: "btn slim report edit", type: "button", title: `já há um report aberto (${ex[0].id}): edita-o em vez de criar outro`, "aria-label": "Editar report",
+      "data-report": ex[0].id, onclick: () => openReport(ctx, ex[0], ex.length) }, "✎ Editar report");
+  }
   return h("button", { class: "btn slim report", type: "button", title: "avisar de um problema: fica guardado com uma captura do que vês", "aria-label": "Reportar um problema", onclick: () => openReport(ctx) }, "⚠ Reportar");
 }
-function openReport(ctx) {
+function openReport(ctx, existing = null, nOpen = 0) {
   const dlg = $("#report-dlg");
   const where = [ctx.piece ? `peça ${ctx.piece}` : null, ctx.cell ? `célula ${cellTxt(ctx.cell)}` : null].filter(Boolean).join(" · ");
   const form = $("#report-form");
   form.reset();
-  $("#report-where").textContent = where || "geral";
-  form.querySelector("input[value=mal_lida]").checked = true;
+  $("#report-title").textContent = existing ? `Editar ${existing.id}` : "Reportar um problema";
+  $("#report-where").textContent = (where || "geral") + (existing && nOpen > 1 ? ` · há ${nOpen} reports abertos para isto; edita o ${existing.id}` : "");
+  const radio = form.querySelector(`input[value=${existing ? existing.tipo : "mal_lida"}]`) || form.querySelector("input[value=mal_lida]");
+  radio.checked = true;
+  if (existing) $("#report-text").value = existing.texto || "";
+  $("#report-send").textContent = existing ? "Guardar edição" : "Enviar";
   form.onsubmit = async (ev) => {
     ev.preventDefault();
     const btn = $("#report-send"); btn.disabled = true;
     const tipo = (form.querySelector("input[name=tipo]:checked") || {}).value || "outro";
     try {
-      const r = await api("/api/report", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo, texto: $("#report-text").value, piece: ctx.piece || null, cell: ctx.cell || null, vista: ctx.vista || null }) });
-      toast(`Reportado ${r.id}`);
+      if (existing) {
+        const r = await api(`/api/report/${existing.id}/edit`, { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tipo, texto: $("#report-text").value }) });
+        toast(`Report ${r.id} editado`);
+      } else {
+        const r = await api("/api/report", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tipo, texto: $("#report-text").value, piece: ctx.piece || null, cell: ctx.cell || null, vista: ctx.vista || null }) });
+        toast(`Reportado ${r.id}`);
+      }
       dlg.close();
+      await loadReports().catch(() => {});
     } catch (e) { toast(e.message, true); } finally { btn.disabled = false; }
   };
   dlg.showModal();

@@ -388,3 +388,37 @@ def test_report_roundtrip(env):
     # reopen and replay with report events
     pr = _ok_on_disk(gui.path)
     assert len(reports.list_reports(pr, only_open=False)) == 2
+
+
+def test_report_edit_endpoint(env):
+    """``POST /api/report/{id}/edit`` appends an edit event (append-only) and returns the edited report."""
+    gui, client, placed, tw, dec = env
+    rep = client.post("/api/report", json={"tipo": "outro", "texto": "primeiro", "piece": tw}).json()
+    with open(os.path.join(gui.path, "reports.jsonl"), encoding="utf-8") as f:
+        before = f.read().splitlines()
+    r = client.post(f"/api/report/{rep['id']}/edit", json={"tipo": "nao_encaixa", "texto": "segundo"})
+    assert r.status_code == 200, r.text
+    assert r.json()["texto"] == "segundo" and r.json()["tipo"] == "nao_encaixa" and r.json()["n_edicoes"] == 1
+    with open(os.path.join(gui.path, "reports.jsonl"), encoding="utf-8") as f:
+        after = f.read().splitlines()
+    assert after[:len(before)] == before and len(after) == len(before) + 1
+    assert gui._known_stat == gui._log_stat()                                   # our own write: no reopen
+    assert client.post("/api/report/R9999/edit", json={"texto": "x"}).status_code == 404
+    assert client.post(f"/api/report/{rep['id']}/edit", json={"tipo": "xx"}).status_code == 400
+
+
+def test_report_edit_endpoint_rejects_bad_types(env):
+    """A body that is not an object, or ``tipo`` / ``texto`` that are not strings, answer 400 (never 500) and
+    write nothing."""
+    gui, client, placed, tw, dec = env
+    rep = client.post("/api/report", json={"tipo": "outro", "texto": "x", "piece": tw}).json()
+    path = os.path.join(gui.path, "reports.jsonl")
+    n0 = open(path, encoding="utf-8").read()
+    url = f"/api/report/{rep['id']}/edit"
+    bad = [["tipo", "texto"], "texto", 3, None,                       # body not an object
+           {"tipo": ["mal_lida"]}, {"tipo": {"a": 1}}, {"tipo": 3},   # tipo not a string (a list used to be a 500)
+           {"texto": 3}, {"texto": ["a"]}, {"texto": {"a": 1}}]       # texto not a string
+    for body in bad:
+        r = client.post(url, json=body)
+        assert r.status_code == 400, (body, r.status_code, r.text)
+    assert open(path, encoding="utf-8").read() == n0
