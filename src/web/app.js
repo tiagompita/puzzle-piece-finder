@@ -794,15 +794,44 @@ function renderLotes() {
 }
 
 // ------------------------------------------------------------ mesa de apoio
+// search of the Mesa tab: group id (G0012), piece id (P0194) or cell ("3,32" / "(3, 32)": a candidate zone or footprint cell)
+function mesaMatches(g, q) {
+  q = (q || "").trim().toLowerCase();
+  if (!q) return true;
+  const m = q.match(/^\(?\s*(\d{1,2})\s*[,; ]\s*(\d{1,2})\s*\)?$/);
+  if (m) {
+    const l = Number(m[1]), c = Number(m[2]);
+    return g.candidatos.some((cd) => (cd.cell0[0] === l && cd.cell0[1] === c) || cd.footprint.some((x) => x[0] === l && x[1] === c));
+  }
+  if (g.id.toLowerCase().includes(q)) return true;
+  return (g.pecas || []).some((p) => p.id.toLowerCase().includes(q));
+}
 function renderMesa() {
-  const T = $("#tab-mesa"); T.replaceChildren();
+  const T = $("#tab-mesa");
   const secs = (S.sections || []).slice().sort((a, b) => ((b.candidatos[0] || {}).margin || 0) - ((a.candidatos[0] || {}).margin || 0));
   $("#n-mesa").textContent = secs.length ? String(secs.length) : "";
+  T.replaceChildren();
   if (!secs.length) { T.append(h("div", { class: "empty" }, h("strong", {}, "A mesa está vazia."), "Não há grupos soltos por ancorar.")); return; }
-  T.append(h("p", { class: "summary" }, `${secs.length} grupos soltos (montados ou em blocos) ainda sem lugar. Para cada um, as 3 melhores zonas pela imagem; ` +
-    "«Ver» mostra no tabuleiro onde ficaria (violeta); «Ancorar aqui» coloca o grupo todo."));
-  for (const g of secs) {
-    const card = h("div", { class: "card" });
+  const box = h("input", { type: "search", id: "mesa-q", class: "search", placeholder: "Procurar: grupo (G0012), peça (P0194) ou célula (3,32)",
+    "aria-label": "Procurar grupos da mesa", autocomplete: "off", value: S.mesaQuery || "" });
+  const info = h("p", { class: "summary", id: "mesa-info" });
+  const list = h("div", { id: "mesa-list" });
+  T.append(box, info, list);
+  const draw = () => {
+    const shown = secs.filter((g) => mesaMatches(g, S.mesaQuery));
+    info.textContent = (S.mesaQuery || "").trim()
+      ? `${shown.length} de ${secs.length} grupos`
+      : `${secs.length} grupos soltos (montados ou em blocos) ainda sem lugar. Para cada um, as 3 melhores zonas pela imagem; ` +
+        "«Ver» mostra no tabuleiro onde ficaria (violeta); «Ancorar aqui» coloca o grupo todo.";
+    list.replaceChildren();
+    if (!shown.length) { list.append(h("div", { class: "empty" }, h("strong", {}, "Nenhum grupo corresponde."), "Tenta um id (G0012, P0194) ou uma célula (3,32).")); return; }
+    for (const g of shown) list.append(mesaCard(g, list));
+  };
+  box.addEventListener("input", () => { S.mesaQuery = box.value; draw(); });
+  draw();
+}
+function mesaCard(g, T) {
+  const card = h("div", { class: "card" });
     card.append(h("div", { class: "grp-top" }, h("img", { src: g.thumb, loading: "lazy", alt: `grupo ${g.id}` }),
       h("div", {}, h("h3", {}, `Grupo ${g.id}`), h("div", { class: "small muted" }, `${g.kind} · ${g.n} peça${g.n > 1 ? "s" : ""}` + (g.scan_id ? ` · folha ${g.scan_id}` : "")),
         g.notes ? h("details", { class: "tech" }, h("summary", {}, "notas da ingestão"), h("div", {}, g.notes)) : null)));
@@ -825,8 +854,7 @@ function renderMesa() {
       cl.append(row);
     }
     card.append(cl);
-    T.append(card);
-  }
+  return card;
 }
 
 // ------------------------------------------------------------ importar
