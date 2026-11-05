@@ -3,7 +3,7 @@
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
 ## Estado
-- **Último commit de código:** `25df1a9` (painel de Reports). Antes: `2c15ef6` (aba «Guardadas»), `d5cc1a7` (interface), `e6ce712` (reconsulta incremental + `docs/decisoes.md`). Os commits dos docs desta ronda vêm a seguir (`git log`).
+- **Último commit de código:** `25df1a9` (painel de Reports). Antes: `2c15ef6` (aba «Guardadas»), `d5cc1a7` (interface), `e6ce712` (reconsulta incremental + `docs/decisoes.md`). Docs desta ronda: `9726e49`.
 - **Testes:** 160 passed, 1 skipped (`pytest tests/`, inclui Playwright `slow`). `tools/gui/screenshot.py` corre (17 capturas, exit 0).
 - **GUI** (`python -m src.server`): «Vai buscar» só com peças que têm ≥ 1 vizinha **ortogonal** montada (diagonal e moldura não contam; borda colocada conta); as outras estão na aba «Guardadas» (recolhida, aviso «Não procurar ainda»). Aba «Reports» só de leitura (lista, filtro aberto/resolvido, contagem). Tiago confirmou na GUI.
 - **Item 2 (trim 0,48 mm) refutado e removido:** piora 44 células, melhora 0 (`docs/decisoes.md`). A cor ficou adiada.
