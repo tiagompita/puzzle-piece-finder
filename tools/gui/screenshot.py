@@ -135,18 +135,13 @@ def main(argv=None) -> int:
                 pg = open_page(1400, 900)
                 pg.evaluate("showTab('buscar'); fitBoard()")
                 settle(pg, 800)
-                # both lists: the "Guarda com posição" header in the middle of the panel, the last "Coloca agora" cards above it
-                pg.evaluate("document.querySelector('#tab-buscar .grupo-head[data-grupo=guarda_posicao]')"
-                            ".scrollIntoView({block: 'center'})")
+                # "Vai buscar" (only entries with a mounted orthogonal neighbour; may be empty) and the "Guardadas" tab
                 settle(pg, 1200)
                 shot(pg, "vai_buscar.jpg")
-                pg.evaluate("document.querySelector('#tab-buscar .grupo-head[data-grupo=guarda_posicao]')"
-                            ".scrollIntoView({block: 'start'})")
+                pg.evaluate("showTab('guardadas'); document.querySelector('#tab-guardadas details.guardadas').open = true")
                 settle(pg, 1200)
                 shot(pg, "guarda_posicao.jpg")
-                pg.evaluate("document.querySelector('#tab-buscar .grupo-head[data-grupo=coloca_agora]')"
-                            ".scrollIntoView({block: 'start'})")
-                pg.click("#tab-buscar .card .btn[aria-label='Reportar um problema']")
+                pg.click("#tab-guardadas .card .btn[aria-label='Reportar um problema']")
                 pg.wait_for_selector("#report-dlg[open]")
                 pg.fill("#report-text", "o recorte está cortado ao meio")
                 settle(pg, 600)
@@ -190,13 +185,14 @@ def main(argv=None) -> int:
             shot(pg, "celula.png")
             pg.evaluate("showTab('buscar')")
             zoom_wait(pg, "zoomCells(1, 26, 7, 58, 0.02)")
-            pg.evaluate("document.querySelectorAll('#tab-buscar .card')[1].scrollIntoView({block: 'start'})")
+            pg.evaluate("showTab('guardadas'); document.querySelector('#tab-guardadas details.guardadas').open = true")
+            pg.evaluate("document.querySelectorAll('#tab-guardadas .card')[1].scrollIntoView({block: 'start'})")
             settle(pg, 1200)
             shot(pg, "vai_buscar_ceu.png")
-            pg.evaluate("showTab('buscar'); fitBoard()")
+            pg.evaluate("showTab('guardadas'); fitBoard()")
             settle(pg, 800)
             # the first ".btn.slim" of a card is now "Reportar"; pick the button by its text
-            pg.evaluate("[...document.querySelectorAll('#tab-buscar .card .btn')]"
+            pg.evaluate("[...document.querySelectorAll('#tab-guardadas .card .btn')]"
                         ".find(b => b.textContent.trim() === 'Ver no tabuleiro').click()")
             settle(pg, 3000)
             shot(pg, "ver_no_tabuleiro.jpg")

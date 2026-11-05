@@ -301,8 +301,10 @@ def _step_pairs(ctx, loose, only_pieces, proposed, lote) -> list:
 
 
 def mounted_neighbours(pr, cell) -> int:
-	"""4-neighbours of ``cell`` that Tiago really assembled: ``colocada``, or ``ocupada_legado`` whose
-	source is ``tiago`` (``foto`` occupancy is a doubt and does not count)."""
+	"""Orthogonal (4-)neighbours of ``cell`` inside the grid that Tiago really assembled: ``colocada``
+	(border pieces included), or ``ocupada_legado`` whose source is ``tiago`` (``foto`` occupancy is a
+	doubt and does not count). Diagonals never count; a side on the frame (outside the grid) is not a
+	neighbour."""
 	n = 0
 	for nb in pr.board.neighbours(tuple(cell)):
 		c = pr.board[nb]
@@ -312,12 +314,12 @@ def mounted_neighbours(pr, cell) -> int:
 
 
 def fetch_group(pr, entry: dict) -> Optional[str]:
-	"""``coloca_agora`` (a mounted neighbour to verify the fit, or a stored position that became placeable)
-	or ``guarda_posicao`` (keep it in a small bag with its cell); None for entries without a cell."""
+	"""``coloca_agora`` iff the entry's cell has >= 1 :func:`mounted_neighbours` (a placed orthogonal
+	neighbour to verify the fit), else ``guarda_posicao`` (keep it in a small bag with its cell); None
+	for entries without a cell. No exception by origin (Tiago's rule): a ``posicao_conhecida`` /
+	``colocavel`` entry without a mounted neighbour is kept aside too."""
 	if not entry.get("cell"):
 		return None
-	if entry.get("origin") == "posicao_conhecida" or entry.get("decision") == "colocavel":
-		return "coloca_agora"
 	return "coloca_agora" if mounted_neighbours(pr, entry["cell"]) >= 1 else "guarda_posicao"
 
 

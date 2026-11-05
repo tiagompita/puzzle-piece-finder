@@ -62,16 +62,17 @@ def test_layout(base, browser, w, h, dsf):
     try:
         pg.goto(base + "/")
         pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
-        pg.wait_for_selector("#tab-buscar .card", timeout=30_000)
+        pg.wait_for_selector("#tab-guardadas .card", state="attached", timeout=30_000)
+        pg.evaluate("showTab('guardadas'); document.querySelector('#tab-guardadas details.guardadas').open = true")
         pg.wait_for_timeout(500)
         assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
         r = pg.evaluate("(() => { const b = document.querySelector('#legend-box > summary').getBoundingClientRect();"
                         " return [b.left, b.top, b.right, b.bottom, innerWidth, innerHeight]; })()")
         assert r[0] >= 0 and r[1] >= 0 and r[2] <= r[4] and r[3] <= r[5], r
-        pg.evaluate("document.querySelector('#tab-buscar .card').scrollIntoView({block: 'start'})")
+        pg.evaluate("document.querySelector('#tab-guardadas .card').scrollIntoView({block: 'start'})")
         pg.wait_for_timeout(200)
         ok = pg.evaluate("""(() => { const p = document.querySelector('#panel').getBoundingClientRect();
-          return [...document.querySelectorAll('#tab-buscar .card')].some((c) => { const b = c.getBoundingClientRect();
+          return [...document.querySelectorAll('#tab-guardadas .card')].some((c) => { const b = c.getBoundingClientRect();
             return b.top >= p.top && b.bottom <= p.bottom && b.left >= p.left && b.right <= p.right; }); })()""")
         assert ok, "nenhum cartão totalmente visível no painel"
         # Ctrl+wheel must not zoom the board; plain wheel must

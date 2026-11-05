@@ -348,3 +348,7 @@ details.tech li { margin: 2px 0; }
 .card .actions, #tab-celula .actions, #tab-peca .actions { margin-top: 14px; }
 .card-top + .actions, .card-top ~ .actions { margin-top: 16px; }
 .btn .ico { display: inline-flex; margin-right: 6px; vertical-align: middle; }
+
+/* guardadas (sem vizinha) e reports */
+.aviso-box { background: rgba(230, 160, 40, .12); border: 1px solid var(--amber); border-radius: 8px; padding: 8px 10px; font-size: 13px; margin: 0 0 10px; }
+details.guardadas > summary { cursor: pointer; font-weight: 700; padding: 6px 0; }

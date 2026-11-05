@@ -294,7 +294,7 @@ function drawFetchLayer() {
   const g = $("#lyr-buscar"); g.replaceChildren();
   const seen = new Set();
   for (const e of fetchPieces()) {
-    if (!e.cell) continue;
+    if (!e.cell || e.grupo === "guarda_posicao") continue;
     const k = e.cell.join(",");
     if (seen.has(k)) continue;
     seen.add(k);
@@ -506,31 +506,27 @@ function proposalCard(e, opts = {}) {
   card.append(h("details", { class: "tech" }, h("summary", {}, "razões técnicas"), h("ul", {}, (e.reasons || []).map((t) => h("li", {}, t)))));
   return card;
 }
+// a piece without a mounted orthogonal neighbour is not fetched yet (rule of Tiago): it lives in "Guardadas"
+const isStored = (e) => e.grupo === "guarda_posicao";
+const pendingPieces = () => fetchPieces().filter((e) => !e.estado_atual || ["solta", "emparelhada", "posicao_conhecida"].includes(e.estado_atual));
 function renderBuscar() {
   const T = $("#tab-buscar"); T.replaceChildren();
-  const es = fetchPieces().filter((e) => !e.estado_atual || ["solta", "emparelhada", "posicao_conhecida"].includes(e.estado_atual));
+  const es = pendingPieces().filter((e) => !isStored(e));
   $("#n-buscar").textContent = es.length ? String(es.length) : "";
+  renderGuardadas();
   if (!es.length) {
     T.append(h("div", { class: "empty" }, h("strong", {}, "Nada a ir buscar agora."),
       "Importa o scan de um saco para o programa procurar gémeas e pares.",
       h("div", { class: "actions", style: "justify-content:center" }, h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, "Importar scan"))));
-    return;
-  }
-  const nAc = es.filter((e) => e.decision === "aceite" || e.decision === "colocavel").length;
-  T.append(h("p", { class: "summary" }, `${es.length} peças para ir buscar em ${new Set(es.map((e) => e.lote ?? "—")).size} saco(s): ` +
-    `${nAc} aceites, ${es.length - nAc} com dúvida. Pela ordem: as mais seguras primeiro.`),
-    h("p", { class: "summary small" }, CARD_KEY));
-  const sections = [
-    ["coloca_agora", "Coloca agora", "têm uma vizinha montada para confirmar o encaixe"],
-    ["guarda_posicao", "Guarda com posição", "sem vizinha montada: guarda num saquinho com a célula"],
-  ];
-  for (const [g, title, sub] of sections) {
-    const gs = es.filter((e) => (e.grupo || "coloca_agora") === g);
-    if (!gs.length) continue;
-    T.append(h("h2", { class: "grupo-head", "data-grupo": g }, `${title} (${gs.length})`, h("span", { class: "muted small" }, ` ${sub}`)));
+  } else {
+    const nAc = es.filter((e) => e.decision === "aceite" || e.decision === "colocavel").length;
+    T.append(h("p", { class: "summary" }, `${es.length} peças para ir buscar em ${new Set(es.map((e) => e.lote ?? "—")).size} saco(s): ` +
+      `${nAc} aceites, ${es.length - nAc} com dúvida. Pela ordem: as mais seguras primeiro. Todas têm uma vizinha montada para confirmar o encaixe.`),
+      h("p", { class: "summary small" }, CARD_KEY));
     const by = new Map();
-    for (const e of gs) { const k = e.lote ?? "—"; if (!by.has(k)) by.set(k, []); by.get(k).push(e); }
+    for (const e of es) { const k = e.lote ?? "—"; if (!by.has(k)) by.set(k, []); by.get(k).push(e); }
     const keys = [...by.keys()].sort((a, b) => (a === "—") - (b === "—") || a - b);
+    T.append(h("h2", { class: "grupo-head", "data-grupo": "coloca_agora" }, `Coloca agora (${es.length})`, h("span", { class: "muted small" }, " têm uma vizinha montada para confirmar o encaixe")));
     for (const k of keys) {
       T.append(h("div", { class: "lot-head" }, h("span", { class: "bag" }, k === "—" ? "Sem saco" : `Saco ${k}`), h("span", { class: "muted small" }, `${by.get(k).length} peças`)));
       for (const e of by.get(k).sort((a, b) => a.ordem - b.ordem)) T.append(proposalCard(e));
@@ -549,6 +545,19 @@ function locateIcon() {
   i.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';
   return i;
 }
+// ------------------------------------------------------------ guardadas (sem vizinha ortogonal montada)
+function renderGuardadas() {
+  const T = $("#tab-guardadas"); T.replaceChildren();
+  const gs = pendingPieces().filter(isStored);
+  $("#n-guardadas").textContent = gs.length ? String(gs.length) : "";
+  T.append(h("p", { class: "aviso-box" }, "Não procurar ainda: estas peças têm posição provável mas nenhuma vizinha ortogonal montada (diagonais e moldura não contam), por isso o encaixe ainda não se pode confirmar. Só aparecem em «Vai buscar» quando uma vizinha for montada."));
+  if (!gs.length) { T.append(h("div", { class: "empty" }, h("strong", {}, "Nenhuma peça guardada à espera de vizinha."))); return; }
+  const d = h("details", { class: "guardadas", "data-grupo": "guarda_posicao" },
+    h("summary", {}, `Guardadas com posição, ainda sem vizinha (${gs.length})`));
+  for (const e of gs.sort((a, b) => a.ordem - b.ordem)) d.append(proposalCard(e));
+  T.append(d);
+}
+
 // ------------------------------------------------------------ reportar
 function reportButton(ctx) {
   return h("button", { class: "btn slim report", type: "button", title: "avisar de um problema: fica guardado com uma captura do que vês", "aria-label": "Reportar um problema", onclick: () => openReport(ctx) }, "⚠ Reportar");

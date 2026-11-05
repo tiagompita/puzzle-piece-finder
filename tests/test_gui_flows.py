@@ -1,7 +1,7 @@
 """User flows of the web GUI in headless Chromium over the synthetic project (slow).
 
-Checks: no console / page errors; the "Vai buscar" list is split in "Coloca agora" and
-"Guarda com posição" (the stored-position card has no "Coloquei" and has "Guardei num saquinho");
+Checks: no console / page errors; "Vai buscar" lists only entries with a mounted orthogonal neighbour; the others are in the
+"Guardadas" tab (the stored-position card has no "Coloquei" and has "Guardei num saquinho");
 the "Reportar" dialog creates ``R0001`` (listed by ``GET /api/reports``, capture on disk).
 """
 
@@ -55,14 +55,18 @@ def test_buscar_groups_and_report(srv):
         pg.on("pageerror", lambda e: errs.append(str(e)))
         pg.goto(base + "/")
         pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
-        pg.wait_for_selector("#tab-buscar .card", timeout=30_000)
-        heads = pg.eval_on_selector_all("#tab-buscar .grupo-head", "els => els.map((e) => e.dataset.grupo)")
-        assert heads == ["guarda_posicao"]          # the only proposal has no mounted neighbour
-        btns = pg.eval_on_selector_all("#tab-buscar .card .actions .btn", "els => els.map((e) => e.textContent)")
+        pg.wait_for_selector("#tab-guardadas .card", state="attached", timeout=30_000)
+        # the only proposal has no mounted orthogonal neighbour: not in "Vai buscar", but in "Guardadas"
+        assert pg.locator("#tab-buscar .card").count() == 0
+        assert pg.locator("#tab-buscar .grupo-head").count() == 0
+        assert pg.locator("#tab-guardadas details.guardadas .card").count() == 1
+        btns = pg.eval_on_selector_all("#tab-guardadas .card .actions .btn", "els => els.map((e) => e.textContent)")
         assert not any("Coloquei" in b for b in btns)
         assert any(b.startswith("Guardei num saquinho") for b in btns)
-        # report
-        pg.click("#tab-buscar .card .btn:has-text('Reportar')")
+        # report (from the stored card)
+        pg.evaluate("showTab('guardadas')")
+        pg.evaluate("document.querySelector('#tab-guardadas details.guardadas').open = true")
+        pg.click("#tab-guardadas .card .btn:has-text('Reportar')")
         pg.wait_for_selector("#report-dlg[open]")
         pg.check("#report-form input[value=mal_lida]")
         pg.fill("#report-text", "teste")
