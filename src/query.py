@@ -145,7 +145,13 @@ def _suppressed(pr, origin: str, res: dict, cell, query_id: Optional[str]) -> Op
 	reason = next((r for r in res.get("reasons") or [] if r.startswith("candidata única")), "candidata única")
 	return {"origin": origin, "query": query_id, "piece": sc["id"], "lote": p.lote if p else None,
 			"n_no_lote": p.n_no_lote if p else None, "cell": list(cell) if cell else None, "candidate": dict(sc),
-			"d1_mm": sc.get("d1_mm"), "decision_shape": res.get("decision_shape"), "reason": reason}
+			"d1_mm": sc.get("d1_mm"), "decision_shape": res.get("decision_shape"), "reason": reason,
+			"cand_ids": [sc["id"]]}
+
+
+def _cand_ids(res: dict) -> list:
+	"""Ids of the top candidates of a twin query: the result changes if one of them leaves the pool."""
+	return [c["id"] for c in res.get("candidates") or [] if c.get("id")]
 
 
 def _from_candidate(pr, origin: str, res: dict, cell, query_id: Optional[str]) -> Optional[dict]:
@@ -156,7 +162,8 @@ def _from_candidate(pr, origin: str, res: dict, cell, query_id: Optional[str]) -
 	img = c0.get("image") or {}
 	return _entry(pr, origin, c0["id"], cell, res["decision"], margin=res.get("margin"), dE=img.get("dE"),
 				  d1_mm=c0.get("d1_mm"), reasons=list(res.get("reasons") or []), query=query_id, rank=1,
-				  score=c0.get("d1_mm"), phi_deg=None if c0.get("phi_deg") is None else float(c0["phi_deg"]))
+				  score=c0.get("d1_mm"), phi_deg=None if c0.get("phi_deg") is None else float(c0["phi_deg"]),
+				  cand_ids=_cand_ids(res))
 
 
 # ---------------------------------------------------------------- steps
@@ -565,11 +572,21 @@ def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, on
 	proposed = set()
 	entries = []
 	if incremental:
-		prior = load_fetch(pr).get("entries", [])
+		prev = load_fetch(pr)
+		prior = prev.get("entries", [])
+		# a twin / border result whose candidates are no longer all in the loose pool (one was placed,
+		# kept aside, discarded...) is stale: its margin / lone-candidate status changed. Its cell is
+		# re-queried, like the changed cells (records without ``cand_ids``, older lists, never are).
+		pool = {p.id for p in pr.loose_pieces()}
+		stale = {_cl(r["cell"]) for r in prior + list(prev.get("suprimidas") or [])
+				 if r.get("cell") and r.get("origin") in ("gemeo", "borda")
+				 and any(x not in pool for x in r.get("cand_ids") or [])}
+		if stale:
+			oc = (oc or set()) | stale
 		entries = [e for e in prior if _valid_prior(pr, e, oc or set(), op or set(), rej)
 				   and (lote is None or e.get("lote") == lote)]
 		proposed = {e["piece"] for e in entries if e["decision"] in ("aceite", "ambigua")}
-		ctx.suppressed = [s for s in load_fetch(pr).get("suprimidas", [])
+		ctx.suppressed = [s for s in prev.get("suprimidas", [])
 						  if _valid_prior_suppressed(pr, s, oc or set(), op or set(), rej)
 						  and (lote is None or s.get("lote") == lote)]
 	entries += _step_border(ctx, loose, oc if incremental else None, proposed, rej) if (not incremental or oc) else []

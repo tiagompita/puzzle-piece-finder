@@ -17,9 +17,10 @@ Usage::
 doubt policy in :mod:`src.state`) and re-query the cells and their twins.
 
 After the change the invariants are checked and :func:`src.query.run_query` is re-run
-incrementally on the affected cells (the changed cells and their twins) and pieces
-(the piece and its pair partner); ``fetch.md`` is rewritten. Neighbour cells are reported
-(``neighbour_cells``) for the hole step (M11) but not re-queried yet.
+incrementally on the affected cells (the changed cells, their twins and the free 4-neighbours
+of both) and pieces (the piece and its pair partner); ``fetch.md`` is rewritten. The twin /
+border queries whose candidates left the loose pool are re-run by ``run_query`` itself
+(``cand_ids``). Neighbour cells are also reported (``neighbour_cells``) for the hole step (M11).
 
 Pair rule: placing a piece of an active pair confirms the pair and gives the partner its
 cell (``profile.twin`` of the new cell) as ``posicao_conhecida``, origin ``par``.
@@ -76,11 +77,16 @@ def _active_pair(pr, pid: str):
 
 
 def _around(pr, cell) -> set:
-	"""The changed cell and its twin cell (what the twin / border steps re-query)."""
+	"""The changed cell, its twin cell and their free 4-neighbours (what the twin / border steps re-query:
+	a pending twin or a missing border cell next to the change is re-evaluated, not carried over)."""
 	out = {tuple(cell)}
 	tw = pr.profile.twin(*cell)
 	if tw:
-		out.add(tw)
+		out.add(tuple(tw))
+	for c in list(out):
+		for nb in pr.board.neighbours(c):
+			if not pr.board.occupied(nb):
+				out.add(tuple(nb))
 	return out
 
 

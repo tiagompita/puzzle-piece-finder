@@ -119,6 +119,40 @@ def test_unknown_pose_when_placed_twin_has_no_theta(tmp_path):
     assert e["ghost"] is None and e["twin_id"] == placed
 
 
+def _fetch_json(pr):
+    with open(pr.p("fetch.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _twin_keys(js):
+    ent = {(e["origin"], e["piece"], tuple(e["cell"]), e["decision"]) for e in js["entries"]
+           if e["origin"] in ("gemeo", "borda")}
+    sup = {(s["origin"], s["query"], s["piece"], tuple(s["cell"])) for s in js.get("suprimidas") or []}
+    return ent, sup
+
+
+def test_place_requeries_twins_whose_candidate_left_the_pool(tmp_path):
+    """After a placement the incremental re-query re-evaluates the twin queries whose candidates left
+    the loose pool: the decoy (runner-up of the query of (3, 4)) is placed far away, at (1, 1) (neither
+    (3, 4) nor a neighbour of it or of its twin), so only ``cand_ids`` can trigger it; the query now has
+    a lone candidate and its proposal becomes a suppressed record, exactly as in a full run."""
+    from src.confirm import confirm
+    from src.query import run_query
+    pr, placed, tw, dec = _project(tmp_path)
+    run_query(pr, use_image=False)
+    e0 = next(x for x in _fetch_json(pr)["entries"] if x["piece"] == tw)
+    assert e0["decision"] == "aceite" and e0["margin"] is not None and dec in e0["cand_ids"]
+    r = confirm(pr, dec, cell=(1, 1), origin="manual", use_image=False)
+    assert "error" not in r and r["invariants"] == []
+    assert (3, 4) not in {tuple(c) for c in r["affected_cells"]}
+    inc = _fetch_json(pr)
+    assert not any(e["piece"] == tw and e["cell"] == [3, 4] for e in inc["entries"])
+    s = next(x for x in inc["suprimidas"] if x["piece"] == tw and x["cell"] == [3, 4])
+    assert s["query"] == placed and s["cand_ids"] == [tw]
+    run_query(pr, use_image=False)                    # full run on the same state: same twin results
+    assert _twin_keys(inc) == _twin_keys(_fetch_json(pr))
+
+
 def test_ghost_contour_uses_profile_rotation():
     from src.query import ghost_contour
     sq = analyse(np.array([[0, 0], [218, 0], [218, 218], [0, 218]], float) + 100, MMPP)

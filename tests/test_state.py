@@ -373,7 +373,8 @@ def test_confirm_requeries_only_affected(proj, stub):
     r = confirm(pr, t1, cell=(4, 5))
     assert "error" not in r
     assert any(e["action"] == "twin_confirmed" and e["piece"] == t1 for e in pr.events())
-    assert stub.calls == []                       # (4,5)'s twin (1,2) is occupied: nothing to query
+    # (4,5)'s twin (1,2) is occupied; p2's twin cell (3,5) is now a free 4-neighbour of (4,5): only that one is re-queried
+    assert stub.calls == [p2]
     # reject the remaining proposal
     r = confirm(pr, t2, reject=True)
     assert "error" not in r
