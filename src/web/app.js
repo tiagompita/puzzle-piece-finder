@@ -12,12 +12,15 @@ const SVGNS = "http://www.w3.org/2000/svg";
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
 
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* the page works without storage */ } }
+
 const S = {
   board: null, fetch: null, ghosts: [], lots: null, sections: null, status: null,
   rows: 47, cols: 64, hr: 1, ppc: 60, ver: 0,
   vb: { x: 0, y: 0, w: 64, h: 47 }, sel: null, tab: "buscar", prevTab: "buscar",
-  showGhost: localStorage.getItem("tg-ghost") !== "0", showGrid: localStorage.getItem("tg-grid") !== "0",
-  mesa: null, detailKey: null, jobLog: [], lastLote: null,
+  showGhost: lsGet("tg-ghost") !== "0", showGrid: lsGet("tg-grid") !== "0", showSug: lsGet("tg-sug") === "1",
+  mesa: null, mesaOpen: null, mesaQuery: "", mesaFilter: null, detailKey: null, jobLog: [], lastLote: null,
 };
 
 // ------------------------------------------------------------ utilities
@@ -223,7 +226,13 @@ function initPointer() {
       if (!moved && start && e.type === "pointerup") {
         const p = clientToBoard(e.clientX, e.clientY);
         const c = Math.floor(p.x) + 1, l = Math.floor(p.y / S.hr) + 1;
-        if (l >= 1 && l <= S.rows && c >= 1 && c <= S.cols) openCell(l, c, { zoom: false });
+        hideSugPicker();
+        if (l >= 1 && l <= S.rows && c >= 1 && c <= S.cols) {
+          const hits = suggestionsAt(l, c);
+          if (hits.length === 1) openMesaGroup(hits[0].g.id, 1);
+          else if (hits.length > 1) showSugPicker(hits, l, c, e.clientX, e.clientY);
+          else openCell(l, c, { zoom: false });
+        }
       }
       start = null;
     } else if (ptrs.size === 1) {
@@ -408,6 +417,10 @@ function showTab(t) {
   if (t === "lotes" && !S.lots) loadLots().catch((e) => toast(e.message, true));
   if (t === "reports") loadReports().catch((e) => toast(e.message, true));
   if (t === "mesa" && !S.sections) loadSections().catch((e) => toast(e.message, true));
+  if (t === "mesa" && S.mesaOpen && S.sections) {
+    const g = S.sections.find((x) => x.id === S.mesaOpen.id), c = g && (g.candidatos.find((x) => x.rank === S.mesaOpen.rank) || groupBest(g));
+    if (c) { S.mesa = { id: g.id, rank: c.rank, footprint: c.footprint }; drawMesa(); }
+  }
   if (t !== "celula" && S.sel) { S.sel = null; drawSel(); }
   if (t !== "mesa" && S.mesa) { S.mesa = null; drawMesa(); }
 }
@@ -469,7 +482,7 @@ function miniMap(cell) {
   return m;
 }
 const DEC_TXT = { aceite: "aceite", ambigua: "ambígua", colocavel: "colocável", candidata: "candidata", proposto: "par proposto",
-  confirmado: "confirmado", por_ancorar: "por ancorar" };
+  confirmado: "confirmado", por_ancorar: "sem lugar" };
 function proposalCard(e, opts = {}) {
   const card = h("div", { class: "card" + (e.decision === "ambigua" ? " amb" : ""), "data-piece": e.piece });
   const head = h("div", {},
@@ -722,7 +735,7 @@ function renderCell(d) {
         p.scan_id ? h("button", { class: "linkish", type: "button", onclick: () => lightbox(`/api/sheets/${p.scan_id}.jpg?highlight=${p.id}&max=1400&v=${S.ver}`, `Folha ${p.scan_id}`) }, "ver na folha do scan") : null)),
       h("div", { class: "actions" },
         d.pode_desfazer ? h("button", { class: "btn danger", type: "button", onclick: (ev) => { if (confirm(`Retirar ${p.id} de ${cellTxt(d.cell)}?`)) act({ acao: "unplace", piece: p.id }, ev.currentTarget); } }, "Desfazer colocação") : null,
-        p.seccao_id ? h("button", { class: "btn danger", type: "button", onclick: (ev) => { if (confirm(`Desancorar o grupo ${p.seccao_id}? Todas as suas peças saem do tabuleiro.`)) act({ acao: "unanchor", section: p.seccao_id }, ev.currentTarget); } }, `Desancorar grupo ${p.seccao_id}`) : null)));
+        p.seccao_id ? h("button", { class: "btn danger", type: "button", onclick: (ev) => { if (confirm(`Desfazer o «${LBL_AQUI}» do grupo ${p.seccao_id}? Todas as suas peças saem do tabuleiro.`)) act({ acao: "unanchor", section: p.seccao_id }, ev.currentTarget); } }, `Desfazer «${LBL_AQUI}» do grupo ${p.seccao_id}`) : null)));
   }
   if (d.propostas.length) {
     wrap.append(h("h2", {}, d.propostas.length > 1 ? "Propostas para esta célula" : "Proposta para esta célula"));
@@ -794,6 +807,18 @@ function renderLotes() {
 }
 
 // ------------------------------------------------------------ mesa de apoio
+// Alternativa B do docs/gui-design.md §14: uma linha por grupo (selo único + «Ver»); a ação principal só aparece depois de ver a zona.
+const LBL_AQUI = "É aqui";    // the one place with the label of the action "this group goes here" (code ids/events keep "anchor")
+const MESA_PLACEHOLDER = "Grupo, peça ou célula: G0021, P0294, 3,32";
+const marginMin = () => {
+  const m = S.board && S.board.calibracao && S.board.calibracao.margin_min;
+  return typeof m === "number" ? m : 1.5;
+};
+const groupBest = (g) => g.candidatos[0] || null;
+const isSafe = (g) => { const c = groupBest(g); return !!c && typeof c.margin === "number" && c.margin >= marginMin(); };
+const sealEl = (g) => h("span", { class: "chip " + (isSafe(g) ? "ok" : "mid") }, isSafe(g) ? "segura" : "a confirmar");
+const mesaSorted = () => (S.sections || []).slice().sort((a, b) => ((b.candidatos[0] || {}).margin || 0) - ((a.candidatos[0] || {}).margin || 0));
+
 // search of the Mesa tab: group id (G0012), piece id (P0194) or cell ("3,32" / "(3, 32)": a candidate zone or footprint cell)
 function mesaMatches(g, q) {
   q = (q || "").trim().toLowerCase();
@@ -806,55 +831,135 @@ function mesaMatches(g, q) {
   if (g.id.toLowerCase().includes(q)) return true;
   return (g.pecas || []).some((p) => p.id.toLowerCase().includes(q));
 }
+const mesaShown = (g) => mesaMatches(g, S.mesaQuery) && (!S.mesaFilter || (S.mesaFilter === "segura") === isSafe(g));
+
+function previewZone(g, c) {
+  S.mesa = { id: g.id, rank: c.rank, footprint: c.footprint }; drawMesa();
+  const ls = c.footprint.map((x) => x[0]), cs = c.footprint.map((x) => x[1]);
+  zoomCells(Math.max(1, Math.min(...ls) - 3), Math.max(1, Math.min(...cs) - 5), Math.min(S.rows, Math.max(...ls) + 3), Math.min(S.cols, Math.max(...cs) + 5));
+}
+/** Open the row of group ``id`` in the Mesa tab and preview zone ``rank`` (used by «Ver» and by a tap on a suggestion). */
+async function openMesaGroup(id, rank = 1) {
+  if (!S.sections) { try { await loadSections(); } catch (e) { toast(e.message, true); return; } }
+  const g = (S.sections || []).find((x) => x.id === id);
+  if (!g) return;
+  S.mesaOpen = { id, rank };
+  if (!mesaShown(g)) { S.mesaQuery = ""; S.mesaFilter = null; }
+  if (S.tab !== "mesa") showTab("mesa");
+  renderMesa();
+  const c = g.candidatos.find((x) => x.rank === rank) || groupBest(g);
+  if (c) previewZone(g, c);
+  const row = $(`#mesa-list .mrow[data-g="${id}"]`);
+  if (row && row.scrollIntoView) row.scrollIntoView({ block: "nearest" });
+}
+function closeMesaGroup() { S.mesaOpen = null; S.mesa = null; drawMesa(); renderMesa(); }
+
 function renderMesa() {
   const T = $("#tab-mesa");
-  const secs = (S.sections || []).slice().sort((a, b) => ((b.candidatos[0] || {}).margin || 0) - ((a.candidatos[0] || {}).margin || 0));
+  const secs = mesaSorted();
   $("#n-mesa").textContent = secs.length ? String(secs.length) : "";
+  drawSuggestions();
   T.replaceChildren();
-  if (!secs.length) { T.append(h("div", { class: "empty" }, h("strong", {}, "A mesa está vazia."), "Não há grupos soltos por ancorar.")); return; }
-  const box = h("input", { type: "search", id: "mesa-q", class: "search", placeholder: "Procurar: grupo (G0012), peça (P0194) ou célula (3,32)",
+  if (S.mesaOpen && !secs.some((g) => g.id === S.mesaOpen.id)) { S.mesaOpen = null; S.mesa = null; drawMesa(); }
+  if (!secs.length) { T.append(h("div", { class: "empty" }, h("strong", {}, "A mesa está vazia."), "Não há grupos soltos sem lugar.")); return; }
+  const nSafe = secs.filter(isSafe).length;
+  const box = h("input", { type: "search", id: "mesa-q", class: "search", placeholder: MESA_PLACEHOLDER,
     "aria-label": "Procurar grupos da mesa", autocomplete: "off", value: S.mesaQuery || "" });
+  const fbtn = (key, label) => h("button", { type: "button", class: "btn slim fchip", "data-filter": key, "aria-pressed": S.mesaFilter === key ? "true" : "false",
+    onclick: (ev) => {
+      S.mesaFilter = S.mesaFilter === key ? null : key;
+      $$(".fchip", T).forEach((b) => b.setAttribute("aria-pressed", S.mesaFilter === b.dataset.filter ? "true" : "false"));
+      draw();
+    } }, label);
+  const filters = h("div", { class: "mesa-filters", role: "group", "aria-label": "Filtrar grupos" },
+    fbtn("segura", `Seguras (${nSafe})`), fbtn("confirmar", `A confirmar (${secs.length - nSafe})`));
   const info = h("p", { class: "summary", id: "mesa-info" });
   const list = h("div", { id: "mesa-list" });
-  T.append(box, info, list);
-  const draw = () => {
-    const shown = secs.filter((g) => mesaMatches(g, S.mesaQuery));
-    info.textContent = (S.mesaQuery || "").trim()
+  T.append(box, filters, info, list);
+  function draw() {
+    const shown = secs.filter(mesaShown);
+    info.textContent = ((S.mesaQuery || "").trim() || S.mesaFilter)
       ? `${shown.length} de ${secs.length} grupos`
-      : `${secs.length} grupos soltos (montados ou em blocos) ainda sem lugar. Para cada um, as 3 melhores zonas pela imagem; ` +
-        "«Ver» mostra no tabuleiro onde ficaria (violeta); «Ancorar aqui» coloca o grupo todo.";
+      : `${secs.length} grupos sem lugar. «Ver» mostra no tabuleiro onde o grupo ficaria (violeta); só depois aparece «${LBL_AQUI}».`;
     list.replaceChildren();
     if (!shown.length) { list.append(h("div", { class: "empty" }, h("strong", {}, "Nenhum grupo corresponde."), "Tenta um id (G0012, P0194) ou uma célula (3,32).")); return; }
-    for (const g of shown) list.append(mesaCard(g, list));
-  };
+    for (const g of shown) list.append(mesaRow(g));
+  }
   box.addEventListener("input", () => { S.mesaQuery = box.value; draw(); });
   draw();
 }
-function mesaCard(g, T) {
-  const card = h("div", { class: "card" });
-    card.append(h("div", { class: "grp-top" }, h("img", { src: g.thumb, loading: "lazy", alt: `grupo ${g.id}` }),
-      h("div", {}, h("h3", {}, `Grupo ${g.id}`), h("div", { class: "small muted" }, `${g.kind} · ${g.n} peça${g.n > 1 ? "s" : ""}` + (g.scan_id ? ` · folha ${g.scan_id}` : "")),
-        g.notes ? h("details", { class: "tech" }, h("summary", {}, "notas da ingestão"), h("div", {}, g.notes)) : null)));
-    const cl = h("div", { class: "cands" });
-    if (!g.candidatos.length) cl.append(h("div", { class: "muted small" }, "sem zonas candidatas"));
-    for (const c of g.candidatos) {
-      const row = h("div", { class: "cand" },
-        h("div", {}, h("b", {}, `${c.rank}) ${cellTxt(c.cell0)}`), ` rot ${c.rot}°${c.mirror ? " espelho" : ""} · margem ${fmt(c.margin, 2)}`,
-          c.fora ? h("span", { class: "warn" }, "parte fica fora da grelha") : null,
-          c.ocupadas ? h("span", { class: "warn" }, `${c.ocupadas} célula(s) já colocadas`) : null),
-        h("button", { class: "btn slim", type: "button", onclick: () => {
-          S.mesa = { id: g.id, rank: c.rank, footprint: c.footprint }; drawMesa();
-          $$(".cand", T).forEach((x) => x.classList.remove("on")); row.classList.add("on");
-          const ls = c.footprint.map((x) => x[0]), cs = c.footprint.map((x) => x[1]);
-          zoomCells(Math.max(1, Math.min(...ls) - 3), Math.max(1, Math.min(...cs) - 5), Math.min(S.rows, Math.max(...ls) + 3), Math.min(S.cols, Math.max(...cs) + 5));
-        } }, "Ver"),
-        h("button", { class: "btn slim primary", type: "button", disabled: c.fora ? true : null, onclick: (ev) => {
-          if (confirm(`Ancorar ${g.id} em ${cellTxt(c.cell0)} rot ${c.rot}°? As ${g.n} peças passam a colocadas.`)) act({ acao: "anchor", section: g.id, cell: c.cell0, rot: c.rot, mirror: c.mirror }, ev.currentTarget);
-        } }, "Ancorar aqui"));
-      cl.append(row);
-    }
-    card.append(cl);
-  return card;
+function mesaRow(g) {
+  const open = !!S.mesaOpen && S.mesaOpen.id === g.id;
+  const c = groupBest(g);
+  const row = h("div", { class: "mrow" + (open ? " on" : ""), "data-g": g.id });
+  row.append(h("div", { class: "mhead" },
+    h("img", { src: g.thumb, loading: "lazy", alt: `grupo ${g.id}` }),
+    h("div", { class: "mtxt" },
+      h("div", { class: "t" }, `${g.id} · ${g.n} peça${g.n > 1 ? "s" : ""}`),
+      h("div", { class: "s" }, c ? ["melhor zona ", h("b", {}, cellTxt(c.cell0)), " ", sealEl(g)] : "sem zonas candidatas")),
+    h("button", { class: "btn slim" + (open ? "" : " primary"), type: "button", "aria-expanded": open ? "true" : "false",
+      onclick: () => (open ? closeMesaGroup() : openMesaGroup(g.id, 1)) }, open ? "Fechar" : "Ver")));
+  if (!open) return row;
+  const cur = g.candidatos.find((x) => x.rank === S.mesaOpen.rank) || c;
+  const exp = h("div", { class: "mexp" });
+  if (cur) {
+    exp.append(h("div", { class: "small" }, h("b", {}, `Zona ${cur.rank}) ${cellTxt(cur.cell0)}`), ` rot ${cur.rot}°${cur.mirror ? " espelho" : ""} · margem ${fmt(cur.margin, 2)}`,
+      cur.fora ? h("span", { class: "warn" }, "parte fica fora da grelha") : null,
+      cur.ocupadas ? h("span", { class: "warn" }, `${cur.ocupadas} célula(s) já colocadas`) : null));
+    if (!isSafe(g)) exp.append(h("div", { class: "warn small" }, `O programa não decidiu este grupo: margem ${fmt(cur.margin, 2)}, mínimo ${fmt(marginMin(), 2)}.`));
+    exp.append(h("div", { class: "actions" },
+      h("button", { class: "btn primary", type: "button", "data-act": "aqui", disabled: cur.fora ? true : null, onclick: (ev) => {
+        const q = `${LBL_AQUI}: ${g.id} em ${cellTxt(cur.cell0)} rot ${cur.rot}°? As ${g.n} peças passam a colocadas.`;
+        const pre = isSafe(g) ? "" : `O programa não decidiu este grupo (margem ${fmt(cur.margin, 2)}, mínimo ${fmt(marginMin(), 2)}).\n`;
+        if (confirm(pre + q)) act({ acao: "anchor", section: g.id, cell: cur.cell0, rot: cur.rot, mirror: cur.mirror }, ev.currentTarget);
+      } }, `${LBL_AQUI} em ${cellTxt(cur.cell0)}`)));
+  }
+  for (const o of g.candidatos.filter((x) => !cur || x.rank !== cur.rank)) {
+    exp.append(h("div", { class: "mother" },
+      h("span", {}, `ou ${cellTxt(o.cell0)} rot ${o.rot}°${o.mirror ? " espelho" : ""}`),
+      h("button", { class: "btn slim", type: "button", onclick: () => openMesaGroup(g.id, o.rank) }, "Ver")));
+  }
+  if (g.notes) exp.append(h("details", { class: "tech" }, h("summary", {}, "ⓘ notas da ingestão"), h("div", {}, g.notes)));
+  row.append(exp);
+  return row;
+}
+
+// ------------------------------------------------------------ sugestões no tabuleiro (botão «Sugestões»)
+function suggestionItems() {
+  const out = [];
+  for (const g of (S.sections || [])) {
+    const c = groupBest(g);
+    if (!c || !c.footprint) continue;
+    const cells = c.footprint.filter(([l, cc]) => l >= 1 && l <= S.rows && cc >= 1 && cc <= S.cols);
+    if (cells.length) out.push({ g, c, safe: isSafe(g), cells });
+  }
+  return out;
+}
+function drawSuggestions() {
+  const gl = $("#lyr-sug"); if (!gl) return;
+  gl.replaceChildren();
+  hideSugPicker();
+  if (!S.showSug || !S.sections || !S.board) return;
+  const items = suggestionItems().sort((a, b) => Number(a.safe) - Number(b.safe));      // weak first, strong on top
+  for (const it of items) for (const [l, c] of it.cells) gl.append(rectEl(l, c, cls(it.safe ? "sugestao" : "sugestao_fraca"), 0.05, { "data-g": it.g.id }));
+}
+const suggestionsAt = (l, c) => (S.showSug ? suggestionItems().filter((it) => it.cells.some(([a, b]) => a === l && b === c))
+  .sort((a, b) => Number(b.safe) - Number(a.safe) || (b.c.margin || 0) - (a.c.margin || 0)) : []);
+function hideSugPicker() { const p = $("#sug-pick"); if (p) p.remove(); }
+function showSugPicker(items, l, c, cx, cy) {
+  hideSugPicker();
+  const wrap = $("#board-wrap");
+  const pick = h("div", { id: "sug-pick", role: "menu", "aria-label": `Sugestões em ${cellTxt([l, c])}` },
+    h("div", { class: "sug-title" }, `Sugestões em ${cellTxt([l, c])}`),
+    items.map((it) => h("button", { type: "button", class: "sug-item", role: "menuitem", "data-g": it.g.id,
+      onclick: () => { hideSugPicker(); openMesaGroup(it.g.id, 1); } },
+    h("b", {}, it.g.id), ` · ${it.g.n} peça${it.g.n > 1 ? "s" : ""} · `, h("span", { class: it.safe ? "ok" : "mid" }, it.safe ? "segura" : "a confirmar"))),
+    h("button", { type: "button", class: "sug-item alt", role: "menuitem", onclick: () => { hideSugPicker(); openCell(l, c, { zoom: false }); } }, `Abrir a célula ${cellTxt([l, c])}`));
+  wrap.append(pick);
+  const r = wrap.getBoundingClientRect();
+  const w = pick.offsetWidth, hh = pick.offsetHeight;
+  pick.style.left = Math.max(4, Math.min(cx - r.left, r.width - w - 4)) + "px";
+  pick.style.top = Math.max(4, Math.min(cy - r.top, r.height - hh - 4)) + "px";
 }
 
 // ------------------------------------------------------------ importar
@@ -948,17 +1053,19 @@ async function boot() {
   $("#lb-close").onclick = () => { $("#lightbox").hidden = true; };
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox" || e.target.classList.contains("lb-body")) $("#lightbox").hidden = true; });
   $("#sheet-handle").onclick = () => $("#app").classList.toggle("sheet-up");
-  const tg = $("#tg-ghost"), tgr = $("#tg-grid");
-  tg.checked = S.showGhost; tgr.checked = S.showGrid;
-  tg.onchange = () => { S.showGhost = tg.checked; localStorage.setItem("tg-ghost", tg.checked ? "1" : "0"); setView(S.vb); renderBuscar(); };
-  tgr.onchange = () => { S.showGrid = tgr.checked; localStorage.setItem("tg-grid", tgr.checked ? "1" : "0"); setView(S.vb); };
+  const tg = $("#tg-ghost"), tgr = $("#tg-grid"), tgs = $("#tg-sug");
+  tg.checked = S.showGhost; tgr.checked = S.showGrid; tgs.checked = S.showSug;
+  tg.onchange = () => { S.showGhost = tg.checked; lsSet("tg-ghost", tg.checked ? "1" : "0"); setView(S.vb); renderBuscar(); };
+  tgr.onchange = () => { S.showGrid = tgr.checked; lsSet("tg-grid", tgr.checked ? "1" : "0"); setView(S.vb); };
+  tgs.onchange = () => { S.showSug = tgs.checked; lsSet("tg-sug", tgs.checked ? "1" : "0"); drawSuggestions(); };
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && $("#sug-pick")) { hideSugPicker(); return; }
     if (e.key === "Escape") { if (!$("#lightbox").hidden) $("#lightbox").hidden = true; else if (S.tab === "celula") showTab(S.prevTab); }
   });
   const lg = $("#legend-box");
-  const stored = localStorage.getItem("legend-open");
+  const stored = lsGet("legend-open");
   lg.open = stored === null ? window.innerHeight >= 900 : stored === "1";
-  lg.addEventListener("toggle", () => { localStorage.setItem("legend-open", lg.open ? "1" : "0"); setView(S.vb); });
+  lg.addEventListener("toggle", () => { lsSet("legend-open", lg.open ? "1" : "0"); setView(S.vb); });
   initPointer();
   connectEvents();
   const st = await api("/api/status");

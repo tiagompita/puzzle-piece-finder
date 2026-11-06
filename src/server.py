@@ -103,8 +103,12 @@ LEGEND = [
 	 "detalhe": "a peça já sabe a sua célula mas está guardada à parte, à espera de uma vizinha montada"},
 	{"id": "fantasma", "tipo": "svg", "classe": "b-fantasma", "rotulo": "Fantasma", "texto": "forma da gémea, rodada {rot}°",
 	 "detalhe": "contorno da gémea já colocada, rodado {rot}° (simetria do perfil): a forma exata da peça que falta nesta célula"},
+	{"id": "sugestao", "tipo": "svg", "classe": "b-sug", "rotulo": "Sugestão segura", "texto": "melhor zona de um grupo (botão Sugestões)",
+	 "detalhe": "melhor zona de um grupo solto cuja margem passa o mínimo do perfil; tocar abre o grupo na aba Mesa"},
+	{"id": "sugestao_fraca", "tipo": "svg", "classe": "b-sug-fraca", "rotulo": "Sugestão a confirmar", "texto": "melhor zona de um grupo, por confirmar",
+	 "detalhe": "melhor zona de um grupo solto cuja margem não passa o mínimo: o programa não decidiu"},
 	{"id": "mesa", "tipo": "svg", "classe": "b-mesa", "rotulo": "Grupo da mesa", "texto": "onde um grupo solto ficaria",
-	 "detalhe": "pré-visualização (separador Mesa) de onde um grupo solto ficaria se for ancorado"},
+	 "detalhe": "pré-visualização (separador Mesa) de onde um grupo solto ficaria se disseres «É aqui»"},
 	{"id": "grelha", "tipo": "svg", "classe": "b-grelha", "rotulo": "Grelha", "texto": "linhas das células (com zoom)",
 	 "detalhe": "linhas das células; aparecem quando há zoom suficiente"},
 	{"id": "selecao", "tipo": "svg", "classe": "b-selecionada", "rotulo": "Selecionada", "texto": "célula aberta no painel",
@@ -119,7 +123,7 @@ def legend_for(profile):
 
 ESTADO_TXT = {"solta": "solta", "emparelhada": "emparelhada (par de gémeas soltas)",
 			  "posicao_conhecida": "posição conhecida (guardada à parte)", "colocada": "colocada",
-			  "em_seccao": "num grupo por ancorar", "descartada": "descartada"}
+			  "em_seccao": "num grupo sem lugar", "descartada": "descartada"}
 CELL_TXT = {"vazia": "vazia", "ocupada_legado": "ocupada (sem silhueta)", "colocada": "colocada"}
 CELL_SOURCE_TXT = {("ocupada_legado", "foto"): "cheia na foto, por confirmar (conta como vazia nas sugestões)",
 				   ("ocupada_legado", "tiago"): "montada, marcada por ti (sem silhueta)",
@@ -131,7 +135,7 @@ def cell_text(cell: dict) -> str:
 	"""Plain text of a board cell: state plus who says so (photo only vs the user)."""
 	return CELL_SOURCE_TXT.get((cell["estado"], cell.get("fonte")), CELL_TXT.get(cell["estado"], cell["estado"]))
 ORIGIN_TXT = {"gemeo": "gémea colocada", "borda": "borda", "par": "par de soltas",
-			  "posicao_conhecida": "posição conhecida", "seccao": "grupo por ancorar"}
+			  "posicao_conhecida": "posição conhecida", "seccao": "grupo sem lugar"}
 
 
 # ---------------------------------------------------------------- pure helpers
@@ -891,7 +895,7 @@ class Gui:
 			elif acao == "anchor":
 				sec, c0 = body.get("section"), cell or body.get("cell0")
 				if not sec or not c0:
-					return {"error": "falta a secção ou a célula de ancoragem"}
+					return {"error": "falta o grupo ou a célula do «É aqui»"}
 				r = confirm(pr, anchor=(sec, int(c0[0]), int(c0[1])), rot=int(body.get("rot") or 0),
 							mirror=bool(body.get("mirror")), **kw)
 			elif acao == "unanchor":

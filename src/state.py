@@ -896,7 +896,7 @@ class Project:
 			raise StateError(f"secção desconhecida {section_id}")
 		s = self.sections[section_id]
 		if s.anchor.get("anchored"):
-			raise StateError(f"{section_id} já está ancorada (unanchor primeiro)")
+			raise StateError(f"{section_id} já tem lugar («É aqui» feito): desfaz primeiro")
 		if int(rot) % 90:
 			raise StateError("rot tem de ser múltiplo de 90")
 		anchor = {"anchored": True, "l0": int(l0), "c0": int(c0), "rot": int(rot) % 360, "mirror": bool(mirror),
@@ -905,7 +905,7 @@ class Project:
 		for pid, rc in sorted(s.cells_local.items()):
 			cell = section_cell(anchor, rc)
 			if not self.profile.in_grid(*cell):
-				raise StateError(f"{pid}: célula {cell} fora da grelha com esta ancoragem")
+				raise StateError(f"{pid}: célula {cell} fora da grelha com este «É aqui»")
 			if self.pieces[pid].estado != "em_seccao":
 				continue
 			cur = self.board[cell]
@@ -923,7 +923,7 @@ class Project:
 		if section_id not in self.sections:
 			raise StateError(f"secção desconhecida {section_id}")
 		if not self.sections[section_id].anchor.get("anchored"):
-			raise StateError(f"{section_id} não está ancorada")
+			raise StateError(f"{section_id} ainda não tem lugar («É aqui» por fazer)")
 		last = None
 		for ev in reversed(self.events()):
 			if ev["action"] == "section_anchored" and ev["section"] == section_id:

@@ -34,16 +34,16 @@ def test_mesa_search_filters_by_group_piece_and_cell(base, browser):  # noqa: F8
         pg.evaluate("showTab('mesa')")
         pg.evaluate(FAKE)
         assert pg.locator("#mesa-q").count() == 1
-        ids = lambda: pg.eval_on_selector_all("#mesa-list .card h3", "els => els.map((e) => e.textContent)")  # noqa: E731
-        assert ids() == ["Grupo G0012", "Grupo G0021", "Grupo G0044"]
+        ids = lambda: pg.eval_on_selector_all("#mesa-list .mrow .t", "els => els.map((e) => e.textContent)")  # noqa: E731
+        assert ids() == ["G0012 · 2 peças", "G0021 · 1 peça", "G0044 · 2 peças"]
         pg.fill("#mesa-q", "g0021")                                   # id do grupo, sem maiúsculas
-        assert ids() == ["Grupo G0021"] and "1 de 3" in pg.inner_text("#mesa-info")
+        assert ids() == ["G0021 · 1 peça"] and "1 de 3" in pg.inner_text("#mesa-info")
         pg.fill("#mesa-q", "P0506")                                    # peça do grupo
-        assert ids() == ["Grupo G0044"]
+        assert ids() == ["G0044 · 2 peças"]
         pg.fill("#mesa-q", "3,32")                                     # célula da zona candidata
-        assert ids() == ["Grupo G0012"]
+        assert ids() == ["G0012 · 2 peças"]
         pg.fill("#mesa-q", "(44, 56)")                                 # célula do footprint (a 2.ª peça do grupo)
-        assert ids() == ["Grupo G0044"]
+        assert ids() == ["G0044 · 2 peças"]
         pg.fill("#mesa-q", "zzz")
         assert ids() == [] and "Nenhum grupo corresponde" in pg.inner_text("#mesa-list")
         pg.fill("#mesa-q", "")

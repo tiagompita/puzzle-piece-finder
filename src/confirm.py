@@ -43,6 +43,8 @@ import argparse
 import sys
 from typing import Optional
 
+
+AQUI_TXT = "É aqui"          # visible label of the action "this group goes here" (code/log ids keep "anchor")
 __all__ = ["confirm", "relot", "parse_cells", "main"]
 
 _CONFIRM_ACTION = {"gemeo": "twin_confirmed", "borda": "twin_confirmed", "par": "twin_confirmed",
@@ -170,14 +172,14 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 		elif anchor is not None:
 			gid, l0, c0 = anchor[0], int(anchor[1]), int(anchor[2])
 			ev = pr.anchor_section(gid, l0, c0, rot=rot, mirror=mirror, fonte="manual", confianca="confirmado")
-			msgs.append(f"{gid} ancorada em ({l0},{c0}) rot {rot} mirror {mirror}: {len(ev['placements'])} peças colocadas")
+			msgs.append(f"{gid}: «{AQUI_TXT}» em ({l0},{c0}) rot {rot} mirror {mirror}: {len(ev['placements'])} peças colocadas")
 			for c in ev["conflicts"]:
 				msgs.append(f"CONFLITO: {c['piece']} → {tuple(c['cell'])} já tem {c['occupant']} (não sobrescrito)")
 			for pl in ev["placements"]:
 				cells |= _around(pr, tuple(pl["cell"]))
 		elif unanchor is not None:
 			ev = pr.unanchor_section(unanchor)
-			msgs.append(f"{unanchor} desancorada: {len(ev['placements'])} peças voltam a em_seccao")
+			msgs.append(f"{unanchor}: «{AQUI_TXT}» desfeito, {len(ev['placements'])} peças voltam a ficar sem lugar")
 			for pl in ev["placements"]:
 				cells |= _around(pr, tuple(pl["cell"]))
 		elif discard:
