@@ -207,3 +207,85 @@ Medição, não produto: `src/` e `projects/alpes` não são tocados; não há `
 **5. Fatias e exemplos.** Wilson 95 % com n = nº de buracos (não buracos × sorteios). Fatias por nº de vizinhas, N, zona, proveniência (b/d vs só layout) e (nº, zona); as **3 piores** (≥ 20 buracos). **Doze exemplos visuais** (cv-visual-verification): do cenário **N = 100, E5 estrito, sem erosão**: 6 acertos (1 em cada ⌊H/6⌋, sem escolher bonitos) e 6 falhas pelo **pior rank no pool completo** (desempate pelo id), com a candidata (a melhor J) **colocada no buraco** e as vizinhas por perto.
 
 **6. Veredicto:** [V] se o intervalo de Wilson fica todo do lado certo do alvo; [F] se o limite superior fica abaixo da fronteira de falha; [NT] caso contrário. Se falhar, diz-se se o bloqueio é o **viés sistemático** (erros correlacionados; leitura pela regra acima e por real vs independente) ou **falta de vizinhas** (por nº de vizinhas), e que mudanças o atacariam, **sem implementar**. Nada se afina depois de ver os números; qualquer variante extra fica marcada pós-hoc.
+
+## 12. Passo 5 — resultados (2026-11-06; critérios do §11, nada afinado depois de ver os números)
+
+Reprodução: `python tools/diagnostico/fit/buraco.py` e `FIT_SHRINK=0.48 python tools/diagnostico/fit/buraco.py` (≈ 1 min cada; `buraco.json`, `buraco_encolhido.json`), `buraco_controlo.py` (controlo pós-hoc, §12.5), `figs_buraco.py` (exemplos). **Sanidade [V]:** com 1 só vizinha o mesmo custo (por peça, mínimo das 4 rotações) dá no pool completo E5 top-1 21,9 % (sem erosão), o mesmo sistema do §1 (19,9 % por lado, N = 805); não houve custos de imagem em falta (NaN = 0). 467 buracos: 2 vizinhas 175, 3 vizinhas 191, 4 vizinhas 101 (zonas e proveniência no §11).
+
+### 12.1 Vizinha presente (n = 467 buracos; Wilson 95 %)
+
+| N | custo | E4 certa-ou-gémea top-1 | E5 certa (estrita) top-1 | E5 top-3 |
+|---|---|---|---|---|
+| **sem erosão** | | | | |
+| 32 | conjunto | 69,4 % (65,1–73,4) | **87,8 %** (84,5–90,5) | 90,3 % |
+| 64 | conjunto | 62,0 % | 86,1 % (82,6–88,9) | 89,9 % |
+| 100 | conjunto | 56,9 % (52,4–61,4) | **84,6 %** (81,0–87,6) | 89,3 % |
+| completo | conjunto | 36,2 % (32,0–40,6) | 74,5 % (70,4–78,3) | 83,1 % |
+| **erosão 0,48 mm** (1 ponto) | | | | |
+| 32 | conjunto | **88,3 %** (85,0–90,8) | **93,0 %** (90,2–94,9) | 94,4 % |
+| 64 | conjunto | 85,0 % | 92,0 % (89,3–94,2) | 94,2 % |
+| 100 | conjunto | 82,2 % (78,5–85,4) | **91,2 %** (88,3–93,5) | 93,8 % |
+| completo | conjunto | 66,8 % (62,4–70,9) | 85,2 % (81,7–88,2) | 90,1 % |
+
+**Contra um lado isolado (mesmos sorteios):** E5 top-1 em N = 32 / 100: lado isolado (média das vizinhas) **69,2 % / 51,7 %** sem erosão (80,0 % / 67,4 % com); conjunto **87,8 % / 84,6 %** (93,0 % / 91,2 %). E4: 18,1 % / 8,0 % → 69,4 % / 56,9 % (41,1 / 23,3 → 88,3 / 82,2 com erosão). O **melhor lado a posteriori (oráculo, não implementável)** dá 92,6 % / 81,6 % (96,4 / 90,9): o conjunto iguala ou aproxima o oráculo sem saber qual é o lado bom. **Se os erros fossem independentes** (custo do verdadeiro tirado de outros buracos): E5 84,2 % / 78,1 % (90,0 / 85,4) — o **real é ≥ ao independente** (+3 a +7 pontos), não pior.
+
+### 12.2 Correlação dos erros entre os lados do mesmo buraco [V]
+Spearman dos percentis do custo E4 do verdadeiro, 1354 pares não ordenados (175 + 3·191 + 6·101), por buraco: **ρ = −0,017** (IC bootstrap −0,069 a +0,034; com erosão −0,035, −0,088 a +0,018); controlo (2.º membro de outro buraco) −0,001 ± 0,017. Pearson do RMS verdadeiro (mm): 0,042 (−0,013 a 0,102; com erosão 0,055). Por nº de vizinhas (Spearman, sem erosão): 2 → −0,116; 3 → −0,027; 4 → +0,015. **Pela regra fixa (ρ < 0,15): não correlacionados.** Ou seja, **o viés da silhueta, sendo sistemático no nível absoluto (±1 mm), não se traduz em erros que se somem entre lados do mesmo buraco** quando se mede em ordem (percentil entre candidatos): os 2–4 lados trazem informação **independente**, e é isso que explica o salto de 69 % → 88 % (E5, N = 32).
+
+### 12.3 Por nº de vizinhas, zona e proveniência (E4 certa-ou-gémea / E5 estrita, top-1, sem erosão → com erosão)
+
+| fatia | n | N = 32 | N = 100 | pool completo |
+|---|---|---|---|---|
+| 2 vizinhas | 175 | 52 / 89 → 82 / 94 | **33 / 83** → 69 / 90 | 14 / 69 → 39 / 81 |
+| 3 vizinhas | 191 | 78 / 88 → 94 / 94 | 66 / 85 → 91 / 93 | 42 / 75 → 83 / 87 |
+| 4 vizinhas | 101 | 84 / 85 → 89 / 89 | 81 / 85 → 88 / 89 | 63 / 84 → 84 / 89 |
+| céu · relva | 196 · 240 | 69 / 89 · 73 / 86 | 56 / 88 · 61 / 82 | 34 / 82 · 40 / 68 |
+| b/d · só layout | 91 · 376 | 67 / 84 · 70 / 89 | 54 / 79 · 58 / 86 | 27 / 63 · 38 / 77 |
+
+(montanha/floresta n = 12 e vale/aldeia n = 19 ficam abaixo do n ≥ 20 das fatias; no meio do puzzle o GT é quase inexistente: **[NT]**.)
+
+**As 3 piores fatias (n ≥ 20; E5 estrito top-1):** sem erosão em N = 32: (1) **4 vizinhas · relva** 82,1 % (n = 56), (2) **GT independente do layout (b/d)** 83,9 % (n = 91), (3) **4 vizinhas** 85,1 % (n = 101); em N = 100: (1) **2 vizinhas · relva 76,7 %** (n = 77; E4 só 37 %), (2) b/d 78,7 %, (3) relva 81,5 %. Com erosão em N = 32: 4 vizinhas · relva 87,5 %, b/d 89,1 %, 4 vizinhas 89,1 %. **Mais vizinhas não melhoram sempre o E5**: 4 vizinhas não é melhor que 3 (85 % vs 88 %, sem erosão), porque cada lado a mais é mais uma ocasião de a peça certa falhar o filtro (§12.4). O E4 (só forma) com **2 vizinhas** é fraco (52 % em N = 32, 33 % em N = 100): com 2 lados a forma ainda não chega.
+
+### 12.4 Onde falha (rank da certa no pool completo; sem erosão → com erosão)
+**45 de 467 (9,6 %) → 26 (5,6 %) buracos têm a peça certa fora dos filtros** (algum lado falha as cordas/tipo ⇒ custo ∞): 2 vizinhas 5,7 %, 3 vizinhas 10,5 %, **4 vizinhas 14,9 %** (com erosão 2,9 / 5,2 / 10,9 %); mais 74 → 43 buracos com a certa a rank finito > 1. Nos exemplos (§12.6) as 6 piores falhas são **todas** deste tipo: a certa **encaixa à vista** mas o perfil lido falha uma corda; a «vencedora» é a de menor custo entre as que passam e visivelmente **não encaixa** (sobrepõe-se às vizinhas ou deixa folga). É a mesma causa raiz do §3: silhueta com viés ≈ 1 mm (M3/M4), agora amplificada por o filtro ser duro em cada lado.
+
+### 12.5 Controlo pós-hoc: o viés «mesma digitalização» [V, limitado]
+Preocupação: a peça certa e as vizinhas vêm da mesma folha de scan; se o E5 se apoiasse na diferença de cor entre scans, a certa ganhava por isso. Controlo (N = 32, 303 buracos com ≥ 31 concorrentes da mesma folha), concorrentes só da **mesma folha** / só de **outras folhas** / aleatórios: E5 certa top-1 **87,1 % / 91,4 % / 91,1 %** (com erosão 95,0 / 96,2 / 96,0); E4 71,7 / 70,6 / 70,4 (89,3 / 91,0 / 90,8). Concorrentes da mesma folha são ligeiramente **mais difíceis**, não mais fáceis: **não há atalho de folha [V]**. **Limite [NT]:** na vida real a peça certa é uma solta de **outro** scan que as vizinhas da tabuleiro; isto não se mediu (só 6 ligações físicas entre scans); a calibração de cor entre scans (M9) é o risco.
+
+### 12.6 Exemplos visuais (cv-visual-verification)
+[`exemplos_buraco_acertos.jpg`](exemplos_buraco_acertos.jpg): 6 acertos (1 em cada ⌊H/6⌋ dos 403 com top-1 em ≥ 50 % dos sorteios a N = 100; **não escolhidos**: P0002, P0087, P0279, P0440, P0555, P0733 — 3 céu, 3 relva, 2–4 vizinhas); os contornos amarelos (vizinhas) e ciano (a certa colocada no buraco) coincidem. [`exemplos_buraco_falhas.jpg`](exemplos_buraco_falhas.jpg): 6 falhas pelo pior rank no pool completo (empate pelo id): P0001, P0012 (céu), P0031, P0034, P0035, P0063 (relva), todas de 3 vizinhas e todas com a certa **fora dos filtros**; à esquerda a certa, à direita a vencedora do E5 conjunto (P0776 rot 3, P0763 rot 3, P0445 rot 0, P0398 rot 3, P0579 rot 2, P0089 rot 1): **a certa encaixa e a vencedora não** [V visual]. Dados em `exemplos_buraco.json`. Como todas as 6 piores têm rank ∞ (nenhuma «rank 2, 3…» em empate), a seleção «pior rank» mostra só o modo de falha dos filtros, não os quase-empates (74 buracos com a certa em rank finito > 1, ver 12.4).
+
+### 12.7 Peça ausente do lote (curva precisão–cobertura; margem d2/d1 do E5 conjunto)
+τ = 1,5 (fixo). Sem erosão / com erosão; falsas = propostas com a peça ausente por buraco.
+
+| N | cobertura (presente) | precisão (presente) | **falsas/buraco** | precisão π = 1 % | π = 10 % |
+|---|---|---|---|---|---|
+| 32 | 50,1 / 63,4 % | 97,7 / 98,9 % | **0,122 / 0,138** | 3,9 / 4,4 % | 30,7 / 33,5 % |
+| 64 | 48,0 / 64,8 % | 97,4 / 98,9 % | 0,111 / 0,127 | 4,1 / 4,8 % | 31,7 / 35,7 % |
+| 100 | 44,2 / 63,2 % | 97,2 / 98,9 % | **0,103 / 0,118** | 4,0 / 5,1 % | 31,3 / 36,9 % |
+
+Por nº de vizinhas (sem erosão, τ = 1,5, N = 32 → N = 100): falsas/buraco 2 vizinhas 0,112 → 0,043; 3 vizinhas 0,167 → 0,134; 4 vizinhas 0,053 → 0,150; precisão a π = 10 %: 36 → 51 % (2), 25 → 26 % (3), 39 → 25 % (4). Com τ = 2,0 (N = 100): falsas 0,010 (2 vizinhas) a 0,063 (4), cobertura 13–32 %, precisão a π = 10 % 28–60 %. **Critério de utilidade (falsas ≤ 0,05, precisão a π = 10 % ≥ 90 %, cobertura ≥ 30 %): não cumprido em nenhum ponto; precisão a π = 10 % < 50 % em quase todos [F].** A π = 1 % (o caso comum de um lote) a precisão é 4–5 %: ≈ 19–25 propostas falsas por cada certa.
+
+## 13. Veredicto do passo 5 e o que diz sobre M11
+
+**Pergunta:** com 2–4 vizinhas o que falhava com um lado isolado resolve-se? **Sim para «a peça está no lote»; não para «propor sem ela garantida».**
+
+1. **E5 (forma + imagem), a certa em top-1, alvo ≥ 85 % [V com erosão]:** com a erosão de 0,48 mm: 93,0 % (N = 32, IC 90,2–94,9), 92,0 % (N = 64), 91,2 % (N = 100, IC 88,3–93,5): **cumprido, o IC inteiro acima de 85 %**. Sem erosão fica em 87,8 % (N = 32) e 84,6 % (N = 100) com IC a cruzar os 85 % **[NT]**. No pool completo 85,2 % (81,7–88,2, com erosão) [NT] e 74,5 % (sem). **Nunca abaixo da fronteira de falha (60 %)** nos pools de lote.
+2. **E4 (só forma), certa-ou-gémea em top-1, alvo ≥ 90 % [não cumprido]:** o melhor é 88,3 % (N = 32, com erosão, IC 85,0–90,8: [NT]); em N = 100 82,2 % (78,5–85,4) abaixo do alvo; sem erosão 69,4 % / 56,9 %. No pool completo [F] (36,2 %, IC 32,0–40,6, abaixo dos 60 %). **A forma sozinha continua a precisar do contorno sem viés; é a imagem que fecha o alvo com 2–4 vizinhas.**
+3. **Ganho do conjunto [V]:** E5 top-1 N = 32: 69,2 % (um lado) → 87,8 % (conjunto); sem erosão N = 100: 51,7 % → 84,6 %; o oráculo do melhor lado é 92,6 % / 81,6 %.
+4. **Erros correlacionados? [V não]:** ρ = −0,02 (IC −0,07 a 0,03); o real bate ao «independente». **O bloqueio não é o viés sistemático a somar-se entre lados.**
+5. **Peça ausente [F]:** 10–14 % de buracos com proposta falsa a τ = 1,5, precisão 4–5 % a π = 1 % e 31–37 % a π = 10 %; nenhum τ resolve (a cobertura cai antes). **Um M11 que «vá dizendo onde cada peça do lote cabe» sem saber que a peça existe gera ≈ 20 falsas por certa.** Para a **direção da GUI** (cada peça solta contra os N buracos da tabuleiro) as falsas por peça multiplicam-se pelo nº de buracos: **não medido [NT]** (era o passo seguinte).
+
+**O que isto diz sobre M11/M6.** M11 (molde do buraco) com 2–4 vizinhas conhecidas é viável **como ranking** (top-3 do E5: 89–94 % em lotes de 32–100) para uma peça da qual **se sabe que está no lote** ou para o ecrã «candidatas para este buraco», e **não** como proposta autónoma. M6 (solta–solta, sem vizinhas fixas) continua [F] (§10).
+
+**Bloqueio dominante (medido), por ordem:** (a) **a peça certa falha o filtro duro** (5,6–9,6 % dos buracos; 10,9–14,9 % com 4 vizinhas) por viés da silhueta nas cordas/tipo — causa de todas as 6 piores falhas; mais vizinhas = mais ocasiões de falhar; (b) **sem calibração absoluta, a melhor candidata propõe-se sempre** (10–14 % de falsas por buraco); (c) E4 sozinho a 2 vizinhas (52 %, N = 32) — a imagem faz o trabalho; (d) **cor entre scans [NT]**. Não é falta de vizinhas (2 vizinhas dão E5 89 % a N = 32, 94 % com erosão) nem correlação de erros.
+
+**Mudanças que o atacariam, SEM implementar [NT, nenhuma medida aqui]:**
+1. **Forma sem viés** (M3/M4: linha de corte ou modelo de sombra, ou a erosão calibrada por modalidade): a erosão de 0,48 mm já tira 42 % das falhas de filtro (45 → 26) e leva o E5 de 87,8 → 93,0 % a N = 32.
+2. **Filtro mole em vez de duro** por lado: penalização graduada acima da corda em vez de ∞, para uma só corda mal lida não anular uma candidata que encaixa nas outras vizinhas (precisa de validação fora da amostra).
+3. **Rejeição absoluta + margem:** exigir também que o custo conjunto d1 seja compatível com o de um verdadeiro (calibrado nos buracos com a certa, fora da amostra) antes de propor; hoje só a margem relativa.
+4. **Afetação conjunta** buracos × peças do lote (cada peça num buraco, cada buraco numa peça): reduz as falsas por peça na direção da GUI.
+5. **Normalização fotométrica entre scans** (M9) e medir com a certa de **outro** scan (os 6 pares físicos de §12.5 são poucos; vale um GT com re-digitalização).
+6. Medir a **direção inversa** (cada solta contra todos os buracos da tabuleiro) e os **buracos reais** (as células vazias do tabuleiro com 2–4 vizinhas, sem GT da peça que lá vai).
+
+**Limitações [NT]:** o GT cobre sobretudo céu e relva (31 buracos de outras zonas); 376 dos 467 buracos têm adjacências só do layout (84/84 verificadas onde havia b/d); os «buracos» são virtuais (a peça existe e vem da mesma folha das vizinhas); o oráculo e o «independente» são referências, não métodos; a erosão de 0,48 mm vem do E-real, não deste GT.

@@ -108,10 +108,11 @@ def prepare():
                 acc_t.append(index_of[(rt, (((q["side_b"] + k) % 4) + kt) % 4)])
                 ex_reps.append(rindex[rt])
         xs = ((q["side_b"] + k) % 4) if rb in reps else None       # lado do alvo no referencial do representante (buracos, passo 5)
-        Q.append(dict(a=a, xs=xs, prov=q["prov"], cluster_b=rb, own=rindex.get(ca, -1), rb=rindex.get(rb, -1) if rb in reps else -1,
+        Q.append(dict(a=a, xs=xs, prov=q["prov"], kind_a=q["kind_a"], side_a=q["side_a"], cluster_b=rb, own=rindex.get(ca, -1), rb=rindex.get(rb, -1) if rb in reps else -1,
                       s4=s4, s5=s5, acc_len=np.array(acc_s + acc_t, int), acc_str=np.array(acc_s, int),
                       ex=np.array(ex_reps, int), zone=q["zone"]))
-    return dict(Q=Q, ri=ri, R=len(rkeys), N_all=len(kind), no_true=sum(1 for x in Q if x["rb"] < 0))
+    return dict(Q=Q, ri=ri, R=len(rkeys), N_all=len(kind), no_true=sum(1 for x in Q if x["rb"] < 0),
+                rkeys=rkeys, reps=reps, sh=sh, pr=pr, cl=cl, tw=tw, sides_of=sides_of)
 
 
 def draw_members(rng, R, forbid, must, n, D):

@@ -1,0 +1,116 @@
+[
+ {
+  "kind": "acerto",
+  "hole": "P0002",
+  "m": 3,
+  "zone": "céu",
+  "e5_hit100": 1.0,
+  "e5_rank_full_str": 1,
+  "e4_rank_full_str": 1
+ },
+ {
+  "kind": "acerto",
+  "hole": "P0087",
+  "m": 3,
+  "zone": "relva",
+  "e5_hit100": 1.0,
+  "e5_rank_full_str": 1,
+  "e4_rank_full_str": 1
+ },
+ {
+  "kind": "acerto",
+  "hole": "P0279",
+  "m": 2,
+  "zone": "céu",
+  "e5_hit100": 1.0,
+  "e5_rank_full_str": 1,
+  "e4_rank_full_str": 2
+ },
+ {
+  "kind": "acerto",
+  "hole": "P0440",
+  "m": 3,
+  "zone": "relva",
+  "e5_hit100": 1.0,
+  "e5_rank_full_str": 1,
+  "e4_rank_full_str": 1
+ },
+ {
+  "kind": "acerto",
+  "hole": "P0555",
+  "m": 3,
+  "zone": "relva",
+  "e5_hit100": 1.0,
+  "e5_rank_full_str": 1,
+  "e4_rank_full_str": 6
+ },
+ {
+  "kind": "acerto",
+  "hole": "P0733",
+  "m": 4,
+  "zone": "céu",
+  "e5_hit100": 1.0,
+  "e5_rank_full_str": 1,
+  "e4_rank_full_str": 2
+ },
+ {
+  "kind": "falha",
+  "hole": "P0001",
+  "winner": "P0776",
+  "winner_rot": 3,
+  "m": 3,
+  "zone": "céu",
+  "e5_rank_full_str": 1000000000,
+  "e4_rank_full_str": 1000000000
+ },
+ {
+  "kind": "falha",
+  "hole": "P0012",
+  "winner": "P0763",
+  "winner_rot": 3,
+  "m": 3,
+  "zone": "céu",
+  "e5_rank_full_str": 1000000000,
+  "e4_rank_full_str": 1000000000
+ },
+ {
+  "kind": "falha",
+  "hole": "P0031",
+  "winner": "P0445",
+  "winner_rot": 0,
+  "m": 3,
+  "zone": "relva",
+  "e5_rank_full_str": 1000000000,
+  "e4_rank_full_str": 1000000000
+ },
+ {
+  "kind": "falha",
+  "hole": "P0034",
+  "winner": "P0398",
+  "winner_rot": 3,
+  "m": 3,
+  "zone": "relva",
+  "e5_rank_full_str": 1000000000,
+  "e4_rank_full_str": 1000000000
+ },
+ {
+  "kind": "falha",
+  "hole": "P0035",
+  "winner": "P0579",
+  "winner_rot": 2,
+  "m": 3,
+  "zone": "relva",
+  "e5_rank_full_str": 1000000000,
+  "e4_rank_full_str": 1000000000
+ },
+ {
+  "kind": "falha",
+  "hole": "P0063",
+  "winner": "P0089",
+  "winner_rot": 1,
+  "m": 3,
+  "zone": "relva",
+  "e5_rank_full_str": 1000000000,
+  "e4_rank_full_str": 1000000000
+ }
+]
