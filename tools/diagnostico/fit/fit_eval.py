@@ -128,7 +128,7 @@ def piece_strips(pr, pid):
 
 
 # ---------------------------------------------------------------- pool
-def build():
+def build(prefer_kinds=None):
     pr = open_project()
     t95 = float(pr.profile.calibration["silhueta_silhueta"]["t95"])
     chord = pr.profile.calibration["chord"]
@@ -141,6 +141,9 @@ def build():
     reps = {}
     for r, ms in members.items():
         ok = sorted(p for p in ms if sh[p] is not None and sh[p].ok)
+        if ok and prefer_kinds:
+            pref = [p for p in ok if (pr.model.scans.get(pr.piece(p).scan_id) or {}).get("kind") in prefer_kinds]
+            ok = pref or ok
         if ok:
             reps[r] = ok[0]
     return pr, t95, chord, sh, cl, members, reps

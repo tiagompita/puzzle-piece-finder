@@ -309,3 +309,65 @@ b) **Peça → tabuleiro:** posição da célula certa entre **todos os buracos 
 **5. Casos visuais:** os 15, **os piores primeiro** (pela posição E5 estrita no pool do lote, com erosão; empate pelo pool completo), com a candidata colocada no buraco; nos casos com rank > 1, ao lado, a vencedora.
 
 **6. Resumo:** [V] / [NT] / [F] por bloco (será [NT] por construção) e o que se deveria ver com n ≥ 20 para decidir o M11 (declarado depois dos números). Nada se afina; se se ajustar alguma coisa, diz-se o quê e marca-se pós-hoc.
+
+## 15. Passo 6 — resultados do piloto (2026-11-06; critérios do §14, nada afinado depois de ver os números)
+
+Reprodução: `python tools/diagnostico/fit/real.py` e `FIT_SHRINK=0.48 python tools/diagnostico/fit/real.py` (≈ 20 s e 40 s; `real.json`, `real_encolhido.json`), `real_compara.py` (§15.4, `real_compara*.json`), `figs_real.py` (`real_casos_{1,2}.jpg`, `real_casos.json`). O script lê o GT do log em cada execução; com mais confirmações físicas volta a correr sem alterações e, a partir de n = 20, imprime «veredicto possível». **Regressão [V]:** a refatoração de `pool.prepare` (função de custo reutilizável, `prefer_kinds`) deixa os números do passo 5 **idênticos** (`buraco.py` reproduz `buraco.json`, sem diferenças no `git diff`).
+
+**GT (por critério, do log): n = 15 [V]** — por nº de vizinhas 1 / 2 / 3 / 4 = 6 / 4 / 4 / 1 (9 com ≥ 2); 13 têm vizinhas de páginas montadas (outro scan), todas as 15 são de **céu** (linhas 2–4, scans S0005–S0007). **n < 20: sem veredicto; nenhum bloco abaixo é «cumprido» nem «falhado».** **Nota obrigatória (otimismo):** estas 15 entraram pelo caminho do gémeo (`find_twin`), que só aceita peças de forma bem lida (cordas, classe, margem): a amostra é provavelmente **otimista** para uma solta aleatória; mesmo assim 3 em 15 (sem erosão) têm a peça certa fora dos filtros duros.
+
+**Validação do mapa de lados [V]:** o sentido σ em que o índice do lado cresce N→E→S→W no tabuleiro é +1 em **603 de 603** peças colocadas; e em todos os 14 casos com pose no log a rotação da solta deduzida das vizinhas é **consistente entre as vizinhas** (`rot_consistent`); o 15.º (P0147) não tem `theta_deg` no log (colocação da GUI antiga) e usa só a rotação que o custo escolheu. É o mesmo mapa que o §11 assumia.
+
+### 15.1 a) Peça → candidatos para a célula certa (pool do lote = 150 peças físicas; pool completo = 813)
+Posição da peça confirmada por E5 conjunto, estrita; Wilson 95 % (n = 15; entre parêntesis só n = 9 com ≥ 2 vizinhas).
+
+| condição | E5 top-1, pool do lote | E5 top-3 | E5 top-1, completo | E4 certa-ou-gémea top-1, lote |
+|---|---|---|---|---|
+| sem erosão | **10/15 = 67 %** (42–85); ≥ 2 viz.: 7/9 (45–94) | 12/15 | 7/15 = 47 % (25–70) | 5/15 = 33 % (15–58) |
+| erosão 0,48 mm | **14/15 = 93 %** (70–99); ≥ 2 viz.: 8/9 (56–98) | 14/15 | 13/15 = 87 % (62–96) | 7/15 = 47 % (25–70) |
+
+Por nº de vizinhas (E5 estrito top-1, lote; sem erosão → com erosão): 1 vizinha 3/6 → 6/6; 2 vizinhas 4/4 → 4/4; 3 vizinhas 3/4 → 3/4; 4 vizinhas 0/1 → 1/1. Os 5 casos sem rank 1 sem erosão: P0119 (4 viz.), P0129 (3), P0131 (1) têm a certa **fora dos filtros** (custo ∞: algum lado falha as cordas/tipo; com erosão só ficam fora P0129), e P0126, P0162 (1 vizinha) ficam em 2.º. **Com 1 vizinha** o E4 não discrimina (mediana do rank 30 sem erosão); a imagem fecha o caso.
+
+**Contra o passo 5 (mesma folha):** E5 estrito, N = 100 (a pool do lote tem 150): sem erosão 84,6 % (81,0–87,6) e com erosão 91,2 % (88,3–93,5). O piloto (67 % e 93 %) **tem intervalos que contêm ambos os valores do passo 5**: **nenhuma diferença sistemática detetável com n = 15 [NT]**. A fração com a certa fora dos filtros: piloto 3/15 = 20 % (7–45) sem erosão e 1/15 = 7 % com erosão, contra 9,6 % e 5,6 % no passo 5: compatível.
+
+### 15.2 b) Peça → tabuleiro: a célula certa entre os buracos reais
+Buracos reais = células `vazia` com ≥ 1 vizinha `colocada` com forma e pose: **207–208** (de ≈ 2400 células vazias; **59** com ≥ 2 vizinhas), a própria peça tirada (a sua célula conta como um buraco).
+
+| condição | E5 top-1 entre os buracos (≥ 1 viz.) | top-3 | só buracos com ≥ 2 viz. (casos com ≥ 2 viz.) | E4 top-1 |
+|---|---|---|---|---|
+| sem erosão | **10/15 = 67 %** (42–85); mediana do rank 1 | 12/15 | 7/9 (45–94) | 0/15 (0–20); mediana 23 |
+| erosão 0,48 mm | **13/15 = 87 %** (62–96) | 14/15 | 8/9 (56–98) | 1/15 (1–30); mediana 11 |
+
+(A coluna «só buracos com ≥ 2 viz.» só existe para os casos cuja célula tem ≥ 2 vizinhas, n = 9, e compara a célula certa só com os 59 buracos de ≥ 2 vizinhas.) Por nº de vizinhas (E5, sem → com erosão): 1 vizinha 4/6 → 5/6; 2 vizinhas 4/4 → 4/4; 3 vizinhas 2/4 → 3/4; 4 vizinhas 0/1 → 1/1. **A forma sozinha (E4) não localiza a célula entre 207 buracos** (mediana do rank 23 sem erosão, 11 com), tal como já não separava os parceiros no §1: a imagem é indispensável.
+
+### 15.3 Resumo contra o alvo (E5 certa top-1 ≥ 85 %) — **[NT] por construção (n = 15 < 20)**
+Não se afirma cumprido nem falhado. Valores e intervalos: pool do lote 10/15 (42–85 %) sem erosão e 14/15 (70–99 %) com erosão; tabuleiro 10/15 (42–85) e 13/15 (62–96). Em nenhum bloco o IC inteiro fica acima de 85 % ou abaixo de 60 %.
+
+### 15.4 Diferença sistemática face ao passo 5? (mede-se, não se corrige)
+Lados **verdadeiros** (mediana [quartis]; n lados): **(A)** vizinha de outro scan (página montada/blocos) n = 18; **(B)** vizinha também de scan de lote n = 12; **(C)** passo 5, mesma folha, 1442 lados (e **C céu**, 622, controlo pós-hoc porque as 15 são todas de céu e o ΔE do céu é liso).
+
+| | RMS da forma (mm) | \|ΔL\| da corda (mm) | ΔE da tira | pontos de tira válidos | passa o filtro |
+|---|---|---|---|---|---|
+| A · outro scan | 1,09 [0,99–1,20] | 0,20 [0,07–0,51] | **4,89** [4,15–5,45] | 11 [10–12] | 94 % |
+| B · scan de lote | 1,37 [1,12–1,51] | 0,33 [0,17–0,77] | 4,95 [4,70–6,05] | 10 [10–11] | 83 % |
+| C · passo 5 | 1,12 [0,98–1,29] | 0,38 [0,20–0,63] | 8,84 [4,12–15,03] | 11 [10–11] | 96 % |
+| C · só céu | 1,14 [0,99–1,31] | 0,39 [0,19–0,66] | **3,93** [3,16–4,93] | 11 [10–11] | 95 % |
+
+(Com erosão: RMS 0,59 / 0,81 / 0,62 / 0,61; o resto igual.) **Regra declarada (≥ 1 intervalo interquartil de C):** nenhuma coluna a cumpre. **Forma e escala:** (A) iguala (C) (RMS 1,09 vs 1,12 mm; \|ΔL\| até menor), **não há problema de escala**; **recorte:** os pontos de tira válidos são os mesmos (11), **sem diferença de recorte**. **Cor:** o ΔE do verdadeiro em lados de outro scan é **+0,96** acima do de (C céu) (4,89 vs 3,93; ≈ 0,5 do intervalo interquartil de 1,77), um desvio **pequeno e na direção esperada** (cor entre scans), não distinguível com n = 18 [NT]; comparar com (C) todas as zonas engana (8,84, por a relva ter ΔE grande). Há um sinal em (B), só 12 lados: as vizinhas que são elas próprias soltas de lote têm RMS 1,37 mm e 17 % de lados fora do filtro (sem erosão) — as soltas fixam pior contra soltas **[NT]** (n pequeno).
+
+### 15.5 Casos visuais (todos os 15, os piores primeiro)
+[`real_casos_1.jpg`](real_casos_1.jpg) (8 piores) e [`real_casos_2.jpg`](real_casos_2.jpg) (7): a peça confirmada colocada no seu buraco (ciano) com as vizinhas (amarelo); ao lado, só em P0129 (o único com rank > 1 com erosão; sem erosão há mais quatro, ver 15.1), a melhor candidata do lote colocada no mesmo buraco. Ordem: pelo rank E5 com erosão (P0129 primeiro). **[V visual]** Nos 15 a certa **encaixa à vista** (os contornos ciano e amarelo coincidem nas arestas); a vencedora de P0129 (P0157, ela própria uma confirmada noutra célula) sobrepõe-se às vizinhas.
+
+### 15.6 Veredicto do piloto e o que bloqueia o M11 em `src/fit.py`
+**[NT] por construção (n = 15; 9 com ≥ 2 vizinhas; todas céu).** O piloto **não contradiz** o passo 5 (E5 certa top-1 67 % sem erosão e 93 % com, nos IC do passo 5), não mostra problema de escala nem de recorte quando a peça vem de **outro scan**, e um ΔE ≈ +1 no céu que não chega ao critério. Os blocos que mais pesam e que o piloto repete:
+1. **Filtro duro das cordas** (a certa fora dos filtros: 3/15 sem erosão, 1/15 com): é o mesmo modo de falha do §12.4 (viés da silhueta); precisa de forma sem viés (M3/M4) ou de filtro mole.
+2. **A imagem é indispensável** (E4 sozinho: 5/15 no lote, e 0/15 a localizar a célula entre 207 buracos).
+3. **O caso só de uma vizinha** (6 dos 15) fica em 2.º 2 vezes sem erosão: com 1 vizinha o ranking não chega, só o conjunto de ≥ 2.
+4. **Rejeição de peça ausente** (do §13) não se mediu no tabuleiro real: sem GT de buracos onde se sabe que a peça **não** está no lote.
+5. **Mapa de lados:** o índice dos lados tem de ter orientação única (σ = +1 em 603/603); `src/fit.py` deve afirmá-lo como invariante.
+
+**O que se deveria ver com n ≥ 20 (declarado depois dos números) para decidir o M11:**
+- **n ≥ 60 casos, ≥ 40 com ≥ 2 vizinhas**: com k acertos em n, o limite inferior de Wilson só passa 85 % com n ≥ 25 sem falhas ou n ≈ 60 com ≤ 3 falhas (n = 20 com 18 acertos dá 70–97 %).
+- **Fora do céu** (relva e meio do puzzle: hoje 0 casos) e **peças de forma menos bem lida** (que o gémeo não aceita): casos obtidos por outro caminho, por exemplo **confirmar fisicamente o top-1 do próprio molde do buraco** (a confirmação física é o GT) para uma amostra de buracos reais; isso dá ao mesmo tempo a **precisão** e as **propostas falsas por buraco**.
+- **Casos com a peça de outro lote que as vizinhas e cor medida** (≥ 20 lados de outro scan): para fechar se o +1 ΔE é real.
+- **Buracos reais onde a peça não está no lote**, para calibrar a rejeição (a lacuna do §13).

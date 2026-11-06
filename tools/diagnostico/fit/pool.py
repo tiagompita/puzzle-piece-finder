@@ -31,11 +31,14 @@ NS_INV = (32, 100)
 OUT = os.path.join(REPO, "docs", "diagnostico", "fit", f"pool{fe.SUFFIX}.json")
 
 
-def prepare():
+def prepare(prefer_kinds=None, with_queries=True):
     """Por consulta: custos E4/E5 sobre TODOS os lados candidatos (inf = não passa), lados aceites, dono (índice de rep)."""
-    pr, t95, chord, sh, cl, members, reps = fe.build()
-    g = json.load(open(fe.GT, encoding="utf-8"))
-    queries = [q for q in g["queries"] if {q["kind_a"], q["kind_b"]} == {"T", "B"}]
+    pr, t95, chord, sh, cl, members, reps = fe.build(prefer_kinds)
+    if with_queries:
+        g = json.load(open(fe.GT, encoding="utf-8"))
+        queries = [q for q in g["queries"] if {q["kind_a"], q["kind_b"]} == {"T", "B"}]
+    else:
+        queries = []
     tw = fe.twin_map(pr, sh, reps, t95)
     SIDES = {}
 
@@ -73,13 +76,13 @@ def prepare():
     for p in sorted(todo):
         cache[p] = fe.piece_strips(pr, p)
     S_cand = np.stack([cache[reps[o]][i] for o, i in zip(owner, sidx)])
+    dirty = []
 
-    Q = []
-    for q in queries:
-        a = q["a"]
+    def costs(a, side_a):
+        """custos E4/E5 do lado ``side_a`` da peça ``a`` contra TODOS os lados candidatos (inf = não passa)."""
         sda = sides_of(a)
-        sa = sda[q["side_a"]]
-        fa_a = f_adjacent([x.kind for x in sda])[q["side_a"]]
+        sa = sda[side_a]
+        fa_a = f_adjacent([x.kind for x in sda])[side_a]
         ca = cl[a]
         rms = np.sqrt(np.mean(np.sum((sa.profile[None] - PN) ** 2, -1), -1)) * (sa.chord_mm + chordv) / 2.0
         comp = ((kind == "T") & (sa.kind == "B")) | ((kind == "B") & (sa.kind == "T"))
@@ -87,13 +90,29 @@ def prepare():
         dl = np.abs(sa.chord_mm - chordv)
         tol = np.where(fa_a | fadj, chord["f_adj_mm"], chord["normal_mm"])
         passed = comp & ~own & (dl <= tol)
-        Sq = cache[a][q["side_a"]]
+        if a not in cache:
+            cache[a] = fe.piece_strips(pr, a)
+            dirty.append(a)
+        Sq = cache[a][side_a]
         diff = np.linalg.norm(Sq[None] - S_cand[:, ::-1], axis=-1)
         valid = np.isfinite(diff).sum(1)
         de = np.where(valid >= fe.MIN_VALID, np.nanmedian(np.where(np.isfinite(diff), diff, np.nan), axis=1), np.nan)
         e5 = rms / fe.RMS_SCALE + de / fe.DE_SCALE
         s4 = np.where(passed & np.isfinite(rms), rms, np.inf).astype(np.float32)
         s5 = np.where(passed & np.isfinite(e5), e5, np.inf).astype(np.float32)
+        return dict(s4=s4, s5=s5, rms=rms, dl=dl, de=de, valid=valid, passed=passed)
+
+    def save_cache():
+        if dirty:
+            np.savez_compressed(fe.CACHE, **cache)
+            dirty.clear()
+
+    Q = []
+    for q in queries:
+        a = q["a"]
+        c_ = costs(a, q["side_a"])
+        s4, s5 = c_["s4"], c_["s5"]
+        ca = cl[a]
         # aceites (como em fit_eval.accepted_for)
         b = q["b"]
         rb = cl[b]
@@ -112,7 +131,8 @@ def prepare():
                       s4=s4, s5=s5, acc_len=np.array(acc_s + acc_t, int), acc_str=np.array(acc_s, int),
                       ex=np.array(ex_reps, int), zone=q["zone"]))
     return dict(Q=Q, ri=ri, R=len(rkeys), N_all=len(kind), no_true=sum(1 for x in Q if x["rb"] < 0),
-                rkeys=rkeys, reps=reps, sh=sh, pr=pr, cl=cl, tw=tw, sides_of=sides_of)
+                rkeys=rkeys, reps=reps, sh=sh, pr=pr, cl=cl, tw=tw, sides_of=sides_of, costs=costs, save_cache=save_cache,
+                kind=kind, owner=owner, sidx=sidx, index_of=index_of, rindex=rindex, t95=t95, chord=chord)
 
 
 def draw_members(rng, R, forbid, must, n, D):

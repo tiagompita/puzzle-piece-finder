@@ -1,0 +1,1672 @@
+{
+ "shrink_mm": 0.0,
+ "n_cases": 15,
+ "by_m": {
+  "1": 6,
+  "2": 4,
+  "4": 1,
+  "3": 4
+ },
+ "verdict_possible": false,
+ "sigma": 1,
+ "orientation_count": {
+  "1": 603
+ },
+ "agg": {
+  "todos": {
+   "a_e5_lote_str": {
+    "n": 15,
+    "top1": 10,
+    "top3": 12,
+    "wilson1": [
+     0.41713125151212976,
+     0.8482389930530876
+    ],
+    "none": 3,
+    "median_rank": 1.0
+   },
+   "a_e5_lote_len": {
+    "n": 15,
+    "top1": 10,
+    "top3": 13,
+    "wilson1": [
+     0.41713125151212976,
+     0.8482389930530876
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e4_lote_len": {
+    "n": 15,
+    "top1": 5,
+    "top3": 7,
+    "wilson1": [
+     0.15176100694691236,
+     0.5828687484878701
+    ],
+    "none": 0,
+    "median_rank": 6.0
+   },
+   "a_e5_completo_str": {
+    "n": 15,
+    "top1": 7,
+    "top3": 12,
+    "wilson1": [
+     0.24809225259746442,
+     0.6988336984894921
+    ],
+    "none": 3,
+    "median_rank": 1.0
+   },
+   "a_e4_completo_len": {
+    "n": 15,
+    "top1": 4,
+    "top3": 5,
+    "wilson1": [
+     0.1089727610318281,
+     0.5195088965768675
+    ],
+    "none": 0,
+    "median_rank": 29.0
+   },
+   "b_e5_todos": {
+    "n": 15,
+    "top1": 10,
+    "top3": 12,
+    "wilson1": [
+     0.41713125151212976,
+     0.8482389930530876
+    ],
+    "none": 3,
+    "median_rank": 1.0
+   },
+   "b_e5_m2": {
+    "n": 15,
+    "top1": 7,
+    "top3": 7,
+    "wilson1": [
+     0.24809225259746442,
+     0.6988336984894921
+    ],
+    "none": 8,
+    "median_rank": 1.0
+   },
+   "b_e4_todos": {
+    "n": 15,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.20388926630434784
+    ],
+    "none": 3,
+    "median_rank": 23.0
+   }
+  },
+  "m1": {
+   "a_e5_lote_str": {
+    "n": 6,
+    "top1": 3,
+    "top3": 5,
+    "wilson1": [
+     0.18761280689940868,
+     0.8123871931005913
+    ],
+    "none": 1,
+    "median_rank": 1.0
+   },
+   "a_e5_lote_len": {
+    "n": 6,
+    "top1": 3,
+    "top3": 5,
+    "wilson1": [
+     0.18761280689940868,
+     0.8123871931005913
+    ],
+    "none": 0,
+    "median_rank": 1.5
+   },
+   "a_e4_lote_len": {
+    "n": 6,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.3903430336530645
+    ],
+    "none": 0,
+    "median_rank": 30.0
+   },
+   "a_e5_completo_str": {
+    "n": 6,
+    "top1": 1,
+    "top3": 5,
+    "wilson1": [
+     0.03005258587173032,
+     0.563509436563646
+    ],
+    "none": 1,
+    "median_rank": 2.0
+   },
+   "a_e4_completo_len": {
+    "n": 6,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.3903430336530645
+    ],
+    "none": 0,
+    "median_rank": 158.0
+   },
+   "b_e5_todos": {
+    "n": 6,
+    "top1": 4,
+    "top3": 5,
+    "wilson1": [
+     0.29998832134152864,
+     0.9032306674407831
+    ],
+    "none": 1,
+    "median_rank": 1.0
+   },
+   "b_e5_m2": {
+    "n": 6,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.3903430336530645
+    ],
+    "none": 6,
+    "median_rank": null
+   },
+   "b_e4_todos": {
+    "n": 6,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.3903430336530645
+    ],
+    "none": 1,
+    "median_rank": 20.0
+   }
+  },
+  "m2": {
+   "a_e5_lote_str": {
+    "n": 4,
+    "top1": 4,
+    "top3": 4,
+    "wilson1": [
+     0.5100999795960008,
+     1.0
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e5_lote_len": {
+    "n": 4,
+    "top1": 4,
+    "top3": 4,
+    "wilson1": [
+     0.5100999795960008,
+     1.0
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e4_lote_len": {
+    "n": 4,
+    "top1": 0,
+    "top3": 2,
+    "wilson1": [
+     0.0,
+     0.48990002040399916
+    ],
+    "none": 0,
+    "median_rank": 4.5
+   },
+   "a_e5_completo_str": {
+    "n": 4,
+    "top1": 3,
+    "top3": 4,
+    "wilson1": [
+     0.3006360524426366,
+     0.9544139373553637
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e4_completo_len": {
+    "n": 4,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.48990002040399916
+    ],
+    "none": 0,
+    "median_rank": 25.5
+   },
+   "b_e5_todos": {
+    "n": 4,
+    "top1": 4,
+    "top3": 4,
+    "wilson1": [
+     0.5100999795960008,
+     1.0
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "b_e5_m2": {
+    "n": 4,
+    "top1": 4,
+    "top3": 4,
+    "wilson1": [
+     0.5100999795960008,
+     1.0
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "b_e4_todos": {
+    "n": 4,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.48990002040399916
+    ],
+    "none": 0,
+    "median_rank": 23.0
+   }
+  },
+  "m3": {
+   "a_e5_lote_str": {
+    "n": 4,
+    "top1": 3,
+    "top3": 3,
+    "wilson1": [
+     0.3006360524426366,
+     0.9544139373553637
+    ],
+    "none": 1,
+    "median_rank": 1.0
+   },
+   "a_e5_lote_len": {
+    "n": 4,
+    "top1": 3,
+    "top3": 3,
+    "wilson1": [
+     0.3006360524426366,
+     0.9544139373553637
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e4_lote_len": {
+    "n": 4,
+    "top1": 4,
+    "top3": 4,
+    "wilson1": [
+     0.5100999795960008,
+     1.0
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e5_completo_str": {
+    "n": 4,
+    "top1": 3,
+    "top3": 3,
+    "wilson1": [
+     0.3006360524426366,
+     0.9544139373553637
+    ],
+    "none": 1,
+    "median_rank": 1.0
+   },
+   "a_e4_completo_len": {
+    "n": 4,
+    "top1": 4,
+    "top3": 4,
+    "wilson1": [
+     0.5100999795960008,
+     1.0
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "b_e5_todos": {
+    "n": 4,
+    "top1": 2,
+    "top3": 3,
+    "wilson1": [
+     0.15003570882017148,
+     0.8499642911798285
+    ],
+    "none": 1,
+    "median_rank": 1.0
+   },
+   "b_e5_m2": {
+    "n": 4,
+    "top1": 3,
+    "top3": 3,
+    "wilson1": [
+     0.3006360524426366,
+     0.9544139373553637
+    ],
+    "none": 1,
+    "median_rank": 1.0
+   },
+   "b_e4_todos": {
+    "n": 4,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.48990002040399916
+    ],
+    "none": 1,
+    "median_rank": 25.0
+   }
+  },
+  "m4": {
+   "a_e5_lote_str": {
+    "n": 1,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.7934567085261071
+    ],
+    "none": 1,
+    "median_rank": null
+   },
+   "a_e5_lote_len": {
+    "n": 1,
+    "top1": 0,
+    "top3": 1,
+    "wilson1": [
+     0.0,
+     0.7934567085261071
+    ],
+    "none": 0,
+    "median_rank": 3.0
+   },
+   "a_e4_lote_len": {
+    "n": 1,
+    "top1": 1,
+    "top3": 1,
+    "wilson1": [
+     0.20654329147389294,
+     1.0
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e5_completo_str": {
+    "n": 1,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.7934567085261071
+    ],
+    "none": 1,
+    "median_rank": null
+   },
+   "a_e4_completo_len": {
+    "n": 1,
+    "top1": 0,
+    "top3": 1,
+    "wilson1": [
+     0.0,
+     0.7934567085261071
+    ],
+    "none": 0,
+    "median_rank": 2.0
+   },
+   "b_e5_todos": {
+    "n": 1,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.7934567085261071
+    ],
+    "none": 1,
+    "median_rank": null
+   },
+   "b_e5_m2": {
+    "n": 1,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.7934567085261071
+    ],
+    "none": 1,
+    "median_rank": null
+   },
+   "b_e4_todos": {
+    "n": 1,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.7934567085261071
+    ],
+    "none": 1,
+    "median_rank": null
+   }
+  },
+  "m>=2": {
+   "a_e5_lote_str": {
+    "n": 9,
+    "top1": 7,
+    "top3": 7,
+    "wilson1": [
+     0.4525833436728054,
+     0.9367762376877727
+    ],
+    "none": 2,
+    "median_rank": 1.0
+   },
+   "a_e5_lote_len": {
+    "n": 9,
+    "top1": 7,
+    "top3": 8,
+    "wilson1": [
+     0.4525833436728054,
+     0.9367762376877727
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e4_lote_len": {
+    "n": 9,
+    "top1": 5,
+    "top3": 7,
+    "wilson1": [
+     0.2666473457440297,
+     0.811224570528086
+    ],
+    "none": 0,
+    "median_rank": 1.0
+   },
+   "a_e5_completo_str": {
+    "n": 9,
+    "top1": 6,
+    "top3": 7,
+    "wilson1": [
+     0.35419734749908977,
+     0.879418401317257
+    ],
+    "none": 2,
+    "median_rank": 1.0
+   },
+   "a_e4_completo_len": {
+    "n": 9,
+    "top1": 4,
+    "top3": 5,
+    "wilson1": [
+     0.188775429471914,
+     0.7333526542559703
+    ],
+    "none": 0,
+    "median_rank": 2.0
+   },
+   "b_e5_todos": {
+    "n": 9,
+    "top1": 6,
+    "top3": 7,
+    "wilson1": [
+     0.35419734749908977,
+     0.879418401317257
+    ],
+    "none": 2,
+    "median_rank": 1.0
+   },
+   "b_e5_m2": {
+    "n": 9,
+    "top1": 7,
+    "top3": 7,
+    "wilson1": [
+     0.4525833436728054,
+     0.9367762376877727
+    ],
+    "none": 2,
+    "median_rank": 1.0
+   },
+   "b_e4_todos": {
+    "n": 9,
+    "top1": 0,
+    "top3": 0,
+    "wilson1": [
+     0.0,
+     0.2991527535509594
+    ],
+    "none": 2,
+    "median_rank": 25.0
+   }
+  }
+ },
+ "cases": [
+  {
+   "piece": "P0094",
+   "cell": [
+    3,
+    29
+   ],
+   "m": 1,
+   "scan": "S0005",
+   "nb_scans": [
+    "S0011"
+   ],
+   "nb_kinds": [
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0300",
+     "d": "E",
+     "side": 1
+    }
+   ],
+   "a_e4_lote_str": 17,
+   "a_e4_lote_len": 7,
+   "a_pool_lote": 150,
+   "a_e4_completo_str": 98,
+   "a_e4_completo_len": 48,
+   "a_pool_completo": 813,
+   "a_e4_winner": "P0172",
+   "a_e4_winner_rot": 2,
+   "a_e4_J_true": 1.1870379447937012,
+   "a_e4_rot_true": 3,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 3,
+   "a_e5_completo_len": 3,
+   "a_e5_winner": "P0119",
+   "a_e5_winner_rot": 2,
+   "a_e5_J_true": 1.8885377645492554,
+   "a_e5_rot_true": 3,
+   "b_e4_todos": 41,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": null,
+   "b_n_buracos_m2": 59,
+   "b_e5_todos": 1,
+   "b_e5_m2": null,
+   "true_sides": [
+    {
+     "piece": "P0300",
+     "kind": "montado",
+     "rms": 1.187037996829102,
+     "dl": 0.023843150185381745,
+     "de": 8.094123840332031,
+     "valid": 11,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0098",
+   "cell": [
+    3,
+    36
+   ],
+   "m": 2,
+   "scan": "S0005",
+   "nb_scans": [
+    "S0005",
+    "S0006"
+   ],
+   "nb_kinds": [
+    "soltas",
+    "soltas"
+   ],
+   "nb": [
+    {
+     "piece": "P0100",
+     "d": "E",
+     "side": 1
+    },
+    {
+     "piece": "P0143",
+     "d": "W",
+     "side": 1
+    }
+   ],
+   "a_e4_lote_str": 7,
+   "a_e4_lote_len": 3,
+   "a_pool_lote": 148,
+   "a_e4_completo_str": 46,
+   "a_e4_completo_len": 22,
+   "a_pool_completo": 812,
+   "a_e4_winner": "P0193",
+   "a_e4_winner_rot": 3,
+   "a_e4_J_true": 1.4716558456420898,
+   "a_e4_rot_true": 1,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 1,
+   "a_e5_completo_len": 1,
+   "a_e5_winner": "P0123",
+   "a_e5_winner_rot": 2,
+   "a_e5_J_true": 2.1469569206237793,
+   "a_e5_rot_true": 1,
+   "b_e4_todos": 42,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": 3,
+   "b_n_buracos_m2": 59,
+   "b_e5_todos": 1,
+   "b_e5_m2": 1,
+   "true_sides": [
+    {
+     "piece": "P0100",
+     "kind": "soltas",
+     "rms": 1.5102473347999639,
+     "dl": 0.32451516701708627,
+     "de": 4.591466903686523,
+     "valid": 10,
+     "passed": true
+    },
+    {
+     "piece": "P0143",
+     "kind": "soltas",
+     "rms": 1.4330643634042293,
+     "dl": 0.3371953329695465,
+     "de": 11.590293884277344,
+     "valid": 11,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0100",
+   "cell": [
+    3,
+    37
+   ],
+   "m": 2,
+   "scan": "S0005",
+   "nb_scans": [
+    "S0010",
+    "S0005"
+   ],
+   "nb_kinds": [
+    "montado",
+    "soltas"
+   ],
+   "nb": [
+    {
+     "piece": "P0279",
+     "d": "E",
+     "side": 1
+    },
+    {
+     "piece": "P0098",
+     "d": "W",
+     "side": 2
+    }
+   ],
+   "a_e4_lote_str": 3,
+   "a_e4_lote_len": 3,
+   "a_pool_lote": 149,
+   "a_e4_completo_str": 26,
+   "a_e4_completo_len": 13,
+   "a_pool_completo": 812,
+   "a_e4_winner": "P0174",
+   "a_e4_winner_rot": 3,
+   "a_e4_J_true": 1.31609046459198,
+   "a_e4_rot_true": 2,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 2,
+   "a_e5_completo_len": 2,
+   "a_e5_winner": "P0133",
+   "a_e5_winner_rot": 3,
+   "a_e5_J_true": 1.6728932857513428,
+   "a_e5_rot_true": 2,
+   "b_e4_todos": 29,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": 2,
+   "b_n_buracos_m2": 59,
+   "b_e5_todos": 1,
+   "b_e5_m2": 1,
+   "true_sides": [
+    {
+     "piece": "P0279",
+     "kind": "montado",
+     "rms": 1.1219336132658972,
+     "dl": 0.5994559309974719,
+     "de": 4.9374799728393555,
+     "valid": 9,
+     "passed": true
+    },
+    {
+     "piece": "P0098",
+     "kind": "soltas",
+     "rms": 1.5102473347999639,
+     "dl": 0.32451516701708627,
+     "de": 4.591466903686523,
+     "valid": 10,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0106",
+   "cell": [
+    3,
+    45
+   ],
+   "m": 1,
+   "scan": "S0005",
+   "nb_scans": [
+    "S0010"
+   ],
+   "nb_kinds": [
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0238",
+     "d": "N",
+     "side": 0
+    }
+   ],
+   "a_e4_lote_str": 40,
+   "a_e4_lote_len": 24,
+   "a_pool_lote": 150,
+   "a_e4_completo_str": 246,
+   "a_e4_completo_len": 156,
+   "a_pool_completo": 813,
+   "a_e4_winner": "P0181",
+   "a_e4_winner_rot": 3,
+   "a_e4_J_true": 1.250500202178955,
+   "a_e4_rot_true": 1,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 2,
+   "a_e5_completo_len": 2,
+   "a_e5_winner": "P0102",
+   "a_e5_winner_rot": 0,
+   "a_e5_J_true": 1.5551021099090576,
+   "a_e5_rot_true": 1,
+   "b_e4_todos": 28,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": null,
+   "b_n_buracos_m2": 57,
+   "b_e5_todos": 2,
+   "b_e5_m2": null,
+   "true_sides": [
+    {
+     "piece": "P0238",
+     "kind": "montado",
+     "rms": 1.2505002093299167,
+     "dl": 0.5051548932208192,
+     "de": 4.18283748626709,
+     "valid": 10,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0119",
+   "cell": [
+    2,
+    48
+   ],
+   "m": 4,
+   "scan": "S0005",
+   "nb_scans": [
+    "S0010",
+    "S0006",
+    "S0006",
+    "S0007"
+   ],
+   "nb_kinds": [
+    "montado",
+    "soltas",
+    "soltas",
+    "soltas"
+   ],
+   "nb": [
+    {
+     "piece": "P0269",
+     "d": "N",
+     "side": 0
+    },
+    {
+     "piece": "P0129",
+     "d": "E",
+     "side": 1
+    },
+    {
+     "piece": "P0131",
+     "d": "S",
+     "side": 2
+    },
+    {
+     "piece": "P0157",
+     "d": "W",
+     "side": 2
+    }
+   ],
+   "a_e4_lote_str": null,
+   "a_e4_lote_len": 1,
+   "a_pool_lote": 147,
+   "a_e4_completo_str": null,
+   "a_e4_completo_len": 2,
+   "a_pool_completo": 810,
+   "a_e4_winner": "P0169",
+   "a_e4_winner_rot": 2,
+   "a_e4_J_true": null,
+   "a_e4_rot_true": null,
+   "a_e5_lote_str": null,
+   "a_e5_lote_len": 3,
+   "a_e5_completo_str": null,
+   "a_e5_completo_len": 8,
+   "a_e5_winner": "P0169",
+   "a_e5_winner_rot": 2,
+   "a_e5_J_true": null,
+   "a_e5_rot_true": null,
+   "b_e4_todos": null,
+   "b_n_buracos_todos": 208,
+   "b_e4_m2": null,
+   "b_n_buracos_m2": 59,
+   "b_e5_todos": null,
+   "b_e5_m2": null,
+   "true_sides": [
+    {
+     "piece": "P0269",
+     "kind": "montado",
+     "rms": 1.1555093685707962,
+     "dl": 0.0663943791242545,
+     "de": 5.068234443664551,
+     "valid": 12,
+     "passed": true
+    },
+    {
+     "piece": "P0129",
+     "kind": "soltas",
+     "rms": 1.5233049499072342,
+     "dl": 0.7678529670390084,
+     "de": 6.052165508270264,
+     "valid": 11,
+     "passed": true
+    },
+    {
+     "piece": "P0131",
+     "kind": "soltas",
+     "rms": 0.9439856143783733,
+     "dl": 1.260573989385371,
+     "de": 5.0060858726501465,
+     "valid": 10,
+     "passed": false
+    },
+    {
+     "piece": "P0157",
+     "kind": "soltas",
+     "rms": 1.3004099645615816,
+     "dl": 0.009500765091871699,
+     "de": 4.6961164474487305,
+     "valid": 10,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0120",
+   "cell": [
+    2,
+    28
+   ],
+   "m": 2,
+   "scan": "S0005",
+   "nb_scans": [
+    "S0012",
+    "S0012"
+   ],
+   "nb_kinds": [
+    "montado",
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0301",
+     "d": "N",
+     "side": 0
+    },
+    {
+     "piece": "P0303",
+     "d": "W",
+     "side": 3
+    }
+   ],
+   "a_e4_lote_str": 16,
+   "a_e4_lote_len": 12,
+   "a_pool_lote": 150,
+   "a_e4_completo_str": 41,
+   "a_e4_completo_len": 29,
+   "a_pool_completo": 812,
+   "a_e4_winner": "P0160",
+   "a_e4_winner_rot": 0,
+   "a_e4_J_true": 1.154701590538025,
+   "a_e4_rot_true": 0,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 1,
+   "a_e5_completo_len": 1,
+   "a_e5_winner": "P0157",
+   "a_e5_winner_rot": 1,
+   "a_e5_J_true": 1.2843677997589111,
+   "a_e5_rot_true": 0,
+   "b_e4_todos": 17,
+   "b_n_buracos_todos": 208,
+   "b_e4_m2": 1,
+   "b_n_buracos_m2": 59,
+   "b_e5_todos": 1,
+   "b_e5_m2": 1,
+   "true_sides": [
+    {
+     "piece": "P0301",
+     "kind": "montado",
+     "rms": 0.8861644990131121,
+     "dl": 0.21387495562617076,
+     "de": 1.790536880493164,
+     "valid": 10,
+     "passed": true
+    },
+    {
+     "piece": "P0303",
+     "kind": "montado",
+     "rms": 1.4232387383369327,
+     "dl": 0.5349191924551562,
+     "de": 2.9022436141967773,
+     "valid": 10,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0126",
+   "cell": [
+    4,
+    40
+   ],
+   "m": 1,
+   "scan": "S0005",
+   "nb_scans": [
+    "S0010"
+   ],
+   "nb_kinds": [
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0268",
+     "d": "N",
+     "side": 0
+    }
+   ],
+   "a_e4_lote_str": 42,
+   "a_e4_lote_len": 42,
+   "a_pool_lote": 150,
+   "a_e4_completo_str": 160,
+   "a_e4_completo_len": 160,
+   "a_pool_completo": 813,
+   "a_e4_winner": "P0932",
+   "a_e4_winner_rot": 3,
+   "a_e4_J_true": 1.0214828252792358,
+   "a_e4_rot_true": 0,
+   "a_e5_lote_str": 2,
+   "a_e5_lote_len": 2,
+   "a_e5_completo_str": 2,
+   "a_e5_completo_len": 2,
+   "a_e5_winner": "P0095",
+   "a_e5_winner_rot": 0,
+   "a_e5_J_true": 1.2916910648345947,
+   "a_e5_rot_true": 0,
+   "b_e4_todos": 18,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": null,
+   "b_n_buracos_m2": 57,
+   "b_e5_todos": 1,
+   "b_e5_m2": null,
+   "true_sides": [
+    {
+     "piece": "P0268",
+     "kind": "montado",
+     "rms": 1.021482766734475,
+     "dl": 0.05002505200967633,
+     "de": 3.6307029724121094,
+     "valid": 12,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0129",
+   "cell": [
+    2,
+    49
+   ],
+   "m": 3,
+   "scan": "S0006",
+   "nb_scans": [
+    "S0010",
+    "S0007",
+    "S0005"
+   ],
+   "nb_kinds": [
+    "montado",
+    "soltas",
+    "soltas"
+   ],
+   "nb": [
+    {
+     "piece": "P0264",
+     "d": "N",
+     "side": 0
+    },
+    {
+     "piece": "P0169",
+     "d": "E",
+     "side": 1
+    },
+    {
+     "piece": "P0119",
+     "d": "W",
+     "side": 3
+    }
+   ],
+   "a_e4_lote_str": null,
+   "a_e4_lote_len": 1,
+   "a_pool_lote": 148,
+   "a_e4_completo_str": null,
+   "a_e4_completo_len": 1,
+   "a_pool_completo": 811,
+   "a_e4_winner": "P0192",
+   "a_e4_winner_rot": 3,
+   "a_e4_J_true": null,
+   "a_e4_rot_true": null,
+   "a_e5_lote_str": null,
+   "a_e5_lote_len": 6,
+   "a_e5_completo_str": null,
+   "a_e5_completo_len": 14,
+   "a_e5_winner": "P0157",
+   "a_e5_winner_rot": 1,
+   "a_e5_J_true": null,
+   "a_e5_rot_true": null,
+   "b_e4_todos": null,
+   "b_n_buracos_todos": 208,
+   "b_e4_m2": null,
+   "b_n_buracos_m2": 58,
+   "b_e5_todos": null,
+   "b_e5_m2": null,
+   "true_sides": [
+    {
+     "piece": "P0264",
+     "kind": "montado",
+     "rms": 0.8103114714969285,
+     "dl": 1.7258422574064163,
+     "de": 5.870314121246338,
+     "valid": 9,
+     "passed": false
+    },
+    {
+     "piece": "P0169",
+     "kind": "soltas",
+     "rms": 1.1183112533137778,
+     "dl": 0.17371921140833635,
+     "de": 4.888494491577148,
+     "valid": 10,
+     "passed": true
+    },
+    {
+     "piece": "P0119",
+     "kind": "soltas",
+     "rms": 1.5233049499072342,
+     "dl": 0.7678529670390084,
+     "de": 6.052165508270264,
+     "valid": 11,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0131",
+   "cell": [
+    3,
+    48
+   ],
+   "m": 1,
+   "scan": "S0006",
+   "nb_scans": [
+    "S0005"
+   ],
+   "nb_kinds": [
+    "soltas"
+   ],
+   "nb": [
+    {
+     "piece": "P0119",
+     "d": "N",
+     "side": 0
+    }
+   ],
+   "a_e4_lote_str": null,
+   "a_e4_lote_len": 49,
+   "a_pool_lote": 149,
+   "a_e4_completo_str": null,
+   "a_e4_completo_len": 243,
+   "a_pool_completo": 813,
+   "a_e4_winner": "P0938",
+   "a_e4_winner_rot": 1,
+   "a_e4_J_true": null,
+   "a_e4_rot_true": null,
+   "a_e5_lote_str": null,
+   "a_e5_lote_len": 51,
+   "a_e5_completo_str": null,
+   "a_e5_completo_len": 206,
+   "a_e5_winner": "P0139",
+   "a_e5_winner_rot": 0,
+   "a_e5_J_true": null,
+   "a_e5_rot_true": null,
+   "b_e4_todos": null,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": null,
+   "b_n_buracos_m2": 57,
+   "b_e5_todos": null,
+   "b_e5_m2": null,
+   "true_sides": [
+    {
+     "piece": "P0119",
+     "kind": "soltas",
+     "rms": 0.9439856143783731,
+     "dl": 1.260573989385371,
+     "de": 5.0060858726501465,
+     "valid": 10,
+     "passed": false
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0143",
+   "cell": [
+    3,
+    35
+   ],
+   "m": 3,
+   "scan": "S0006",
+   "nb_scans": [
+    "S0011",
+    "S0005",
+    "S0011"
+   ],
+   "nb_kinds": [
+    "montado",
+    "soltas",
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0285",
+     "d": "N",
+     "side": 0
+    },
+    {
+     "piece": "P0098",
+     "d": "E",
+     "side": 0
+    },
+    {
+     "piece": "P0288",
+     "d": "W",
+     "side": 3
+    }
+   ],
+   "a_e4_lote_str": 1,
+   "a_e4_lote_len": 1,
+   "a_pool_lote": 149,
+   "a_e4_completo_str": 1,
+   "a_e4_completo_len": 1,
+   "a_pool_completo": 811,
+   "a_e4_winner": "P0171",
+   "a_e4_winner_rot": 1,
+   "a_e4_J_true": 1.1033427715301514,
+   "a_e4_rot_true": 0,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 1,
+   "a_e5_completo_len": 1,
+   "a_e5_winner": "P0095",
+   "a_e5_winner_rot": 1,
+   "a_e5_J_true": 1.7836833000183105,
+   "a_e5_rot_true": 0,
+   "b_e4_todos": 21,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": 1,
+   "b_n_buracos_m2": 59,
+   "b_e5_todos": 1,
+   "b_e5_m2": 1,
+   "true_sides": [
+    {
+     "piece": "P0285",
+     "kind": "montado",
+     "rms": 1.058937676962006,
+     "dl": 0.11239736522681198,
+     "de": 4.178133487701416,
+     "valid": 11,
+     "passed": true
+    },
+    {
+     "piece": "P0098",
+     "kind": "soltas",
+     "rms": 1.4330643634042293,
+     "dl": 0.3371953329695465,
+     "de": 11.590293884277344,
+     "valid": 11,
+     "passed": true
+    },
+    {
+     "piece": "P0288",
+     "kind": "montado",
+     "rms": 0.8180263127429398,
+     "dl": 0.2612935048960985,
+     "de": 7.650904655456543,
+     "valid": 11,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0144",
+   "cell": [
+    2,
+    56
+   ],
+   "m": 2,
+   "scan": "S0007",
+   "nb_scans": [
+    "S0010",
+    "S0010"
+   ],
+   "nb_kinds": [
+    "montado",
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0276",
+     "d": "N",
+     "side": 0
+    },
+    {
+     "piece": "P0271",
+     "d": "E",
+     "side": 1
+    }
+   ],
+   "a_e4_lote_str": 6,
+   "a_e4_lote_len": 6,
+   "a_pool_lote": 150,
+   "a_e4_completo_str": 30,
+   "a_e4_completo_len": 30,
+   "a_pool_completo": 812,
+   "a_e4_winner": "P0163",
+   "a_e4_winner_rot": 3,
+   "a_e4_J_true": 1.0652703046798706,
+   "a_e4_rot_true": 3,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 1,
+   "a_e5_completo_len": 1,
+   "a_e5_winner": "P0165",
+   "a_e5_winner_rot": 3,
+   "a_e5_J_true": 1.4868885278701782,
+   "a_e5_rot_true": 3,
+   "b_e4_todos": 15,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": 1,
+   "b_n_buracos_m2": 58,
+   "b_e5_todos": 1,
+   "b_e5_m2": 1,
+   "true_sides": [
+    {
+     "piece": "P0276",
+     "kind": "montado",
+     "rms": 1.0159615548435128,
+     "dl": 0.04906474608213074,
+     "de": 4.8432488441467285,
+     "valid": 12,
+     "passed": true
+    },
+    {
+     "piece": "P0271",
+     "kind": "montado",
+     "rms": 1.1145791027210257,
+     "dl": 0.007372933706371043,
+     "de": 5.525969982147217,
+     "valid": 11,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0147",
+   "cell": [
+    2,
+    61
+   ],
+   "m": 1,
+   "scan": "S0007",
+   "nb_scans": [
+    "S0010"
+   ],
+   "nb_kinds": [
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0251",
+     "d": "N",
+     "side": 0
+    }
+   ],
+   "a_e4_lote_str": 14,
+   "a_e4_lote_len": 8,
+   "a_pool_lote": 150,
+   "a_e4_completo_str": 93,
+   "a_e4_completo_len": 58,
+   "a_pool_completo": 813,
+   "a_e4_winner": "P0928",
+   "a_e4_winner_rot": 1,
+   "a_e4_J_true": 0.9846808910369873,
+   "a_e4_rot_true": 0,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 1,
+   "a_e5_completo_len": 1,
+   "a_e5_winner": "P0115",
+   "a_e5_winner_rot": 0,
+   "a_e5_J_true": 1.5383551120758057,
+   "a_e5_rot_true": 0,
+   "b_e4_todos": 8,
+   "b_n_buracos_todos": 208,
+   "b_e4_m2": null,
+   "b_n_buracos_m2": 59,
+   "b_e5_todos": 1,
+   "b_e5_m2": null,
+   "rot_from_cost": true,
+   "true_sides": [
+    {
+     "piece": "P0251",
+     "kind": "montado",
+     "rms": 0.9846809125057245,
+     "dl": 0.6307019009798474,
+     "de": 6.431906223297119,
+     "valid": 11,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0157",
+   "cell": [
+    2,
+    47
+   ],
+   "m": 3,
+   "scan": "S0007",
+   "nb_scans": [
+    "S0010",
+    "S0005",
+    "S0010"
+   ],
+   "nb_kinds": [
+    "montado",
+    "soltas",
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0275",
+     "d": "N",
+     "side": 0
+    },
+    {
+     "piece": "P0119",
+     "d": "E",
+     "side": 1
+    },
+    {
+     "piece": "P0281",
+     "d": "W",
+     "side": 3
+    }
+   ],
+   "a_e4_lote_str": 1,
+   "a_e4_lote_len": 1,
+   "a_pool_lote": 149,
+   "a_e4_completo_str": 2,
+   "a_e4_completo_len": 1,
+   "a_pool_completo": 811,
+   "a_e4_winner": "P0192",
+   "a_e4_winner_rot": 3,
+   "a_e4_J_true": 1.1961370706558228,
+   "a_e4_rot_true": 1,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 1,
+   "a_e5_completo_len": 1,
+   "a_e5_winner": "P0176",
+   "a_e5_winner_rot": 3,
+   "a_e5_J_true": 1.546554684638977,
+   "a_e5_rot_true": 1,
+   "b_e4_todos": 40,
+   "b_n_buracos_todos": 208,
+   "b_e4_m2": 2,
+   "b_n_buracos_m2": 58,
+   "b_e5_todos": 1,
+   "b_e5_m2": 1,
+   "true_sides": [
+    {
+     "piece": "P0275",
+     "kind": "montado",
+     "rms": 1.2196788338733013,
+     "dl": 0.17811394932505564,
+     "de": 4.141123294830322,
+     "valid": 12,
+     "passed": true
+    },
+    {
+     "piece": "P0119",
+     "kind": "soltas",
+     "rms": 1.3004099645615816,
+     "dl": 0.009500765091871699,
+     "de": 4.6961164474487305,
+     "valid": 10,
+     "passed": true
+    },
+    {
+     "piece": "P0281",
+     "kind": "montado",
+     "rms": 1.0683226873229357,
+     "dl": 0.11090158318437915,
+     "de": 4.9374799728393555,
+     "valid": 11,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0162",
+   "cell": [
+    3,
+    52
+   ],
+   "m": 1,
+   "scan": "S0007",
+   "nb_scans": [
+    "S0010"
+   ],
+   "nb_kinds": [
+    "montado"
+   ],
+   "nb": [
+    {
+     "piece": "P0250",
+     "d": "N",
+     "side": 0
+    }
+   ],
+   "a_e4_lote_str": 36,
+   "a_e4_lote_len": 36,
+   "a_pool_lote": 150,
+   "a_e4_completo_str": 191,
+   "a_e4_completo_len": 191,
+   "a_pool_completo": 813,
+   "a_e4_winner": "P0141",
+   "a_e4_winner_rot": 2,
+   "a_e4_J_true": 1.200278639793396,
+   "a_e4_rot_true": 1,
+   "a_e5_lote_str": 2,
+   "a_e5_lote_len": 2,
+   "a_e5_completo_str": 2,
+   "a_e5_completo_len": 2,
+   "a_e5_winner": "P0179",
+   "a_e5_winner_rot": 0,
+   "a_e5_J_true": 1.4452184438705444,
+   "a_e5_rot_true": 1,
+   "b_e4_todos": 20,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": null,
+   "b_n_buracos_m2": 57,
+   "b_e5_todos": 1,
+   "b_e5_m2": null,
+   "true_sides": [
+    {
+     "piece": "P0250",
+     "kind": "montado",
+     "rms": 1.2002786981281381,
+     "dl": 0.4346941896119674,
+     "de": 3.540559768676758,
+     "valid": 11,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  },
+  {
+   "piece": "P0169",
+   "cell": [
+    2,
+    50
+   ],
+   "m": 3,
+   "scan": "S0007",
+   "nb_scans": [
+    "S0010",
+    "S0010",
+    "S0006"
+   ],
+   "nb_kinds": [
+    "montado",
+    "montado",
+    "soltas"
+   ],
+   "nb": [
+    {
+     "piece": "P0261",
+     "d": "N",
+     "side": 0
+    },
+    {
+     "piece": "P0256",
+     "d": "E",
+     "side": 1
+    },
+    {
+     "piece": "P0129",
+     "d": "W",
+     "side": 3
+    }
+   ],
+   "a_e4_lote_str": 1,
+   "a_e4_lote_len": 1,
+   "a_pool_lote": 149,
+   "a_e4_completo_str": 1,
+   "a_e4_completo_len": 1,
+   "a_pool_completo": 811,
+   "a_e4_winner": "P0164",
+   "a_e4_winner_rot": 3,
+   "a_e4_J_true": 1.0803585052490234,
+   "a_e4_rot_true": 2,
+   "a_e5_lote_str": 1,
+   "a_e5_lote_len": 1,
+   "a_e5_completo_str": 1,
+   "a_e5_completo_len": 1,
+   "a_e5_winner": "P0109",
+   "a_e5_winner_rot": 3,
+   "a_e5_J_true": 1.466802954673767,
+   "a_e5_rot_true": 2,
+   "b_e4_todos": 25,
+   "b_n_buracos_todos": 207,
+   "b_e4_m2": 3,
+   "b_n_buracos_m2": 59,
+   "b_e5_todos": 2,
+   "b_e5_m2": 1,
+   "true_sides": [
+    {
+     "piece": "P0261",
+     "kind": "montado",
+     "rms": 0.8607359397165844,
+     "dl": 0.5055476208693186,
+     "de": 5.205352306365967,
+     "valid": 12,
+     "passed": true
+    },
+    {
+     "piece": "P0256",
+     "kind": "montado",
+     "rms": 1.2620280398043593,
+     "dl": 0.09447908813621808,
+     "de": 4.445922374725342,
+     "valid": 12,
+     "passed": true
+    },
+    {
+     "piece": "P0129",
+     "kind": "soltas",
+     "rms": 1.1183112533137778,
+     "dl": 0.17371921140833635,
+     "de": 4.888494491577148,
+     "valid": 10,
+     "passed": true
+    }
+   ],
+   "rot_consistent": true
+  }
+ ],
+ "target": 0.85,
+ "n_holes_total": 2397
+}
