@@ -195,7 +195,7 @@ Figura: `orla_antes_depois.jpg` (cartões sobre branco, antes | depois | zoom 4�
 
 ### 6.1 Papel escurecido pela sombra: regra só de visualização, LIGADA (2026-11-01)
 
-**Regra** (`render.shadow_paper_mask`, aplicada só em `piece_rgba_for_display`: cartões, folhas «vai buscar», Mesa; nunca nas silhuetas do índice, no `compose_board` nem nos `render/clean/` do `clean_all` / registo): na faixa exterior de `DISPLAY_SHADOW_BAND_MM` = 0,4 mm, descartar os píxeis com a\* < `DISPLAY_SHADOW_A_MAX` = −30, `bg_distance` ao `background_lab` < `DISPLAY_SHADOW_DIST_MAX` = 40 e L\* < `DISPLAY_SHADOW_L_MAX` = 62, em componentes ligadas ao bordo. Interruptor: `DISPLAY_SHADOW = True`. Teste: `test_display_drops_shadow_darkened_paper` (faixa de 0,3 mm verde-escura em dois lados, interior com textura de relva e verde tipo papel no fundo; falha com a regra desligada, passa ligada; verifica também que `clean_crop` não muda).
+**Regra** (`render.shadow_paper_mask`, aplicada só em `piece_rgba_for_display`: cartões, folhas «vai buscar», Mesa; nunca nas silhuetas do índice, no `compose_board` nem nos `render/clean/` do `clean_all` / registo) — **desde 2026-11-06 também no `compose_board` (§7)**: na faixa exterior de `DISPLAY_SHADOW_BAND_MM` = 0,4 mm, descartar os píxeis com a\* < `DISPLAY_SHADOW_A_MAX` = −30, `bg_distance` ao `background_lab` < `DISPLAY_SHADOW_DIST_MAX` = 40 e L\* < `DISPLAY_SHADOW_L_MAX` = 62, em componentes ligadas ao bordo. Interruptor: `DISPLAY_SHADOW = True`. Teste: `test_display_drops_shadow_darkened_paper` (faixa de 0,3 mm verde-escura em dois lados, interior com textura de relva e verde tipo papel no fundo; falha com a regra desligada, passa ligada; verifica também que `clean_crop` não muda).
 
 **Mudança de porta.** A primeira medição usava «nenhuma peça perde > 1,5 % dos píxeis visíveis». Essa porta nunca podia admitir uma orla de sombra real: 0,4 mm em dois lados valem ≈ 2–4 % da área de uma peça. Porta nova (decisão do coordenador, 2026-11-01), por peça: perda total ≤ 4,5 %, **e** ≥ 65 % do descartado na metade de sombra do scan (esquerda/baixo em relação ao centróide; não se aplica com < 50 px descartados), **e** perda nos lados iluminados ≤ 1,5 %, **e** interior (> 0,4 mm) 100 % igual (alfa e cor).
 
@@ -214,3 +214,58 @@ Figura: `orla_antes_depois.jpg` (cartões sobre branco, antes | depois | zoom 4�
 Regra ligada na mesma (decisão do coordenador). Desliga-se com `DISPLAY_SHADOW = False`.
 
 **Figuras.** `orla_antes_depois.jpg` regenerada (antes = HEAD; depois = pipeline de visualização com a regra). Em P0047, P0051 e P0055 a faixa verde-escura dos lados esquerdo/inferior desaparece no zoom 4×. O «esverdeado» dos cartões desce 1002 → 195, 956 → 125 e 872 → 85; G0041 desce 5576 → 298 e o lado da sombra fica limpo; G0083 desce 1328 → 0. Fica um fio verde-claro (L\* > 62) no lado iluminado de algumas peças de relva, que a regra não visa. `orla_sombra_regra.jpg` (avaliação da regra: atual | descartado a magenta | regra | variante fraca) mantém-se. Não verificado [NT]: céu fora das 3 peças; cartões rodados e reduzidos (a porta foi medida à resolução do scan).
+
+## 7. Verde na borda no desenho do tabuleiro (2026-11-06; reports R0001, R0018–R0020)
+
+**Problema.** Na vista da célula da GUI (`Gui.region` → `compose_board`, 3 × 3 a 300 dpi) via-se um fio verde (verde-escuro) à volta das peças, sobretudo nos lados sem vizinha. Peças reportadas: P0778 (4,10), P0196 (14,64), P0198 (28,64), P0204 (36,64), P0234 (3,64), P0233 (4,64). Excluído (já decidido): trim de 0,48 mm, `cut_line_alpha`, cor. A rotação de P0778 é pose (pendente (b)), fora daqui.
+
+**Causa [V].**
+- **Segmentação (origem, por desenho):** o contorno híbrido de `segment_scan` inclui a sombra projetada e a franja. O papel escurecido pela sombra («esverdeado»: a\* < −30, distância ao fundo < 40, L\* < 62) fica 3–15× mais no lado de sombra do scan (esquerda/baixo) do que no iluminado. A limpeza (`clean_crop`) não o tira: está acima de `BG_DIST_MAX`. O encaixe de P0778 cheio de papel (12,7 mm², §2.6) é o defeito de segmentação já conhecido.
+- **Render (o que se vê):** a regra do §6.1 que tira esse papel escurecido só se aplicava às miniaturas, e o `compose_board` ficava de fora («as vizinhas tapam»). Nas fronteiras (bordo do puzzle, vizinha em falta) e nalgumas juntas, nada o tapa.
+
+**Mudança** (`src/render.py`):
+- **A — `BOARD_SHADOW = True`:** o `compose_board` aplica a mesma `shadow_paper_mask` do §6.1 (faixa de 0,4 mm, os mesmos limiares) ao recorte limpo, antes do warp. A **sangria** continua a usar a silhueta limpa, com a orla tirada pintada da cor funda da peça: o espaço que a orla deixa é preenchido como qualquer folga fina, nunca com o fundo, e os buracos não mudam. Sem esta parte (primeira versão), as células com buraco > 5 % subiam de 70 para 76.
+- **B — `PAPER_POCKETS = True`:** as miniaturas e o tabuleiro tiram também as componentes da **própria cor do papel** (`bg_distance` < `PAPER_POCKET_DIST_MAX` = 15; o p1 do interior da relva é 24,3, §2.1) que chegam à banda de 0,7 mm do bordo, a qualquer profundidade. Nunca tira mais de 10 % da peça (`PAPER_POCKET_MAX_FRAC`). Na sangria o encaixe fica aberto: não é pintado com a cor da peça.
+- **Não mudam:** `clean_crop`, `render/clean/`, as silhuetas do índice e a segmentação. A regra corre em memória e não há cache a regenerar.
+- **Interruptores:** `BOARD_SHADOW = False` (ou `compose_board(..., board_shadow=False)`) e `PAPER_POCKETS = False`.
+
+**Medido pela entrada real da GUI** (`tools/diagnostico/render/verde_tabuleiro.py`: `compose_board` 3 × 3 a 300 dpi, poses de `render/placements.json`, regra desligada vs ligada no mesmo processo; `projects/alpes` só lido) **[V]**:
+
+| peça | verde (d < 29,5) no anel | esverdeado no anel | contorno desenhado com verde a ≤ 2 px |
+|---|---|---|---|
+| P0778 (4,10) | 1 → 0 | 245 → 1 | 15,9 → 8,1 % (só A: 0,5 %; com B o encaixe aberto mostra a sua parede de papel misturado) |
+| P0196 (14,64) | 157 → 2 | 760 → 23 | 31,4 → 4,0 % |
+| P0198 (28,64) | 1130 → 965 | 1087 → 52 | **52,6 → 21,1 %** |
+| P0204 (36,64) | 427 → 2 | 1077 → 98 | 38,5 → 9,9 % |
+| P0234 (3,64) | 12 → 4 | 173 → 12 | 16,2 → 2,2 % |
+| P0233 (4,64) | 24 → 4 | 180 → 8 | 10,5 → 2,3 % |
+
+(Anel = silhueta crua ≤ 1,5 mm para dentro + 0,3 mm de sangria para fora.) **Encaixe de P0778** (B): píxeis da cor do papel na vista da célula 1694 → 0.
+
+**Amostra de 100 peças colocadas** (semente 20261106; 30 de relva, linhas 41–47; 30 de céu, linhas 1–14; 40 do resto):
+- **Nenhuma piora** no verde, no esverdeado nem na fração do contorno com verde.
+- **Esverdeado no anel:** 62 019 → 12 123 (relva 43 920 → 9 107; céu 1 109 → 164).
+- **Contorno com verde, média:** 18,4 % → 7,0 % (relva 43,5 → 16,7 %).
+- **B:** além de P0778 toca 19 peças colocadas, cada uma com ≤ 0,19 mm².
+
+**Buracos** (tabuleiro inteiro, `compose_board` a 120 px/célula, só peças, fundo magenta, inset 0,4 mm, 605 células colocadas): **70 / 10 células com > 5 % / > 10 %, iguais com e sem a regra** (média 0,01331 → 0,01333).
+
+A referência de `docs/decisoes.md` (131 / 39) foi medida noutra altura e não se reproduz com este script: o tabuleiro tem hoje 605 colocadas, contra 589, e as poses mudaram. O que conta aqui é o par desligado/ligado no mesmo processo.
+
+**Porta do §6.1 sobre o que a regra tira** (perda ≤ 4,5 %, ≥ 65 % na metade da sombra, perda nos lados iluminados ≤ 1,5 %, interior > 0,4 mm igual): **falha em 7 das 100 [F]**.
+- **P0471, P0404, P0605, P0418, P0560** (relva, linhas 44–47): perda nos lados iluminados de 1,55–1,84 %, com perda total de 2,1–3,5 % e 78–86 % na sombra. É a mesma falha à justa do P0087 no §6.1.
+- **P0199:** 62 píxeis, só 19 % na sombra, perda total 0,15 %.
+- **P0555:** «interior igual» falha porque B tira um ponto de papel de 0,09 mm² a mais de 0,4 mm do bordo (é o que B faz; o mesmo em P0778, fora da amostra).
+- **Visto** (`verde_tabuleiro_porta_falhas.jpg`, tirado a magenta): só sai a orla exterior; o interior fica intacto em todas.
+
+Regra ligada na mesma: é a regra do §6.1, já ligada nas miniaturas.
+
+**Figuras.**
+- `verde_tabuleiro_alvos_1.jpg` e `_2.jpg` (as 6 células, antes | depois) e `verde_tabuleiro_zoom4.jpg` (o sítio com mais verde de cada peça, 4×): nos lados de fronteira a orla verde-escura desaparece.
+- `verde_tabuleiro_amostra.jpg`: 2 de relva e 2 de céu.
+- `verde_tabuleiro_P0778_encaixe.jpg`: a mancha verde viva do encaixe desaparece.
+
+**O que fica [V visual]:**
+1. Meias-luas verde-escuras dentro de alguns encaixes (P0196, P0198, P0204, P0233), a 0,4–0,8 mm do bordo, fora da faixa de 0,4 mm da regra. Alargá-la é outra decisão: mudaria a porta do §6.1, medida a 0,4 mm.
+2. Em P0198, o verde que resta (965 píxeis) é sobretudo o próprio prado claro do topo da peça, com a cor do papel. Pela cor não se separa (§2.6). O «comido» do R0019 é provavelmente esse prado e fica **[NT]**.
+3. Em P0778 fica uma orla fina de papel misturado (d 15–30) à volta do encaixe, que fica aberto e escuro: com a pose atual, o tab da vizinha não chega lá.

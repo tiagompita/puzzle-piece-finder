@@ -1,0 +1,3661 @@
+{
+ "targets": [
+  {
+   "pid": "P0778",
+   "cell": [
+    4,
+    10
+   ],
+   "region": [
+    3,
+    9,
+    5,
+    11
+   ],
+   "off": {
+    "green": 1,
+    "esverdeado": 245,
+    "ring": 25439,
+    "contour_with_green": 0.1593625498007968
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 1,
+    "ring": 25439,
+    "contour_with_green": 0.08122119815668202
+   },
+   "gate": {
+    "dropped": 1048,
+    "loss": 0.019226888289577485,
+    "shadow_share": 0.892175572519084,
+    "lit_loss": 0.009138480206279387,
+    "interior_same": false,
+    "pass": false
+   }
+  },
+  {
+   "pid": "P0196",
+   "cell": [
+    14,
+    64
+   ],
+   "region": [
+    13,
+    63,
+    15,
+    64
+   ],
+   "off": {
+    "green": 157,
+    "esverdeado": 760,
+    "ring": 23632,
+    "contour_with_green": 0.3144815766923736
+   },
+   "on": {
+    "green": 2,
+    "esverdeado": 23,
+    "ring": 23632,
+    "contour_with_green": 0.040457343887423045
+   },
+   "gate": {
+    "dropped": 852,
+    "loss": 0.017645596885096513,
+    "shadow_share": 0.92018779342723,
+    "lit_loss": 0.0034526178967464152,
+    "interior_same": true,
+    "pass": true
+   }
+  },
+  {
+   "pid": "P0198",
+   "cell": [
+    28,
+    64
+   ],
+   "region": [
+    27,
+    63,
+    29,
+    64
+   ],
+   "off": {
+    "green": 1130,
+    "esverdeado": 1087,
+    "ring": 23494,
+    "contour_with_green": 0.5259313367421475
+   },
+   "on": {
+    "green": 965,
+    "esverdeado": 52,
+    "ring": 23494,
+    "contour_with_green": 0.21091445427728614
+   },
+   "gate": {
+    "dropped": 1313,
+    "loss": 0.023851477774346493,
+    "shadow_share": 1.0,
+    "lit_loss": 0.007892408423287913,
+    "interior_same": true,
+    "pass": true
+   }
+  },
+  {
+   "pid": "P0204",
+   "cell": [
+    36,
+    64
+   ],
+   "region": [
+    35,
+    63,
+    37,
+    64
+   ],
+   "off": {
+    "green": 427,
+    "esverdeado": 1077,
+    "ring": 24330,
+    "contour_with_green": 0.38516405135520687
+   },
+   "on": {
+    "green": 2,
+    "esverdeado": 98,
+    "ring": 24330,
+    "contour_with_green": 0.0989247311827957
+   },
+   "gate": {
+    "dropped": 1128,
+    "loss": 0.024983942058517353,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0051088675343632164,
+    "interior_same": true,
+    "pass": true
+   }
+  },
+  {
+   "pid": "P0234",
+   "cell": [
+    3,
+    64
+   ],
+   "region": [
+    2,
+    63,
+    4,
+    64
+   ],
+   "off": {
+    "green": 12,
+    "esverdeado": 173,
+    "ring": 23310,
+    "contour_with_green": 0.1622464898595944
+   },
+   "on": {
+    "green": 4,
+    "esverdeado": 12,
+    "ring": 23310,
+    "contour_with_green": 0.022292993630573247
+   },
+   "gate": {
+    "dropped": 308,
+    "loss": 0.007071031727811194,
+    "shadow_share": 0.9415584415584416,
+    "lit_loss": 0.0031903088588866283,
+    "interior_same": true,
+    "pass": true
+   }
+  },
+  {
+   "pid": "P0233",
+   "cell": [
+    4,
+    64
+   ],
+   "region": [
+    3,
+    63,
+    5,
+    64
+   ],
+   "off": {
+    "green": 24,
+    "esverdeado": 180,
+    "ring": 23580,
+    "contour_with_green": 0.1053921568627451
+   },
+   "on": {
+    "green": 4,
+    "esverdeado": 8,
+    "ring": 23580,
+    "contour_with_green": 0.02287581699346405
+   },
+   "gate": {
+    "dropped": 542,
+    "loss": 0.009427398594587072,
+    "shadow_share": 1.0,
+    "lit_loss": 0.004395911104908767,
+    "interior_same": true,
+    "pass": true
+   }
+  }
+ ],
+ "sample": [
+  {
+   "pid": "P0471",
+   "cell": [
+    44,
+    44
+   ],
+   "region": [
+    43,
+    43,
+    45,
+    45
+   ],
+   "off": {
+    "green": 774,
+    "esverdeado": 1766,
+    "ring": 26896,
+    "contour_with_green": 0.640581330352152
+   },
+   "on": {
+    "green": 684,
+    "esverdeado": 418,
+    "ring": 26896,
+    "contour_with_green": 0.2806036892118502
+   },
+   "gate": {
+    "dropped": 1594,
+    "loss": 0.033901909906844184,
+    "shadow_share": 0.7816813048933501,
+    "lit_loss": 0.01841039846580013,
+    "interior_same": false,
+    "pass": false
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0486",
+   "cell": [
+    45,
+    30
+   ],
+   "region": [
+    44,
+    29,
+    46,
+    31
+   ],
+   "off": {
+    "green": 425,
+    "esverdeado": 1216,
+    "ring": 26809,
+    "contour_with_green": 0.34031710079275196
+   },
+   "on": {
+    "green": 380,
+    "esverdeado": 164,
+    "ring": 26809,
+    "contour_with_green": 0.19167142042213348
+   },
+   "gate": {
+    "dropped": 1532,
+    "loss": 0.0273239637582935,
+    "shadow_share": 0.8994778067885117,
+    "lit_loss": 0.011293446876941633,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0490",
+   "cell": [
+    45,
+    31
+   ],
+   "region": [
+    44,
+    30,
+    46,
+    32
+   ],
+   "off": {
+    "green": 270,
+    "esverdeado": 966,
+    "ring": 26920,
+    "contour_with_green": 0.3649122807017544
+   },
+   "on": {
+    "green": 159,
+    "esverdeado": 53,
+    "ring": 26920,
+    "contour_with_green": 0.12949640287769784
+   },
+   "gate": {
+    "dropped": 1334,
+    "loss": 0.03214148033924441,
+    "shadow_share": 0.8590704647676162,
+    "lit_loss": 0.010074003342086416,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0508",
+   "cell": [
+    46,
+    35
+   ],
+   "region": [
+    45,
+    34,
+    47,
+    36
+   ],
+   "off": {
+    "green": 316,
+    "esverdeado": 1493,
+    "ring": 28847,
+    "contour_with_green": 0.4429273620972146
+   },
+   "on": {
+    "green": 90,
+    "esverdeado": 107,
+    "ring": 28847,
+    "contour_with_green": 0.11977401129943503
+   },
+   "gate": {
+    "dropped": 1316,
+    "loss": 0.02367545201043447,
+    "shadow_share": 0.8351063829787234,
+    "lit_loss": 0.009360604385480007,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0555",
+   "cell": [
+    47,
+    12
+   ],
+   "region": [
+    46,
+    11,
+    47,
+    13
+   ],
+   "off": {
+    "green": 1403,
+    "esverdeado": 2340,
+    "ring": 23649,
+    "contour_with_green": 0.47324530924252955
+   },
+   "on": {
+    "green": 1110,
+    "esverdeado": 1392,
+    "ring": 23649,
+    "contour_with_green": 0.21098459477561957
+   },
+   "gate": {
+    "dropped": 1103,
+    "loss": 0.023443145589798087,
+    "shadow_share": 0.9129646418857661,
+    "lit_loss": 0.00827273914747246,
+    "interior_same": false,
+    "pass": false
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0424",
+   "cell": [
+    44,
+    51
+   ],
+   "region": [
+    43,
+    50,
+    45,
+    52
+   ],
+   "off": {
+    "green": 707,
+    "esverdeado": 1690,
+    "ring": 28042,
+    "contour_with_green": 0.4597839135654262
+   },
+   "on": {
+    "green": 556,
+    "esverdeado": 278,
+    "ring": 28042,
+    "contour_with_green": 0.1518987341772152
+   },
+   "gate": {
+    "dropped": 1764,
+    "loss": 0.0349154823641186,
+    "shadow_share": 0.9138321995464853,
+    "lit_loss": 0.01105336642879305,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0498",
+   "cell": [
+    45,
+    33
+   ],
+   "region": [
+    44,
+    32,
+    46,
+    34
+   ],
+   "off": {
+    "green": 381,
+    "esverdeado": 1530,
+    "ring": 27030,
+    "contour_with_green": 0.3956750438340152
+   },
+   "on": {
+    "green": 294,
+    "esverdeado": 154,
+    "ring": 27030,
+    "contour_with_green": 0.15156897572528122
+   },
+   "gate": {
+    "dropped": 1553,
+    "loss": 0.03157081579963814,
+    "shadow_share": 0.8731487443657437,
+    "lit_loss": 0.01242818141070046,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0036",
+   "cell": [
+    47,
+    41
+   ],
+   "region": [
+    46,
+    40,
+    47,
+    42
+   ],
+   "off": {
+    "green": 383,
+    "esverdeado": 1070,
+    "ring": 24173,
+    "contour_with_green": 0.391304347826087
+   },
+   "on": {
+    "green": 287,
+    "esverdeado": 107,
+    "ring": 24173,
+    "contour_with_green": 0.09320252277505256
+   },
+   "gate": {
+    "dropped": 1019,
+    "loss": 0.019604825211151086,
+    "shadow_share": 0.9990186457311089,
+    "lit_loss": 0.0043664862847546185,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0084",
+   "cell": [
+    45,
+    60
+   ],
+   "region": [
+    44,
+    59,
+    46,
+    61
+   ],
+   "off": {
+    "green": 1198,
+    "esverdeado": 2363,
+    "ring": 28127,
+    "contour_with_green": 0.45576407506702415
+   },
+   "on": {
+    "green": 1095,
+    "esverdeado": 1272,
+    "ring": 28127,
+    "contour_with_green": 0.2956932773109244
+   },
+   "gate": {
+    "dropped": 1476,
+    "loss": 0.03433755961381878,
+    "shadow_share": 0.9214092140921409,
+    "lit_loss": 0.012278564064110976,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0404",
+   "cell": [
+    46,
+    48
+   ],
+   "region": [
+    45,
+    47,
+    47,
+    49
+   ],
+   "off": {
+    "green": 330,
+    "esverdeado": 1472,
+    "ring": 28845,
+    "contour_with_green": 0.4368421052631579
+   },
+   "on": {
+    "green": 168,
+    "esverdeado": 78,
+    "ring": 28845,
+    "contour_with_green": 0.11308466548253404
+   },
+   "gate": {
+    "dropped": 1659,
+    "loss": 0.03313824581027905,
+    "shadow_share": 0.8613622664255576,
+    "lit_loss": 0.016183013741780525,
+    "interior_same": true,
+    "pass": false
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0605",
+   "cell": [
+    47,
+    5
+   ],
+   "region": [
+    46,
+    4,
+    47,
+    6
+   ],
+   "off": {
+    "green": 1341,
+    "esverdeado": 2319,
+    "ring": 23416,
+    "contour_with_green": 0.593143596377749
+   },
+   "on": {
+    "green": 1249,
+    "esverdeado": 1499,
+    "ring": 23416,
+    "contour_with_green": 0.35382685069008785
+   },
+   "gate": {
+    "dropped": 1000,
+    "loss": 0.021018117617386187,
+    "shadow_share": 0.785,
+    "lit_loss": 0.01572926596758818,
+    "interior_same": false,
+    "pass": false
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0418",
+   "cell": [
+    44,
+    50
+   ],
+   "region": [
+    43,
+    49,
+    45,
+    51
+   ],
+   "off": {
+    "green": 380,
+    "esverdeado": 1719,
+    "ring": 27645,
+    "contour_with_green": 0.5099218280216476
+   },
+   "on": {
+    "green": 293,
+    "esverdeado": 237,
+    "ring": 27645,
+    "contour_with_green": 0.15720263000597728
+   },
+   "gate": {
+    "dropped": 1594,
+    "loss": 0.03548135781858653,
+    "shadow_share": 0.8186951066499373,
+    "lit_loss": 0.015549300973561574,
+    "interior_same": true,
+    "pass": false
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0534",
+   "cell": [
+    45,
+    24
+   ],
+   "region": [
+    44,
+    23,
+    46,
+    25
+   ],
+   "off": {
+    "green": 813,
+    "esverdeado": 1931,
+    "ring": 27385,
+    "contour_with_green": 0.4482957827845176
+   },
+   "on": {
+    "green": 577,
+    "esverdeado": 179,
+    "ring": 27385,
+    "contour_with_green": 0.17879656160458451
+   },
+   "gate": {
+    "dropped": 1613,
+    "loss": 0.03042936915182614,
+    "shadow_share": 0.9280843149411035,
+    "lit_loss": 0.013047778454047474,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0484",
+   "cell": [
+    47,
+    30
+   ],
+   "region": [
+    46,
+    29,
+    47,
+    31
+   ],
+   "off": {
+    "green": 357,
+    "esverdeado": 645,
+    "ring": 24673,
+    "contour_with_green": 0.3383838383838384
+   },
+   "on": {
+    "green": 217,
+    "esverdeado": 28,
+    "ring": 24673,
+    "contour_with_green": 0.11452879581151833
+   },
+   "gate": {
+    "dropped": 884,
+    "loss": 0.018318206307762444,
+    "shadow_share": 0.8970588235294118,
+    "lit_loss": 0.007444883185258309,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0521",
+   "cell": [
+    46,
+    21
+   ],
+   "region": [
+    45,
+    20,
+    47,
+    22
+   ],
+   "off": {
+    "green": 697,
+    "esverdeado": 2006,
+    "ring": 27561,
+    "contour_with_green": 0.5167930660888408
+   },
+   "on": {
+    "green": 425,
+    "esverdeado": 170,
+    "ring": 27561,
+    "contour_with_green": 0.18627997769102064
+   },
+   "gate": {
+    "dropped": 1421,
+    "loss": 0.02933828842778982,
+    "shadow_share": 0.8923293455313159,
+    "lit_loss": 0.010028962953356677,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0090",
+   "cell": [
+    43,
+    58
+   ],
+   "region": [
+    42,
+    57,
+    44,
+    59
+   ],
+   "off": {
+    "green": 240,
+    "esverdeado": 1625,
+    "ring": 28862,
+    "contour_with_green": 0.42691671263099834
+   },
+   "on": {
+    "green": 137,
+    "esverdeado": 210,
+    "ring": 28862,
+    "contour_with_green": 0.16467236467236468
+   },
+   "gate": {
+    "dropped": 1627,
+    "loss": 0.02988117320795607,
+    "shadow_share": 0.9545175169022742,
+    "lit_loss": 0.011569664902998236,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0525",
+   "cell": [
+    46,
+    22
+   ],
+   "region": [
+    45,
+    21,
+    47,
+    23
+   ],
+   "off": {
+    "green": 578,
+    "esverdeado": 1463,
+    "ring": 27456,
+    "contour_with_green": 0.4570290267501423
+   },
+   "on": {
+    "green": 370,
+    "esverdeado": 225,
+    "ring": 27456,
+    "contour_with_green": 0.20045428733674048
+   },
+   "gate": {
+    "dropped": 1359,
+    "loss": 0.02792618773631432,
+    "shadow_share": 0.9580573951434879,
+    "lit_loss": 0.009394273577584447,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0026",
+   "cell": [
+    47,
+    51
+   ],
+   "region": [
+    46,
+    50,
+    47,
+    52
+   ],
+   "off": {
+    "green": 1049,
+    "esverdeado": 1472,
+    "ring": 25210,
+    "contour_with_green": 0.53198127925117
+   },
+   "on": {
+    "green": 817,
+    "esverdeado": 250,
+    "ring": 25210,
+    "contour_with_green": 0.24743083003952568
+   },
+   "gate": {
+    "dropped": 1108,
+    "loss": 0.020655456545244397,
+    "shadow_share": 0.9972924187725631,
+    "lit_loss": 0.004486922263159815,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0022",
+   "cell": [
+    47,
+    57
+   ],
+   "region": [
+    46,
+    56,
+    47,
+    58
+   ],
+   "off": {
+    "green": 408,
+    "esverdeado": 450,
+    "ring": 23998,
+    "contour_with_green": 0.1589825119236884
+   },
+   "on": {
+    "green": 243,
+    "esverdeado": 65,
+    "ring": 23998,
+    "contour_with_green": 0.0746147607461476
+   },
+   "gate": {
+    "dropped": 1296,
+    "loss": 0.023844130038820303,
+    "shadow_share": 0.9992283950617284,
+    "lit_loss": 0.0040873400021512315,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0392",
+   "cell": [
+    44,
+    56
+   ],
+   "region": [
+    43,
+    55,
+    45,
+    57
+   ],
+   "off": {
+    "green": 297,
+    "esverdeado": 2099,
+    "ring": 28537,
+    "contour_with_green": 0.6067738231917337
+   },
+   "on": {
+    "green": 147,
+    "esverdeado": 214,
+    "ring": 28537,
+    "contour_with_green": 0.11527377521613832
+   },
+   "gate": {
+    "dropped": 1618,
+    "loss": 0.03001576848158798,
+    "shadow_share": 0.8436341161928307,
+    "lit_loss": 0.013020532377980662,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0045",
+   "cell": [
+    43,
+    5
+   ],
+   "region": [
+    42,
+    4,
+    44,
+    6
+   ],
+   "off": {
+    "green": 454,
+    "esverdeado": 927,
+    "ring": 27734,
+    "contour_with_green": 0.39707602339181286
+   },
+   "on": {
+    "green": 261,
+    "esverdeado": 34,
+    "ring": 27734,
+    "contour_with_green": 0.10075713453698311
+   },
+   "gate": {
+    "dropped": 862,
+    "loss": 0.013913324186909853,
+    "shadow_share": 0.9965197215777262,
+    "lit_loss": 0.006496276124544768,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0560",
+   "cell": [
+    46,
+    13
+   ],
+   "region": [
+    45,
+    12,
+    47,
+    14
+   ],
+   "off": {
+    "green": 1250,
+    "esverdeado": 2145,
+    "ring": 28199,
+    "contour_with_green": 0.4636258660508083
+   },
+   "on": {
+    "green": 985,
+    "esverdeado": 842,
+    "ring": 28199,
+    "contour_with_green": 0.18911335578002245
+   },
+   "gate": {
+    "dropped": 1593,
+    "loss": 0.02750962750617369,
+    "shadow_share": 0.837413684871312,
+    "lit_loss": 0.016253423670174426,
+    "interior_same": true,
+    "pass": false
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0626",
+   "cell": [
+    46,
+    10
+   ],
+   "region": [
+    45,
+    9,
+    47,
+    11
+   ],
+   "off": {
+    "green": 525,
+    "esverdeado": 844,
+    "ring": 28042,
+    "contour_with_green": 0.2977855477855478
+   },
+   "on": {
+    "green": 449,
+    "esverdeado": 146,
+    "ring": 28042,
+    "contour_with_green": 0.19871043376318875
+   },
+   "gate": {
+    "dropped": 1319,
+    "loss": 0.029326100006670075,
+    "shadow_share": 0.8377558756633814,
+    "lit_loss": 0.011473565804274466,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0043",
+   "cell": [
+    45,
+    6
+   ],
+   "region": [
+    44,
+    5,
+    46,
+    7
+   ],
+   "off": {
+    "green": 1108,
+    "esverdeado": 1639,
+    "ring": 27995,
+    "contour_with_green": 0.5157053112507138
+   },
+   "on": {
+    "green": 939,
+    "esverdeado": 196,
+    "ring": 27995,
+    "contour_with_green": 0.21926713947990545
+   },
+   "gate": {
+    "dropped": 1147,
+    "loss": 0.022648290024484638,
+    "shadow_share": 0.9363557105492589,
+    "lit_loss": 0.013993541442411194,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0417",
+   "cell": [
+    45,
+    50
+   ],
+   "region": [
+    44,
+    49,
+    46,
+    51
+   ],
+   "off": {
+    "green": 738,
+    "esverdeado": 1168,
+    "ring": 27368,
+    "contour_with_green": 0.3288863109048724
+   },
+   "on": {
+    "green": 596,
+    "esverdeado": 249,
+    "ring": 27368,
+    "contour_with_green": 0.11339600470035252
+   },
+   "gate": {
+    "dropped": 1466,
+    "loss": 0.030811265237494747,
+    "shadow_share": 0.9809004092769441,
+    "lit_loss": 0.011854553744443178,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0532",
+   "cell": [
+    47,
+    24
+   ],
+   "region": [
+    46,
+    23,
+    47,
+    25
+   ],
+   "off": {
+    "green": 413,
+    "esverdeado": 1179,
+    "ring": 24840,
+    "contour_with_green": 0.5006218905472637
+   },
+   "on": {
+    "green": 305,
+    "esverdeado": 81,
+    "ring": 24840,
+    "contour_with_green": 0.1116015132408575
+   },
+   "gate": {
+    "dropped": 1072,
+    "loss": 0.022393515907334294,
+    "shadow_share": 0.9813432835820896,
+    "lit_loss": 0.01242580810453051,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0529",
+   "cell": [
+    46,
+    23
+   ],
+   "region": [
+    45,
+    22,
+    47,
+    24
+   ],
+   "off": {
+    "green": 654,
+    "esverdeado": 1746,
+    "ring": 26863,
+    "contour_with_green": 0.4479553903345725
+   },
+   "on": {
+    "green": 430,
+    "esverdeado": 277,
+    "ring": 26863,
+    "contour_with_green": 0.25749235474006116
+   },
+   "gate": {
+    "dropped": 1464,
+    "loss": 0.024024812511282145,
+    "shadow_share": 0.9979508196721312,
+    "lit_loss": 0.008884567673584337,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0488",
+   "cell": [
+    47,
+    31
+   ],
+   "region": [
+    46,
+    30,
+    47,
+    32
+   ],
+   "off": {
+    "green": 195,
+    "esverdeado": 472,
+    "ring": 24909,
+    "contour_with_green": 0.32420429311621024
+   },
+   "on": {
+    "green": 113,
+    "esverdeado": 25,
+    "ring": 24909,
+    "contour_with_green": 0.09764789736279401
+   },
+   "gate": {
+    "dropped": 1165,
+    "loss": 0.02401764730136478,
+    "shadow_share": 0.9184549356223176,
+    "lit_loss": 0.009740528889994196,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0499",
+   "cell": [
+    44,
+    33
+   ],
+   "region": [
+    43,
+    32,
+    45,
+    34
+   ],
+   "off": {
+    "green": 710,
+    "esverdeado": 1245,
+    "ring": 28132,
+    "contour_with_green": 0.36678403755868544
+   },
+   "on": {
+    "green": 497,
+    "esverdeado": 146,
+    "ring": 28132,
+    "contour_with_green": 0.17373134328358208
+   },
+   "gate": {
+    "dropped": 1155,
+    "loss": 0.022453780205680514,
+    "shadow_share": 0.9948051948051948,
+    "lit_loss": 0.007386406028501082,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0563",
+   "cell": [
+    43,
+    13
+   ],
+   "region": [
+    42,
+    12,
+    44,
+    14
+   ],
+   "off": {
+    "green": 186,
+    "esverdeado": 920,
+    "ring": 26674,
+    "contour_with_green": 0.4217171717171717
+   },
+   "on": {
+    "green": 28,
+    "esverdeado": 11,
+    "ring": 26674,
+    "contour_with_green": 0.03188775510204082
+   },
+   "gate": {
+    "dropped": 1128,
+    "loss": 0.01997025706394731,
+    "shadow_share": 1.0,
+    "lit_loss": 0.006730344335293518,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "relva"
+  },
+  {
+   "pid": "P0255",
+   "cell": [
+    1,
+    51
+   ],
+   "region": [
+    1,
+    50,
+    2,
+    52
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24833,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24833,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0098",
+   "cell": [
+    3,
+    36
+   ],
+   "region": [
+    2,
+    35,
+    4,
+    37
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 21,
+    "ring": 27418,
+    "contour_with_green": 0.014935064935064935
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27418,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 27,
+    "loss": 0.0006067552079822018,
+    "shadow_share": 0.8888888888888888,
+    "lit_loss": 0.0011380548017158364,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0815",
+   "cell": [
+    2,
+    4
+   ],
+   "region": [
+    1,
+    3,
+    3,
+    5
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27958,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27958,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0659",
+   "cell": [
+    12,
+    1
+   ],
+   "region": [
+    11,
+    1,
+    13,
+    2
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 1,
+    "ring": 24246,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24246,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0812",
+   "cell": [
+    5,
+    5
+   ],
+   "region": [
+    4,
+    4,
+    6,
+    6
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27470,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27470,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0241",
+   "cell": [
+    1,
+    44
+   ],
+   "region": [
+    1,
+    43,
+    2,
+    45
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24993,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24993,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0818",
+   "cell": [
+    5,
+    4
+   ],
+   "region": [
+    4,
+    3,
+    6,
+    5
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 7,
+    "ring": 26200,
+    "contour_with_green": 0.0020134228187919465
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 26200,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0144",
+   "cell": [
+    2,
+    56
+   ],
+   "region": [
+    1,
+    55,
+    3,
+    57
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28614,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28614,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0824",
+   "cell": [
+    5,
+    3
+   ],
+   "region": [
+    4,
+    2,
+    6,
+    4
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 26959,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 26959,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0774",
+   "cell": [
+    7,
+    11
+   ],
+   "region": [
+    6,
+    10,
+    8,
+    12
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 2,
+    "ring": 29203,
+    "contour_with_green": 0.004209260372820205
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 29203,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 15,
+    "loss": 0.00034529591860224214,
+    "shadow_share": 0.6666666666666666,
+    "lit_loss": 0.00022014793941528706,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0751",
+   "cell": [
+    3,
+    14
+   ],
+   "region": [
+    2,
+    13,
+    4,
+    15
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28345,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28345,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0250",
+   "cell": [
+    2,
+    52
+   ],
+   "region": [
+    1,
+    51,
+    3,
+    53
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 10,
+    "ring": 28367,
+    "contour_with_green": 0.015980331899200985
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28367,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 12,
+    "loss": 0.00021580016904346576,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0147",
+   "cell": [
+    2,
+    61
+   ],
+   "region": [
+    1,
+    60,
+    3,
+    62
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27016,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27016,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0797",
+   "cell": [
+    2,
+    7
+   ],
+   "region": [
+    1,
+    6,
+    3,
+    8
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 29106,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 29106,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 3,
+    "loss": 6.677499054020968e-05,
+    "shadow_share": 0.0,
+    "lit_loss": 0.00012723185885745792,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0769",
+   "cell": [
+    2,
+    11
+   ],
+   "region": [
+    1,
+    10,
+    3,
+    12
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27884,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27884,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 4,
+    "loss": 8.779438554904414e-05,
+    "shadow_share": 0.75,
+    "lit_loss": 4.2879807898460615e-05,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0016",
+   "cell": [
+    1,
+    20
+   ],
+   "region": [
+    1,
+    19,
+    2,
+    21
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 8,
+    "ring": 24714,
+    "contour_with_green": 0.004246284501061571
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24714,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0660",
+   "cell": [
+    11,
+    2
+   ],
+   "region": [
+    10,
+    1,
+    12,
+    3
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 1,
+    "ring": 28138,
+    "contour_with_green": 0.002942907592701589
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28138,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 4,
+    "loss": 8.337849668570476e-05,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0746",
+   "cell": [
+    3,
+    15
+   ],
+   "region": [
+    2,
+    14,
+    4,
+    16
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27240,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27240,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 3,
+    "loss": 6.949431304871551e-05,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0783",
+   "cell": [
+    2,
+    9
+   ],
+   "region": [
+    1,
+    8,
+    3,
+    10
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 3,
+    "ring": 28051,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28051,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0094",
+   "cell": [
+    3,
+    29
+   ],
+   "region": [
+    2,
+    28,
+    4,
+    30
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 3,
+    "ring": 26952,
+    "contour_with_green": 0.003893575600259572
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 26952,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 6,
+    "loss": 0.00015401201293700908,
+    "shadow_share": 0.0,
+    "lit_loss": 0.00030624744793793387,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0169",
+   "cell": [
+    2,
+    50
+   ],
+   "region": [
+    1,
+    49,
+    3,
+    51
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27158,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27158,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0340",
+   "cell": [
+    2,
+    20
+   ],
+   "region": [
+    1,
+    19,
+    3,
+    21
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 4,
+    "ring": 28428,
+    "contour_with_green": 0.008620689655172414
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28428,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 20,
+    "loss": 0.00043355733795794494,
+    "shadow_share": 0.7,
+    "lit_loss": 0.00027969420100689915,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0275",
+   "cell": [
+    1,
+    47
+   ],
+   "region": [
+    1,
+    46,
+    2,
+    48
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24275,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24275,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0816",
+   "cell": [
+    3,
+    4
+   ],
+   "region": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27200,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27200,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 2,
+    "loss": 4.168056018672891e-05,
+    "shadow_share": 0.0,
+    "lit_loss": 8.711560240439062e-05,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0821",
+   "cell": [
+    2,
+    3
+   ],
+   "region": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28187,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28187,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 1,
+    "loss": 2.266237592349182e-05,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0759",
+   "cell": [
+    5,
+    13
+   ],
+   "region": [
+    4,
+    12,
+    6,
+    14
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27534,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 27534,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0232",
+   "cell": [
+    5,
+    64
+   ],
+   "region": [
+    4,
+    63,
+    6,
+    64
+   ],
+   "off": {
+    "green": 352,
+    "esverdeado": 1031,
+    "ring": 24308,
+    "contour_with_green": 0.31832298136645965
+   },
+   "on": {
+    "green": 16,
+    "esverdeado": 164,
+    "ring": 24308,
+    "contour_with_green": 0.16222570532915362
+   },
+   "gate": {
+    "dropped": 1092,
+    "loss": 0.021274108708357685,
+    "shadow_share": 0.8489010989010989,
+    "lit_loss": 0.007537993920972644,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0756",
+   "cell": [
+    2,
+    13
+   ],
+   "region": [
+    1,
+    12,
+    3,
+    14
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 6,
+    "ring": 28162,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28162,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0320",
+   "cell": [
+    5,
+    24
+   ],
+   "region": [
+    4,
+    23,
+    6,
+    25
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 2,
+    "ring": 28339,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 28339,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 4,
+    "loss": 9.38945095185559e-05,
+    "shadow_share": 0.5,
+    "lit_loss": 9.536524890329964e-05,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0010",
+   "cell": [
+    1,
+    14
+   ],
+   "region": [
+    1,
+    13,
+    2,
+    15
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 10,
+    "ring": 24905,
+    "contour_with_green": 0.014925373134328358
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24905,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 206,
+    "loss": 0.004110873860030732,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "céu"
+  },
+  {
+   "pid": "P0228",
+   "cell": [
+    34,
+    64
+   ],
+   "region": [
+    33,
+    63,
+    35,
+    64
+   ],
+   "off": {
+    "green": 427,
+    "esverdeado": 1257,
+    "ring": 23307,
+    "contour_with_green": 0.3601213040181956
+   },
+   "on": {
+    "green": 119,
+    "esverdeado": 246,
+    "ring": 23307,
+    "contour_with_green": 0.17559523809523808
+   },
+   "gate": {
+    "dropped": 1159,
+    "loss": 0.021863386844239874,
+    "shadow_share": 0.911130284728214,
+    "lit_loss": 0.009856564913571167,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0214",
+   "cell": [
+    38,
+    64
+   ],
+   "region": [
+    37,
+    63,
+    39,
+    64
+   ],
+   "off": {
+    "green": 66,
+    "esverdeado": 170,
+    "ring": 23823,
+    "contour_with_green": 0.05140845070422535
+   },
+   "on": {
+    "green": 1,
+    "esverdeado": 25,
+    "ring": 23823,
+    "contour_with_green": 0.002112676056338028
+   },
+   "gate": {
+    "dropped": 1,
+    "loss": 1.9440124416796266e-05,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0221",
+   "cell": [
+    19,
+    64
+   ],
+   "region": [
+    18,
+    63,
+    20,
+    64
+   ],
+   "off": {
+    "green": 4,
+    "esverdeado": 33,
+    "ring": 23776,
+    "contour_with_green": 0.008148148148148147
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 23776,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0649",
+   "cell": [
+    30,
+    1
+   ],
+   "region": [
+    29,
+    1,
+    31,
+    2
+   ],
+   "off": {
+    "green": 4,
+    "esverdeado": 103,
+    "ring": 22652,
+    "contour_with_green": 0.03386581469648562
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 5,
+    "ring": 22652,
+    "contour_with_green": 0.0025493945188017845
+   },
+   "gate": {
+    "dropped": 7,
+    "loss": 0.00014761081354645522,
+    "shadow_share": 0.8571428571428571,
+    "lit_loss": 4.358817888588615e-05,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0201",
+   "cell": [
+    15,
+    64
+   ],
+   "region": [
+    14,
+    63,
+    16,
+    64
+   ],
+   "off": {
+    "green": 31,
+    "esverdeado": 100,
+    "ring": 23794,
+    "contour_with_green": 0.030381944444444444
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 2,
+    "ring": 23794,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 40,
+    "loss": 0.0007786645902277594,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0013464127716868628,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0219",
+   "cell": [
+    39,
+    64
+   ],
+   "region": [
+    38,
+    63,
+    40,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 12,
+    "ring": 23992,
+    "contour_with_green": 0.012408759124087591
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 23992,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 31,
+    "loss": 0.0007340926851215989,
+    "shadow_share": 0.06451612903225806,
+    "lit_loss": 0.0013118016917718369,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0647",
+   "cell": [
+    16,
+    1
+   ],
+   "region": [
+    15,
+    1,
+    17,
+    2
+   ],
+   "off": {
+    "green": 2,
+    "esverdeado": 36,
+    "ring": 24836,
+    "contour_with_green": 0.021212121212121213
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24836,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 23,
+    "loss": 0.0005266894135427878,
+    "shadow_share": 0.0,
+    "lit_loss": 0.001045074518356961,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0211",
+   "cell": [
+    17,
+    64
+   ],
+   "region": [
+    16,
+    63,
+    18,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 31,
+    "ring": 23815,
+    "contour_with_green": 0.043993231810490696
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 23815,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 45,
+    "loss": 0.0010128519660582052,
+    "shadow_share": 1.0,
+    "lit_loss": 0.00035612535612535614,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0222",
+   "cell": [
+    26,
+    64
+   ],
+   "region": [
+    25,
+    63,
+    27,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 2,
+    "ring": 24363,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24363,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0197",
+   "cell": [
+    21,
+    64
+   ],
+   "region": [
+    20,
+    63,
+    22,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24886,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24886,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0667",
+   "cell": [
+    39,
+    1
+   ],
+   "region": [
+    38,
+    1,
+    40,
+    2
+   ],
+   "off": {
+    "green": 109,
+    "esverdeado": 207,
+    "ring": 23448,
+    "contour_with_green": 0.0535833891493637
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 19,
+    "ring": 23448,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 27,
+    "loss": 0.0005941901408450704,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0666",
+   "cell": [
+    32,
+    1
+   ],
+   "region": [
+    31,
+    1,
+    33,
+    2
+   ],
+   "off": {
+    "green": 167,
+    "esverdeado": 1145,
+    "ring": 24451,
+    "contour_with_green": 0.3225579761068166
+   },
+   "on": {
+    "green": 57,
+    "esverdeado": 60,
+    "ring": 24451,
+    "contour_with_green": 0.11858760826115923
+   },
+   "gate": {
+    "dropped": 1535,
+    "loss": 0.03270898591489271,
+    "shadow_share": 0.9140065146579804,
+    "lit_loss": 0.012173992339959876,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0206",
+   "cell": [
+    16,
+    64
+   ],
+   "region": [
+    15,
+    63,
+    17,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 5,
+    "ring": 24243,
+    "contour_with_green": 0.013396375098502758
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24243,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 9,
+    "loss": 0.00020402611534276388,
+    "shadow_share": 0.5555555555555556,
+    "lit_loss": 0.00016975046681378373,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0644",
+   "cell": [
+    36,
+    1
+   ],
+   "region": [
+    35,
+    1,
+    37,
+    2
+   ],
+   "off": {
+    "green": 673,
+    "esverdeado": 1607,
+    "ring": 23356,
+    "contour_with_green": 0.3215547703180212
+   },
+   "on": {
+    "green": 4,
+    "esverdeado": 406,
+    "ring": 23356,
+    "contour_with_green": 0.16500711237553342
+   },
+   "gate": {
+    "dropped": 1239,
+    "loss": 0.02925758005100595,
+    "shadow_share": 0.8886198547215496,
+    "lit_loss": 0.008266846102085936,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0202",
+   "cell": [
+    22,
+    64
+   ],
+   "region": [
+    21,
+    63,
+    23,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 25145,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 25145,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0212",
+   "cell": [
+    24,
+    64
+   ],
+   "region": [
+    23,
+    63,
+    25,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24206,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24206,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0213",
+   "cell": [
+    31,
+    64
+   ],
+   "region": [
+    30,
+    63,
+    32,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 22,
+    "ring": 23363,
+    "contour_with_green": 0.02782462057335582
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 23363,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 22,
+    "loss": 0.0004339250493096647,
+    "shadow_share": 0.3181818181818182,
+    "lit_loss": 0.0006130205566226654,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0656",
+   "cell": [
+    38,
+    1
+   ],
+   "region": [
+    37,
+    1,
+    39,
+    2
+   ],
+   "off": {
+    "green": 71,
+    "esverdeado": 437,
+    "ring": 24122,
+    "contour_with_green": 0.1719939117199391
+   },
+   "on": {
+    "green": 54,
+    "esverdeado": 247,
+    "ring": 24122,
+    "contour_with_green": 0.04216867469879518
+   },
+   "gate": {
+    "dropped": 1521,
+    "loss": 0.030086044901592324,
+    "shadow_share": 0.9414858645627876,
+    "lit_loss": 0.009962983381901236,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0636",
+   "cell": [
+    21,
+    1
+   ],
+   "region": [
+    20,
+    1,
+    22,
+    2
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24481,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24481,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 3,
+    "loss": 6.965405154399815e-05,
+    "shadow_share": 0.0,
+    "lit_loss": 0.0001444669170759896,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0632",
+   "cell": [
+    34,
+    1
+   ],
+   "region": [
+    33,
+    1,
+    35,
+    2
+   ],
+   "off": {
+    "green": 302,
+    "esverdeado": 1275,
+    "ring": 23980,
+    "contour_with_green": 0.3236677115987461
+   },
+   "on": {
+    "green": 225,
+    "esverdeado": 440,
+    "ring": 23980,
+    "contour_with_green": 0.18651066758430832
+   },
+   "gate": {
+    "dropped": 1513,
+    "loss": 0.031153481859737264,
+    "shadow_share": 0.8863185723727693,
+    "lit_loss": 0.010717888365837256,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0631",
+   "cell": [
+    27,
+    1
+   ],
+   "region": [
+    26,
+    1,
+    28,
+    2
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 11,
+    "ring": 24862,
+    "contour_with_green": 0.0067842605156037995
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 3,
+    "ring": 24862,
+    "contour_with_green": 0.0033921302578018998
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0655",
+   "cell": [
+    31,
+    1
+   ],
+   "region": [
+    30,
+    1,
+    32,
+    2
+   ],
+   "off": {
+    "green": 172,
+    "esverdeado": 846,
+    "ring": 24264,
+    "contour_with_green": 0.21751824817518248
+   },
+   "on": {
+    "green": 6,
+    "esverdeado": 86,
+    "ring": 24264,
+    "contour_with_green": 0.08785175017158545
+   },
+   "gate": {
+    "dropped": 1107,
+    "loss": 0.02316626556450769,
+    "shadow_share": 0.8283649503161699,
+    "lit_loss": 0.009928663802094197,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0641",
+   "cell": [
+    15,
+    1
+   ],
+   "region": [
+    14,
+    1,
+    16,
+    2
+   ],
+   "off": {
+    "green": 299,
+    "esverdeado": 883,
+    "ring": 24556,
+    "contour_with_green": 0.22397891963109354
+   },
+   "on": {
+    "green": 1,
+    "esverdeado": 86,
+    "ring": 24556,
+    "contour_with_green": 0.07204803202134756
+   },
+   "gate": {
+    "dropped": 1000,
+    "loss": 0.02068594596830913,
+    "shadow_share": 0.896,
+    "lit_loss": 0.009394752792449564,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0664",
+   "cell": [
+    26,
+    1
+   ],
+   "region": [
+    25,
+    1,
+    27,
+    2
+   ],
+   "off": {
+    "green": 12,
+    "esverdeado": 143,
+    "ring": 23971,
+    "contour_with_green": 0.0322354590049054
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 5,
+    "ring": 23971,
+    "contour_with_green": 0.00350385423966363
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0208",
+   "cell": [
+    30,
+    64
+   ],
+   "region": [
+    29,
+    63,
+    31,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 5,
+    "ring": 22751,
+    "contour_with_green": 0.01282051282051282
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 22751,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 10,
+    "loss": 0.000226510827217541,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0661",
+   "cell": [
+    19,
+    1
+   ],
+   "region": [
+    18,
+    1,
+    20,
+    2
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24107,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24107,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 1,
+    "loss": 2.317497103128621e-05,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0665",
+   "cell": [
+    33,
+    1
+   ],
+   "region": [
+    32,
+    1,
+    34,
+    2
+   ],
+   "off": {
+    "green": 128,
+    "esverdeado": 989,
+    "ring": 24089,
+    "contour_with_green": 0.257396449704142
+   },
+   "on": {
+    "green": 89,
+    "esverdeado": 27,
+    "ring": 24089,
+    "contour_with_green": 0.0723894939141576
+   },
+   "gate": {
+    "dropped": 1259,
+    "loss": 0.023639640992902475,
+    "shadow_share": 0.9451945988880064,
+    "lit_loss": 0.00926840385930259,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0217",
+   "cell": [
+    25,
+    64
+   ],
+   "region": [
+    24,
+    63,
+    26,
+    64
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24287,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24287,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0643",
+   "cell": [
+    29,
+    1
+   ],
+   "region": [
+    28,
+    1,
+    30,
+    2
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 2,
+    "ring": 23686,
+    "contour_with_green": 0.003986710963455149
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 23686,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 4,
+    "loss": 7.882550004926594e-05,
+    "shadow_share": 0.75,
+    "lit_loss": 4.03518682915019e-05,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0648",
+   "cell": [
+    23,
+    1
+   ],
+   "region": [
+    22,
+    1,
+    24,
+    2
+   ],
+   "off": {
+    "green": 621,
+    "esverdeado": 1006,
+    "ring": 24162,
+    "contour_with_green": 0.400390625
+   },
+   "on": {
+    "green": 372,
+    "esverdeado": 42,
+    "ring": 24162,
+    "contour_with_green": 0.09042904290429044
+   },
+   "gate": {
+    "dropped": 1267,
+    "loss": 0.026110790536641663,
+    "shadow_share": 1.0,
+    "lit_loss": 0.008059966148142177,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0662",
+   "cell": [
+    18,
+    1
+   ],
+   "region": [
+    17,
+    1,
+    19,
+    2
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 22846,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 22846,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 3,
+    "loss": 6.74976375826846e-05,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0638",
+   "cell": [
+    35,
+    1
+   ],
+   "region": [
+    34,
+    1,
+    36,
+    2
+   ],
+   "off": {
+    "green": 301,
+    "esverdeado": 1011,
+    "ring": 23890,
+    "contour_with_green": 0.34686064318529863
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 111,
+    "ring": 23890,
+    "contour_with_green": 0.08444444444444445
+   },
+   "gate": {
+    "dropped": 1420,
+    "loss": 0.028620376902146527,
+    "shadow_share": 0.8556338028169014,
+    "lit_loss": 0.00951462821695029,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0653",
+   "cell": [
+    17,
+    1
+   ],
+   "region": [
+    16,
+    1,
+    18,
+    2
+   ],
+   "off": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 23642,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 23642,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 0,
+    "loss": 0.0,
+    "shadow_share": null,
+    "lit_loss": 0.0,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0199",
+   "cell": [
+    35,
+    64
+   ],
+   "region": [
+    34,
+    63,
+    36,
+    64
+   ],
+   "off": {
+    "green": 90,
+    "esverdeado": 158,
+    "ring": 23375,
+    "contour_with_green": 0.11969380654140571
+   },
+   "on": {
+    "green": 55,
+    "esverdeado": 0,
+    "ring": 23375,
+    "contour_with_green": 0.07387140902872777
+   },
+   "gate": {
+    "dropped": 62,
+    "loss": 0.0015463274722533982,
+    "shadow_share": 0.1935483870967742,
+    "lit_loss": 0.0023990020151616926,
+    "interior_same": true,
+    "pass": false
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0650",
+   "cell": [
+    37,
+    1
+   ],
+   "region": [
+    36,
+    1,
+    38,
+    2
+   ],
+   "off": {
+    "green": 478,
+    "esverdeado": 1988,
+    "ring": 23622,
+    "contour_with_green": 0.41491525423728814
+   },
+   "on": {
+    "green": 66,
+    "esverdeado": 626,
+    "ring": 23622,
+    "contour_with_green": 0.17559322033898306
+   },
+   "gate": {
+    "dropped": 1658,
+    "loss": 0.031168928826559385,
+    "shadow_share": 0.9927623642943305,
+    "lit_loss": 0.011805012475328641,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0226",
+   "cell": [
+    20,
+    64
+   ],
+   "region": [
+    19,
+    63,
+    21,
+    64
+   ],
+   "off": {
+    "green": 4,
+    "esverdeado": 33,
+    "ring": 23765,
+    "contour_with_green": 0.02034174125305126
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 23765,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 38,
+    "loss": 0.0008343946247419964,
+    "shadow_share": 1.0,
+    "lit_loss": 0.0013232983210652552,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0668",
+   "cell": [
+    40,
+    1
+   ],
+   "region": [
+    39,
+    1,
+    41,
+    2
+   ],
+   "off": {
+    "green": 645,
+    "esverdeado": 1391,
+    "ring": 23867,
+    "contour_with_green": 0.20984848484848484
+   },
+   "on": {
+    "green": 37,
+    "esverdeado": 297,
+    "ring": 23867,
+    "contour_with_green": 0.13665480427046264
+   },
+   "gate": {
+    "dropped": 1347,
+    "loss": 0.024792932081722806,
+    "shadow_share": 0.9992576095025983,
+    "lit_loss": 0.006775407779171894,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0223",
+   "cell": [
+    33,
+    64
+   ],
+   "region": [
+    32,
+    63,
+    34,
+    64
+   ],
+   "off": {
+    "green": 977,
+    "esverdeado": 1445,
+    "ring": 24074,
+    "contour_with_green": 0.5536723163841808
+   },
+   "on": {
+    "green": 730,
+    "esverdeado": 100,
+    "ring": 24074,
+    "contour_with_green": 0.18394886363636365
+   },
+   "gate": {
+    "dropped": 1327,
+    "loss": 0.028766529373509646,
+    "shadow_share": 0.9947249434815373,
+    "lit_loss": 0.007065239846300046,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0218",
+   "cell": [
+    32,
+    64
+   ],
+   "region": [
+    31,
+    63,
+    33,
+    64
+   ],
+   "off": {
+    "green": 1367,
+    "esverdeado": 612,
+    "ring": 27677,
+    "contour_with_green": 0.35960303561004087
+   },
+   "on": {
+    "green": 1308,
+    "esverdeado": 19,
+    "ring": 27677,
+    "contour_with_green": 0.1764018691588785
+   },
+   "gate": {
+    "dropped": 866,
+    "loss": 0.020621993618135923,
+    "shadow_share": 0.851039260969977,
+    "lit_loss": 0.006617420744844568,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  },
+  {
+   "pid": "P0224",
+   "cell": [
+    40,
+    64
+   ],
+   "region": [
+    39,
+    63,
+    41,
+    64
+   ],
+   "off": {
+    "green": 1,
+    "esverdeado": 25,
+    "ring": 24578,
+    "contour_with_green": 0.0
+   },
+   "on": {
+    "green": 0,
+    "esverdeado": 0,
+    "ring": 24578,
+    "contour_with_green": 0.0
+   },
+   "gate": {
+    "dropped": 44,
+    "loss": 0.0010902963623748638,
+    "shadow_share": 0.6136363636363636,
+    "lit_loss": 0.0008426270136307311,
+    "interior_same": true,
+    "pass": true
+   },
+   "zone": "resto"
+  }
+ ],
+ "seed": 20261106,
+ "sample_summary": {
+  "n": 100,
+  "worse": [],
+  "gate_fail": [
+   "P0471",
+   "P0555",
+   "P0404",
+   "P0605",
+   "P0418",
+   "P0560",
+   "P0199"
+  ],
+  "green_off": 25883,
+  "green_on": 17041,
+  "esv_off": 62019,
+  "esv_on": 12123,
+  "contour_off": 0.18420191065277547,
+  "contour_on": 0.0703995005116767,
+  "by_zone": {
+   "relva": {
+    "n": 30,
+    "esv_off": 43920,
+    "esv_on": 9107,
+    "contour_off": 0.4351312058934698,
+    "contour_on": 0.1674888019953879
+   },
+   "céu": {
+    "n": 30,
+    "esv_off": 1109,
+    "esv_on": 164,
+    "contour_off": 0.013002996395862039,
+    "contour_on": 0.0054075235109717875
+   },
+   "resto": {
+    "n": 40,
+    "esv_off": 16990,
+    "esv_on": 2852,
+    "contour_off": 0.12440412491493973,
+    "contour_on": 0.04632650714942202
+   }
+  }
+ },
+ "holes": {
+  "off": {
+   "cells": 605,
+   "gt5": 70,
+   "gt10": 10,
+   "mean": 0.01330762570866964
+  },
+  "on": {
+   "cells": 605,
+   "gt5": 70,
+   "gt10": 10,
+   "mean": 0.013327001721956049
+  }
+ }
+}

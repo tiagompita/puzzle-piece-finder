@@ -1,0 +1,21 @@
+﻿P0778 (4, 10): verde 1 -> 0 | esverdeado 245 -> 1 | contorno com verde 15.9 -> 0.5 % | porta {'dropped': 1048, 'loss': 0.019226888289577485, 'shadow_share': 0.892175572519084, 'lit_loss': 0.009138480206279387, 'interior_same': True, 'pass': True}
+P0196 (14, 64): verde 157 -> 2 | esverdeado 760 -> 23 | contorno com verde 31.4 -> 4.0 % | porta {'dropped': 852, 'loss': 0.017645596885096513, 'shadow_share': 0.92018779342723, 'lit_loss': 0.0034526178967464152, 'interior_same': True, 'pass': True}
+P0198 (28, 64): verde 1130 -> 965 | esverdeado 1087 -> 52 | contorno com verde 52.6 -> 21.1 % | porta {'dropped': 1313, 'loss': 0.023851477774346493, 'shadow_share': 1.0, 'lit_loss': 0.007892408423287913, 'interior_same': True, 'pass': True}
+P0204 (36, 64): verde 427 -> 2 | esverdeado 1077 -> 98 | contorno com verde 38.5 -> 9.9 % | porta {'dropped': 1128, 'loss': 0.024983942058517353, 'shadow_share': 1.0, 'lit_loss': 0.0051088675343632164, 'interior_same': True, 'pass': True}
+P0234 (3, 64): verde 12 -> 4 | esverdeado 173 -> 12 | contorno com verde 16.2 -> 2.2 % | porta {'dropped': 308, 'loss': 0.007071031727811194, 'shadow_share': 0.9415584415584416, 'lit_loss': 0.0031903088588866283, 'interior_same': True, 'pass': True}
+P0233 (4, 64): verde 24 -> 4 | esverdeado 180 -> 8 | contorno com verde 10.5 -> 2.3 % | porta {'dropped': 542, 'loss': 0.009427398594587072, 'shadow_share': 1.0, 'lit_loss': 0.004395911104908767, 'interior_same': True, 'pass': True}
+alvos: 3s
+amostra: {'n': 100, 'worse': [], 'gate_fail': ['P0471', 'P0404', 'P0605', 'P0418', 'P0560', 'P0199'], 'green_off': 25883, 'green_on': 17145, 'esv_off': 62019, 'esv_on': 12174, 'contour_off': 0.18420191065277547, 'contour_on': 0.07017965232358883}
+por zona: {'relva': {'n': 30, 'esv_off': 43920, 'esv_on': 9158, 'contour_off': 0.4351312058934698, 'contour_on': 0.16675597470176165}, 'céu': {'n': 30, 'esv_off': 1109, 'esv_on': 164, 'contour_off': 0.013002996395862039, 'contour_on': 0.0054075235109717875}, 'resto': {'n': 40, 'esv_off': 16990, 'esv_on': 2852, 'contour_off': 0.12440412491493973, 'contour_on': 0.04632650714942202}}
+  porta §6.1 falha: P0471 {'dropped': 1594, 'loss': 0.033901909906844184, 'shadow_share': 0.7816813048933501, 'lit_loss': 0.01841039846580013, 'interior_same': True, 'pass': False}
+  porta §6.1 falha: P0404 {'dropped': 1659, 'loss': 0.03313824581027905, 'shadow_share': 0.8613622664255576, 'lit_loss': 0.016183013741780525, 'interior_same': True, 'pass': False}
+  porta §6.1 falha: P0605 {'dropped': 1000, 'loss': 0.021018117617386187, 'shadow_share': 0.785, 'lit_loss': 0.01572926596758818, 'interior_same': True, 'pass': False}
+  porta §6.1 falha: P0418 {'dropped': 1594, 'loss': 0.03548135781858653, 'shadow_share': 0.8186951066499373, 'lit_loss': 0.015549300973561574, 'interior_same': True, 'pass': False}
+  porta §6.1 falha: P0560 {'dropped': 1593, 'loss': 0.02750962750617369, 'shadow_share': 0.837413684871312, 'lit_loss': 0.016253423670174426, 'interior_same': True, 'pass': False}
+  porta §6.1 falha: P0199 {'dropped': 62, 'loss': 0.0015463274722533982, 'shadow_share': 0.1935483870967742, 'lit_loss': 0.0023990020151616926, 'interior_same': True, 'pass': False}
+amostra: 54s
+buracos: {'off': {'cells': 605, 'gt5': 70, 'gt10': 10, 'mean': 0.01330762570866964}, 'on': {'cells': 605, 'gt5': 70, 'gt10': 10, 'mean': 0.01330762570866964}} (76s)
+  D:\DEKSTOP\puzzle_piece_finder\docs\diagnostico\render\verde_tabuleiro_alvos_1.jpg 303 KB
+  D:\DEKSTOP\puzzle_piece_finder\docs\diagnostico\render\verde_tabuleiro_alvos_2.jpg 300 KB
+  D:\DEKSTOP\puzzle_piece_finder\docs\diagnostico\render\verde_tabuleiro_zoom4.jpg 310 KB
+  D:\DEKSTOP\puzzle_piece_finder\docs\diagnostico\render\verde_tabuleiro_amostra.jpg 237 KB
