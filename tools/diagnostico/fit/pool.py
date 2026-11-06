@@ -98,6 +98,7 @@ def prepare():
         b = q["b"]
         rb = cl[b]
         acc_s, acc_t, ex_reps = [], [], []
+        k = 0
         if rb in reps:
             k = corner_dist(sh[b], sh[reps[rb]])[1] if b != reps[rb] else 0
             acc_s.append(index_of[(rb, (q["side_b"] + k) % 4)])
@@ -106,7 +107,8 @@ def prepare():
                 kt = corner_dist(sh[reps[rb]], sh[reps[rt]])[1]
                 acc_t.append(index_of[(rt, (((q["side_b"] + k) % 4) + kt) % 4)])
                 ex_reps.append(rindex[rt])
-        Q.append(dict(a=a, own=rindex.get(ca, -1), rb=rindex.get(rb, -1) if rb in reps else -1,
+        xs = ((q["side_b"] + k) % 4) if rb in reps else None       # lado do alvo no referencial do representante (buracos, passo 5)
+        Q.append(dict(a=a, xs=xs, prov=q["prov"], cluster_b=rb, own=rindex.get(ca, -1), rb=rindex.get(rb, -1) if rb in reps else -1,
                       s4=s4, s5=s5, acc_len=np.array(acc_s + acc_t, int), acc_str=np.array(acc_s, int),
                       ex=np.array(ex_reps, int), zone=q["zone"]))
     return dict(Q=Q, ri=ri, R=len(rkeys), N_all=len(kind), no_true=sum(1 for x in Q if x["rb"] < 0))

@@ -1,0 +1,32 @@
+{
+ "n": 467,
+ "by_n": {
+  "4": 101,
+  "3": 191,
+  "2": 175
+ },
+ "by_zone": {
+  "céu": 196,
+  "relva": 240,
+  "montanha/floresta": 12,
+  "vale/aldeia": 19
+ },
+ "by_n_zone": {
+  "4|céu": 45,
+  "3|céu": 84,
+  "2|céu": 67,
+  "4|relva": 56,
+  "3|relva": 107,
+  "2|relva": 77,
+  "2|montanha/floresta": 12,
+  "2|vale/aldeia": 19
+ },
+ "prov": {
+  "só layout (a)": 376,
+  "b/d presente": 91
+ },
+ "dropped": {
+  "< 2 vizinhas": 106,
+  "conflito: dois vizinhos no mesmo lado": 3
+ }
+}
