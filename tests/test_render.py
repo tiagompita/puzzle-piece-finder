@@ -251,7 +251,7 @@ def test_confirmed_placement_renders_in_proposal_pose(tmp_path):
     rgba = np.asarray(Image.open(fp).convert("RGBA")).copy()
     cx, cy = np.round(mark_mm / MMPP - np.asarray(p.bbox[:2], float)).astype(int)
     r = int(round(1.5 / MMPP))
-    rgba[cy - r:cy + r, cx - r:cx + r, :3] = 0
+    rgba[cy - r:cy + r, cx - r:cx + r, :3] = (120, 0, 160)              # a purple mark (black is the synthetic paper colour)
     Image.fromarray(rgba).save(fp)
     out = confirm(pr, tw, cell=(3, 4), use_image=False)
     assert "error" not in out
@@ -260,7 +260,7 @@ def test_confirmed_placement_renders_in_proposal_pose(tmp_path):
     ppc = 200.0
     img = R.compose_board(pr, ppc, region=(cell[0], cell[1], cell[0], cell[1]), layers=("pieces",))
     ppm = ppc / float(pr.profile.cell_mm["w"])
-    ys, xs = np.nonzero(img.max(-1) < 20)
+    ys, xs = np.nonzero(np.abs(img.astype(int) - (160, 0, 120)).max(-1) < 25)   # the mark (BGR)
     assert len(xs) > 100
     got = np.array([xs.mean(), ys.mean()]) / ppm                       # mm in the cell's box
     origin = np.array([(cell[1] - 1) * pr.profile.cell_mm["w"], (cell[0] - 1) * pr.profile.cell_mm["h"]])
@@ -421,4 +421,57 @@ def test_board_drops_shadow_darkened_paper(tmp_path):
     k = int(round(1.5 / MMPP))                                             # 1.5 mm inside what is drawn (0.3 mm bleed + 0.4 mm band + 1 px)
     inner = cv2.erode(drawn, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * k + 1, 2 * k + 1))).astype(bool)
     assert inner.sum() > 10000 and np.array_equal(on[inner], off[inner])  # the inside of the piece is not touched
+
+
+def test_paper_pocket_dropped_on_display_and_board(tmp_path):
+    """A blank filled with paper by the segmentation (very paper colour, 2 mm deep, open to the boundary) is
+    dropped by the display (thumbnails and board, ``PAPER_POCKETS``) and left open on the board (the bleed
+    does not paint it); the grass interior, including paper-like green that is not the paper colour, stays."""
+    prof = _profile(3, 3)
+    pp = tmp_path / "puzzle.json"
+    prof.save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    sid = pr.add_scan(None, dpi=300)
+    cell = (2, 2)
+    board = make_piece("FFFF", offset=(0, 0)) * MMPP + R.cell_corners_mm(prof, *cell)[0]
+    cnt = _grown_contour(board / MMPP, int(round(0.48 / MMPP)))
+    x, y, w, h = cv2.boundingRect(cnt.astype(np.int32).reshape(-1, 1, 2))
+    x, y, w, h = x - 3, y - 3, w + 6, h + 6
+    alpha = np.zeros((h, w), np.uint8)
+    cv2.fillPoly(alpha, [(cnt - [x, y]).astype(np.int32).reshape(-1, 1, 2)], 255)
+    rng = np.random.default_rng(11)
+    tex = np.where(rng.random((h, w, 1)) < 0.5, _lab_to_rgb(60, -15, 45), _lab_to_rgb(30, -10, 20)).astype(np.uint8)
+    deep_green = (rng.random((h, w)) < 0.02) & (alpha > 0)
+    tex[deep_green] = _lab_to_rgb(50, -34, 32)                             # paper-like, not the paper (distance ~30)
+    ys, xs = np.nonzero(alpha)
+    cy = int(ys.mean())
+    xx_p = np.mgrid[0:h, 0:w][1]
+    pocket = np.zeros((h, w), bool)
+    pocket[cy - int(1.5 / MMPP):cy + int(1.5 / MMPP), :xs.min() + int(2.0 / MMPP)] = True   # 3 x 2 mm, open on the left
+    pocket &= alpha > 0
+    tex[pocket] = _bg_rgb()
+    mouth = pocket & (xx_p < xs.min() + int(round(0.4 / MMPP)))            # a 0.4 mm layer of blended paper at the mouth (P0778)
+    tex[mouth] = _lab_to_rgb(65, -40, 40)                                  # distance ~16: not the paper colour itself
+    rgba = np.dstack([tex, alpha])
+    rel = "crops/P0001.png"
+    os.makedirs(pr.p("crops"), exist_ok=True)
+    Image.fromarray(rgba).save(pr.p(rel))
+    pid = pr.add_piece(sid, {"index_in_scan": 0, "shape": analyse(cnt, MMPP), "contour": cnt.astype(np.int32),
+                             "bbox": [x, y, w, h], "crop_path": rel})
+    pr.place(pid, cell, theta_deg=0.0)
+    pr.save()
+    out = R.piece_rgba_for_display(pr, pid)
+    deep = R._depth_px(alpha > 0) > 0.7 / MMPP
+    assert (out[pocket & deep, 3] == 0).all()                              # the pocket is gone from the thumbnail
+    keep = (alpha > 0) & ~pocket & deep & ~cv2.dilate(pocket.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
+    assert (out[keep, 3] == 255).all() and (out[deep_green & keep, 3] == 255).all()   # grass and paper-like green stay
+    pls = {pid: R.register_piece(pr, pid, image=False)}
+    img = R.compose_board(pr, 18.5 / MMPP, layers=("pieces",), placements=pls)
+    lab = R._lab(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    assert (R.bg_distance(lab, BG_LAB) < R.PAPER_POCKET_DIST_MAX).sum() == 0   # no paper drawn
+    off = R.compose_board(pr, 18.5 / MMPP, layers=("pieces",), placements=pls, board_shadow=False)
+    lab0 = R._lab(cv2.cvtColor(off, cv2.COLOR_BGR2RGB))
+    assert (R.bg_distance(lab0, BG_LAB) < R.PAPER_POCKET_DIST_MAX).sum() > 0.5 * pocket.sum()  # before: the pocket was drawn (minus the cleaned band)
+    base = np.all(img == 40, -1).sum() - np.all(off == 40, -1).sum()
+    assert base > 0.4 * pocket.sum()                                       # the pocket is left open (base shows), not painted
 

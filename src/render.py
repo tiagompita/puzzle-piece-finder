@@ -69,6 +69,7 @@ __all__ = [
 	"seam_gaps", "relax", "bg_distance", "fringe_masks", "decontaminate", "clean_crop", "clean_all", "compose_board",
 	"compose_zone_vs_art", "rebuild_assets", "load_placements", "save_placements", "main",
 	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
+	"paper_pocket_mask", "PAPER_POCKETS", "PAPER_POCKET_DIST_MAX",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
 ]
 
@@ -99,6 +100,9 @@ SHADOW_DEFAULT = False         # shadow pass off by default (RENDER.md §2: it e
 # BG_DIST_MAX (RENDER.md §6.1, §7)
 DISPLAY_SHADOW = True          # on (decision 2026-11-01, RENDER.md §6.1)
 BOARD_SHADOW = True            # the same rule in compose_board (RENDER.md §7: frontier rims showed it); False = as before
+PAPER_POCKETS = True           # display: also drop paper-coloured components touching the boundary at any depth (RENDER.md §7)
+PAPER_POCKET_DIST_MAX = 15.0   # ... "paper colour" = bg_distance below this (grass interior p1 24.3, RENDER.md §2.1)
+PAPER_POCKET_MAX_FRAC = 0.10   # ... and each component at most this share of the piece (P0778's pocket: ~3 %)
 DISPLAY_SHADOW_BAND_MM = 0.4   # only within this distance of the alpha boundary
 DISPLAY_SHADOW_A_MAX = -30.0   # a* below this (paper-like green; grass interior median a* ~ -6 .. -18)
 DISPLAY_SHADOW_DIST_MAX = 40.0 # bg_distance to background_lab below this
@@ -1026,12 +1030,40 @@ def shadow_paper_mask(rgba: np.ndarray, background_lab, mm_per_px: float, *, ban
 	return _touching(cand, alpha & (depth <= 1.5))
 
 
-def _drop_shadow_paper(project, pid: str, rgba: np.ndarray) -> np.ndarray:
-	"""Copy of ``rgba`` (a cleaned crop of ``pid``) with :func:`shadow_paper_mask` made transparent. Display only:
-	the thumbnails (:func:`piece_rgba_for_display`) and the board drawing (:func:`compose_board`), never the index."""
-	out = np.array(rgba, np.uint8, copy=True)
+def paper_pocket_mask(rgba: np.ndarray, background_lab, mm_per_px: float, *, dist_max: float = PAPER_POCKET_DIST_MAX,
+					  seed_mm: float = BAND_MM) -> np.ndarray:
+	"""Visible pixels of the very paper colour (:func:`bg_distance` < ``dist_max``, at any depth) in components that
+	reach within ``seed_mm`` of the alpha boundary (the cleaning band: a pocket is open to the outside through it,
+	across a thin layer of blended paper, P0778 0.47 mm): a blank filled with paper by the segmentation (RENDER.md §7).
+	The interior of the grass pieces stays far above ``dist_max`` (p1 24.3, RENDER.md §2.1). Pure; display only."""
+	alpha = np.asarray(rgba)[..., 3] > 0
+	lab = _lab(np.asarray(rgba)[..., :3])
+	cand = alpha & (bg_distance(lab, background_lab) < float(dist_max))
+	hit = _touching(cand, alpha & (_depth_px(alpha) <= float(seed_mm) / float(mm_per_px)))
+	if not hit.any():
+		return hit
+	# safety: a pocket is a small part of a piece; a piece whose own colours are the paper's is never touched
+	if hit.sum() > PAPER_POCKET_MAX_FRAC * max(1, int(alpha.sum())):
+		return np.zeros_like(hit)
+	return hit
+
+
+def _display_masks(project, pid: str, rgba: np.ndarray):
+	"""``(shadow, pocket)`` masks of a cleaned crop of ``pid`` that the display drops (pocket empty if off)."""
 	mmpp = _scan_mmpp(project, project.piece(pid).scan_id)
-	out[..., 3][shadow_paper_mask(out, project.profile.background_lab, mmpp)] = 0
+	bg = project.profile.background_lab
+	sh = shadow_paper_mask(rgba, bg, mmpp)
+	pk = paper_pocket_mask(rgba, bg, mmpp) if PAPER_POCKETS else np.zeros_like(sh)
+	return sh, pk
+
+
+def _drop_shadow_paper(project, pid: str, rgba: np.ndarray) -> np.ndarray:
+	"""Copy of ``rgba`` (a cleaned crop of ``pid``) with :func:`shadow_paper_mask` (and, if ``PAPER_POCKETS``,
+	:func:`paper_pocket_mask`) made transparent. Display only: the thumbnails (:func:`piece_rgba_for_display`) and
+	the board drawing (:func:`compose_board`), never the index."""
+	out = np.array(rgba, np.uint8, copy=True)
+	sh, pk = _display_masks(project, pid, out)
+	out[..., 3][sh | pk] = 0
 	return out
 
 
@@ -1178,11 +1210,15 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 			# or on the frontier is filled with the piece's own deep colour (as every hairline gap), never the base
 			rb = rgba
 			if clean and board_shadow:
-				dropped = _drop_shadow_paper(project, pid, rgba)
-				if (dropped[..., 3] != rgba[..., 3]).any():
+				sh, pk = _display_masks(project, pid, rgba)
+				if (sh | pk).any():
+					dropped = np.array(rgba, np.uint8, copy=True)
+					dropped[..., 3][sh | pk] = 0
 					rb = _fill_transparent(dropped, BAND_MM / _scan_mmpp(project, project.piece(pid).scan_id))
-					rb[..., 3] = rgba[..., 3]          # extent of the cleaned silhouette, the dropped rim in the deep colour
-				rgba = dropped
+					# extent of the cleaned silhouette (dropped shadow rim in the deep colour), minus a paper pocket:
+					# a blank must stay open, not be painted with the piece colour
+					rb[..., 3] = np.where(pk, 0, rgba[..., 3])
+					rgba = dropped
 			jobs.append((pid, pl, rgba, rb))
 		passes = (("bleed", "pieces") if bleed_mm and bleed_mm > 0 else ("pieces",))
 		for pas, (pid, pl, rgba, rb) in [(q, j) for q in passes for j in jobs]:
