@@ -1,0 +1,68 @@
+{
+ "grupos": 38,
+ "seguras": 7,
+ "B_real_1366": {
+  "linhas_no_ecra": 10,
+  "botoes_total": 40
+ },
+ "sugestoes_1366": {
+  "grupos": 38,
+  "seguras": 7,
+  "celulas": 81
+ },
+ "sobreposicao_1366": [
+  18,
+  34
+ ],
+ "picker_1366": [
+  44,
+  44,
+  44
+ ],
+ "A_celulas_1366": {
+  "grupos_visiveis": 6,
+  "toques": 2,
+  "botoes_novos": 1,
+  "linhas_no_ecra": 6,
+  "botoes_total": 41
+ },
+ "B_caixas_1366": {
+  "toques_para_3": 4,
+  "botoes_novos": 40,
+  "caixas": 38,
+  "linhas_no_ecra": 8,
+  "botoes_total": 80
+ },
+ "B_real_390": {
+  "linhas_no_ecra": 4,
+  "botoes_total": 40
+ },
+ "sugestoes_390": {
+  "grupos": 38,
+  "seguras": 7,
+  "celulas": 81
+ },
+ "sobreposicao_390": [
+  18,
+  34
+ ],
+ "picker_390": [
+  44,
+  44,
+  44
+ ],
+ "A_celulas_390": {
+  "grupos_visiveis": 6,
+  "toques": 2,
+  "botoes_novos": 1,
+  "linhas_no_ecra": 6,
+  "botoes_total": 41
+ },
+ "B_caixas_390": {
+  "toques_para_3": 4,
+  "botoes_novos": 40,
+  "caixas": 38,
+  "linhas_no_ecra": 8,
+  "botoes_total": 80
+ }
+}

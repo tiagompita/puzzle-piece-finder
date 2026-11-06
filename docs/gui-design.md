@@ -52,7 +52,7 @@ Uma página: tabuleiro à esquerda, painel compacto de 360 px à direita com sep
 - **Vai buscar**: cartões agrupados por saco, pela ordem do `fetch.json`. Cada cartão: "Saco N · nº X" grande; célula alvo e decisão em palavra (aceite / ambígua); a peça **rodada como fica** (`theta_deg`), com ▲ = topo do tabuleiro, quadrado tracejado = célula e o fantasma da gémea por cima; minimapa com a célula; a folha do saco com a peça a âmbar (toque amplia); razões em frases (forma: diferença X mm (limite t95); margem para a 2.ª candidata (mínimo); imagem: ΔE); botões **Coloquei / Não encaixa / Guardar posição / Ver no tabuleiro / Reportar**; "razões técnicas" recolhidas. A lista tem duas partes: **«Coloca agora (n)»** (≥ 1 vizinha 4-conexa montada, isto é, `colocada` ou marcada pelo Tiago; «só foto» não conta), onde o encaixe é verificável à mão, e a seguir **«Guarda com posição (n)»**, cujo botão é **«Guardei num saquinho (l, c)»** (→ `posicao_conhecida`, sem «Coloquei»); quando uma posição guardada passa a colocável aparece um aviso (toast) e um emblema. «Ver no tabuleiro» só faz zoom e realça a célula: não muda de separador, a lista fica ao lado. A peça nos cartões, nas folhas e nas miniaturas da Mesa vem de um só pipeline de exibição (§6.8). Estado vazio: "Nada a ir buscar agora" + botão Importar. Sugestões suprimidas (candidata única) numa nota recolhida.
 - **Célula**: o tabuleiro a 300 dpi (3 × 3) ao lado da arte, com o fantasma e as marcas da célula; estado, gémea (clicável), peça e como chegou; propostas com os mesmos cartões; vizinhas; "Desfazer colocação" ou "Desancorar grupo"; botões **«Está montada» / «Está vazia»** (pista do Tiago: `cell_full`/`cell_empty`, com desfazer) e **Reportar**. Textos de estado: «cheia na foto, por confirmar» (só foto) e «marcada por ti» (pista).
 - **Lotes**: um bloco por saco com as folhas (miniaturas, toque amplia) e a grelha de peças (miniatura como digitalizada, nº, célula ou estado; chave de cores dos estados no topo). Tocar numa peça colocada/posição conhecida abre a célula; numa solta abre o painel da peça (propostas, folha, "Descartar", "Reportar").
-- **Mesa**: grupos por ancorar (ordenados pela margem do 1.º candidato), miniatura, top-3; "Ver" desenha a pegada a violeta e aproxima; "Ancorar aqui" (com confirmação) usa `confirm(anchor=…)`. Candidatos com peças fora da grelha ficam desativados; células já colocadas são avisadas.
+- **Mesa** (lista compacta desde 2026-11-06, §15): uma linha por grupo com selo segura / a confirmar, pesquisa, filtros «Seguras» / «A confirmar», «Ver» (abre a linha e desenha a pegada a violeta) e só depois «É aqui em (l, c)» (com confirmação) que usa `confirm(anchor=…)`; botão «Sugestões» na barra do tabuleiro. Candidatos com peças fora da grelha ficam desativados; células já colocadas são avisadas.
 - **Importar** (pensado para o PC): ficheiro, nº do saco (proposta: o seguinte ao maior), dpi; progresso em linhas; no fim, ligações para "Vai buscar" e para o saco.
 - **Telemóvel** (`max-width: 700px`): tabuleiro em cima (40 % da altura), legenda compacta (só rótulos, em várias linhas, sempre visível), painel como folha inferior com pega; tocar na pega expande a folha e reduz o tabuleiro. Alvos de toque ≥ 44 px (botões de zoom 40 px no telemóvel).
 
@@ -71,6 +71,8 @@ A tabela `LEGEND` de `src/server.py` é a única fonte: o servidor devolve-a em 
 | âmbar pontilhado | `b-buscar-par` | Par de soltas: célula só provável |
 | quadrado ciano | `b-conhecida` | Posição conhecida: peça guardada à espera de vizinha |
 | contorno branco tracejado com a forma da peça | `b-fantasma` | Fantasma: contorno da gémea colocada rodado por `profile.twin_rotation_deg()` (180° neste puzzle) |
+| violeta cheio | `b-sug` | Sugestão segura: melhor zona de um grupo (botão Sugestões) |
+| violeta ténue tracejado | `b-sug-fraca` | Sugestão a confirmar: o programa não decidiu |
 | violeta tracejado | `b-mesa` | Onde um grupo solto ficaria (pré-visualização da Mesa) |
 | linhas finas | `b-grelha` | Grelha (com zoom) |
 | quadrado branco grosso | `b-selecionada` | Célula aberta no painel |
@@ -150,7 +152,7 @@ Botão "Reportar" em cada cartão, no painel da peça e no da célula: abre um `
 As 6 abas estão na barra de topo (`header#top > nav#tabs`), ao lado do nome e do progresso; abaixo de 1181 px ocupam uma 2.ª linha e abaixo de 900 px usam rótulos curtos (sem scroll horizontal; testado de 360 a 1920 px). O botão de report de um cartão, da célula ou da peça passa a **«Editar report»** quando já existe um report **aberto** dessa peça (ou dessa célula, se o report não tem peça): abre o mesmo diálogo preenchido («Editar R####», «Guardar edição»). `reports.jsonl` é append-only: editar acrescenta uma linha `{"evento": "edicao", "id", "t", "tipo"?, "texto"?}` (`POST /api/report/{id}/edit`; evento de log `report_edited`); a lista de Reports marca «editado N×». Só se editam reports abertos.
 
 
-## 14. Mesa — propostas (2026-11-05; **nada implementado, à espera de decisão**)
+## 14. Mesa — propostas (2026-11-05; decidido: B, implementada em §15)
 
 O Tiago acha a aba «Mesa» confusa: «muita informação», muitos botões ver/ancorar, demasiado texto. Esta secção audita a aba com os dados reais do alpes e propõe duas alternativas **mais simples**. As alternativas são **protótipos descartáveis** desenhados por JavaScript injetado na página (`tools/gui/mesa_mockups.py`, nada em `src/`), sobre `S.sections` reais; as capturas e as métricas (`docs/gui/screenshots/mesa_*.jpg`, `mesa_metricas.json`) saem do mesmo script. A pesquisa por id/peça/célula (commit `70eae0a`) está feita e vale para qualquer das alternativas.
 
@@ -216,3 +218,60 @@ Nota sobre os protótipos: nas capturas as zonas alternativas mostram o selo do 
 **Recomendo a B (lista compacta).** Razões: (1) a **visão geral** é o que falta ao Tiago quando procura um grupo (acabou de pedir pesquisa por id/célula, o que pressupõe uma lista em que se navega), e a B mostra 11 grupos no ecrã em vez de 2; (2) corta o ruído tanto como a A (de 228 botões para 38 + 3, de ≈ 9 000 para ≈ 2 000 caracteres), com **uma ação por linha** («Ver») e a ação principal só depois de ver a zona, o que evita ancorar às cegas; (3) o custo é do mesmo tamanho da A e não perde nenhum caso de uso; (4) a A é melhor num único fluxo «despachar por ordem» (os 7 seguros), mas obriga a 38 passos para ver o resto, e na prática 31 dos 38 grupos são «a confirmar» e pedem comparação, não despacho em fila. Se o Tiago quiser só despachar os 7 seguros, a B com um filtro «só seguras (7)» dá-lhe a fila sem perder a lista.
 
 **Por decidir (Tiago):** A ou B (ou outra); o que fazer com os 31 grupos «a confirmar» (escondidos atrás de um filtro, ou visíveis com «Ancorar» a pedir confirmação); se as zonas que só diferem na rotação se juntam. **Não implementado** até haver decisão.
+
+
+## 15. Mesa — alternativa B implementada, «É aqui» e «Sugestões» (2026-11-06)
+
+Decisão do Tiago: **B (lista compacta)** do §14. Código: `src/web/app.js` (secção «mesa de apoio» e «sugestões no tabuleiro»), `app.css`, `index.html`; testes `tests/test_gui_mesa_b.py` e `tests/test_gui_mesa.py`; capturas com dados reais do alpes (cópia) em `docs/gui/screenshots/mesa_b_impl_*.jpg` ([lista](screenshots/mesa_b_impl_lista_1366.jpg), [linha aberta](screenshots/mesa_b_impl_aberta_1366.jpg)), `sugestoes_*.jpg` ([botão ligado](screenshots/sugestoes_1366.jpg), [lista de escolha](screenshots/sugestoes_escolha_390.jpg)) (`tools/gui/mesa_b_capturas.py`, métricas em `mesa_b_metricas.json`).
+
+### 15.1 A lista (desktop e telemóvel)
+- **Uma linha por grupo:** miniatura 44 px, «G0071 · 4 peças», «melhor zona (17, 35)» e **selo único** (*segura* se a margem do melhor candidato ≥ `margin_min` do perfil, vindo de `/api/board` → `calibracao.margin_min`, 1,5 por omissão; *a confirmar* caso contrário) e **um só botão, «Ver»**. Ordem: pela margem. Os 31 grupos «a confirmar» ficam **visíveis**.
+- **«Ver» abre a linha** (uma de cada vez), pré-visualiza a zona a violeta e só então aparece a ação principal **«É aqui em (l, c)»**; por baixo, as outras zonas como «ou (c, l) rot 90° · Ver». **Zonas que só diferem na rotação não se juntam** (decisão do Tiago): cada uma é uma linha. As notas da ingestão ficam num «ⓘ» recolhido.
+- **Confirmação:** o diálogo do «É aqui» diz o grupo, a célula, a rotação e quantas peças passam a colocadas; num grupo «a confirmar» começa por «O programa não decidiu este grupo (margem x, mínimo y).» e a linha aberta mostra o mesmo aviso. Zonas com peças fora da grelha deixam o botão desativado (como antes).
+- **Pesquisa e filtros rápidos:** a caixa mantém-se (placeholder «Grupo, peça ou célula: G0021, P0294, 3,32») e há dois botões «Seguras (7)» / «A confirmar (31)» (`aria-pressed`; tocar outra vez limpa; combinam com a pesquisa). Sem teclado.
+- **Medido [V] (alpes, 38 grupos):** a 1366×768 cabem **10 linhas** no ecrã (eram 2 cartões) com 40 botões no total (eram 228); a 390 px, 4 linhas (era 1 cartão); sem scroll horizontal; botões ≥ 40 px de altura.
+
+### 15.2 «Ancorar» → «É aqui»
+Todos os textos **visíveis** passaram a «É aqui» (botão, confirmação, mensagens do servidor, título da legenda, estado «sem lugar» em vez de «por ancorar», «Desfazer «É aqui» do grupo G…»): constante única `LBL_AQUI` em `app.js` (e `AQUI_TXT` em `src/confirm.py` para as mensagens do servidor). Ficam como estavam os identificadores (`acao: "anchor"`, `por_ancorar`, `seccoes_por_ancorar`, eventos do log) e os docs antigos (§14 conta a história com o nome antigo). Teste: nenhum «ancor» (maiúsculas ou não) no texto, `title`/`aria-label`/`placeholder`/`alt` de todas as abas, na legenda do servidor, nos textos de estado e no diálogo de confirmação; e nenhum nas fontes `app.js`/`index.html`/`app.css` fora do identificador `por_ancorar`.
+
+### 15.3 Botão «Sugestões» (barra do tabuleiro, ao lado de «Fantasmas» e «Grelha»; desligado por omissão)
+- Mostra no tabuleiro a **melhor zona de cada grupo** (não as 3): **forte** (violeta cheio) se o grupo é *seguro*, **fraca** (tracejado ténue) se é *a confirmar*; 2 linhas novas na legenda (`sugestao`, `sugestao_fraca`; o teste de cobertura da legenda continua a passar). Com os dados do alpes: 38 grupos, 7 fortes, 81 células.
+- **Tocar** numa sugestão abre a aba Mesa **na linha desse grupo, aberta, com a pré-visualização** dessa zona; se um filtro/pesquisa esconder o grupo, limpa-os. **Se várias se sobrepõem** no ponto tocado aparece uma lista curta (seguras primeiro, depois por margem) com alvos de **44 px** (medido a 1366 e a 390), mais «Abrir a célula (l, c)»; fecha com Esc, com outro toque ou ao escolher. (Medido no alpes: a célula (18, 34) dá 2 grupos + «Abrir a célula», os 3 botões com 44 px.) Com o botão ligado, um toque numa célula **sem** sugestão abre a célula como sempre; numa célula com **uma** sugestão abre o grupo (a célula só se abre desligando o botão ou pela lista, quando há várias).
+- **Estado:** `localStorage` (`tg-sug`), com `try/catch` em todas as leituras/escritas (`lsGet`/`lsSet`, que passaram a servir também Fantasmas, Grelha e Legenda); sem armazenamento a página abre e o botão funciona, só não persiste (teste com `localStorage` a lançar erro).
+- **Telemóvel (390 px):** a barra do topo leva os 3 botões sem rebentar (testes de layout existentes verdes); a lista de escolha fica dentro do ecrã.
+
+### 15.4 Pendente, não pedido agora
+Rótulo do grupo sobre a sugestão (só com zoom suficiente), ordenar a lista de escolha por distância ao toque, e a seleção sem escrever (§16, **só proposta**).
+
+## 16. Mesa — selecionar sem escrever: propostas (2026-11-06; **nada implementado**)
+
+Pedido: escolher **um ou vários grupos / peças / células** sem teclado (ex.: tocar no tabuleiro para filtrar a Mesa; caixas nas linhas; chips). Duas alternativas, ambas **protótipos injetados** sobre os dados reais (`tools/gui/mesa_b_capturas.py`, nada em `src/`); métricas em `mesa_b_metricas.json`. Hoje o filtro existente é «texto + Seguras/A confirmar».
+
+### 16.1 Alternativa S1 — «Tocar no tabuleiro» (células → chips → filtro)
+Captura: [`mesa_sel_a_celulas_1366.jpg`](screenshots/mesa_sel_a_celulas_1366.jpg), [`mesa_sel_a_celulas_390.jpg`](screenshots/mesa_sel_a_celulas_390.jpg).
+
+Um modo «Selecionar» (botão na barra do tabuleiro, como «Sugestões»): cada toque numa célula a acrescenta/retira como **chip** «(15, 59) ✕» no topo da Mesa e a desenha a branco no tabuleiro. A Mesa mostra só os grupos cujas **zonas** (as 3 melhores) **cobrem alguma** das células (OU), com o contador «6 de 38 grupos · OU» e «Limpar». Peças: tocar na miniatura de uma peça dentro de uma linha aberta junta o chip «P0294» (filtra o grupo que a contém).
+
+| | |
+|---|---|
+| **Filtra exatamente** | grupo aparece se **qualquer** das 3 zonas candidatas tem **uma** das células escolhidas na sua pegada (a mesma regra da pesquisa por célula, `mesaMatches`), **OU** o grupo contém uma das peças escolhidas; várias escolhas = união; opção «todas» (interseção) fica de fora da 1.ª versão |
+| **Medido (alpes)** | 2 toques (células (15, 59) e (2, 63)) → **6 de 38** grupos; 1 botão novo («Selecionar») + chips; 6 linhas no ecrã |
+| **Custo** | médio: ≈ 90–110 linhas JS (modo, estado, gancho no toque do tabuleiro em `initPointer`, chips, camada de seleção) e 1 linha nova na legenda (+ o teste de cobertura); sem backend; testes Playwright (toque, chips, remover, telemóvel) |
+| **Bom** | é o único que responde a «o que cabe **aqui**» a olhar para o tabuleiro; zero teclado; funciona com várias células |
+| **Riscos** | rouba o toque da célula (conflito com «abrir célula» e com «Sugestões»: só um modo de cada vez, com o botão a dizer qual); toque num ecrã pequeno falha a célula (zoom ou alvos grandes); só seleciona **onde**, não **quais** grupos |
+
+### 16.2 Alternativa S2 — «Caixas nas linhas + barra de seleção» (grupos → «Só estes»)
+Captura: [`mesa_sel_b_caixas_1366.jpg`](screenshots/mesa_sel_b_caixas_1366.jpg), [`mesa_sel_b_caixas_390.jpg`](screenshots/mesa_sel_b_caixas_390.jpg).
+
+Cada linha ganha uma **caixa de seleção** (26 px de caixa dentro de um alvo de 44 px). Uma **barra fixa** no topo da lista diz «3 selecionados» com os chips das peças (P0850 ✕ …) e dois botões: **«Só estes»** (filtra a lista) e «Limpar». Os grupos escolhidos podem ser mostrados todos no tabuleiro (violeta) para comparar.
+
+| | |
+|---|---|
+| **Filtra exatamente** | «Só estes» deixa **só** os grupos marcados (por id; as peças dos chips são apenas informação, vêm dos grupos); não depende da regra das zonas; pode combinar com Seguras/A confirmar (interseção) |
+| **Medido (alpes)** | escolher 3 grupos = **3 toques + «Só estes» = 4**; 38 caixas + 2 botões novos (80 botões na aba, eram 40); 8 linhas no ecrã a 1366 e a 390 px |
+| **Custo** | pequeno: ≈ 50–60 linhas JS (caixas, conjunto de escolhidos, barra, filtro), sem legenda nova, sem tocar no tabuleiro; testes Playwright simples |
+| **Bom** | simples e previsível, não compete com os toques do tabuleiro; serve para «quero comparar estes 3» e para juntar a seleção a uma ação em lote no futuro |
+| **Riscos** | 38 caixas acrescentam ruído visual à lista que acabámos de limpar (mitigação: caixas só depois de tocar «Selecionar» na barra); não responde a «o que cabe nesta célula» (para isso há a pesquisa por célula ou S1); «células» por chips só por pesquisa |
+
+### 16.3 Recomendação
+**S2 primeiro** (custo pequeno, não mexe no tabuleiro, resolve «escolher vários grupos» e não se pisa com «Sugestões»); **S1 depois, só se o Tiago sentir falta do «filtrar pelo tabuleiro»**, e já com a regra «um modo de toque de cada vez». As duas não se excluem: ambas acabam num conjunto de ids de grupos filtrado. **Por decidir (Tiago):** S1, S2 ou ambas; se as caixas aparecem sempre ou só depois de «Selecionar»; se a interseção (todas as células) é precisa. **Não implementado.**
