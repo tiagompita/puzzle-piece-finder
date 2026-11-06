@@ -68,7 +68,7 @@ __all__ = [
 	"initial_theta", "baseline_placement", "image_refine", "register_piece", "register_all", "registered_theta",
 	"seam_gaps", "relax", "bg_distance", "fringe_masks", "decontaminate", "clean_crop", "clean_all", "compose_board",
 	"compose_zone_vs_art", "rebuild_assets", "load_placements", "save_placements", "main",
-	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "shadow_paper_mask", "DISPLAY_SHADOW",
+	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
 ]
 
@@ -94,9 +94,11 @@ BG_LUMA_WEIGHT = 0.5           # weight of dL^2 in the background distance (as s
 SHADOW_L_DELTA = 12.0          # shadow pass: band pixel with L* < interior median - this ...
 SHADOW_CHROMA_MAX = 12.0       # ... and chroma below this, connected to the outside
 SHADOW_DEFAULT = False         # shadow pass off by default (RENDER.md §2: it eats dark grass)
-# display only (thumbnails: cards, fetch sheets, Mesa; never the index, the board or render/clean/):
-# paper darkened by the cast shadow, left by the cleaning because it is just above BG_DIST_MAX (RENDER.md §6.1)
+# display only (thumbnails: cards, fetch sheets, Mesa; and, since 2026-11-06, the board drawing; never the index
+# nor render/clean/): paper darkened by the cast shadow, left by the cleaning because it is just above
+# BG_DIST_MAX (RENDER.md §6.1, §7)
 DISPLAY_SHADOW = True          # on (decision 2026-11-01, RENDER.md §6.1)
+BOARD_SHADOW = True            # the same rule in compose_board (RENDER.md §7: frontier rims showed it); False = as before
 DISPLAY_SHADOW_BAND_MM = 0.4   # only within this distance of the alpha boundary
 DISPLAY_SHADOW_A_MAX = -30.0   # a* below this (paper-like green; grass interior median a* ~ -6 .. -18)
 DISPLAY_SHADOW_DIST_MAX = 40.0 # bg_distance to background_lab below this
@@ -1015,13 +1017,22 @@ def shadow_paper_mask(rgba: np.ndarray, background_lab, mm_per_px: float, *, ban
 					  l_max: float = DISPLAY_SHADOW_L_MAX) -> np.ndarray:
 	"""Visible pixels within ``band_mm`` of the alpha boundary that look like paper darkened by the cast
 	shadow (a* < ``a_max``, :func:`bg_distance` < ``dist_max``, L* < ``l_max``), in components touching
-	the boundary. Pure; used only for display (:func:`piece_rgba_for_display`)."""
+	the boundary. Pure; used only for display (:func:`piece_rgba_for_display`, :func:`compose_board`)."""
 	alpha = np.asarray(rgba)[..., 3] > 0
 	depth = _depth_px(alpha)
 	band = alpha & (depth <= float(band_mm) / float(mm_per_px))
 	lab = _lab(np.asarray(rgba)[..., :3])
 	cand = band & (lab[..., 1] < a_max) & (bg_distance(lab, background_lab) < dist_max) & (lab[..., 0] < l_max)
 	return _touching(cand, alpha & (depth <= 1.5))
+
+
+def _drop_shadow_paper(project, pid: str, rgba: np.ndarray) -> np.ndarray:
+	"""Copy of ``rgba`` (a cleaned crop of ``pid``) with :func:`shadow_paper_mask` made transparent. Display only:
+	the thumbnails (:func:`piece_rgba_for_display`) and the board drawing (:func:`compose_board`), never the index."""
+	out = np.array(rgba, np.uint8, copy=True)
+	mmpp = _scan_mmpp(project, project.piece(pid).scan_id)
+	out[..., 3][shadow_paper_mask(out, project.profile.background_lab, mmpp)] = 0
+	return out
 
 
 def piece_rgba_for_display(project, pid: str, *, theta_deg: Optional[float] = None, pivot_mm=None,
@@ -1031,7 +1042,7 @@ def piece_rgba_for_display(project, pid: str, *, theta_deg: Optional[float] = No
 	Cleaned crop (``render/clean/`` or :func:`clean_crop` on the fly, the same as the board) with the
 	colour under alpha 0 replaced by the nearest piece colour and, if ``DISPLAY_SHADOW``, the
 	shadow-darkened paper of the outer 0.4 mm dropped (:func:`shadow_paper_mask`, display only: the
-	board and the index keep their silhouettes); without ``size`` that crop is returned
+	board drawing does the same, ``BOARD_SHADOW``; the index keeps its silhouettes); without ``size`` that crop is returned
 	at scan resolution. With ``size`` (``px_per_mm`` default: the scan resolution) it is turned by
 	``theta_deg`` (default 0) about ``pivot_mm`` (scan mm; default the crop centre), the pivot at the
 	centre of a ``size`` x ``size`` canvas, resampled with premultiplied alpha (:func:`warp_rgba`).
@@ -1043,8 +1054,7 @@ def piece_rgba_for_display(project, pid: str, *, theta_deg: Optional[float] = No
 	p = project.piece(pid)
 	mmpp = _scan_mmpp(project, p.scan_id)
 	if DISPLAY_SHADOW:
-		rgba = np.array(rgba, np.uint8, copy=True)
-		rgba[..., 3][shadow_paper_mask(rgba, project.profile.background_lab, mmpp)] = 0
+		rgba = _drop_shadow_paper(project, pid, rgba)
 	rgba = _fill_transparent(rgba, BAND_MM / mmpp)
 	if size is None:
 		return rgba
@@ -1078,7 +1088,8 @@ def _bleed_rgba(rgba: np.ndarray, r_px: int, deep_px: float = 0.0):
 def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float = 0.34,
 				  layers=("art", "pieces", "legacy", "missing_border", "grid"), placements: Optional[dict] = None,
 				  art_bgr: Optional[np.ndarray] = None, piece_ids=None, clean: bool = True,
-				  depth_priority: bool = True, bleed_mm: float = BLEED_MM, base_bgr=(40, 40, 40)) -> np.ndarray:
+				  depth_priority: bool = True, bleed_mm: float = BLEED_MM, base_bgr=(40, 40, 40),
+				  board_shadow: Optional[bool] = None) -> np.ndarray:
 	"""Render the board (BGR uint8).
 
 	``px_per_cell`` = output px per cell width (the height follows ``cell_mm``; ~218.5 = 300 dpi
@@ -1097,7 +1108,13 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 	colour of its nearest pixel deeper than the fringe band; the pieces then cover it, so it only shows in hairline gaps
 	between registered neighbours (and widens the outer frontier by ``bleed_mm``). 0 = off.
 	``base_bgr``: colour under everything (dark grey; a vivid colour makes gaps measurable).
+	``board_shadow`` (default ``BOARD_SHADOW``): with ``clean``, the paper darkened by the cast shadow in the
+	outer ``DISPLAY_SHADOW_BAND_MM`` of each cleaned crop is dropped before drawing (:func:`shadow_paper_mask`,
+	the thumbnails' rule; RENDER.md §7): on frontier sides no neighbour covers that rim. The bleed pass keeps the
+	cleaned silhouette, so the dropped rim is filled with the piece's deep colour, not the base. Drawing only.
 	"""
+	if board_shadow is None:
+		board_shadow = BOARD_SHADOW
 	prof = project.profile
 	rows, cols = prof.rows, prof.cols
 	l0, c0, l1, c1 = region if region is not None else (1, 1, rows, cols)
@@ -1157,14 +1174,23 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 			rgba = _clean_or_crop(project, pid) if clean else project.crop_rgba(pid)
 			if rgba is None:
 				continue
-			jobs.append((pid, pl, rgba))
+			# the bleed keeps the cleaned silhouette: where the shadow rim is dropped, the gap it leaves at a seam
+			# or on the frontier is filled with the piece's own deep colour (as every hairline gap), never the base
+			rb = rgba
+			if clean and board_shadow:
+				dropped = _drop_shadow_paper(project, pid, rgba)
+				if (dropped[..., 3] != rgba[..., 3]).any():
+					rb = _fill_transparent(dropped, BAND_MM / _scan_mmpp(project, project.piece(pid).scan_id))
+					rb[..., 3] = rgba[..., 3]          # extent of the cleaned silhouette, the dropped rim in the deep colour
+				rgba = dropped
+			jobs.append((pid, pl, rgba, rb))
 		passes = (("bleed", "pieces") if bleed_mm and bleed_mm > 0 else ("pieces",))
-		for pas, (pid, pl, rgba) in [(q, j) for q in passes for j in jobs]:
+		for pas, (pid, pl, rgba, rb) in [(q, j) for q in passes for j in jobs]:
 			p = project.piece(pid)
 			mmpp = _scan_mmpp(project, p.scan_id)
 			origin = np.asarray(p.bbox[:2], float)
 			if pas == "bleed":
-				rgba, pad = _bleed_rgba(rgba, max(1, int(round(bleed_mm / mmpp))), BAND_MM / mmpp)
+				rgba, pad = _bleed_rgba(rb, max(1, int(round(bleed_mm / mmpp))), BAND_MM / mmpp)
 				origin = origin - pad
 			A = _crop_to_out(pl["theta_deg"], pl["pivot_mm"], cell_centre_mm(prof, *pl["cell"]), (pl["dx_mm"], pl["dy_mm"]),
 							 origin, mmpp, (ppm, ppm), (ox, oy))
@@ -1214,11 +1240,11 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 
 def compose_zone_vs_art(project, region, dpi: float = 300, *, placements: Optional[dict] = None,
 						layers=("art", "pieces"), clean: bool = True, depth_priority: bool = True,
-						bleed_mm: float = BLEED_MM) -> np.ndarray:
+						bleed_mm: float = BLEED_MM, board_shadow: Optional[bool] = None) -> np.ndarray:
 	"""Side by side at ``dpi`` (300 = 1 scan px per screen px): the render of ``region`` | the art upsampled."""
 	ppc = float(project.profile.cell_mm["w"]) / (25.4 / float(dpi))
 	a = compose_board(project, ppc, region=region, placements=placements, layers=layers, clean=clean,
-					  depth_priority=depth_priority, bleed_mm=bleed_mm)
+					  depth_priority=depth_priority, bleed_mm=bleed_mm, board_shadow=board_shadow)
 	b = compose_board(project, ppc, region=region, layers=("art",), art_alpha=1.0)
 	sep = np.full((a.shape[0], 8, 3), 255, np.uint8)
 	return np.hstack([a, sep, b])

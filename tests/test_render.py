@@ -371,3 +371,54 @@ def test_display_drops_shadow_darkened_paper(tmp_path):
     assert (out[inner, 3] == 255).all() and np.array_equal(out[inner, :3], rgba[inner, :3])
     lit = (a > 0) & ~shadow & (depth <= 0.4 / MMPP) & ((xx - 30) > 1.0 / MMPP) & ((270 - yy) > 1.0 / MMPP)
     assert (out[lit, 3] > 0).mean() > 0.99                            # lit sides (grass texture) stay
+
+
+def _esverdeado(img_bgr):
+    lab = R._lab(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
+    return (lab[..., 1] < -30) & (R.bg_distance(lab, BG_LAB) < 40) & (lab[..., 0] < 62)
+
+
+def test_board_drops_shadow_darkened_paper(tmp_path):
+    """Board drawing (RENDER.md §7): a placed piece whose cleaned crop keeps a 0.3 mm dark-green rim (paper
+    darkened by the cast shadow) on two sides is drawn by ``compose_board`` without that rim (the rule of the
+    thumbnails, ``BOARD_SHADOW``); with ``board_shadow=False`` the rim shows (as before); the inside of the
+    piece is drawn the same either way."""
+    prof = _profile(3, 3)
+    pp = tmp_path / "puzzle.json"
+    prof.save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    sid = pr.add_scan(None, dpi=300)
+    cell = (2, 2)
+    board = make_piece("TBTB", offset=(0, 0)) * MMPP + R.cell_corners_mm(prof, *cell)[0]
+    cnt = _grown_contour(board / MMPP, int(round(0.48 / MMPP)))
+    x, y, w, h = cv2.boundingRect(cnt.astype(np.int32).reshape(-1, 1, 2))
+    x, y, w, h = x - 3, y - 3, w + 6, h + 6
+    alpha = np.zeros((h, w), np.uint8)
+    cv2.fillPoly(alpha, [(cnt - [x, y]).astype(np.int32).reshape(-1, 1, 2)], 255)
+    rng = np.random.default_rng(7)
+    tex = np.where(rng.random((h, w, 1)) < 0.5, _lab_to_rgb(60, -15, 45), _lab_to_rgb(30, -10, 20)).astype(np.uint8)
+    depth = R._depth_px(alpha > 0)
+    yy, xx = np.mgrid[0:h, 0:w]
+    ys, xs = np.nonzero(alpha)
+    rim = (alpha > 0) & (depth <= 0.3 / MMPP) & ((xx < xs.mean()) | (yy > ys.mean()))   # left and bottom of the scan
+    tex[rim] = _lab_to_rgb(52, -33, 30)
+    rgba = np.dstack([tex, alpha])
+    rel = "crops/P0001.png"
+    os.makedirs(pr.p("crops"), exist_ok=True)
+    Image.fromarray(rgba).save(pr.p(rel))
+    pid = pr.add_piece(sid, {"index_in_scan": 0, "shape": analyse(cnt, MMPP), "contour": cnt.astype(np.int32),
+                             "bbox": [x, y, w, h], "crop_path": rel})
+    pr.place(pid, cell, theta_deg=0.0)
+    pr.save()
+    assert (R.clean_crop(rgba, BG_LAB, MMPP)[rim, 3] > 0).mean() > 0.9      # the cleaning keeps it (index)
+    pls = {pid: R.register_piece(pr, pid, image=False)}
+    ppc = 18.5 / MMPP                                                      # 300 dpi, as the GUI cell view
+    on = R.compose_board(pr, ppc, layers=("pieces",), placements=pls)     # default: the board drawing of the GUI
+    off = R.compose_board(pr, ppc, layers=("pieces",), placements=pls, board_shadow=False)
+    assert _esverdeado(off).sum() > 300                                   # before: the dark-green rim is drawn
+    assert _esverdeado(on).sum() < 0.05 * _esverdeado(off).sum()          # now: gone
+    drawn = (np.abs(off.astype(int) - 40).max(-1) > 0).astype(np.uint8)  # piece (and its bleed) over the grey base
+    k = int(round(1.5 / MMPP))                                             # 1.5 mm inside what is drawn (0.3 mm bleed + 0.4 mm band + 1 px)
+    inner = cv2.erode(drawn, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * k + 1, 2 * k + 1))).astype(bool)
+    assert inner.sum() > 10000 and np.array_equal(on[inner], off[inner])  # the inside of the piece is not touched
+
