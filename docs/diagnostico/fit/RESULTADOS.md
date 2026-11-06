@@ -97,7 +97,7 @@ Nota visual: nos painéis 7–9 e 11 as duas peças verdadeiras **encaixam fisic
 3. **O molde do buraco (M11) combina ≥ 2 vizinhos**; não foi medido aqui (o E-buraco é outra experiência) — a restrição conjunta pode ser muito mais forte do que um lado isolado, mas **[NT]**: é a ordem natural do próximo passo (e o GT (a)/(b) já tem células com 2 e 3 vizinhos).
 4. O M6 (encaixe entre soltas, um lado de cada vez) **não é viável com estes lados** em pool de ≈ 800; em pool de lote pequeno **[NT]**.
 
-**Próximos passos baratos [NT]:** varrimento por tamanho de pool (32/100/300/814) sobre o mesmo GT; E-buraco com 2–3 vizinhos; medir o RMS verdadeiro com o contorno por linha de corte (secções de céu e legado) em vez da silhueta; hold-out do desvio isotrópico com validação cruzada metade/metade.
+**Próximos passos baratos [NT]:** (o varrimento por tamanho de pool está feito no §9) E-buraco com 2–3 vizinhos; medir o RMS verdadeiro com o contorno por linha de corte (secções de céu e legado) em vez da silhueta; hold-out do desvio isotrópico com validação cruzada metade/metade.
 
 ## 8. Passo 4 — pool pequeno (o caso de uso real). **Critérios fixados em 2026-11-06, ANTES de correr**
 
@@ -112,3 +112,76 @@ Medição, não produto: `src/` e `projects/alpes` não são tocados. Código: `
 **C. Direção inversa (a da GUI).** Fronteira de M = 50 lados livres (consultas do GT, de peças distintas), lote de N peças ∈ {32, 100} que contém o vizinho verdadeiro de K = 8 desses lados (os «lugares») e N−8 aleatórias; as outras 42 consultas têm o vizinho **fora** do lote (nem gémea). Por peça do lote: (i) peças com lugar: está no top-3 da consulta do seu lugar? (recall, alvo ≥ 90 % como o E4 top-3); (ii) **propostas falsas por peça**: nº de consultas **de outros lugares** onde a peça aparece (top-3 sem filtro; e top-1 com margem ≥ τ = 1,5). Alvo: ≤ 0,2 propostas falsas por peça com filtro; falha > 1,0. 200 sorteios por N.
 
 **Veredicto:** por bloco, [V] se o intervalo de Wilson fica todo do lado certo do alvo, [F] se o limite superior fica abaixo da fronteira de falha, [NT] caso contrário. Se falhar: o bloqueio dominante e as mudanças que o atacariam, **sem implementar**. Nada será afinado depois de ver os números; qualquer variante extra fica marcada pós-hoc.
+
+## 9. Passo 4 — resultados (2026-11-06; critérios do §8, nada afinado depois de ver os números)
+
+Reprodução: `python tools/diagnostico/fit/pool.py` e `FIT_SHRINK=0.48 python tools/diagnostico/fit/pool.py` (≈ 2 min cada; `pool.json`, `pool_encolhido.json`). **Sanidade [V]:** com N = 805 o mesmo código reproduz o §1 (E4 1,8 % / 4,6 %, E5 19,9 % / 38,2 %), logo o varrimento mede o mesmo sistema; a única variável é o tamanho do pool. Suite antes de correr: 180 passed, 1 skipped (Python 3.12).
+
+### 9.1 Vizinho presente (A). Wilson 95 % com n = 1442 consultas
+
+| N (pool) | E4 top-1 | E4 top-3 | E5 top-1 | E5 top-3 | acaso top-1 / cordas top-3 |
+|---|---|---|---|---|---|
+| **sem erosão** | | | | | |
+| 32 | 17,3 % (15,5–19,4) | 37,9 % (35,4–40,4) | **63,7 %** (61,2–66,2) | 85,2 % (83,2–86,9) | 3,4 % / 10,0 % |
+| 64 | 10,7 % | 25,1 % | 54,3 % | 77,3 % | 1,8 % / 5,3 % |
+| 100 | 7,7 % (6,4–9,2) | 18,7 % (16,8–20,8) | **47,9 %** (45,4–50,5) | 71,3 % (68,9–73,6) | 1,2 % / 3,6 % |
+| 200 | 4,6 % | 11,5 % | 37,9 % | 60,8 % | 0,7 % / 2,0 % |
+| **erosão 0,48 mm** (1 ponto, não varrida) | | | | | |
+| 32 | 40,8 % (38,3–43,4) | 70,0 % (67,6–72,3) | **76,7 %** (74,4–78,8) | 91,4 % (89,9–92,8) | idem |
+| 64 | 29,5 % | 54,6 % | 69,6 % | 86,4 % | |
+| 100 | 23,4 % (21,3–25,7) | 45,3 % (42,7–47,9) | **64,6 %** (62,1–67,1) | 82,5 % (80,4–84,3) | |
+| 200 | 16,3 % | 33,2 % | 56,2 % | 75,5 % | |
+
+`strict` = `lenient` em E5 (a gémea do vizinho quase nunca sai no sorteio). **[V]** O pool pequeno ajuda muito (E5 top-1 19,9 % → 63,7 % de 805 para 32 peças; ≈ 19× o acaso), mas **só quando o vizinho está no lote**.
+
+**Veredicto A contra os alvos fixados:** E4 [F] em N = 32 e 100, com e sem erosão (sem erosão top-3 de 37,9 % / 18,7 %, limite superior < 60 %; com erosão N = 100 top-3 45,3 %, também [F]; N = 32 com erosão 70,0 %, acima da falha mas longe dos 90 %). **E5 não atinge o alvo (≥ 85 % top-1) em nenhum ponto**: o melhor é 76,7 % (N = 32, com erosão). Fica na banda «abaixo do alvo, acima da falha» (≥ 60 %) em N = 32 (63,7 %; 76,7 %) e em N = 100 só com erosão (64,6 %); sem erosão em N = 100 (47,9 %) é [F]. Nenhum ponto é [V] contra o alvo.
+
+### 9.2 Vizinho ausente (B): precisão–cobertura, não um número só
+
+Confiança = margem d2/d1 do custo E5; τ de operação **1,5** (fixado). «cobertura» = fração de consultas com proposta quando o vizinho está presente; «falsas/consulta» = fração de consultas com proposta quando está ausente (uma proposta por consulta = nº de propostas falsas por consulta); precisão a π = P(vizinho no lote). Em cada célula: sem erosão / com erosão.
+
+| N | τ | cobertura (presente) | precisão (presente) | **falsas/consulta (ausente)** | precisão π = 1 % | π = 10 % | π = 50 % |
+|---|---|---|---|---|---|---|---|
+| 32 | 1,0 | 99,9 / 99,9 % | 63,7 / 76,7 % | 0,997 / 0,998 | 0,6 / 0,8 % | 6 / 8 % | 32 / 38 % |
+| 32 | 1,25 | 42,5 / 59,8 % | 87,2 / 93,7 % | 0,236 / 0,282 | 1,6 / 2,0 % | 15 / 18 % | 56 / 64 % |
+| **32** | **1,5** | **19,9 / 38,6 %** | **95,9 / 98,2 %** | **0,067 / 0,095** | **2,8 / 3,9 %** | **24 / 31 %** | 72 / 79 % |
+| 32 | 2,0 | 5,2 / 15,4 % | 98,9 / 99,6 % | 0,011 / 0,019 | 4,4 / 7,7 % | 34 / 48 % | 81 / 89 % |
+| 100 | 1,25 | 26,7 / 44,2 % | 78,6 / 90,0 % | 0,150 / 0,193 | 1,4 / 2,0 % | 13 / 18 % | 50 / 63 % |
+| **100** | **1,5** | **8,9 / 22,5 %** | **92,1 / 97,5 %** | **0,029 / 0,046** | **2,8 / 4,6 %** | **23 / 34 %** | 70 / 81 % |
+| 100 | 2,0 | 1,2 / 5,8 % | 98,7 / 99,7 % | 0,003 / 0,005 | 4,4 / 10,4 % | 34 / 56 % | 81 / 92 % |
+
+(Tabela completa, τ ∈ {1; 1,1; 1,25; 1,5; 2; 3; 5}, em `pool*.json`. Para τ ≥ 3 a cobertura é < 3 %, sem utilidade.)
+
+**[V]** Em τ = 1,5 a proposta, **quando existe, é quase sempre certa** (92–98 %), mas **com o vizinho fora do lote o sistema propõe na mesma em 3–9,5 % das consultas**; como o vizinho está quase sempre ausente, a precisão efetiva desaba: **a π = 1 % (o caso comum) é 2,8–4,6 %, ≈ 21–35 propostas falsas por cada certa**; a π = 10 % é 23–34 %. Nenhum τ resolve: subir τ baixa as falsas mas a cobertura vai a zero primeiro (N = 100, τ = 2: 0,3–0,5 % de falsas, 1–6 % de cobertura). **Critério de utilidade (falsas/consulta ≤ 0,05 e precisão a π = 10 % ≥ 90 % e cobertura ≥ 30 %): não cumprido em nenhum ponto.** N = 100 cumpre o limite de falsas (0,029 / 0,046) mas não a precisão a π = 10 % nem (sem erosão) a cobertura (8,9 %); N = 32 cumpre a cobertura só com erosão (38,6 %) mas excede as falsas (0,067 / 0,095). **[F]** pela condição de falha clara: precisão a π = 10 % < 50 % em todos os pontos.
+
+### 9.3 Direção inversa, a da GUI (C): 50 lados livres, lote de N com 8 lugares
+
+| N | erosão | recall no lugar (top-3) | falsas por peça, top-3 sem filtro | **falsas por peça, top-1 com margem ≥ 1,5** (p95) |
+|---|---|---|---|---|
+| 32 | não / sim | 83,3 / 91,3 % | **4,12 / 4,11** | 0,089 / 0,122 (0,16 / 0,23) |
+| 100 | não / sim | 72,2 / 81,9 % | **1,39 / 1,39** | 0,012 / 0,019 (0,03 / 0,04) |
+
+(200 sorteios por N; recall sobre as 8 peças-com-lugar de cada sorteio; as outras 42 consultas têm o vizinho, nem a gémea, fora do lote. «Falsa» = a peça aparece para um lado cuja vizinha verdadeira não é ela.)
+
+**[V]** A lista «top-3 por lado» enche-se sempre (≈ 3·M/N ≈ 4,7 aparições por peça com M = 50, N = 32): cada peça do lote aparece, em média, **em 4 lados livres errados** (N = 32) ou 1,4 (N = 100). **Com o filtro de margem ≥ 1,5 as falsas por peça caem para 0,01–0,12 (cumpre o alvo ≤ 0,2)**, mas o filtro custa a cobertura de 9.2: só ≈ 20–39 % (N = 32) e 9–23 % (N = 100) dos lugares chegam a ter proposta confiante. O recall do top-3 (alvo ≥ 90 %) só é atingido em N = 32 com erosão (91,3 %); sem erosão 83 % / 72 %. O recall **com** filtro não foi medido em C **[NT]**; o limite superior é a «cobertura» de 9.2.
+
+## 10. Veredicto do passo 4 e o que diz sobre M6/M11
+
+**[F] para propor sem o vizinho garantido; [NT] para o caso «o vizinho está no lote» com lista de ajuda.**
+
+1. **Vizinho presente, pool de lote** (A): E4 [F]; E5 chega a 64–77 % em N = 32 e a 48–65 % em N = 100, abaixo do alvo de 85 % (e, sem erosão em N = 100, abaixo do limiar de falha). Dar «as 3 melhores» (E5 top-3 85 % sem erosão e 91 % com erosão em N = 32; 71 % / 83 % em N = 100) é o ponto em que a ferramenta começa a servir **como ajuda a quem já sabe que a peça está lá**, não como proposta.
+2. **Vizinho ausente** (B): o caso comum (π ≈ 1 %) dá precisão de 3–5 % em τ = 1,5. **Um M6 que proponha encaixes solta–solta a partir de um lote aleatório com estes lados gera 20–35 falsas por cada certa [V]; não é viável.**
+3. **Direção inversa** (C): sem filtro cada peça é sugerida a ≈ 4 lados errados (N = 32); com filtro quase nenhuma falsa, mas também poucos acertos.
+
+**M6 (encaixe solta–solta): [F] com estes lados. M11 (molde do buraco):** o teste certo é com 2–3 vizinhos conhecidos, que este passo **não mediu [NT]**; o lado isolado dá o limite inferior (E5 top-3 85–91 % em N = 32 quando a peça está lá). Dois vizinhos podem ajudar (erros de acaso independentes), mas o viés da silhueta é comum aos dois lados do mesmo encaixe, por isso o ganho é incerto **[NT]**.
+
+**Bloqueio dominante (medido):** não é o tamanho do pool (N = 32 já dá o melhor E5 e ainda falha o caso comum) nem as gémeas (§3: 3 % das falhas); é a **falta de poder discriminativo de um lado lido da silhueta** (RMS do vizinho verdadeiro 1,11 mm contra 1,79 de pares aleatórios, §1) **combinada com a baixa prevalência** (π ≈ 1 %): uma taxa de falsas de 3–9 % em 99 % das consultas (sem vizinho) afoga os poucos acertos. A erosão de 0,48 mm vale +13 pontos de E5 top-1 (N = 32) e ×2,4 no E4: o viés da silhueta é a parte tratável.
+
+**Mudanças que o atacariam, SEM implementar [NT, nenhuma medida aqui]:**
+1. **Forma sem viés** (M3/M4): contorno por linha de corte ou modelo de sombra, em vez de silhueta + erosão isotrópica; ordem de grandeza do ganho = a que a erosão já mostra (E4 top-1 em N = 32: 17 % → 41 %).
+2. **Sinal ortogonal da arte:** o lugar de uma consulta é uma **célula conhecida** do tabuleiro (a arte está registada), logo cada candidato pode ser testado 1-contra-1 contra a arte dessa célula (`locate.de_cell`), como no gémeo; independe da forma.
+3. **Restrição de lote fechado:** afetação conjunta lados × peças (cada peça num só lugar, cada lugar numa só peça) em vez de consultas isoladas; as falsas por peça (§9.3) caem porque uma peça sugerida a 4 lados só pode ficar com um.
+4. **Imagem mais discriminativa:** a continuidade em Lab mediana (12 pontos, banda 1–2,5 mm) dá E5 de 13 % na relva; gradientes/textura através da aresta e calibração de cor entre scans.
+5. **Molde do buraco com ≥ 2 vizinhos** (E-buraco) como o teste a fazer antes de decidir M11.
+
+**Limitações [NT]:** os pools saem de 814 peças que só cobrem céu e relva (o meio do puzzle quase não tem GT); π ≈ 1 % é uma estimativa (lote de 32 em ≈ 2400 por colocar) e as precisões a π são **derivadas**, não sorteadas; K = 8 lugares em C é uma escolha fixa; o recall com filtro em C não foi medido; a erosão de 0,48 mm foi usada sem ajuste mas veio de outro GT (E-real).
