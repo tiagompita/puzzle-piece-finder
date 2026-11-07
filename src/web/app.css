@@ -590,3 +590,33 @@ body[data-pose] #board { cursor: default; }
   .pose-panel .btn, .pose-f input, .pose-nota input { min-height: 44px; }
   .pose-juntas { grid-template-columns: 1fr; }
 }
+
+/* molde do buraco (holes.js, docs/gui-design.md §21): ranking «candidatas para este buraco» */
+.chip.sem { background: rgba(255, 255, 255, .08); color: var(--muted); }
+.holes-block { margin-top: 14px; }
+.hole-lead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 8px; }
+.hole-warn { border-left: 3px solid var(--amber); }
+.hole-card.hole-best { border-color: rgba(123, 216, 143, .55); }
+.hole-top { grid-template-columns: 128px minmax(0, 1fr); }
+.hole-fig { min-width: 0; }
+.hole-mini { display: block; width: 128px; height: 128px; border-radius: 10px; background: #2a2a2a; }
+.hole-mini .hole-cell, #hole-layer .hole-cell { fill: none; stroke: rgba(255, 255, 255, .35); stroke-width: 1px; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.hole-mini .hole-neigh, #hole-layer .hole-neigh { fill: rgba(51, 214, 255, .10); stroke: #33d6ff; stroke-width: 1.5px; vector-effect: non-scaling-stroke; pointer-events: none; }
+.hole-mini .hole-cand, #hole-layer .hole-cand { fill: none; stroke: var(--amber); stroke-width: 2px; vector-effect: non-scaling-stroke; pointer-events: none; }
+#hole-layer image { pointer-events: none; }
+.hole-nums { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 4px 0; font-variant-numeric: tabular-nums; }
+.holes-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.hole-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; width: 100%; min-width: 0; text-align: left; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg3); color: var(--text); font: inherit; cursor: pointer; }
+.hole-row:hover, .hole-row:focus-visible { border-color: #fff; }
+.hole-row.hole-top1 { border-color: rgba(123, 216, 143, .55); }
+.hole-row .hole-cellt { font-weight: 700; min-width: 4.5em; }
+.hole-row > span { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .hole-top { grid-template-columns: 96px minmax(0, 1fr); }
+  .hole-mini { width: 96px; height: 96px; }
+  .hole-row { min-height: 44px; }
+}
+.holes-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 14px 0 6px; }
+.holes-entry b { color: var(--ok); margin-left: 4px; }
+@media (max-width: 900px) { .hole-card .actions .btn, .holes-entry .btn { min-height: 44px; } }

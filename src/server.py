@@ -552,6 +552,192 @@ class Gui:
 		self._suspeitas = None
 		self._emit_suspeitas()
 
+	# ------------------------------------------------------------ hole mould (M11, src/fit.py): «candidatas para este buraco»
+	def _fit_cache(self):
+		"""One :class:`src.fit._Cache` (strips on disk in ``render/fit/strips.npz``, eroded sides in memory) bound to the
+		current project object and calibration."""
+		from src import fit as F
+		cal = F.calibration(self.pr)
+		c = getattr(self, "_fitc", None)
+		if c is None or c.calib != cal:
+			c = F._Cache(self.pr, cal)
+			self._fitc = c
+		elif c.pr is not self.pr:
+			c.rebind(self.pr)
+		return c
+
+	def _holes_empty(self, key, **extra) -> dict:
+		return {"versao": key[0], "a_calcular": True, "buracos": [], "resumo": {}, **extra}
+
+	def holes_json(self, *, wait: bool = False) -> dict:
+		"""``GET /api/holes``: every hole of the board (empty cell with >= 1 mounted neighbour with shape and pose)
+		ranked against the loose pool by :func:`src.fit.rank_all` (joint assignment on), ordered by confidence.
+		Cached per log version and project object; the first computation takes minutes (strips of the mounted
+		neighbours, ~0.3 s each, then cached on disk), so it runs in a background thread and the answer says
+		``a_calcular`` until it is done (SSE ``holes_changed``); ``wait=True`` blocks (tests, CLI)."""
+		key = (self.version(), id(self.pr))
+		c = getattr(self, "_holes", None)
+		if c is not None and c[0] == key:
+			return c[1]
+		th = getattr(self, "_holes_thread", None)
+		if th is not None and th.is_alive():
+			if not wait:
+				return self._holes_empty(key)
+			th.join()
+			c = getattr(self, "_holes", None)
+			if c is not None and c[0] == key:
+				return c[1]
+		if wait:
+			return self._compute_holes(key)
+		th = threading.Thread(target=self._compute_holes, args=(key,), daemon=True, name="holes")
+		self._holes_thread = th
+		th.start()
+		return self._holes_empty(key)
+
+	def _compute_holes(self, key) -> dict:
+		from src import fit as F
+		t0 = time.time()
+		try:
+			cache = self._fit_cache()
+			r = self.read(lambda: F.rank_all(self.pr, calib=cache.calib, cache=cache))
+		except Exception as e:  # noqa: BLE001 - the ranking is informative; the GUI shows the error
+			self.log(f"[servidor] buracos não calculados: {e}")
+			r = {"error": str(e)}
+		out = self._holes_payload(r, key, time.time() - t0)
+		self._holes = (key, out)
+		self.emit("holes_changed", dict(out["resumo"], versao=key[0]))
+		return out
+
+	@staticmethod
+	def _hole_row(h: dict) -> dict:
+		return {"cell": list(h["cell"]), "m": h["m"], "zona": h.get("zone"), "confianca": h["confidence"], "d1": h["d1"],
+				"d2": h["d2"], "margem": h["margin"], "n_finitas": h["n_finite"], "n_pool": h["n_pool"], "atribuida": h.get("assigned"),
+				"razoes": h["reasons"], "f_exigidos": h.get("f_required", []),
+				"vizinhas": [{"dir": x["direction"], "piece": x["piece"], "kind": x.get("kind"), "scan_id": x.get("scan_id")} for x in h.get("sides", [])],
+				"candidatas": [{"piece": c["id"], "lote": c["lote"], "n_no_lote": c["n_no_lote"], "scan_id": c.get("scan_id"), "rank": c["rank"],
+								"J": c["J"], "rot": c["rot"], "theta_deg": c["theta_deg"],
+								"melhor_para": (list(c["melhor_para"]) if c.get("melhor_para") else None), "por_lado": c["per_side"]}
+							   for c in h["candidates"]]}
+
+	def _holes_payload(self, r: dict, key, secs: float) -> dict:
+		from src import fit as F
+		if "error" in r:
+			return {"versao": key[0], "a_calcular": False, "erro": r["error"], "buracos": [],
+					"resumo": {"erro": r["error"], "n_buracos": r.get("n_holes", 0), "sigma": r.get("sigma")}}
+		holes = [self._hole_row(h) for h in r["holes"]]
+		cnt = collections.Counter(h["confianca"] for h in holes)
+		resumo = {"n_buracos": r["n_holes"], "n_soltas": r["n_pool"], "sigma": r["sigma"], "n_sigma": r.get("n_sigma"),
+				  "por_confianca": {k: cnt.get(k, 0) for k in F.CONFIDENCES},
+				  "alta_m2": sum(1 for h in holes if h["confianca"] == "alta" and h["m"] >= 2),
+				  "calibrado": bool(r["calib"].get("calibrated")), "versao_fit": F.FIT_VERSION, "segundos": round(secs, 1)}
+		return {"versao": key[0], "a_calcular": False, "buracos": holes, "resumo": resumo, "calib": r["calib"]}
+
+	def hole_json(self, l: int, c: int) -> dict:
+		"""``GET /api/holes/{l}/{c}``: the ranking of one hole plus the drawing (contours in board units, as
+		:meth:`pose_json`). While the full list is still being computed the cell is ranked alone (``parcial``: no
+		joint assignment yet). ``{'buraco': False}`` when the cell is not a hole."""
+		from src import fit as F
+		if not self.pr.profile.in_grid(l, c):
+			raise FileNotFoundError(f"célula ({l},{c}) fora da grelha")
+		hj = self.holes_json(wait=False)
+		h = next((x for x in hj.get("buracos", []) if x["cell"] == [l, c]), None)
+		parcial = False
+		if h is None:
+			if not hj.get("a_calcular"):
+				return {"cell": [l, c], "buraco": False, "a_calcular": False}
+			cache = self._fit_cache()
+			r = self.read(lambda: F.rank_all(self.pr, calib=cache.calib, cache=cache, cells=[(l, c)], joint=False))
+			if "error" in r:
+				if not r.get("n_holes"):
+					return {"cell": [l, c], "buraco": False, "a_calcular": True, "erro": r["error"]}
+				return {"cell": [l, c], "buraco": False, "erro": r["error"]}
+			if not r["holes"]:
+				return {"cell": [l, c], "buraco": False, "a_calcular": True}
+			h = self._hole_row(r["holes"][0])
+			parcial = True
+		return dict(h, buraco=True, parcial=parcial, desenho=self._hole_drawing(h))
+
+	def _hole_drawing(self, h: dict) -> dict:
+		"""Contours for the hole layer / cards: the mounted neighbours as in :meth:`pose_json` and each candidate about
+		its body centre, placed on the hole cell with the pose ``theta_deg`` of the ranking."""
+		from src.locate import body_center_mm
+		pr = self.pr
+		l, c = h["cell"]
+		viz = {}
+		for d, q in self._neighbours_placed((l, c)).items():
+			if q is None:
+				viz[d] = None
+				continue
+			eq = self._effective_entry(q)
+			if "error" in eq:
+				viz[d] = None
+				continue
+			cq = pr.piece(q).celula
+			viz[d] = {"piece": q, "cell": list(cq), "contorno": self._pose_contour(q, eq["pivot_mm"]), "svg": self._svg_of(cq, eq)}
+		cands = []
+		for cd in h["candidatas"]:
+			sh = pr.shape(cd["piece"])
+			if sh is None or cd.get("theta_deg") is None:
+				cands.append(None)
+				continue
+			piv = body_center_mm(sh)
+			e = {"theta_deg": float(cd["theta_deg"]), "dx_mm": 0.0, "dy_mm": 0.0}
+			cands.append({"piece": cd["piece"], "contorno": self._pose_contour(cd["piece"], piv), "svg": self._svg_of((l, c), e),
+						  "img": f"/api/pieces/{cd['piece']}.png?pose=scan&size=600"})
+		w, hh = float(pr.profile.cell_mm["w"]), float(pr.profile.cell_mm["h"])
+		return {"hr": hh / w, "vizinhas": viz, "candidatas": cands}
+
+	def hole_action(self, l: int, c: int, body: dict, *, confirm_it: bool) -> dict:
+		"""``POST /api/holes/{l}/{c}/confirmar`` | ``rejeitar``: the user placed (or refused) a candidate of the hole
+		ranking; the event carries rank, custo, margem, confianca, m and ``fit_version`` (ground truth of
+		``python -m src.fit --relatorio``). One write path with the CLI: :func:`src.confirm.confirm`."""
+		from src import fit as F
+		from src.confirm import confirm
+		pid = body.get("piece") if isinstance(body, dict) else None
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			if self.job:
+				raise Busy(self.job)
+			self.sync_locked()
+			pr = self.pr
+			if not pid or pid not in pr.pieces:
+				return {"error": f"peça desconhecida {pid}"}
+			if not pr.profile.in_grid(l, c):
+				return {"error": f"célula ({l},{c}) fora da grelha"}
+			h = self.hole_json(l, c)
+			if "error" in h:
+				return {"error": h["error"]}
+			if not h.get("buraco"):
+				return {"error": f"a célula ({l},{c}) não é um buraco (ocupada ou sem vizinha montada com forma e pose)"}
+			cd = next((x for x in h["candidatas"] if x["piece"] == pid), None)
+			meta = {"m": h["m"], "confianca": h["confianca"], "fit_version": F.FIT_VERSION, "margem": h.get("margem"),
+					"rank": (cd["rank"] if cd else None), "custo": (cd["J"] if cd else None),
+					"theta_deg": (cd["theta_deg"] if cd else None)}
+			nota = str(body.get("nota") or "").strip()
+			if nota:
+				meta["nota"] = nota[:200]
+			if cd is None:
+				meta["nota"] = (meta.get("nota", "") + " fora do top-3 mostrado").strip()
+			before = board_snapshot(pr.board, pr.pieces)
+			t0 = time.time()
+			kw = {"use_image": self.use_image}
+			r = confirm(pr, pid, hole=((l, c), meta) if confirm_it else None, hole_reject=None if confirm_it else ((l, c), meta), **kw)
+			if "error" in r:
+				self._known_stat = self._log_stat()
+				return {"error": r["error"]}
+			now = board_snapshot(pr.board, pr.pieces)
+			placed = [p.id for p in pr.pieces.values() if p.estado == "colocada"
+					  and before[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]
+					  != now[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]]
+			extra = self._after_write(before, placed)
+			if not confirm_it:
+				self.emit("board_changed", {"versao": self.version(), "celulas": [[l, c]]})
+			return {"ok": True, "mensagens": r.get("messages", []), "invariantes": r.get("invariants", []),
+					"segundos": round(time.time() - t0, 2), "meta": meta, **extra}
+		finally:
+			self.wlock.release()
+
 	# ------------------------------------------------------------ board raster
 	def _compose(self, ppc: float, region=None) -> np.ndarray:
 		from src import render
@@ -971,6 +1157,11 @@ class Gui:
 		self.emit("fetch_changed", {})
 		self._suspeitas = None
 		self._emit_suspeitas()           # orientation suspects (read-only); never fails a write
+		self._holes = None               # hole moulds changed (new neighbour / piece out of the pool / rejection): recompute in the background
+		try:
+			self.holes_json(wait=False)
+		except Exception as e:  # noqa: BLE001
+			self.log(f"[servidor] buracos não relançados: {e}")
 		return {"celulas_mudadas": [list(x) for x in ch]}
 
 	def _refresh_render_assets(self, pids: list) -> None:
@@ -2171,6 +2362,42 @@ def create_app(gui: Gui):
 	@app.post("/api/suspeitas/{piece}/restaurar")
 	async def post_restaurar_suspeita(piece: str, request: Request):
 		return await _suspect_post(request, lambda body: gui.restore_suspect(piece, body))
+
+	@app.get("/api/holes")
+	def get_holes():
+		ready()
+		return JSON(gui.holes_json())
+
+	@app.get("/api/holes/{l}/{c}")
+	def get_hole(l: int, c: int):
+		ready()
+		if not gui.pr.profile.in_grid(l, c):
+			raise HTTPException(404, detail=f"célula ({l},{c}) fora da grelha")
+		r = guard(lambda: gui.read(lambda: gui.hole_json(l, c)))
+		if "error" in r:
+			return JSON(r, status_code=400)
+		return JSON(r)
+
+	async def _hole_post(l: int, c: int, request: Request, confirm_it: bool):
+		ready()
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		if not isinstance(body, dict):
+			return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		r = await asyncio.to_thread(lambda: guard(lambda: gui.hole_action(l, c, body, confirm_it=confirm_it)))
+		if "error" in r:
+			return JSON(r, status_code=400)
+		return JSON(r)
+
+	@app.post("/api/holes/{l}/{c}/confirmar")
+	async def post_hole_confirmar(l: int, c: int, request: Request):
+		return await _hole_post(l, c, request, True)
+
+	@app.post("/api/holes/{l}/{c}/rejeitar")
+	async def post_hole_rejeitar(l: int, c: int, request: Request):
+		return await _hole_post(l, c, request, False)
 
 	@app.get("/api/reports/{rid}/captura")
 	def get_report_captura(rid: str):

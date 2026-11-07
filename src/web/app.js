@@ -419,6 +419,8 @@ function showTab(t) {
   if (t === "lotes" && !S.lots) loadLots().catch((e) => toast(e.message, true));
   if (t === "reports") loadReports().catch((e) => toast(e.message, true));
   if (t === "mesa" && !S.sections) loadSections().catch((e) => toast(e.message, true));
+  if (t === "buracos" && typeof loadHoles === "function") loadHoles().catch((e) => toast(e.message, true));
+  if (t !== "celula" && S.holeShown && typeof holeLayerClear === "function") holeLayerClear();
   if (t === "mesa" && S.mesaOpen && S.sections) {
     const g = S.sections.find((x) => x.id === S.mesaOpen.id), c = g && (g.candidatos.find((x) => x.rank === S.mesaOpen.rank) || groupBest(g));
     if (c) { S.mesa = { id: g.id, rank: c.rank, footprint: c.footprint }; drawMesa(); }
@@ -550,6 +552,7 @@ function renderBuscar() {
       for (const e of by.get(k).sort((a, b) => a.ordem - b.ordem)) T.append(proposalCard(e));
     }
   }
+  if (typeof holesEntry === "function") T.append(holesEntry());     // M11: ranking dos buracos (secção à parte, não é proposta)
   const sup = S.fetch.suprimidas || [];
   if (sup.length) {
     T.append(h("details", { class: "tech" }, h("summary", {}, `${sup.length} sugestões não mostradas (candidata única, por política)`),
@@ -894,11 +897,14 @@ function renderCell(d) {
     wrap.append(h("p", { class: "summary small" }, CARD_KEY));
     for (const e of d.propostas) wrap.append(proposalCard(e, { noLocate: true }));
   }
+  if (!d.peca && d.estado !== "colocada" && d.vizinhas.some((n) => n.estado === "colocada") && typeof holesBlock === "function") {
+    wrap.append(holesBlock(d));          // M11: «Candidatas para este buraco» (ranking, src/fit.py)
+  }
   if (d.conhecidas.length) {
     wrap.append(h("h2", {}, "Posição conhecida"));
     for (const p of d.conhecidas) wrap.append(h("p", {}, `${pieceLine(p)}: guardada à parte, à espera de uma vizinha montada.`));
   }
-  if (!d.peca && !d.propostas.length && !d.conhecidas.length && !d.fantasma && d.estado === "vazia") {
+  if (!d.peca && !d.propostas.length && !d.conhecidas.length && !d.fantasma && d.estado === "vazia" && !d.vizinhas.some((n) => n.estado === "colocada")) {
     wrap.append(h("p", { class: "note" }, "Ainda nenhuma pista para esta célula: a gémea não está colocada e nenhuma peça solta foi proposta."));
   }
   wrap.append(h("h2", {}, "Vizinhas"));
@@ -953,6 +959,7 @@ function parseQuery(q) {
   if ((m = t.match(/^p?0*(\d{1,4})$/)) && Number(m[1]) > 0) return { kind: "piece", id: "P" + m[1].padStart(4, "0") };
   if ((m = t.match(/^r0*(\d{1,4})$/)) && Number(m[1]) > 0) return { kind: "report", id: "R" + m[1].padStart(4, "0") };
   if ((m = t.match(/^s0*(\d{1,4})$/)) && Number(m[1]) > 0) return { kind: "sheet", id: "S" + m[1].padStart(4, "0") };
+  if (/^buracos?$/.test(t)) return { kind: "holes" };
   if ((m = t.match(/^\(?\s*l?\s*(\d{1,2})\s*[,; ]\s*c?\s*(\d{1,2})\s*\)?$/))) {
     const l = Number(m[1]), c = Number(m[2]);
     if (l >= 1 && l <= S.rows && c >= 1 && c <= S.cols) return { kind: "cell", cell: [l, c] };
@@ -1020,19 +1027,20 @@ async function locateReport(r) {
 }
 async function locateQuery(q) {
   const t = (q || "").trim();
-  if (!t) { toast("Escreve uma peça (P0778), célula (4,10), report (R0019) ou folha (S0020)"); return; }
+  if (!t) { toast("Escreve uma peça (P0778), célula (4,10), report (R0019), folha (S0020) ou «buracos»"); return; }
   const p = parseQuery(t);
   if (p.kind === "piece") return locatePiece(p.id);
   if (p.kind === "cell") return locateCell(p.cell[0], p.cell[1]);
   if (p.kind === "outside") { toast(`(${p.cell[0]},${p.cell[1]}): não encontrado (fora da grelha ${S.rows}×${S.cols})`, true); return; }
   if (p.kind === "sheet") return locateSheet(p.id);
+  if (p.kind === "holes") { showTab("buracos"); return; }
   if (p.kind === "report") {
     if (!S.reports) await loadReports();
     const r = (S.reports || []).find((x) => x.id === p.id);
     if (!r) { toast(`${p.id}: não encontrado (não existe)`, true); return; }
     return locateReport(r);
   }
-  toast(`«${t}»: não encontrado (usa P0778, 4,10, R0019 ou S0020)`, true);
+  toast(`«${t}»: não encontrado (usa P0778, 4,10, R0019, S0020 ou «buracos»)`, true);
 }
 function initSearch() {
   const f = $("#search"), q = $("#q"), btn = $("#search-btn");
@@ -1470,6 +1478,8 @@ function connectEvents() {
   es.addEventListener("suspeitas_changed", () => { clearTimeout(suspTimer); suspTimer = setTimeout(() => loadSuspeitas().catch(() => {}), 300); });
   for (const ev of ["report_added", "report_edited", "report_changed"]) es.addEventListener(ev, () => loadReports().catch(() => {}));
   es.addEventListener("piece_changed", () => { if (S.lots) loadLots().catch(() => {}); });
+  let holesTimer = null;
+  es.addEventListener("holes_changed", () => { clearTimeout(holesTimer); holesTimer = setTimeout(() => { if (typeof loadHoles === "function") loadHoles().catch(() => {}); if (S.tab === "celula" && S.sel) openCell(S.sel[0], S.sel[1], { keep: true }); }, 300); });
   es.addEventListener("ingest_progress", (e) => {
     const d = JSON.parse(e.data);
     S.jobLog.push(d); renderJobLog();
