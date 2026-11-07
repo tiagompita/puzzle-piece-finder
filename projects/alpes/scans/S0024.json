@@ -434,29 +434,30 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "recuperado_mm2": 20.52
    },
-   "area_mm2": 377.98,
-   "cls": "BTFT",
-   "n_flat": 1,
+   "area_mm2": 398.5,
+   "cls": "BTTT",
+   "n_flat": 0,
    "chords_mm": [
-    19.171,
-    17.614,
-    18.198,
-    15.742
+    18.851,
+    17.612,
+    18.16,
+    16.257
    ],
    "shape_ok": true,
    "bbox": [
     98,
-    1156,
+    1112,
     361,
-    259
+    303
    ],
    "crop_path": "crops/P0844.png",
    "mean_lab": [
-    56.26,
-    -25.44,
-    39.84
+    56.22,
+    -25.43,
+    39.63
    ]
   },
   {
@@ -760,29 +761,30 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "recuperado_mm2": 18.91
    },
-   "area_mm2": 361.61,
+   "area_mm2": 380.52,
    "cls": "BTBT",
    "n_flat": 0,
    "chords_mm": [
-    18.266,
-    18.416,
-    17.76,
-    18.855
+    18.115,
+    18.549,
+    17.774,
+    18.815
    ],
    "shape_ok": true,
    "bbox": [
     601,
-    2356,
+    2319,
     256,
-    342
+    379
    ],
    "crop_path": "crops/P0852.png",
    "mean_lab": [
-    73.64,
-    -4.16,
-    34.95
+    72.5,
+    -3.66,
+    34.2
    ]
   },
   {
