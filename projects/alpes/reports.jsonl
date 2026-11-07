@@ -29,3 +29,13 @@
 {"evento": "estado", "id": "R0019", "t": "2026-11-07T04:56:08", "acao": "close", "nota": "verificado pelo Tiago 2026-11-07", "estado": "fechado"}
 {"evento": "estado", "id": "R0020", "t": "2026-11-07T04:56:09", "acao": "close", "nota": "verificado pelo Tiago 2026-11-07", "estado": "fechado"}
 {"evento": "estado", "id": "R0027", "t": "2026-11-07T04:56:09", "acao": "close", "nota": "verificado pelo Tiago 2026-11-07", "estado": "fechado"}
+{"evento": "estado", "id": "R0002", "t": "2026-11-07T12:42:31", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0003", "t": "2026-11-07T12:42:40", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0004", "t": "2026-11-07T12:42:53", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0005", "t": "2026-11-07T12:42:59", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0006", "t": "2026-11-07T12:43:03", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0007", "t": "2026-11-07T12:43:07", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0008", "t": "2026-11-07T12:43:24", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0009", "t": "2026-11-07T12:43:30", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0024", "t": "2026-11-07T12:47:21", "acao": "close", "nota": "", "estado": "fechado"}
+{"id": "R0028", "t": "2026-11-07T12:52:22", "tipo": "mal_colocada", "texto": "", "piece": "P0833", "cell": [8, 2], "scan_id": "S0023", "n_no_lote": 59, "lote": null, "crop_path": "crops/P0833.png", "captura": "reports/R0028.jpg", "vista": "celula", "estado": "aberto"}
