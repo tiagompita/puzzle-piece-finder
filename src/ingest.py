@@ -35,7 +35,7 @@ from typing import Optional
 
 import numpy as np
 
-__all__ = ["MIN_PIECE_MM2", "DOUBLE_AREA_FACTOR", "grid_order", "local_mean_lab", "ingest_scan",
+__all__ = ["MIN_PIECE_MM2", "DOUBLE_AREA_FACTOR", "SEG_FLAG_KEYS", "grid_order", "local_mean_lab", "seg_flags", "ingest_scan",
 		   "draw_overlay", "sheet_overlay", "write_overlay", "open_project", "add_project_args", "main"]
 
 MIN_PIECE_MM2 = 150.0        # below this a component is a fragment (strip remnant, dust), never a piece
@@ -147,6 +147,28 @@ def draw_overlay(rgb: np.ndarray, items: list, title: str = "", *, max_w: Option
 	return img
 
 
+SEG_FLAG_KEYS = ("touches_frame", "touches_strip", "is_cluster", "objeto_duplo", "contacto", "recuperado_mm2")
+
+
+def seg_flags(p: dict, area_mm2: float, median_mm2: float) -> dict:
+	"""Piece ``flags`` derived from one ``segment_scan`` piece (keys :data:`SEG_FLAG_KEYS`).
+
+	``objeto_duplo`` = ``is_cluster`` or area > :data:`DOUBLE_AREA_FACTOR` x the median area of
+	the scan's kept pieces; ``contacto`` and ``recuperado_mm2`` only when the segmentation sets them.
+	"""
+	flags = {"touches_frame": bool(p.get("touches_frame")), "touches_strip": bool(p.get("touches_strip")),
+			 "is_cluster": bool(p.get("is_cluster")),
+			 "objeto_duplo": bool(p.get("is_cluster")) or area_mm2 > DOUBLE_AREA_FACTOR * median_mm2}
+	if p.get("contacto"):
+		flags["contacto"] = {"com": [int(i) for i in p["contacto"].get("com", [])],
+							 "confianca": str(p["contacto"].get("confianca", "alta")),
+							 "metodo": str(p["contacto"].get("metodo", "")),
+							 "alterado": bool(p["contacto"].get("alterado"))}
+	if p.get("recuperado_mm2"):
+		flags["recuperado_mm2"] = float(p["recuperado_mm2"])
+	return flags
+
+
 def piece_label(p) -> int:
 	"""Number printed for a piece on its sheet: ``n_no_lote``, else ``index_in_scan + 1``."""
 	return int(p.n_no_lote) if p.n_no_lote is not None else int(p.index_in_scan) + 1
@@ -252,17 +274,9 @@ def ingest_scan(project, scan_path: str, lote: Optional[int], *, dpi: float = 30
 	for (p, area), n in sorted(zip(kept, order), key=lambda t: t[1]):
 		cnt = np.asarray(p["contour"]).reshape(-1, 2)
 		shape = analyse(cnt, mmpp)
-		dup = bool(p.get("is_cluster")) or area > DOUBLE_AREA_FACTOR * med
+		flags = seg_flags(p, area, med)
+		dup = flags["objeto_duplo"]
 		rgba = np.asarray(piece_to_rgba(p["image"], p["mask"]))
-		flags = {"touches_frame": bool(p.get("touches_frame")), "touches_strip": bool(p.get("touches_strip")),
-				 "is_cluster": bool(p.get("is_cluster")), "objeto_duplo": dup}
-		if p.get("contacto"):
-			flags["contacto"] = {"com": [int(i) for i in p["contacto"].get("com", [])],
-								 "confianca": str(p["contacto"].get("confianca", "alta")),
-								 "metodo": str(p["contacto"].get("metodo", "")),
-								 "alterado": bool(p["contacto"].get("alterado"))}
-		if p.get("recuperado_mm2"):
-			flags["recuperado_mm2"] = float(p["recuperado_mm2"])
 		pid_next = f"P{int(project.meta['next_ids']['P']):04d}"
 		crop_rel = f"crops/{pid_next}.png"
 		Image.fromarray(np.ascontiguousarray(rgba)).save(project.p(crop_rel))

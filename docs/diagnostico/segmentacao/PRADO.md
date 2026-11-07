@@ -123,3 +123,25 @@ Antes = contorno vermelho; depois = contorno ciano, com a área recuperada a mag
 - **Prado comido abaixo do limiar**, se o limiar fechado não o tiver, não se recupera: o desenho da proposta para componentes abaixo do limiar não foi preciso nestes 3 casos e não foi implementado **[NT]**.
 - **Limites fixados neste conjunto:** o raio de 1,1 mm e os outros limites vêm deste conjunto (12 candidatas, 3 verdadeiras). Peças fora destas 27 folhas **[NT]**.
 - **`projects/alpes` não foi re-segmentado.** O índice continua com as formas antigas até `render.rebuild_assets` ou `ingest_all.py` (decisão do gestor/Tiago).
+
+## 7. Rebuild (2026-11-07)
+
+**Código.** `render.rebuild_assets(force_scans=[...], motivo=..., dry_run=...)` re-segmenta folhas cujos ativos existem. O emparelhamento é por `index_in_scan` com IoU da bbox ≥ 0,6; a folha é abortada sem escrever nada se a contagem ou a ordem mudar. Cada peça cuja silhueta mudou (bbox, classe, cordas ou área diferentes do log) ganha um evento `piece_resegmented` (`src/state.py`, `Project.resegment_piece`) com os campos estáticos novos (`bbox, cls, n_flat, chords_mm, area_mm2, shape_ok, flags` com `recuperado_mm2`, `mean_lab` do recorte novo). Só as peças com contorno novo recebem arrays no npz e recorte novos; as outras ficam bit a bit. Para essas peças apagam-se as caches de visualização (`render/clean`, folhas `render/sheets` e `render/gui/sheets` da folha, raster `render/gui/board_*`, entradas de `placements.json`); `overlays/S####.jpg` é reescrito. CLI: `tools/rebuild_scans.py --project … --scans S0009 --motivo recover_bays [--dry-run]` (sem `placements.json`, sem `render/clean`).
+
+**Medição numa cópia** (`alpes_r`, log 2076, 958 peças) **[V]**:
+
+| peça (célula, #) | gémea | classe | cordas (mm) | área (mm²) | `recuperado_mm2` | `free_dist` à gémea |
+|---|---|---|---|---|---|---|
+| P0218 (32,64), #25 | P0647 (16,1), BFBT | BBBT → **BFBT** | [18,215; 18,551; 19,889; 17,410] → [**18,444**; 18,272; 19,947; 17,383] | 340,23 → 358,10 | 17,87 | 2,749 → **0,500** |
+| P0223 (33,64), #30 | P0641 (15,1), BBTF | BBTF → BBTF | [**15,962**; 18,655; 16,632; 19,078] → [**19,672**; 18,689; 16,671; 18,878] | 362,47 → 375,71 | 13,25 | 1,037 → **0,593** |
+| P0199 (35,64), #6 | P0629 (13,1), BFBT | BFBT → BFBT | [19,234; 17,882; 18,213; **15,412**] → [19,052; 17,950; 18,216; **18,531**] | 351,15 → 363,50 | 12,36 | 0,822 → **0,560** |
+
+- As gémeas são as células (48 − l, 65 − c) pelo `profile.twin`. As bbox **não mudam** (o entalhe estava dentro da caixa); mudam cordas, área e, em P0218, a classe.
+- `changed` = exatamente P0218, P0223 e P0199; o log ganha 3 linhas `piece_resegmented`; `check_invariants(disk=True)` OK; `scans/S0009.json` = modelo (as 958 peças das 27 vistas comparadas campo a campo).
+- Contagens iguais antes e depois: 958 peças, 607 `colocada`, 211 `em_seccao`, 134 `solta`, 1 `posicao_conhecida`, 5 `descartada`. Numeração (`n_no_lote`) intacta: o overlay mostra 1–43 nos mesmos sítios.
+- **Buracos** (pose da GUI `register_piece(image=False)`, `verde_tabuleiro.holes`, 120 px/célula, `BOARD_SHADOW`): **67 / 9 → 65 / 9** (média 0,01244 → 0,01225). Fecham (32,64) 5,5 % → 0,0 % e (35,64) 6,0 % → 0,2 %; (33,64) 3,7 % → 3,6 %, (34,64) 0,2 % → 0,1 %; nenhuma outra célula muda.
+- **Lado F na pose da GUI:** P0218 tem agora o F no lado E do tabuleiro (`f_ok`, atribuição k = 1), a 1,96° da borda. Fica com a rotação dos cantos: a reta do F tem RMS 0,173 mm > `F_LINE_RMS_MAX` 0,15. P0199: RMS do F 0,588 → 0,167 mm (também > 0,15, fica com os cantos), mas a inclinação do F face à borda passa de 5,89° a 0,00°. P0223: 0,039 → 0,091 mm, usa a rotação do F (0,00°).
+- **Todas as folhas** (segunda cópia `alpes_r2`, `force_scans` = as 27, 179,5 s): só S0009 muda (3 peças). `src/segmentation.py` sem alterações no working tree (último commit e5c44a5), por isso S0023 não muda. **S0027 (lote 3) não tinha `pieces/S0027.npz` nem os 50 recortes P0909–P0958 em `projects/alpes`**: o rebuild escreveu-os (50 contornos, 0 silhuetas diferentes do log, logo 0 eventos).
+- Teste do CLI noutra cópia do projeto atual (log 2086): `--dry-run` não escreve nada; a corrida real dá log 2086 → 2089 e invariantes OK, e só mudam `crops/P0199.png`, `crops/P0218.png`, `crops/P0223.png`, `log.jsonl`, `overlays/S0009.jpg`, `pieces/S0009.npz` e `scans/S0009.json` (as outras vistas JSON só mudam de fim de linha, CRLF → LF, que o git normaliza).
+- **Imagens vistas:** antes/depois sobre o scan (vermelho/ciano). P0218: o entalhe retangular do prado claro em baixo à direita fecha e o contorno segue o lado reto até ao canto (fica um pequeno degrau a meio do lado direito). P0223: o triângulo de prado no canto superior direito volta; fica um entalhe < 0,5 mm junto ao canto. P0199: volta o canto superior direito. No tabuleiro (colunas 62–64, linhas 31–36) desaparece o buraco magenta de (32,64) e o canto em falta de (33,64); fica uma lasca magenta fina na borda direita de (35,64).
+- **[NT]:** o projeto real ainda não foi re-segmentado (fica para o gestor). As propostas e a lista «Vai buscar» com as formas novas não foram recalculadas.

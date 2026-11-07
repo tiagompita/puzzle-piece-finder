@@ -40,7 +40,9 @@ Three steps, each usable on its own:
    ``ocupada_legado`` cells, red outline on empty border cells, optional grid.
 
 :func:`rebuild_assets` regenerates ``pieces/*.npz`` and ``crops/`` from the scans listed in the
-log (the other PC only has the JSON and the log), checking every piece bbox.
+log (the other PC only has the JSON and the log), matching every piece by index and bbox IoU;
+``force_scans`` re-segments sheets whose assets exist, and a piece whose silhouette changed gets
+a ``piece_resegmented`` event (its new static fields) in the log.
 
 Frames: scan mm = contour px index x ``mm_per_px`` (the frame of :class:`src.shape.Shape`);
 board mm = continuous frame where cell ``(l, c)`` spans ``[(c-1) w, c w] x [(l-1) h, l h]``
@@ -1473,95 +1475,212 @@ def compose_zone_vs_art(project, region, dpi: float = 300, *, placements: Option
 
 
 # ---------------------------------------------------------------- rebuild of the bulky assets
-def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, register: bool = True) -> dict:
-	"""Regenerate ``pieces/S####.npz`` and ``crops/P####.png`` that are missing, without touching the log.
+REBUILD_IOU_MIN = 0.6           # rebuild: stored bbox vs new bbox of the same index_in_scan below this -> order changed, sheet aborted
+_STATIC_CMP = ("bbox", "cls", "chords_mm", "area_mm2")   # a piece whose silhouette changed (piece_resegmented)
 
-	For each scan of ``project.model.scans`` (or only ``scans``) with a missing npz or crop: the
-	same segmentation as :func:`src.ingest.ingest_scan` (``segment_scan(normalize_rotation=False)``,
-	fragments < ``MIN_PIECE_MM2`` dropped; legacy pages go through ``ingest_scan`` too, so the
-	order is the same), piece k of the project matched by ``index_in_scan`` and checked by its
-	stored ``bbox`` (abort with a message on any mismatch), npz keys as
-	:meth:`src.state.Project.add_piece` writes them. Then :func:`clean_all` and :func:`register_all`.
-	Missing numbered sheets ``overlays/S####.jpg`` are rewritten with :func:`src.ingest.write_overlay`.
-	Returns ``{scans: {sid: {n, seconds}}, overlays: [paths], errors: [...]}``.
+
+def _bbox_iou(a, b) -> float:
+	"""IoU of two ``(x, y, w, h)`` boxes."""
+	ax, ay, aw, ah = (float(v) for v in a)
+	bx, by, bw, bh = (float(v) for v in b)
+	ix = max(0.0, min(ax + aw, bx + bw) - max(ax, bx))
+	iy = max(0.0, min(ay + ah, by + bh) - max(ay, by))
+	inter = ix * iy
+	union = aw * ah + bw * bh - inter
+	return inter / union if union > 0 else 0.0
+
+
+def _jsonable(v):
+	return json.loads(json.dumps(v))
+
+
+def _drop_stale_caches(project, sid: str, pids: list) -> None:
+	"""Display caches that depend on a piece's crop/contour (all regenerated on demand)."""
+	import glob
+	for pid in pids:
+		fp = project.p("render", "clean", f"{pid}.png")
+		if os.path.exists(fp):
+			os.remove(fp)
+	for pat in (project.p("render", "sheets", f"{sid}_*.jpg"), project.p("render", "gui", "sheets", f"{sid}_*.jpg"),
+				project.p("render", "gui", "board_*.jpg"), project.p("render", "gui", "board_*.json")):
+		for fp in glob.glob(pat):
+			os.remove(fp)
+	if os.path.exists(project.p("render", "placements.json")):
+		d = load_placements(project)
+		if any(pid in d.get("placements", {}) for pid in pids):
+			for pid in pids:
+				d["placements"].pop(pid, None)
+			save_placements(project, d)
+
+
+def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, register: bool = True,
+				   force_scans=None, motivo: str = "recover_bays", segment=None, dry_run: bool = False) -> dict:
+	"""Regenerate ``pieces/S####.npz`` and ``crops/P####.png`` from the scans (missing ones, or ``force_scans``).
+
+	For each scan of ``project.model.scans`` (or only ``scans``) with a missing npz or crop, and for
+	every scan id in ``force_scans`` (re-segmented even when its assets exist): the same
+	segmentation as :func:`src.ingest.ingest_scan` (``segment_scan(normalize_rotation=False)``,
+	or ``segment`` (tests), fragments < ``MIN_PIECE_MM2`` dropped; legacy pages go through
+	``ingest_scan`` too, so the order is the same). The scan file must keep its ``sha256``.
+	Piece k of the project is matched by ``index_in_scan``; the sheet is aborted with a message
+	(nothing written) if the number of pieces changed or any matched bbox has IoU <
+	:data:`REBUILD_IOU_MIN` with the stored one (the order changed).
+
+	A piece whose silhouette changed (``bbox``, ``cls``, chords or area differ from the log)
+	gets an event ``piece_resegmented`` (:meth:`src.state.Project.resegment_piece`, with
+	``motivo``) carrying its new static fields (``flags`` = the stored non-segmentation keys +
+	:func:`src.ingest.seg_flags`, ``mean_lab`` of the new crop), so ``scans/S####.json`` stays a
+	faithful view after :meth:`~src.state.Project.save`. Only pieces whose contour changed (or
+	whose crop is missing) get new npz arrays and crop; the others keep theirs bit for bit. For
+	those pieces the display caches (``render/clean``, the scan's sheets, the GUI board raster,
+	their ``placements.json`` entries) are dropped. The sheet ``overlays/S####.jpg`` is rewritten
+	when missing or when a contour changed. ``dry_run`` = report only, nothing written. Then
+	:func:`clean_all` and :func:`register_all` (``clean`` / ``register``; skipped on errors or
+	``dry_run``).
+
+	Returns ``{scans: {sid: {n, written, changed, seconds}}, changed: [{piece, scan_id, bbox_old,
+	bbox_new, cls_old, cls_new, chords_old, chords_new, area_old, area_new, flags_new}],
+	overlays: [paths], errors: [...]}``.
 	"""
 	from PIL import Image
-	from src.ingest import MIN_PIECE_MM2
-	from src.segmentation import piece_to_rgba, segment_scan
+	from src.ingest import MIN_PIECE_MM2, SEG_FLAG_KEYS, _mean_lab, seg_flags
+	from src.segmentation import piece_to_rgba
 	from src.shape import analyse
 	from src.state import file_sha256
-	out = {"scans": {}, "errors": []}
-	os.makedirs(project.p("pieces"), exist_ok=True)
-	os.makedirs(project.p("crops"), exist_ok=True)
+	if segment is None:
+		from src.segmentation import segment_scan as segment
+	out = {"scans": {}, "changed": [], "errors": [], "overlays": []}
+	force = set(force_scans or ())
+	unknown = sorted(force - set(project.model.scans))
+	if unknown:
+		out["errors"].append(f"folhas desconhecidas em force_scans: {unknown}")
+		return out
+	if not dry_run:
+		os.makedirs(project.p("pieces"), exist_ok=True)
+		os.makedirs(project.p("crops"), exist_ok=True)
+	redraw, n_events = set(), 0
+
+	def _err(msg):
+		out["errors"].append(msg)
+		if progress:
+			progress("ERRO " + msg)
+
 	for sid, scan in sorted(project.model.scans.items()):
-		if scans is not None and sid not in scans:
+		if scans is not None and sid not in scans and sid not in force:
 			continue
 		pcs = sorted((p for p in project.pieces.values() if p.scan_id == sid), key=lambda q: q.index_in_scan)
 		if not pcs:
 			continue
 		npz = project.p("pieces", f"{sid}.npz")
-		missing_crop = [p.id for p in pcs if p.crop_path and not os.path.exists(project.p(p.crop_path))]
-		if os.path.exists(npz) and not missing_crop:
+		missing_crop = {p.id for p in pcs if p.crop_path and not os.path.exists(project.p(p.crop_path))}
+		have_npz = os.path.exists(npz)
+		if sid not in force and have_npz and not missing_crop:
 			continue
 		path = scan.get("file")
 		ap = path if path and os.path.isabs(path) else os.path.join(REPO, path or "")
 		if not path or not os.path.exists(ap):
-			out["errors"].append(f"{sid}: scan em falta ({path})")
-			if progress:
-				progress(f"ERRO {sid}: scan em falta ({path})")
+			_err(f"{sid}: scan em falta ({path})")
 			continue
 		if scan.get("sha256") and file_sha256(ap) != scan["sha256"]:
-			msg = f"{sid}: sha256 de {path} diferente do registado; o scan mudou, não regenero"
-			out["errors"].append(msg)
-			if progress:
-				progress("ERRO " + msg)
+			_err(f"{sid}: sha256 de {path} diferente do registado; o scan mudou, não regenero")
 			continue
 		t0 = time.time()
 		with Image.open(ap) as im:
 			photo = im.convert("RGB")
 		dpi = float(scan.get("dpi") or project.profile.dpi)
-		res = segment_scan(photo, dpi=dpi, normalize_rotation=False)
+		res = segment(photo, dpi=dpi, normalize_rotation=False)
 		if "error" in res:
-			out["errors"].append(f"{sid}: segment_scan: {res['error']}")
+			_err(f"{sid}: segment_scan: {res['error']}")
 			continue
 		mmpp = float(res.get("mm_per_px") or 25.4 / dpi)
-		raw = {int(p["index"]): p for p in res["pieces"] if float(p["area_px"]) * mmpp * mmpp >= MIN_PIECE_MM2}
+		kept = [p for p in res["pieces"] if float(p["area_px"]) * mmpp * mmpp >= MIN_PIECE_MM2]
+		if len(kept) != len(pcs):
+			_err(f"{sid}: a contagem mudou ({len(kept)} peças na nova segmentação, {len(pcs)} no projeto); nada escrito")
+			continue
+		raw = {int(p["index"]): p for p in kept}
 		bad = []
 		for q in pcs:
 			r = raw.get(int(q.index_in_scan))
 			if r is None:
 				bad.append(f"{q.id}: índice {q.index_in_scan} não existe na nova segmentação")
-			elif q.bbox is not None and [int(v) for v in r["bbox"]] != [int(v) for v in q.bbox]:
-				bad.append(f"{q.id}: bbox {list(r['bbox'])} != registada {q.bbox}")
+			elif q.bbox is not None and _bbox_iou(r["bbox"], q.bbox) < REBUILD_IOU_MIN:
+				bad.append(f"{q.id}: bbox {[int(v) for v in r['bbox']]} vs registada {q.bbox} "
+						   f"(IoU {_bbox_iou(r['bbox'], q.bbox):.2f} < {REBUILD_IOU_MIN})")
 		if bad:
-			msg = f"{sid}: a segmentação não reproduz a ingestão ({len(bad)} peças; p. ex. {bad[0]}); nada escrito"
-			out["errors"].append(msg)
-			if progress:
-				progress("ERRO " + msg)
+			_err(f"{sid}: a ordem mudou ({len(bad)} peças; p. ex. {bad[0]}); nada escrito")
 			continue
-		arrs = {}
+		med = float(np.median([float(p["area_px"]) * mmpp * mmpp for p in kept]))
+		old = {}
+		if have_npz:
+			with np.load(npz, allow_pickle=False) as z:
+				old = {k: z[k] for k in z.files}
+		arrs = dict(old)
+		written, changes, crops = [], [], {}
 		for q in pcs:
 			r = raw[int(q.index_in_scan)]
-			cnt = np.asarray(r["contour"]).reshape(-1, 2)
+			pre = f"{q.id}__"
+			cnt = np.asarray(r["contour"]).reshape(-1, 2).astype(np.int32)
+			oc = old.get(pre + "contour_px")
+			same_cnt = oc is not None and oc.shape == cnt.shape and np.array_equal(oc, cnt)
 			sh = analyse(cnt, mmpp)
-			for k, v in sh.to_arrays().items():
-				arrs[f"{q.id}__{k}"] = v
-			arrs[f"{q.id}__contour_px"] = cnt.astype(np.int32)
-			if q.crop_path:
-				rgba = np.asarray(piece_to_rgba(r["image"], r["mask"]))
-				Image.fromarray(np.ascontiguousarray(rgba)).save(project.p(q.crop_path))
-			project._shape_cache.pop(q.id, None)
-		np.savez_compressed(npz, **arrs)
+			area = round(float(r["area_px"]) * mmpp * mmpp, 2)
+			static = {"bbox": [int(v) for v in r["bbox"]], "cls": sh.cls, "n_flat": int(sh.n_flat),
+					  "chords_mm": [round(float(x), 3) for x in sh.lens], "area_mm2": area, "shape_ok": bool(sh.ok)}
+			diff = [k for k in _STATIC_CMP if _jsonable(getattr(q, k)) != _jsonable(static[k])]
+			if not same_cnt:
+				for k in [k for k in arrs if k.startswith(pre)]:
+					del arrs[k]
+				for k, v in sh.to_arrays().items():
+					arrs[pre + k] = v
+				arrs[pre + "contour_px"] = cnt
+				written.append(q.id)
+			rgba = None
+			if q.crop_path and (not same_cnt or diff or q.id in missing_crop):
+				rgba = np.ascontiguousarray(np.asarray(piece_to_rgba(r["image"], r["mask"])))
+				crops[q.id] = rgba
+			if diff:
+				flags = {k: v for k, v in (q.flags or {}).items() if k not in SEG_FLAG_KEYS}
+				flags.update(seg_flags(r, area, med))
+				static["flags"] = flags
+				if rgba is not None:
+					static["mean_lab"] = _mean_lab(rgba)
+				changes.append((q, static, {
+					"piece": q.id, "scan_id": sid, "index_in_scan": int(q.index_in_scan),
+					"bbox_old": q.bbox, "bbox_new": static["bbox"], "cls_old": q.cls, "cls_new": static["cls"],
+					"chords_old": list(q.chords_mm or []), "chords_new": static["chords_mm"],
+					"area_old": q.area_mm2, "area_new": static["area_mm2"], "flags_new": flags, "diff": diff}))
 		dt = time.time() - t0
-		out["scans"][sid] = {"n": len(pcs), "seconds": round(dt, 1)}
+		out["scans"][sid] = {"n": len(pcs), "written": len(written), "changed": len(changes), "seconds": round(dt, 1)}
+		out["changed"].extend(rec for _, _, rec in changes)
 		if progress:
-			progress(f"{sid} ({os.path.basename(path)}): {len(pcs)} peças regeneradas em {dt:.1f} s")
-	# numbered sheets (gitignored, shown by the GUI): regenerated from the npz when missing
-	out["overlays"] = []
-	for sid in sorted(project.model.scans):
-		if scans is not None and sid not in scans:
+			progress(f"{sid} ({os.path.basename(path)}): {len(pcs)} peças, {len(written)} contornos novos, "
+					 f"{len(changes)} silhuetas mudadas ({', '.join(rec['piece'] for _, _, rec in changes) or '-'}) "
+					 f"em {dt:.1f} s" + (" [dry-run]" if dry_run else ""))
+		if dry_run:
 			continue
-		if os.path.exists(project.p("overlays", f"{sid}.jpg")) or not os.path.exists(project.p("pieces", f"{sid}.npz")):
+		if written:
+			np.savez_compressed(npz, **arrs)
+		for pid, rgba in crops.items():
+			Image.fromarray(rgba).save(project.p(project.piece(pid).crop_path))
+		for pid in set(written) | set(crops):
+			project._shape_cache.pop(pid, None)
+		if have_npz and written:
+			_drop_stale_caches(project, sid, sorted(set(written) | set(crops)))
+			redraw.add(sid)
+		for q, static, _ in changes:
+			project.resegment_piece(q.id, motivo=motivo, **static)
+			n_events += 1
+	if dry_run:
+		return out
+	if n_events:
+		project.save()
+	# numbered sheets (gitignored, shown by the GUI): regenerated from the npz when missing or redrawn
+	for sid in sorted(project.model.scans):
+		if scans is not None and sid not in scans and sid not in force:
+			continue
+		if not os.path.exists(project.p("pieces", f"{sid}.npz")):
+			continue
+		if sid not in redraw and os.path.exists(project.p("overlays", f"{sid}.jpg")):
 			continue
 		if not any(p.scan_id == sid for p in project.pieces.values()):
 			continue

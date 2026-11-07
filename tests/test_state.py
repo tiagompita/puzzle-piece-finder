@@ -650,3 +650,26 @@ def test_photo_and_confirm_cli_hints(proj, capsys):
     assert q.check_invariants(disk=True) == []
     assert photo_main(["--cheia", "9,9", "--no-requery", "--project", proj.path]) == 1
     assert "pista" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------- re-segmentation
+def test_piece_resegmented_updates_static_fields_and_replays(proj):
+    a, b = _add(proj, 2)
+    proj.save()
+    old_dyn = proj.piece(a).dynamic
+    ev = proj.resegment_piece(a, motivo="recover_bays", bbox=[1, 2, 30, 40], cls="BFBT", n_flat=1,
+                              chords_mm=[18.4, 18.3, 19.9, 17.4], area_mm2=358.1, shape_ok=True,
+                              flags={"touches_frame": False, "recuperado_mm2": 17.9}, mean_lab=[43.1, -7.7, 27.5])
+    assert ev["action"] == "piece_resegmented" and ev["scan_id"] == proj.piece(a).scan_id and ev["index_in_scan"] == 0
+    with pytest.raises(StateError):
+        proj.resegment_piece(a, motivo="x", estado="colocada")      # dynamic fields are not re-segmentation
+    proj.save()
+    q = Project.open(proj.path)
+    p = q.piece(a)
+    assert (p.bbox, p.cls, p.n_flat, p.chords_mm, p.area_mm2) == ([1, 2, 30, 40], "BFBT", 1, [18.4, 18.3, 19.9, 17.4], 358.1)
+    assert p.flags["recuperado_mm2"] == 17.9 and p.mean_lab == [43.1, -7.7, 27.5]
+    assert p.dynamic == old_dyn and q.piece(b).cls == proj.piece(b).cls
+    assert q.check_invariants(disk=True) == []
+    with open(q.p("scans", f"{p.scan_id}.json"), encoding="utf-8") as f:
+        view = {d["id"]: d for d in json.load(f)["pieces"]}
+    assert view[a]["cls"] == "BFBT" and view[a]["chords_mm"] == [18.4, 18.3, 19.9, 17.4] and view[a]["bbox"] == [1, 2, 30, 40]

@@ -585,3 +585,82 @@ def test_placements_cache_stale_when_f_translation_switches(tmp_path, monkeypatc
     assert pid in R.load_placements(pr)["placements"]
     monkeypatch.setattr(R, "F_TARGET_GROW", not R.F_TARGET_GROW)
     assert R.load_placements(pr)["placements"] == {}
+
+
+# ---------------------------------------------------------------- rebuild of the assets (force_scans)
+def _synthetic_sheet(rects):
+    bg = np.full((1000, 1400, 3), (40, 160, 60), np.uint8)
+    for x, y, w, h, col in rects:
+        bg[y:y + h, x:x + w] = col
+    return bg
+
+
+_RECTS = [(940, 310, 220, 210, (210, 170, 30)), (300, 320, 220, 210, (200, 40, 40)), (620, 330, 220, 210, (40, 60, 200))]
+
+
+def _ingested(tmp_path):
+    from src.ingest import ingest_scan
+    scan = tmp_path / "scan.png"
+    Image.fromarray(_synthetic_sheet(_RECTS)).save(scan)
+    pp = tmp_path / "puzzle.json"
+    PuzzleProfile(id="t", grid={"cols": 6, "rows": 4}, symmetry={"type": "rot180"}).save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    r = ingest_scan(pr, str(scan), lote=1)
+    assert "error" not in r and len(r["pieces"]) == 3
+    return pr, r["scan_id"]
+
+
+def _fake_segment(rects):
+    """``segment_scan`` of another (in-memory) sheet, whatever photo it is given (the sha256 check stays real)."""
+    from src.segmentation import segment_scan
+
+    def seg(photo, dpi=300, normalize_rotation=False):
+        return segment_scan(Image.fromarray(_synthetic_sheet(rects)), dpi=dpi, normalize_rotation=normalize_rotation)
+    return seg
+
+
+def test_rebuild_force_scans_records_resegmented_piece(tmp_path):
+    pr, sid = _ingested(tmp_path)
+    red = next(p for p in pr.pieces.values() if p.bbox[0] < 400)          # the (300, 320) rectangle
+    others = {p.id: (list(p.bbox), p.area_mm2) for p in pr.pieces.values() if p.id != red.id}
+    with np.load(pr.p("pieces", f"{sid}.npz")) as z:
+        before = {k: z[k] for k in z.files}
+    w_crop = pr.crop_rgba(red.id).shape[1]
+    n_log = len(pr.events())
+    grown = [r if r[0] != 300 else (300, 320, 240, 210, r[4]) for r in _RECTS]     # 20 px wider: bbox IoU ~0.92
+    out = R.rebuild_assets(pr, force_scans=[sid], segment=_fake_segment(grown), clean=False, register=False)
+    assert out["errors"] == [] and [c["piece"] for c in out["changed"]] == [red.id]
+    c = out["changed"][0]
+    assert abs(c["bbox_new"][2] - c["bbox_old"][2] - 20) <= 3 and c["area_new"] > c["area_old"]
+    evs = pr.events()[n_log:]
+    assert [e["action"] for e in evs] == ["piece_resegmented"] and evs[0]["piece"] == red.id
+    assert evs[0]["motivo"] == "recover_bays"
+    q = Project.open(pr.path)
+    assert q.piece(red.id).bbox == c["bbox_new"] and q.piece(red.id).area_mm2 == c["area_new"]
+    assert {pid: (list(q.piece(pid).bbox), q.piece(pid).area_mm2) for pid in others} == others
+    assert q.check_invariants(disk=True) == []
+    with np.load(q.p("pieces", f"{sid}.npz")) as z:
+        after = {k: z[k] for k in z.files}
+    assert not np.array_equal(after[f"{red.id}__contour_px"], before[f"{red.id}__contour_px"])
+    for pid in others:                                                     # unchanged pieces keep their arrays
+        assert np.array_equal(after[f"{pid}__contour_px"], before[f"{pid}__contour_px"])
+    assert q.crop_rgba(red.id).shape[1] - w_crop == c["bbox_new"][2] - c["bbox_old"][2]
+    # the same segmentation again: nothing to record
+    out2 = R.rebuild_assets(q, force_scans=[sid], segment=_fake_segment(grown), clean=False, register=False)
+    assert out2["errors"] == [] and out2["changed"] == [] and len(q.events()) == n_log + 1
+
+
+def test_rebuild_force_scans_aborts_sheet_when_count_changes(tmp_path):
+    pr, sid = _ingested(tmp_path)
+    npz = pr.p("pieces", f"{sid}.npz")
+    st = (os.path.getsize(npz), os.path.getmtime(npz), len(pr.events()))
+    crops = {p.id: os.path.getmtime(pr.p(p.crop_path)) for p in pr.pieces.values()}
+    extra = _RECTS + [(300, 700, 220, 210, (230, 230, 230))]
+    out = R.rebuild_assets(pr, force_scans=[sid], segment=_fake_segment(extra), clean=False, register=False)
+    assert out["changed"] == [] and len(out["errors"]) == 1 and "contagem" in out["errors"][0]
+    assert (os.path.getsize(npz), os.path.getmtime(npz), len(pr.events())) == st
+    assert {pid: os.path.getmtime(pr.p(pr.piece(pid).crop_path)) for pid in crops} == crops
+    moved = [(r[0], r[1] + 400, *r[2:]) if r[0] == 300 else r for r in _RECTS]     # same count, a box moved away
+    out = R.rebuild_assets(pr, force_scans=[sid], segment=_fake_segment(moved), clean=False, register=False)
+    assert out["changed"] == [] and len(out["errors"]) == 1 and "ordem" in out["errors"][0]
+    assert len(pr.events()) == st[2]

@@ -55,7 +55,7 @@ from src.profile import PuzzleProfile
 
 __all__ = [
 	"SCHEMA_VERSION", "PIECE_STATES", "PAIR_STATES", "SECTION_KINDS", "CELL_STATES", "CELL_SOURCES", "ACTIONS",
-	"PHOTO_SOURCE", "USER_SOURCE",
+	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS",
 	"StateError", "Piece", "Pair", "Section", "Photo", "Board", "Model", "apply", "replay", "read_log",
 	"Project", "file_sha256", "section_cell",
 ]
@@ -77,7 +77,9 @@ ACTIONS = (
 	"cell_cleared_by_photo", "position_known", "position_placeable", "same_as", "lote_changed",
 	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
 	"report", "report_closed", "report_edited", "report_reopened", "report_deleted", "report_restored",
+	"piece_resegmented",
 )
+RESEGMENT_FIELDS = ("bbox", "cls", "n_flat", "chords_mm", "area_mm2", "shape_ok", "flags", "mean_lab")  # piece_resegmented
 ID_PREFIXES = ("S", "P", "T", "G", "F")
 LOOSE_STATES = ("solta", "emparelhada")
 _PLACEABLE_FROM = ("solta", "emparelhada", "posicao_conhecida")
@@ -451,6 +453,11 @@ def apply(m: Model, ev: dict) -> None:
 			s.notes = ev["notes"]
 	elif a == "same_as":
 		_piece(m, ev["piece"]).same_as = ev["other"]
+	elif a == "piece_resegmented":
+		p = _piece(m, ev["piece"])
+		for k in RESEGMENT_FIELDS:
+			if k in ev:
+				setattr(p, k, copy.deepcopy(ev[k]))
 	elif a == "lote_changed":
 		lote = ev.get("lote")
 		sids = set(ev["scan_ids"])
@@ -1020,6 +1027,18 @@ class Project:
 		if section_id not in self.sections:
 			raise StateError(f"secção desconhecida {section_id}")
 		return self._emit("section_candidates_updated", section=section_id, candidates=list(candidates), notes=notes)
+
+	def resegment_piece(self, piece_id: str, *, motivo: str, **static) -> dict:
+		"""Log ``piece_resegmented``: new static fields (:data:`RESEGMENT_FIELDS`) of a piece whose
+		silhouette was re-segmented from the same scan (:func:`src.render.rebuild_assets`). The caller
+		writes the new arrays in ``pieces/<scan>.npz`` and the crop; the JSON views follow on :meth:`save`."""
+		p = self.piece(piece_id)
+		bad = sorted(set(static) - set(RESEGMENT_FIELDS))
+		if bad:
+			raise StateError(f"campos não estáticos em piece_resegmented: {bad}")
+		self._shape_cache.pop(piece_id, None)
+		return self._emit("piece_resegmented", piece=piece_id, scan_id=p.scan_id, index_in_scan=p.index_in_scan,
+						  motivo=motivo, **static)
 
 	def discard(self, piece_id: str, reason: str = "") -> dict:
 		p = self.piece(piece_id)
