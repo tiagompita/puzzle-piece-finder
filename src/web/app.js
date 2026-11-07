@@ -600,11 +600,21 @@ function renderReports() {
   const rows = all.filter((r) => r.estado === f);
   if (!rows.length) { T.append(h("div", { class: "empty" }, h("strong", {}, f === "aberto" ? "Sem reports abertos." : "Sem reports resolvidos."))); return; }
   for (const r of rows) {
-    const where = [r.piece, r.cell ? cellTxt(r.cell) : null].filter(Boolean).join(" · ") || "geral";
-    T.append(h("div", { class: "card report-row", "data-report": r.id },
-      h("div", { class: "small" }, h("b", {}, r.id), ` · ${r.estado === "aberto" ? "aberto" : "resolvido"} · ${r.tipo} · ${where}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "")),
-      h("div", {}, r.texto || h("span", { class: "muted" }, "(sem texto)")),
-      r.nota ? h("div", { class: "small muted" }, `nota: ${r.nota}`) : null));
+    // clickable (read-only): locates the piece / cell on the board; nothing is written
+    const go = () => locateReport(r).catch((e) => toast(e.message, true));
+    const row = h("div", { class: "card report-row" + (r.piece ? " has-thumb" : ""), "data-report": r.id, role: "button", tabindex: "0",
+      title: "Ver no tabuleiro", onclick: go,
+      onkeydown: (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } } },
+      r.piece ? h("img", { class: "rthumb", loading: "lazy", src: `/api/pieces/${r.piece}.png?pose=scan&size=64`, alt: "", width: 64, height: 64 }) : null,
+      h("div", { class: "rbody" },
+        h("div", { class: "small rhead" }, h("b", {}, r.id),
+          r.piece ? h("span", { class: "chip" }, r.piece) : null,
+          r.cell ? h("span", { class: "chip" }, cellTxt(r.cell)) : null,
+          !r.piece && !r.cell ? h("span", { class: "chip" }, "geral") : null,
+          ` ${r.estado === "aberto" ? "aberto" : "resolvido"} · ${r.tipo}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "")),
+        h("div", {}, r.texto || h("span", { class: "muted" }, "(sem texto)")),
+        r.nota ? h("div", { class: "small muted" }, `nota: ${r.nota}`) : null));
+    T.append(row);
   }
 }
 
@@ -774,6 +784,112 @@ async function openPiece(pid) {
   if (["solta", "emparelhada"].includes(d.estado)) {
     T.append(h("div", { class: "actions" }, h("button", { class: "btn danger", type: "button", onclick: (ev) => { if (confirm(`Descartar ${d.id} (não é uma peça / duplicada)?`)) act({ acao: "discard", piece: d.id, reason: "gui" }, ev.currentTarget); } }, "Descartar (não é peça / repetida)")));
   }
+}
+
+// ------------------------------------------------------------ pesquisa (barra de topo; só cliente, só leitura)
+/** «P0778» / «p778» / «778» → piece; «R0019» / «r19» → report; «S0020» / «s20» → sheet; «4,10» / «4 10» / «(4,10)» / «l4 c10» → cell. */
+function parseQuery(q) {
+  const t = (q || "").trim().toLowerCase();
+  let m;
+  if ((m = t.match(/^p?0*(\d{1,4})$/)) && Number(m[1]) > 0) return { kind: "piece", id: "P" + m[1].padStart(4, "0") };
+  if ((m = t.match(/^r0*(\d{1,4})$/)) && Number(m[1]) > 0) return { kind: "report", id: "R" + m[1].padStart(4, "0") };
+  if ((m = t.match(/^s0*(\d{1,4})$/)) && Number(m[1]) > 0) return { kind: "sheet", id: "S" + m[1].padStart(4, "0") };
+  if ((m = t.match(/^\(?\s*l?\s*(\d{1,2})\s*[,; ]\s*c?\s*(\d{1,2})\s*\)?$/))) {
+    const l = Number(m[1]), c = Number(m[2]);
+    if (l >= 1 && l <= S.rows && c >= 1 && c <= S.cols) return { kind: "cell", cell: [l, c] };
+    return { kind: "outside", cell: [l, c] };
+  }
+  return { kind: "none" };
+}
+/** Show the proposal card of a piece in "Guardadas" or "Vai buscar" (selected + scrolled into view); false if it has no card there. */
+function highlightCard(tab, pid) {
+  showTab(tab);                 // before highlighting: showTab clears the selection
+  const T = $(`#tab-${tab}`);
+  const det = T.querySelector("details.guardadas");
+  if (det) det.open = true;
+  $$(".card.sel").forEach((x) => x.classList.remove("sel"));
+  const card = $$(".card[data-piece]", T).find((x) => x.dataset.piece === pid);
+  if (!card) return false;
+  card.classList.add("sel");
+  card.scrollIntoView({ block: "center" });
+  return true;
+}
+async function locatePiece(pid) {
+  let d;
+  try { d = await api(`/api/pieces/${pid}`); } catch (e) {
+    toast(e.status === 404 ? `${pid}: não encontrado (não existe)` : e.message, true);
+    return;
+  }
+  if (d.celula && (d.estado === "colocada" || d.estado === "posicao_conhecida")) { await openCell(d.celula[0], d.celula[1], { zoom: true }); return; }
+  const e = pendingPieces().find((x) => x.piece === pid);
+  if (e && highlightCard(isStored(e) ? "guardadas" : "buscar", pid)) {
+    toast(`${pid}: ${isStored(e) ? "em «Guardadas»" : "em «Vai buscar»"} → célula ${cellTxt(e.cell)}`);
+    return;
+  }
+  const where = d.lote !== null && d.lote !== undefined ? ` (saco ${d.lote}, nº ${d.n_no_lote})` : "";
+  toast(`${pid} existe: ${ST_TXT[d.estado] || d.estado}${where}, sem proposta`);
+  await openPiece(pid);
+}
+async function locateCell(l, c) {
+  const cell = S.board && S.board.cells[l - 1] && S.board.cells[l - 1][c - 1];
+  await openCell(l, c, { zoom: true });
+  if (!cell || !cell.peca_id) toast(cell && cell.estado && cell.estado !== "vazia" ? `célula (${l},${c}) sem peça: ${cell.estado}` : `célula (${l},${c}) vazia`);
+}
+async function locateSheet(sid) {
+  if (!S.lots) await loadLots();
+  const idx = S.lots.findIndex((lot) => lot.folhas.some((f) => f.scan_id === sid));
+  if (idx < 0) { toast(`${sid}: não encontrado (não existe)`, true); return; }
+  const lot = S.lots[idx], f = lot.folhas.find((x) => x.scan_id === sid);
+  showTab("lotes");
+  const T = $("#tab-lotes");
+  const det = $$("details.lot", T)[idx];
+  if (det) det.open = true;
+  const pcs = lot.pecas.filter((p) => p.scan_id === sid);
+  $$(".lot-hit", T).forEach((x) => x.remove());
+  const hit = h("div", { class: "card lot-hit", "data-scan": sid },
+    h("div", { class: "small" }, h("b", {}, sid), ` · ${lot.lote === null ? "sem saco" : "saco " + lot.lote} · ${f.n} peça${f.n === 1 ? "" : "s"}`),
+    h("img", { class: "sheet-thumb", src: `${f.url}?max=480&v=${S.ver}`, alt: sid, onclick: () => lightbox(`${f.url}?max=1400&v=${S.ver}`, `${sid} · ${f.ficheiro} · ${f.n} peças`) }),
+    h("div", { class: "pgrid" }, pcs.map((p) => h("div", { class: `ptile st-${p.estado}`, title: `${p.id} · ${ST_TXT[p.estado] || p.estado}`, onclick: () => openPiece(p.id) },
+      h("img", { loading: "lazy", src: `/api/pieces/${p.id}.png?pose=scan&size=128`, alt: "" }),
+      h("div", { class: "pn" }, p.n_no_lote !== null ? `nº ${p.n_no_lote}` : p.id),
+      h("div", { class: "pc" }, p.celula ? cellTxt(p.celula) : (ST_TXT[p.estado] || p.estado))))));
+  T.prepend(hit);
+  hit.scrollIntoView({ block: "start" });
+}
+async function locateReport(r) {
+  if (r.piece) return locatePiece(r.piece);
+  if (r.cell) return locateCell(r.cell[0], r.cell[1]);
+  toast(`${r.id}: report geral, sem peça nem célula para localizar`);
+}
+async function locateQuery(q) {
+  const t = (q || "").trim();
+  if (!t) { toast("Escreve uma peça (P0778), célula (4,10), report (R0019) ou folha (S0020)"); return; }
+  const p = parseQuery(t);
+  if (p.kind === "piece") return locatePiece(p.id);
+  if (p.kind === "cell") return locateCell(p.cell[0], p.cell[1]);
+  if (p.kind === "outside") { toast(`(${p.cell[0]},${p.cell[1]}): não encontrado (fora da grelha ${S.rows}×${S.cols})`, true); return; }
+  if (p.kind === "sheet") return locateSheet(p.id);
+  if (p.kind === "report") {
+    if (!S.reports) await loadReports();
+    const r = (S.reports || []).find((x) => x.id === p.id);
+    if (!r) { toast(`${p.id}: não encontrado (não existe)`, true); return; }
+    return locateReport(r);
+  }
+  toast(`«${t}»: não encontrado (usa P0778, 4,10, R0019 ou S0020)`, true);
+}
+function initSearch() {
+  const f = $("#search"), q = $("#q"), btn = $("#search-btn");
+  const setOpen = (on) => { f.classList.toggle("open", on); btn.setAttribute("aria-expanded", on ? "true" : "false"); if (on) q.focus(); };
+  btn.onclick = () => setOpen(!f.classList.contains("open"));
+  f.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const v = q.value;
+    if (f.classList.contains("open")) setOpen(false);   // phone: the box folds back after searching
+    locateQuery(v).catch((e) => toast(e.message, true));
+  });
+  q.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") { ev.stopPropagation(); q.blur(); if (f.classList.contains("open")) setOpen(false); }
+  });
 }
 
 // ------------------------------------------------------------ lotes
@@ -1050,6 +1166,7 @@ function connectEvents() {
 
 async function boot() {
   $$("#tabs button").forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
+  initSearch();
   $("#lb-close").onclick = () => { $("#lightbox").hidden = true; };
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox" || e.target.classList.contains("lb-body")) $("#lightbox").hidden = true; });
   $("#sheet-handle").onclick = () => $("#app").classList.toggle("sheet-up");

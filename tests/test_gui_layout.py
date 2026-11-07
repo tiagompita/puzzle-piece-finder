@@ -166,6 +166,7 @@ def test_top_bar_no_overlap_with_job_pill_and_big_badges(base, browser, w):
           const r = (e) => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
           const out = [['brand', r(document.querySelector('#top .brand'))]];
           for (const b of document.querySelectorAll('#tabs button')) out.push(['tab ' + b.dataset.tab, r(b)]);
+          out.push(['search', r(document.querySelector('#top #search'))]);
           for (const e of document.querySelectorAll('#top .tools > *')) if (!e.hidden) out.push(['tool ' + (e.id || e.className), r(e)]);
           return out;
         }""")
@@ -179,5 +180,52 @@ def test_top_bar_no_overlap_with_job_pill_and_big_badges(base, browser, w):
                 inter_h = min(a[3], b[3]) - max(a[1], b[1])
                 assert not (inter_w > eps and inter_h > eps), (w, na, nb, a, b)
         assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), w
+    finally:
+        pg.close()
+
+
+@pytest.mark.parametrize("w,h,dsf", [(w, h, 1.0) for w, h in TAB_VIEWPORTS] + [m for m in MATRIX])
+def test_search_in_top_bar(base, browser, w, h, dsf):
+    """The search box lives in the top bar: visible (or, on a phone, a magnifier that opens the box),
+    inside the viewport, never overlapping the tabs, no horizontal scroll, top bar height within bounds."""
+    vw, vh = (round(w / dsf), round(h / dsf)) if (w, h, dsf) in MATRIX else (w, h)
+    pg = browser.new_page(viewport={"width": vw, "height": vh}, device_scale_factor=dsf)
+    try:
+        pg.goto(base + "/")
+        pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+        pg.wait_for_timeout(300)
+        assert pg.evaluate("!!document.querySelector('#top #search #q') && !document.querySelector('#panel #search')")
+        phone = vw <= 900
+
+        def boxes():
+            return pg.evaluate("""() => {
+              const r = (e) => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
+              const vis = (e) => { const b = e.getBoundingClientRect(); return b.width > 0 && b.height > 0; };
+              const q = document.querySelector('#q'), btn = document.querySelector('#search-btn');
+              return { form: r(document.querySelector('#search')), q: vis(q) ? r(q) : null, btn: vis(btn) ? r(btn) : null,
+                       tabs: [...document.querySelectorAll('#tabs button')].map(r),
+                       top: document.querySelector('#top').getBoundingClientRect().height,
+                       sw: document.documentElement.scrollWidth <= innerWidth };
+            }""")
+        b = boxes()
+        assert b["sw"]
+        if phone:
+            assert b["btn"] is not None and b["q"] is None, b
+            target = b["btn"]
+        else:
+            assert b["q"] is not None and b["btn"] is None, b
+            assert b["q"][2] - b["q"][0] >= 90, b["q"]
+            target = b["q"]
+        assert target[0] >= 0 and target[2] <= vw + 0.5 and target[1] >= 0 and target[3] <= vh, (vw, target)
+        for t in b["tabs"]:
+            iw = min(target[2], t[2]) - max(target[0], t[0])
+            ih = min(target[3], t[3]) - max(target[1], t[1])
+            assert not (iw > 0.5 and ih > 0.5), (vw, target, t)
+        assert b["top"] <= (64 if vw >= 1181 else 110), (vw, b["top"])
+        if phone:
+            pg.click("#search-btn")
+            b2 = boxes()
+            assert b2["q"] is not None and b2["q"][0] >= 0 and b2["q"][2] <= vw + 0.5, b2
+            assert b2["sw"]
     finally:
         pg.close()

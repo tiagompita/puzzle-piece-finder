@@ -406,3 +406,42 @@ details.guardadas > summary { cursor: pointer; font-weight: 700; padding: 6px 0;
 .sug-item.alt { color: var(--muted); }
 .sug-item .ok { color: #8fdc98; }
 .sug-item .mid { color: var(--amber); }
+
+/* pesquisa na barra de topo (peça / célula / report / folha): uma linha a >= 1181 px, na 1.ª linha ao lado das ferramentas até 901 px (as abas ocupam a 2.ª), só uma lupa no telemóvel */
+#search { display: flex; align-items: center; flex: 0 1 220px; min-width: 96px; margin: 0; }
+#search .search { margin: 0; min-height: 34px; min-width: 0; width: 100%; }
+#search-btn { display: none; min-height: var(--tap); min-width: var(--tap); padding: 0; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg3); color: inherit; cursor: pointer; align-items: center; justify-content: center; }
+#search-btn[aria-expanded="true"] { background: var(--amber); color: var(--amber-ink); }
+@media (max-width: 1180px) {
+  #search { order: 2; flex: 0 1 150px; min-width: 100px; }
+}
+@media (max-width: 900px) {
+  #top { position: relative; }
+  #search { order: 2; flex: 0 0 auto; min-width: 0; }
+  #search-btn { display: inline-flex; }
+  #search .search { display: none; }
+  #search.open .search { display: block; position: absolute; left: 8px; right: 8px; top: calc(100% + 4px); z-index: 40; width: auto;
+    min-height: 44px; box-shadow: 0 6px 20px rgba(0, 0, 0, .5); }
+}
+
+/* aba Reports: linhas clicáveis (só leitura) com miniatura da peça e chips do ID e da célula */
+.report-row { cursor: pointer; }
+.report-row.has-thumb { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: start; }
+.report-row:hover, .report-row:focus-visible { border-color: var(--muted); outline: none; }
+.report-row:focus-visible { box-shadow: 0 0 0 2px var(--amber); }
+.rthumb { width: 64px; height: 64px; object-fit: contain; border-radius: 6px; background: #262626; }
+.rbody { min-width: 0; }
+.rhead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 2px; }
+.report-row .chip { background: var(--bg3); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.lot-hit { margin: 0 0 10px; }
+@media (max-width: 480px) {
+  /* 360 px: name + lupa + three toggles must stay on one row (top bar <= 110 px with the tabs row) */
+  #top { gap: 6px; }
+  #search-btn { min-width: 40px; min-height: 40px; }
+  .tools { gap: 4px; }
+  .toggle { padding: 0 5px; gap: 4px; font-size: 12.5px; }
+}
+@media (max-width: 1300px) {
+  .progress { display: none; }       /* the search box needs the room; the progress text under the name stays */
+}

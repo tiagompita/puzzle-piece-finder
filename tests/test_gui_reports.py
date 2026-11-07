@@ -41,7 +41,7 @@ def test_reports_panel(synth):
         assert pg.inner_text("#n-reports") == "2"
         assert "2 abertos" in pg.inner_text("#reports-count") and "1 resolvido" in pg.inner_text("#reports-count")
         rows = pg.eval_on_selector_all("#tab-reports .report-row", "els => els.map((e) => e.innerText)")
-        assert [r.split(" ")[0] for r in rows] == ["R0001", "R0002"]            # só os abertos por omissão
+        assert [r.split()[0] for r in rows] == ["R0001", "R0002"]            # só os abertos por omissão
         assert "recorte comido" in rows[0] and "(3, 4)" in rows[0].replace("(3,4)", "(3, 4)")
         assert "segundo problema" in rows[1]
         pg.click("#reports-filter [data-filter=fechado]")
