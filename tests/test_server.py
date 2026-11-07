@@ -294,6 +294,9 @@ def test_prepare_runs_rebuild_when_assets_missing(env, monkeypatch):
         return {"scans": {}, "errors": [], "overlays": []}
 
     monkeypatch.setattr(render, "rebuild_assets", fake_rebuild)
+    # the hand-made pieces of _project (bbox +10 px, polygon area) are not what an ingest writes: keep the
+    # stale-asset check of the start-up (test_prepare_rebuilds_stale_assets_after_pull) out of this test
+    monkeypatch.setattr(render, "stale_assets", lambda project: {"sheets": {}, "pecas": {}, "n_pecas": 0, "n_folhas": 0})
     g2 = S.Gui(gui.path, prepare=True, use_image=False, log=None)
     t0 = time.time()
     while not any(n == "ready" for _, n, _ in g2.events_after(0)) and time.time() - t0 < 60:
@@ -577,3 +580,163 @@ def test_contorno_busy_is_409(env):
         assert r.status_code == 409
     finally:
         gui.job = None
+
+
+# ---------------------------------------------------------------- stroke editor (POST …/contorno/resolver, TRACOS.md)
+def _bump_lasso(d, w=14):
+    """A ``peca`` lasso (crop px) sticking ``w`` px out of the right side of the current outline."""
+    c = np.asarray(d["denso"], float)
+    x1 = c[:, 0].max()
+    yc = float(np.median(c[:, 1]))
+    return {"ferramenta": "laco", "marca": "peca",
+            "pontos": [[x1 - 10, yc - 12], [x1 + w, yc - 12], [x1 + w, yc + 12], [x1 - 10, yc + 12]]}
+
+
+def test_contorno_resolver(env):
+    from src import overrides as OV
+    from src import strokes as ST
+    gui, cl, placed, tw, dec = env
+    d = cl.get(f"/api/pieces/{tw}/contorno").json()
+    assert d["tracos"] == [] and d["banda_mm"] == ST.BANDA_MM and d["solver_omissao"] in d["solvers"]
+    w, h = d["tamanho"]
+    body = {"tracos": [], "origem": d["origem"], "tamanho": d["tamanho"]}
+    for solver in (None, "grabcut", "watershed", "limiar"):
+        r = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=dict(body, solver=solver) if solver else body)
+        assert r.status_code == 200, r.text
+        s = r.json()
+        assert s["valido"] is True and s["erro"] is None and s["solver"] == (solver or ST.SOLVER_OMISSAO)
+        assert s["n_pontos"] == len(s["contour"]) >= 20 and s["origem"] == d["origem"] and s["ms"] > 0
+        m = ST.rle_decode(s["mascara_rle"])
+        assert m.shape == (h, w)
+        assert abs(m.sum() - OV.polygon_area(s["contour"])) / m.sum() < 0.05
+        dense = _fill_poly(d["denso"], (h, w))
+        assert (m & dense).sum() / (m | dense).sum() > 0.95                    # flat synthetic piece: the same outline
+    r = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=dict(body, tracos=[_bump_lasso(d)], iter=3)).json()
+    assert r["valido"] and r["params"]["iters"] == 3 and r["area_mm2"] > d["area_mm2"]
+    assert not os.path.exists(OV.overrides_path(gui.pr))                        # nothing written
+    # an outline the save would refuse: valido false with the reason (still 200)
+    huge = {"ferramenta": "laco", "marca": "peca", "pontos": [[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]]}
+    r = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=dict(body, tracos=[huge])).json()
+    assert r["valido"] is False and "área" in r["erro"]
+
+
+def _fill_poly(poly, shape):
+    from src.maskcmp import fill_contour
+    return fill_contour(poly, shape)
+
+
+def test_contorno_resolver_errors(env):
+    gui, cl, placed, tw, dec = env
+    d = cl.get(f"/api/pieces/{tw}/contorno").json()
+    url = f"/api/pieces/{tw}/contorno/resolver"
+    base = {"tracos": [], "origem": d["origem"], "tamanho": d["tamanho"]}
+    for bad, word in ((dict(base, tracos={"x": 1}), "lista"),
+                      (dict(base, tracos=[{"ferramenta": "spray", "pontos": [[1, 1]]}]), "ferramenta"),
+                      (dict(base, origem=[-5, 0]), "fora do scan"),
+                      (dict(base, origem=[0, 0], tamanho=[99999, 10]), "fora do scan"),
+                      (dict(base, solver="magia"), "solver"),
+                      (dict(base, iter=0), "iter")):
+        r = cl.post(url, json=bad)
+        assert r.status_code == 400 and word in r.json()["error"], (bad, r.text)
+    assert cl.post(url, json=[1, 2]).status_code == 400
+    assert cl.post(url, content=b"{", headers={"content-type": "application/json"}).status_code == 400
+    assert cl.post("/api/pieces/P9999/contorno/resolver", json=base).status_code == 404
+
+
+def test_contorno_save_with_tracos(env):
+    from src import overrides as OV
+    from src import strokes as ST
+    gui, cl, placed, tw, dec = env
+    d = cl.get(f"/api/pieces/{tw}/contorno").json()
+    lasso = _bump_lasso(d)
+    body = {"tracos": [lasso], "origem": d["origem"], "tamanho": d["tamanho"], "solver": "grabcut", "iter": 2}
+    s = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=body).json()
+    assert s["valido"]
+    n_log = len(Project.open(gui.path).events())
+    r = cl.post(f"/api/pieces/{tw}/contorno", json=dict(body, contour=s["contour"], mascara_rle=s["mascara_rle"],
+                                                       nota="traços"))
+    assert r.status_code == 200, r.text
+    out = r.json()
+    assert out["ok"] and "tracos" not in out["override"] and "auto_contour_px" not in out["override"]
+    assert out["override"]["metodo"] == "tracos"
+    pr = _ok_on_disk(gui.path)
+    evs = [e for e in pr.events()[n_log:] if e["action"] == "piece_resegmented"]
+    assert len(evs) == 1 and evs[0]["motivo"] == "manual" and evs[0]["piece"] == tw
+    (line,) = OV.read_overrides(pr)
+    assert line["metodo"] == "tracos" and line["auto_origem"] == "segmentacao" and line["nota"] == "traços"
+    assert line["origem"] == d["origem"] and line["tamanho"] == d["tamanho"]
+    assert line["solver"]["nome"] == "grabcut" and line["solver"]["params"]["iters"] == 2
+    assert line["tracos"][0]["marca"] == "peca" and line["tracos"][0]["pontos"] == [[float(x), float(y)] for x, y in lasso["pontos"]]
+    auto = np.asarray(line["auto_contour_px"])
+    assert auto.dtype.kind == "i" and np.allclose(auto, np.round(np.asarray(d["denso"]) + d["origem"]))
+    assert abs(line["auto_area_mm2"] - d["area_mm2"]) / d["area_mm2"] < 0.03
+    m = ST.rle_decode(line["mascara_rle"])
+    assert m.shape == (d["tamanho"][1], d["tamanho"][0])
+    assert np.array_equal(m, _fill_poly(np.asarray(line["contour_px"]) - d["origem"], m.shape))
+    # reopen: the strokes come back in the NEW crop (the bbox grew to the right, the origin may move)
+    d2 = cl.get(f"/api/pieces/{tw}/contorno").json()
+    assert d2["manual_override"] is True and len(d2["tracos"]) == 1
+    p_new = np.asarray(d2["tracos"][0]["pontos"]) + d2["origem"]
+    assert np.allclose(p_new, np.asarray(lasso["pontos"]) + d["origem"], atol=0.01)
+    # the next save records the manual outline as the one it replaces
+    s2 = cl.post(f"/api/pieces/{tw}/contorno/resolver", json={"tracos": d2["tracos"], "origem": d2["origem"],
+                                                              "tamanho": d2["tamanho"]}).json()
+    assert s2["valido"]
+    assert cl.post(f"/api/pieces/{tw}/contorno", json={"contour": s2["contour"], "origem": d2["origem"],
+                                                       "tamanho": d2["tamanho"], "tracos": d2["tracos"]}).status_code == 200
+    last = OV.read_overrides(Project.open(gui.path))[-1]
+    assert last["auto_origem"] == "manual" and last["solver"]["nome"] == ST.SOLVER_OMISSAO
+    # bad stroke / mask size on save: 400, nothing more written
+    n = len(OV.read_overrides(Project.open(gui.path)))
+    bad = cl.post(f"/api/pieces/{tw}/contorno", json={"contour": s2["contour"], "origem": d2["origem"],
+                                                      "tracos": [{"ferramenta": "x"}]})
+    assert bad.status_code == 400 and "ferramenta" in bad.json()["error"]
+    bad = cl.post(f"/api/pieces/{tw}/contorno", json={"contour": s2["contour"], "origem": d2["origem"], "tracos": [],
+                                                      "mascara_rle": {"w": 2, "h": 2, "runs": [4]}})
+    assert bad.status_code == 400 and "mascara_rle" in bad.json()["error"]
+    assert len(OV.read_overrides(Project.open(gui.path))) == n
+
+
+def test_contorno_save_vertices_records_auto(env):
+    """A handle-editor save (no strokes) also records the outline it replaces (metodo vertices)."""
+    from src import overrides as OV
+    gui, cl, placed, tw, dec = env
+    d = cl.get(f"/api/pieces/{placed}/contorno").json()
+    r = cl.post(f"/api/pieces/{placed}/contorno", json={"contour": _editor_contour(d), "origem": d["origem"]})
+    assert r.status_code == 200, r.text
+    (line,) = OV.read_overrides(Project.open(gui.path))
+    assert line["metodo"] == "vertices" and line["auto_origem"] == "segmentacao" and "tracos" not in line
+    assert len(line["auto_contour_px"]) == len(d["denso"])
+
+
+def test_prepare_rebuilds_stale_assets_after_pull(tmp_path):
+    """A log pulled without its npz: the shrunk contour of one piece is re-segmented at start-up, 0 events."""
+    from src import render
+    from test_render import _ingested, _shrink_npz_contour
+    pr, sid = _ingested(tmp_path)
+    os.makedirs(pr.p("render", "gui"), exist_ok=True)         # assets present: only the stale check runs
+    assert S.missing_assets(pr) == []
+    pid = sorted(pr.pieces)[1]
+    with np.load(pr.p("pieces", f"{sid}.npz")) as z:
+        good = z[f"{pid}__contour_px"].copy()
+    _shrink_npz_contour(pr, sid, pid)
+    n_log = len(pr.events())
+    g = S.Gui(pr.path, prepare=True, use_image=False, log=None)
+    t0 = time.time()
+    while not any(n == "ready" for _, n, _ in g.events_after(0)) and time.time() - t0 < 60:
+        time.sleep(0.1)
+    info = g.stale_info
+    assert info["desatualizados_antes"] == 1 and info["refeitos"] == 1 and info["eventos"] == 0
+    assert info["restantes"] == 0 and info["folhas"] == [sid] and info["erros"] == []
+    with np.load(pr.p("pieces", f"{sid}.npz")) as z:
+        assert np.array_equal(z[f"{pid}__contour_px"], good)
+    assert len(Project.open(pr.path).events()) == n_log
+    st = TestClient(S.create_app(g)).get("/api/status").json()
+    assert st["ativos"]["refeitos"] == 1 and st["ativos"]["eventos"] == 0
+    assert render.stale_assets(Project.open(pr.path))["n_pecas"] == 0
+    # coherent start-up: nothing to redo
+    g2 = S.Gui(pr.path, prepare=True, use_image=False, log=None)
+    t0 = time.time()
+    while not any(n == "ready" for _, n, _ in g2.events_after(0)) and time.time() - t0 < 60:
+        time.sleep(0.1)
+    assert g2.stale_info["desatualizados_antes"] == 0 and g2.stale_info["refeitos"] == 0

@@ -28,9 +28,14 @@ Design (docs/gui-design.md):
 * **Start-up rule**: if ``pieces/``, ``crops/``, ``overlays/`` or ``render/`` is missing or
   empty (a fresh clone: they are git-ignored), :func:`src.render.rebuild_assets` runs in a
   background thread, with progress in the terminal and on the "a preparar" page (SSE
-  ``prepare_progress``); the data endpoints answer 503 until it ends.
+  ``prepare_progress``); the data endpoints answer 503 until it ends. Then (always) the assets are
+  checked against the log (:func:`src.render.stale_assets`: the log comes with ``git pull``, the npz /
+  crops do not); stale sheets are re-segmented (:func:`src.render.rebuild_stale`) the same way, and the
+  summary is ``ativos`` in ``/api/status`` (``eventos`` > 0 = this code segments differently).
 * **Contour editor** (``/api/pieces/{id}/contorno``, docs/gui-design.md §18): the scan around the
-  piece, a preview of a drawn outline, and the save (``overrides.jsonl`` via
+  piece, a preview of a drawn outline, the stroke solver (``POST …/contorno/resolver``: strokes ->
+  trimap -> :mod:`src.strokes` -> polygon, read-only, no lock; contract in
+  docs/diagnostico/editor/TRACOS.md) and the save (``overrides.jsonl`` via
   :func:`src.overrides.append_override`, then :func:`src.render.rebuild_piece`, under the same lock).
 * **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``, ``piece_changed``,
   ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``, ``ready``.
@@ -57,6 +62,7 @@ import cv2
 import numpy as np
 
 from src import overrides as OV
+from src import strokes as ST
 from src.query import fetch_group, mounted_neighbours
 from src.state import Project, StateError
 
@@ -285,6 +291,7 @@ class Gui:
 		self._sheets = {}
 		self._art = None
 		self.ingest_segment = None    # tests: replacement for segment_scan
+		self.stale_info = None        # start-up check of the assets against the log (render.stale_assets)
 		if prepare:
 			threading.Thread(target=self._prepare, name="preparar", daemon=True).start()
 
@@ -350,6 +357,33 @@ class Gui:
 		self.prep_log.append(msg)
 		self.emit("prepare_progress", {"msg": msg})
 
+	def _check_stale(self) -> None:
+		"""Assets (npz, crops) against the log; stale sheets re-segmented (:func:`src.render.rebuild_stale`).
+		Sets :attr:`stale_info` = ``{desatualizados_antes, folhas, refeitos, eventos, restantes, segundos, aviso,
+		erros}``."""
+		from src import render
+		t0 = time.time()
+		st = render.stale_assets(self.pr)
+		info = {"desatualizados_antes": st["n_pecas"], "folhas": sorted(st["sheets"]), "refeitos": 0, "eventos": 0,
+				"restantes": st["n_pecas"], "segundos": None, "aviso": None, "erros": []}
+		if st["n_pecas"]:
+			self.state = "a_preparar"
+			self._prep(f"{st['n_pecas']} peças em {st['n_folhas']} folhas desatualizadas (depois de um git pull?): "
+					   f"a refazer {', '.join(info['folhas'])}…")
+			with self.wlock:
+				r = render.rebuild_stale(self.pr, progress=self._prep)
+				self._known_stat = self._log_stat()       # our own events (if any) are not an outside change
+			left = r["depois"]["n_pecas"] if r.get("depois") else st["n_pecas"]
+			info.update(refeitos=st["n_pecas"] - left, restantes=left, eventos=int(r.get("eventos") or 0),
+						aviso=r.get("aviso"), erros=list(r.get("errors") or []))
+			self._placements = None
+			for e in info["erros"]:
+				self._prep(f"ERRO: {e}")
+			self._prep(info["aviso"] or f"ativos refeitos: {info['refeitos']} peças, 0 eventos"
+					   + (f"; {left} ainda desatualizadas" if left else ""))
+		info["segundos"] = round(time.time() - t0, 1)
+		self.stale_info = info
+
 	def _prepare(self) -> None:
 		miss = missing_assets(self.pr)
 		try:
@@ -364,6 +398,7 @@ class Gui:
 				for e in r.get("errors", []):
 					self._prep(f"ERRO: {e}")
 				self._prep("recursos regenerados" + (" com erros (ver acima)" if r.get("errors") else ""))
+			self._check_stale()
 			self._prep("a compor o tabuleiro")
 			t0 = time.time()
 			self.board_jpg(BOARD_PPC)
@@ -838,7 +873,7 @@ class Gui:
 
 	def status_json(self) -> dict:
 		return {"estado": self.state, "job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
-				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id")}
+				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info}
 
 	# ------------------------------------------------------------ writes
 	def _after_write(self, before_snap: list, placed: list) -> dict:
@@ -1079,14 +1114,12 @@ class Gui:
 		x0, y0, x1, y1, m = OV.crop_window(pr, pid)
 		mmpp = render._scan_mmpp(pr, p.scan_id)
 		ov = OV.latest_overrides(pr).get(pid)
-		if ov is not None:
-			dense = OV.clean_polygon(ov["contour_px"])
-		else:
-			c = pr.contour_px(pid)
-			if c is None:
-				raise FileNotFoundError(f"{pid}: contorno em falta (pieces/{p.scan_id}.npz)")
-			dense = OV.clean_polygon(c)          # the stored pixel chain: exact (an unchanged save keeps the shape)
+		dense, _ = self._dense(pid)
 		idx = OV.editor_indices(dense, OV.RESAMPLE_MM / mmpp)
+		tracos = []
+		if ov is not None and ov.get("metodo") == "tracos" and ov.get("tracos") and ov.get("origem"):
+			# the strokes were drawn on the crop of that save; the bbox (hence the crop) may have changed since
+			tracos = ST.traduzir_tracos(ov["tracos"], ov["origem"][0] - x0, ov["origem"][1] - y0)
 		dloc = np.round(dense - np.array([x0, y0], float), 2)
 		loc = dloc[idx]
 		return {"scan_id": p.scan_id, "piece": pid, "lote": p.lote, "n_no_lote": p.n_no_lote, "estado": p.estado,
@@ -1099,7 +1132,116 @@ class Gui:
 				"override_pendente": ov is not None and not p.flags.get(OV.MANUAL_FLAG),
 				"nota": (ov or {}).get("nota") or p.flags.get(OV.MANUAL_NOTE_FLAG) or "",
 				"cls": p.cls, "chords_mm": p.chords_mm, "area_mm2": p.area_mm2,
-				"limites": {"min_pontos": OV.MIN_POINTS, "area_min": OV.AREA_MIN_FRAC, "area_max": OV.AREA_MAX_FRAC}}
+				"limites": {"min_pontos": OV.MIN_POINTS, "area_min": OV.AREA_MIN_FRAC, "area_max": OV.AREA_MAX_FRAC},
+				"tracos": tracos, "banda_mm": ST.BANDA_MM, "solver_omissao": ST.SOLVER_OMISSAO,
+				"solvers": list(ST.SOLVERS)}
+
+	def _dense(self, pid: str) -> tuple:
+		"""``(polygon in scan px, origem)`` of the piece's current outline: the latest manual override
+		(``"manual"``), else the stored pixel chain of the segmentation (``"segmentacao"``; exact, so an
+		unchanged save keeps the shape)."""
+		pr = self.pr
+		ov = OV.latest_overrides(pr).get(pid)
+		if ov is not None:
+			return OV.clean_polygon(ov["contour_px"]), "manual"
+		c = pr.contour_px(pid)
+		if c is None:
+			raise FileNotFoundError(f"{pid}: contorno em falta (pieces/{pr.piece(pid).scan_id}.npz)")
+		return OV.clean_polygon(c), "segmentacao"
+
+	def _bg_lab(self, sid: str) -> np.ndarray:
+		"""Background colour of the scan (OpenCV 8-bit Lab, :func:`src.segmentation._rim_background`),
+		the last one kept (only the ``limiar`` solver needs it)."""
+		from src import render
+		from src.segmentation import _rim_background
+		c = getattr(self, "_bg_cache", None)
+		rgb = self._scan_rgb(sid)
+		if c is not None and c[0] == sid and c[1] is rgb:
+			return c[2]
+		bg = _rim_background(cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32), render._scan_mmpp(self.pr, sid))
+		self._bg_cache = (sid, rgb, bg)
+		return bg
+
+	@staticmethod
+	def _solver_spec(body: dict) -> tuple:
+		"""``(name, params)`` from ``{solver?: name | {nome, params}, iter?}`` (ValueError if invalid)."""
+		sv = body.get("solver")
+		params = {}
+		if isinstance(sv, dict):
+			params = dict(sv.get("params") or {})
+			sv = sv.get("nome")
+		sv = sv or ST.SOLVER_OMISSAO
+		if sv not in ST.SOLVERS:
+			raise ValueError(f"solver desconhecido {sv!r} ({', '.join(ST.SOLVERS)})")
+		it = body.get("iter")
+		if it is not None:
+			if isinstance(it, bool) or not isinstance(it, int) or not 1 <= it <= 10:
+				raise ValueError("iter deve ser um inteiro entre 1 e 10")
+			if sv == "grabcut":
+				params["iters"] = it
+		return sv, ST.parametros(sv, params)
+
+	def _strokes_window(self, pid: str, body: dict) -> tuple:
+		"""``(normalised strokes, (x0, y0, w, h))`` of a ``{tracos, origem?, tamanho?}`` body."""
+		x0, y0, w, h = self._window(pid, body.get("origem"), body.get("tamanho"))
+		tr, err = ST.validar_tracos(body.get("tracos"), w, h)
+		if err:
+			raise ValueError(err)
+		return tr, (x0, y0, w, h)
+
+	def contour_solve(self, pid: str, body: dict) -> dict:
+		"""``POST /api/pieces/{pid}/contorno/resolver``: strokes -> trimap -> solver -> polygon on the
+		editor crop (:func:`src.strokes.resolver`), validated as a save would be
+		(:func:`src.overrides.check_override`). Writes nothing; no write lock. ValueError on a bad body."""
+		from src import render
+		t0 = time.perf_counter()
+		pr = self.pr
+		p = pr.piece(pid)
+		tr, (x0, y0, w, h) = self._strokes_window(pid, body)
+		name, params = self._solver_spec(body)
+		mmpp = render._scan_mmpp(pr, p.scan_id)
+		rgb = self._scan_rgb(p.scan_id)[y0:y0 + h, x0:x0 + w]
+		dense, _ = self._dense(pid)
+		auto = np.zeros((h, w), np.uint8)
+		cv2.fillPoly(auto, [np.round(dense - np.array([x0, y0], float)).astype(np.int32).reshape(-1, 1, 2)], 1)
+		bg = self._bg_lab(p.scan_id) if name == "limiar" else None
+		r = ST.resolver(rgb, auto > 0, tr, mmpp, solver=name, params=params, bg_lab=bg)
+		if "error" in r:
+			return {"contour": [], "area_mm2": 0.0, "valido": False, "erro": r["error"], "solver": name,
+					"params": params, "mascara_rle": None, "n_pontos": 0, "origem": [x0, y0], "tamanho": [w, h],
+					"ms": round((time.perf_counter() - t0) * 1000.0, 1), "ms_solver": None}
+		cnt = r["contour"]
+		_, err = OV.check_override(pr, pid, cnt + np.array([x0, y0], float))
+		return {"contour": cnt.astype(int).tolist(), "area_mm2": round(r["area_mm2"], 3), "valido": err is None,
+				"erro": err, "solver": name, "params": params, "mascara_rle": ST.rle_encode(r["mask"]),
+				"n_pontos": int(len(cnt)), "origem": [int(x0), int(y0)], "tamanho": [int(w), int(h)],
+				"ms_solver": round(r["ms"], 1), "ms": round((time.perf_counter() - t0) * 1000.0, 1)}
+
+	def _save_extra(self, pid: str, body: dict, pts: np.ndarray, win: tuple) -> dict:
+		"""Extra fields of the ``overrides.jsonl`` line of a GUI save (:data:`src.overrides.EXTRA_KEYS`):
+		the outline being replaced (``auto_contour_px``, ``auto_area_mm2``, ``auto_origem``), ``metodo``
+		and, for a stroke save, the strokes (crop px), the crop, the solver and the RLE of the saved
+		polygon filled in the crop (computed here; a client ``mascara_rle`` is only checked for size)."""
+		from src import render
+		mmpp = render._scan_mmpp(self.pr, self.pr.piece(pid).scan_id)
+		dense, origem = self._dense(pid)
+		extra = {"auto_contour_px": np.round(dense).astype(int).tolist(),
+				 "auto_area_mm2": round(OV.polygon_area(dense) * mmpp * mmpp, 3), "auto_origem": origem,
+				 "metodo": "vertices"}
+		if body.get("tracos") is None:
+			return extra
+		tr, (x0, y0, w, h) = self._strokes_window(pid, body)
+		name, params = self._solver_spec(body)
+		cm = body.get("mascara_rle")
+		if cm is not None:
+			got = ST.rle_decode(cm)
+			if got.shape != (h, w):
+				raise ValueError(f"mascara_rle com {got.shape[1]} x {got.shape[0]} px; o recorte tem {w} x {h}")
+		m = np.zeros((h, w), np.uint8)
+		cv2.fillPoly(m, [np.round(np.asarray(pts, float) - np.array([x0, y0], float)).astype(np.int32).reshape(-1, 1, 2)], 1)
+		extra.update(metodo="tracos", tracos=ST.traduzir_tracos(tr, 0.0, 0.0), origem=[int(x0), int(y0)],
+					 tamanho=[int(w), int(h)], solver={"nome": name, "params": params}, mascara_rle=ST.rle_encode(m > 0))
+		return extra
 
 	def _window(self, pid: str, origem=None, tamanho=None) -> tuple:
 		"""``(x0, y0, w, h)`` of the editor crop: the client's (validated) or the current one."""
@@ -1173,13 +1315,14 @@ class Gui:
 			if pid not in pr.pieces:
 				return {"error": f"peça desconhecida {pid}"}
 			try:
-				pts, _ = self._scan_points(pid, body)
+				pts, win = self._scan_points(pid, body)
+				extra = self._save_extra(pid, body, pts, win)
 			except ValueError as e:
 				return {"error": str(e)}
 			before = board_snapshot(pr.board, pr.pieces)
 			old = self.piece_summary(pid)
 			t0 = time.time()
-			rec = OV.append_override(pr, pid, pts, nota=(nota or "").strip())
+			rec = OV.append_override(pr, pid, pts, nota=(nota or "").strip(), extra=extra)
 			if "error" in rec:
 				return {"error": rec["error"]}
 			r = render.rebuild_piece(pr, pid, progress=None)
@@ -1226,7 +1369,8 @@ class Gui:
 			ch = r["changed"][0] if r["changed"] else None
 			msg = (f"{pid}: contorno manual aplicado (classe {old['cls']} → {new['cls']}, cordas "
 				   + "/".join(f"{x:.1f}" for x in (new["chords_mm"] or [])) + " mm)") if ch else f"{pid}: contorno igual ao atual"
-			return {"ok": True, "piece": new, "antes": old, "mensagens": [msg], "invariantes": bad, "override": rec,
+			slim = {k: v for k, v in rec.items() if k not in ("tracos", "mascara_rle", "auto_contour_px")}
+			return {"ok": True, "piece": new, "antes": old, "mensagens": [msg], "invariantes": bad, "override": slim,
 					"n_propostas": n_prop, "segundos": round(time.time() - t0, 2), **extra}
 		finally:
 			self.wlock.release()
@@ -1441,6 +1585,25 @@ def create_app(gui: Gui):
 		except FileNotFoundError as e:
 			raise HTTPException(404, detail=str(e))
 		return img(data, "image/png", cache=False)
+
+	@app.post("/api/pieces/{pid}/contorno/resolver")
+	async def piece_contour_solve(pid: str, request: Request):
+		ready()
+		if pid not in gui.pr.pieces:
+			raise HTTPException(404, detail=f"peça desconhecida {pid}")
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		if not isinstance(body, dict):
+			return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		try:
+			r = await asyncio.to_thread(lambda: gui.contour_solve(pid, body))
+		except ValueError as e:
+			return JSON({"error": str(e)}, status_code=400)
+		except FileNotFoundError as e:
+			raise HTTPException(404, detail=str(e))
+		return JSON(r)
 
 	@app.post("/api/pieces/{pid}/contorno")
 	async def piece_contour_save(pid: str, request: Request):

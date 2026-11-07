@@ -5,7 +5,17 @@ The file ``projects/<id>/overrides.jsonl`` is APPEND-ONLY, one line per save::
 	{"t", "autor": "manual", "scan_id", "piece", "index_in_scan", "contour_px": [[x, y], ...], "nota"}
 
 ``contour_px`` is a closed polygon in whole-scan pixel coordinates (ints or floats); the last
-line of a piece wins (:func:`latest_overrides`). The override is applied by
+line of a piece wins (:func:`latest_overrides`). Lines saved by the GUI editor may carry more
+fields (``append_override(..., extra=...)``; old lines without them stay valid and nothing that applies
+an override reads them)::
+
+	"metodo": "tracos" | "vertices", "tracos": [...] (crop px, src.strokes), "origem": [x0, y0],
+	"tamanho": [w, h], "solver": {"nome", "params"}, "mascara_rle": {"w", "h", "runs"} (the saved
+	polygon filled in the crop, src.strokes.rle_encode), "auto_contour_px": [[x, y], ...] (int, scan
+	px: the outline the save replaced), "auto_area_mm2", "auto_origem": "segmentacao" | "manual"
+
+:func:`manual_pairs` measures the automatic contour against the manual one per piece
+(``python -m src.overrides --project <p> --pares``). The override is applied by
 :func:`src.render.rebuild_assets` / :func:`src.render.rebuild_piece`: the polygon replaces the
 segmented contour (npz arrays, crop, overlay) and the piece gets a ``piece_resegmented`` event
 with ``motivo: "manual"`` and ``flags.manual_override = true``. Pieces with that flag are
@@ -32,6 +42,7 @@ __all__ = [
 	"validate_polygon", "manual_flags", "is_manual",
 	"overrides_path", "read_overrides", "latest_overrides", "has_override", "scan_file", "scan_size",
 	"load_scan_rgb", "reference_area_px", "check_override", "append_override", "crop_window",
+	"EXTRA_KEYS", "pair_metrics", "manual_pairs", "main",
 ]
 
 OVERRIDES_FILE = "overrides.jsonl"
@@ -46,6 +57,8 @@ EDITOR_EPS_PX = 2.0        # editor handles: Douglas-Peucker tolerance (px; corn
 MANUAL_FLAG = "manual_override"
 MANUAL_NOTE_FLAG = "manual_nota"
 _SEG_SILHOUETTE_KEYS = ("is_cluster", "contacto", "recuperado_mm2", "suspeita_recorte")   # facts of the segmented silhouette, dropped
+EXTRA_KEYS = ("metodo", "tracos", "origem", "tamanho", "solver", "mascara_rle", "auto_contour_px", "auto_area_mm2",
+			  "auto_origem")
 
 
 # ---------------------------------------------------------------- pure helpers
@@ -77,12 +90,15 @@ def is_simple(pts, touch: bool = True) -> bool:
 	revisits a pixel at 1-px spurs (it touches itself, 1 of 60 Alpes pieces), so the override validation
 	uses ``touch=False``: it rejects the crossings a dragged vertex makes, not the raster artefacts.
 
-	Edge i = (p_i, p_{i+1}); every pair of non-adjacent edges is tested (one numpy pass per edge)."""
+	Edge i = (p_i, p_{i+1}); every pair of non-adjacent edges whose closed bounding boxes overlap (a
+	necessary condition for crossing or touching, so the prefilter is exact) is tested, in vectorised
+	blocks of rows (a 1100-point pixel chain: ~5 ms instead of ~160 ms with one numpy pass per edge)."""
 	a = clean_polygon(pts)
 	n = len(a)
 	if n < 3:
 		return False
 	p0, p1 = a, np.roll(a, -1, axis=0)
+	lo, hi = np.minimum(p0, p1), np.maximum(p0, p1)
 
 	def orient(o, u, v):
 		return (u[..., 0] - o[..., 0]) * (v[..., 1] - o[..., 1]) - (u[..., 1] - o[..., 1]) * (v[..., 0] - o[..., 0])
@@ -91,13 +107,18 @@ def is_simple(pts, touch: bool = True) -> bool:
 		return ((np.minimum(o[..., 0], u[..., 0]) <= q[..., 0]) & (q[..., 0] <= np.maximum(o[..., 0], u[..., 0]))
 				& (np.minimum(o[..., 1], u[..., 1]) <= q[..., 1]) & (q[..., 1] <= np.maximum(o[..., 1], u[..., 1])))
 
-	for i in range(n - 2):
-		j = np.arange(i + 2, n)
-		if i == 0:
-			j = j[j != n - 1]       # the last edge shares p_0 with edge 0
-		if len(j) == 0:
+	block = max(1, 2_000_000 // n)
+	for s in range(0, n, block):
+		r = np.arange(s, min(n, s + block))
+		ov = ((lo[r, None, 0] <= hi[None, :, 0]) & (lo[None, :, 0] <= hi[r, None, 0])
+			  & (lo[r, None, 1] <= hi[None, :, 1]) & (lo[None, :, 1] <= hi[r, None, 1]))
+		i, j = np.nonzero(ov)
+		i = i + s
+		keep = (j >= i + 2) & ~((i == 0) & (j == n - 1))      # non-adjacent; the last edge shares p_0 with edge 0
+		i, j = i[keep], j[keep]
+		if len(i) == 0:
 			continue
-		a0, a1 = np.broadcast_to(p0[i], (len(j), 2)), np.broadcast_to(p1[i], (len(j), 2))
+		a0, a1 = p0[i], p1[i]
 		b0, b1 = p0[j], p1[j]
 		d1, d2 = orient(b0, b1, a0), orient(b0, b1, a1)
 		d3, d4 = orient(a0, a1, b0), orient(a0, a1, b1)
@@ -379,9 +400,16 @@ def check_override(project, piece: str, contour_px) -> tuple:
 	return clean_polygon(contour_px), None
 
 
-def append_override(project, piece: str, contour_px, nota: str = "") -> dict:
+def append_override(project, piece: str, contour_px, nota: str = "", extra: Optional[dict] = None) -> dict:
 	"""Validate (:func:`check_override`) and append one line to ``overrides.jsonl``; returns the line
-	or ``{'error': str}`` (nothing written). The override is applied by :func:`src.render.rebuild_piece`."""
+	or ``{'error': str}`` (nothing written). The override is applied by :func:`src.render.rebuild_piece`.
+
+	``extra``: additional JSON fields of the line, only those of :data:`EXTRA_KEYS` (the base fields
+	cannot be overwritten); see the module docstring."""
+	extra = dict(extra or {})
+	bad = sorted(k for k in extra if k not in EXTRA_KEYS)
+	if bad:
+		return {"error": f"campos desconhecidos no registo: {', '.join(bad)}"}
 	pts, err = check_override(project, piece, contour_px)
 	if err:
 		return {"error": err}
@@ -389,6 +417,7 @@ def append_override(project, piece: str, contour_px, nota: str = "") -> dict:
 	rec = {"t": _dt.datetime.now().isoformat(timespec="seconds"), "autor": "manual", "scan_id": p.scan_id,
 		   "piece": piece, "index_in_scan": int(p.index_in_scan),
 		   "contour_px": [[round(float(x), 2), round(float(y), 2)] for x, y in pts], "nota": str(nota or "")}
+	rec.update({k: extra[k] for k in EXTRA_KEYS if k in extra})
 	with open(overrides_path(project), "a", encoding="utf-8") as f:
 		f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 	return rec
@@ -410,3 +439,80 @@ def crop_window(project, piece: str, margin_mm: float = MARGIN_MM) -> tuple:
 		w, h = int(c[:, 0].max()) - x + 1, int(c[:, 1].max()) - y + 1
 	m = int(round(margin_mm / _mmpp(project, p.scan_id)))
 	return max(0, x - m), max(0, y - m), min(W, x + w + m), min(H, y + h + m), m
+
+
+# ---------------------------------------------------------------- automatic vs manual (plan 2.4)
+def pair_metrics(auto_px, manual_px, mm_per_px: float) -> dict:
+	""":func:`src.maskcmp.mask_metrics` of the automatic polygon (candidate) against the manual one
+	(ground truth), both in scan px, rasterised in a common local frame: ``missing`` = manual area the
+	automatic contour does not cover (a bite), ``excess`` = automatic halo / shadow outside it."""
+	from src.maskcmp import fill_contour, mask_metrics
+	a = np.asarray(auto_px, float).reshape(-1, 2)
+	m = np.asarray(manual_px, float).reshape(-1, 2)
+	both = np.vstack([a, m])
+	org = np.floor(both.min(0)) - 2
+	shape = (int(np.ceil(both[:, 1].max() - org[1])) + 3, int(np.ceil(both[:, 0].max() - org[0])) + 3)
+	return mask_metrics(fill_contour(m - org, shape), fill_contour(a - org, shape), mm_per_px)
+
+
+def manual_pairs(project) -> list:
+	"""One dict per piece with an override: ``piece``, ``t`` and ``metodo`` of its latest line, and the
+	automatic contour against the manual one (:func:`pair_metrics`: ``iou``, ``missing_mm2``,
+	``excess_mm2``, ``d_p95``, ``missing_depth_mm``, ``excess_depth_mm``). The automatic contour is the
+	``auto_contour_px`` of the piece's first line whose ``auto_origem`` is ``"segmentacao"`` (or not
+	given), else of its latest line that has one (then ``auto_origem`` says ``"manual"``: a previous
+	manual outline); pieces whose lines carry none (saved before the field existed) get the metrics as
+	None and ``auto_origem`` None. Sorted by piece."""
+	lines = read_overrides(project)
+	latest = latest_overrides(project)
+	keys = ("iou", "missing_mm2", "excess_mm2", "d_p95", "missing_depth_mm", "excess_depth_mm")
+	out = []
+	for pid in sorted(latest):
+		ov = latest[pid]
+		mine = [o for o in lines if o.get("piece") == pid and o.get("auto_contour_px")]
+		seg = [o for o in mine if o.get("auto_origem") in (None, "segmentacao")]
+		src = seg[0] if seg else (mine[-1] if mine else None)
+		row = {"piece": pid, "t": ov.get("t"), "metodo": ov.get("metodo") or "vertices", "scan_id": ov.get("scan_id"),
+			   "auto_origem": (src.get("auto_origem") or "segmentacao") if src else None}
+		if src is None:
+			row.update({k: None for k in keys})
+		else:
+			r = pair_metrics(src["auto_contour_px"], ov["contour_px"], _mmpp(project, ov.get("scan_id")))
+			row.update({k: float(r[k]) for k in keys})
+		out.append(row)
+	return out
+
+
+def _fmt(v, nd=2):
+	return "—" if v is None else f"{v:.{nd}f}"
+
+
+def main(argv=None) -> int:
+	"""``python -m src.overrides --project <p> --pares [--json]``: the automatic-vs-manual table."""
+	import argparse
+	from src.state import Project
+	ap = argparse.ArgumentParser(prog="python -m src.overrides", description="Contornos manuais (overrides.jsonl).")
+	ap.add_argument("--project", required=True)
+	ap.add_argument("--pares", action="store_true", help="contorno automático vs manual por peça (maskcmp)")
+	ap.add_argument("--json", action="store_true", help="com --pares: JSON em vez da tabela")
+	a = ap.parse_args(argv)
+	if not a.pares:
+		ap.print_help()
+		return 0
+	rows = manual_pairs(Project.open(a.project))
+	if a.json:
+		print(json.dumps(rows, ensure_ascii=False, indent=1))
+		return 0
+	print("| peça | t | método | origem auto | IoU | em falta mm² | a mais mm² | p95 mm | prof. falta mm | prof. a mais mm |")
+	print("|---|---|---|---|---|---|---|---|---|---|")
+	for r in rows:
+		print(f"| {r['piece']} | {r['t']} | {r['metodo']} | {r['auto_origem'] or 'sem registo'} | {_fmt(r['iou'], 4)} | "
+			  f"{_fmt(r['missing_mm2'])} | {_fmt(r['excess_mm2'])} | {_fmt(r['d_p95'])} | {_fmt(r['missing_depth_mm'])} | "
+			  f"{_fmt(r['excess_depth_mm'])} |")
+	n = sum(1 for r in rows if r["iou"] is not None)
+	print(f"\n{len(rows)} peças com contorno manual; {n} com contorno automático registado.")
+	return 0
+
+
+if __name__ == "__main__":
+	raise SystemExit(main())

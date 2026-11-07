@@ -409,7 +409,7 @@ async function loadAll() {
 
 // ------------------------------------------------------------ tabs
 function showTab(t) {
-  if (t !== "celula" && t !== "contorno") S.prevTab = t;
+  if (t !== "celula") S.prevTab = t;
   if (t === "buscar") $("#n-buscar").classList.remove("aviso");
   S.tab = t;
   $$("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t));
@@ -421,7 +421,7 @@ function showTab(t) {
     const g = S.sections.find((x) => x.id === S.mesaOpen.id), c = g && (g.candidatos.find((x) => x.rank === S.mesaOpen.rank) || groupBest(g));
     if (c) { S.mesa = { id: g.id, rank: c.rank, footprint: c.footprint }; drawMesa(); }
   }
-  if (t !== "celula" && t !== "report" && t !== "contorno" && S.sel) { S.sel = null; drawSel(); }
+  if (t !== "celula" && t !== "report" && S.sel) { S.sel = null; drawSel(); }
   if (t !== "mesa" && S.mesa) { S.mesa = null; drawMesa(); }
 }
 
@@ -880,11 +880,8 @@ async function openPiece(pid) {
 }
 
 // ------------------------------------------------------------ editor de contorno (docs/gui-design.md §18)
-// The scan around the piece in a <canvas>, the outline as draggable vertices (crop px). Saving appends to
-// overrides.jsonl and re-cuts the piece on the server (POST /api/pieces/{id}/contorno); nothing else here
-// knows about shapes.
-const CED_HIT = 6;          // vertex / edge hit radius, screen px (mouse); touch uses CED_HIT_TOUCH
-const CED_HIT_TOUCH = 14;
+// The editor itself (strokes, live solve, full-window overlay) lives in editor.js; only the entry button and
+// the «contorno manual» badge are here.
 function contourButton(pid, back) {
   return h("button", { class: "btn slim", type: "button", "data-contorno": pid, "aria-label": "Editar contorno",
     title: "desenhar / ajustar o contorno da peça por cima do scan (fica fora das métricas de CV)",
@@ -894,337 +891,6 @@ function manualBadge(p) {
   if (!p || !p.contorno_manual) return null;
   return h("div", { class: "manual-badge small", title: "contorno desenhado à mão: a peça fica fora das métricas de segmentação" },
     h("span", { class: "chip manual" }, "contorno manual"), p.contorno_nota ? h("span", { class: "muted" }, ` ${p.contorno_nota}`) : null);
-}
-async function openContourEditor(pid, back) {
-  let d;
-  try { d = await api(`/api/pieces/${pid}/contorno`); } catch (e) { toast(e.message, true); return; }
-  const img = new Image();
-  img.src = d.crop_png_url;
-  try { await img.decode(); } catch (e) { toast(`${pid}: recorte do scan indisponível`, true); return; }
-  const pts = d.contour.map((p) => [p[0], p[1]]);
-  const oi = (d.indices && d.indices.length === pts.length) ? d.indices.slice() : pts.map(() => null);
-  const E = { pid, d, back: back || { kind: "piece", pid }, img, pts, oi, keep: pts.map(() => true), undo: [], sel: null,
-    view: null, drag: null, ptrs: new Map(), pinch: null, space: false, dirty: false, prevUrl: null };
-  E.orig = cedSnap(E);
-  E.origPoly = cedExpanded(E);
-  S.ced = E;
-  renderContourEditor();
-  showTab("contorno");
-  $("#app").classList.add("sheet-up");
-  requestAnimationFrame(() => { cedResize(); cedFit(); cedDraw(); });
-}
-function cedLeave() {
-  const E = S.ced;
-  if (E && E.prevUrl) URL.revokeObjectURL(E.prevUrl);
-  S.ced = null;
-  const b = E ? E.back : null;
-  if (b && b.kind === "cell") openCell(b.cell[0], b.cell[1], { zoom: false });
-  else if (b && b.kind === "piece") openPiece(b.pid);
-  else showTab(S.prevTab || "buscar");
-}
-function renderContourEditor() {
-  const E = S.ced, d = E.d, T = $("#tab-contorno");
-  const who = d.lote !== null && d.lote !== undefined ? `Saco ${d.lote} · nº ${d.n_no_lote}` : d.piece;
-  const btn = (txt, fn, attrs = {}) => h("button", Object.assign({ class: "btn slim", type: "button", onclick: fn }, attrs), txt);
-  const canvas = h("canvas", { id: "ced-canvas", "aria-label": `contorno de ${d.piece} sobre o scan`, tabindex: "0" });
-  T.replaceChildren(
-    h("div", { class: "cell-head" }, btn("← voltar", () => cedCancel()), h("h3", {}, `Contorno · ${who}`)),
-    h("p", { class: "small muted ced-who" }, `${d.piece} · ${d.scan_id}` + (d.celula ? ` · ${cellTxt(d.celula)}` : "") + ` · classe ${d.cls || "?"} · `,
-      d.manual_override ? h("span", { class: "chip manual" }, "contorno manual") : "contorno da segmentação",
-      d.override_pendente ? h("span", { class: "chip mid" }, "por aplicar") : null),
-    h("div", { class: "ced-wrap" }, canvas),
-    h("div", { class: "ced-tools" },
-      btn("−", () => cedZoom(1 / 1.4), { "aria-label": "Afastar", title: "afastar (Ctrl+roda)" }),
-      btn("+", () => cedZoom(1.4), { "aria-label": "Aproximar", title: "aproximar (Ctrl+roda)" }),
-      btn("Ajustar", () => { cedFit(); cedDraw(); }, { title: "ver o recorte inteiro" }),
-      btn("Desfazer", () => cedUndo(), { id: "ced-undo", title: "desfazer (Ctrl+Z)" }),
-      btn("Apagar vértice", () => cedDelete(), { id: "ced-del", title: "apagar o vértice selecionado (Delete)" }),
-      btn("Repor", () => cedReset(), { title: "voltar ao contorno com que o editor abriu" })),
-    h("p", { class: "small ced-status", id: "ced-status" }),
-    h("p", { class: "small muted ced-help" }, "Arrasta os vértices · clique numa aresta: novo vértice · Delete: apaga o selecionado · Ctrl+Z: desfaz · Ctrl+roda: zoom · arrastar o fundo, botão do meio ou espaço: mover."),
-    h("div", { class: "ced-prev-row" },
-      btn("Pré-visualizar recorte", (ev) => cedPreview(ev.currentTarget), { id: "ced-preview" }),
-      h("div", { class: "ced-prev", id: "ced-prev" }, h("span", { class: "muted small" }, "o recorte aparece aqui"))),
-    h("label", { class: "ced-nota" }, h("span", { class: "small muted" }, "Nota (opcional)"),
-      h("input", { id: "ced-nota", type: "text", maxlength: "200", value: d.nota || "", placeholder: "ex.: comido no lado de baixo" })),
-    h("div", { class: "actions" },
-      h("button", { class: "btn primary", type: "button", id: "ced-save", onclick: (ev) => cedSave(ev.currentTarget) }, "Guardar"),
-      btn("Cancelar", () => cedCancel(), { id: "ced-cancel" })));
-  cedBind(canvas);
-  cedStatus();
-}
-// geometry (crop px <-> canvas css px)
-const cedToScreen = (p) => { const v = S.ced.view; return [(p[0] - v.ox) * v.s, (p[1] - v.oy) * v.s]; };
-const cedToImg = (x, y) => { const v = S.ced.view; return [x / v.s + v.ox, y / v.s + v.oy]; };
-function cedCanvas() { return $("#ced-canvas"); }
-function cedResize() {
-  const c = cedCanvas(); if (!c) return;
-  const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
-  c.width = Math.max(1, Math.round(r.width * dpr)); c.height = Math.max(1, Math.round(r.height * dpr));
-}
-function cedFit() {
-  const E = S.ced, c = cedCanvas(); if (!E || !c) return;
-  const r = c.getBoundingClientRect(), [w, hh] = E.d.tamanho;
-  const s = Math.min(r.width / w, r.height / hh) || 1;
-  E.view = { s, ox: (w - r.width / s) / 2, oy: (hh - r.height / s) / 2 };
-}
-function cedZoom(f, cx, cy) {
-  const E = S.ced, c = cedCanvas(); if (!E || !c || !E.view) return;
-  const r = c.getBoundingClientRect();
-  const x = cx === undefined ? r.width / 2 : cx, y = cy === undefined ? r.height / 2 : cy;
-  const [ix, iy] = cedToImg(x, y);
-  const s = Math.min(40, Math.max(0.2, E.view.s * f));
-  E.view = { s, ox: ix - x / s, oy: iy - y / s };
-  cedDraw();
-}
-function cedArea(pts) {
-  let a = 0;
-  for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; }
-  return Math.abs(a) / 2;
-}
-function cedSimple(pts) {
-  const n = pts.length;
-  const o = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
-  for (let i = 0; i < n; i++) {
-    const a = pts[i], b = pts[(i + 1) % n];
-    for (let j = i + 2; j < n; j++) {
-      if (i === 0 && j === n - 1) continue;
-      const c = pts[j], d = pts[(j + 1) % n];
-      const d1 = o(c, d, a), d2 = o(c, d, b), d3 = o(a, b, c), d4 = o(a, b, d);
-      if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return false;
-    }
-  }
-  return true;
-}
-function cedStatus() {
-  const E = S.ced, el = $("#ced-status"); if (!E || !el) return;
-  const lim = E.d.limites || { min_pontos: 20, area_min: 0.5, area_max: 1.5 };
-  const poly = cedExpanded(E);
-  const f = cedArea(poly) / Math.max(1, cedArea(E.origPoly));
-  const warn = [];
-  if (E.pts.length < lim.min_pontos) warn.push(`precisa de pelo menos ${lim.min_pontos} vértices`);
-  if (f < lim.area_min || f > lim.area_max) warn.push(`área fora de ${Math.round(lim.area_min * 100)}–${Math.round(lim.area_max * 100)} %`);
-  if (!cedSimple(poly)) warn.push("o contorno cruza-se");
-  el.replaceChildren(`${E.pts.length} vértices · área ${Math.round(f * 100)} % da inicial` + (E.sel !== null ? ` · vértice ${E.sel + 1} selecionado` : ""),
-    ...(warn.length ? [h("span", { class: "ced-warn" }, ` · ${warn.join(" · ")}`)] : []));
-  el.classList.toggle("bad", warn.length > 0);
-  const u = $("#ced-undo"), dl = $("#ced-del");
-  if (u) u.disabled = !E.undo.length;
-  if (dl) dl.disabled = E.sel === null;
-}
-function cedDraw() {
-  const E = S.ced, c = cedCanvas(); if (!E || !c || !E.view) return;
-  const ctx = c.getContext("2d"), dpr = window.devicePixelRatio || 1, v = E.view;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = "#202226"; ctx.fillRect(0, 0, c.width, c.height);
-  ctx.setTransform(dpr * v.s, 0, 0, dpr * v.s, -v.ox * v.s * dpr, -v.oy * v.s * dpr);
-  ctx.imageSmoothingEnabled = v.s < 2.5;
-  ctx.drawImage(E.img, 0, 0);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const path = (pts) => { ctx.beginPath(); pts.forEach((p, i) => { const [x, y] = cedToScreen(p); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.closePath(); };
-  path(E.origPoly); ctx.setLineDash([4, 4]); ctx.strokeStyle = "rgba(41, 211, 230, .85)"; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
-  path(cedExpanded(E)); ctx.fillStyle = "rgba(255, 176, 0, .22)"; ctx.fill(); ctx.strokeStyle = "#ffb000"; ctx.lineWidth = 1.6; ctx.stroke();
-  // vertex dots shrink when they crowd (low zoom): radius ~ 30 % of the mean on-screen spacing, 1.5..3.2 px
-  let per = 0;
-  for (let i = 0; i < E.pts.length; i++) { const a = E.pts[i], b = E.pts[(i + 1) % E.pts.length]; per += Math.hypot(b[0] - a[0], b[1] - a[1]); }
-  const dot = Math.max(1.5, Math.min(3.2, 0.3 * per * v.s / Math.max(1, E.pts.length)));
-  E.pts.forEach((p, i) => {
-    const [x, y] = cedToScreen(p), sel = i === E.sel;
-    ctx.beginPath(); ctx.arc(x, y, sel ? CED_HIT : dot, 0, 2 * Math.PI);
-    ctx.fillStyle = sel ? "#ffb000" : "#1a1300"; ctx.fill();
-    ctx.lineWidth = sel ? 2 : 1.3; ctx.strokeStyle = sel ? "#fff" : "#ffb000"; ctx.stroke();
-  });
-}
-function cedHitVertex(x, y, r) {
-  const E = S.ced; let best = null, bd = r;
-  E.pts.forEach((p, i) => { const [sx, sy] = cedToScreen(p); const dd = Math.hypot(sx - x, sy - y); if (dd <= bd) { bd = dd; best = i; } });
-  return best;
-}
-function cedHitEdge(x, y, r) {
-  const E = S.ced, n = E.pts.length; let best = null, bd = r;
-  for (let i = 0; i < n; i++) {
-    const a = cedToScreen(E.pts[i]), b = cedToScreen(E.pts[(i + 1) % n]);
-    const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy || 1;
-    const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / L));
-    const dd = Math.hypot(a[0] + t * dx - x, a[1] + t * dy - y);
-    if (dd <= bd) { bd = dd; best = { i, p: cedToImg(a[0] + t * dx, a[1] + t * dy) }; }
-  }
-  return best;
-}
-// Each handle i keeps oi[i] (its index in d.denso, null once it moved / was created) and keep[i] (edge
-// i -> i+1 untouched). cedExpanded() = what is drawn, previewed and saved: an untouched edge gets back the
-// exact points of denso between its handles (src.overrides.expand_polygon), an edited one is straight.
-function cedSnap(E) { return { pts: E.pts.map((p) => p.slice()), oi: E.oi.slice(), keep: E.keep.slice(), sel: E.sel }; }
-function cedRestore(E, u) { E.pts = u.pts.map((p) => p.slice()); E.oi = u.oi.slice(); E.keep = u.keep.slice(); }
-function cedExpanded(E = S.ced) {
-  const n = E.pts.length, D = E.d.denso || [], m = D.length, out = [];
-  for (let i = 0; i < n; i++) {
-    out.push(E.pts[i]);
-    const a = E.oi[i], b = E.oi[(i + 1) % n];
-    if (E.keep[i] && a !== null && b !== null && m && n > 1) {
-      for (let j = (a + 1) % m, g = 0; j !== b && g < m; j = (j + 1) % m, g++) out.push(D[j]);
-    }
-  }
-  return out;
-}
-function cedPush() {
-  const E = S.ced;
-  E.undo.push(Object.assign(cedSnap(E), { sel: E.sel }));
-  if (E.undo.length > 200) E.undo.shift();
-  E.dirty = true;
-}
-function cedUndo() {
-  const E = S.ced; if (!E || !E.undo.length) return;
-  const u = E.undo.pop(); cedRestore(E, u); E.sel = u.sel !== null && u.sel < E.pts.length ? u.sel : null;
-  cedDraw(); cedStatus();
-}
-function cedTouch(E, i) {      // handle i moved: its two edges are no longer the original contour
-  const n = E.pts.length;
-  E.oi[i] = null; E.keep[i] = false; E.keep[(i - 1 + n) % n] = false;
-}
-function cedInsert(E, i, p) {  // new handle on edge i (between i and i+1)
-  E.pts.splice(i + 1, 0, p); E.oi.splice(i + 1, 0, null); E.keep.splice(i, 1, false, false);
-}
-function cedDelete() {
-  const E = S.ced; if (!E || E.sel === null) return;
-  if (E.pts.length <= 3) { toast("um contorno precisa de pelo menos 3 vértices", true); return; }
-  cedPush();
-  const i = E.sel;
-  E.pts.splice(i, 1); E.oi.splice(i, 1); E.keep.splice(i, 1);
-  const n = E.pts.length; E.keep[(i - 1 + n) % n] = false;     // the merged edge is straight
-  E.sel = null; cedDraw(); cedStatus();
-}
-function cedReset() {
-  const E = S.ced; if (!E) return;
-  cedPush(); cedRestore(E, E.orig); E.sel = null; cedDraw(); cedStatus();
-}
-function cedClamp(p) {
-  const [w, hh] = S.ced.d.tamanho;
-  return [Math.max(0, Math.min(w - 1, Math.round(p[0] * 100) / 100)), Math.max(0, Math.min(hh - 1, Math.round(p[1] * 100) / 100))];
-}
-function cedBind(c) {
-  const local = (e) => { const r = c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-  c.addEventListener("wheel", (e) => {
-    if (!(e.ctrlKey || e.metaKey)) return;     // plain wheel scrolls the panel
-    e.preventDefault();
-    const [x, y] = local(e);
-    cedZoom(Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0025)), x, y);
-  }, { passive: false });
-  c.addEventListener("mousedown", (e) => { if (e.button === 1) e.preventDefault(); });   // no autoscroll
-  c.addEventListener("pointerdown", (e) => {
-    const E = S.ced; if (!E || !E.view) return;
-    c.focus({ preventScroll: true });
-    try { c.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointer: no capture */ }
-    const [x, y] = local(e);
-    E.ptrs.set(e.pointerId, { x, y });
-    if (E.ptrs.size === 2) {               // pinch (touch): zoom about the midpoint, cancels a vertex drag
-      const [a, b] = [...E.ptrs.values()];
-      if (E.drag && E.drag.kind === "v" && E.drag.pushed) cedUndo();
-      E.drag = null;
-      E.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), view: { ...E.view }, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
-      return;
-    }
-    if (E.ptrs.size > 2) return;
-    if (e.button === 1 || (e.button === 0 && E.space)) {
-      e.preventDefault();
-      E.drag = { kind: "pan", x, y, view: { ...E.view } };
-      c.classList.add("panning");
-      return;
-    }
-    if (e.button !== 0) return;
-    const r = e.pointerType === "touch" ? CED_HIT_TOUCH : CED_HIT;
-    let i = cedHitVertex(x, y, r), pushed = false;
-    if (i === null) {
-      const ed = cedHitEdge(x, y, r);
-      if (ed) { cedPush(); pushed = true; cedInsert(E, ed.i, cedClamp(ed.p)); i = ed.i + 1; }
-    }
-    if (i !== null) {
-      E.sel = i;
-      E.drag = { kind: "v", i, pushed, x, y };
-    } else {
-      E.sel = null;
-      E.drag = { kind: "pan", x, y, view: { ...E.view } };
-      c.classList.add("panning");
-    }
-    cedDraw(); cedStatus();
-  });
-  c.addEventListener("pointermove", (e) => {
-    const E = S.ced; if (!E || !E.ptrs.has(e.pointerId)) return;
-    const [x, y] = local(e);
-    E.ptrs.set(e.pointerId, { x, y });
-    if (E.pinch && E.ptrs.size >= 2) {
-      const [a, b] = [...E.ptrs.values()], P = E.pinch;
-      const s = Math.min(40, Math.max(0.2, P.view.s * Math.hypot(a.x - b.x, a.y - b.y) / Math.max(1, P.d)));
-      const ix = P.mx / P.view.s + P.view.ox, iy = P.my / P.view.s + P.view.oy;
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      E.view = { s, ox: ix - mx / s, oy: iy - my / s };
-      cedDraw();
-      return;
-    }
-    const D = E.drag; if (!D) return;
-    if (D.kind === "pan") {
-      E.view = { s: D.view.s, ox: D.view.ox - (x - D.x) / D.view.s, oy: D.view.oy - (y - D.y) / D.view.s };
-      cedDraw();
-    } else if (D.kind === "v") {
-      if (!D.pushed) { if (Math.hypot(x - D.x, y - D.y) < 2) return; cedPush(); D.pushed = true; cedTouch(E, D.i); }
-      E.pts[D.i] = cedClamp(cedToImg(x, y));
-      cedDraw();
-    }
-  });
-  const up = (e) => {
-    const E = S.ced; if (!E) return;
-    E.ptrs.delete(e.pointerId);
-    if (E.ptrs.size < 2) E.pinch = null;
-    if (E.ptrs.size === 0) { E.drag = null; c.classList.remove("panning"); cedStatus(); }
-  };
-  c.addEventListener("pointerup", up);
-  c.addEventListener("pointercancel", up);
-  c.addEventListener("contextmenu", (e) => e.preventDefault());
-}
-function cedKey(e) {
-  const E = S.ced;
-  if (!E || S.tab !== "contorno") return;
-  const tag = (e.target && e.target.tagName) || "";
-  if (tag === "INPUT" || tag === "TEXTAREA") return;
-  if (e.type === "keyup") { if (e.key === " ") { E.space = false; const c = cedCanvas(); if (c) c.classList.remove("space"); } return; }
-  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === "z" || e.key === "Z")) { e.preventDefault(); cedUndo(); return; }
-  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); cedDelete(); return; }
-  if (e.key === " ") { e.preventDefault(); E.space = true; const c = cedCanvas(); if (c) c.classList.add("space"); }
-}
-async function cedPreview(btn) {
-  const E = S.ced; if (!E) return;
-  btn.disabled = true;
-  try {
-    const r = await fetch(`/api/pieces/${E.pid}/contorno/preview`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contour: cedExpanded(E), origem: E.d.origem, tamanho: E.d.tamanho }) });
-    if (!r.ok) { let m = `erro ${r.status}`; try { const b = await r.json(); m = b.error || b.detail || m; } catch (e) { /* not JSON */ } toast(m, true); return; }
-    const url = URL.createObjectURL(await r.blob());
-    if (E.prevUrl) URL.revokeObjectURL(E.prevUrl);
-    E.prevUrl = url;
-    $("#ced-prev").replaceChildren(h("img", { src: url, alt: `pré-visualização do recorte de ${E.pid}` }));
-  } catch (e) { toast(e.message, true); } finally { btn.disabled = false; }
-}
-async function cedSave(btn) {
-  const E = S.ced; if (!E) return;
-  const old = btn.textContent;
-  btn.disabled = true; btn.textContent = "a gravar…";
-  try {
-    const r = await api(`/api/pieces/${E.pid}/contorno`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contour: cedExpanded(E), origem: E.d.origem, tamanho: E.d.tamanho, nota: $("#ced-nota").value }) });
-    for (const m of r.mensagens || []) toast(m);
-    if (r.invariantes && r.invariantes.length) toast("INVARIANTES: " + r.invariantes.join("; "), true);
-    E.dirty = false;
-    await loadAll();
-    if (S.lots) loadLots().catch(() => {});
-    cedLeave();
-  } catch (e) {
-    toast(e.message, true);
-  } finally { btn.disabled = false; btn.textContent = old; }
-}
-function cedCancel() {
-  const E = S.ced;
-  if (E && E.dirty && !confirm("Descartar as alterações ao contorno?")) return;
-  cedLeave();
 }
 
 // ------------------------------------------------------------ pesquisa (barra de topo; só cliente, só leitura)
@@ -1574,7 +1240,7 @@ function renderSuspeitas(T) {
   const items = S.susp.items || [], sm = S.susp.summary || {};
   const d = h("details", { class: "suspeitas", id: "suspeitas" },
     h("summary", {}, `Suspeitas (${items.length})`),
-    h("p", { class: "small muted" }, `Orientação contra as vizinhas montadas: ${sm.n_verificadas ?? "—"} de ${sm.n_colocadas ?? "—"} peças verificadas`
+    h("p", { class: "small muted" }, `Orientação (contra as vizinhas montadas) e recorte (contra a gémea): ${sm.n_verificadas ?? "—"} de ${sm.n_colocadas ?? "—"} peças verificadas`
       + (sm.n_sem_cantos ? ` · ${sm.n_sem_cantos} sem cantos (não verificadas)` : "") + ". Só leitura: nada é corrigido aqui."));
   d.open = old ? old.open : !!S.suspOpen;
   d.addEventListener("toggle", () => { S.suspOpen = d.open; });
@@ -1588,7 +1254,7 @@ function renderSuspeitas(T) {
   q.addEventListener("input", apply);
   d.append(q);
   if (!items.length) d.append(h("div", { class: "empty" }, h("strong", {}, "Sem suspeitas.")));
-  const GRAU = { impossivel: "impossível", melhor_rotacao: "melhor rotação" };
+  const GRAU = { impossivel: "impossível", melhor_rotacao: "melhor rotação", recorte: "Recorte" };
   for (const it of items) {
     const [l, c] = it.cell;
     const go = () => showCellOnBoard(l, c);
@@ -1666,12 +1332,12 @@ async function boot() {
   tgr.onchange = () => { S.showGrid = tgr.checked; lsSet("tg-grid", tgr.checked ? "1" : "0"); setView(S.vb); };
   tgs.onchange = () => { S.showSug = tgs.checked; lsSet("tg-sug", tgs.checked ? "1" : "0"); drawSuggestions(); };
   document.addEventListener("keydown", (e) => {
+    if (S.ced) { cedKey(e); return; }
     if (e.key === "Escape" && $("#sug-pick")) { hideSugPicker(); return; }
     if (e.key === "Escape") { if (!$("#lightbox").hidden) $("#lightbox").hidden = true; else if (S.tab === "celula") showTab(S.prevTab); }
-    cedKey(e);
   });
   document.addEventListener("keyup", cedKey);
-  window.addEventListener("resize", () => { if (S.ced && S.tab === "contorno") { cedResize(); cedDraw(); } });
+  window.addEventListener("resize", () => { if (S.ced) cedOnResize(); });
   const lg = $("#legend-box");
   const stored = lsGet("legend-open");
   lg.open = stored === null ? window.innerHeight >= 900 : stored === "1";

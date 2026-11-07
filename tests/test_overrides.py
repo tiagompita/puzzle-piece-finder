@@ -196,3 +196,46 @@ def test_force_rebuild_keeps_manual_contour(tmp_path):
     ev = q.events()[-1]
     assert ev["action"] == "piece_resegmented" and ev["motivo"] == "manual" and ev["nota"] == "segunda"
     assert Project.open(q.path).check_invariants(disk=True) == []
+
+
+# ---------------------------------------------------------------- extra fields, automatic vs manual (plan 2.4)
+def test_append_override_extra_fields(tmp_path):
+    pr, placed, tw, dec = _project(tmp_path)
+    c = _moved_contour(pr, tw, 6.0)
+    bad = OV.append_override(pr, tw, c, extra={"contour_px": [[0, 0]]})
+    assert "desconhecidos" in bad["error"] and not os.path.exists(OV.overrides_path(pr))
+    auto = np.round(pr.contour_px(tw)).astype(int).tolist()
+    rec = OV.append_override(pr, tw, c, nota="t", extra={"metodo": "tracos", "auto_contour_px": auto,
+                                                         "auto_origem": "segmentacao", "auto_area_mm2": 1.0})
+    assert rec["metodo"] == "tracos" and rec["auto_contour_px"] == auto and len(rec["contour_px"]) == len(c)
+    line = OV.read_overrides(pr)[0]
+    assert line == rec
+    assert R.rebuild_piece(pr, tw)["errors"] == []                       # extra fields do not disturb applying it
+
+
+def test_manual_pairs_and_cli(tmp_path, capsys):
+    pr, placed, tw, dec = _project(tmp_path)
+    mmpp = OV._mmpp(pr, pr.piece(tw).scan_id)
+    auto = np.round(pr.contour_px(tw)).astype(int).tolist()
+    c1 = _moved_contour(pr, tw, 6.0)                                      # manual = auto pushed out on the right
+    assert "error" not in OV.append_override(pr, tw, c1, extra={"metodo": "vertices", "auto_contour_px": auto,
+                                                                "auto_origem": "segmentacao"})
+    c2 = _moved_contour(pr, tw, 9.0)                                      # a second manual save: its "auto" is c1
+    assert "error" not in OV.append_override(pr, tw, c2, extra={"metodo": "tracos", "auto_contour_px": np.round(c1).astype(int).tolist(),
+                                                                "auto_origem": "manual"})
+    assert "error" not in OV.append_override(pr, dec, _moved_contour(pr, dec, 5.0))   # an old-style line
+    rows = {r["piece"]: r for r in OV.manual_pairs(pr)}
+    assert set(rows) == {tw, dec}
+    r = rows[tw]
+    assert r["metodo"] == "tracos" and r["auto_origem"] == "segmentacao"   # measured against the segmentation
+    want = OV.pair_metrics(auto, c2, mmpp)
+    assert abs(r["iou"] - want["iou"]) < 1e-12 and r["iou"] < 0.99
+    assert r["missing_mm2"] > 1.0 and r["excess_mm2"] < 0.2 * r["missing_mm2"]   # the automatic contour bites
+    assert 0.5 < r["missing_depth_mm"] < 1.2 and r["d_p95"] > 0               # ~9 px = 0.76 mm
+    assert rows[dec]["iou"] is None and rows[dec]["auto_origem"] is None and rows[dec]["metodo"] == "vertices"
+    assert OV.main(["--project", pr.path, "--pares"]) == 0
+    out = capsys.readouterr().out
+    assert tw in out and dec in out and "sem registo" in out and "2 peças com contorno manual; 1 com" in out
+    assert OV.main(["--project", pr.path, "--pares", "--json"]) == 0
+    js = json.loads(capsys.readouterr().out)
+    assert [x["piece"] for x in js] == sorted([tw, dec])
