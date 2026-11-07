@@ -65,7 +65,7 @@ def test_right_poses_no_suspects(tmp_path):
     r = C.evaluate(pr)
     assert r["items"] == []
     assert r["summary"] == dict(n_colocadas=3, n_verificadas=3, n_sem_cantos=0, n_com_vizinhas=3, n_impossivel=0,
-                                n_melhor_rotacao=0, n_explicadas=0)
+                                n_melhor_rotacao=0, n_explicadas=0, n_recorte=0)
     assert _log_lines(pr) == log0
 
 
@@ -123,3 +123,74 @@ def test_grade_rules():
     assert C._grade({0: _res(1, 0, 1.0, f_ok=False), 1: _res(1, 0, 1.2), 2: bad, 3: bad}, 0) == ("impossivel", 1)
     # no assignment has the F sides right (an F-count / shape problem, not orientation): not reported
     assert C._grade({k: _res(1, 0, 1.0, f_ok=False) for k in range(4)}, 0) == (None, None)
+
+
+# ---------------------------------------------------------------- grau «recorte» (silhueta contra a gémea colocada)
+def _twin_project(tmp_path, twin_kinds="TBTB", symmetry=None):
+    """Piece ``TBTB`` at (2,2) and its twin at (3,5) of the 4×6 rot180 profile: the same die cut turned 180°
+    (``twin_kinds`` = ``TBTB``), or a cut with a tab less (``FBTB``: the top tab replaced by a flat side)."""
+    prof = synth.profile(rows=4, cols=6, p90=None, symmetry=symmetry)
+    pp = tmp_path / "puzzle.json"
+    prof.save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    board = synth.body_mm("TBTB")
+    twin = synth.twin_board_contour(synth.body_mm(twin_kinds), prof)
+    spec = [(board, 23.0, (2, 2)), (twin, -61.0, (3, 5))]
+    pts_all = [_piece_px(b, psi, (400 + 800 * i, 400)) for i, (b, psi, _) in enumerate(spec)]
+    img = np.full((800, 2000, 3), BG, np.uint8)
+    for pts in pts_all:
+        cv2.fillPoly(img, [np.round(pts).astype(np.int32).reshape(-1, 1, 2)], (200, 40, 40))
+    scan = tmp_path / "scan.png"
+    Image.fromarray(img).save(scan)
+    sid = pr.add_scan(str(scan), dpi=300, lote=1)
+    os.makedirs(pr.p("crops"), exist_ok=True)
+    ids = []
+    for i, ((_, psi, cell), pts) in enumerate(zip(spec, pts_all)):
+        x0, y0 = np.floor(pts.min(0)).astype(int) - 10
+        x1, y1 = np.ceil(pts.max(0)).astype(int) + 10
+        al = np.zeros(img.shape[:2], np.uint8)
+        cv2.fillPoly(al, [np.round(pts).astype(np.int32).reshape(-1, 1, 2)], 255)
+        rel = f"crops/P{i + 1:04d}.png"
+        Image.fromarray(np.ascontiguousarray(np.dstack([img, al])[y0:y1, x0:x1])).save(pr.p(rel))
+        pid = pr.add_piece(sid, {"index_in_scan": i, "n_no_lote": i + 1, "shape": analyse(pts, MMPP), "contour": pts,
+                                 "bbox": [int(x0), int(y0), int(x1 - x0), int(y1 - y0)], "crop_path": rel})
+        pr.place(pid, cell, theta_deg=-psi)
+        ids.append(pid)
+    pr.save()
+    return pr, ids
+
+
+def test_twin_with_same_cut_is_not_recorte(tmp_path):
+    pr, ids = _twin_project(tmp_path)
+    r = C.evaluate(pr)
+    assert r["items"] == [] and r["summary"]["n_recorte"] == 0
+    res = C.twin_local_residual(pr.shape(ids[0]), pr.shape(ids[1]))
+    assert res["nn_max_mm"] < 0.5 * C.TWIN_LOCAL_MAX_MM
+
+
+def test_twin_with_a_tab_less_is_recorte_for_both(tmp_path):
+    pr, ids = _twin_project(tmp_path, twin_kinds="FBTB")
+    log0 = _log_lines(pr)
+    r = C.evaluate(pr)
+    rec = [it for it in r["items"] if it["grau"] == "recorte"]
+    assert sorted(it["piece"] for it in rec) == sorted(ids) and r["summary"]["n_recorte"] == 2
+    it = next(it for it in rec if it["piece"] == ids[0])
+    assert it["gemea"] == ids[1] and it["nn_max_mm"] > C.TWIN_LOCAL_MAX_MM and it["excecao"] is None
+    assert it["falhas"][0].startswith("gémea local ") and "recorte" in C.format_item(it)
+    assert _log_lines(pr) == log0
+
+
+def test_recorte_in_symmetry_exception_says_so(tmp_path):
+    exc = {"type": "rot180", "excecoes": [{"cols": [2, 5], "rows": [[2, 3]], "texto": "corte não simétrico (teste)"}]}
+    pr, ids = _twin_project(tmp_path, twin_kinds="FBTB", symmetry=exc)
+    rec = [it for it in C.evaluate(pr)["items"] if it["grau"] == "recorte"]
+    assert len(rec) == 2 and all(it["texto"] == "corte não simétrico (teste)" for it in rec)
+
+
+def test_bay_flag_and_manual_override(tmp_path):
+    pr, ids = _twin_project(tmp_path)
+    pr.piece(ids[0]).flags = dict(pr.piece(ids[0]).flags or {}, suspeita_recorte={"razoes": ["baia"], "baia_mm2": 22.8})
+    rec = [it for it in C.evaluate(pr)["items"] if it["grau"] == "recorte"]
+    assert [it["piece"] for it in rec] == [ids[0]] and rec[0]["texto"] == "tab/baía fora do contorno (22,8 mm²)"
+    pr.piece(ids[0]).flags["manual_override"] = True
+    assert [it for it in C.evaluate(pr)["items"] if it["grau"] == "recorte"] == []

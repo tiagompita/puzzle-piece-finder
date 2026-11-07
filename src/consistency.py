@@ -17,6 +17,19 @@ A piece is a suspect when
   (fewer failing sides, or a much lower total cost; :data:`BETTER_FEWER_FAILS`,
   :data:`BETTER_COST_RATIO`, :data:`BETTER_COST_MM`).
 
+A piece is also a suspect, grade ``recorte`` (its silhouette, not its pose), when
+
+* its twin (:meth:`src.profile.PuzzleProfile.twin`) is on the board and the twin's shape, aligned by
+  :func:`src.shape.free_dist`, leaves a contour point of the piece farther than :data:`TWIN_LOCAL_MAX_MM`
+  from it (``nn_max``: a local bite or a lost tab that the global RMS hides), or the piece has no 4
+  corners while its twin is there (signal (a) of docs/diagnostico/segmentacao/COMIDO.md §5);
+* the segmentation flagged it with ``flags.suspeita_recorte.razoes`` containing ``baia`` (a tab / bay
+  outside the contour).
+
+Cells of a known exception of the die symmetry (:data:`TWIN_EXCEPTIONS`, or ``symmetry.excecoes`` of the
+profile) are still listed, with the exception as text. Pieces with a manual contour (``manual_override``)
+are left out of ``recorte``.
+
 Nothing is corrected: the output says which rotation would fit (``rot_alt_deg``, clockwise on the
 screen like ``theta_deg``: the pose that fits is ``theta_deg + rot_alt_deg``). The rotation fix
 itself is a data change (log / section anchor) after a physical check.
@@ -35,6 +48,7 @@ import time
 from typing import Optional
 
 __all__ = ["BETTER_FEWER_FAILS", "BETTER_COST_RATIO", "BETTER_COST_MM", "BETTER_COST_MIN_SIDES", "FAIL_COST_MM", "GRAUS",
+		   "TWIN_LOCAL_MAX_MM", "TWIN_EXCEPTIONS", "twin_local_residual", "twin_exception",
 		   "checked_ids", "evaluate", "suspects", "summary", "suspects_near", "suspects_lines", "rot_text", "format_item", "main"]
 
 BETTER_FEWER_FAILS = 1      # an alternative is better with at least this many fewer failing sides ...
@@ -45,7 +59,13 @@ BETTER_COST_MIN_SIDES = 2   # ... the cost-only rule needs at least this many mo
 							# (P0147 (2,61), 1 neighbour, 0 failures, 2,2 -> 1,3 mm: the only cost-only hit of the 607)
 FAIL_COST_MM = 5.0          # cost (mm) of a side that cannot fit at all (F facing a neighbour, T-T / B-B) in the totals;
 							# above any T-B cost seen (RMS + 0.5 dL, failing T-B sides of the 607 placed: <= 3.2)
-GRAUS = ("impossivel", "melhor_rotacao")
+TWIN_LOCAL_MAX_MM = 1.75   # recorte: max distance of a contour point to the aligned twin (COMIDO.md §5: 63 controls
+							# <= 1.31, 5 eaten silhouettes >= 2.17; midpoint)
+# Known exceptions of the die symmetry, by profile id, until they move to ``symmetry.excecoes`` of puzzle.json:
+# the c32|c33 cut of rows 1-3 / 45-47 of the Alpes is not symmetric (ORIENTACOES-2026-11-07 §D; pending 6).
+TWIN_EXCEPTIONS = {"alpes": [{"cols": [32, 33], "rows": [[1, 3], [45, 47]],
+							  "texto": "corte c32|c33 não simétrico (exceção por confirmar)"}]}
+GRAUS = ("impossivel", "melhor_rotacao", "recorte")
 _OPP = {"N": "S", "S": "N", "E": "W", "W": "E"}
 _STATES = ("colocada", "posicao_conhecida")
 
@@ -78,6 +98,85 @@ def _fail_text(f: dict) -> str:
 	if why == "rms":
 		return f"{d} RMS {_num(f['rms'])} mm com {q}"
 	return f"{d} ΔL {_num(f['dl'])} mm com {q}"
+
+
+def twin_local_residual(a, b) -> Optional[dict]:
+	"""``{rms_mm, nn_p95_mm, nn_max_mm}`` of shape ``a`` against shape ``b`` aligned by :func:`src.shape.free_dist`
+	(cyclic shift + rotation of the 512-point ``z``): distance of each point of ``a`` to the nearest point of the
+	aligned ``b``. None if a shape is missing or has no ``z``."""
+	import numpy as np
+	from src.shape import free_dist
+	if a is None or b is None or getattr(a, "z", None) is None or getattr(b, "z", None) is None:
+		return None
+	rms, s, phi = free_dist(a, b)
+	zb = np.roll(b.z, -s) * np.exp(1j * np.radians(phi))
+	nn = np.abs(a.z[:, None] - zb[None, :]).min(1)
+	return {"rms_mm": float(rms), "nn_p95_mm": float(np.percentile(nn, 95)), "nn_max_mm": float(nn.max())}
+
+
+def twin_exception(profile, cell) -> Optional[str]:
+	"""Text of the known symmetry exception covering ``cell`` (profile ``symmetry.excecoes``, else
+	:data:`TWIN_EXCEPTIONS` by profile id), or None."""
+	exc = (getattr(profile, "symmetry", None) or {}).get("excecoes")
+	if exc is None:
+		exc = TWIN_EXCEPTIONS.get(getattr(profile, "id", None), [])
+	l, c = int(cell[0]), int(cell[1])
+	for e in exc or []:
+		if c in [int(v) for v in e.get("cols", [])] and any(int(a) <= l <= int(b) for a, b in e.get("rows", [])):
+			return str(e.get("texto") or "exceção da simetria")
+	return None
+
+
+def _bay_mm2(flag: dict) -> Optional[float]:
+	"""Area of the ``baia`` reason of a ``suspeita_recorte`` flag (key not fixed yet: ``baia_mm2`` or ``baia.mm2``)."""
+	v = flag.get("baia_mm2")
+	if v is None and isinstance(flag.get("baia"), dict):
+		v = flag["baia"].get("mm2")
+	return None if v is None else float(v)
+
+
+def _recorte_items(project, ids: list) -> list:
+	"""``recorte`` suspects among ``ids`` (see the module docstring); pure reads of the project."""
+	from src.overrides import is_manual
+	by_cell = {tuple(p.celula): pid for pid, p in project.pieces.items() if p.estado in _STATES and p.celula is not None}
+	out = []
+	for pid in ids:
+		p = project.piece(pid)
+		if is_manual(p):
+			continue
+		falhas, extra = [], {}
+		sh = project.shape(pid)
+		tc = project.profile.twin(*p.celula)
+		tw = by_cell.get(tuple(tc)) if tc is not None else None
+		tsh = project.shape(tw) if tw is not None and tw != pid else None
+		if tsh is not None and tsh.ok:
+			if sh is None or not sh.ok or len(sh.corners) != 4:
+				falhas.append("silhueta sem 4 cantos")
+			else:
+				r = twin_local_residual(sh, tsh)
+				if r is not None and r["nn_max_mm"] > TWIN_LOCAL_MAX_MM:
+					falhas.append(f"gémea local {_num(r['nn_max_mm'])} mm")
+					extra = {"nn_max_mm": round(r["nn_max_mm"], 3), "rms_mm": round(r["rms_mm"], 3)}
+		sr = (p.flags or {}).get("suspeita_recorte") or {}
+		bay = "baia" in (sr.get("razoes") or [])
+		if bay:
+			a = _bay_mm2(sr)
+			falhas.append("tab/baía fora do contorno" + (f" ({_num(a, 1)} mm²)" if a is not None else ""))
+		if not falhas:
+			continue
+		exc = twin_exception(project.profile, p.celula)
+		if exc and not bay:
+			texto = exc
+		elif bay and len(falhas) == 1:
+			texto = falhas[0]
+		else:
+			texto = "silhueta longe da gémea: recorte a rever (scan/contorno)"
+		item = dict(piece=pid, cell=list(p.celula), estado=p.estado, grau="recorte", falhas=falhas, texto=texto,
+					gemea=tw, nn_max_mm=None, rms_mm=None, excecao=exc, k0=None, k_alt=None, rot_alt_deg=None,
+					n_falhas0=len(falhas), n_falhas_alt=None, custo0=None, custo_alt=None, n_vizinhas=None, falhas_alt=[])
+		item.update(extra)
+		out.append(item)
+	return out
 
 
 def _side_cost(r: dict) -> float:
@@ -252,11 +351,18 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None) -> dict
 			n_expl += 1
 			continue
 		items.append(_item(project, pid, k0, res, grau, ka))
-	items.sort(key=lambda it: (GRAUS.index(it["grau"]),
-							   -(it["custo0"] - (it["custo_alt"] if it["custo_alt"] is not None else it["custo0"])), it["piece"]))
+	items += _recorte_items(project, ids)
+
+	def order(it):
+		if it["grau"] == "recorte":     # real bites first, then the known exceptions; larger residual first
+			return (GRAUS.index("recorte"), it.get("excecao") is not None, -(it.get("nn_max_mm") or 0.0), it["piece"])
+		return (GRAUS.index(it["grau"]), False,
+				-(it["custo0"] - (it["custo_alt"] if it["custo_alt"] is not None else it["custo0"])), it["piece"])
+	items.sort(key=order)
 	summ = dict(n_colocadas=len(ids), n_verificadas=n_ok, n_sem_cantos=n_none, n_com_vizinhas=n_nb,
 				n_impossivel=sum(it["grau"] == "impossivel" for it in items),
-				n_melhor_rotacao=sum(it["grau"] == "melhor_rotacao" for it in items), n_explicadas=n_expl)
+				n_melhor_rotacao=sum(it["grau"] == "melhor_rotacao" for it in items), n_explicadas=n_expl,
+				n_recorte=sum(it["grau"] == "recorte" for it in items))
 	return {"summary": summ, "items": items}
 
 
@@ -267,7 +373,8 @@ def suspects(project, placements: Optional[dict] = None, *, pieces=None) -> list
 
 
 def summary(project, placements: Optional[dict] = None, *, pieces=None) -> dict:
-	"""``{n_colocadas, n_verificadas, n_sem_cantos, n_com_vizinhas, n_impossivel, n_melhor_rotacao}``."""
+	"""``{n_colocadas, n_verificadas, n_sem_cantos, n_com_vizinhas, n_impossivel, n_melhor_rotacao, n_explicadas,
+	n_recorte}``."""
 	return evaluate(project, placements, pieces=pieces)["summary"]
 
 
@@ -303,6 +410,9 @@ def suspects_lines(project, cells) -> list:
 def format_item(it: dict) -> str:
 	"""One suspect as a line of text."""
 	cell = f"({it['cell'][0]},{it['cell'][1]})"
+	if it["grau"] == "recorte":
+		tw = f"; gémea {it['gemea']}" if it.get("gemea") else ""
+		return f"{it['piece']} {cell} recorte: {'; '.join(it['falhas'])} — {it['texto']}{tw}"
 	extra = ""
 	if "custo" not in it["texto"]:
 		extra = f"; custo {_num(it['custo0'], 1)}" + (f" → {_num(it['custo_alt'], 1)}" if it["custo_alt"] is not None else "") + " mm"
@@ -334,8 +444,8 @@ def main(argv=None) -> int:
 		return 0
 	s = r["summary"]
 	print(f"{s['n_colocadas']} peças no tabuleiro, {s['n_verificadas']} verificadas ({s['n_com_vizinhas']} com vizinhas montadas), "
-		  f"{s['n_sem_cantos']} sem cantos; suspeitas: {s['n_impossivel']} impossível, {s['n_melhor_rotacao']} melhor rotação "
-		  f"({dt:.1f} s)")
+		  f"{s['n_sem_cantos']} sem cantos; suspeitas: {s['n_impossivel']} impossível, {s['n_melhor_rotacao']} melhor rotação, "
+		  f"{s['n_recorte']} recorte ({dt:.1f} s)")
 	for it in r["items"]:
 		print("  " + format_item(it))
 	return 0
