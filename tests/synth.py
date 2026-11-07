@@ -231,6 +231,46 @@ def meadow_scan(seed=0, patch_mm=5.0, colour=(50, 90, 180)):
     return Image.fromarray(img), masks, patch
 
 
+def contact_tongue_labels(tongue_mm=1.2, thread_mm=0.0):
+    """Label image (300 dpi) of a watershed partition of two touching pieces, S0023 #3/#4 style.
+
+    Member 1 (A): a square body of side ``L0`` with a right tab (disk r 3 mm, centre 2 mm out,
+    so it protrudes 5 mm); member 2 (B): a square body whose left side the tab tip touches.
+    The cast shadow under A's tab (background within ``tongue_mm`` of the tab's lower half,
+    between A's side and B's side) is labelled 2, as the priority flood of S0023 handed it to
+    P0778 (the plateau-with-a-ring tie, docs/diagnostico/segmentacao/CONTACTOS.md §6). With
+    ``thread_mm`` > 0 a dark thread of that width, 4 mm long, leaves the junction downwards
+    along B's side, also labelled 2.
+
+    Returns ``(labels int32, tongue_mask bool, body_masks [A, B] bool)``; ``tongue_mask`` holds
+    the tongue and the thread, which belong to neither body.
+    """
+    H, W = 520, 720
+    s = 1.0 / MMPP
+    x0, y0 = 60, 60
+    side = int(round(L0 * s))
+    cy = y0 + side // 2
+    r_tab = 3.0 * s
+    cx_tab = x0 + side + 2.0 * s
+    xb = int(round(cx_tab + r_tab))   # B's left side, at the tab tip
+    yy, xx = np.mgrid[0:H, 0:W]
+    a_body = (xx >= x0) & (xx < x0 + side) & (yy >= y0) & (yy < y0 + side)
+    tab = ((xx - cx_tab) ** 2 + (yy - cy) ** 2 <= r_tab ** 2) & (xx >= x0 + side)
+    a = a_body | tab
+    b = (xx >= xb) & (xx < xb + side) & (yy >= y0) & (yy < y0 + side) & ~a
+    d_tab = cv2.distanceTransform((~tab).astype(np.uint8), cv2.DIST_L2, 5) / s
+    tongue = (~a & ~b & (d_tab <= tongue_mm) & (yy > cy) & (xx >= x0 + side) & (xx < xb))
+    if thread_mm > 0:
+        tw = max(1, int(round(thread_mm * s)))
+        thread = np.zeros((H, W), bool)
+        thread[cy:cy + int(round(4.0 * s)), xb - tw:xb] = True
+        tongue |= thread & ~a & ~b
+    lbl = np.zeros((H, W), np.int32)
+    lbl[a] = 1
+    lbl[b | tongue] = 2
+    return lbl, tongue, [a, b]
+
+
 def mask_iou(contour_px, gt_mask):
     """IoU between the filled ``contour_px`` (full-image px) and a full-size bool GT mask."""
     m = np.zeros(gt_mask.shape, np.uint8)

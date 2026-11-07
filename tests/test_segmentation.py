@@ -320,3 +320,85 @@ def test_segment_scan_recover_bays_module_switch(monkeypatch):
     monkeypatch.setattr(SEG, "_RECOVER_BAYS", True)
     (p, _), = _match_gt(segment_scan(img, dpi=300, normalize_rotation=False), gts[:1])
     assert p.get("recuperado_mm2", 0) > 0
+
+
+# ---------------------------------------------------------------- contact trim and suspect cuts (CONTACTOS.md §6)
+def test_contact_trim_returns_shadow_tongue_to_the_tab():
+    """The cast shadow under a tab, handed by the flood to the neighbour, goes back to the tab's piece.
+
+    tests/synth.contact_tongue_labels: S0023 #3/#4 as a label image, the shadow under A's tab
+    (1.2 mm thick) plus a dark thread of 0.2 mm x 4 mm leaving the junction, both labelled B.
+    The spur step of the previous code (opening 0.5 mm) left 97 % of it to B; with the contact
+    trim (_CONTACT_TRIM) at most 25 % stays with B (the part against B's side), most goes to A,
+    and neither body loses more than 0.1 mm^2.
+    """
+    import src.segmentation as SEG
+    from synth import MMPP, contact_tongue_labels
+    lbl, tongue, (a, b) = contact_tongue_labels(tongue_mm=1.2, thread_mm=0.2)
+    new, dropped = SEG._contact_trim(lbl, 2, MMPP)
+    mm2 = MMPP * MMPP
+    t = float(tongue.sum())
+    in_b = float(((new == 2) & tongue).sum())
+    in_a = float(((new == 1) & tongue).sum())
+    assert in_b <= 0.25 * t, (in_b * mm2, t * mm2)
+    assert in_a >= 0.6 * t, (in_a * mm2, t * mm2)
+    assert float(((new != 1) & a).sum()) * mm2 < 0.1
+    assert float(((new != 2) & b).sum()) * mm2 < 0.1
+    assert not (dropped & (a | b)).any() or float((dropped & (a | b)).sum()) * mm2 < 0.1
+
+
+def test_contact_trim_switch_off_is_previous_spur_step(monkeypatch):
+    """With ``_CONTACT_TRIM`` off the step is the previous spur opening (_CONTACT_SPUR_MM), nothing dropped."""
+    import src.segmentation as SEG
+    from synth import MMPP, contact_tongue_labels
+    lbl, _, _ = contact_tongue_labels()
+    monkeypatch.setattr(SEG, "_CONTACT_TRIM", False)
+    off, dropped = SEG._contact_trim(lbl, 2, MMPP)
+    ref, _ = SEG._trim_contact_labels(lbl, 2, MMPP, SEG._CONTACT_SPUR_MM)
+    assert np.array_equal(off, ref)
+    assert not dropped.any()
+
+
+def test_appendage_measures_thread_not_corners():
+    """``_appendage``: a square piece has none (corner tips < 2 mm); a 0.8 mm x 4 mm thread is measured."""
+    import cv2
+    import src.segmentation as SEG
+    from synth import MMPP
+    side = int(round(18.5 / MMPP))
+    sq = np.array([(50, 50), (50 + side, 50), (50 + side, 50 + side), (50, 50 + side)], np.int32)
+    length, _ = SEG._appendage(sq, MMPP)
+    assert length < SEG._SUSPECT_SPUR_LEN_MM, length
+    m = np.zeros((side + 200, side + 200), np.uint8)
+    cv2.fillPoly(m, [sq.reshape(-1, 1, 2)], 1)
+    tw, tl = int(round(0.8 / MMPP)), int(round(4.0 / MMPP))
+    m[50 + side // 2:50 + side // 2 + tw, 50 + side:50 + side + tl] = 1
+    cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    length, area = SEG._appendage(max(cnts, key=cv2.contourArea).reshape(-1, 2), MMPP)
+    assert 3.5 <= length <= 4.6, length
+    assert area > 2.0, area
+
+
+@pytest.mark.slow
+def test_segment_scan_s0023_pair_without_tongue():
+    """Real sheet S0023 (montado_p15): #3/#4 (index 2/3, P0777/P0778) cut without tongue or wedge.
+
+    Before the contact trim P0778 carried the shadow under P0777's tab (appendage 3.43 mm), P0777 a
+    wedge of halo (2.90 mm) and the facing sides did not mate (side_complement RMS 3.76 mm); both
+    are flagged ``suspeita_recorte`` with the trim off. With the trim: appendage < 2 mm, RMS < 2 mm,
+    no flag.
+    """
+    import src.segmentation as SEG
+    from conftest import REPO_ROOT
+    fp = os.path.join(REPO_ROOT, "images", "pieces", "legado", "montado_p15_300dpi.jpg")
+    if not os.path.exists(fp):
+        pytest.skip("montado_p15 em falta")
+    with Image.open(fp) as im:
+        photo = im.convert("RGB")
+    res = segment_scan(photo, dpi=300, normalize_rotation=False)
+    a, b = res["pieces"][2], res["pieces"][3]
+    assert a["contacto"]["metodo"] == "watershed" and a["contacto"]["com"] == [3]
+    for p in (a, b):
+        assert "suspeita_recorte" not in p, p.get("suspeita_recorte")
+        assert SEG._appendage(p["contour"], res["mm_per_px"])[0] < SEG._SUSPECT_SPUR_LEN_MM
+    _, info = SEG._shape_violations([a["contour"], b["contour"]], res["mm_per_px"], True)
+    assert info[0]["face"]["kinds"] in ("TB", "BT") and info[0]["face"]["rms_mm"] < SEG._SUSPECT_FACE_RMS_MM

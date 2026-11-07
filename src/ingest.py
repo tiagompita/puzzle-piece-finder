@@ -147,14 +147,15 @@ def draw_overlay(rgb: np.ndarray, items: list, title: str = "", *, max_w: Option
 	return img
 
 
-SEG_FLAG_KEYS = ("touches_frame", "touches_strip", "is_cluster", "objeto_duplo", "contacto", "recuperado_mm2")
+SEG_FLAG_KEYS = ("touches_frame", "touches_strip", "is_cluster", "objeto_duplo", "contacto", "recuperado_mm2",
+				 "suspeita_recorte")
 
 
 def seg_flags(p: dict, area_mm2: float, median_mm2: float) -> dict:
 	"""Piece ``flags`` derived from one ``segment_scan`` piece (keys :data:`SEG_FLAG_KEYS`).
 
 	``objeto_duplo`` = ``is_cluster`` or area > :data:`DOUBLE_AREA_FACTOR` x the median area of
-	the scan's kept pieces; ``contacto`` and ``recuperado_mm2`` only when the segmentation sets them.
+	the scan's kept pieces; ``contacto``, ``recuperado_mm2`` and ``suspeita_recorte`` only when the segmentation sets them.
 	"""
 	flags = {"touches_frame": bool(p.get("touches_frame")), "touches_strip": bool(p.get("touches_strip")),
 			 "is_cluster": bool(p.get("is_cluster")),
@@ -166,6 +167,8 @@ def seg_flags(p: dict, area_mm2: float, median_mm2: float) -> dict:
 							 "alterado": bool(p["contacto"].get("alterado"))}
 	if p.get("recuperado_mm2"):
 		flags["recuperado_mm2"] = float(p["recuperado_mm2"])
+	if p.get("suspeita_recorte"):
+		flags["suspeita_recorte"] = dict(p["suspeita_recorte"])  # only marks (razoes apendice / corte_de_contacto)
 	return flags
 
 

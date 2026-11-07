@@ -1894,6 +1894,19 @@ _CONTACT_BLACKHAT_MM = 1.5
 # Opening radius (mm) that strips thin flood spurs (a shadow line along the neighbour)
 # from a watershed region; the removed pixels go to the nearest kept region.
 _CONTACT_SPUR_MM = 0.5
+# Contact trim (2026-11-07, docs/diagnostico/segmentacao/CONTACTOS.md §6). Module switch: False
+# reproduces the previous output bit for bit. The black-hat makes the cast shadow under a raised
+# tab a closed plateau with a high ring, so both floods reach it at the same level and the tie
+# decides its owner (S0023 #3/#4: the shadow under P0777's tab, 0.6..1.1 mm thick and 3.4 mm long,
+# went to P0778 through its cast-shadow halo; P0777 kept a wedge of halo along P0778's lip).
+_CONTACT_TRIM = True
+# With the trim, the spur opening uses this radius instead of _CONTACT_SPUR_MM (a disk of
+# 1.6 mm strips the 0.6..1.1 mm shadow tongue; the narrowest real part of a piece, a tab neck, is
+# >= 3 mm), and each member then loses (to nobody) what the same opening removes within
+# _CONTACT_TRIM_ZONE_MM of another member: the thin wedges and slivers of shared halo in the joint.
+# Far from the neighbour nothing is dropped (corners rounded by the opening go back to their owner).
+_CONTACT_TRIM_MM = 0.8
+_CONTACT_TRIM_ZONE_MM = 1.0
 # Holes of a member's foreground smaller than this (mm^2) are filled before its core is
 # eroded (dark texture spots under the threshold), larger ones (a blank's green hole) are not.
 _CONTACT_HOLE_MM2 = 4.0
@@ -1911,6 +1924,90 @@ _CONTACT_CHORD_MM = (15.5, 21.0)
 _CONTACT_FALSE_FLAT_MM = 17.0
 # Violation count of a piece whose 4 corners are not found.
 _CONTACT_NOT_OK = 3
+
+# ===== Suspect cut (flag only, never changes a contour; CONTACTOS.md §6) =====
+# (b) Appendage: the filled contour is opened by a disk of this radius (mm) and the longest
+# removed component (convex-hull diameter) is measured. On the 908 pieces of projects/alpes
+# (2026-11-07) the longest is <= 1.46 mm at p99 (corner tips, debris specks), 1.83 mm for the next
+# real piece; the shadow tongue of P0778 measured 3.43 mm, the wedge of P0777 2.90 mm, the dark
+# line under P0395 (S0013 #50) 14.5 mm.
+_SUSPECT_SPUR_MM = 0.8
+_SUSPECT_SPUR_LEN_MM = 2.0
+# (a) Cut consistency of a pair split by the watershed (the pieces touch, the cut line made both
+# facing sides): their side_complement RMS (mm). On the 950 T<->B joints of the board it is
+# 1.12 at p50, 1.80 at p99; S0023 P0777 E <-> P0778 W measured 3.76 (worst of all), 1.16 after
+# the contact trim.
+_SUSPECT_FACE_RMS_MM = 2.0
+
+
+def _appendage(contour: np.ndarray, mm_per_px: float) -> tuple[float, float]:
+	"""Longest thin protrusion of a piece contour: ``(length_mm, area_mm2)`` (``(0, 0)`` if none).
+
+	The filled contour is opened by a disk of radius ``_SUSPECT_SPUR_MM``; among the removed
+	8-connected components, the one with the largest convex-hull diameter is returned.
+	"""
+	c = np.asarray(contour).reshape(-1, 2).astype(np.int32)
+	if len(c) < 3:
+		return 0.0, 0.0
+	x0, y0 = c.min(0) - 4
+	x1, y1 = c.max(0) + 5
+	m = np.zeros((int(y1 - y0), int(x1 - x0)), np.uint8)
+	cv2.drawContours(m, [(c - [x0, y0]).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+	r = max(1, int(round(_SUSPECT_SPUR_MM / mm_per_px)))
+	op = cv2.morphologyEx(m, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1)))
+	n, cc, st, _ = cv2.connectedComponentsWithStats(((m > 0) & (op == 0)).astype(np.uint8), connectivity=8)
+	best = (0.0, 0.0)
+	for q in range(1, n):
+		ys, xs = np.nonzero(cc == q)
+		p = np.c_[xs, ys].astype(np.float32)
+		if len(p) >= 3:
+			h = cv2.convexHull(p).reshape(-1, 2)
+			d = float(np.sqrt(((h[:, None] - h[None]) ** 2).sum(-1)).max()) + 1.0
+		else:
+			d = 1.0
+		if d * mm_per_px > best[0]:
+			best = (d * mm_per_px, float(st[q, cv2.CC_STAT_AREA]) * mm_per_px * mm_per_px)
+	return best
+
+
+def _flag_suspect_cuts(pieces: list[dict], mm_per_px: float) -> None:
+	"""Add ``suspeita_recorte`` to the pieces whose cut looks wrong (in place; contours untouched).
+
+	Reasons: ``apendice`` (:func:`_appendage` longer than ``_SUSPECT_SPUR_LEN_MM``: a thread,
+	a shadow tongue or a sliver of the neighbour) and ``corte_de_contacto`` (member of a
+	``watershed`` contact pair (a group of exactly 2) whose side facing the other is not T against B or
+	has a :func:`src.shape.side_complement` RMS above ``_SUSPECT_FACE_RMS_MM``: the cut that
+	made both sides does not mate). The flag is ``{'razoes': [...], 'apendice_mm',
+	'apendice_mm2', 'contacto_rms_mm' (only with the second reason)}``.
+	"""
+	by_index = {int(p["index"]): q for q, p in enumerate(pieces)}
+	face: dict[int, float] = {}
+	done: set[int] = set()
+	for q, p in enumerate(pieces):
+		ct = p.get("contacto") or {}
+		if ct.get("metodo") != "watershed" or q in done:
+			continue
+		group = sorted({q} | {by_index[i] for i in ct.get("com", []) if i in by_index})
+		done.update(group)
+		if len(group) != 2:
+			continue   # in a larger group the nearest member is not reliably the one sharing the cut
+		_, info = _shape_violations([np.asarray(pieces[g]["contour"]).reshape(-1, 2) for g in group], mm_per_px, True)
+		for g, inf in zip(group, info):
+			if "face" in inf:
+				rms = inf["face"]["rms_mm"]
+				face[g] = float("inf") if rms is None else float(rms)
+	for q, p in enumerate(pieces):
+		length, area = _appendage(p["contour"], mm_per_px)
+		razoes = []
+		if length > _SUSPECT_SPUR_LEN_MM:
+			razoes.append("apendice")
+		if q in face and face[q] > _SUSPECT_FACE_RMS_MM:
+			razoes.append("corte_de_contacto")
+		if razoes:
+			flag = {"razoes": razoes, "apendice_mm": round(length, 2), "apendice_mm2": round(area, 2)}
+			if "corte_de_contacto" in razoes:
+				flag["contacto_rms_mm"] = None if not np.isfinite(face[q]) else round(face[q], 2)
+			p["suspeita_recorte"] = flag
 
 
 def _bbox_gap(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> float:
@@ -2122,6 +2219,66 @@ def _match_components(overlap: np.ndarray) -> list[int] | None:
 	return assign
 
 
+def _trim_contact_labels(
+	lbl: np.ndarray,
+	n: int,
+	mm_per_px: float,
+	spur_mm: float,
+	trim_mm: float = 0.0,
+	zone_mm: float = 0.0,
+) -> tuple[np.ndarray, np.ndarray]:
+	"""Strip thin protrusions from the member regions of a watershed partition (pure).
+
+	``lbl`` (int32) holds member labels ``1..n`` (0 = not a member). (1) Spurs: each region is
+	opened by a disk of radius ``spur_mm`` and every removed pixel goes to the nearest kept
+	region (a corner rounded by the opening goes back to its owner; a thin shadow tongue goes
+	to the member it lies against). (2) Trim, when ``trim_mm`` > 0: each region
+	is opened by a disk of radius ``trim_mm`` and the removed pixels lying within ``zone_mm``
+	of another region are dropped (label 0): the thin wedges of shared halo in the joint.
+
+	Returns ``(labels, dropped)``: the new label image and the bool mask of the dropped pixels
+	(all False without the trim); with ``trim_mm == 0`` the labels are those of step (1) only.
+	"""
+	shp = lbl.shape
+	sr = max(1, int(round(spur_mm / mm_per_px)))
+	kspur = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * sr + 1, 2 * sr + 1))
+	kept = np.zeros(shp, np.int32)
+	for k in range(n):
+		kept[cv2.morphologyEx((lbl == k + 1).astype(np.uint8), cv2.MORPH_OPEN, kspur) > 0] = k + 1
+	removed = (lbl > 0) & (kept == 0)
+	if removed.any() and (kept > 0).any():
+		_, near = cv2.distanceTransformWithLabels((kept == 0).astype(np.uint8), cv2.DIST_L2, 5,
+												  labelType=cv2.DIST_LABEL_PIXEL)
+		zero = np.flatnonzero(kept.ravel() > 0)
+		lut2 = np.zeros(int(near.max()) + 1, np.int32)
+		lut2[np.arange(1, len(zero) + 1)] = kept.ravel()[zero]
+		lbl = np.where(removed, lut2[near], lbl)
+	dropped = np.zeros(shp, bool)
+	if trim_mm > 0:
+		tr = max(1, int(round(trim_mm / mm_per_px)))
+		ktrim = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * tr + 1, 2 * tr + 1))
+		zr = max(1, int(round(zone_mm / mm_per_px)))
+		kzone = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * zr + 1, 2 * zr + 1))
+		for k in range(n):
+			own = lbl == k + 1
+			opened = cv2.morphologyEx(own.astype(np.uint8), cv2.MORPH_OPEN, ktrim) > 0
+			near_other = cv2.dilate(((lbl > 0) & ~own).astype(np.uint8), kzone) > 0
+			dropped |= own & ~opened & near_other
+		lbl = np.where(dropped, 0, lbl)
+	return lbl, dropped
+
+
+def _contact_trim(lbl: np.ndarray, n: int, mm_per_px: float) -> tuple[np.ndarray, np.ndarray]:
+	"""The spur/trim step of a watershed partition as the module switch ``_CONTACT_TRIM`` sets it.
+
+	On: :func:`_trim_contact_labels` with ``_CONTACT_TRIM_MM`` (spur and trim) and
+	``_CONTACT_TRIM_ZONE_MM``. Off: the previous step (spurs of ``_CONTACT_SPUR_MM`` only).
+	"""
+	if _CONTACT_TRIM:
+		return _trim_contact_labels(lbl, n, mm_per_px, _CONTACT_TRIM_MM, _CONTACT_TRIM_MM, _CONTACT_TRIM_ZONE_MM)
+	return _trim_contact_labels(lbl, n, mm_per_px, _CONTACT_SPUR_MM)
+
+
 def _resolve_contact_group(
 	members: list[int],
 	contours: list[np.ndarray],
@@ -2151,7 +2308,10 @@ def _resolve_contact_group(
 	gradient (each normalised by its 99th percentile in the component): the boundary
 	follows the dark gap/shadow line and the colour edge, not the tab neck (a distance
 	transform would cut there); thin flood spurs (a shadow line along the neighbour)
-	are then opened away (``_CONTACT_SPUR_MM``) and handed to the nearest region.
+	are then opened away (``_CONTACT_SPUR_MM``) and handed to the nearest region. With
+	``_CONTACT_TRIM`` (:func:`_trim_contact_labels`) that opening has radius
+	``_CONTACT_TRIM_MM`` (a shadow tongue under a tab goes back to the tab's piece) and the
+	thin parts within ``_CONTACT_TRIM_ZONE_MM`` of another member are dropped.
 	Each member's region is finally closed (``close_px``), clipped to ``band`` (the
 	``band_mm`` band of the low-res contours, as the normal boundary; skipped for a member
 	when it would remove more than ``1 - _CONTACT_BAND_KEEP`` of the region, i.e. the
@@ -2240,26 +2400,18 @@ def _resolve_contact_group(
 	# Thin spurs: the flood can run along a shadow line hugging the neighbour (a cast
 	# shadow is foreground and belongs to neither body). Open each member's region by
 	# _CONTACT_SPUR_MM and hand every removed pixel to the nearest kept region.
+	# With _CONTACT_TRIM the opening is wider and the thin shared halo in the joint is dropped.
+	dropped = None
 	if metodo == "watershed":
-		sr = max(1, int(round(_CONTACT_SPUR_MM / mm_per_px)))
-		kspur = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * sr + 1, 2 * sr + 1))
-		kept = np.zeros(shp, np.int32)
-		for k in range(len(members)):
-			kept[cv2.morphologyEx((new_lbl == k + 1).astype(np.uint8), cv2.MORPH_OPEN, kspur) > 0] = k + 1
-		removed = (new_lbl > 0) & (kept == 0)
-		if removed.any() and (kept > 0).any():
-			_, near = cv2.distanceTransformWithLabels((kept == 0).astype(np.uint8), cv2.DIST_L2, 5,
-													  labelType=cv2.DIST_LABEL_PIXEL)
-			zero = np.flatnonzero(kept.ravel() > 0)
-			lut2 = np.zeros(int(near.max()) + 1, np.int32)
-			lut2[np.arange(1, len(zero) + 1)] = kept.ravel()[zero]
-			new_lbl = np.where(removed, lut2[near], new_lbl)
+		new_lbl, dropped = _contact_trim(new_lbl, len(members), mm_per_px)
 	kclose = np.ones((close_px, close_px), np.uint8)
 	new_contours, ious = [], []
 	for k in range(len(members)):
 		own = new_lbl == k + 1
 		m = (cv2.morphologyEx(own.astype(np.uint8), cv2.MORPH_CLOSE, kclose) > 0) & win
 		m &= ~((new_lbl > 0) & ~own)
+		if dropped is not None:
+			m &= ~dropped   # the closing must not take the dropped joint slivers back
 		mb = m & band_c
 		if mb.sum() >= _CONTACT_BAND_KEEP * m.sum():
 			m = mb
@@ -2797,8 +2949,10 @@ def segment_scan(
 		split_contacts: re-partition contact groups (pieces closer than ~1 mm,
 			e.g. a tab sitting in a neighbour's blank) by full-res connectivity,
 			then by a seam watershed, validated by shape (:func:`_split_scan_contacts`,
-			docs/diagnostico/segmentacao/CONTACTOS.md). ``False`` reproduces the
-			previous output bit for bit. Never changes the number of pieces.
+			docs/diagnostico/segmentacao/CONTACTOS.md); the watershed regions are trimmed
+			of shadow tongues and joint slivers (module switch ``_CONTACT_TRIM``, §6).
+			``False`` reproduces the previous output bit for bit. Never changes the number
+			of pieces.
 		recover_bays: grow a piece into a bay of its own paper-coloured art that the
 			threshold holds but the band dropped (:func:`_recover_scan_bays`,
 			docs/diagnostico/segmentacao/PRADO.md); ``None`` follows the module switch
@@ -2824,7 +2978,9 @@ def segment_scan(
 		(perimeter / smoothed perimeter; a diagnostic, never a gate); members of a
 		contact group also carry ``contacto`` (``com``, ``confianca`` alta/baixa,
 		``metodo``, ``alterado``); pieces grown by ``recover_bays`` carry
-		``recuperado_mm2`` (area added, mm^2). On failure
+		``recuperado_mm2`` (area added, mm^2); pieces whose cut looks wrong carry
+		``suspeita_recorte`` (:func:`_flag_suspect_cuts`: ``razoes`` ``apendice`` and/or
+		``corte_de_contacto``, with the measures; a flag, the contour is not changed). On failure
 		the ``segment_pieces`` error dict with ``method`` and ``mm_per_px`` added.
 	"""
 	mm_per_px = 25.4 / float(dpi)
@@ -2898,6 +3054,8 @@ def segment_scan(
 	# still holds it); grown back inside the piece's rectangle, validated by shape.
 	if _RECOVER_BAYS if recover_bays is None else recover_bays:
 		_recover_scan_bays(pieces, seg_contours, thr, vor, rgb, mm_per_px, reach, pad_ratio, normalize_rotation)
+	# Suspect cuts (thread / shadow tongue / sliver, contact cut that does not mate): flag only.
+	_flag_suspect_cuts(pieces, mm_per_px)
 	del lab
 
 	res["scan_background_lab"] = (float(bg[0]), float(bg[1]), float(bg[2]))
