@@ -299,6 +299,9 @@ def main(argv=None) -> int:
 		return 1
 	for m in r["messages"]:
 		print(m)
+	if args.cell or args.position_known or args.anchor or args.unanchor:
+		from src.consistency import suspects_lines   # orientation check of the changed area (read-only, never blocks)
+		print("\n".join(suspects_lines(pr, r["affected_cells"])))
 	if r["invariants"]:
 		print("INVARIANTES VIOLADAS: " + "; ".join(r["invariants"]))
 		return 1

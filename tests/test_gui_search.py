@@ -142,11 +142,14 @@ def test_report_row_click_locates_without_writing(srv, page):
         before = sum(1 for _ in f)
     row.click()
     page.wait_for_function("S.sel && S.sel[0] === 2 && S.sel[1] === 3", timeout=15_000)
-    assert page.evaluate("document.querySelector('#tab-celula').classList.contains('on')")
-    page.evaluate("showTab('reports')")
+    # o clique já não muda de aba: realça a célula no tabuleiro e fica em «Reports»
+    assert page.evaluate("document.querySelector('#tab-reports').classList.contains('on')")
+    assert page.evaluate("S.tab") == "reports" and page.evaluate("S.sel") == [2, 3]
+    page.evaluate("S.sel = null")
     page.focus("#tab-reports .report-row[data-report='R0001']")
     page.keyboard.press("Enter")
-    page.wait_for_function("S.tab === 'celula'", timeout=15_000)
+    page.wait_for_function("S.sel && S.sel[0] === 2 && S.sel[1] === 3", timeout=15_000)
+    assert page.evaluate("S.tab") == "reports"
     with open(gui.pr.log_path, encoding="utf-8") as f:
         after = sum(1 for _ in f)
     assert after == before

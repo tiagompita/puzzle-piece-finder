@@ -421,7 +421,7 @@ function showTab(t) {
     const g = S.sections.find((x) => x.id === S.mesaOpen.id), c = g && (g.candidatos.find((x) => x.rank === S.mesaOpen.rank) || groupBest(g));
     if (c) { S.mesa = { id: g.id, rank: c.rank, footprint: c.footprint }; drawMesa(); }
   }
-  if (t !== "celula" && S.sel) { S.sel = null; drawSel(); }
+  if (t !== "celula" && t !== "report" && S.sel) { S.sel = null; drawSel(); }
   if (t !== "mesa" && S.mesa) { S.mesa = null; drawMesa(); }
 }
 
@@ -576,46 +576,138 @@ function renderGuardadas() {
   T.append(d);
 }
 
-// ------------------------------------------------------------ reports (só leitura: fecham-se no ficheiro)
+// ------------------------------------------------------------ reports (lista, detalhe, estados como eventos)
+const ESTADO_TXT = { aberto: "aberto", fechado: "resolvido", eliminado: "eliminado" };
+const when = (t) => (t ? String(t).replace("T", " ").slice(0, 16) : "");
 async function loadReports() {
-  const r = await api("/api/reports?todos=true");
+  const r = await api("/api/reports?todos=true&eliminados=true");
   S.reports = r.reports || [];
+  loadSuspeitas().catch(() => {});
   S.reportFilter = S.reportFilter || "aberto";
   renderReports();
+  if (S.tab === "report" && S.reportOpen) {
+    const cur = S.reports.find((x) => x.id === S.reportOpen);
+    if (cur) renderReportDetail(cur);
+  }
   renderBuscar();               // the cards' button is «Editar report» for pieces that already have one
   if (S.tab === "celula" && S.sel) openCell(S.sel[0], S.sel[1], { keep: true });
 }
 function renderReports() {
   const T = $("#tab-reports"); T.replaceChildren();
+  if (typeof renderSuspeitas === "function") renderSuspeitas(T);
   const all = S.reports || [];
-  const nOpen = all.filter((r) => r.estado === "aberto").length;
+  const cnt = (e) => all.filter((r) => r.estado === e).length;
+  const nOpen = cnt("aberto"), nRes = cnt("fechado"), nDel = cnt("eliminado");
   $("#n-reports").textContent = nOpen ? String(nOpen) : "";
   const f = S.reportFilter || "aberto";
-  T.append(h("p", { class: "summary", id: "reports-count" }, `${nOpen} aberto${nOpen === 1 ? "" : "s"} · ${all.length - nOpen} resolvido${all.length - nOpen === 1 ? "" : "s"}`));
+  T.append(h("p", { class: "summary", id: "reports-count" }, `${nOpen} aberto${nOpen === 1 ? "" : "s"} · ${nRes} resolvido${nRes === 1 ? "" : "s"}` + (nDel ? ` · ${nDel} eliminado${nDel === 1 ? "" : "s"}` : "")));
   const bar = h("div", { class: "actions", id: "reports-filter" });
-  for (const [k, t] of [["aberto", "Abertos"], ["fechado", "Resolvidos"]]) {
+  for (const [k, t] of [["aberto", "Abertos"], ["fechado", "Resolvidos"], ["eliminado", "Eliminados"]]) {
     bar.append(h("button", { class: "btn slim" + (f === k ? " primary" : ""), type: "button", "data-filter": k, onclick: () => { S.reportFilter = k; renderReports(); } }, t));
   }
   T.append(bar);
   const rows = all.filter((r) => r.estado === f);
-  if (!rows.length) { T.append(h("div", { class: "empty" }, h("strong", {}, f === "aberto" ? "Sem reports abertos." : "Sem reports resolvidos."))); return; }
+  if (!rows.length) { T.append(h("div", { class: "empty" }, h("strong", {}, `Sem reports ${f === "aberto" ? "abertos" : f === "fechado" ? "resolvidos" : "eliminados"}.`))); return; }
   for (const r of rows) {
-    // clickable (read-only): locates the piece / cell on the board; nothing is written
-    const go = () => locateReport(r).catch((e) => toast(e.message, true));
+    // clickable (read-only): highlights the piece / cell on the board and STAYS in this tab; nothing is written
+    const go = () => locateReportInPlace(r).catch((e) => toast(e.message, true));
     const row = h("div", { class: "card report-row" + (r.piece ? " has-thumb" : ""), "data-report": r.id, role: "button", tabindex: "0",
       title: "Ver no tabuleiro", onclick: go,
-      onkeydown: (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } } },
+      onkeydown: (ev) => { if (ev.target === ev.currentTarget && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); go(); } } },
       r.piece ? h("img", { class: "rthumb", loading: "lazy", src: `/api/pieces/${r.piece}.png?pose=scan&size=64`, alt: "", width: 64, height: 64 }) : null,
       h("div", { class: "rbody" },
         h("div", { class: "small rhead" }, h("b", {}, r.id),
           r.piece ? h("span", { class: "chip" }, r.piece) : null,
           r.cell ? h("span", { class: "chip" }, cellTxt(r.cell)) : null,
           !r.piece && !r.cell ? h("span", { class: "chip" }, "geral") : null,
-          ` ${r.estado === "aberto" ? "aberto" : "resolvido"} · ${r.tipo}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "")),
+          ` ${ESTADO_TXT[r.estado] || r.estado} · ${r.tipo}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "")),
         h("div", {}, r.texto || h("span", { class: "muted" }, "(sem texto)")),
-        r.nota ? h("div", { class: "small muted" }, `nota: ${r.nota}`) : null));
+        r.nota ? h("div", { class: "small muted" }, `nota: ${r.nota}`) : null),
+      h("button", { class: "rgo", type: "button", "aria-label": `Abrir report ${r.id}`, title: "Abrir o report",
+        onclick: (ev) => { ev.stopPropagation(); openReportDetail(r); } }, "→"));
     T.append(row);
   }
+}
+/** Row click: highlight + zoom on the board, WITHOUT leaving the Reports tab and without writing anything. */
+async function locateReportInPlace(r) {
+  if (r.piece) {
+    let d = null;
+    try { d = await api(`/api/pieces/${r.piece}`); } catch (e) { d = null; }
+    if (d && d.celula && (d.estado === "colocada" || d.estado === "posicao_conhecida")) { showCellOnBoard(d.celula[0], d.celula[1]); return; }
+    const e = pendingPieces().find((x) => x.piece === r.piece);
+    if (e) { toast(`${r.piece} está em ${isStored(e) ? "Guardadas" : "Vai buscar"}`); return; }
+    if (r.cell) { showCellOnBoard(r.cell[0], r.cell[1]); return; }
+    toast(d ? `${r.piece} existe: ${ST_TXT[d.estado] || d.estado}, sem célula no tabuleiro` : `${r.piece}: não encontrada`);
+    return;
+  }
+  if (r.cell) { showCellOnBoard(r.cell[0], r.cell[1]); return; }
+  toast(`${r.id}: report geral, sem localização`);
+}
+function openReportDetail(r) {
+  S.reportOpen = r.id;
+  renderReportDetail(r);
+  showTab("report");
+}
+function renderReportDetail(r) {
+  const T = $("#tab-report"); T.replaceChildren();
+  const ctx = { piece: r.piece || null, cell: r.cell || null, vista: r.vista || null };
+  const chips = h("div", { class: "rhead" },
+    r.piece ? h("button", { class: "chip chip-btn", type: "button", title: "ver no tabuleiro", onclick: () => locateReportInPlace(r).catch((e) => toast(e.message, true)) }, r.piece) : null,
+    r.cell ? h("button", { class: "chip chip-btn", type: "button", title: "ver no tabuleiro", onclick: () => showCellOnBoard(r.cell[0], r.cell[1]) }, cellTxt(r.cell)) : null,
+    !r.piece && !r.cell ? h("span", { class: "chip" }, "geral") : null);
+  const hist = [{ estado: "criado", t: r.t, nota: "" }].concat((r.historico && r.historico.length) ? r.historico
+    : (r.estado === "fechado" && r.fechado_em ? [{ estado: "fechado", t: r.fechado_em, nota: r.nota || "" }] : []));
+  const histTxt = { criado: "criado", aberto: "reaberto", fechado: "resolvido", eliminado: "eliminado" };
+  const nCap = !r.captura ? null : h("img", { class: "rcap", alt: `captura de ${r.id}`, src: `/api/reports/${r.id}/captura`, onerror: (ev) => ev.target.remove() });
+  const act = h("div", { class: "actions rdetail-actions" });
+  const btn = (txt, fn, cls = "") => h("button", { class: `btn slim ${cls}`.trim(), type: "button", onclick: fn }, txt);
+  act.append(btn("Ver no tabuleiro", () => locateReportInPlace(r).catch((e) => toast(e.message, true))));
+  if (r.estado === "aberto") {
+    act.append(btn("Editar", () => openReport(ctx, r)));
+    act.append(btn("Marcar resolvido", () => askEstado(r, "close"), "primary"));
+    act.append(btn("Eliminar", () => askEstado(r, "delete")));
+  } else if (r.estado === "fechado") {
+    act.append(btn("Reabrir", () => setEstado(r, "reopen")));
+    act.append(btn("Eliminar", () => askEstado(r, "delete")));
+  } else {
+    act.append(btn("Restaurar", () => setEstado(r, "restore"), "primary"));
+  }
+  T.append(...[
+    h("div", { class: "cell-head" }, btn("← Reports", () => showTab("reports"))),
+    h("h3", { class: "rtitle" }, r.id, h("span", { class: `chip rstate st-${r.estado}` }, ESTADO_TXT[r.estado] || r.estado)),
+    h("p", { class: "small muted" }, `${TIPOS_TXT[r.tipo] || r.tipo} · ${when(r.t)}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "")),
+    chips,
+    r.piece ? h("div", { class: "rthumbs" },
+      h("figure", {}, h("img", { src: `/api/pieces/${r.piece}.png?pose=board&size=160`, alt: `${r.piece} no tabuleiro`, width: 160, height: 160 }), h("figcaption", { class: "small muted" }, "no tabuleiro")),
+      h("figure", {}, h("img", { src: `/api/pieces/${r.piece}.png?pose=scan&size=160`, alt: `${r.piece} no scan`, width: 160, height: 160 }), h("figcaption", { class: "small muted" }, "no scan"))) : null,
+    nCap,
+    h("p", { class: "rtexto" }, r.texto || h("span", { class: "muted" }, "(sem texto)")),
+    r.nota ? h("p", { class: "small" }, h("b", {}, "Nota: "), r.nota) : null,
+    h("div", { class: "small rhist" }, h("b", {}, "Histórico"),
+      h("ul", {}, hist.map((x) => h("li", {}, `${histTxt[x.estado] || x.estado} · ${when(x.t)}` + (x.nota ? ` · ${x.nota}` : ""))))),
+    act].filter(Boolean));
+}
+const TIPOS_TXT = { mal_lida: "mal lida / mal recortada", mal_colocada: "mal colocada", nao_encaixa: "não encaixa", outro: "outro" };
+function askEstado(r, acao) {
+  const dlg = $("#estado-dlg"), form = $("#estado-form"), nota = $("#estado-nota");
+  form.reset();
+  const del = acao === "delete";
+  $("#estado-title").textContent = del ? `Eliminar ${r.id}` : `Marcar ${r.id} como resolvido`;
+  $("#estado-msg").textContent = del ? `Eliminar ${r.id}? Fica escondido e pode ser restaurado.` : "A nota é opcional.";
+  nota.hidden = del;
+  form.onsubmit = async (ev) => {
+    ev.preventDefault();
+    const ok = $("#estado-ok"); ok.disabled = true;
+    try { dlg.close(); await setEstado(r, acao, del ? "" : nota.value); } finally { ok.disabled = false; }
+  };
+  dlg.showModal();
+}
+async function setEstado(r, acao, nota = "") {
+  try {
+    const n = await api(`/api/report/${r.id}/estado`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acao, nota }) });
+    toast({ close: `${r.id} marcado como resolvido`, reopen: `${r.id} reaberto`, delete: `${r.id} eliminado (pode ser restaurado)`, restore: `${r.id} restaurado` }[acao] || `${r.id}: ${n.estado}`);
+    await loadReports();
+  } catch (e) { toast(e.message, true); }
 }
 
 // ------------------------------------------------------------ reportar
@@ -1119,6 +1211,53 @@ function renderJobLog() {
   }
 }
 
+// ------------------------------------------------------------ suspeitas de orientação (só leitura, topo de Reports)
+// /api/suspeitas = src.consistency: peças colocadas com um lado T↔T / B↔B (impossível) ou com outra rotação
+// claramente melhor contra as vizinhas montadas. Nada é corrigido aqui: a linha só localiza a peça no tabuleiro.
+async function loadSuspeitas() {
+  S.susp = await api("/api/suspeitas");
+  renderSuspeitas();
+}
+function renderSuspeitas(T) {
+  T = T || $("#tab-reports");
+  const old = T.querySelector("details.suspeitas");
+  if (!S.susp) { if (old) old.remove(); return; }
+  const items = S.susp.items || [], sm = S.susp.summary || {};
+  const d = h("details", { class: "suspeitas", id: "suspeitas" },
+    h("summary", {}, `Suspeitas (${items.length})`),
+    h("p", { class: "small muted" }, `Orientação contra as vizinhas montadas: ${sm.n_verificadas ?? "—"} de ${sm.n_colocadas ?? "—"} peças verificadas`
+      + (sm.n_sem_cantos ? ` · ${sm.n_sem_cantos} sem cantos (não verificadas)` : "") + ". Só leitura: nada é corrigido aqui."));
+  d.open = old ? old.open : !!S.suspOpen;
+  d.addEventListener("toggle", () => { S.suspOpen = d.open; });
+  const q = h("input", { type: "search", class: "susp-filter", placeholder: "filtrar (peça, célula, texto)", "aria-label": "filtrar suspeitas", value: S.suspQuery || "" });
+  const norm = (x) => String(x || "").toLowerCase().replace(/[()\s]/g, "");
+  const apply = () => {
+    S.suspQuery = q.value;
+    const k = norm(q.value);
+    for (const row of d.querySelectorAll(".suspeita-row")) row.hidden = !!k && !row.dataset.q.includes(k);
+  };
+  q.addEventListener("input", apply);
+  d.append(q);
+  if (!items.length) d.append(h("div", { class: "empty" }, h("strong", {}, "Sem suspeitas.")));
+  const GRAU = { impossivel: "impossível", melhor_rotacao: "melhor rotação" };
+  for (const it of items) {
+    const [l, c] = it.cell;
+    const go = () => showCellOnBoard(l, c);
+    d.append(h("div", { class: "card suspeita-row", role: "button", tabindex: "0", title: "Ver no tabuleiro",
+      "data-piece": it.piece, "data-grau": it.grau,
+      "data-q": norm([it.piece, `${l},${c}`, it.grau, GRAU[it.grau], it.texto, ...(it.falhas || [])].join(" ")),
+      onclick: go, onkeydown: (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } } },
+      h("img", { class: "rthumb", loading: "lazy", src: `/api/pieces/${it.piece}.png?pose=board&size=64`, alt: "", width: 64, height: 64 }),
+      h("div", { class: "rbody" },
+        h("div", { class: "small rhead" }, h("span", { class: "chip" }, it.piece), h("span", { class: "chip" }, cellTxt(it.cell)),
+          h("span", { class: "chip grau " + it.grau }, GRAU[it.grau] || it.grau)),
+        h("div", {}, it.texto),
+        it.falhas && it.falhas.length ? h("div", { class: "small muted" }, it.falhas.join(" · ")) : null)));
+  }
+  apply();
+  if (old) old.replaceWith(d); else T.prepend(d);
+}
+
 // ------------------------------------------------------------ events (SSE) + start-up
 let reloadTimer = null;
 function scheduleReload(what) {
@@ -1145,6 +1284,7 @@ function connectEvents() {
   es.addEventListener("hello", (e) => { const st = JSON.parse(e.data); setJob(st.job); });
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) scheduleReload("board"); });
   es.addEventListener("fetch_changed", () => scheduleReload("fetch"));
+  for (const ev of ["report_added", "report_edited", "report_changed"]) es.addEventListener(ev, () => loadReports().catch(() => {}));
   es.addEventListener("ingest_progress", (e) => {
     const d = JSON.parse(e.data);
     S.jobLog.push(d); renderJobLog();

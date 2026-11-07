@@ -75,6 +75,7 @@
     <section class="tab" id="tab-importar"></section>
     <section class="tab" id="tab-reports"></section>
     <section class="tab" id="tab-celula"></section>
+    <section class="tab" id="tab-report"></section>
   </aside>
 
   <footer id="legend-wrap"><details id="legend-box"><summary title="mostrar / esconder a legenda">Legenda</summary><div id="legend" aria-label="Legenda"></div></details></footer>
@@ -109,6 +110,18 @@
     <div class="actions">
       <button type="submit" class="btn primary" id="report-send">Enviar</button>
       <button type="button" class="btn" onclick="document.getElementById('report-dlg').close()">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="estado-dlg">
+  <form id="estado-form" method="dialog">
+    <h3 id="estado-title">Marcar resolvido</h3>
+    <p class="muted small" id="estado-msg"></p>
+    <textarea id="estado-nota" rows="3" placeholder="Nota (opcional)"></textarea>
+    <div class="actions">
+      <button type="submit" class="btn primary" id="estado-ok">Confirmar</button>
+      <button type="button" class="btn" onclick="document.getElementById('estado-dlg').close()">Cancelar</button>
     </div>
   </form>
 </dialog>

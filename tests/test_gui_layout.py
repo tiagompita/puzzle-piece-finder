@@ -29,8 +29,11 @@ def base(tmp_path_factory):
     import uvicorn
     from src.query import run_query
     tmp = tmp_path_factory.mktemp("gui")
-    pr, *_ = _project(tmp)
+    pr, placed, *_ = _project(tmp)
     run_query(pr, use_image=False)
+    from src import reports
+    reports.add_report(pr, tipo="mal_lida", texto="um texto de report bastante comprido para testar a quebra de linha no painel estreito " * 2,
+                       piece=placed, cell=(3, 4), vista="celula")
     gui = S.Gui(pr.path, prepare=False, use_image=False, uploads=str(tmp / "uploads"), log=None)
     s = socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
     server = uvicorn.Server(uvicorn.Config(S.create_app(gui), host="127.0.0.1", port=port, log_level="warning"))
@@ -84,8 +87,13 @@ def test_layout(base, browser, w, h, dsf):
                     "{deltaY: -400, bubbles: true, cancelable: true, clientX: 300, clientY: 200}))")
         assert pg.get_attribute("#board", "viewBox") != vb0
         # no horizontal scroll anywhere (document, panel, every tab), vertical scroll only inside the panel
-        for tab in ("buscar", "lotes", "mesa", "importar"):
-            pg.evaluate(f"showTab('{tab}')")
+        for tab in ("buscar", "lotes", "mesa", "importar", "reports", "report"):
+            if tab == "report":
+                pg.evaluate("openReportDetail(S.reports[0])")
+            else:
+                pg.evaluate(f"showTab('{tab}')")
+            if tab == "reports":
+                pg.wait_for_selector("#tab-reports .report-row", timeout=15_000)
             pg.wait_for_timeout(300)
             assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), tab
             assert pg.evaluate("document.documentElement.scrollHeight <= innerHeight"), tab

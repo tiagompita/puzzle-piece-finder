@@ -48,7 +48,7 @@ def test_edit_errors_and_close_keeps_events(tmp_path):
     n = len(_lines(pr))
     c = reports.close_report(pr, r1["id"], "feito")
     assert c["estado"] == "fechado" and c["texto"] == "b" and c["n_edicoes"] == 1
-    assert len(_lines(pr)) == n                                                    # the edit event survived the rewrite
+    assert len(_lines(pr)) == n + 1                                                # closing appends one state line (no rewrite)
     assert any(json.loads(x).get("evento") == "edicao" for x in _lines(pr))
     assert "error" in reports.edit_report(pr, r1["id"], texto="c")                # closed: no edits
     assert reports.list_reports(pr) == []

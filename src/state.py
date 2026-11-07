@@ -76,7 +76,7 @@ ACTIONS = (
 	"section_anchored", "section_unanchored", "piece_discarded", "photo_registered", "cell_occupied_by_photo",
 	"cell_cleared_by_photo", "position_known", "position_placeable", "same_as", "lote_changed",
 	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
-	"report", "report_closed", "report_edited",
+	"report", "report_closed", "report_edited", "report_reopened", "report_deleted", "report_restored",
 )
 ID_PREFIXES = ("S", "P", "T", "G", "F")
 LOOSE_STATES = ("solta", "emparelhada")
@@ -465,7 +465,7 @@ def apply(m: Model, ev: dict) -> None:
 				if p.id in nums:
 					p.n_no_lote = None if nums[p.id] is None else int(nums[p.id])
 	elif a in ("twin_confirmed", "hole_confirmed", "fetch_listed", "position_placeable", "report", "report_closed",
-			"report_edited"):
+			"report_edited", "report_reopened", "report_deleted", "report_restored"):
 		pass  # informative events (metrics / notifications); no state change
 	else:
 		raise StateError(f"ação desconhecida no log: {a!r}")

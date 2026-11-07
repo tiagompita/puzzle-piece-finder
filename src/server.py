@@ -30,7 +30,7 @@ Design (docs/gui-design.md):
   background thread, with progress in the terminal and on the "a preparar" page (SSE
   ``prepare_progress``); the data endpoints answer 503 until it ends.
 * **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``,
-  ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``ready``.
+  ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``, ``ready``.
 
 Pure helpers (legend, cell diff, patch regions, plain-language reasons) are separate from
 the :class:`Gui` state object and from :func:`create_app` (routes).
@@ -413,6 +413,24 @@ class Gui:
 		if p.theta_deg is not None:
 			return float(p.theta_deg), "log"
 		return None, "desconhecida"
+
+	def suspeitas_json(self) -> dict:
+		"""``{summary, items}`` of :func:`src.consistency.evaluate` (orientation suspects, read-only), cached
+		per log version and project object (a reopened project recomputes). Poses come from
+		:meth:`placements`; pieces missing there are registered without the image once and kept in
+		``_susp_pl`` while their key (cell, pose, anchor) holds, so a write re-registers only what changed."""
+		from src import consistency, render
+		key = (self.version(), id(self.pr))
+		c = getattr(self, "_suspeitas", None)
+		if c is not None and c[0] == key:
+			return c[1]
+		memo = getattr(self, "_susp_pl", {})
+		pl = {pid: e for pid, e in memo.items() if pid in self.pr.pieces and e.get("key") == render._entry_key(self.pr, pid)}
+		pl.update(self.placements())
+		r = consistency.evaluate(self.pr, pl)
+		self._susp_pl = pl
+		self._suspeitas = (key, r)
+		return r
 
 	# ------------------------------------------------------------ board raster
 	def _compose(self, ppc: float, region=None) -> np.ndarray:
@@ -828,6 +846,11 @@ class Gui:
 		ch = changed_cells(before_snap, snap, self.pr.profile.cols)
 		self.emit("board_changed", {"versao": self.version(), "celulas": [list(x) for x in ch]})
 		self.emit("fetch_changed", {})
+		self._suspeitas = None
+		try:                             # orientation suspects (read-only); never fails a write
+			self.emit("suspeitas_changed", self.suspeitas_json()["summary"])
+		except Exception as e:  # noqa: BLE001
+			self.log(f"[servidor] suspeitas não recalculadas: {e}")
 		return {"celulas_mudadas": [list(x) for x in ch]}
 
 	def _refresh_render_assets(self, pids: list) -> None:
@@ -998,6 +1021,33 @@ class Gui:
 			return rep
 		finally:
 			self.wlock.release()
+
+	def set_report_state(self, rid: str, acao: str, nota: str = "") -> dict:
+		"""``POST /api/report/{rid}/estado``: one state event (close / reopen / delete / restore); like
+		:meth:`add_report` it changes no cache."""
+		from src import reports
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			self.sync_locked()
+			rep = reports.set_state(self.pr, rid, acao, nota)
+			self._known_stat = self._log_stat()
+			if "error" not in rep:
+				self.emit("report_changed", {"id": rid, "estado": rep.get("estado")})
+			return rep
+		finally:
+			self.wlock.release()
+
+	def report_capture(self, rid: str) -> Optional[str]:
+		"""Absolute path of the capture of report ``rid`` (``None`` if there is none)."""
+		from src import reports
+		rep = next((r for r in reports.read_reports(self.pr) if r.get("id") == rid), None)
+		cap = rep.get("captura") if rep else None
+		if not cap:
+			return None
+		fp = os.path.abspath(self.pr.p(cap))
+		root = os.path.abspath(self.pr.p("reports")) + os.sep
+		return fp if fp.startswith(root) and os.path.isfile(fp) else None
 
 	def sync_locked(self) -> None:
 		st = self._log_stat()
@@ -1251,11 +1301,46 @@ def create_app(gui: Gui):
 			return JSON(r, status_code=404 if "relatório desconhecido" in r["error"] else 400)
 		return JSON(r)
 
+	@app.post("/api/report/{rid}/estado")
+	async def post_report_estado(rid: str, request: Request):
+		ready()
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		if not isinstance(body, dict):
+			return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		nota = body.get("nota")
+		if nota is not None and not isinstance(nota, str):
+			return JSON({"error": "nota deve ser texto"}, status_code=400)
+		acao = body.get("acao")
+		if not isinstance(acao, str):
+			return JSON({"error": "falta a acao"}, status_code=400)
+		r = await asyncio.to_thread(lambda: guard(lambda: gui.set_report_state(rid, acao, nota or "")))
+		if "error" in r:
+			return JSON(r, status_code=404 if "relatório desconhecido" in r["error"] else 400)
+		return JSON(r)
+
 	@app.get("/api/reports")
-	def get_reports(todos: bool = False):
+	def get_reports(todos: bool = False, eliminados: bool = False):
 		ready()
 		from src import reports
-		return JSON({"reports": reports.list_reports(gui.pr, only_open=not todos)})
+		return JSON({"reports": reports.list_reports(gui.pr, only_open=not todos, eliminados=eliminados)})
+
+	@app.get("/api/suspeitas")
+	def get_suspeitas():
+		ready()
+		return JSON(gui.read(gui.suspeitas_json))
+
+	@app.get("/api/reports/{rid}/captura")
+	def get_report_captura(rid: str):
+		ready()
+		fp = gui.report_capture(rid)
+		if not fp:
+			raise HTTPException(404, detail="sem captura")
+		with open(fp, "rb") as f:
+			data = f.read()
+		return img(data, "image/png" if fp.lower().endswith(".png") else "image/jpeg", cache=False)
 
 	@app.post("/api/ingest")
 	async def post_ingest(file: UploadFile = File(...), lote: int = Form(...), dpi: float = Form(300)):

@@ -39,8 +39,10 @@ Web local: `python -m src.server` (FastAPI + uvicorn) + `src/web/` (`index.html`
 | `POST /api/confirm` | `{acao: place\|reject\|position_known\|anchor\|unanchor\|discard\|unplace\|cell_full\|cell_empty, piece, cell, section, rot, mirror, reason, origin}` → `{ok, mensagens, invariantes, n_propostas, segundos, celulas_mudadas}` ou 400 `{error}` / 409 |
 | `POST /api/ingest` | multipart `file` + `lote` + `dpi` → grava em `images/pieces/lotes/loteNN_<data>_<nome>`, trabalho em fundo (segmentar → `run_query` completo), progresso por SSE `ingest_progress` |
 | `POST /api/report` | `{tipo: mal_lida\|mal_colocada\|nao_encaixa\|outro, texto, piece, cell, vista}` → o servidor grava a captura (zoom 3×3 da célula, ou o recorte da peça) em `projects/<id>/reports/R####.jpg\|png` e acrescenta o relatório a `reports.jsonl` (§11); SSE `report_added` |
-| `GET /api/reports[?todos=1]` | relatórios abertos (ou todos) |
-| `GET /api/events` | SSE: `hello`, `board_changed`, `fetch_changed`, `ingest_progress`, `prepare_progress`, `report_added`, `ready` |
+| `GET /api/reports[?todos=1&eliminados=1]` | relatórios abertos (ou todos); os eliminados só com `eliminados` |
+| `POST /api/report/{id}/estado` | `{acao: close\|reopen\|delete\|restore, nota?}` → o report dobrado; 404 se desconhecido, 400 numa transição inválida (§17); SSE `report_changed` |
+| `GET /api/reports/{id}/captura` | a captura do report (`reports/R####.jpg\|png`); 404 se não existe |
+| `GET /api/events` | SSE: `hello`, `board_changed`, `fetch_changed`, `ingest_progress`, `prepare_progress`, `report_added`, `report_edited`, `report_changed`, `ready` |
 
 `unplace` não estava na lista pedida; foi acrescentado porque um toque errado em "Coloquei" precisa de desfazer (só para peças colocadas pelo log; as de secções desfazem-se com "Desancorar grupo").
 
@@ -140,14 +142,14 @@ Botão "Reportar" em cada cartão, no painel da peça e no da célula: abre um `
 
 - **Ficheiro** `projects/<id>/reports.jsonl`, uma linha por relatório: `{id: "R0001", t, tipo, texto, piece, cell, scan_id, n_no_lote, lote, crop_path, captura, vista, estado: "aberto"}`; ao fechar: `estado: "fechado"`, `fechado_em`, `nota`. Capturas em `projects/<id>/reports/R####.jpg|png` (zoom 3×3 da célula se há célula, senão o recorte da peça).
 - **Log**: eventos informativos `report` e `report_closed` (sem efeito no estado; o replay ignora-os). A escrita atualiza `_known_stat` e não emite `board_changed`/`fetch_changed`.
-- **CLI** (`src/reports.py`): `python -m src.reports --project projects/alpes --list` e `--close R0001 --nota "..."`.
+- **CLI** (`src/reports.py`): `python -m src.reports --project projects/alpes --list` e `--close R0001 --nota "..."`; também `--reopen`, `--delete`, `--restore` e `--list [--all] [--eliminados]` (§17).
 - **"Vai buscar" em dois grupos** (item 6): `fetch.json` ganha, só na resposta de `/api/fetch`, `vizinhas_montadas` (vizinhas 4-conexas `colocada` ou `ocupada_legado` com fonte `tiago`; `foto` não conta) e `grupo` (`coloca_agora` com ≥ 1, ou posição conhecida que passou a colocável; senão `guarda_posicao`, cujo botão é "Guardei num saquinho (l, c)" = `position_known` com `nota: "saquinho"`, ainda não guardada no log).
 
 ## 12. Abas «Guardadas» e «Reports» (2026-11-05)
 
-«Vai buscar» só mostra peças com ≥ 1 vizinha ortogonal montada (`fetch_group`: diagonais e moldura não contam; borda colocada conta; sem exceção para `posicao_conhecida`). As restantes estão na aba **Guardadas**: aviso «Não procurar ainda» e a secção «Guardadas com posição, ainda sem vizinha» recolhida por omissão; saem também do realce do tabuleiro. A aba **Reports** é só de leitura (`GET /api/reports?todos=true`): ID, estado (aberto / resolvido), tipo, peça e célula, texto; filtro aberto/resolvido e contagem de abertos no separador. Os reports fecham-se no ficheiro (`python -m src.reports --close`).
+«Vai buscar» só mostra peças com ≥ 1 vizinha ortogonal montada (`fetch_group`: diagonais e moldura não contam; borda colocada conta; sem exceção para `posicao_conhecida`). As restantes estão na aba **Guardadas**: aviso «Não procurar ainda» e a secção «Guardadas com posição, ainda sem vizinha» recolhida por omissão; saem também do realce do tabuleiro. A aba **Reports** lista os reports (`GET /api/reports?todos=true&eliminados=true`; estados e detalhe em §17): ID, estado (aberto / resolvido), tipo, peça e célula, texto; filtro aberto/resolvido e contagem de abertos no separador. Os estados mudam-se no detalhe ou pelo CLI (`python -m src.reports --close`).
 
-**Linhas clicáveis (2026-11-07):** cada linha da aba Reports é um botão (`role=button`, `tabindex=0`; clique ou Enter) que localiza o que o report aponta: com peça, o mesmo caminho da pesquisa por peça (§13); só com célula, a gaveta dessa célula. Mostra a miniatura da peça (`/api/pieces/{id}.png?pose=scan&size=64`) e chips visíveis com o ID da peça e a célula, antes do estado e do tipo. Continua só leitura: o clique não chama `/api/confirm` nem `/api/report` e o `log.jsonl` não ganha eventos (testado).
+**Linhas clicáveis (2026-11-07, revisto no mesmo dia; ver §17):** cada linha da aba Reports é um botão (`role=button`, `tabindex=0`; clique ou Enter) que realça o que o report aponta no tabuleiro **sem sair da aba Reports** (`locateReportInPlace` → `showCellOnBoard`): peça colocada ou com posição conhecida → realce e zoom na célula; peça pendente → toast «P#### está em Guardadas / Vai buscar»; só célula → realce da célula; sem peça nem célula → toast «report geral, sem localização». À direita, a seta «→» (`button.rgo`, `aria-label="Abrir report R####"`, 36×36 px) abre o detalhe. A linha mostra a miniatura da peça e chips com o ID da peça e a célula. O clique não escreve nada (`log.jsonl` fica igual; testado). A pesquisa por `R####` continua a abrir a gaveta da célula.
 
 ## 13. Abas no topo e «Editar report» (2026-11-05)
 
@@ -279,3 +281,13 @@ Cada linha ganha uma **caixa de seleção** (26 px de caixa dentro de um alvo de
 
 ### 16.3 Recomendação
 **S2 primeiro** (custo pequeno, não mexe no tabuleiro, resolve «escolher vários grupos» e não se pisa com «Sugestões»); **S1 depois, só se o Tiago sentir falta do «filtrar pelo tabuleiro»**, e já com a regra «um modo de toque de cada vez». As duas não se excluem: ambas acabam num conjunto de ids de grupos filtrado. **Por decidir (Tiago):** S1, S2 ou ambas; se as caixas aparecem sempre ou só depois de «Selecionar»; se a interseção (todas as células) é precisa. **Não implementado.**
+
+## 17. Estados dos reports (2026-11-07)
+
+Estados: `aberto`, `fechado` (na GUI «resolvido») e `eliminado` (escondido, restaurável). Transições (`src.reports.set_state(project, id, acao, nota="")`, o único caminho, usado pela GUI e pelo CLI): `close` aberto→fechado; `reopen` fechado→aberto; `delete` aberto|fechado→eliminado (guarda `estado_anterior`); `restore` eliminado→`estado_anterior`. Qualquer outra combinação devolve `{error}` (ex.: «R0001 já está fechado») e não escreve nada.
+
+- **Append-only:** cada ação acrescenta UMA linha `{"evento": "estado", "id", "t", "acao", "estado", "nota", "estado_anterior"?}` a `reports.jsonl` e UM evento ao `log.jsonl` (`report_closed`, `report_reopened`, `report_deleted`, `report_restored`, informativos). Nenhuma linha anterior é reescrita (antes, fechar reescrevia o ficheiro). `read_reports` dobra os eventos `estado` (`estado`, `nota`, `fechado_em`/`reaberto_em`/`eliminado_em`/`restaurado_em`, `estado_anterior`, `n_estados`, `historico`); as linhas antigas reescritas com `estado: fechado` continuam válidas sem conversão.
+- **Lista:** `list_reports(project, only_open=True, eliminados=False)` esconde os eliminados por omissão. CLI: `--close/--reopen/--delete/--restore R#### [--nota ...]`, `--list [--all] [--eliminados]` (mostra id, estado, tipo, peça, célula, texto).
+- **GUI, lista:** filtro «Abertos / Resolvidos / Eliminados» e contagens no cabeçalho; a seta «→» de cada linha abre o detalhe.
+- **GUI, detalhe** (`section#tab-report`, sem botão em `nav#tabs`; abrir não limpa a seleção da célula): «← Reports», ID + estado + tipo + data, chips da peça e da célula (→ realce no tabuleiro), miniaturas `pose=board` e `pose=scan` a 160 px, a captura (`/api/reports/{id}/captura`; só se o report tem `captura`), texto, nota, histórico de estados e os botões do estado: «Ver no tabuleiro», «Editar» (aberto), «Marcar resolvido» (`dialog#estado-dlg`, nota opcional), «Reabrir», «Eliminar» (o mesmo diálogo em confirmação: «Eliminar R####? Fica escondido e pode ser restaurado.»), «Restaurar». Depois de cada ação: toast, `loadReports()` e o detalhe volta a desenhar-se. O `EventSource` ouve `report_added`, `report_edited` e `report_changed` e recarrega a lista.
+- **Testes:** `tests/test_reports_estado.py`, `tests/test_server.py` (`test_report_estado_endpoint`, `test_report_captura_endpoint`), `tests/test_gui_reports.py`; layout do detalhe e da lista na matriz de `tests/test_gui_layout.py`.

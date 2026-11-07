@@ -422,3 +422,72 @@ def test_report_edit_endpoint_rejects_bad_types(env):
         r = client.post(url, json=body)
         assert r.status_code == 400, (body, r.status_code, r.text)
     assert open(path, encoding="utf-8").read() == n0
+
+
+def test_report_estado_endpoint(env):
+    """``POST /api/report/{id}/estado``: close / reopen / delete / restore, each one a single appended line in
+    ``reports.jsonl`` and one in the log; 404 for unknown, 400 for invalid transitions."""
+    gui, client, placed, tw, dec = env
+    rep = client.post("/api/report", json={"tipo": "outro", "texto": "x", "piece": tw}).json()
+    rid, path = rep["id"], os.path.join(gui.path, "reports.jsonl")
+
+    def lines():
+        with open(path, encoding="utf-8") as f:
+            return f.read().splitlines()
+
+    def go(acao, nota=None):
+        before, ver = lines(), gui.version()
+        body = {"acao": acao} if nota is None else {"acao": acao, "nota": nota}
+        r = client.post(f"/api/report/{rid}/estado", json=body)
+        if r.status_code == 200:
+            after = lines()
+            assert after[:len(before)] == before and len(after) == len(before) + 1
+            assert gui._known_stat == gui._log_stat()                               # our own write: no reopen
+        return r
+
+    r = go("close", "feito")
+    assert r.status_code == 200 and r.json()["estado"] == "fechado" and r.json()["nota"] == "feito"
+    assert go("close").status_code == 400
+    assert go("reopen").json()["estado"] == "aberto"
+    assert go("delete").json()["estado"] == "eliminado"
+    assert client.get("/api/reports?todos=true").json()["reports"] == []
+    assert [x["id"] for x in client.get("/api/reports?todos=true&eliminados=true").json()["reports"]] == [rid]
+    assert go("restore").json()["estado"] == "aberto"
+    assert go("restore").status_code == 400
+    assert go("explodir").status_code == 400
+    assert client.post("/api/report/R9999/estado", json={"acao": "close"}).status_code == 404
+    for bad in (["close"], 3, {"acao": 3}, {}, {"acao": "close", "nota": 3}):
+        assert client.post(f"/api/report/{rid}/estado", json=bad).status_code == 400, bad
+    acts = [ev["action"] for ev in gui.pr.events()]
+    for a in ("report_closed", "report_reopened", "report_deleted", "report_restored"):
+        assert a in acts
+    _ok_on_disk(gui.path)
+
+
+def test_report_captura_endpoint(env):
+    gui, client, placed, tw, dec = env
+    r1 = client.post("/api/report", json={"tipo": "outro", "cell": [2, 3]}).json()        # jpg capture of the cell
+    r2 = client.post("/api/report", json={"tipo": "outro", "texto": "geral"}).json()      # no capture
+    c = client.get(f"/api/reports/{r1['id']}/captura")
+    assert c.status_code == 200 and c.headers["content-type"] == "image/jpeg"
+    with open(gui.pr.p(r1["captura"]), "rb") as f:
+        assert c.content == f.read()
+    assert client.get(f"/api/reports/{r2['id']}/captura").status_code == 404
+    assert client.get("/api/reports/R9999/captura").status_code == 404
+    # a capture file that vanished is a 404, not a 500
+    os.remove(gui.pr.p(r1["captura"]))
+    assert client.get(f"/api/reports/{r1['id']}/captura").status_code == 404
+
+
+def test_suspeitas_endpoint_and_event(env):
+    gui, client, placed, tw, dec = env
+    r = client.get("/api/suspeitas")
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert isinstance(d["items"], list) and d["items"] == []
+    assert d["summary"]["n_colocadas"] == 1 and d["summary"]["n_verificadas"] == 1 and d["summary"]["n_impossivel"] == 0
+    seq0 = gui.seq
+    assert client.post("/api/confirm", json={"acao": "place", "piece": tw, "cell": [3, 4]}).status_code == 200
+    ev = [data for _, n, data in gui.events_after(seq0) if n == "suspeitas_changed"]
+    assert ev and ev[-1]["n_colocadas"] == 2
+    assert client.get("/api/suspeitas").json()["summary"]["n_colocadas"] == 2
