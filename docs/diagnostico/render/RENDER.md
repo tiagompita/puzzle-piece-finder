@@ -269,3 +269,43 @@ Regra ligada na mesma: é a regra do §6.1, já ligada nas miniaturas.
 1. Meias-luas verde-escuras dentro de alguns encaixes (P0196, P0198, P0204, P0233), a 0,4–0,8 mm do bordo, fora da faixa de 0,4 mm da regra. Alargá-la é outra decisão: mudaria a porta do §6.1, medida a 0,4 mm.
 2. Em P0198, o verde que resta (965 píxeis) é sobretudo o próprio prado claro do topo da peça, com a cor do papel. Pela cor não se separa (§2.6). O «comido» do R0019 é provavelmente esse prado e fica **[NT]**.
 3. Em P0778 fica uma orla fina de papel misturado (d 15–30) à volta do encaixe, que fica aberto e escuro: com a pose atual, o tab da vizinha não chega lá.
+
+## 8. Rotação das peças de moldura pelo lado F (2026-11-07; R0022 P0240, pendente 4 P0590)
+
+**O que mudou** (`src/render.py`, interruptor `F_ROTATION = True`):
+- Nas peças com lado F, a rotação vem da reta ajustada ao lado F (8–92 % da corda, `f_side_line`), posta na linha da borda que a célula exige (lado `i` → `DIRS[(i+k)%4]`, `k` da atribuição de cantos; `f_rotation`).
+- **Só lados F com contorno reto:** RMS da reta ≤ `F_LINE_RMS_MAX` = 0,15 mm (mediana dos 220 lados F 0,059 mm, p90 0,108, p95 0,161). Os 13 lados acima têm orla verde/sombra na silhueta (S0020, coluna 1), prado comido (P0199) ou manchas brancas no bordo; ficam com a rotação dos cantos.
+- **Cantos do puzzle (2 F):** média pesada pela corda dos lados retos (2 peças; diferença entre os dois lados 0,57–0,81°).
+- **Só |Δθ| ≤ 10°** face aos cantos (`F_MAX_DEG`; máximo medido 4,96°).
+- **Translação:** Kabsch dos 4 cantos com a rotação fixa. Com o pivot na média dos cantos, isto dá centróide sobre centróide, ou seja `dx = dy = 0`, como antes. É, por isso, a variante «só rotação» da triagem: igual a 1e-13° nas 199 peças de um F **[V]**.
+- **O que muda nas entradas:** `method` fica `corners`/`corners+image` (o teste `test_compose_board_no_gaps` e `run_render.py` dependem desses valores); a origem da rotação vai em `rotation` (`corners` | `F`) e `f_rotation`.
+- **Cache:** `render/placements.json` passa a guardar `f_rotation`. Um ficheiro feito com o interruptor noutra posição é ignorado e a peça é registada na hora, por isso a mudança chega à GUI (`registered_theta`, `Gui.placements`, `query`).
+
+**Medição** (`tools/diagnostico/render/pose_f.py`, 111 s): antes = `alpes_r3b` (log 2072, 607 colocadas, 954 juntas); depois = a mesma cópia re-registada. A pose da GUI (`register_piece(image=False)`) foi medida desligada/ligada no mesmo processo; a pose com imagem compara `placements.json` da `alpes_r3b` com `register_all(image=True, force=True)`.
+
+| porta | pose da GUI (sem imagem) | pose com imagem (`register_all`) |
+|---|---|---|
+| (1) nenhuma junta piora > 0,2 mm | **0** (máx. +0,130 mm; 4 melhoram > 0,2) **[V]** | **3 [F]** (máx. +0,291; 5 melhoram) |
+| (2) mediana \|folga\| não sobe | 0,188 → **0,183** mm; > 0,8 mm: 21 → 20; p95 0,603 → 0,601 **[V]** | 0,193 → 0,186; > 0,8: 20 → 19 **[V]** |
+| (3) buracos ≤ 67 / 9 | 67 / 9 → **67 / 9** (média 0,01250 → 0,01244) **[V]** | 67 / 9 → **68** / 9 **[F]** |
+| (4) F a > 3° da borda: 12 → 0 | 12 → **2 [F]** (> 2°: 31 → 7; mediana 0,91° → 0,00°) | 12 → 2 **[F]** |
+| (5) `pytest tests/` | **224 passed, 1 skipped** (146 s, OpenCV 4.11; 2 testes novos em `tests/test_render.py`; o de paralelismo falha com `F_ROTATION = False`: inclinação 1,63° contra 0,000° ligado) **[V]**; OpenCV 5.0 **[NT]** | |
+
+- **(4): ficam P0655 e P0199.** São as duas da lista com o lado F não reto (RMS 0,31 e 0,59 mm), ficam com a pose dos cantos e a métrica (reta dos 8–92 %) não mede ali o bordo da peça:
+  - **P0655** (31,1), S0020 #28: a silhueta tem um degrau de orla a meio do lado W (visto). A reta dá 7,4°, a corda dá 0,9°.
+  - **P0199** (35,64), S0009 #6: é prado comido (TRIAGEM §4). A correção é em `segment_scan`, não aqui.
+  - Sem o filtro de retidão, as duas ficam a 0° pela métrica, mas P0655 (com P0637 e P0649, também com orla) piora 3 juntas da coluna 1 até +0,26 mm. É a falha da variante da triagem **[V]**.
+  - Um ajuste robusto (MAD) não as salva: o desvio cobre o lado todo. Medido e não adotado.
+- **Imagem, (1) e (3):** as 3 juntas (P0416–P0035 (46–47,50), P0276–P0270 (1,56–57), P0216–P0221 (18–19,64)) vêm todas de a translação por imagem passar de aceite a rejeitada, ou o contrário, com diferenças de score de 0,01–0,05 ΔE:
+  - P0035 perde um dy +0,43 aceite (agora pede 0,83 > 0,5 mm);
+  - P0270 e P0221 ganham −0,39 / −0,42 mm aceites com melhorias de 0,01 / 0,04 no score.
+  - A rotação por F só muda o ponto de partida. É a instabilidade conhecida do passo da imagem, que não tem poder a 0,75 mm/px (§1) **[V]**.
+- **Pedidas no report:**
+  - **P0240** (1,63): F 4,96° → 0,00°. Juntas E com P0245 −0,82 → −0,62 mm e com P0236 +0,14 → −0,08.
+  - **P0590** (47,2): F 4,04° → 0,00°. Juntas S P0063 −0,07 → +0,04, W P0670 −0,02 → −0,07, E P0595 −0,42 → −0,34.
+- **Controlo de 30 peças de moldura** (semente 20261107, fora da lista): \|F\| mediana 0,86° → 0,00°. Mediana da maior \|folga\| por peça 0,329 → 0,334 mm, nenhuma piora > 0,2 mm **[V]**.
+- **Figura** `pose_f_P0240_P0590.jpg`: vista 3 × 3 a 300 dpi; antes, contorno a vermelho | depois, contorno a verde. Vista também ampliada.
+  - **P0240, antes:** o lado de cima sobe para a esquerda e o canto superior esquerdo sai acima da linha da borda, fora da vista; o canto inferior direito fica mais baixo do que o esquerdo.
+  - **P0240, depois:** os 4 cantos ficam alinhados com a grelha e o lado de cima assenta na linha da borda. A diferença na sobreposição com a vizinha W (−0,82 → −0,62 mm) não se distingue a olho.
+  - **P0590, antes:** a base desce para a direita e o canto inferior direito sai abaixo do tabuleiro; ao longo da borda vê-se uma cunha escura.
+  - **P0590, depois:** a base fica horizontal, na linha da borda.

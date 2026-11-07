@@ -14,7 +14,11 @@ Three steps, each usable on its own:
    pose (log ``theta_deg``, or the section rotation + the body angle for legacy sections).
    Kabsch aligns the corner centroids, so the corner solution always puts the body centre on
    the cell centre (``dx = dy = 0``); its value is the rotation and the right pivot (the mean of
-   the 4 corners, not the contour mean, which the tabs pull around). Secondary = image: the
+   the 4 corners, not the contour mean, which the tabs pull around). Border pieces
+   (``F_ROTATION``): the rotation comes instead from the line fitted to the F side(s), laid on
+   the border line (:func:`f_rotation`; only F sides whose contour is straight, line RMS <=
+   ``F_LINE_RMS_MAX``); the translation is unchanged (corner centroid on the cell centre), so a
+   non-rectangular cell no longer tilts the piece (RENDER.md §8). Secondary = image: the
    crop rendered at the art scale is searched over +/- ``IMG_SEARCH_CELL`` cell and
    +/- ``IMG_ROT_DEG`` deg (RMS dE in Lab + ``GRAD_W`` x (1 - gradient-magnitude NCC), parabola
    refinement); it refines the corner pose only when it lowers the score and stays within
@@ -61,7 +65,7 @@ import numpy as np
 from src.locate import CellArt, body_beta_deg, body_center_mm, wrap_deg
 
 __all__ = [
-	"CORNER_RESIDUAL_MAX_MM", "IMG_SEARCH_CELL", "IMG_ROT_DEG", "IMG_ACCEPT_MM", "IMG_ACCEPT_DEG", "GRAD_W", "IMG_NCC_MIN",
+	"CORNER_RESIDUAL_MAX_MM", "F_ROTATION", "F_SPAN", "F_MAX_DEG", "F_LINE_RMS_MAX", "f_side_line", "f_rotation", "IMG_SEARCH_CELL", "IMG_ROT_DEG", "IMG_ACCEPT_MM", "IMG_ACCEPT_DEG", "GRAD_W", "IMG_NCC_MIN",
 	"BAND_MM", "LIGHT_BAND_MAX_MM", "BG_DIST_MAX", "PIECE_P5_FRAC", "LIGHT_BAND_MM", "LIGHT_PIECE_P5_MIN", "is_light", "BG_LUMA_WEIGHT", "SHADOW_L_DELTA", "SHADOW_CHROMA_MAX", "SHADOW_DEFAULT",
 	"INTERIOR_MM", "SEAM_TRIM", "BLEED_MM", "RELAX_GAP_MM", "RELAX_MAX_MM", "DIRS",
 	"cell_corners_mm", "cell_centre_mm", "kabsch_2d", "corner_register", "pose_matrix", "board_contour",
@@ -75,6 +79,10 @@ __all__ = [
 
 # ---------------------------------------------------------------- constants
 CORNER_RESIDUAL_MAX_MM = 1.0   # RMS corner residual (mm) above which the corner solution is not trusted
+F_ROTATION = True              # border pieces: rotation from the line fitted to the F side(s), not from the corners (RENDER.md §8)
+F_SPAN = (0.08, 0.92)          # ... line fitted on this share of the F side's chord (corner rounding left out)
+F_MAX_DEG = 10.0               # ... used only within this of the corner rotation (else the corner rotation is kept)
+F_LINE_RMS_MAX = 0.15          # ... and only from an F side whose contour is straight: line RMS (mm) at most this
 IMG_SEARCH_CELL = 0.5          # image search: translation range (+/- fraction of a cell)
 IMG_ROT_DEG = 5                # image search: rotation range (+/- deg, 1 deg steps); only without corners:
                                # a 1 deg turn moves the body edge ~0.16 mm = 0.2 art px, not observable (RENDER.md §1)
@@ -158,6 +166,11 @@ def kabsch_2d(src: np.ndarray, dst: np.ndarray):
 	return th, t, rms
 
 
+def _grow(profile) -> float:
+	"""Silhouette offset outside the cut line (``calibration.celula_silhueta.offset_mm``, mm)."""
+	return float(((profile.calibration or {}).get("celula_silhueta") or {}).get("offset_mm") or 0.0)
+
+
 def _f_ok(shape, k: int, flat: set) -> bool:
 	"""F sides on exactly the border directions of the cell under the cyclic assignment ``k``."""
 	fd = {DIRS[(i + k) % 4] for i, s in enumerate(shape.sides) if s.kind == "F"}
@@ -187,7 +200,7 @@ def corner_register(shape, profile, cell, theta0: Optional[float] = None, grow: 
 	if shape is None or not shape.ok or len(shape.corners) != 4:
 		return {"ok": False, "reason": "sem 4 cantos"}
 	if grow is None:
-		grow = float(((profile.calibration or {}).get("celula_silhueta") or {}).get("offset_mm") or 0.0)
+		grow = _grow(profile)
 	P = shape.c[shape.corners]
 	T = cell_corners_mm(profile, cell[0], cell[1], grow)
 	flat = profile.flat_directions(*cell)
@@ -207,6 +220,66 @@ def corner_register(shape, profile, cell, theta0: Optional[float] = None, grow: 
 			"shape_residual_mm": _rect_residual(P, th, k),
 			"dtheta0_deg": None if theta0 is None else float(wrap_deg(th - theta0)), "ambiguous": amb,
 			"cands": [(int(a), float(b), float(c), bool(d)) for a, b, c, d in cands]}
+
+
+def f_side_line(shape, i: int) -> Optional[tuple]:
+	"""Least-squares line through side ``i`` within ``F_SPAN`` of its chord: ``(angle_deg, rms_mm)``
+	(direction in the image frame, ``atan2(dy, dx)`` from corner ``i`` to corner ``i + 1``; RMS of the
+	points about the line), None with fewer than 6 points.
+
+	Meant for F sides: unlike the chord it does not depend on where exactly the two corners were
+	detected; the RMS says whether the contour there is a straight edge at all (a green / shadow
+	fringe inside the silhouette makes it bulge, RENDER.md §8).
+	"""
+	a, b = int(shape.corners[i]), int(shape.corners[(i + 1) % 4])
+	seg = shape.c[a:b + 1] if b > a else np.vstack([shape.c[a:], shape.c[:b + 1]])
+	p0, p1 = seg[0], seg[-1]
+	L = float(np.linalg.norm(p1 - p0))
+	if L < 1e-6:
+		return None
+	u = (p1 - p0) / L
+	v = np.array([-u[1], u[0]])
+	x, y = (seg - p0) @ u / L, (seg - p0) @ v / L
+	sel = (x > F_SPAN[0]) & (x < F_SPAN[1])
+	if sel.sum() < 6:
+		return None
+	coef = np.polyfit(x[sel], y[sel], 1)
+	rms = float(np.sqrt(np.mean((y[sel] - np.polyval(coef, x[sel])) ** 2)) * L)
+	return float(np.degrees(np.arctan2(u[1], u[0])) + np.degrees(np.arctan(float(coef[0])))), rms
+
+
+def f_rotation(shape, k: int, theta_ref: float, rms_max: Optional[float] = None) -> Optional[dict]:
+	"""Board rotation that lays the F side(s) of ``shape`` on the border line(s) of the cell.
+
+	Side ``i`` faces ``DIRS[(i + k) % 4]`` (the cyclic corner assignment of :func:`corner_register`);
+	on the board its direction must be ``90 * ((i + k) % 4)`` deg, so each F side gives
+	``theta = 90 j - angle_i`` (taken nearest ``theta_ref``). Only F sides whose contour is straight
+	(line RMS <= ``rms_max``, default ``F_LINE_RMS_MAX``) count. Two F sides (puzzle corners): the
+	mean weighted by chord length. Returns ``{theta_deg, dtheta_deg, n_f, per_side: [(i, dir, theta,
+	rms_mm, used)], spread_deg}`` or None (no usable F side).
+	"""
+	if shape is None or not shape.ok or len(shape.corners) != 4:
+		return None
+	rms_max = F_LINE_RMS_MAX if rms_max is None else float(rms_max)
+	est, wts, per = [], [], []
+	for i, s in enumerate(shape.sides):
+		if s.kind != "F":
+			continue
+		fl = f_side_line(shape, i)
+		if fl is None:
+			continue
+		j = (i + int(k)) % 4
+		th = float(theta_ref + wrap_deg(90.0 * j - fl[0] - theta_ref))
+		use = fl[1] <= rms_max
+		per.append((i, DIRS[j], th, fl[1], bool(use)))
+		if use:
+			est.append(th)
+			wts.append(float(s.chord_mm))
+	if not est:
+		return None
+	th = float(np.average(est, weights=wts))
+	return {"theta_deg": th, "dtheta_deg": float(th - theta_ref), "n_f": len(est), "per_side": per,
+			"spread_deg": float(np.ptp(est)) if len(est) > 1 else 0.0}
 
 
 def pose_matrix(theta_deg: float, pivot_mm, centre_mm, d_mm=(0.0, 0.0)) -> np.ndarray:
@@ -444,6 +517,10 @@ def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=
 	Returns ``{cell, theta_deg, dx_mm, dy_mm, pivot_mm, residual_mm, shape_residual_mm, method,
 	score, theta0, corner: {...}, image: {...}}`` with ``method`` in ``corners | corners+image |
 	image | none`` (``dx/dy`` = body centre minus cell centre, board mm) or ``{'error': str}``.
+	With the corner solution, ``rotation`` says where the rotation came from: ``corners`` or ``F``
+	(``F_ROTATION`` on and the piece has an F side: the line fitted to the F side(s) laid on the
+	border line(s), :func:`f_rotation`, details in ``f_rotation``; the translation is still the
+	corner centroid on the cell centre). ``method`` keeps its values (``corners`` / ``corners+image``).
 
 	Gate of the corner solution: ``shape_residual_mm`` (corners against their best-fit
 	rectangle, i.e. corner-detection consistency) <= ``CORNER_RESIDUAL_MAX_MM``.
@@ -498,6 +575,19 @@ def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=
 		out["residual_mm"] = float(out["corner"]["residual_mm"])
 		out["shape_residual_mm"] = float(cr["shape_residual_mm"])
 		if out["shape_residual_mm"] <= CORNER_RESIDUAL_MAX_MM:
+			out["rotation"] = "corners"
+			fr = f_rotation(sh, int(out["corner"]["k"]), float(theta)) if F_ROTATION else None
+			if fr is not None and abs(fr["dtheta_deg"]) <= F_MAX_DEG:
+				# rotation from the F line(s); translation = Kabsch of the 4 corners with that rotation
+				# fixed, i.e. corner centroid on the cell centre: the pivot (corner mean) stays on the
+				# cell centre and dx = dy = 0, as for the corner solution
+				theta = fr["theta_deg"]
+				Pc = sh.c[sh.corners]
+				Tc = np.roll(cell_corners_mm(profile, cell[0], cell[1], _grow(profile)), -int(out["corner"]["k"]), axis=0)
+				Q = (Pc - Pc.mean(0)) @ _R(theta).T + Tc.mean(0)
+				out["residual_mm"] = float(np.sqrt(np.mean(np.sum((Q - Tc) ** 2, 1))))
+				out["rotation"] = "F"
+				out["f_rotation"] = fr
 			out.update(theta_deg=float(theta), method="corners")
 			r = _img(theta, rot=0)    # translation only: rotation is not observable at the art scale
 			if r is not None:
@@ -552,12 +642,14 @@ def load_placements(project) -> dict:
 		return {"log_len": None, "version": PLACEMENTS_VERSION, "placements": {}}
 	with open(fp, encoding="utf-8") as f:
 		d = json.load(f)
-	if d.get("version") != PLACEMENTS_VERSION:
+	if d.get("version") != PLACEMENTS_VERSION or bool(d.get("f_rotation", False)) != bool(F_ROTATION):
+		# another registration rule (F_ROTATION switched since the file was written): stale
 		return {"log_len": None, "version": PLACEMENTS_VERSION, "placements": {}}
 	return d
 
 
 def save_placements(project, d: dict) -> str:
+	d["f_rotation"] = bool(F_ROTATION)
 	fp = project.p("render", "placements.json")
 	os.makedirs(os.path.dirname(fp), exist_ok=True)
 	tmp = fp + ".tmp"

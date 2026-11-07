@@ -475,3 +475,55 @@ def test_paper_pocket_dropped_on_display_and_board(tmp_path):
     base = np.all(img == 40, -1).sum() - np.all(off == 40, -1).sum()
     assert base > 0.4 * pocket.sum()                                       # the pocket is left open (base shows), not painted
 
+
+
+# ---------------------------------------------------------------- F rotation (RENDER.md §8)
+def _f_board_tilt(pr, pid, pl):
+    """Tilt (deg) of the line fitted to the F side, on the board, against the border line it must lie on."""
+    sh = pr.shape(pid)
+    k = int(pl["corner"]["k"])
+    i = next(i for i, s in enumerate(sh.sides) if s.kind == "F")
+    ang, _ = R.f_side_line(sh, i)
+    return float(R.wrap_deg(ang + pl["theta_deg"] - 90.0 * ((i + k) % 4)))
+
+
+def _short_side_border_piece(tmp_path):
+    """A border piece (cell (1, 4): N must be F) from a non-rectangular cell: E side 16.5 mm, the rest
+    18.5 mm (like P0240 / P0590), scanned turned by 23 deg; returns ``(project, pid)``."""
+    prof = _profile(6, 8)
+    pp = tmp_path / "puzzle.json"
+    prof.save(str(pp))
+    pr = Project.create(str(tmp_path / "proj"), str(pp))
+    sid = pr.add_scan(None, dpi=300)
+    corners = [(0.0, 0.0), (L0, 0.0), (L0, 16.5), (0.0, L0)]          # TL, TR, BR, BL (mm): the F side (top) is straight
+    board = make_piece("FTBT", corners=corners, offset=(0, 0)) * MMPP
+    scan_mm = transform_contour(board, 23.0, center=board.mean(0)) + np.array([40.0, 40.0])
+    cnt = scan_mm / MMPP
+    x, y, w, h = cv2.boundingRect(np.round(cnt).astype(np.int32).reshape(-1, 1, 2))
+    pid = pr.add_piece(sid, {"index_in_scan": 0, "shape": analyse(cnt, MMPP), "contour": np.round(cnt).astype(np.int32),
+                             "bbox": [x - 3, y - 3, w + 6, h + 6], "crop_path": None})
+    pr.place(pid, (1, 4), theta_deg=-23.0)
+    pr.save()
+    return pr, pid
+
+
+def test_corner_pose_tilts_border_piece_of_short_cell(tmp_path, monkeypatch):
+    """Precondition of the F rule: with the corners alone the 4-corner Kabsch against the nominal
+    rectangle spreads the short side and tilts the F side off the border line (> 1 deg)."""
+    pr, pid = _short_side_border_piece(tmp_path)
+    monkeypatch.setattr(R, "F_ROTATION", False)
+    pl = R.register_piece(pr, pid, image=False)
+    assert pl["method"] == "corners" and pl["rotation"] == "corners"
+    assert abs(_f_board_tilt(pr, pid, pl)) > 1.0
+
+
+def test_f_side_parallel_to_border_after_registration(tmp_path):
+    """With ``F_ROTATION`` (module default) the F side of the short-cell border piece lies on the
+    border line after :func:`register_piece` (GUI path, no image) and :func:`registered_theta`;
+    the body centre stays on the cell centre. Fails with ``F_ROTATION = False``."""
+    pr, pid = _short_side_border_piece(tmp_path)
+    pl = R.register_piece(pr, pid, image=False)
+    assert pl["method"] == "corners"
+    assert abs(_f_board_tilt(pr, pid, pl)) < 0.2
+    assert pl["dx_mm"] == 0.0 and pl["dy_mm"] == 0.0
+    assert abs(float(R.wrap_deg(R.registered_theta(pr, pid) - pl["theta_deg"]))) < 1e-9
