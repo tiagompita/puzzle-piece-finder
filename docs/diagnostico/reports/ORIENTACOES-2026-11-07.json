@@ -1,0 +1,2970 @@
+{
+"nota": "orientacoes.py measure/block/swap; antes = projects/alpes (log 2076, só leitura); depois = cópia alpes_o",
+"B": {
+"antes": {
+"P0083": {
+"estado": "colocada",
+"cell": [
+44,
+60
+],
+"seccao": null,
+"cls": "BBTT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0082",
+"kinds": "B<->T",
+"ok": false,
+"why": "rms",
+"rms": 1.83,
+"dl": 1.25,
+"gap_mm": -0.91,
+"de_seam": 20.7
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0078",
+"kinds": "T<->T",
+"ok": false,
+"why": "kind",
+"rms": null,
+"dl": null,
+"gap_mm": -2.34,
+"de_seam": 22.4
+},
+"S": {
+"kind": "vizinha",
+"piece": "P0084",
+"kinds": "T<->B",
+"ok": false,
+"why": "dl",
+"rms": 1.26,
+"dl": 2.52,
+"gap_mm": 0.13,
+"de_seam": 19.0
+},
+"W": {
+"kind": "vizinha",
+"piece": "P0087",
+"kinds": "B<->B",
+"ok": false,
+"why": "kind",
+"rms": null,
+"dl": null,
+"gap_mm": 2.43,
+"de_seam": 23.3
+}
+},
+"image": {
+"theta_deg": 85.24,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 17.18,
+"ncc": -0.02
+},
+{
+"rot": 90,
+"dE": 14.33,
+"ncc": 0.7
+},
+{
+"rot": 180,
+"dE": 16.83,
+"ncc": 0.03
+},
+{
+"rot": -90,
+"dE": 17.35,
+"ncc": 0.07
+}
+],
+"best_ncc_rot": 90
+},
+"n_vizinhas": 4,
+"n_tb": 2,
+"n_ok": 0,
+"n_borda": 0,
+"n_borda_ok": 0
+},
+"P0333": {
+"estado": "colocada",
+"cell": [
+6,
+22
+],
+"seccao": "G0030",
+"cls": "BBBT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0332",
+"kinds": "B<->B",
+"ok": false,
+"why": "kind",
+"rms": null,
+"dl": null,
+"gap_mm": 2.05,
+"de_seam": 24.1
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0327",
+"kinds": "T<->T",
+"ok": false,
+"why": "kind",
+"rms": null,
+"dl": null,
+"gap_mm": -1.76,
+"de_seam": 32.4
+},
+"S": {
+"kind": "livre",
+"side": "B"
+},
+"W": {
+"kind": "livre",
+"side": "B"
+}
+},
+"image": {
+"theta_deg": 177.98,
+"k": 3,
+"rots": [
+{
+"rot": 0,
+"dE": 9.17,
+"ncc": 0.08
+},
+{
+"rot": 90,
+"dE": 10.4,
+"ncc": 0.29
+},
+{
+"rot": 180,
+"dE": 10.34,
+"ncc": 0.02
+},
+{
+"rot": -90,
+"dE": 9.68,
+"ncc": 0.06
+}
+],
+"best_ncc_rot": 90
+},
+"n_vizinhas": 2,
+"n_tb": 0,
+"n_ok": 0,
+"n_borda": 0,
+"n_borda_ok": 0
+}
+},
+"depois": {
+"P0083": {
+"estado": "colocada",
+"cell": [
+44,
+60
+],
+"seccao": null,
+"cls": "BBTT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0082",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.04,
+"dl": 0.58,
+"gap_mm": -0.34,
+"de_seam": 26.0
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0078",
+"kinds": "B<->T",
+"ok": false,
+"why": "rms",
+"rms": 1.77,
+"dl": 0.11,
+"gap_mm": -0.46,
+"de_seam": 37.8
+},
+"S": {
+"kind": "vizinha",
+"piece": "P0084",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.28,
+"dl": 1.25,
+"gap_mm": -0.19,
+"de_seam": 10.8
+},
+"W": {
+"kind": "vizinha",
+"piece": "P0087",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.35,
+"dl": 0.5,
+"gap_mm": -0.07,
+"de_seam": 15.1
+}
+},
+"image": {
+"theta_deg": 175.3,
+"k": 3,
+"rots": [
+{
+"rot": 0,
+"dE": 14.35,
+"ncc": 0.7
+},
+{
+"rot": 90,
+"dE": 16.86,
+"ncc": 0.03
+},
+{
+"rot": 180,
+"dE": 17.36,
+"ncc": 0.07
+},
+{
+"rot": -90,
+"dE": 17.19,
+"ncc": -0.02
+}
+],
+"best_ncc_rot": 0
+},
+"n_vizinhas": 4,
+"n_tb": 4,
+"n_ok": 3,
+"n_borda": 0,
+"n_borda_ok": 0
+},
+"P0333": {
+"estado": "colocada",
+"cell": [
+6,
+22
+],
+"seccao": "G0030",
+"cls": "BBBT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0332",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.07,
+"dl": 0.38,
+"gap_mm": 0.04,
+"de_seam": 13.2
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0327",
+"kinds": "B<->T",
+"ok": false,
+"why": "rms",
+"rms": 1.68,
+"dl": 0.37,
+"gap_mm": -0.26,
+"de_seam": 58.2
+},
+"S": {
+"kind": "livre",
+"side": "B"
+},
+"W": {
+"kind": "livre",
+"side": "B"
+}
+},
+"image": {
+"theta_deg": 87.92,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 9.6,
+"ncc": 0.06
+},
+{
+"rot": 90,
+"dE": 9.31,
+"ncc": 0.07
+},
+{
+"rot": 180,
+"dE": 10.4,
+"ncc": 0.29
+},
+{
+"rot": -90,
+"dE": 10.35,
+"ncc": 0.02
+}
+],
+"best_ncc_rot": 180
+},
+"n_vizinhas": 2,
+"n_tb": 2,
+"n_ok": 1,
+"n_borda": 0,
+"n_borda_ok": 0
+}
+},
+"P0333_rot270": {
+"P0333": {
+"estado": "colocada",
+"cell": [
+6,
+22
+],
+"seccao": "G0030",
+"cls": "BBBT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0332",
+"kinds": "B<->B",
+"ok": false,
+"why": "kind",
+"rms": null,
+"dl": null,
+"gap_mm": 2.75,
+"de_seam": 11.0
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0327",
+"kinds": "B<->T",
+"ok": false,
+"why": "rms",
+"rms": 1.68,
+"dl": 0.84,
+"gap_mm": -0.3,
+"de_seam": 27.5
+},
+"S": {
+"kind": "livre",
+"side": "T"
+},
+"W": {
+"kind": "livre",
+"side": "B"
+}
+},
+"image": {
+"theta_deg": -92.08,
+"k": 0,
+"rots": [
+{
+"rot": 0,
+"dE": 10.4,
+"ncc": 0.29
+},
+{
+"rot": 90,
+"dE": 10.35,
+"ncc": 0.02
+},
+{
+"rot": 180,
+"dE": 9.6,
+"ncc": 0.06
+},
+{
+"rot": -90,
+"dE": 9.31,
+"ncc": 0.07
+}
+],
+"best_ncc_rot": 0
+},
+"n_vizinhas": 2,
+"n_tb": 1,
+"n_ok": 0,
+"n_borda": 0,
+"n_borda_ok": 0
+}
+},
+"P0333_rot0": {
+"P0333": {
+"estado": "colocada",
+"cell": [
+6,
+22
+],
+"seccao": "G0030",
+"cls": "BBBT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0332",
+"kinds": "B<->B",
+"ok": false,
+"why": "kind",
+"rms": null,
+"dl": null,
+"gap_mm": 1.83,
+"de_seam": 9.4
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0327",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.33,
+"dl": 0.37,
+"gap_mm": -0.1,
+"de_seam": 18.4
+},
+"S": {
+"kind": "livre",
+"side": "B"
+},
+"W": {
+"kind": "livre",
+"side": "T"
+}
+},
+"image": {
+"theta_deg": -2.02,
+"k": 1,
+"rots": [
+{
+"rot": 0,
+"dE": 10.34,
+"ncc": 0.02
+},
+{
+"rot": 90,
+"dE": 9.68,
+"ncc": 0.06
+},
+{
+"rot": 180,
+"dE": 9.17,
+"ncc": 0.08
+},
+{
+"rot": -90,
+"dE": 10.4,
+"ncc": 0.29
+}
+],
+"best_ncc_rot": -90
+},
+"n_vizinhas": 2,
+"n_tb": 1,
+"n_ok": 1,
+"n_borda": 0,
+"n_borda_ok": 0
+}
+}
+},
+"C": {
+"P0442": {
+"estado": "colocada",
+"cell": [
+42,
+55
+],
+"seccao": "G0040",
+"cls": "BBTT",
+"sides": {
+"N": {
+"kind": "livre",
+"side": "B"
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0391",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.4,
+"dl": 0.0,
+"gap_mm": -0.19,
+"de_seam": 47.3
+},
+"S": {
+"kind": "vizinha",
+"piece": "P0401",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.24,
+"dl": 0.06,
+"gap_mm": -0.33,
+"de_seam": 11.1
+},
+"W": {
+"kind": "vizinha",
+"piece": "P0443",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.35,
+"dl": 0.48,
+"gap_mm": -0.0,
+"de_seam": 16.5
+}
+},
+"image": {
+"theta_deg": 179.24,
+"k": 3,
+"rots": [
+{
+"rot": 0,
+"dE": 7.49,
+"ncc": 0.46
+},
+{
+"rot": 90,
+"dE": 19.38,
+"ncc": -0.15
+},
+{
+"rot": 180,
+"dE": 23.98,
+"ncc": 0.07
+},
+{
+"rot": -90,
+"dE": 19.1,
+"ncc": 0.12
+}
+],
+"best_ncc_rot": 0
+},
+"n_vizinhas": 3,
+"n_tb": 3,
+"n_ok": 3,
+"n_borda": 0,
+"n_borda_ok": 0
+},
+"P0401": {
+"estado": "colocada",
+"cell": [
+43,
+55
+],
+"seccao": "G0037",
+"cls": "BTBT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0442",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.24,
+"dl": 0.06,
+"gap_mm": -0.33,
+"de_seam": 11.1
+},
+"E": {
+"kind": "livre",
+"side": "T"
+},
+"S": {
+"kind": "vizinha",
+"piece": "P0425",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.69,
+"dl": 0.81,
+"gap_mm": 0.35,
+"de_seam": 20.7
+},
+"W": {
+"kind": "livre",
+"side": "T"
+}
+},
+"image": {
+"theta_deg": 142.54,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 11.01,
+"ncc": 0.72
+},
+{
+"rot": 90,
+"dE": 18.5,
+"ncc": -0.19
+},
+{
+"rot": 180,
+"dE": 14.73,
+"ncc": 0.11
+},
+{
+"rot": -90,
+"dE": 17.56,
+"ncc": -0.12
+}
+],
+"best_ncc_rot": 0
+},
+"n_vizinhas": 2,
+"n_tb": 2,
+"n_ok": 2,
+"n_borda": 0,
+"n_borda_ok": 0
+},
+"P0425": {
+"estado": "colocada",
+"cell": [
+44,
+55
+],
+"seccao": "G0039",
+"cls": "BBTT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0401",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.69,
+"dl": 0.81,
+"gap_mm": 0.35,
+"de_seam": 20.7
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0392",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.34,
+"dl": 0.12,
+"gap_mm": 0.06,
+"de_seam": 30.7
+},
+"S": {
+"kind": "vizinha",
+"piece": "P0420",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.04,
+"dl": 0.86,
+"gap_mm": -0.16,
+"de_seam": 22.8
+},
+"W": {
+"kind": "vizinha",
+"piece": "P0441",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.8,
+"dl": 0.54,
+"gap_mm": 0.46,
+"de_seam": 20.7
+}
+},
+"image": {
+"theta_deg": -177.27,
+"k": 3,
+"rots": [
+{
+"rot": 0,
+"dE": 8.52,
+"ncc": 0.76
+},
+{
+"rot": 90,
+"dE": 12.47,
+"ncc": 0.01
+},
+{
+"rot": 180,
+"dE": 13.23,
+"ncc": -0.23
+},
+{
+"rot": -90,
+"dE": 11.81,
+"ncc": 0.18
+}
+],
+"best_ncc_rot": 0
+},
+"n_vizinhas": 4,
+"n_tb": 4,
+"n_ok": 4,
+"n_borda": 0,
+"n_borda_ok": 0
+},
+"P0420": {
+"estado": "colocada",
+"cell": [
+45,
+55
+],
+"seccao": "G0038",
+"cls": "BTTT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0425",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.04,
+"dl": 0.86,
+"gap_mm": -0.16,
+"de_seam": 22.8
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0393",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.27,
+"dl": 0.28,
+"gap_mm": 0.03,
+"de_seam": 22.5
+},
+"S": {
+"kind": "vizinha",
+"piece": "P0408",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.45,
+"dl": 0.64,
+"gap_mm": 0.07,
+"de_seam": 20.0
+},
+"W": {
+"kind": "vizinha",
+"piece": "P0440",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.83,
+"dl": 0.3,
+"gap_mm": 0.53,
+"de_seam": 10.9
+}
+},
+"image": {
+"theta_deg": 178.77,
+"k": 3,
+"rots": [
+{
+"rot": 0,
+"dE": 9.82,
+"ncc": 0.67
+},
+{
+"rot": 90,
+"dE": 13.15,
+"ncc": -0.07
+},
+{
+"rot": 180,
+"dE": 12.55,
+"ncc": 0.18
+},
+{
+"rot": -90,
+"dE": 12.63,
+"ncc": -0.04
+}
+],
+"best_ncc_rot": 0
+},
+"n_vizinhas": 4,
+"n_tb": 4,
+"n_ok": 4,
+"n_borda": 0,
+"n_borda_ok": 0
+},
+"P0501": {
+"estado": "colocada",
+"cell": [
+44,
+37
+],
+"seccao": "G0044",
+"cls": "BTBT",
+"sides": {
+"N": {
+"kind": "livre",
+"side": "B"
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0447",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.61,
+"dl": 0.27,
+"gap_mm": 0.21,
+"de_seam": 9.9
+},
+"S": {
+"kind": "vizinha",
+"piece": "P0506",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.17,
+"dl": 0.32,
+"gap_mm": 0.16,
+"de_seam": 20.9
+},
+"W": {
+"kind": "vizinha",
+"piece": "P0515",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.09,
+"dl": 0.31,
+"gap_mm": 0.06,
+"de_seam": 29.1
+}
+},
+"image": {
+"theta_deg": -0.51,
+"k": 1,
+"rots": [
+{
+"rot": 0,
+"dE": 14.33,
+"ncc": 0.88
+},
+{
+"rot": 90,
+"dE": 29.04,
+"ncc": -0.02
+},
+{
+"rot": 180,
+"dE": 35.61,
+"ncc": -0.58
+},
+{
+"rot": -90,
+"dE": 26.16,
+"ncc": 0.12
+}
+],
+"best_ncc_rot": 0
+},
+"n_vizinhas": 3,
+"n_tb": 3,
+"n_ok": 3,
+"n_borda": 0,
+"n_borda_ok": 0
+},
+"P0506": {
+"estado": "colocada",
+"cell": [
+45,
+37
+],
+"seccao": "G0044",
+"cls": "BTBT",
+"sides": {
+"N": {
+"kind": "vizinha",
+"piece": "P0501",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.17,
+"dl": 0.32,
+"gap_mm": 0.16,
+"de_seam": 20.9
+},
+"E": {
+"kind": "vizinha",
+"piece": "P0446",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.0,
+"dl": 0.58,
+"gap_mm": -0.22,
+"de_seam": 36.4
+},
+"S": {
+"kind": "vizinha",
+"piece": "P0511",
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.15,
+"dl": 1.0,
+"gap_mm": 0.07,
+"de_seam": 43.8
+},
+"W": {
+"kind": "vizinha",
+"piece": "P0514",
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.84,
+"dl": 0.61,
+"gap_mm": 0.01,
+"de_seam": 51.1
+}
+},
+"image": {
+"theta_deg": 7.85,
+"k": 1,
+"rots": [
+{
+"rot": 0,
+"dE": 13.26,
+"ncc": 0.85
+},
+{
+"rot": 90,
+"dE": 23.18,
+"ncc": 0.08
+},
+{
+"rot": 180,
+"dE": 27.8,
+"ncc": -0.29
+},
+{
+"rot": -90,
+"dE": 24.24,
+"ncc": -0.06
+}
+],
+"best_ncc_rot": 0
+},
+"n_vizinhas": 4,
+"n_tb": 4,
+"n_ok": 4,
+"n_borda": 0,
+"n_borda_ok": 0
+}
+},
+"D": {
+"bloco": {
+"pairs": [
+{
+"cell": [
+1,
+32
+],
+"twin": [
+47,
+33
+],
+"a": "P0292",
+"b": "P0496",
+"cls_a": "FTTT",
+"cls_b": "BTTF",
+"free": 3.08,
+"chords_a": [
+20.99,
+17.77,
+21.59,
+18.72
+],
+"chords_b": [
+20.29,
+17.77,
+21.48,
+18.36
+],
+"best_in_twin_block": [
+[
+2.12,
+"P0492",
+[
+1,
+33
+]
+],
+[
+2.73,
+"P0494",
+[
+3,
+33
+]
+]
+],
+"best_index": [
+[
+1.53,
+"P0014",
+[
+1,
+18
+],
+"S0001"
+],
+[
+1.57,
+"P0396",
+null,
+"S0014"
+],
+[
+1.61,
+"P0726",
+null,
+"S0022"
+]
+]
+},
+{
+"cell": [
+1,
+33
+],
+"twin": [
+47,
+32
+],
+"a": "P0289",
+"b": "P0492",
+"cls_a": "BFTT",
+"cls_b": "FTTT",
+"free": 2.83,
+"chords_a": [
+17.74,
+18.81,
+19.48,
+18.2
+],
+"chords_b": [
+18.62,
+18.95,
+19.22,
+18.46
+],
+"best_in_twin_block": [
+[
+2.71,
+"P0494",
+[
+3,
+33
+]
+],
+[
+2.83,
+"P0497",
+[
+2,
+32
+]
+]
+],
+"best_index": [
+[
+0.96,
+"P0217",
+[
+25,
+64
+],
+"S0009"
+],
+[
+1.05,
+"P0280",
+[
+1,
+46
+],
+"S0010"
+],
+[
+1.09,
+"P0648",
+[
+23,
+1
+],
+"S0020"
+]
+]
+},
+{
+"cell": [
+2,
+32
+],
+"twin": [
+46,
+33
+],
+"a": "P0293",
+"b": "P0497",
+"cls_a": "BBBT",
+"cls_b": "BBTT",
+"free": 2.39,
+"chords_a": [
+21.41,
+18.68,
+21.49,
+17.48
+],
+"chords_b": [
+20.75,
+18.41,
+20.72,
+17.61
+],
+"best_in_twin_block": [
+[
+1.56,
+"P0493",
+[
+2,
+33
+]
+],
+[
+2.37,
+"P0498",
+[
+3,
+32
+]
+]
+],
+"best_index": [
+[
+0.88,
+"P0140",
+null,
+"S0006"
+],
+[
+1.15,
+"P0877",
+null,
+"S0025"
+],
+[
+1.26,
+"P0832",
+[
+6,
+2
+],
+"S0023"
+]
+]
+},
+{
+"cell": [
+2,
+33
+],
+"twin": [
+46,
+32
+],
+"a": "P0290",
+"b": "P0493",
+"cls_a": "BTBT",
+"cls_b": "BBBT",
+"free": 2.36,
+"chords_a": [
+17.34,
+18.85,
+17.73,
+17.52
+],
+"chords_b": [
+17.65,
+18.51,
+18.33,
+17.77
+],
+"best_in_twin_block": [
+[
+2.36,
+"P0493",
+[
+2,
+33
+]
+],
+[
+2.91,
+"P0494",
+[
+3,
+33
+]
+]
+],
+"best_index": [
+[
+0.9,
+"P0489",
+[
+46,
+31
+],
+"S0016"
+],
+[
+0.96,
+"P0287",
+[
+2,
+34
+],
+"S0011"
+],
+[
+0.98,
+"P0509",
+[
+45,
+35
+],
+"S0016"
+]
+]
+},
+{
+"cell": [
+3,
+32
+],
+"twin": [
+45,
+33
+],
+"a": "P0294",
+"b": "P0498",
+"cls_a": "BTTT",
+"cls_b": "BBTT",
+"free": 2.86,
+"chords_a": [
+20.63,
+17.36,
+19.52,
+18.02
+],
+"chords_b": [
+20.05,
+17.03,
+20.01,
+16.9
+],
+"best_in_twin_block": [
+[
+2.36,
+"P0494",
+[
+3,
+33
+]
+],
+[
+2.61,
+"P0497",
+[
+2,
+32
+]
+]
+],
+"best_index": [
+[
+1.16,
+"P0430",
+[
+43,
+52
+],
+"S0014"
+],
+[
+1.21,
+"P0759",
+[
+5,
+13
+],
+"S0022"
+],
+[
+1.3,
+"P0621",
+[
+45,
+10
+],
+"S0019"
+]
+]
+},
+{
+"cell": [
+3,
+33
+],
+"twin": [
+45,
+32
+],
+"a": "P0291",
+"b": "P0494",
+"cls_a": "BTTT",
+"cls_b": "TTTT",
+"free": 2.67,
+"chords_a": [
+17.55,
+16.91,
+16.03,
+19.37
+],
+"chords_b": [
+17.58,
+17.07,
+17.23,
+18.44
+],
+"best_in_twin_block": [
+[
+2.43,
+"P0498",
+[
+3,
+32
+]
+],
+[
+2.59,
+"P0497",
+[
+2,
+32
+]
+]
+],
+"best_index": [
+[
+0.98,
+"P0108",
+null,
+"S0005"
+],
+[
+0.99,
+"P0582",
+[
+43,
+17
+],
+"S0018"
+],
+[
+1.1,
+"P0804",
+[
+3,
+6
+],
+"S0023"
+]
+]
+}
+],
+"sides": {
+"p03 (1..3,32..33)": {
+"rows": [
+{
+"piece": "P0292",
+"cell": [
+1,
+32
+],
+"dir": "N",
+"ext": true,
+"kind": "borda",
+"ok": true,
+"side": "F"
+},
+{
+"piece": "P0292",
+"cell": [
+1,
+32
+],
+"dir": "E",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.95,
+"dl": 0.09,
+"gap_mm": -0.62,
+"other": "P0289",
+"other_scan": "S0011"
+},
+{
+"piece": "P0292",
+"cell": [
+1,
+32
+],
+"dir": "S",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.18,
+"dl": 0.51,
+"gap_mm": 0.17,
+"other": "P0293",
+"other_scan": "S0011"
+},
+{
+"piece": "P0292",
+"cell": [
+1,
+32
+],
+"dir": "W",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.95,
+"dl": 0.34,
+"gap_mm": -0.7,
+"other": "P0295",
+"other_scan": "S0011"
+},
+{
+"piece": "P0289",
+"cell": [
+1,
+33
+],
+"dir": "N",
+"ext": true,
+"kind": "borda",
+"ok": true,
+"side": "F"
+},
+{
+"piece": "P0289",
+"cell": [
+1,
+33
+],
+"dir": "E",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.2,
+"dl": 0.93,
+"gap_mm": 0.28,
+"other": "P0286",
+"other_scan": "S0011"
+},
+{
+"piece": "P0289",
+"cell": [
+1,
+33
+],
+"dir": "S",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.4,
+"dl": 0.01,
+"gap_mm": -0.24,
+"other": "P0290",
+"other_scan": "S0011"
+},
+{
+"piece": "P0289",
+"cell": [
+1,
+33
+],
+"dir": "W",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.95,
+"dl": 0.09,
+"gap_mm": -0.62,
+"other": "P0292",
+"other_scan": "S0011"
+},
+{
+"piece": "P0293",
+"cell": [
+2,
+32
+],
+"dir": "N",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.18,
+"dl": 0.51,
+"gap_mm": 0.17,
+"other": "P0292",
+"other_scan": "S0011"
+},
+{
+"piece": "P0293",
+"cell": [
+2,
+32
+],
+"dir": "E",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.0,
+"dl": 1.37,
+"gap_mm": -0.34,
+"other": "P0290",
+"other_scan": "S0011"
+},
+{
+"piece": "P0293",
+"cell": [
+2,
+32
+],
+"dir": "S",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.62,
+"dl": 1.89,
+"gap_mm": 0.67,
+"other": "P0294",
+"other_scan": "S0011"
+},
+{
+"piece": "P0293",
+"cell": [
+2,
+32
+],
+"dir": "W",
+"ext": true,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.32,
+"dl": 0.91,
+"gap_mm": -0.9,
+"other": "P0296",
+"other_scan": "S0011"
+},
+{
+"piece": "P0290",
+"cell": [
+2,
+33
+],
+"dir": "N",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.4,
+"dl": 0.01,
+"gap_mm": -0.24,
+"other": "P0289",
+"other_scan": "S0011"
+},
+{
+"piece": "P0290",
+"cell": [
+2,
+33
+],
+"dir": "E",
+"ext": true,
+"kinds": "T<->B",
+"ok": false,
+"why": "rms",
+"rms": 1.71,
+"dl": 0.9,
+"gap_mm": -0.0,
+"other": "P0287",
+"other_scan": "S0011"
+},
+{
+"piece": "P0290",
+"cell": [
+2,
+33
+],
+"dir": "S",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.96,
+"dl": 1.31,
+"gap_mm": 0.42,
+"other": "P0291",
+"other_scan": "S0011"
+},
+{
+"piece": "P0290",
+"cell": [
+2,
+33
+],
+"dir": "W",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.0,
+"dl": 1.37,
+"gap_mm": -0.34,
+"other": "P0293",
+"other_scan": "S0011"
+},
+{
+"piece": "P0294",
+"cell": [
+3,
+32
+],
+"dir": "N",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.62,
+"dl": 1.89,
+"gap_mm": 0.67,
+"other": "P0293",
+"other_scan": "S0011"
+},
+{
+"piece": "P0294",
+"cell": [
+3,
+32
+],
+"dir": "E",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.08,
+"dl": 1.11,
+"gap_mm": 0.01,
+"other": "P0291",
+"other_scan": "S0011"
+},
+{
+"piece": "P0294",
+"cell": [
+3,
+32
+],
+"dir": "W",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.16,
+"dl": 0.85,
+"gap_mm": -0.48,
+"other": "P0297",
+"other_scan": "S0011"
+},
+{
+"piece": "P0291",
+"cell": [
+3,
+33
+],
+"dir": "N",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.96,
+"dl": 1.31,
+"gap_mm": 0.42,
+"other": "P0290",
+"other_scan": "S0011"
+},
+{
+"piece": "P0291",
+"cell": [
+3,
+33
+],
+"dir": "E",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.54,
+"dl": 0.15,
+"gap_mm": 0.17,
+"other": "P0288",
+"other_scan": "S0011"
+},
+{
+"piece": "P0291",
+"cell": [
+3,
+33
+],
+"dir": "W",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.08,
+"dl": 1.11,
+"gap_mm": 0.01,
+"other": "P0294",
+"other_scan": "S0011"
+}
+],
+"n_ext": 6,
+"n_ext_ok": 5,
+"n_ext_kind": 0,
+"n_int": 14,
+"n_int_ok": 14,
+"borda": [
+[
+"P0292",
+"N",
+"F"
+],
+[
+"P0289",
+"N",
+"F"
+]
+],
+"scans": [
+"S0011"
+],
+"seccoes": [
+"G0018",
+"G0019",
+"G0021",
+"G0022",
+"G0023"
+]
+},
+"G0043 (45..47,32..33)": {
+"rows": [
+{
+"piece": "P0496",
+"cell": [
+47,
+33
+],
+"dir": "N",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.28,
+"dl": 0.43,
+"gap_mm": 0.09,
+"other": "P0497",
+"other_scan": "S0016"
+},
+{
+"piece": "P0496",
+"cell": [
+47,
+33
+],
+"dir": "E",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.73,
+"dl": 0.51,
+"gap_mm": -0.41,
+"other": "P0502",
+"other_scan": "S0016"
+},
+{
+"piece": "P0496",
+"cell": [
+47,
+33
+],
+"dir": "S",
+"ext": true,
+"kind": "borda",
+"ok": true,
+"side": "F"
+},
+{
+"piece": "P0496",
+"cell": [
+47,
+33
+],
+"dir": "W",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.85,
+"dl": 0.59,
+"gap_mm": -0.31,
+"other": "P0492",
+"other_scan": "S0016"
+},
+{
+"piece": "P0492",
+"cell": [
+47,
+32
+],
+"dir": "N",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.95,
+"dl": 0.29,
+"gap_mm": -0.05,
+"other": "P0493",
+"other_scan": "S0016"
+},
+{
+"piece": "P0492",
+"cell": [
+47,
+32
+],
+"dir": "E",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.85,
+"dl": 0.59,
+"gap_mm": -0.31,
+"other": "P0496",
+"other_scan": "S0016"
+},
+{
+"piece": "P0492",
+"cell": [
+47,
+32
+],
+"dir": "S",
+"ext": true,
+"kind": "borda",
+"ok": true,
+"side": "F"
+},
+{
+"piece": "P0492",
+"cell": [
+47,
+32
+],
+"dir": "W",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.86,
+"dl": 0.19,
+"gap_mm": 0.2,
+"other": "P0488",
+"other_scan": "S0016"
+},
+{
+"piece": "P0497",
+"cell": [
+46,
+33
+],
+"dir": "N",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.96,
+"dl": 0.74,
+"gap_mm": 0.8,
+"other": "P0498",
+"other_scan": "S0016"
+},
+{
+"piece": "P0497",
+"cell": [
+46,
+33
+],
+"dir": "E",
+"ext": true,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.32,
+"dl": 0.11,
+"gap_mm": -0.75,
+"other": "P0503",
+"other_scan": "S0016"
+},
+{
+"piece": "P0497",
+"cell": [
+46,
+33
+],
+"dir": "S",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.28,
+"dl": 0.43,
+"gap_mm": 0.09,
+"other": "P0496",
+"other_scan": "S0016"
+},
+{
+"piece": "P0497",
+"cell": [
+46,
+33
+],
+"dir": "W",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.12,
+"dl": 0.9,
+"gap_mm": -0.2,
+"other": "P0493",
+"other_scan": "S0016"
+},
+{
+"piece": "P0493",
+"cell": [
+46,
+32
+],
+"dir": "N",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.12,
+"dl": 0.42,
+"gap_mm": 0.34,
+"other": "P0494",
+"other_scan": "S0016"
+},
+{
+"piece": "P0493",
+"cell": [
+46,
+32
+],
+"dir": "E",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.12,
+"dl": 0.9,
+"gap_mm": -0.2,
+"other": "P0497",
+"other_scan": "S0016"
+},
+{
+"piece": "P0493",
+"cell": [
+46,
+32
+],
+"dir": "S",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.95,
+"dl": 0.29,
+"gap_mm": -0.05,
+"other": "P0492",
+"other_scan": "S0016"
+},
+{
+"piece": "P0493",
+"cell": [
+46,
+32
+],
+"dir": "W",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.18,
+"dl": 0.18,
+"gap_mm": 0.1,
+"other": "P0489",
+"other_scan": "S0016"
+},
+{
+"piece": "P0498",
+"cell": [
+45,
+33
+],
+"dir": "N",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 0.92,
+"dl": 0.22,
+"gap_mm": 0.64,
+"other": "P0499",
+"other_scan": "S0016"
+},
+{
+"piece": "P0498",
+"cell": [
+45,
+33
+],
+"dir": "E",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.39,
+"dl": 0.23,
+"gap_mm": -0.4,
+"other": "P0504",
+"other_scan": "S0016"
+},
+{
+"piece": "P0498",
+"cell": [
+45,
+33
+],
+"dir": "S",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 0.96,
+"dl": 0.74,
+"gap_mm": 0.8,
+"other": "P0497",
+"other_scan": "S0016"
+},
+{
+"piece": "P0498",
+"cell": [
+45,
+33
+],
+"dir": "W",
+"ext": false,
+"kinds": "B<->T",
+"ok": true,
+"why": "",
+"rms": 1.1,
+"dl": 0.17,
+"gap_mm": 0.11,
+"other": "P0494",
+"other_scan": "S0016"
+},
+{
+"piece": "P0494",
+"cell": [
+45,
+32
+],
+"dir": "N",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.24,
+"dl": 0.54,
+"gap_mm": 0.27,
+"other": "P0495",
+"other_scan": "S0016"
+},
+{
+"piece": "P0494",
+"cell": [
+45,
+32
+],
+"dir": "E",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.1,
+"dl": 0.17,
+"gap_mm": 0.11,
+"other": "P0498",
+"other_scan": "S0016"
+},
+{
+"piece": "P0494",
+"cell": [
+45,
+32
+],
+"dir": "S",
+"ext": false,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.12,
+"dl": 0.42,
+"gap_mm": 0.34,
+"other": "P0493",
+"other_scan": "S0016"
+},
+{
+"piece": "P0494",
+"cell": [
+45,
+32
+],
+"dir": "W",
+"ext": true,
+"kinds": "T<->B",
+"ok": true,
+"why": "",
+"rms": 1.24,
+"dl": 0.75,
+"gap_mm": 0.37,
+"other": "P0490",
+"other_scan": "S0016"
+}
+],
+"n_ext": 8,
+"n_ext_ok": 8,
+"n_ext_kind": 0,
+"n_int": 14,
+"n_int_ok": 14,
+"borda": [
+[
+"P0496",
+"S",
+"F"
+],
+[
+"P0492",
+"S",
+"F"
+]
+],
+"scans": [
+"S0016"
+],
+"seccoes": [
+"G0043"
+]
+}
+}
+},
+"swap": {
+"joints": [
+{
+"bloco": "p03",
+"cell": [
+1,
+32
+],
+"dir": "W",
+"piece": "P0292",
+"neighbour": "P0295",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 0.95,
+"dl": 0.34,
+"cost": 1.12
+},
+"twin": "P0496",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 0.89,
+"dl": 0.34,
+"cost": 1.06
+}
+},
+{
+"bloco": "p03",
+"cell": [
+1,
+33
+],
+"dir": "E",
+"piece": "P0289",
+"neighbour": "P0286",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.2,
+"dl": 0.93,
+"cost": 1.67
+},
+"twin": "P0492",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.16,
+"dl": 0.68,
+"cost": 1.49
+}
+},
+{
+"bloco": "p03",
+"cell": [
+2,
+32
+],
+"dir": "W",
+"piece": "P0293",
+"neighbour": "P0296",
+"own": {
+"kinds": "BT",
+"ok": true,
+"rms": 1.32,
+"dl": 0.91,
+"cost": 1.77
+},
+"twin": "P0497",
+"swap": {
+"kinds": "BT",
+"ok": true,
+"rms": 1.23,
+"dl": 0.63,
+"cost": 1.55
+}
+},
+{
+"bloco": "p03",
+"cell": [
+2,
+33
+],
+"dir": "E",
+"piece": "P0290",
+"neighbour": "P0287",
+"own": {
+"kinds": "TB",
+"ok": false,
+"rms": 1.71,
+"dl": 0.9,
+"cost": 2.16
+},
+"twin": "P0493",
+"swap": {
+"kinds": "TB",
+"ok": false,
+"rms": 1.68,
+"dl": 0.66,
+"cost": 2.01
+}
+},
+{
+"bloco": "p03",
+"cell": [
+3,
+32
+],
+"dir": "W",
+"piece": "P0294",
+"neighbour": "P0297",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.16,
+"dl": 0.85,
+"cost": 1.58
+},
+"twin": "P0498",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.08,
+"dl": 0.52,
+"cost": 1.34
+}
+},
+{
+"bloco": "p03",
+"cell": [
+3,
+33
+],
+"dir": "E",
+"piece": "P0291",
+"neighbour": "P0288",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.54,
+"dl": 0.15,
+"cost": 1.61
+},
+"twin": "P0494",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.38,
+"dl": 0.79,
+"cost": 1.78
+}
+},
+{
+"bloco": "G0043",
+"cell": [
+47,
+33
+],
+"dir": "E",
+"piece": "P0496",
+"neighbour": "P0502",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 0.73,
+"dl": 0.51,
+"cost": 0.99
+},
+"twin": "P0292",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 0.82,
+"dl": 0.51,
+"cost": 1.07
+}
+},
+{
+"bloco": "G0043",
+"cell": [
+47,
+32
+],
+"dir": "W",
+"piece": "P0492",
+"neighbour": "P0488",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 0.86,
+"dl": 0.19,
+"cost": 0.95
+},
+"twin": "P0289",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 0.91,
+"dl": 0.44,
+"cost": 1.13
+}
+},
+{
+"bloco": "G0043",
+"cell": [
+46,
+33
+],
+"dir": "E",
+"piece": "P0497",
+"neighbour": "P0503",
+"own": {
+"kinds": "BT",
+"ok": true,
+"rms": 1.32,
+"dl": 0.11,
+"cost": 1.38
+},
+"twin": "P0293",
+"swap": {
+"kinds": "BT",
+"ok": true,
+"rms": 1.39,
+"dl": 0.17,
+"cost": 1.47
+}
+},
+{
+"bloco": "G0043",
+"cell": [
+46,
+32
+],
+"dir": "W",
+"piece": "P0493",
+"neighbour": "P0489",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.18,
+"dl": 0.18,
+"cost": 1.27
+},
+"twin": "P0290",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.26,
+"dl": 0.43,
+"cost": 1.47
+}
+},
+{
+"bloco": "G0043",
+"cell": [
+45,
+33
+],
+"dir": "N",
+"piece": "P0498",
+"neighbour": "P0499",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 0.92,
+"dl": 0.22,
+"cost": 1.03
+},
+"twin": "P0294",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 0.87,
+"dl": 0.36,
+"cost": 1.05
+}
+},
+{
+"bloco": "G0043",
+"cell": [
+45,
+33
+],
+"dir": "E",
+"piece": "P0498",
+"neighbour": "P0504",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.39,
+"dl": 0.23,
+"cost": 1.5
+},
+"twin": "P0294",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.48,
+"dl": 0.11,
+"cost": 1.53
+}
+},
+{
+"bloco": "G0043",
+"cell": [
+45,
+32
+],
+"dir": "N",
+"piece": "P0494",
+"neighbour": "P0495",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.24,
+"dl": 0.54,
+"cost": 1.51
+},
+"twin": "P0291",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.48,
+"dl": 0.56,
+"cost": 1.76
+}
+},
+{
+"bloco": "G0043",
+"cell": [
+45,
+32
+],
+"dir": "W",
+"piece": "P0494",
+"neighbour": "P0490",
+"own": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.24,
+"dl": 0.75,
+"cost": 1.62
+},
+"twin": "P0291",
+"swap": {
+"kinds": "TB",
+"ok": true,
+"rms": 1.39,
+"dl": 0.18,
+"cost": 1.48
+}
+}
+],
+"image": {
+"P0292": {
+"cell": [
+1,
+32
+],
+"theta_deg": 84.52,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 6.46,
+"ncc": 0.13
+},
+{
+"rot": 90,
+"dE": 5.82,
+"ncc": 0.24
+},
+{
+"rot": 180,
+"dE": 6.95,
+"ncc": 0.48
+},
+{
+"rot": -90,
+"dE": 6.05,
+"ncc": 0.17
+}
+],
+"best_ncc_rot": 180
+},
+"P0289": {
+"cell": [
+1,
+33
+],
+"theta_deg": 89.55,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 7.07,
+"ncc": 0.86
+},
+{
+"rot": 90,
+"dE": 11.03,
+"ncc": -0.23
+},
+{
+"rot": 180,
+"dE": 13.6,
+"ncc": -0.51
+},
+{
+"rot": -90,
+"dE": 10.29,
+"ncc": 0.29
+}
+],
+"best_ncc_rot": 0
+},
+"P0293": {
+"cell": [
+2,
+32
+],
+"theta_deg": 90.31,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 7.76,
+"ncc": 0.48
+},
+{
+"rot": 90,
+"dE": 11.01,
+"ncc": -0.04
+},
+{
+"rot": 180,
+"dE": 10.38,
+"ncc": 0.02
+},
+{
+"rot": -90,
+"dE": 10.81,
+"ncc": -0.14
+}
+],
+"best_ncc_rot": 0
+},
+"P0290": {
+"cell": [
+2,
+33
+],
+"theta_deg": 89.02,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 7.8,
+"ncc": 0.72
+},
+{
+"rot": 90,
+"dE": 9.97,
+"ncc": 0.31
+},
+{
+"rot": 180,
+"dE": 11.15,
+"ncc": -0.04
+},
+{
+"rot": -90,
+"dE": 10.35,
+"ncc": 0.27
+}
+],
+"best_ncc_rot": 0
+},
+"P0294": {
+"cell": [
+3,
+32
+],
+"theta_deg": 96.79,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 8.11,
+"ncc": 0.78
+},
+{
+"rot": 90,
+"dE": 14.16,
+"ncc": 0.2
+},
+{
+"rot": 180,
+"dE": 16.29,
+"ncc": -0.58
+},
+{
+"rot": -90,
+"dE": 14.61,
+"ncc": -0.07
+}
+],
+"best_ncc_rot": 0
+},
+"P0291": {
+"cell": [
+3,
+33
+],
+"theta_deg": 96.34,
+"k": 2,
+"rots": [
+{
+"rot": 0,
+"dE": 7.55,
+"ncc": 0.48
+},
+{
+"rot": 90,
+"dE": 13.39,
+"ncc": 0.05
+},
+{
+"rot": 180,
+"dE": 18.07,
+"ncc": -0.1
+},
+{
+"rot": -90,
+"dE": 13.93,
+"ncc": 0.0
+}
+],
+"best_ncc_rot": 0
+},
+"P0496": {
+"cell": [
+47,
+33
+],
+"theta_deg": -90.74,
+"k": 0,
+"rots": [
+{
+"rot": 0,
+"dE": null,
+"ncc": null
+},
+{
+"rot": 90,
+"dE": null,
+"ncc": null
+},
+{
+"rot": 180,
+"dE": null,
+"ncc": null
+},
+{
+"rot": -90,
+"dE": null,
+"ncc": null
+}
+],
+"best_ncc_rot": 0
+},
+"P0492": {
+"cell": [
+47,
+32
+],
+"theta_deg": -86.15,
+"k": 0,
+"rots": [
+{
+"rot": 0,
+"dE": null,
+"ncc": null
+},
+{
+"rot": 90,
+"dE": null,
+"ncc": null
+},
+{
+"rot": 180,
+"dE": null,
+"ncc": null
+},
+{
+"rot": -90,
+"dE": null,
+"ncc": null
+}
+],
+"best_ncc_rot": 0
+},
+"P0497": {
+"cell": [
+46,
+33
+],
+"theta_deg": -96.29,
+"k": 0,
+"rots": [
+{
+"rot": 0,
+"dE": 15.71,
+"ncc": 0.78
+},
+{
+"rot": 90,
+"dE": 22.48,
+"ncc": -0.04
+},
+{
+"rot": 180,
+"dE": 23.23,
+"ncc": -0.1
+},
+{
+"rot": -90,
+"dE": 21.48,
+"ncc": 0.09
+}
+],
+"best_ncc_rot": 0
+},
+"P0493": {
+"cell": [
+46,
+32
+],
+"theta_deg": -91.01,
+"k": 0,
+"rots": [
+{
+"rot": 0,
+"dE": 16.96,
+"ncc": 0.72
+},
+{
+"rot": 90,
+"dE": 24.38,
+"ncc": -0.13
+},
+{
+"rot": 180,
+"dE": 23.86,
+"ncc": -0.02
+},
+{
+"rot": -90,
+"dE": 21.34,
+"ncc": 0.1
+}
+],
+"best_ncc_rot": 0
+},
+"P0498": {
+"cell": [
+45,
+33
+],
+"theta_deg": -89.47,
+"k": 0,
+"rots": [
+{
+"rot": 0,
+"dE": 14.96,
+"ncc": 0.69
+},
+{
+"rot": 90,
+"dE": 18.54,
+"ncc": 0.0
+},
+{
+"rot": 180,
+"dE": 18.35,
+"ncc": 0.07
+},
+{
+"rot": -90,
+"dE": 19.5,
+"ncc": -0.08
+}
+],
+"best_ncc_rot": 0
+},
+"P0494": {
+"cell": [
+45,
+32
+],
+"theta_deg": -90.34,
+"k": 0,
+"rots": [
+{
+"rot": 0,
+"dE": 13.22,
+"ncc": 0.81
+},
+{
+"rot": 90,
+"dE": 18.01,
+"ncc": 0.25
+},
+{
+"rot": 180,
+"dE": 17.98,
+"ncc": 0.12
+},
+{
+"rot": -90,
+"dE": 17.48,
+"ncc": 0.26
+}
+],
+"best_ncc_rot": 0
+}
+},
+"base": {
+"n_true": 970,
+"true_ok": 0.9649484536082474,
+"true_rms_p50": 1.12,
+"true_rms_p90": 1.44,
+"n_random": 20000,
+"random_ok": 0.35135,
+"random_rms_p10": 1.02,
+"random_rms_p50": 1.74
+}
+}
+}
+}
