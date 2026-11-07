@@ -125,7 +125,7 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			position_known=None, anchor=None, rot: int = 0, mirror: bool = False, unanchor: Optional[str] = None,
 			discard: bool = False, reason: str = "", cell_full=None, cell_empty=None, requery: bool = True,
 			use_image: bool = True, unplace: bool = False, theta_deg: Optional[float] = None, pose=None,
-			pose_repor: bool = False, nota: str = "") -> dict:
+			pose_repor: bool = False, nota: str = "", hole=None, hole_reject=None) -> dict:
 	"""Apply one confirmation; returns ``{messages, affected_cells, affected_pieces, entries, invariants}``
 	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error).
 
@@ -175,6 +175,24 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 					pr.set_position_known(other, tw, origin="par", theta_deg=_entry_theta(_cell_entry(pr, other, tw)))
 					msgs.append(f"par {pair.id}: {other} fica com posição conhecida {tw}")
 					cells |= _around(pr, tw)
+		elif hole is not None or hole_reject is not None:
+			# M11: a candidate of the «candidatas para este buraco» list, confirmed or refused physically.
+			# ``hole`` / ``hole_reject`` = (cell, meta) with meta from src.fit (rank, custo, margem, confianca, m,
+			# fit_version, theta_deg); the only write path for the CLI and the server.
+			hc, meta = (hole if hole is not None else hole_reject)
+			hc = (int(hc[0]), int(hc[1]))
+			meta = dict(meta or {})
+			if hole is not None:
+				th = meta.get("theta_deg")
+				pr.hole_confirm(piece_id, hc, meta=meta, theta_deg=(None if th is None else float(th)))
+				msgs.append(f"{piece_id} colocada em {hc} (origem buraco, rank {meta.get('rank')}, confiança {meta.get('confianca')}"
+							+ (f", pose {float(th):.2f}°)" if th is not None else ")"))
+				cells |= _around(pr, hc)
+			else:
+				pr.hole_reject(piece_id, hc, meta=meta)
+				msgs.append(f"{piece_id} rejeitada para o buraco {hc} (rank {meta.get('rank')}, confiança {meta.get('confianca')})")
+				cells.add(hc)
+			pieces.add(piece_id)
 		elif unplace:
 			p = pr.piece(piece_id)
 			if p.seccao_id is not None:
@@ -248,7 +266,7 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			msgs.append(f"{piece_id} descartada")
 			pieces.add(piece_id)
 		else:
-			return {"error": "nada a fazer (indica --cell, --unplace, --reject, --position-known, --anchor, --unanchor ou --discard)"}
+			return {"error": "nada a fazer (indica --cell, --unplace, --reject, --position-known, --anchor, --unanchor, --discard, --buraco ou --buraco-rejeitar)"}
 	except ValueError as e:
 		pr.save()
 		return {"error": str(e)}
@@ -263,6 +281,27 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 		entries = run_query(pr, only_cells=cells, only_pieces=pieces, use_image=use_image)
 	return {"messages": msgs, "affected_cells": sorted(cells), "neighbour_cells": neigh,
 			"affected_pieces": sorted(pieces), "entries": entries, "invariants": bad}
+
+
+def _hole_meta_for(pr, piece_id: str, cell) -> dict:
+	"""Rank / custo / margem / confiança / m / fit_version / theta_deg of ``piece_id`` for the hole ``cell`` from
+	:func:`src.fit.rank_all` (the same numbers the GUI shows), or ``{'error'}``."""
+	from src import fit as F
+	if piece_id is None:
+		return {"error": "falta a peça"}
+	res = F.rank_all(pr, cells=[tuple(cell)], top=10 ** 6)
+	if "error" in res:
+		return {"error": res["error"]}
+	if not res["holes"]:
+		return {"error": f"célula {tuple(cell)} não é um buraco (ocupada ou sem vizinha montada com forma e pose)"}
+	r = res["holes"][0]
+	c = next((x for x in r["candidates"] if x["id"] == piece_id), None)
+	meta = {"m": r["m"], "confianca": r["confidence"], "fit_version": r["version"], "margem": r.get("margin")}
+	if c is None:
+		meta.update(rank=None, custo=None, nota="fora do ranking (custo infinito)")
+	else:
+		meta.update(rank=c["rank"], custo=c["J"], theta_deg=c["theta_deg"])
+	return meta
 
 
 def relot(pr, scan_ids, lote, *, overlays: bool = True) -> dict:
@@ -308,6 +347,9 @@ def main(argv=None) -> int:
 	g.add_argument("--pose", nargs=3, type=float, metavar=("THETA", "DX", "DY"),
 				   help="pose manual da peça colocada: graus (sentido dos ponteiros no ecrã), dx e dy em mm (y para baixo)")
 	g.add_argument("--pose-repor", action="store_true", help="retira a pose manual (volta ao registo automático)")
+	g.add_argument("--buraco", nargs=2, type=int, metavar=("L", "C"),
+				   help="M11: coloca a peça no buraco (L, C) a partir da lista «candidatas para este buraco» (rank/custo/margem/confiança do src.fit)")
+	g.add_argument("--buraco-rejeitar", nargs=2, type=int, metavar=("L", "C"), help="M11: a peça não encaixa no buraco (L, C)")
 	ap.add_argument("--lote", type=int, default=None, help="lote de destino de --relot")
 	ap.add_argument("--origin", default=None, help="gemeo | par | borda | buraco | gt | manual (omissão: a da lista)")
 	ap.add_argument("--theta", type=float, default=None, metavar="DEG",
@@ -358,7 +400,18 @@ def main(argv=None) -> int:
 		return 1
 	try:
 		pr = open_project(args)
-		r = confirm(pr, args.piece_id, cell=args.cell, origin=args.origin, reject=args.reject,
+		hole = hole_rej = None
+		if args.buraco or args.buraco_rejeitar:
+			hc = tuple(args.buraco or args.buraco_rejeitar)
+			meta = _hole_meta_for(pr, args.piece_id, hc)
+			if "error" in meta:
+				print(f"erro: {meta['error']}")
+				return 1
+			if args.buraco:
+				hole = (hc, meta)
+			else:
+				hole_rej = (hc, meta)
+		r = confirm(pr, args.piece_id, cell=args.cell, origin=args.origin, reject=args.reject, hole=hole, hole_reject=hole_rej,
 					position_known=args.position_known, anchor=args.anchor, rot=args.rot, mirror=args.mirror,
 					unanchor=args.unanchor, discard=args.discard, reason=args.reason, cell_full=full, cell_empty=empty,
 					requery=not args.no_requery, use_image=not args.no_image, unplace=args.unplace, theta_deg=args.theta,
@@ -371,7 +424,7 @@ def main(argv=None) -> int:
 		return 1
 	for m in r["messages"]:
 		print(m)
-	if args.cell or args.unplace or args.position_known or args.anchor or args.unanchor or args.pose or args.pose_repor:
+	if args.cell or args.unplace or args.position_known or args.anchor or args.unanchor or args.pose or args.pose_repor or args.buraco:
 		from src.consistency import suspects_lines   # orientation check of the changed area (read-only, never blocks)
 		print("\n".join(suspects_lines(pr, r["affected_cells"])))
 	if r["invariants"]:

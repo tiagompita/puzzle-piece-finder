@@ -7,18 +7,16 @@ Correr da raiz: ``python tools/diagnostico/fit/fit_eval.py``.
 
 import collections
 import json
-import math
 import os
 import sys
 import time
 
-import cv2
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import REPO, open_project, physical_clusters  # noqa: E402
 
-from src import render  # noqa: E402
+from src import fit as F  # noqa: E402
 from src.shape import chord_pass, corner_dist, f_adjacent, free_dist, side_complement, _neg_inv  # noqa: E402
 
 SHRINK_MM = float(os.environ.get("FIT_SHRINK", "0"))      # exploratório (pós-hoc): erosão da silhueta em mm; 0 = critério fixado
@@ -30,101 +28,34 @@ CACHE = os.path.join(os.environ.get("PPF_SCRATCH", os.path.join(REPO, "docs", "d
 # constantes fixadas em GT.md §5 (não se ajustam)
 RMS_SCALE = 1.1          # mm
 DE_SCALE = 10.0
-N_STRIP = 12             # pontos ao longo do arco
-T0, T1 = 0.08, 0.92
-BAND_MM = (1.0, 2.5)     # profundidade da tira a partir da silhueta
-HALF_WIN = 1.0 / 24.0    # meia-largura da janela (fração do arco)
-MIN_VALID = 6
+N_STRIP = F.N_STRIP      # pontos ao longo do arco (constantes promovidas a src.fit, mesmos valores)
+T0, T1 = F.T0, F.T1
+BAND_MM = F.BAND_MM      # profundidade da tira a partir da silhueta
+HALF_WIN = F.HALF_WIN    # meia-largura da janela (fração do arco)
+MIN_VALID = F.MIN_VALID
 FAIL_RMS = 2.0           # "forma mal lida" se o RMS do lado verdadeiro >= isto
 GEMEO_NEAR = 0.15        # mm
 EQUIV_RMS = 0.5          # mm
 
 
-def wilson(k, n, z=1.96):
-    if n == 0:
-        return (float("nan"), float("nan"))
-    p = k / n
-    d = 1 + z * z / n
-    c = (p + z * z / (2 * n)) / d
-    h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
-    return (max(0.0, c - h), min(1.0, c + h))
+wilson = F.wilson            # promovido a src.fit (M11)
 
 
 def shrink_sides(shape, d):
-    """Lados da silhueta erodida ``d`` mm, alinhados ao índice dos lados da forma original (ou None).
+    """Lados da silhueta erodida ``d`` mm (promovido a :func:`src.fit.eroded_sides`, M11; mesma aritmética).
 
-    Exploratório e pós-hoc (``FIT_SHRINK``): o desvio de 0,48 mm vem do E-real (cantos BD, EREAL.md), não deste GT; o
-    valor não se ajusta. A erosão desloca cada ponto do contorno ``d`` mm ao longo da normal interior.
+    Exploratório e pós-hoc (``FIT_SHRINK``): o desvio de 0,48 mm vem do E-real (cantos BD, EREAL.md), não deste GT.
     """
-    from src.shape import analyse, _smooth_closed
-    c = np.asarray(shape.c, float)
-    cs = _smooth_closed(c, 3.0)
-    t = np.roll(cs, -1, 0) - np.roll(cs, 1, 0)
-    t /= np.maximum(np.linalg.norm(t, axis=1, keepdims=True), 1e-9)
-    nrm = np.stack([t[:, 1], -t[:, 0]], 1)
-
-    def area(p):
-        return 0.5 * np.sum(p[:, 0] * np.roll(p[:, 1], -1) - np.roll(p[:, 0], -1) * p[:, 1])
-    a0 = abs(area(c))
-    cand = c + d * nrm
-    if abs(area(cand)) > a0:
-        cand = c - d * nrm
-    sh2 = analyse(cand, 1.0)                    # contorno já em mm
-    if not sh2.ok:
-        return None
-    k = corner_dist(shape, sh2)[1]
-    return [sh2.sides[(i + k) % 4] for i in range(4)]
+    return F.eroded_sides(shape, d)
 
 
 # ---------------------------------------------------------------- tiras de imagem
-def lab_of(rgb):
-    lab = cv2.cvtColor(np.ascontiguousarray(rgb, np.uint8), cv2.COLOR_RGB2LAB).astype(np.float32)
-    lab[..., 0] *= 100.0 / 255.0
-    lab[..., 1:] -= 128.0
-    return lab
+lab_of = F.lab_of
 
 
 def piece_strips(pr, pid):
-    """(4, N_STRIP, 3) Lab das tiras interiores de cada lado (NaN onde não há pixéis)."""
-    sh = pr.shape(pid)
-    out = np.full((4, N_STRIP, 3), np.nan, np.float32)
-    if sh is None or not sh.ok:
-        return out
-    rgba = render.piece_rgba_for_display(pr, pid)
-    if rgba is None:
-        return out
-    p = pr.piece(pid)
-    mmpp = render._scan_mmpp(pr, p.scan_id)
-    origin = np.asarray(p.bbox[:2], float)
-    alpha = rgba[..., 3] > 0
-    depth = render._depth_px(alpha) * mmpp                     # mm (1 px na silhueta)
-    band = alpha & (depth >= BAND_MM[0]) & (depth <= BAND_MM[1])
-    ys, xs = np.nonzero(band)
-    if len(xs) == 0:
-        return out
-    lab = lab_of(rgba[..., :3])[ys, xs]
-    cpx = sh.c / mmpp - origin                                  # contorno em px do recorte
-    n = len(cpx)
-    # contorno -> ponto mais próximo de cada pixel da tira
-    P = np.stack([xs, ys], 1).astype(np.float32)
-    near = np.empty(len(P), np.int32)
-    for s in range(0, len(P), 4000):
-        d2 = ((P[s:s + 4000, None, :] - cpx[None, ::2, :].astype(np.float32)) ** 2).sum(-1)
-        near[s:s + 4000] = np.argmin(d2, 1) * 2
-    cor = list(sh.corners)
-    for i in range(4):
-        a, b = cor[i], cor[(i + 1) % 4]
-        length = (b - a) % n
-        if length <= 0:
-            continue
-        frac = ((near - a) % n) / float(length)
-        inside = frac <= 1.0
-        for k in range(N_STRIP):
-            t = T0 + (T1 - T0) * k / (N_STRIP - 1)
-            m = inside & (np.abs(frac - t) <= HALF_WIN)
-            if m.sum() >= 5:
-                out[i, k] = np.median(lab[m], 0)
-    return out
+    """(4, N_STRIP, 3) Lab das tiras interiores de cada lado (promovido a :func:`src.fit.piece_strips`, M11)."""
+    return F.piece_strips(pr, pid)
 
 
 # ---------------------------------------------------------------- pool

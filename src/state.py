@@ -54,6 +54,7 @@ import numpy as np
 from src.profile import PuzzleProfile
 
 __all__ = [
+	"HOLE_META",
 	"SCHEMA_VERSION", "PIECE_STATES", "PAIR_STATES", "SECTION_KINDS", "CELL_STATES", "CELL_SOURCES", "ACTIONS",
 	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS", "SUSPECT_GRAUS", "POSE_MAX_FRAC",
 	"StateError", "Piece", "Pair", "Section", "Photo", "Board", "Model", "apply", "replay", "read_log",
@@ -97,6 +98,19 @@ def _now() -> str:
 
 def _cell(v) -> Optional[tuple]:
 	return None if v is None else (int(v[0]), int(v[1]))
+
+
+HOLE_META = ("rank", "custo", "margem", "confianca", "m", "fit_version", "nota")   # hole_confirmed / hole_rejected (M11)
+
+
+def _hole_meta(meta: dict) -> dict:
+	"""Only the known fields of a hole proposal (JSON-friendly) for the ``hole_*`` events."""
+	out = {}
+	for k in HOLE_META:
+		if k in meta and meta[k] is not None:
+			v = meta[k]
+			out[k] = int(v) if k in ("rank", "m") else (str(v) if k in ("confianca", "fit_version", "nota") else float(v))
+	return out
 
 
 def _cell_list(v) -> Optional[list]:
@@ -889,6 +903,31 @@ class Project:
 		if other:
 			raise StateError(f"célula {cell} já é a posição conhecida de {other[0]}")
 		return self._emit("position_known", piece=piece_id, cell=cell, origin=origin, theta_deg=theta_deg)
+
+	# ------------------------------------------------------------ hole mould (M11): ranking confirmed / refused physically
+	def hole_confirm(self, piece_id: str, cell, *, meta: Optional[dict] = None, theta_deg: Optional[float] = None) -> dict:
+		"""The user placed ``piece_id`` in the hole ``cell`` from the «candidatas para este buraco» list: log
+		``hole_confirmed`` (origin ``buraco`` + ``meta``: rank, custo, margem, confianca, m, fit_version; the
+		ground truth of :func:`src.fit.report`) and then :meth:`place` with ``origin='buraco'``."""
+		meta = dict(meta or {})
+		p = self.piece(piece_id)
+		cell = self._check_cell(cell)
+		if p.estado not in _PLACEABLE_FROM:
+			raise StateError(f"{piece_id} está '{p.estado}': não pode ser colocada")
+		if self.board[cell]["estado"] == "colocada":
+			raise StateError(f"célula {cell} já tem a peça {self.board[cell]['peca_id']}")
+		ev = self._emit("hole_confirmed", piece=piece_id, cell=cell, origin="buraco", **_hole_meta(meta))
+		self.place(piece_id, cell, origin="buraco", rank=meta.get("rank"), score=meta.get("custo"), theta_deg=theta_deg)
+		return ev
+
+	def hole_reject(self, piece_id: str, cell, *, meta: Optional[dict] = None) -> dict:
+		"""The user says ``piece_id`` does not fit the hole ``cell``: log ``hole_rejected`` (origin ``buraco`` + meta);
+		the pair ``(piece, cell)`` joins ``rejections`` and is never ranked again for that cell."""
+		p = self.piece(piece_id)
+		cell = self._check_cell(cell)
+		if p.estado not in _PLACEABLE_FROM:
+			raise StateError(f"{piece_id} está '{p.estado}': não é candidata")
+		return self._emit("hole_rejected", piece=piece_id, cell=cell, origin="buraco", **_hole_meta(dict(meta or {})))
 
 	def register_pair(self, a: str, b: str, d1=None, margin=None, image=None, cells=None) -> str:
 		"""Register a proposed twin pair between two loose pieces; returns the pair id."""
