@@ -10,7 +10,8 @@ Passos (``python tools/diagnostico/fit/m11.py <passo>``):
   reproduz ``buraco.py`` (custos por lado iguais e os mesmos agregados com ``buraco.eval_hole``) contra a corrida de hoje
   guardada em ``$PPF_SCRATCH/buraco_base{,_encolhido}.json``.
 * ``afinar``    — grelha erosão × corte × quantil em S_T (144 buracos), N = 32; escreve ``m11_afinacao.json``.
-* ``validar``   — uma passagem em S_V (214) com a configuração escolhida + ablação; escreve ``m11_validacao.json``.
+* ``validar``   — uma passagem em S_V (214) com a configuração escolhida + ablação; escreve ``m11_validacao.json`` (agregados)
+  e ``$PPF_SCRATCH/m11_validacao_rows.json`` (linhas por buraco, não commitadas; ``figs`` lê-as).
 * ``real``      — os 15 casos reais e a direção inversa no tabuleiro real (``src.fit.hole_queries`` / ``pool_items``);
   escreve ``m11_real.json``.
 * ``figs``      — 6 melhores, 6 piores, 6 «sem candidata fiável» de S_V (N = 100, configuração final).
@@ -367,6 +368,10 @@ def step_validar(P, holes, part, final):
         ab = a32["absent"]
         line += f" | ausente N=32: cob {100 * ab['cov']:.0f} % falsas {ab['fp']:.3f} prec π10 {100 * (ab['prec_pi10'] or 0):.0f} % (só alta: cob {100 * a32['alta_absent']['cov']:.0f} % falsas {a32['alta_absent']['fp']:.3f} prec π10 {100 * (a32['alta_absent']['prec_pi10'] or 0):.0f} %)"
         print(line)
+    # as linhas por buraco da configuração final (grandes, regeneráveis) ficam fora do repo, como gt_pairs.json
+    rows = {N: out["configs"]["final"][N].pop("rows") for N in list(NS) + ["full"]}
+    json.dump({str(k): v for k, v in rows.items()}, open(os.path.join(SCRATCH, "m11_validacao_rows.json"), "w", encoding="utf-8"), ensure_ascii=False,
+              default=lambda o: float(o) if isinstance(o, np.floating) else int(o))
     json.dump(out, open(os.path.join(DOC, "m11_validacao.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1,
               default=lambda o: float(o) if isinstance(o, np.floating) else int(o))
     return out
@@ -469,9 +474,9 @@ def step_figs(P, holes, part, final):
     import cv2
     from figs import hstack_pad, rigid_for
     from figs_buraco import draw, same_for
-    V = json.load(open(os.path.join(DOC, "m11_validacao.json"), encoding="utf-8"))
-    rows100 = {r["rb"]: r for r in V["configs"]["final"]["100"]["rows"]}
-    rowsF = {r["rb"]: r for r in V["configs"]["final"]["full"]["rows"]}
+    RW = json.load(open(os.path.join(SCRATCH, "m11_validacao_rows.json"), encoding="utf-8"))   # escrito por ``validar``
+    rows100 = {r["rb"]: r for r in RW["100"]}
+    rowsF = {r["rb"]: r for r in RW["full"]}
     sh, pr, reps, rkeys, Q = P["sh"], P["pr"], P["reps"], P["rkeys"], P["Q"]
 
     def panel(rb, z, rot, col, title, lines):

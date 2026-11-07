@@ -13,7 +13,9 @@
     "silhueta_silhueta": {"t95": 0.507, "tmax": 0.637},
     "celula_silhueta": {"t95": null, "tmax": null, "offset_mm": 0.48},
     "chord": {"normal_mm": 1.0, "f_adj_mm": 2.0},
-    "margin_min": 1.5
+    "margin_min": 1.5,
+    "buraco": {"erosion_mm": 0.6, "chord_cut": 2.0, "t_abs": 2.6656, "q": 0.9, "f_rule": true, "fit_version": "m11-1",
+      "afinado_em": "2026-11-07", "fonte": "docs/diagnostico/fit/m11_afinacao.json (S_T: 144 buracos de 8 folhas, N = 32; M11_CRITERIOS.md §4)"}
   },
   "image_zones": {"ceu": {"dE_p90": 50.0}},
   "modalities": ["scan300"]
