@@ -9,13 +9,13 @@
   ]
  },
  "anchor": {
-  "anchored": false,
-  "l0": null,
-  "c0": null,
-  "rot": 0,
+  "anchored": true,
+  "l0": 42,
+  "c0": 55,
+  "rot": 180,
   "mirror": false,
-  "fonte": null,
-  "confianca": null,
+  "fonte": "manual",
+  "confianca": "confirmado",
   "margin": null
  },
  "candidates": [

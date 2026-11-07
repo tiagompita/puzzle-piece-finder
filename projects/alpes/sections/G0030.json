@@ -12,11 +12,11 @@
   "anchored": true,
   "l0": 6,
   "c0": 22,
-  "rot": 180,
+  "rot": 90,
   "mirror": false,
-  "fonte": "legado_scan+pista",
-  "confianca": "alta",
-  "margin": 1.044
+  "fonte": "manual",
+  "confianca": "confirmado",
+  "margin": null
  },
  "candidates": [
   {

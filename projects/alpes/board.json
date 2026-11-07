@@ -16154,10 +16154,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0442",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -16540,10 +16540,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0401",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "vazia",
@@ -16818,10 +16818,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0501",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -16926,10 +16926,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0425",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -17204,10 +17204,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0506",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
@@ -17312,10 +17312,10 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "foto",
-    "foto_id": "F0001"
+    "estado": "colocada",
+    "peca_id": "P0420",
+    "fonte": "legado_scan",
+    "foto_id": null
    },
    {
     "estado": "colocada",
