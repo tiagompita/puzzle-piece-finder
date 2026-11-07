@@ -37,19 +37,31 @@ itself is a data change (log / section anchor) after a physical check.
 Poses: ``placements`` (``{pid: entry}`` as :func:`src.render.register_piece` returns, e.g. the
 server's cache of ``render/placements.json``); a piece missing from it is registered on the fly
 without the image (``register_piece(image=False)``, about 30 ms each) and added to the dict.
+
+False alarms (docs/diagnostico/reports/FALSOS_ALARMES.md): the user can mark a suspect ``(piece, grau)`` as a
+false alarm (:meth:`src.state.Project.dismiss_suspect`, event ``suspect_dismissed``). The mark carries the
+:func:`suspect_signature` of the item it was made on (cell, 90° class ``k0``, shape class and chords, manual
+contour / pose, mounted neighbours, twin and its residual for ``recorte``); while the current item has the same
+signature it is left out of ``items`` and of the counts, and as soon as any of those changes the mark is
+``obsoleto`` and the suspect is reported again. The marks are the only thing this module ever writes (CLI
+``--falso-alarme`` / ``--restaurar``), through the log.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import time
 from typing import Optional
 
+from src.state import SUSPECT_GRAUS
+
 __all__ = ["BETTER_FEWER_FAILS", "BETTER_COST_RATIO", "BETTER_COST_MM", "BETTER_COST_MIN_SIDES", "FAIL_COST_MM", "GRAUS",
-		   "TWIN_LOCAL_MAX_MM", "TWIN_EXCEPTIONS", "twin_local_residual", "twin_exception",
-		   "checked_ids", "evaluate", "suspects", "summary", "suspects_near", "suspects_lines", "rot_text", "format_item", "main"]
+		   "TWIN_LOCAL_MAX_MM", "TWIN_EXCEPTIONS", "SIGNATURE_HEX", "twin_local_residual", "twin_exception", "suspect_signature",
+		   "checked_ids", "evaluate", "suspects", "summary", "suspects_near", "suspects_lines", "rot_text", "format_item",
+		   "format_falso", "main"]
 
 BETTER_FEWER_FAILS = 1      # an alternative is better with at least this many fewer failing sides ...
 BETTER_COST_RATIO = 0.6     # ... or, else, with a total cost at most this share of the current one ...
@@ -65,7 +77,8 @@ TWIN_LOCAL_MAX_MM = 1.75   # recorte: max distance of a contour point to the ali
 # the c32|c33 cut of rows 1-3 / 45-47 of the Alpes is not symmetric (ORIENTACOES-2026-11-07 §D; pending 6).
 TWIN_EXCEPTIONS = {"alpes": [{"cols": [32, 33], "rows": [[1, 3], [45, 47]],
 							  "texto": "corte c32|c33 não simétrico (exceção por confirmar)"}]}
-GRAUS = ("impossivel", "melhor_rotacao", "recorte")
+GRAUS = SUSPECT_GRAUS               # ("impossivel", "melhor_rotacao", "recorte"), also validated by the state
+SIGNATURE_HEX = 12                 # suspect_signature: leading hex digits of the sha1
 _OPP = {"N": "S", "S": "N", "E": "W", "W": "E"}
 _STATES = ("colocada", "posicao_conhecida")
 
@@ -133,6 +146,60 @@ def _bay_mm2(flag: dict) -> Optional[float]:
 	if v is None and isinstance(flag.get("baia"), dict):
 		v = flag["baia"].get("mm2")
 	return None if v is None else float(v)
+
+
+def _step(v: float, step: float) -> float:
+	"""``v`` rounded to a multiple of ``step`` (4 decimals, so 0.05 steps print stably)."""
+	return round(round(float(v) / step) * step, 4)
+
+
+def _pose_manual(p):
+	"""The piece's manual pose rounded for :func:`suspect_signature` (angles to 0.1°, offsets to 0.05 mm), or
+	None. ``pose_manual`` does not exist yet on :class:`src.state.Piece`: read with ``getattr``."""
+	pm = getattr(p, "pose_manual", None)
+	if pm is None:
+		return None
+	if not isinstance(pm, dict):
+		return pm
+	out = {}
+	for k, v in sorted(pm.items()):
+		if isinstance(v, (int, float)) and not isinstance(v, bool):
+			out[k] = _step(v, 0.1 if ("theta" in k or "deg" in k) else 0.05)
+		else:
+			out[k] = v
+	return out
+
+
+def suspect_signature(item: dict, project, *, k0: Optional[int] = None) -> str:
+	"""Short sha1 (:data:`SIGNATURE_HEX` hex) of what a suspect was seen with, for the false-alarm marks.
+
+	Canonical JSON of ``{cell, k0, grau, cls, chords (0.1 mm), contorno_manual, pose_manual, vizinhas, gemea,
+	nn_max_mm (0.1 mm)}``: ``vizinhas`` = the ``colocada`` piece id (or null) on N / E / S / W of the cell;
+	``gemea`` / ``nn_max_mm`` only for ``recorte`` (null otherwise). ``k0`` is the 90° class of the corner
+	registration: a small change of ``theta_deg`` keeps it, a quarter turn does not. ``k0`` (keyword) overrides
+	``item['k0']`` (``recorte`` items carry ``k0 = None``; :func:`evaluate` passes the registration's ``k``).
+	Pure: reads the project, never writes."""
+	from src.legacy import _STEP
+	from src.overrides import is_manual
+	p = project.piece(item["piece"])
+	l, c = int(item["cell"][0]), int(item["cell"][1])
+	k = item.get("k0") if k0 is None else k0
+	viz = {}
+	for d in ("N", "E", "S", "W"):
+		dl, dc = _STEP[d]
+		q = None
+		if project.profile.in_grid(l + dl, c + dc):
+			cellv = project.board[(l + dl, c + dc)]
+			q = cellv["peca_id"] if cellv["estado"] == "colocada" else None
+		viz[d] = q
+	rec = item["grau"] == "recorte"
+	nn = item.get("nn_max_mm") if rec else None
+	data = {"cell": [l, c], "k0": None if k is None else int(k), "grau": item["grau"], "cls": p.cls or "",
+			"chords": [round(float(x), 1) for x in (p.chords_mm or [])], "contorno_manual": bool(is_manual(p)),
+			"pose_manual": _pose_manual(p), "vizinhas": viz, "gemea": item.get("gemea") if rec else None,
+			"nn_max_mm": None if nn is None else round(float(nn), 1)}
+	js = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+	return hashlib.sha1(js.encode("utf-8")).hexdigest()[:SIGNATURE_HEX]
 
 
 def _recorte_items(project, ids: list) -> list:
@@ -284,8 +351,10 @@ def _item(project, pid: str, k0: int, res: dict, grau: str, ka: Optional[int]) -
 	return item
 
 
-def evaluate(project, placements: Optional[dict] = None, *, pieces=None) -> dict:
-	"""``{summary, items}``: :func:`summary` and :func:`suspects` of one pass (see the module docstring).
+def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismissed: Optional[dict] = None,
+			 incluir_falsos: bool = False) -> dict:
+	"""``{summary, items, falsos_alarmes}``: :func:`summary` and :func:`suspects` of one pass (see the module
+	docstring).
 
 	``pieces``: only these are checked and reported (their mounted neighbours are registered too,
 	for their ``k``); default every piece of :func:`checked_ids`.
@@ -293,6 +362,16 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None) -> dict
 	A T-T / B-B side is a conflict of two pieces. A piece whose only fault is such a conflict with a
 	neighbour that is itself ``impossivel`` and fixed by its own rotation (and that no rotation of its
 	own fixes) is not reported: the neighbour's rotation removes the conflict (``n_explicadas``).
+
+	Every item carries ``assinatura`` (:func:`suspect_signature`). ``dismissed``: the false-alarm marks
+	``{(piece, grau): {assinatura, cell, nota, t}}``, default ``project.falsos_alarmes``. An item whose mark has
+	the same signature gets ``falso_alarme = {t, nota}`` and leaves ``items`` (kept, marked, with
+	``incluir_falsos``); it never counts in ``summary`` (the summary does not depend on ``incluir_falsos``).
+	``falsos_alarmes``: one row per mark (of the checked pieces when ``pieces`` is given)
+	``{piece, grau, cell, t, nota, assinatura, assinatura_atual, estado, obsoleto}``; ``estado``: ``ativo``
+	(hides the current item), ``obsoleto`` (the piece is flagged with that grade under another signature: it
+	is reported again) or ``sem_suspeita`` (not flagged with that grade now; the mark waits).
+	``summary`` adds ``n_falsos_alarmes`` (active) and ``n_falsos_alarmes_obsoletos``.
 	"""
 	placements = {} if placements is None else placements
 	ids = checked_ids(project)
@@ -352,18 +431,48 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None) -> dict
 			continue
 		items.append(_item(project, pid, k0, res, grau, ka))
 	items += _recorte_items(project, ids)
+	for it in items:
+		it["assinatura"] = suspect_signature(it, project, k0=k_of(it["piece"]) if it["grau"] == "recorte" else None)
+	items, falsos = _apply_dismissed(items, getattr(project, "falsos_alarmes", {}) if dismissed is None else dismissed,
+									 None if pieces is None else set(ids))
+	shown = items if incluir_falsos else [it for it in items if "falso_alarme" not in it]
+	counted = [it for it in items if "falso_alarme" not in it]
 
 	def order(it):
 		if it["grau"] == "recorte":     # real bites first, then the known exceptions; larger residual first
 			return (GRAUS.index("recorte"), it.get("excecao") is not None, -(it.get("nn_max_mm") or 0.0), it["piece"])
 		return (GRAUS.index(it["grau"]), False,
 				-(it["custo0"] - (it["custo_alt"] if it["custo_alt"] is not None else it["custo0"])), it["piece"])
-	items.sort(key=order)
+	shown.sort(key=order)
 	summ = dict(n_colocadas=len(ids), n_verificadas=n_ok, n_sem_cantos=n_none, n_com_vizinhas=n_nb,
-				n_impossivel=sum(it["grau"] == "impossivel" for it in items),
-				n_melhor_rotacao=sum(it["grau"] == "melhor_rotacao" for it in items), n_explicadas=n_expl,
-				n_recorte=sum(it["grau"] == "recorte" for it in items))
-	return {"summary": summ, "items": items}
+				n_impossivel=sum(it["grau"] == "impossivel" for it in counted),
+				n_melhor_rotacao=sum(it["grau"] == "melhor_rotacao" for it in counted), n_explicadas=n_expl,
+				n_recorte=sum(it["grau"] == "recorte" for it in counted),
+				n_falsos_alarmes=sum(f["estado"] == "ativo" for f in falsos),
+				n_falsos_alarmes_obsoletos=sum(f["obsoleto"] for f in falsos))
+	return {"summary": summ, "items": shown, "falsos_alarmes": falsos}
+
+
+def _apply_dismissed(items: list, dismissed: dict, only: Optional[set]):
+	"""Mark the items hidden by a false-alarm mark (``falso_alarme``) and list the marks (see :func:`evaluate`).
+	``only``: the checked pieces when :func:`evaluate` got ``pieces`` (marks of other pieces are not listed)."""
+	cur = {(it["piece"], it["grau"]): it for it in items}
+	falsos = []
+	for (pid, grau), rec in sorted((dismissed or {}).items()):
+		if only is not None and pid not in only:
+			continue
+		it = cur.get((pid, grau))
+		if it is None:
+			estado = "sem_suspeita"
+		elif it["assinatura"] == rec.get("assinatura"):
+			estado = "ativo"
+			it["falso_alarme"] = {"t": rec.get("t"), "nota": rec.get("nota") or ""}
+		else:
+			estado = "obsoleto"
+		falsos.append(dict(piece=pid, grau=grau, cell=rec.get("cell"), t=rec.get("t"), nota=rec.get("nota") or "",
+						   assinatura=rec.get("assinatura"), assinatura_atual=None if it is None else it["assinatura"],
+						   estado=estado, obsoleto=estado == "obsoleto"))
+	return items, falsos
 
 
 def suspects(project, placements: Optional[dict] = None, *, pieces=None) -> list:
@@ -374,12 +483,12 @@ def suspects(project, placements: Optional[dict] = None, *, pieces=None) -> list
 
 def summary(project, placements: Optional[dict] = None, *, pieces=None) -> dict:
 	"""``{n_colocadas, n_verificadas, n_sem_cantos, n_com_vizinhas, n_impossivel, n_melhor_rotacao, n_explicadas,
-	n_recorte}``."""
+	n_recorte, n_falsos_alarmes, n_falsos_alarmes_obsoletos}``."""
 	return evaluate(project, placements, pieces=pieces)["summary"]
 
 
-def suspects_near(project, cells, placements: Optional[dict] = None) -> list:
-	"""Suspects among the pieces in ``cells`` and in their 4-neighbours (the check after a confirmation)."""
+def _near_ids(project, cells) -> list:
+	"""Pieces on the board in ``cells`` and in their 4-neighbours (sorted)."""
 	want = set()
 	by_cell = {tuple(p.celula): pid for pid, p in project.pieces.items() if p.estado in _STATES and p.celula is not None}
 	for c in cells:
@@ -387,24 +496,45 @@ def suspects_near(project, cells, placements: Optional[dict] = None) -> list:
 		for x in [c] + project.board.neighbours(c):
 			if x in by_cell:
 				want.add(by_cell[x])
-	if not want:
-		return []
-	return suspects(project, placements, pieces=sorted(want))
+	return sorted(want)
+
+
+def suspects_near(project, cells, placements: Optional[dict] = None) -> list:
+	"""Suspects among the pieces in ``cells`` and in their 4-neighbours (the check after a confirmation)."""
+	want = _near_ids(project, cells)
+	return suspects(project, placements, pieces=want) if want else []
+
+
+def _falsos_text(s: dict) -> str:
+	return f"{s['n_falsos_alarmes']} falsos alarmes ativos, {s['n_falsos_alarmes_obsoletos']} obsoletos"
 
 
 def suspects_lines(project, cells) -> list:
-	"""Text lines of :func:`suspects_near` for the confirmation CLI (never raises: a failure is one line).
+	"""Text lines of :func:`suspects_near` for the confirmation CLI (never raises: a failure is one line); the
+	false-alarm counts of those pieces are appended to the first line when not zero.
 
 	Arrows and the minus sign are written in ASCII (``<->``, ``->``, ``-``): the confirmation CLI prints to
 	the console as it is (cp1252 on Windows)."""
 	try:
-		items = suspects_near(project, cells)
+		want = _near_ids(project, cells)
+		r = evaluate(project, pieces=want) if want else None
 	except Exception as e:  # noqa: BLE001 - the check is informative, it must not break a confirmation
 		return [f"Suspeitas novas: verificação falhou ({e})"]
+	items = r["items"] if r else []
+	s = r["summary"] if r else None
+	fa = f" ({_falsos_text(s)})" if s and (s["n_falsos_alarmes"] or s["n_falsos_alarmes_obsoletos"]) else ""
 	if not items:
-		return ["Suspeitas novas: nenhuma (peças afetadas e vizinhas)"]
-	lines = [f"Suspeitas novas: {len(items)} (peças afetadas e vizinhas; nada foi alterado)"] + ["  " + format_item(it) for it in items]
+		return [f"Suspeitas novas: nenhuma (peças afetadas e vizinhas){fa}"]
+	lines = ([f"Suspeitas novas: {len(items)} (peças afetadas e vizinhas; nada foi alterado){fa}"]
+			 + ["  " + format_item(it) for it in items])
 	return [ln.replace("↔", "<->").replace("→", "->").replace("−", "-").replace("—", "-").replace("Δ", "d") for ln in lines]
+
+
+def format_falso(f: dict) -> str:
+	"""One false-alarm mark (a row of ``evaluate(...)['falsos_alarmes']``) as a line of text."""
+	cell = f"({f['cell'][0]},{f['cell'][1]})" if f.get("cell") else "(?)"
+	nota = f" — «{f['nota']}»" if f.get("nota") else ""
+	return f"{f['piece']} {cell} {f['grau']}: {f['estado']} (assinatura {f['assinatura']}, {f.get('t') or '?'}){nota}"
 
 
 def format_item(it: dict) -> str:
@@ -423,20 +553,57 @@ def format_item(it: dict) -> str:
 # ---------------------------------------------------------------- CLI
 def main(argv=None) -> int:
 	from src.ingest import DEFAULT_PROJECT
-	from src.state import Project
+	from src.state import Project, StateError
 	ap = argparse.ArgumentParser(prog="python -m src.consistency",
-								 description="Peças colocadas com uma orientação impossível ou claramente pior que outra (só leitura).")
+								 description="Peças colocadas com uma orientação impossível ou claramente pior que outra, ou com a "
+											 "silhueta longe da gémea. Só leitura, exceto --falso-alarme / --restaurar (um evento no log).")
 	ap.add_argument("--project", default=DEFAULT_PROJECT, help="pasta do projeto (projects/<id>)")
-	ap.add_argument("--json", action="store_true", help="saída JSON {summary, items}")
+	ap.add_argument("--json", action="store_true", help="saída JSON {summary, items, falsos_alarmes}")
 	ap.add_argument("--pieces", nargs="+", default=None, metavar="P", help="só estas peças")
+	ap.add_argument("--list", action="store_true", help="lista as suspeitas (o comportamento por omissão)")
+	ap.add_argument("--falsos", action="store_true", help="com --list: lista os falsos alarmes registados e o estado de cada um")
+	ap.add_argument("--falso-alarme", dest="falso", metavar="P####",
+					help="marca a suspeita atual desta peça (grau --grau) como falso alarme")
+	ap.add_argument("--restaurar", metavar="P####", help="retira a marca de falso alarme (grau --grau)")
+	ap.add_argument("--grau", choices=GRAUS, help="grau da suspeita (com --falso-alarme / --restaurar)")
+	ap.add_argument("--nota", default="", help="nota do falso alarme")
 	args = ap.parse_args(argv)
 	if hasattr(sys.stdout, "reconfigure"):
 		sys.stdout.reconfigure(encoding="utf-8")      # ↔, −, → on a cp1252 console
+	if (args.falso or args.restaurar) and not args.grau:
+		ap.error("--falso-alarme / --restaurar precisam de --grau")
+	if args.falso and args.restaurar:
+		ap.error("--falso-alarme e --restaurar são exclusivos")
 	pr = Project.open(args.project)
 	t0 = time.time()
 	from src import render
 	pl = dict(render.load_placements(pr).get("placements") or {})
 	pl = {pid: e for pid, e in pl.items() if pid in pr.pieces and e.get("key") == render._entry_key(pr, pid)}
+	if args.falso or args.restaurar:
+		pid = args.falso or args.restaurar
+		try:
+			if pid not in pr.pieces:
+				raise StateError(f"peça desconhecida {pid}")
+			if args.falso:
+				r = evaluate(pr, pl, pieces=[pid], incluir_falsos=True)
+				it = next((x for x in r["items"] if x["piece"] == pid and x["grau"] == args.grau), None)
+				if it is None:
+					raise StateError(f"{pid} não está sinalizada como {args.grau}")
+				ev = pr.dismiss_suspect(pid, args.grau, it["assinatura"], cell=it["cell"], nota=args.nota)
+				msg = f"{pid} {args.grau}: falso alarme registado (assinatura {ev['assinatura']})"
+			else:
+				pr.restore_suspect(pid, args.grau)
+				msg = f"{pid} {args.grau}: falso alarme retirado (volta a ser sinalizada se ainda for suspeita)"
+		except StateError as e:
+			print(f"erro: {e}", file=sys.stderr)
+			return 1
+		pr.save()
+		bad = pr.check_invariants(disk=True)
+		print(msg)
+		if bad:
+			print("invariantes violados: " + "; ".join(bad), file=sys.stderr)
+			return 1
+		return 0
 	r = evaluate(pr, pl, pieces=args.pieces)
 	dt = time.time() - t0
 	if args.json:
@@ -445,7 +612,12 @@ def main(argv=None) -> int:
 	s = r["summary"]
 	print(f"{s['n_colocadas']} peças no tabuleiro, {s['n_verificadas']} verificadas ({s['n_com_vizinhas']} com vizinhas montadas), "
 		  f"{s['n_sem_cantos']} sem cantos; suspeitas: {s['n_impossivel']} impossível, {s['n_melhor_rotacao']} melhor rotação, "
-		  f"{s['n_recorte']} recorte ({dt:.1f} s)")
+		  f"{s['n_recorte']} recorte ({_falsos_text(s)}) ({dt:.1f} s)")
+	if args.falsos:
+		print(f"Falsos alarmes registados: {len(r['falsos_alarmes'])}")
+		for f in r["falsos_alarmes"]:
+			print("  " + format_falso(f))
+		return 0
 	for it in r["items"]:
 		print("  " + format_item(it))
 	return 0

@@ -740,3 +740,86 @@ def test_prepare_rebuilds_stale_assets_after_pull(tmp_path):
     while not any(n == "ready" for _, n, _ in g2.events_after(0)) and time.time() - t0 < 60:
         time.sleep(0.1)
     assert g2.stale_info["desatualizados_antes"] == 0 and g2.stale_info["refeitos"] == 0
+
+
+# ---------------------------------------------------------------- suspeitas: falso alarme + junção com reports
+@pytest.fixture
+def susp_env(tmp_path):
+    """Row project of ``tests/test_consistency.py``: B (2,4) placed turned +90°, ``impossivel``."""
+    from test_consistency import _row_project
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    gui = S.Gui(pr.path, prepare=False, use_image=False, uploads=str(tmp_path / "uploads"), log=None)
+    return gui, TestClient(S.create_app(gui)), ids
+
+
+def test_suspeitas_report_aberto_join_and_event(susp_env):
+    gui, cl, ids = susp_env
+    b, a = ids["B"], ids["A"]
+    d = cl.get("/api/suspeitas").json()
+    assert [(x["piece"], x["grau"]) for x in d["items"]] == [(b, "impossivel")]
+    assert d["items"][0]["report_aberto"] is None and d["n_em_reports"] == 0 and d["falsos_alarmes"] == []
+    assert len(d["items"][0]["assinatura"]) == 12
+    eval0 = gui._susp_eval[1]
+    seq0 = gui.seq
+    r1 = cl.post("/api/report", json={"tipo": "mal_colocada", "piece": b}).json()
+    ev = [data for _, n, data in gui.events_after(seq0) if n == "suspeitas_changed"]
+    assert ev and ev[-1]["n_impossivel"] == 1 and ev[-1]["n_em_reports"] == 1
+    assert gui._susp_eval[1] is eval0              # a report write re-joins, it does not re-evaluate
+    d = cl.get("/api/suspeitas").json()
+    assert d["items"][0]["report_aberto"] == r1["id"] and d["n_em_reports"] == 1
+    # a report of another piece does not count; a report without piece on the same cell does, the newest wins
+    cl.post("/api/report", json={"tipo": "outro", "piece": a})
+    r3 = cl.post("/api/report", json={"tipo": "outro", "cell": [2, 4]}).json()
+    assert cl.get("/api/suspeitas").json()["items"][0]["report_aberto"] == r3["id"]
+    seq1 = gui.seq
+    for rid in (r1["id"], r3["id"]):
+        assert cl.post(f"/api/report/{rid}/estado", json={"acao": "close", "nota": "ok"}).status_code == 200
+    ev = [data for _, n, data in gui.events_after(seq1) if n == "suspeitas_changed"]
+    assert len(ev) == 2 and ev[-1]["n_em_reports"] == 0
+    d = cl.get("/api/suspeitas").json()
+    assert d["items"][0]["report_aberto"] is None and d["n_em_reports"] == 0
+    # editing an open report also re-joins
+    r4 = cl.post("/api/report", json={"tipo": "outro", "piece": b}).json()
+    seq2 = gui.seq
+    assert cl.post(f"/api/report/{r4['id']}/edit", json={"texto": "x"}).status_code == 200
+    assert [n for _, n, _ in gui.events_after(seq2)].count("suspeitas_changed") == 1
+
+
+def test_suspeitas_falso_alarme_and_restaurar_endpoints(susp_env):
+    gui, cl, ids = susp_env
+    b, a = ids["B"], ids["A"]
+    item = cl.get("/api/suspeitas").json()["items"][0]
+    n0 = len(Project.open(gui.path).events())
+    # errors: grade not flagged / invalid / body not an object / unknown piece; nothing written
+    r = cl.post(f"/api/suspeitas/{b}/falso-alarme", json={"grau": "recorte"})
+    assert r.status_code == 400 and r.json()["error"] == f"{b} não está sinalizada como recorte"
+    assert cl.post(f"/api/suspeitas/{a}/falso-alarme", json={"grau": "impossivel"}).status_code == 400
+    assert cl.post(f"/api/suspeitas/{b}/falso-alarme", json={"grau": "xx"}).status_code == 400
+    assert cl.post(f"/api/suspeitas/{b}/falso-alarme", json=["impossivel"]).status_code == 400
+    assert cl.post("/api/suspeitas/P9999/falso-alarme", json={"grau": "impossivel"}).status_code == 404
+    assert cl.post(f"/api/suspeitas/{b}/restaurar", json={"grau": "impossivel"}).status_code == 400   # no mark yet
+    assert len(Project.open(gui.path).events()) == n0
+    # busy -> 409
+    gui.job = "importar x"
+    try:
+        assert cl.post(f"/api/suspeitas/{b}/falso-alarme", json={"grau": "impossivel"}).status_code == 409
+        assert cl.post(f"/api/suspeitas/{b}/restaurar", json={"grau": "impossivel"}).status_code == 409
+    finally:
+        gui.job = None
+    seq0 = gui.seq
+    r = cl.post(f"/api/suspeitas/{b}/falso-alarme", json={"grau": "impossivel", "nota": " visto na mesa "})
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["ok"] and d["piece"] == b and d["grau"] == "impossivel" and d["assinatura"] == item["assinatura"]
+    assert d["summary"]["n_impossivel"] == 0 and d["summary"]["n_falsos_alarmes"] == 1 and d["invariantes"] == []
+    assert [data for _, n, data in gui.events_after(seq0) if n == "suspeitas_changed"][-1]["n_falsos_alarmes"] == 1
+    pr = _ok_on_disk(gui.path)
+    evs = pr.events()
+    assert len(evs) == n0 + 1 and evs[-1]["action"] == "suspect_dismissed" and evs[-1]["nota"] == "visto na mesa"
+    s = cl.get("/api/suspeitas").json()
+    assert s["items"] == [] and [(f["piece"], f["estado"]) for f in s["falsos_alarmes"]] == [(b, "ativo")]
+    r = cl.post(f"/api/suspeitas/{b}/restaurar", json={"grau": "impossivel"})
+    assert r.status_code == 200 and r.json()["summary"]["n_impossivel"] == 1 and r.json()["summary"]["n_falsos_alarmes"] == 0
+    pr = _ok_on_disk(gui.path)
+    assert len(pr.events()) == n0 + 2 and pr.events()[-1]["action"] == "suspect_restored" and pr.falsos_alarmes == {}
+    assert [x["piece"] for x in cl.get("/api/suspeitas").json()["items"]] == [b]

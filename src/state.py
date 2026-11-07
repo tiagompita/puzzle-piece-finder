@@ -55,7 +55,7 @@ from src.profile import PuzzleProfile
 
 __all__ = [
 	"SCHEMA_VERSION", "PIECE_STATES", "PAIR_STATES", "SECTION_KINDS", "CELL_STATES", "CELL_SOURCES", "ACTIONS",
-	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS",
+	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS", "SUSPECT_GRAUS",
 	"StateError", "Piece", "Pair", "Section", "Photo", "Board", "Model", "apply", "replay", "read_log",
 	"Project", "file_sha256", "section_cell",
 ]
@@ -77,9 +77,10 @@ ACTIONS = (
 	"cell_cleared_by_photo", "position_known", "position_placeable", "same_as", "lote_changed",
 	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
 	"report", "report_closed", "report_edited", "report_reopened", "report_deleted", "report_restored",
-	"piece_resegmented",
+	"piece_resegmented", "suspect_dismissed", "suspect_restored",
 )
 RESEGMENT_FIELDS = ("bbox", "cls", "n_flat", "chords_mm", "area_mm2", "shape_ok", "flags", "mean_lab")  # piece_resegmented
+SUSPECT_GRAUS = ("impossivel", "melhor_rotacao", "recorte")   # grades of src.consistency (suspect_dismissed)
 ID_PREFIXES = ("S", "P", "T", "G", "F")
 LOOSE_STATES = ("solta", "emparelhada")
 _PLACEABLE_FROM = ("solta", "emparelhada", "posicao_conhecida")
@@ -344,6 +345,7 @@ class Model:
 		self.sections: dict = {}
 		self.photos: dict = {}            # id -> meta {id, file, sha256, date}
 		self.rejections: set = set()       # (piece_id, (l, c) | None, origin)
+		self.falsos_alarmes: dict = {}     # (piece_id, grau) -> {assinatura, cell, nota, t} (suspect_dismissed)
 		self.max_ids = {p: 0 for p in ID_PREFIXES}
 
 	def _seen(self, ident: str) -> None:
@@ -434,6 +436,14 @@ def apply(m: Model, ev: dict) -> None:
 	elif a == "piece_discarded":
 		p = _piece(m, ev["piece"])
 		p.estado, p.celula = "descartada", None
+		for key in [k for k in m.falsos_alarmes if k[0] == p.id]:
+			del m.falsos_alarmes[key]
+	elif a == "suspect_dismissed":
+		_piece(m, ev["piece"])
+		m.falsos_alarmes[(ev["piece"], ev["grau"])] = {"assinatura": ev["assinatura"], "cell": _cell_list(ev.get("cell")),
+													   "nota": ev.get("nota") or "", "t": ev.get("t")}
+	elif a == "suspect_restored":
+		m.falsos_alarmes.pop((ev["piece"], ev["grau"]), None)
 	elif a == "photo_registered":
 		m.photos[ev["photo"]["id"]] = copy.deepcopy(ev["photo"])
 		m._seen(ev["photo"]["id"])
@@ -647,6 +657,12 @@ class Project:
 	@property
 	def sections(self) -> dict:
 		return self.model.sections
+
+	@property
+	def falsos_alarmes(self) -> dict:
+		"""Suspects marked as false alarms: ``{(piece_id, grau): {assinatura, cell, nota, t}}`` (live dict of the
+		model; :meth:`dismiss_suspect` / :meth:`restore_suspect` change it, :func:`src.consistency.evaluate` reads it)."""
+		return self.model.falsos_alarmes
 
 	def piece(self, pid: str) -> Piece:
 		return _piece(self.model, pid)
@@ -1043,6 +1059,33 @@ class Project:
 		return self._emit("piece_resegmented", piece=piece_id, scan_id=p.scan_id, index_in_scan=p.index_in_scan,
 						  motivo=motivo, **extra, **static)
 
+	def dismiss_suspect(self, piece_id: str, grau: str, assinatura: str, *, cell, nota: str = "") -> dict:
+		"""Log ``suspect_dismissed``: the user says the suspect ``(piece_id, grau)`` of :mod:`src.consistency` is a
+		false alarm. ``assinatura`` (:func:`src.consistency.suspect_signature` of the current item) ties the
+		dismissal to the data it was seen with: the suspect stays hidden only while the signature matches
+		(same cell, 90° class, contour, neighbours, twin). A new dismissal of the same pair replaces the old one.
+
+		Compatibility: the log is shared between machines; a checkout older than this action cannot replay a
+		log that holds it (``ação desconhecida``), the same price already paid by ``piece_resegmented``."""
+		p = self.piece(piece_id)
+		if grau not in SUSPECT_GRAUS:
+			raise StateError(f"grau desconhecido {grau!r} (um de {', '.join(SUSPECT_GRAUS)})")
+		if not isinstance(assinatura, str) or not assinatura:
+			raise StateError("falta a assinatura da suspeita")
+		cell = self._check_cell(cell)
+		if p.estado == "descartada":
+			raise StateError(f"{piece_id} está descartada")
+		return self._emit("suspect_dismissed", piece=piece_id, cell=cell, grau=grau, assinatura=assinatura,
+						  nota=str(nota or ""), autor="manual")
+
+	def restore_suspect(self, piece_id: str, grau: str) -> dict:
+		"""Log ``suspect_restored``: undo :meth:`dismiss_suspect` (the suspect is reported again). Error if
+		``(piece_id, grau)`` is not marked as a false alarm. Same log-compatibility note as there."""
+		self.piece(piece_id)
+		if (piece_id, grau) not in self.model.falsos_alarmes:
+			raise StateError(f"{piece_id} não tem falso alarme registado como {grau}")
+		return self._emit("suspect_restored", piece=piece_id, grau=grau)
+
 	def discard(self, piece_id: str, reason: str = "") -> dict:
 		p = self.piece(piece_id)
 		if p.estado in ("colocada", "descartada"):
@@ -1138,20 +1181,23 @@ class Project:
 	def check_invariants(self, disk: bool = False) -> list:
 		"""List of violated invariants (empty = all hold).
 
-		board == replay(log); pieces' dynamic state == replay; a cell holds <= 1 piece; a
+		board == replay(log); pieces' dynamic state == replay; false alarms == replay; a cell holds <= 1 piece; a
 		``colocada`` piece has exactly one cell and that cell points back to it; ids unique;
 		``n_no_lote`` unique within a bag; a piece's ``lote`` is its scan's ``lote``.
 		With ``disk=True`` also ``board.json`` == replay (call after :meth:`save`).
 		"""
 		errs = []
 		try:
-			rb, rp = replay(self.log_path, self.profile)
+			rm = _replay_model(read_log(self.log_path), self.profile)
 		except Exception as e:  # noqa: BLE001 - a corrupt log is itself a violation
 			return [f"replay falhou: {e}"]
+		rb = rm.board
 		if rb != self.board:
 			errs.append("board != replay(log)")
-		if rp != self.model.pieces_state():
+		if rm.pieces_state() != self.model.pieces_state():
 			errs.append("estado das peças != replay(log)")
+		if rm.falsos_alarmes != self.model.falsos_alarmes:
+			errs.append("falsos alarmes != replay(log)")
 		if disk:
 			fp = self.p("board.json")
 			if os.path.exists(fp):

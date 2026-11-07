@@ -673,3 +673,48 @@ def test_piece_resegmented_updates_static_fields_and_replays(proj):
     with open(q.p("scans", f"{p.scan_id}.json"), encoding="utf-8") as f:
         view = {d["id"]: d for d in json.load(f)["pieces"]}
     assert view[a]["cls"] == "BFBT" and view[a]["chords_mm"] == [18.4, 18.3, 19.9, 17.4] and view[a]["bbox"] == [1, 2, 30, 40]
+
+
+def test_suspect_dismissed_and_restored_replay(proj):
+    a, b = _add(proj, 2)
+    proj.place(a, (2, 2))
+    n0 = len(proj.events())
+    ev = proj.dismiss_suspect(a, "recorte", "abc123def456", cell=(2, 2), nota="corte assimétrico")
+    assert ev["action"] == "suspect_dismissed" and ev["autor"] == "manual" and ev["cell"] == [2, 2]
+    assert len(proj.events()) == n0 + 1
+    assert proj.falsos_alarmes == {(a, "recorte"): {"assinatura": "abc123def456", "cell": [2, 2],
+                                                    "nota": "corte assimétrico", "t": ev["t"]}}
+    proj.dismiss_suspect(a, "recorte", "000000000000", cell=(2, 2))          # a new dismissal replaces the old
+    proj.dismiss_suspect(b, "impossivel", "111111111111", cell=(3, 3))
+    assert proj.falsos_alarmes[(a, "recorte")]["assinatura"] == "000000000000"
+    for bad in [dict(piece_id=a, grau="xx", assinatura="a1", cell=(2, 2)),
+                dict(piece_id=a, grau="recorte", assinatura="", cell=(2, 2)),
+                dict(piece_id=a, grau="recorte", assinatura="a1", cell=(9, 9)),
+                dict(piece_id="P9999", grau="recorte", assinatura="a1", cell=(2, 2))]:
+        with pytest.raises(StateError):
+            proj.dismiss_suspect(bad.pop("piece_id"), bad.pop("grau"), bad.pop("assinatura"), **bad)
+    proj.restore_suspect(a, "recorte")
+    with pytest.raises(StateError):
+        proj.restore_suspect(a, "recorte")                                     # nothing to restore
+    assert set(proj.falsos_alarmes) == {(b, "impossivel")}
+    _ok(proj)
+    proj.save()
+    q = Project.open(proj.path)
+    assert q.falsos_alarmes == proj.falsos_alarmes and q.check_invariants(disk=True) == []
+    # the replay compares the marks: a mark only in memory is a violation
+    q.model.falsos_alarmes[(a, "melhor_rotacao")] = {"assinatura": "x", "cell": [2, 2], "nota": "", "t": None}
+    assert "falsos alarmes != replay(log)" in q.check_invariants()
+
+
+def test_piece_discarded_clears_its_false_alarms(proj):
+    a, b = _add(proj, 2)
+    proj.dismiss_suspect(a, "recorte", "aaaaaaaaaaaa", cell=(2, 2))
+    proj.dismiss_suspect(a, "impossivel", "bbbbbbbbbbbb", cell=(2, 2))
+    proj.dismiss_suspect(b, "recorte", "cccccccccccc", cell=(3, 3))
+    proj.discard(a, "partida")
+    assert set(proj.falsos_alarmes) == {(b, "recorte")}
+    with pytest.raises(StateError):
+        proj.dismiss_suspect(a, "recorte", "aaaaaaaaaaaa", cell=(2, 2))        # a discarded piece is not on the board
+    proj.save()
+    q = Project.open(proj.path)
+    assert set(q.falsos_alarmes) == {(b, "recorte")} and q.check_invariants(disk=True) == []

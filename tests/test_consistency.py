@@ -65,7 +65,8 @@ def test_right_poses_no_suspects(tmp_path):
     r = C.evaluate(pr)
     assert r["items"] == []
     assert r["summary"] == dict(n_colocadas=3, n_verificadas=3, n_sem_cantos=0, n_com_vizinhas=3, n_impossivel=0,
-                                n_melhor_rotacao=0, n_explicadas=0, n_recorte=0)
+                                n_melhor_rotacao=0, n_explicadas=0, n_recorte=0, n_falsos_alarmes=0,
+                                n_falsos_alarmes_obsoletos=0)
     assert _log_lines(pr) == log0
 
 
@@ -194,3 +195,91 @@ def test_bay_flag_and_manual_override(tmp_path):
     assert [it["piece"] for it in rec] == [ids[0]] and rec[0]["texto"] == "tab/baía fora do contorno (22,8 mm²)"
     pr.piece(ids[0]).flags["manual_override"] = True
     assert [it for it in C.evaluate(pr)["items"] if it["grau"] == "recorte"] == []
+
+
+# ---------------------------------------------------------------- falsos alarmes (suspect_dismissed / suspect_restored)
+def test_false_alarm_hides_until_the_signature_changes(tmp_path):
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    b = ids["B"]
+    it = C.evaluate(pr)["items"][0]
+    assert it["piece"] == b and len(it["assinatura"]) == C.SIGNATURE_HEX
+    assert C.suspect_signature(it, pr) == it["assinatura"]                       # pure, repeatable
+    pr.dismiss_suspect(b, "impossivel", it["assinatura"], cell=it["cell"], nota="verificado na mesa")
+    r = C.evaluate(pr)
+    assert r["items"] == [] and r["summary"]["n_impossivel"] == 0
+    assert r["summary"]["n_falsos_alarmes"] == 1 and r["summary"]["n_falsos_alarmes_obsoletos"] == 0
+    assert r["summary"]["n_explicadas"] == 1                                     # A stays explained by B
+    fa = r["falsos_alarmes"]
+    assert [(f["piece"], f["grau"], f["estado"], f["obsoleto"], f["cell"]) for f in fa] == [(b, "impossivel", "ativo", False, [2, 4])]
+    assert fa[0]["nota"] == "verificado na mesa" and fa[0]["assinatura"] == fa[0]["assinatura_atual"]
+    # incluir_falsos keeps it, marked; the summary does not change
+    r2 = C.evaluate(pr, incluir_falsos=True)
+    assert [x["piece"] for x in r2["items"]] == [b] and r2["items"][0]["falso_alarme"]["nota"] == "verificado na mesa"
+    assert r2["summary"] == r["summary"]
+    # a different set of marks can be passed in (dismissed=)
+    assert [x["piece"] for x in C.evaluate(pr, dismissed={})["items"]] == [b]
+    # put back with a small change of theta (same 90° class): still the same suspect, still hidden
+    th = pr.piece(b).theta_deg
+    pr.unplace(b)
+    pr.place(b, (2, 4), theta_deg=th + 2.0)
+    assert C.evaluate(pr)["items"] == []
+    # put back a quarter turn further: another k0, another signature -> reported again, the mark is obsolete
+    pr.unplace(b)
+    pr.place(b, (2, 4), theta_deg=th + 90.0)
+    r3 = C.evaluate(pr)
+    assert [(x["piece"], x["grau"]) for x in r3["items"]] == [(b, "impossivel")]
+    assert "falso_alarme" not in r3["items"][0] and r3["items"][0]["assinatura"] != it["assinatura"]
+    assert r3["summary"]["n_impossivel"] == 1 and r3["summary"]["n_falsos_alarmes"] == 0
+    assert r3["summary"]["n_falsos_alarmes_obsoletos"] == 1 and r3["falsos_alarmes"][0]["estado"] == "obsoleto"
+    # a mark of a piece that is no longer flagged with that grade waits (sem_suspeita), hides nothing
+    pr.restore_suspect(b, "impossivel")
+    pr.dismiss_suspect(b, "recorte", "ffffffffffff", cell=(2, 4))
+    r4 = C.evaluate(pr)
+    assert [f["estado"] for f in r4["falsos_alarmes"]] == ["sem_suspeita"] and [x["piece"] for x in r4["items"]] == [b]
+    assert pr.check_invariants() == []
+
+
+def test_signature_follows_neighbours_and_contour(tmp_path):
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    b = ids["B"]
+    it = C.evaluate(pr)["items"][0]
+    s0 = it["assinatura"]
+    pr.unplace(ids["C"])                                    # not a neighbour of B (2,4): same signature
+    assert C.suspect_signature(it, pr) == s0
+    pr.unplace(ids["A"])                                    # the W neighbour leaves: another signature
+    assert C.suspect_signature(it, pr) != s0
+    pr.place(ids["A"], (2, 3), theta_deg=-PSI["A"])
+    assert C.suspect_signature(it, pr) == s0
+    pr.piece(b).flags = dict(pr.piece(b).flags or {}, manual_override=True)
+    assert C.suspect_signature(it, pr) != s0
+    pr.piece(b).flags["manual_override"] = False
+    pr.piece(b).pose_manual = {"theta_deg": 12.34, "dx_mm": 0.12}           # future attribute, read with getattr
+    s1 = C.suspect_signature(it, pr)
+    assert s1 != s0
+    pr.piece(b).pose_manual = {"theta_deg": 12.33, "dx_mm": 0.11}           # same after rounding (0.1°, 0.05 mm)
+    assert C.suspect_signature(it, pr) == s1
+
+
+def test_cli_false_alarm_restore_and_list(tmp_path, capsys):
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    b, path = ids["B"], pr.path
+    n0 = len(Project.open(path).events())
+    assert C.main(["--project", path, "--falso-alarme", b, "--grau", "recorte"]) == 1           # not flagged so
+    assert "não está sinalizada como recorte" in capsys.readouterr().err
+    assert C.main(["--project", path, "--falso-alarme", b, "--grau", "impossivel", "--nota", "visto"]) == 0
+    assert "falso alarme registado" in capsys.readouterr().out
+    q = Project.open(path)
+    assert len(q.events()) == n0 + 1 and q.events()[-1]["action"] == "suspect_dismissed"
+    assert q.check_invariants(disk=True) == [] and C.evaluate(q)["items"] == []
+    assert C.main(["--project", path]) == 0
+    out = capsys.readouterr().out
+    assert "1 falsos alarmes ativos, 0 obsoletos" in out and b not in out
+    assert C.main(["--project", path, "--list", "--falsos"]) == 0
+    out = capsys.readouterr().out
+    assert f"{b} (2,4) impossivel: ativo" in out and "«visto»" in out
+    lines = C.suspects_lines(q, [(2, 4)])
+    assert lines[0].startswith("Suspeitas novas: nenhuma") and "1 falsos alarmes ativos" in lines[0]
+    assert C.main(["--project", path, "--restaurar", b, "--grau", "impossivel"]) == 0
+    assert C.main(["--project", path, "--restaurar", b, "--grau", "impossivel"]) == 1
+    q = Project.open(path)
+    assert len(q.events()) == n0 + 2 and [x["piece"] for x in C.evaluate(q)["items"]] == [b]

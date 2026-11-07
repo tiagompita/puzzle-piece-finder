@@ -38,7 +38,12 @@ Design (docs/gui-design.md):
   docs/diagnostico/editor/TRACOS.md) and the save (``overrides.jsonl`` via
   :func:`src.overrides.append_override`, then :func:`src.render.rebuild_piece`, under the same lock).
 * **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``, ``piece_changed``,
-  ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``, ``ready``.
+  ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``,
+  ``suspeitas_changed`` (summary of ``/api/suspeitas`` + ``n_em_reports``: after a board write, a report write
+  or a false-alarm mark), ``ready``.
+* **Suspects** (``/api/suspeitas``, :mod:`src.consistency`): items joined with the open reports
+  (``report_aberto``); ``POST /api/suspeitas/{piece}/falso-alarme`` ``{grau, nota?}`` and
+  ``POST …/restaurar`` ``{grau}`` log ``suspect_dismissed`` / ``suspect_restored`` under the write lock.
 
 Pure helpers (legend, cell diff, patch regions, plain-language reasons) are separate from
 the :class:`Gui` state object and from :func:`create_app` (routes).
@@ -453,23 +458,89 @@ class Gui:
 			return float(p.theta_deg), "log"
 		return None, "desconhecida"
 
+	def _susp_placements(self) -> dict:
+		"""Poses for :func:`src.consistency.evaluate`: :meth:`placements`, plus the pieces registered on the fly
+		without the image by an earlier pass (``_susp_pl``) while their key (cell, pose, anchor) holds. The
+		caller stores the dict back in ``_susp_pl`` (``evaluate`` adds what it registers)."""
+		from src import render
+		memo = getattr(self, "_susp_pl", {})
+		pl = {pid: e for pid, e in memo.items() if pid in self.pr.pieces and e.get("key") == render._entry_key(self.pr, pid)}
+		pl.update(self.placements())
+		return pl
+
 	def suspeitas_json(self) -> dict:
-		"""``{summary, items}`` of :func:`src.consistency.evaluate` (orientation suspects, read-only), cached
-		per log version and project object (a reopened project recomputes). Poses come from
-		:meth:`placements`; pieces missing there are registered without the image once and kept in
-		``_susp_pl`` while their key (cell, pose, anchor) holds, so a write re-registers only what changed."""
-		from src import consistency, render
+		"""``{summary, items, falsos_alarmes, n_em_reports}``: :func:`src.consistency.evaluate` (suspects of the
+		placed pieces, read-only; false alarms with an unchanged signature left out) joined with the open
+		reports: each item gets ``report_aberto`` (the most recent open report of the same piece, or of the
+		same cell when the report has no piece; else null) and ``n_em_reports`` counts the items that have one.
+
+		Cached per log version and project object (a reopened project recomputes). The evaluation itself is
+		kept apart (``_susp_eval``) so a report write, which only appends informative events, re-joins the
+		reports without re-evaluating (:meth:`_reports_changed`). Poses: :meth:`_susp_placements`."""
+		from src import consistency
 		key = (self.version(), id(self.pr))
 		c = getattr(self, "_suspeitas", None)
 		if c is not None and c[0] == key:
 			return c[1]
-		memo = getattr(self, "_susp_pl", {})
-		pl = {pid: e for pid, e in memo.items() if pid in self.pr.pieces and e.get("key") == render._entry_key(self.pr, pid)}
-		pl.update(self.placements())
-		r = consistency.evaluate(self.pr, pl)
-		self._susp_pl = pl
-		self._suspeitas = (key, r)
-		return r
+		ev = getattr(self, "_susp_eval", None)
+		if ev is not None and ev[0] == key:
+			r = ev[1]
+		else:
+			pl = self._susp_placements()
+			r = consistency.evaluate(self.pr, pl)
+			self._susp_pl = pl
+			self._susp_eval = (key, r)
+		out = self._join_reports(r)
+		self._suspeitas = (key, out)
+		return out
+
+	def _join_reports(self, r: dict) -> dict:
+		"""``r`` (an :func:`src.consistency.evaluate` result, not modified) with ``report_aberto`` per item and
+		``n_em_reports`` (rule of ``openReportsFor`` in the GUI: same piece, or a report without piece on the
+		same cell)."""
+		from src import reports
+		try:
+			abertos = reports.list_reports(self.pr, only_open=True)
+		except Exception as e:  # noqa: BLE001 - a broken reports file must not hide the suspects
+			self.log(f"[servidor] reports ilegíveis na junção com as suspeitas: {e}")
+			abertos = []
+		by_piece, by_cell = {}, {}
+		for rep in abertos:
+			rid = rep.get("id")
+			if not rid:
+				continue
+			if rep.get("piece"):
+				by_piece.setdefault(rep["piece"], []).append(rid)
+			elif rep.get("cell"):
+				by_cell.setdefault((int(rep["cell"][0]), int(rep["cell"][1])), []).append(rid)
+
+		def newest(ids):
+			return max(ids, key=lambda x: (int(x[1:]) if x[1:].isdigit() else -1, x)) if ids else None
+
+		items = [dict(it, report_aberto=newest(by_piece.get(it["piece"], []) + by_cell.get(tuple(it["cell"]), [])))
+				 for it in r["items"]]
+		return dict(r, items=items, n_em_reports=sum(it["report_aberto"] is not None for it in items))
+
+	def _emit_suspeitas(self) -> Optional[dict]:
+		"""SSE ``suspeitas_changed`` with the summary of :meth:`suspeitas_json` plus ``n_em_reports``; never raises
+		(the suspects are informative; a failure is logged and None returned)."""
+		try:
+			s = self.suspeitas_json()
+			data = dict(s["summary"], n_em_reports=s["n_em_reports"])
+		except Exception as e:  # noqa: BLE001
+			self.log(f"[servidor] suspeitas não recalculadas: {e}")
+			return None
+		self.emit("suspeitas_changed", data)
+		return data
+
+	def _reports_changed(self, key_before: tuple) -> None:
+		"""After a report write (informative log events only): carry the evaluation over to the new log version
+		when it was current before the write, drop the joined cache, emit ``suspeitas_changed``."""
+		ev = getattr(self, "_susp_eval", None)
+		if ev is not None and ev[0] == key_before:
+			self._susp_eval = ((self.version(), id(self.pr)), ev[1])
+		self._suspeitas = None
+		self._emit_suspeitas()
 
 	# ------------------------------------------------------------ board raster
 	def _compose(self, ppc: float, region=None) -> np.ndarray:
@@ -887,10 +958,7 @@ class Gui:
 		self.emit("board_changed", {"versao": self.version(), "celulas": [list(x) for x in ch]})
 		self.emit("fetch_changed", {})
 		self._suspeitas = None
-		try:                             # orientation suspects (read-only); never fails a write
-			self.emit("suspeitas_changed", self.suspeitas_json()["summary"])
-		except Exception as e:  # noqa: BLE001
-			self.log(f"[servidor] suspeitas não recalculadas: {e}")
+		self._emit_suspeitas()           # orientation suspects (read-only); never fails a write
 		return {"celulas_mudadas": [list(x) for x in ch]}
 
 	def _refresh_render_assets(self, pids: list) -> None:
@@ -1004,8 +1072,9 @@ class Gui:
 	def add_report(self, body: dict) -> dict:
 		"""``POST /api/report``: save a capture of what is on screen and append the report.
 
-		The log grows by an informative event only, so ``_known_stat`` is refreshed here and no
-		cache is invalidated (no ``board_changed`` / ``fetch_changed``)."""
+		The log grows by an informative event only, so ``_known_stat`` is refreshed here and no board / fetch
+		cache is invalidated (no ``board_changed`` / ``fetch_changed``); the suspects are re-joined with the
+		reports (``report_aberto``) and ``suspeitas_changed`` is emitted (:meth:`_reports_changed`)."""
 		from src import reports
 		piece, cell = body.get("piece"), body.get("cell")
 		if piece is not None and piece not in self.pr.pieces:
@@ -1021,6 +1090,7 @@ class Gui:
 			raise Busy(self.job or "ocupado")
 		try:
 			self.sync_locked()
+			kb = (self.version(), id(self.pr))
 			rid = reports.next_report_id(reports.read_reports(self.pr))
 			data, ext = None, "jpg"
 			try:
@@ -1042,41 +1112,115 @@ class Gui:
 			self._known_stat = self._log_stat()
 			if "error" not in rep:
 				self.emit("report_added", {"id": rep["id"]})
+				self._reports_changed(kb)
 			return rep
 		finally:
 			self.wlock.release()
 
 	def edit_report(self, rid: str, body: dict) -> dict:
 		"""``POST /api/report/{rid}/edit``: append an edit event to an open report (``reports.jsonl`` stays
-		append-only); like :meth:`add_report` it changes no cache."""
+		append-only); like :meth:`add_report` it changes no board / fetch cache and re-joins the suspects."""
 		from src import reports
 		if not self.wlock.acquire(timeout=0.5):
 			raise Busy(self.job or "ocupado")
 		try:
 			self.sync_locked()
+			kb = (self.version(), id(self.pr))
 			rep = reports.edit_report(self.pr, rid, tipo=body.get("tipo"), texto=body.get("texto"))
 			self._known_stat = self._log_stat()
 			if "error" not in rep:
 				self.emit("report_edited", {"id": rid})
+				self._reports_changed(kb)
 			return rep
 		finally:
 			self.wlock.release()
 
 	def set_report_state(self, rid: str, acao: str, nota: str = "") -> dict:
 		"""``POST /api/report/{rid}/estado``: one state event (close / reopen / delete / restore); like
-		:meth:`add_report` it changes no cache."""
+		:meth:`add_report` it changes no board / fetch cache and re-joins the suspects."""
 		from src import reports
 		if not self.wlock.acquire(timeout=0.5):
 			raise Busy(self.job or "ocupado")
 		try:
 			self.sync_locked()
+			kb = (self.version(), id(self.pr))
 			rep = reports.set_state(self.pr, rid, acao, nota)
 			self._known_stat = self._log_stat()
 			if "error" not in rep:
 				self.emit("report_changed", {"id": rid, "estado": rep.get("estado")})
+				self._reports_changed(kb)
 			return rep
 		finally:
 			self.wlock.release()
+
+	def dismiss_suspect(self, pid: str, body: dict) -> dict:
+		"""``POST /api/suspeitas/{pid}/falso-alarme`` ``{grau, nota?}``: mark the current suspect ``(pid, grau)`` as
+		a false alarm with the signature of the item as it is now (:func:`src.consistency.suspect_signature`,
+		event ``suspect_dismissed``), then save, check the invariants, SSE ``suspeitas_changed``.
+		``{ok, piece, grau, assinatura, summary, invariantes}``; ``{error}`` when the piece is not flagged with
+		that grade (nothing written); FileNotFoundError (404) for an unknown piece; Busy (409)."""
+		from src import consistency
+		grau, nota = body.get("grau"), body.get("nota")
+		if grau not in consistency.GRAUS:
+			return {"error": f"grau inválido {grau!r} (um de {', '.join(consistency.GRAUS)})"}
+		if nota is not None and not isinstance(nota, str):
+			return {"error": "nota deve ser texto"}
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			if self.job:
+				raise Busy(self.job)
+			self.sync_locked()
+			pr = self.pr
+			if pid not in pr.pieces:
+				raise FileNotFoundError(f"peça desconhecida {pid}")
+			pl = self._susp_placements()
+			r = consistency.evaluate(pr, pl, pieces=[pid], incluir_falsos=True)
+			self._susp_pl = pl
+			it = next((x for x in r["items"] if x["piece"] == pid and x["grau"] == grau), None)
+			if it is None:
+				return {"error": f"{pid} não está sinalizada como {grau}"}
+			try:
+				pr.dismiss_suspect(pid, grau, it["assinatura"], cell=it["cell"], nota=(nota or "").strip())
+			except StateError as e:
+				return {"error": str(e)}
+			return self._after_suspect_write({"piece": pid, "grau": grau, "assinatura": it["assinatura"]})
+		finally:
+			self.wlock.release()
+
+	def restore_suspect(self, pid: str, body: dict) -> dict:
+		"""``POST /api/suspeitas/{pid}/restaurar`` ``{grau}``: undo a false-alarm mark (event ``suspect_restored``).
+		``{ok, piece, grau, summary, invariantes}``; ``{error}`` if there is no such mark; 404 / 409 as
+		:meth:`dismiss_suspect`."""
+		from src import consistency
+		grau = body.get("grau")
+		if grau not in consistency.GRAUS:
+			return {"error": f"grau inválido {grau!r} (um de {', '.join(consistency.GRAUS)})"}
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			if self.job:
+				raise Busy(self.job)
+			self.sync_locked()
+			if pid not in self.pr.pieces:
+				raise FileNotFoundError(f"peça desconhecida {pid}")
+			try:
+				self.pr.restore_suspect(pid, grau)
+			except StateError as e:
+				return {"error": str(e)}
+			return self._after_suspect_write({"piece": pid, "grau": grau})
+		finally:
+			self.wlock.release()
+
+	def _after_suspect_write(self, out: dict) -> dict:
+		"""Save, invariants on disk, drop the suspects caches, SSE ``suspeitas_changed`` (under ``wlock``)."""
+		self.pr.save()
+		bad = self.pr.check_invariants(disk=True)
+		self._known_stat = self._log_stat()
+		self._suspeitas = None
+		self._susp_eval = None
+		summ = self._emit_suspeitas()
+		return dict(out, ok=True, summary=summ, invariantes=bad)
 
 	def report_capture(self, rid: str) -> Optional[str]:
 		"""Absolute path of the capture of report ``rid`` (``None`` if there is none)."""
@@ -1725,6 +1869,27 @@ def create_app(gui: Gui):
 	def get_suspeitas():
 		ready()
 		return JSON(gui.read(gui.suspeitas_json))
+
+	async def _suspect_post(request: Request, fn):
+		ready()
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		if not isinstance(body, dict):
+			return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		r = await asyncio.to_thread(lambda: guard(lambda: fn(body)))
+		if "error" in r:
+			return JSON(r, status_code=400)
+		return JSON(r)
+
+	@app.post("/api/suspeitas/{piece}/falso-alarme")
+	async def post_falso_alarme(piece: str, request: Request):
+		return await _suspect_post(request, lambda body: gui.dismiss_suspect(piece, body))
+
+	@app.post("/api/suspeitas/{piece}/restaurar")
+	async def post_restaurar_suspeita(piece: str, request: Request):
+		return await _suspect_post(request, lambda body: gui.restore_suspect(piece, body))
 
 	@app.get("/api/reports/{rid}/captura")
 	def get_report_captura(rid: str):
