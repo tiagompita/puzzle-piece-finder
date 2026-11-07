@@ -1,0 +1,758 @@
+{
+ "final": {
+  "erosion_mm": 0.6,
+  "chord_cut": 2.0,
+  "t_abs": 2.665580916499459,
+  "q": 0.9
+ },
+ "n_cases": 15,
+ "n_loose": 134,
+ "cases": [
+  {
+   "piece": "P0094",
+   "cell": [
+    3,
+    29
+   ],
+   "m": 1,
+   "rank_lote": 1,
+   "conf": "media",
+   "margin": 1.8932453874970114,
+   "d1": 1.34553955771556,
+   "J_true": 1.34553955771556,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 2,
+   "others_alta": 0,
+   "others_media": 1,
+   "assigned_cells": [
+    [
+     3,
+     29
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0094",
+   "nb_scans": [
+    "S0011"
+   ],
+   "scan": "S0005",
+   "dE_true": [
+    8.094123840332031
+   ],
+   "rms_true": [
+    0.5897399172766362
+   ]
+  },
+  {
+   "piece": "P0098",
+   "cell": [
+    3,
+    36
+   ],
+   "m": 2,
+   "rank_lote": 1,
+   "conf": "media",
+   "margin": 1.4835651852171357,
+   "d1": 1.6451201536942914,
+   "J_true": 1.6451201536942914,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 1,
+   "others_alta": 0,
+   "others_media": 1,
+   "assigned_cells": [
+    [
+     3,
+     36
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0098",
+   "nb_scans": [
+    "S0005",
+    "S0006"
+   ],
+   "scan": "S0005",
+   "dE_true": [
+    4.591466903686523,
+    11.590293884277344
+   ],
+   "rms_true": [
+    0.8470300271190604,
+    0.9922406636714207
+   ]
+  },
+  {
+   "piece": "P0100",
+   "cell": [
+    3,
+    37
+   ],
+   "m": 2,
+   "rank_lote": 1,
+   "conf": "alta",
+   "margin": 2.140938071909693,
+   "d1": 1.1080938075180855,
+   "J_true": 1.1080938075180855,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 0,
+   "others_alta": 0,
+   "others_media": 0,
+   "assigned_cells": [
+    [
+     3,
+     37
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0100",
+   "nb_scans": [
+    "S0010",
+    "S0005"
+   ],
+   "scan": "S0005",
+   "dE_true": [
+    4.9374799728393555,
+    4.591466903686523
+   ],
+   "rms_true": [
+    0.5425921930028811,
+    0.8470300271190604
+   ]
+  },
+  {
+   "piece": "P0106",
+   "cell": [
+    3,
+    45
+   ],
+   "m": 1,
+   "rank_lote": 1,
+   "conf": "media",
+   "margin": 1.6671114005882568,
+   "d1": 0.980508095990873,
+   "J_true": 0.980508095990873,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 9,
+   "others_alta": 0,
+   "others_media": 1,
+   "assigned_cells": [
+    [
+     3,
+     45
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0106",
+   "nb_scans": [
+    "S0010"
+   ],
+   "scan": "S0005",
+   "dE_true": [
+    4.18283748626709
+   ],
+   "rms_true": [
+    0.6184467689875586
+   ]
+  },
+  {
+   "piece": "P0119",
+   "cell": [
+    2,
+    48
+   ],
+   "m": 4,
+   "rank_lote": 1,
+   "conf": "alta",
+   "margin": 2.2211911929562107,
+   "d1": 1.0981446295688764,
+   "J_true": 1.0981446295688764,
+   "rank_board": 1,
+   "n_holes": 213,
+   "others_top1": 1,
+   "others_alta": 0,
+   "others_media": 1,
+   "assigned_cells": [
+    [
+     2,
+     48
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0119",
+   "nb_scans": [
+    "S0010",
+    "S0006",
+    "S0006",
+    "S0007"
+   ],
+   "scan": "S0005",
+   "dE_true": [
+    5.068234443664551,
+    6.052165508270264,
+    5.0060858726501465,
+    4.6961164474487305
+   ],
+   "rms_true": [
+    0.5453392874106018,
+    0.8538226992879888,
+    0.5317162024708944,
+    0.6104719703489313
+   ]
+  },
+  {
+   "piece": "P0120",
+   "cell": [
+    2,
+    28
+   ],
+   "m": 2,
+   "rank_lote": 1,
+   "conf": "alta",
+   "margin": 5.479805075920714,
+   "d1": 0.6664926555738354,
+   "J_true": 0.6664926555738354,
+   "rank_board": 1,
+   "n_holes": 213,
+   "others_top1": 0,
+   "others_alta": 0,
+   "others_media": 0,
+   "assigned_cells": [
+    [
+     2,
+     28
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0120",
+   "nb_scans": [
+    "S0012",
+    "S0012"
+   ],
+   "scan": "S0005",
+   "dE_true": [
+    1.790536880493164,
+    2.9022436141967773
+   ],
+   "rms_true": [
+    0.4655861970292006,
+    0.4844917711478111
+   ]
+  },
+  {
+   "piece": "P0126",
+   "cell": [
+    4,
+    40
+   ],
+   "m": 1,
+   "rank_lote": 1,
+   "conf": "sem",
+   "margin": 1.3144268203183391,
+   "d1": 0.9323143204338433,
+   "J_true": 0.9323143204338433,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 1,
+   "others_alta": 0,
+   "others_media": 1,
+   "assigned_cells": [
+    [
+     4,
+     40
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0126",
+   "nb_scans": [
+    "S0010"
+   ],
+   "scan": "S0005",
+   "dE_true": [
+    3.6307029724121094
+   ],
+   "rms_true": [
+    0.6261684123988738
+   ]
+  },
+  {
+   "piece": "P0129",
+   "cell": [
+    2,
+    49
+   ],
+   "m": 3,
+   "rank_lote": 1,
+   "conf": "alta",
+   "margin": 2.0430480057159897,
+   "d1": 1.401494707479884,
+   "J_true": 1.401494707479884,
+   "rank_board": 2,
+   "n_holes": 213,
+   "others_top1": 2,
+   "others_alta": 0,
+   "others_media": 1,
+   "assigned_cells": [
+    [
+     3,
+     50
+    ]
+   ],
+   "assigned_right": false,
+   "winner": "P0129",
+   "nb_scans": [
+    "S0010",
+    "S0007",
+    "S0005"
+   ],
+   "scan": "S0006",
+   "dE_true": [
+    5.870314121246338,
+    4.888494491577148,
+    6.052165508270264
+   ],
+   "rms_true": [
+    0.548530595404689,
+    0.602693601012904,
+    0.8538226992879888
+   ]
+  },
+  {
+   "piece": "P0131",
+   "cell": [
+    3,
+    48
+   ],
+   "m": 1,
+   "rank_lote": 1,
+   "conf": "sem",
+   "margin": 1.2759186820569561,
+   "d1": 0.9839869293057879,
+   "J_true": 0.9839869293057879,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 7,
+   "others_alta": 0,
+   "others_media": 1,
+   "assigned_cells": [
+    [
+     3,
+     48
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0131",
+   "nb_scans": [
+    "S0005"
+   ],
+   "scan": "S0006",
+   "dE_true": [
+    5.0060858726501465
+   ],
+   "rms_true": [
+    0.5317162024708944
+   ]
+  },
+  {
+   "piece": "P0143",
+   "cell": [
+    3,
+    35
+   ],
+   "m": 3,
+   "rank_lote": 1,
+   "conf": "alta",
+   "margin": 2.2608290692469226,
+   "d1": 1.345461076920925,
+   "J_true": 1.345461076920925,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 0,
+   "others_alta": 0,
+   "others_media": 0,
+   "assigned_cells": [
+    [
+     3,
+     35
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0143",
+   "nb_scans": [
+    "S0011",
+    "S0005",
+    "S0011"
+   ],
+   "scan": "S0006",
+   "dE_true": [
+    4.178133487701416,
+    11.590293884277344,
+    7.650904655456543
+   ],
+   "rms_true": [
+    0.4982030928957514,
+    0.9922406636714208,
+    0.3734512873670187
+   ]
+  },
+  {
+   "piece": "P0144",
+   "cell": [
+    2,
+    56
+   ],
+   "m": 2,
+   "rank_lote": 1,
+   "conf": "alta",
+   "margin": 2.206492506171343,
+   "d1": 0.9532868732113471,
+   "J_true": 0.9532868732113471,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 0,
+   "others_alta": 0,
+   "others_media": 0,
+   "assigned_cells": [
+    [
+     2,
+     56
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0144",
+   "nb_scans": [
+    "S0010",
+    "S0010"
+   ],
+   "scan": "S0007",
+   "dE_true": [
+    4.8432488441467285,
+    5.525969982147217
+   ],
+   "rms_true": [
+    0.39314265909142476,
+    0.5634744173072485
+   ]
+  },
+  {
+   "piece": "P0147",
+   "cell": [
+    2,
+    61
+   ],
+   "m": 1,
+   "rank_lote": 1,
+   "conf": "media",
+   "margin": 1.6761948391421486,
+   "d1": 1.0301359838434425,
+   "J_true": 1.0301359838434425,
+   "rank_board": 1,
+   "n_holes": 213,
+   "others_top1": 2,
+   "others_alta": 0,
+   "others_media": 0,
+   "assigned_cells": [
+    [
+     2,
+     61
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0147",
+   "nb_scans": [
+    "S0010"
+   ],
+   "scan": "S0007",
+   "dE_true": [
+    6.431906223297119
+   ],
+   "rms_true": [
+    0.4256398976651037
+   ]
+  },
+  {
+   "piece": "P0157",
+   "cell": [
+    2,
+    47
+   ],
+   "m": 3,
+   "rank_lote": 1,
+   "conf": "alta",
+   "margin": 2.594813791659939,
+   "d1": 0.9876853574041943,
+   "J_true": 0.9876853574041943,
+   "rank_board": 1,
+   "n_holes": 213,
+   "others_top1": 1,
+   "others_alta": 0,
+   "others_media": 0,
+   "assigned_cells": [
+    [
+     2,
+     47
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0157",
+   "nb_scans": [
+    "S0010",
+    "S0005",
+    "S0010"
+   ],
+   "scan": "S0007",
+   "dE_true": [
+    4.141123294830322,
+    4.6961164474487305,
+    4.9374799728393555
+   ],
+   "rms_true": [
+    0.5749958889748473,
+    0.6104719703489313,
+    0.5586746383340159
+   ]
+  },
+  {
+   "piece": "P0162",
+   "cell": [
+    3,
+    52
+   ],
+   "m": 1,
+   "rank_lote": 1,
+   "conf": "sem",
+   "margin": 1.1874403744092237,
+   "d1": 0.8144549203101169,
+   "J_true": 0.8144549203101169,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 0,
+   "others_alta": 0,
+   "others_media": 0,
+   "assigned_cells": [
+    [
+     3,
+     52
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0162",
+   "nb_scans": [
+    "S0010"
+   ],
+   "scan": "S0007",
+   "dE_true": [
+    3.540559768676758
+   ],
+   "rms_true": [
+    0.5064388443431962
+   ]
+  },
+  {
+   "piece": "P0169",
+   "cell": [
+    2,
+    50
+   ],
+   "m": 3,
+   "rank_lote": 1,
+   "conf": "alta",
+   "margin": 2.2147306919735903,
+   "d1": 0.9989025833198754,
+   "J_true": 0.9989025833198754,
+   "rank_board": 1,
+   "n_holes": 212,
+   "others_top1": 2,
+   "others_alta": 0,
+   "others_media": 2,
+   "assigned_cells": [
+    [
+     2,
+     50
+    ]
+   ],
+   "assigned_right": true,
+   "winner": "P0169",
+   "nb_scans": [
+    "S0010",
+    "S0010",
+    "S0006"
+   ],
+   "scan": "S0007",
+   "dE_true": [
+    5.205352306365967,
+    4.445922374725342,
+    4.888494491577148
+   ],
+   "rms_true": [
+    0.47235398601940126,
+    0.6219563158167314,
+    0.602693601012904
+   ]
+  }
+ ],
+ "inverse": {
+  "n_holes": 212,
+  "n_loose": 134,
+  "conf": {
+   "alta": 8,
+   "media": 32,
+   "sem": 172
+  },
+  "alta_per_piece": 0.05970149253731343,
+  "media_per_piece": 0.23880597014925373,
+  "pieces_with_alta": 8,
+  "max_alta_one_piece": 1,
+  "alta_assigned": 7,
+  "alta_assigned_per_piece": 0.05223880597014925,
+  "by_m": {
+   "1": {
+    "media": 9,
+    "sem": 144
+   },
+   "2": {
+    "alta": 4,
+    "media": 20,
+    "sem": 20
+   },
+   "3": {
+    "alta": 4,
+    "media": 3,
+    "sem": 6
+   },
+   "4": {
+    "sem": 2
+   }
+  },
+  "top_alta": [
+   {
+    "cell": [
+     3,
+     28
+    ],
+    "m": 3,
+    "piece": "P0133",
+    "J": 1.1507961190175218,
+    "margin": 3.206568883146731,
+    "lote": 1,
+    "n": 40,
+    "assigned": "P0133"
+   },
+   {
+    "cell": [
+     4,
+     39
+    ],
+    "m": 2,
+    "piece": "P0122",
+    "J": 0.7091500865931306,
+    "margin": 2.6211401834021455,
+    "lote": 1,
+    "n": 29,
+    "assigned": "P0122"
+   },
+   {
+    "cell": [
+     6,
+     21
+    ],
+    "m": 3,
+    "piece": "P0123",
+    "J": 0.9775436635376153,
+    "margin": 2.591465875317271,
+    "lote": 1,
+    "n": 30,
+    "assigned": "P0123"
+   },
+   {
+    "cell": [
+     2,
+     37
+    ],
+    "m": 3,
+    "piece": "P0177",
+    "J": 0.9548363728555914,
+    "margin": 2.3708437289629263,
+    "lote": 2,
+    "n": 34,
+    "assigned": "P0177"
+   },
+   {
+    "cell": [
+     5,
+     26
+    ],
+    "m": 3,
+    "piece": "P0179",
+    "J": 0.975568183910577,
+    "margin": 2.2172936647926105,
+    "lote": 2,
+    "n": 36,
+    "assigned": "P0179"
+   },
+   {
+    "cell": [
+     7,
+     7
+    ],
+    "m": 2,
+    "piece": "P0139",
+    "J": 1.0037032638889216,
+    "margin": 2.0540839322578286,
+    "lote": 1,
+    "n": 46,
+    "assigned": "P0139"
+   },
+   {
+    "cell": [
+     13,
+     63
+    ],
+    "m": 2,
+    "piece": "P0125",
+    "J": 1.0343000223200536,
+    "margin": 1.8800022662290445,
+    "lote": 1,
+    "n": 32,
+    "assigned": "P0954"
+   },
+   {
+    "cell": [
+     3,
+     46
+    ],
+    "m": 2,
+    "piece": "P0135",
+    "J": 1.147065432973807,
+    "margin": 1.5740430029717722,
+    "lote": 1,
+    "n": 42,
+    "assigned": "P0135"
+   }
+  ]
+ },
+ "agg": {
+  "n": 15,
+  "top1": 15,
+  "top3": 15,
+  "wilson1": [
+   0.7961107336956521,
+   1.0
+  ],
+  "board_top1": 14,
+  "n_m2": 9,
+  "top1_m2": 9,
+  "others_alta_per_piece": 0.0,
+  "others_media_per_piece": 0.6,
+  "assigned_right": 14,
+  "assigned_elsewhere": 1,
+  "conf": {
+   "media": 4,
+   "alta": 8,
+   "sem": 3
+  }
+ }
+}
