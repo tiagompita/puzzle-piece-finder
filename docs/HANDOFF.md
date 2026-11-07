@@ -1,50 +1,41 @@
-# HANDOFF — 2026-11-05 (2.ª ronda, fechada)
+# HANDOFF — 2026-11-07 (ronda «pesquisa na GUI + triagem medida dos reports», fechada)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
 ## Estado
-- **Commits:** `b894749` (.gitattributes), `fb487de` (abas no topo), `1b5c21e` («Editar report»); antes, até `bdbbfef` (aba «Guardadas», painel de Reports, docs).
-- **Testes:** suite completa: **179 passed, 1 skipped** (75 s). Antes desta ronda: 160 passed, 1 skipped.
-- **GUI** (`python -m src.server`): as 6 abas estão na **barra de topo** (Vai buscar, Guardadas, Lotes, Mesa, Importar, Reports) ao lado do nome/progresso; abaixo de 1181 px ficam numa 2.ª linha (rótulos curtos abaixo de 900 px); sem scroll horizontal. «Vai buscar» só tem peças com ≥ 1 vizinha ortogonal montada; as outras estão em «Guardadas». «Reports» é só de leitura; o botão do cartão/célula/peça é **«Editar report»** quando já há um report aberto para essa peça (ou célula sem peça), senão «Reportar».
-- **Editar report = evento:** `reports.jsonl` é append-only; editar acrescenta uma linha `{"evento": "edicao", "id", "t", "tipo"?, "texto"?}` (`src.reports.edit_report`, `POST /api/report/{id}/edit`, evento de log `report_edited`). `read_reports` aplica as edições (`editado_em`, `n_edicoes`); `close_report` preserva as linhas de edição. Só reports abertos se editam.
-- **Reports:** 22 abertos (R0001–R0012, R0018–R0027); R0013–R0017 fechados. Triagem abaixo; **nenhum fechado nesta ronda** (espera do Tiago).
-- **Dados do Tiago por commitar:** `projects/alpes/` (log, reports, fetch, board, capturas) muda por uso da GUI; não é commitado por mim.
-- **Item 2 (trim 0,48 mm)** refutado e removido (`docs/decisoes.md`); a cor ficou adiada.
+- **Commits desta ronda:** `783681e` (pesquisa na barra de topo + linhas de report clicáveis), `a8bb331` (triagem medida, `docs/diagnostico/reports/TRIAGEM-2026-11-07.md`), `a249ad6` (rotação das peças de moldura pelo lado F, `F_ROTATION`), `e5c44a5` (segmentação: recuperação do prado «comido», `_RECOVER_BAYS`), + o commit das docs. Antes: `0877adb` (Tiago, 2026-11-06 23:55: G0084 desancorada, G0077 em (15,59), G0075 em (15,61)).
+- **Testes:** suite completa **227 passed, 1 skipped** (≈ 150 s, OpenCV 4.11, venv4); OpenCV 5.0 não corrido [NT].
+- **Interpretador:** `C:/Users/Tiago/AppData/Local/Temp/claude/c--Users-Tiago-Desktop-puzzle-piece-finder/f748cb5c-95ce-4ca7-bb40-feccfde7cc64/scratchpad/venv4/Scripts/python.exe` (o `.venv` referido antes não existe; o `python` do PATH não tem numpy).
+- **Projeto:** `projects/alpes` com log de 2072 eventos, 607 colocadas; **`render/placements.json` e `render/clean/` não existem localmente** (a GUI regista a pose na hora, por cantos, sem imagem). Nada foi escrito em `projects/alpes` nesta ronda.
+- **Reports:** **19 abertos** (R0001–R0012, R0018–R0020, R0022–R0024, R0027); R0013–R0017 e os duplicados R0021/R0025/R0026 fechados. **Nenhum fechado nesta ronda.** R0018–R0020 são P0196 (14,64), P0198 (28,64), P0204 (36,64) (o HANDOFF anterior dizia P0234/P0233: eram alvos do RENDER §7, não reports).
+- **GUI:** pesquisa na barra de topo (`P0778`/`p778`/`778`, `R0019`, `S0020`, «4,10» «4 10» «(4,10)» «l4 c10»); Enter localiza (peça colocada → gaveta da célula com zoom; «Guardadas»/«Vai buscar» → cartão realçado; solta → estado real; vazia → «vazia»; nada → «não encontrado»); linhas da aba Reports clicáveis, com miniatura e chips da peça e da célula. ≤ 900 px é uma lupa. Tudo só leitura.
 
-## Espera pelo Tiago
-- **Confirmação física de (3,32) e (3,33).** P0291 (G0021) e P0294 (G0023) estão digitalizadas, só como pista (`ocupada_legado`, fonte `tiago`). Indício do encaixe dos lados: **P0294 em (3,32) e P0291 em (3,33)**; o score do programa diz o contrário por 0,3 (7,25 vs 8,10), por isso decide a peça física. Escala não calibrada [NT]. Depois: `python -m src.confirm`.
-- **Aprovar a triagem** (abaixo): fechar os 3 duplicados e dizer o que fazer com as secções por ancorar.
+## Espera pelo Tiago (decisões que são dele)
+1. **Rebuild do índice** com a segmentação nova (`render.rebuild_assets` / `ingest_all.py`): só mudam as formas de P0218, P0223 e P0199 (S0009); P0218 passa a ter o lado F (BFBT). Sem isto, o tabuleiro continua a mostrar o P0218 comido (R0023).
+2. **Orientação de P0083 (44,60), R0024:** pelos lados e pela imagem está rodada 90° (NCC 0,70 a +90° contra −0,02); a pose vem do `theta_deg` do log (GT BD, S0004 #18). Confirmar fisicamente e corrigir no log (não há comando; `unplace` + `place` com o θ certo, ou editar a pose com `src.confirm`).
+3. **P0333 (6,22), R0010:** orientação atual impossível (N B↔B, E T↔T); −90° é compatível mas o céu não decide; pode ser outra peça. Confirmar fisicamente (gémea (42,43) vazia).
+4. **Células só-foto (R0004–R0009):** hipóteses medidas (lados + imagem, identidade [NT]): coluna 55 filas 42–45 = montado_p06 #47, #6, #30, #25 (P0442, P0401, P0425, P0420; G0040/G0037/G0039/G0038, rot 180); (44,37)/(45,37) = montado_p08 #22/#27 (P0501/P0506, G0044 rot 0; a candidata atual (44,55) rot 0 é impossível pelos lados). Ancorar na Mesa («É aqui») se bater.
+5. **R0002/R0003 (3,32)/(3,33):** já têm P0294/P0291 (colocadas pelo Tiago em 2026-11-05), **mas** o bloco (1..3, 32..33) da montado_p03 não casa com o bloco gémeo (45..47, 32..33) da montado_p08/G0043 (`free_dist` 2,4–3,1 mm contra 0,17–0,36 nas colunas vizinhas): um dos dois blocos está nas células erradas. Confirmar fisicamente antes de fechar.
+6. **Porta §6.1:** nas 607 colocadas, 49 falham o 1,5 % nos lados iluminados (todas relva; mediana 1,12 %, p90 1,68 %, máx. 5,65 % P0462), 13 falham 2,0 %; bolsas interiores tiradas pela regra B todas ≤ 0,093 mm². Opções (TRIAGEM §4): (A) manter 1,5 % mas medir só na faixa de 0,4 mm (precisa de limite novo: mediana 9,2 % na relva); (B) subir para 2,0 % e autorizar bolsas ≤ 0,1 mm², ficando 13 a inspecionar. Nada implementado.
+7. **Fechar reports** conforme a tabela de TRIAGEM §6: candidatos a fechar depois de ver na GUI (pesquisa): R0001 P0778, R0011/R0012 P0651/P0657 (dados certos; capturas de 2 de novembro, anteriores ao render atual), R0018 P0196, R0027 (resolvido pelo próprio Tiago), R0022 P0240 (agora a 0° depois do `F_ROTATION`); R0019 P0198 é limite da cor (silhueta certa, 0,44 mm da gémea), decisão do Tiago.
 
-## Triagem dos 22 reports abertos (medido em 2026-11-05 sobre `projects/alpes`; nada foi fechado)
-| Reports | O que é | Proposta |
-|---|---|---|
-| R0021, R0025, R0026 | duplicados exatos de R0010 (P0333 (6,22)), R0012 (P0657 (45,1)), R0011 (P0651 (44,1)): mesma peça, mesmo tipo, sem texto | **fechar como duplicado** (`--close … --nota "duplicado de R00xx"`) |
-| R0002, R0003 | (3,32)/(3,33): digitalizadas, não ancoradas (secções de 1 peça G0021/G0023); células só com pista do Tiago | **explicar**; espera pela confirmação física |
-| R0004–R0007 ((45,55) (44,55) (43,55) (42,55)), R0008, R0009 ((44,37) (45,37)) | células `ocupada_legado` só por foto (dúvida). Só G0044 (2 peças, melhor (44,55), score 21,7) e G0049 (P0573, (44,37), 17,7) propõem alguma; nenhuma secção propõe (45,55), (43,55), (42,55), (45,37). As peças estão digitalizadas mas não ancoradas | **explicar**; ancorar na aba Mesa se o Tiago concordar; ver o overlay `montado_p06`/`p07` para as células sem candidata [NT] |
-| R0018–R0020 ((14,64) (28,64) (36,64)), R0001 (P0778 (4,10)) | recorte/verde («comida», verde visível); R0001 tem ainda rotação −3,9° | **corrigir** (pendente a) |
-| R0011/R0012 (+R0025/R0026): P0651 (44,1), P0657 (45,1) | pose sem solução por cantos (método `image` / `none`), folgas de 1,3–2,5 mm com as vizinhas: defeito real de pose no canto inferior esquerdo | **corrigir** (pendente b) |
-| R0022 (P0240 (1,63)) | inclinada (rotação 3,9°, lado reto 4,6°) | **corrigir** (pendente d) |
-| R0023 (P0218 (32,64)), R0024 (P0083 (44,60)), R0027 (P0862 (14,61)) | rotação −6,8°, −4,8°, −4,4° (corners); R0024 com folgas até 2,4 mm | **corrigir** (pendente b: erro de rotação por cantos) |
-| R0010 (+R0021): P0333 (6,22) | pose registada boa (rotação −2,0°, resíduo 0,53 mm, sem entrada em `placements.json`: registada na hora). **Hipótese [NT]:** se está «mal colocada» será identidade/posição e não desenho; só a confirmação física decide | **explicar**; confirmar fisicamente (já estava [NT] em CLAUDE.md) |
-
-## Limitações conhecidas (abas / «Editar report»)
-- **Um report aberto por peça:** com um report aberto numa peça (ou célula sem peça) o botão passa a «Editar report» e **não se consegue criar um segundo** (só editar). A edição substitui `tipo`/`texto` na leitura; os valores anteriores só ficam nas linhas `edicao` do `reports.jsonl`.
-- **SSE:** `app.js` **não trata** os eventos `report_added` / `report_edited` (só ouve `hello`, `board_changed`, `fetch_changed`, `ingest_progress`, `prepare_progress`, `ready`). A aba Reports e o botão «Editar report» só atualizam depois de uma ação do próprio utilizador ou ao abrir a aba; um report criado noutra janela não aparece sozinho. **Pendente, não implementado.**
-- Com o job-pill visível, a barra de topo a 1181–1280 px corta o nome do puzzle com reticências (teste `test_top_bar_no_overlap_with_job_pill_and_big_badges`).
-
-## Próxima sessão
-1. **Corrigir pose/recorte** (pendentes do `CLAUDE.md`, por ordem): (a) recorte «comido» (3,64) P0234 / (4,64) P0233 + R0018–R0020; (b) baseline de buracos (131 células > 5 %, 39 > 10 %) e erro de pose ~1 mm / rotação 363/588 > 1,5° (a rotação sai dos 4 cantos, ruidosa; P0651/P0657 sem solução por cantos); (c) (26,1)/(25,1): contornos a 0,06 mm mas (26,1) parece por baixo (ordem de desenho dos tabs); (d) (1,63) e (47,2) inclinadas; (e) usar IDs P0xxx nos reports ((44,55) e (40,63) não têm peça; P0778 está em (4,10)).
-2. **Depois da aprovação do Tiago:** fechar os duplicados R0021/R0025/R0026 e os reports que passem a estar resolvidos.
-3. **(3,32)/(3,33):** colocar com `src.confirm` quando o Tiago confirmar fisicamente.
-4. **SSE dos reports** (`report_added` / `report_edited` no `connectEvents` de `app.js`) — ver limitações.
+## Pendentes técnicos (por ordem)
+1. **Instabilidade da translação por imagem** (`register_all` com imagem): aceite/rejeitada por 0,01–0,05 ΔE; com `F_ROTATION` 3 juntas pioram até 0,29 mm e buracos 67 → 68 só nessa pose (RENDER §8). Exigir ganho mínimo de score, ou não usar a pose com imagem como referência. A GUI não usa imagem.
+2. **Lados F ainda inclinados > 3°:** P0655 (31,1) (degrau de orla na silhueta, lado W) e P0199 (resolve-se com o rebuild). 13 lados F com RMS da reta > 0,15 mm ficam com a rotação por cantos (lista em RENDER §8).
+3. **(26,1)/(25,1) «por baixo»:** não é prioridade de profundidade [F]; é uma orla preta de sombra de ~0,5 mm no lado S de P0663 (escura, a* > −30, fora da regra do verde). Correção possível: estender a regra da orla a píxeis escuros neutros na faixa de 0,4 mm do lado da sombra, medida com a porta §6.1 (é o «passe de sombra» de RENDER §2, que come relva escura).
+4. **Meias-luas verde-escuras** a 0,4–0,8 mm dentro dos encaixes (P0196, P0204): fora da faixa de 0,4 mm (RENDER §7).
+5. **`_RECOVER_BAYS`:** disco de 1,1 mm fixado só neste conjunto (margem curta: 0,96 vs 1,34 mm); peças em contacto não são tratadas; prado abaixo do limiar fechado não é recuperado [NT].
+6. SSE dos reports (`report_added`/`report_edited`) continua por fazer (ronda anterior).
 
 ## Convenções que mordem
-- Interpretador: `.venv\Scripts\python.exe` (o `python` do PATH não tem numpy). Em `Bash`, heredocs com muitos `'''` falham: escrever o script com a ferramenta Write.
-- Commits em português, sem co-author.
-- Suite completa passa dos 120 s: corre-a em segundo plano.
-- Testes sobre o Alpes real usam uma cópia com o `log.jsonl` cortado a 2045 eventos (`tests/test_fetch_group_real.py`); nada se escreve em `projects/alpes`.
+- Nunca correr `tools/diagnostico/render/run_render.py` nem `verde_tabuleiro.py` sem `--project` apontado a uma cópia (o primeiro escreve `render/`, o segundo sobrepõe `docs/diagnostico/render/verde_tabuleiro.json`). `tools/diagnostico/reports/triagem_r3.py`, `tools/diagnostico/render/pose_f.py` e `tools/diagnostico/segmentacao/prado.py` só leem.
+- Em `Bash`, heredocs com muitas aspas falham: escrever o script com a ferramenta Write.
+- Commits em português, sem co-author. Suite completa > 120 s: em segundo plano.
+- Testes sobre o Alpes real usam uma cópia (`tests/test_fetch_group_real.py`, log cortado a 2045); nada se escreve em `projects/alpes`.
+- Com `F_ROTATION = True`, um `placements.json` antigo é ignorado (campo `f_rotation`): as peças registam-se na hora até se correr `register_all`.
 
 ## Links
-- Estado e plano: `docs/estado-e-plano.md`; arquitetura: `ARCHITECTURE.md`; GUI: `docs/gui-design.md`; decisões: `docs/decisoes.md`.
-- Prompts por ronda: `docs/prompts/` (formato em `docs/prompts/README.md`); esta ronda: `docs/prompts/2026-11-05-abas-topo-editar-report-triagem.md`.
+- Triagem desta ronda: `docs/diagnostico/reports/TRIAGEM-2026-11-07.md` (+ `_tabelas.md`, `.json`, figuras); pose: `docs/diagnostico/render/RENDER.md` §8; segmentação: `docs/diagnostico/segmentacao/PRADO.md`.
+- Estado e plano: `docs/estado-e-plano.md`; arquitetura: `ARCHITECTURE.md`; GUI: `docs/gui-design.md` (§12–§13 pesquisa); decisões: `docs/decisoes.md`.
+- Prompt desta ronda: `docs/prompts/2026-11-07-pesquisa-gui-triagem-reports.md` (fechado).
 - Reports: `python -m src.reports --project projects/alpes --list`.

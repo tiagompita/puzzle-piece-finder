@@ -100,15 +100,16 @@ Manter o princípio de usar o modelo mais barato que chegue: o grosso do trabalh
 - Critical modules requiring implementer design/review for any algorithmic change: `src/matching.py`, `src/segmentation.py`, and the geometry/fit modules to be created (`src/shape.py`, `src/fit.py`, `src/twin.py`).
 - Reports to the user label every claim as verified (with evidence), not tested, or tested-and-failing; external claims carry a link. Commit messages in Portuguese, no Co-Authored-By line.
 
-## Pendentes (por esta ordem; registados 2026-11-05, nada disto foi corrigido nesta ronda)
+## Pendentes (por esta ordem; revistos 2026-11-07 com a triagem medida `docs/diagnostico/reports/TRIAGEM-2026-11-07.md`)
 
-O estado corrente e a «Próxima sessão» vivem em `docs/HANDOFF.md`; esta é a lista técnica. Os reports R0013–R0020 continuam **abertos**.
+O estado corrente e as decisões que esperam pelo Tiago vivem em `docs/HANDOFF.md`; esta é a lista técnica. 19 reports **abertos** (R0001–R0012, R0018–R0020, R0022–R0024, R0027); nenhum foi fechado pelo programa.
 
-1. **Recorte «comido» em (3,64) P0234 e (4,64) P0233** (R0018–R0020, coluna 64): cor da peça removida na parte de cima e verde visível em baixo; é recorte/limpeza, não escala.
-2. **Baseline de buracos e erro de pose** (alvo para melhorar o encaixe visual): no desenho do tabuleiro sem trim, 131 células com > 5 % de buraco e 39 com > 10 % (de 589 colocadas); erro de pose ~1 mm; rotação das 588 peças com forma: 363 com desvio > 1,5° de um múltiplo de 90° (mediana 2,1°). Medidas e variantes refutadas (trim 0,48 mm, alinhar o lado reto) em `docs/decisoes.md`.
-3. **(26,1) / (25,1):** os contornos ficam a 0,06 mm um do outro, mas o Tiago vê (26,1) por baixo de (25,1): verificar a ordem de desenho dos tabs (prioridade de profundidade na sobreposição).
-4. **(1,63) P0240 e (47,2) P0590 inclinadas:** o lado reto fica a 4,6° e 4,3° da linha da borda (a rotação sai dos 4 cantos, que é ruidosa).
-5. **Coordenadas nos reports:** as células (44,55) e (40,63) que o Tiago indicou não têm peça (a primeira é só ocupação vinda da foto); o P0778 está em (4,10) e o P0224 em (40,64). Usar **IDs P0xxx** nos reports e não só a célula.
+1. **Rebuild do índice** (decisão do Tiago): `segment_scan` recupera o prado claro «comido» (`_RECOVER_BAYS`, `e5c44a5`), mas `projects/alpes` ainda tem as formas antigas de P0218 (32,64), P0223 (33,64) e P0199 (35,64) (S0009); só mudam com `render.rebuild_assets` / `ingest_all.py`. R0019 P0198 **não** está comido (0,44 mm da gémea): é cor.
+2. **Orientação errada nos dados:** P0083 (44,60) a 90° (lados B↔B/T↔T e NCC 0,70 a +90°; `theta_deg` do log, GT BD) e P0333 (6,22) (orientação atual impossível; −90° compatível, identidade [NT]). Correção nos dados depois da confirmação física; não é código.
+3. **Instabilidade da translação por imagem** (`register_all` com imagem): aceite/rejeitada por 0,01–0,05 ΔE; só nessa pose o `F_ROTATION` (`a249ad6`) piora 3 juntas até 0,29 mm (RENDER §8). A GUI usa a pose sem imagem, onde nenhuma junta piora > 0,2 mm e os lados F > 3° passam de 12 para 2 (P0655 com degrau de orla; P0199 resolve-se com o rebuild).
+4. **(26,1) / (25,1):** não é prioridade de profundidade [F]; é uma orla preta de sombra (~0,5 mm, lado S de P0663, a* > −30) fora da regra do verde. Correção = estender a regra a píxeis escuros neutros na faixa de 0,4 mm, medida com a porta §6.1.
+5. **Porta §6.1:** 49/607 colocadas falham o 1,5 % nos lados iluminados (todas relva), 13 falham 2,0 %; opções A/B em TRIAGEM §4; decisão do Tiago. Meias-luas verde-escuras a 0,4–0,8 mm dentro dos encaixes ficam (RENDER §7).
+6. **Bloco (1..3, 32..33) vs gémeo (45..47, 32..33):** `free_dist` 2,4–3,1 mm contra 0,17–0,36 nas colunas vizinhas: um dos dois blocos está nas células erradas (confirmação física antes de fechar R0002/R0003).
 
 ## Sessões
 
