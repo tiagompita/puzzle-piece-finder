@@ -491,3 +491,89 @@ def test_suspeitas_endpoint_and_event(env):
     ev = [data for _, n, data in gui.events_after(seq0) if n == "suspeitas_changed"]
     assert ev and ev[-1]["n_colocadas"] == 2
     assert client.get("/api/suspeitas").json()["summary"]["n_colocadas"] == 2
+
+
+# ---------------------------------------------------------------- contour editor (manual overrides, §18)
+def _editor_contour(d, dx=6.0):
+    """What the editor saves (crop px) after pushing its rightmost handles out by ``dx`` px: the handles,
+    with the untouched stretches expanded back to ``denso`` (as the JS ``cedExpanded``)."""
+    from src import overrides as OV
+    c = np.asarray(d["contour"], float)
+    x = c[:, 0]
+    moved = x > x.min() + 0.8 * (x.max() - x.min())
+    c[moved, 0] += dx
+    n = len(c)
+    oi = [None if moved[i] else d["indices"][i] for i in range(n)]
+    keep = [not (moved[i] or moved[(i + 1) % n]) for i in range(n)]
+    return OV.expand_polygon(d["denso"], c, oi, keep).tolist()
+
+
+@pytest.mark.parametrize("which", ["tw", "placed"])
+def test_contorno_get_preview_save(env, which):
+    from src import overrides as OV
+    gui, cl, placed, tw, dec = env
+    pid = tw if which == "tw" else placed
+    d = cl.get(f"/api/pieces/{pid}/contorno").json()
+    assert d["piece"] == pid and d["manual_override"] is False and d["nota"] == ""
+    assert d["margem_px"] == round(3.0 / d["mmpp"]) and len(d["contour"]) >= 20
+    x0, y0 = d["origem"]
+    bx, by, bw, bh = d["bbox"]
+    assert x0 == max(0, bx - d["margem_px"]) and y0 == max(0, by - d["margem_px"])
+    png = cl.get(d["crop_png_url"])
+    assert png.status_code == 200 and png.content[:4] == b"\x89PNG"
+    im = cv2.imdecode(np.frombuffer(png.content, np.uint8), cv2.IMREAD_UNCHANGED)
+    assert im.shape == (d["tamanho"][1], d["tamanho"][0], 3)
+    c = _editor_contour(d)
+    body = {"contour": c, "origem": d["origem"], "tamanho": d["tamanho"]}
+    pv = cl.post(f"/api/pieces/{pid}/contorno/preview", json=body)
+    assert pv.status_code == 200 and pv.headers["content-type"] == "image/png"
+    rgba = cv2.imdecode(np.frombuffer(pv.content, np.uint8), cv2.IMREAD_UNCHANGED)
+    assert rgba.shape == (d["tamanho"][1], d["tamanho"][0], 4)
+    assert abs((rgba[..., 3] > 0).sum() - OV.polygon_area(c)) / OV.polygon_area(c) < 0.03
+    n_log = len(Project.open(gui.path).events())
+    assert not os.path.exists(OV.overrides_path(gui.pr))                 # preview writes nothing
+    # invalid outlines: 400 with the reason, nothing written
+    bow = c[: len(c) // 2] + c[len(c) // 2:][::-1]
+    r = cl.post(f"/api/pieces/{pid}/contorno", json=dict(body, contour=bow))
+    assert r.status_code == 400 and "cruza" in r.json()["error"]
+    r = cl.post(f"/api/pieces/{pid}/contorno", json=dict(body, contour=c[:10]))
+    assert r.status_code == 400 and "pelo menos" in r.json()["error"]
+    assert cl.post(f"/api/pieces/{pid}/contorno/preview", json=dict(body, contour=bow)).status_code == 400
+    assert cl.post(f"/api/pieces/{pid}/contorno", json={"origem": d["origem"]}).status_code == 400
+    assert not os.path.exists(OV.overrides_path(gui.pr))
+    assert len(Project.open(gui.path).events()) == n_log
+    # save
+    seq0 = gui.seq
+    r = cl.post(f"/api/pieces/{pid}/contorno", json=dict(body, nota="comido à direita"))
+    assert r.status_code == 200, r.text
+    s = r.json()
+    assert s["ok"] and s["invariantes"] == [] and s["piece"]["contorno_manual"] is True
+    assert s["piece"]["contorno_nota"] == "comido à direita" and s["piece"]["flags"]["manual_override"] is True
+    assert s["piece"]["area_mm2"] > s["antes"]["area_mm2"]
+    names = [n for _, n, _ in gui.events_after(seq0)]
+    assert "board_changed" in names and "piece_changed" in names and "fetch_changed" in names
+    pr = _ok_on_disk(gui.path)
+    evs = [e for e in pr.events()[n_log:] if e["action"] == "piece_resegmented"]
+    assert len(evs) == 1 and evs[0]["motivo"] == "manual" and evs[0]["piece"] == pid
+    assert len(OV.read_overrides(pr)) == 1
+    d2 = cl.get(f"/api/pieces/{pid}/contorno").json()
+    assert d2["manual_override"] is True and d2["nota"] == "comido à direita"
+    assert np.allclose(np.asarray(d2["denso"]) + d2["origem"], np.asarray(c) + d["origem"], atol=0.01)
+    assert len(d2["contour"]) == len(d2["indices"]) < len(d2["denso"])
+    assert cl.get(f"/api/pieces/{pid}").json()["contorno_manual"] is True
+    assert cl.get(f"/api/pieces/{pid}.png?pose=scan&size=120").status_code == 200
+    if which == "placed":
+        assert cl.get("/api/cell/2/3").json()["peca"]["contorno_manual"] is True
+        assert [2, 3] in s["celulas_mudadas"]
+    assert cl.get("/api/pieces/P9999/contorno").status_code == 404
+
+
+def test_contorno_busy_is_409(env):
+    gui, cl, placed, tw, dec = env
+    d = cl.get(f"/api/pieces/{tw}/contorno").json()
+    gui.job = "importar x"
+    try:
+        r = cl.post(f"/api/pieces/{tw}/contorno", json={"contour": _editor_contour(d), "origem": d["origem"]})
+        assert r.status_code == 409
+    finally:
+        gui.job = None

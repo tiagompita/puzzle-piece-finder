@@ -1028,17 +1028,20 @@ class Project:
 			raise StateError(f"secção desconhecida {section_id}")
 		return self._emit("section_candidates_updated", section=section_id, candidates=list(candidates), notes=notes)
 
-	def resegment_piece(self, piece_id: str, *, motivo: str, **static) -> dict:
+	def resegment_piece(self, piece_id: str, *, motivo: str, nota: Optional[str] = None, **static) -> dict:
 		"""Log ``piece_resegmented``: new static fields (:data:`RESEGMENT_FIELDS`) of a piece whose
-		silhouette was re-segmented from the same scan (:func:`src.render.rebuild_assets`). The caller
-		writes the new arrays in ``pieces/<scan>.npz`` and the crop; the JSON views follow on :meth:`save`."""
+		silhouette was re-segmented from the same scan (:func:`src.render.rebuild_assets`) or replaced
+		by a manual contour (``motivo="manual"``, ``nota`` = the user's note, informative only). The
+		caller writes the new arrays in ``pieces/<scan>.npz`` and the crop; the JSON views follow on
+		:meth:`save`."""
 		p = self.piece(piece_id)
 		bad = sorted(set(static) - set(RESEGMENT_FIELDS))
 		if bad:
 			raise StateError(f"campos não estáticos em piece_resegmented: {bad}")
 		self._shape_cache.pop(piece_id, None)
+		extra = {"nota": str(nota)} if nota else {}
 		return self._emit("piece_resegmented", piece=piece_id, scan_id=p.scan_id, index_in_scan=p.index_in_scan,
-						  motivo=motivo, **static)
+						  motivo=motivo, **extra, **static)
 
 	def discard(self, piece_id: str, reason: str = "") -> dict:
 		p = self.piece(piece_id)

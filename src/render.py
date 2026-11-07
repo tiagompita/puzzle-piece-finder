@@ -67,6 +67,7 @@ from typing import Optional
 import cv2
 import numpy as np
 
+from src import overrides as OV
 from src.locate import CellArt, body_beta_deg, body_center_mm, wrap_deg
 
 __all__ = [
@@ -76,7 +77,7 @@ __all__ = [
 	"cell_corners_mm", "cell_centre_mm", "kabsch_2d", "corner_register", "pose_matrix", "board_contour",
 	"initial_theta", "baseline_placement", "image_refine", "register_piece", "register_all", "registered_theta",
 	"seam_gaps", "relax", "bg_distance", "fringe_masks", "decontaminate", "clean_crop", "clean_all", "compose_board",
-	"compose_zone_vs_art", "rebuild_assets", "load_placements", "save_placements", "main",
+	"compose_zone_vs_art", "rebuild_assets", "rebuild_piece", "load_placements", "save_placements", "main",
 	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
 	"paper_pocket_mask", "PAPER_POCKETS", "PAPER_POCKET_DIST_MAX",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
@@ -1513,6 +1514,42 @@ def _drop_stale_caches(project, sid: str, pids: list) -> None:
 			save_placements(project, d)
 
 
+def _manual_pending(project, sid: str, pcs: list, manual: dict, old: dict) -> bool:
+	"""True if some manual override of the sheet is not applied yet: the stored npz contour differs
+	from the polygon's rasterised contour (:func:`src.overrides.rasterize_polygon`), the piece lacks
+	``flags.manual_override`` or carries another note."""
+	try:
+		W, H = OV.scan_size(project, sid)
+	except FileNotFoundError:
+		return True                         # the caller reports the missing scan
+	for q in pcs:
+		ov = manual.get(q.id)
+		if ov is None:
+			continue
+		oc = old.get(f"{q.id}__contour_px")
+		_, _, cnt = OV.rasterize_polygon(ov["contour_px"], W, H)
+		if oc is None or oc.shape != cnt.shape or not np.array_equal(oc, cnt):
+			return True
+		fl = q.flags or {}
+		if not fl.get(OV.MANUAL_FLAG) or (fl.get(OV.MANUAL_NOTE_FLAG) or "") != (ov.get("nota") or ""):
+			return True
+	return False
+
+
+def rebuild_piece(project, piece: str, *, progress=None) -> dict:
+	"""Apply the manual contour override of ``piece`` (:mod:`src.overrides`) without re-segmenting its
+	sheet: the same path as :func:`rebuild_assets` (``scans=[scan]``, no ``clean`` / ``register``), which
+	only segments when the sheet's npz or a non-manual crop is missing. Other pending overrides of the
+	same sheet are applied too. Returns ``{piece, scan_id, changed: [record of this piece], all_changed,
+	errors}`` or ``{'error'}`` when the piece has no override."""
+	p = project.piece(piece)
+	if not OV.has_override(project, piece):
+		return {"error": f"{piece} não tem contorno manual em {OV.OVERRIDES_FILE}"}
+	out = rebuild_assets(project, progress=progress, scans=[p.scan_id], clean=False, register=False)
+	return {"piece": piece, "scan_id": p.scan_id, "changed": [c for c in out["changed"] if c["piece"] == piece],
+			"all_changed": out["changed"], "errors": out["errors"], "overlays": out["overlays"]}
+
+
 def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, register: bool = True,
 				   force_scans=None, motivo: str = "recover_bays", segment=None, dry_run: bool = False) -> dict:
 	"""Regenerate ``pieces/S####.npz`` and ``crops/P####.png`` from the scans (missing ones, or ``force_scans``).
@@ -1534,7 +1571,15 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 	whose crop is missing) get new npz arrays and crop; the others keep theirs bit for bit. For
 	those pieces the display caches (``render/clean``, the scan's sheets, the GUI board raster,
 	their ``placements.json`` entries) are dropped. The sheet ``overlays/S####.jpg`` is rewritten
-	when missing or when a contour changed. ``dry_run`` = report only, nothing written. Then
+	when missing or when a contour changed. ``dry_run`` = report only, nothing written.
+
+	Manual overrides (:func:`src.overrides.latest_overrides`): for a piece with one, the drawn polygon
+	replaces the segmented contour (npz arrays, crop cut from the scan by the polygon, bbox of the
+	polygon padded like ``segment_scan``), its flags become :func:`src.overrides.manual_flags`
+	(``manual_override = true``, ``manual_nota``) and its event carries ``motivo="manual"`` and the
+	note, whatever ``motivo`` is; the bbox IoU check skips it. A sheet whose assets are all present
+	and not forced is still processed, WITHOUT segmentation, when one of its overrides is not applied
+	yet (:func:`rebuild_piece`). Then
 	:func:`clean_all` and :func:`register_all` (``clean`` / ``register``; skipped on errors or
 	``dry_run``).
 
@@ -1565,6 +1610,7 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 		if progress:
 			progress("ERRO " + msg)
 
+	manual_all = OV.latest_overrides(project)
 	for sid, scan in sorted(project.model.scans.items()):
 		if scans is not None and sid not in scans and sid not in force:
 			continue
@@ -1574,8 +1620,16 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 		npz = project.p("pieces", f"{sid}.npz")
 		missing_crop = {p.id for p in pcs if p.crop_path and not os.path.exists(project.p(p.crop_path))}
 		have_npz = os.path.exists(npz)
+		manual = {q.id: manual_all[q.id] for q in pcs if q.id in manual_all}
+		old = None
 		if sid not in force and have_npz and not missing_crop:
-			continue
+			# nothing missing: only a manual contour not applied yet brings this sheet in (no segmentation)
+			if not manual:
+				continue
+			with np.load(npz, allow_pickle=False) as z:
+				old = {k: z[k] for k in z.files}
+			if not _manual_pending(project, sid, pcs, manual, old):
+				continue
 		path = scan.get("file")
 		ap = path if path and os.path.isabs(path) else os.path.join(REPO, path or "")
 		if not path or not os.path.exists(ap):
@@ -1588,36 +1642,52 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 		with Image.open(ap) as im:
 			photo = im.convert("RGB")
 		dpi = float(scan.get("dpi") or project.profile.dpi)
-		res = segment(photo, dpi=dpi, normalize_rotation=False)
-		if "error" in res:
-			_err(f"{sid}: segment_scan: {res['error']}")
-			continue
-		mmpp = float(res.get("mm_per_px") or 25.4 / dpi)
-		kept = [p for p in res["pieces"] if float(p["area_px"]) * mmpp * mmpp >= MIN_PIECE_MM2]
-		if len(kept) != len(pcs):
-			_err(f"{sid}: a contagem mudou ({len(kept)} peças na nova segmentação, {len(pcs)} no projeto); nada escrito")
-			continue
-		raw = {int(p["index"]): p for p in kept}
-		bad = []
-		for q in pcs:
-			r = raw.get(int(q.index_in_scan))
-			if r is None:
-				bad.append(f"{q.id}: índice {q.index_in_scan} não existe na nova segmentação")
-			elif q.bbox is not None and _bbox_iou(r["bbox"], q.bbox) < REBUILD_IOU_MIN:
-				bad.append(f"{q.id}: bbox {[int(v) for v in r['bbox']]} vs registada {q.bbox} "
-						   f"(IoU {_bbox_iou(r['bbox'], q.bbox):.2f} < {REBUILD_IOU_MIN})")
-		if bad:
-			_err(f"{sid}: a ordem mudou ({len(bad)} peças; p. ex. {bad[0]}); nada escrito")
-			continue
-		med = float(np.median([float(p["area_px"]) * mmpp * mmpp for p in kept]))
-		old = {}
-		if have_npz:
-			with np.load(npz, allow_pickle=False) as z:
-				old = {k: z[k] for k in z.files}
+		need_seg = sid in force or not have_npz or bool(missing_crop - set(manual))
+		raw = None
+		if need_seg:
+			res = segment(photo, dpi=dpi, normalize_rotation=False)
+			if "error" in res:
+				_err(f"{sid}: segment_scan: {res['error']}")
+				continue
+			mmpp = float(res.get("mm_per_px") or 25.4 / dpi)
+			kept = [p for p in res["pieces"] if float(p["area_px"]) * mmpp * mmpp >= MIN_PIECE_MM2]
+			if len(kept) != len(pcs):
+				_err(f"{sid}: a contagem mudou ({len(kept)} peças na nova segmentação, {len(pcs)} no projeto); nada escrito")
+				continue
+			raw = {int(p["index"]): p for p in kept}
+			bad = []
+			for q in pcs:
+				r = raw.get(int(q.index_in_scan))
+				if r is None:
+					bad.append(f"{q.id}: índice {q.index_in_scan} não existe na nova segmentação")
+				elif q.id not in manual and q.bbox is not None and _bbox_iou(r["bbox"], q.bbox) < REBUILD_IOU_MIN:
+					# a manual piece's stored bbox is the drawn polygon's, not comparable with the segmentation
+					bad.append(f"{q.id}: bbox {[int(v) for v in r['bbox']]} vs registada {q.bbox} "
+							   f"(IoU {_bbox_iou(r['bbox'], q.bbox):.2f} < {REBUILD_IOU_MIN})")
+			if bad:
+				_err(f"{sid}: a ordem mudou ({len(bad)} peças; p. ex. {bad[0]}); nada escrito")
+				continue
+			med = float(np.median([float(p["area_px"]) * mmpp * mmpp for p in kept]))
+		else:
+			mmpp = _scan_mmpp(project, sid)
+			med = float(np.median([float(q.area_mm2) for q in pcs if q.area_mm2] or [0.0]))
+		rgb = np.asarray(photo) if manual else None
+		if old is None:
+			old = {}
+			if have_npz:
+				with np.load(npz, allow_pickle=False) as z:
+					old = {k: z[k] for k in z.files}
 		arrs = dict(old)
 		written, changes, crops = [], [], {}
 		for q in pcs:
-			r = raw[int(q.index_in_scan)]
+			ov = manual.get(q.id)
+			seg_r = raw.get(int(q.index_in_scan)) if raw is not None else None
+			if ov is not None:
+				r = OV.polygon_record(rgb, ov["contour_px"])     # the manual contour replaces the segmented one
+			elif seg_r is None:
+				continue                                          # no segmentation this time: piece untouched
+			else:
+				r = seg_r
 			pre = f"{q.id}__"
 			cnt = np.asarray(r["contour"]).reshape(-1, 2).astype(np.int32)
 			oc = old.get(pre + "contour_px")
@@ -1627,6 +1697,10 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 			static = {"bbox": [int(v) for v in r["bbox"]], "cls": sh.cls, "n_flat": int(sh.n_flat),
 					  "chords_mm": [round(float(x), 3) for x in sh.lens], "area_mm2": area, "shape_ok": bool(sh.ok)}
 			diff = [k for k in _STATIC_CMP if _jsonable(getattr(q, k)) != _jsonable(static[k])]
+			if ov is not None:
+				flags = OV.manual_flags(q.flags, seg_r, area, med, ov.get("nota") or "")
+				if _jsonable(flags) != _jsonable(q.flags or {}) or (not same_cnt and not diff):
+					diff.append("flags" if _jsonable(flags) != _jsonable(q.flags or {}) else "contorno")
 			if not same_cnt:
 				for k in [k for k in arrs if k.startswith(pre)]:
 					del arrs[k]
@@ -1639,13 +1713,15 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 				rgba = np.ascontiguousarray(np.asarray(piece_to_rgba(r["image"], r["mask"])))
 				crops[q.id] = rgba
 			if diff:
-				flags = {k: v for k, v in (q.flags or {}).items() if k not in SEG_FLAG_KEYS}
-				flags.update(seg_flags(r, area, med))
+				if ov is None:
+					flags = {k: v for k, v in (q.flags or {}).items() if k not in SEG_FLAG_KEYS}
+					flags.update(seg_flags(r, area, med))
 				static["flags"] = flags
 				if rgba is not None:
 					static["mean_lab"] = _mean_lab(rgba)
 				changes.append((q, static, {
 					"piece": q.id, "scan_id": sid, "index_in_scan": int(q.index_in_scan),
+					"motivo": "manual" if ov is not None else motivo, "nota": (ov or {}).get("nota") or "",
 					"bbox_old": q.bbox, "bbox_new": static["bbox"], "cls_old": q.cls, "cls_new": static["cls"],
 					"chords_old": list(q.chords_mm or []), "chords_new": static["chords_mm"],
 					"area_old": q.area_mm2, "area_new": static["area_mm2"], "flags_new": flags, "diff": diff}))
@@ -1667,8 +1743,8 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 		if have_npz and written:
 			_drop_stale_caches(project, sid, sorted(set(written) | set(crops)))
 			redraw.add(sid)
-		for q, static, _ in changes:
-			project.resegment_piece(q.id, motivo=motivo, **static)
+		for q, static, rec in changes:
+			project.resegment_piece(q.id, motivo=rec["motivo"], nota=rec["nota"] or None, **static)
 			n_events += 1
 	if dry_run:
 		return out

@@ -29,7 +29,10 @@ Design (docs/gui-design.md):
   empty (a fresh clone: they are git-ignored), :func:`src.render.rebuild_assets` runs in a
   background thread, with progress in the terminal and on the "a preparar" page (SSE
   ``prepare_progress``); the data endpoints answer 503 until it ends.
-* **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``,
+* **Contour editor** (``/api/pieces/{id}/contorno``, docs/gui-design.md §18): the scan around the
+  piece, a preview of a drawn outline, and the save (``overrides.jsonl`` via
+  :func:`src.overrides.append_override`, then :func:`src.render.rebuild_piece`, under the same lock).
+* **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``, ``piece_changed``,
   ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``, ``ready``.
 
 Pure helpers (legend, cell diff, patch regions, plain-language reasons) are separate from
@@ -53,6 +56,7 @@ from typing import Optional
 import cv2
 import numpy as np
 
+from src import overrides as OV
 from src.query import fetch_group, mounted_neighbours
 from src.state import Project, StateError
 
@@ -699,7 +703,8 @@ class Gui:
 				"estado_txt": ESTADO_TXT.get(p.estado, p.estado), "celula": list(p.celula) if p.celula else None,
 				"scan_id": p.scan_id, "seccao_id": p.seccao_id, "same_as": p.same_as, "cls": p.cls, "n_flat": p.n_flat,
 				"chords_mm": p.chords_mm, "area_mm2": p.area_mm2, "flags": {k: v for k, v in p.flags.items() if v},
-				"theta_deg": p.theta_deg}
+				"theta_deg": p.theta_deg, "contorno_manual": bool(p.flags.get(OV.MANUAL_FLAG)),
+				"contorno_nota": p.flags.get(OV.MANUAL_NOTE_FLAG) or ""}
 
 	def board_json(self) -> dict:
 		pr = self.pr
@@ -1049,6 +1054,183 @@ class Gui:
 		root = os.path.abspath(self.pr.p("reports")) + os.sep
 		return fp if fp.startswith(root) and os.path.isfile(fp) else None
 
+	# ------------------------------------------------------------ contour editor (manual overrides, §18)
+	def _scan_rgb(self, sid: str) -> np.ndarray:
+		"""The scan as RGB, the last one kept in memory (the editor asks for the same sheet repeatedly)."""
+		fp = OV.scan_file(self.pr, sid)
+		key = (sid, fp, os.path.getmtime(fp) if fp and os.path.exists(fp) else None)
+		c = getattr(self, "_scan_cache", None)
+		if c is not None and c[0] == key:
+			return c[1]
+		rgb = OV.load_scan_rgb(self.pr, sid)
+		self._scan_cache = (key, rgb)
+		return rgb
+
+	def contour_json(self, pid: str) -> dict:
+		"""``GET /api/pieces/{pid}/contorno``: the editor's crop (bbox + ``MARGIN_MM``) and, in crop px,
+		``denso`` = the current outline (the latest manual override, else the stored pixel chain),
+		``contour`` = the handles (about every
+		``RESAMPLE_MM``, corners kept) and ``indices`` = each handle's index in ``denso``. The client
+		saves the handles with the untouched stretches expanded back to ``denso``
+		(:func:`src.overrides.expand_polygon`), so an unchanged save keeps the shape exactly."""
+		from src import render
+		pr = self.pr
+		p = pr.piece(pid)
+		x0, y0, x1, y1, m = OV.crop_window(pr, pid)
+		mmpp = render._scan_mmpp(pr, p.scan_id)
+		ov = OV.latest_overrides(pr).get(pid)
+		if ov is not None:
+			dense = OV.clean_polygon(ov["contour_px"])
+		else:
+			c = pr.contour_px(pid)
+			if c is None:
+				raise FileNotFoundError(f"{pid}: contorno em falta (pieces/{p.scan_id}.npz)")
+			dense = OV.clean_polygon(c)          # the stored pixel chain: exact (an unchanged save keeps the shape)
+		idx = OV.editor_indices(dense, OV.RESAMPLE_MM / mmpp)
+		dloc = np.round(dense - np.array([x0, y0], float), 2)
+		loc = dloc[idx]
+		return {"scan_id": p.scan_id, "piece": pid, "lote": p.lote, "n_no_lote": p.n_no_lote, "estado": p.estado,
+				"celula": list(p.celula) if p.celula else None,
+				"bbox": p.bbox, "margem_px": int(m), "origem": [int(x0), int(y0)],
+				"tamanho": [int(x1 - x0), int(y1 - y0)], "mmpp": mmpp, "passo_px": OV.RESAMPLE_MM / mmpp,
+				"crop_png_url": f"/api/pieces/{pid}/contorno.png?v={self.version()}",
+				"contour": loc.tolist(), "denso": dloc.tolist(), "indices": [int(i) for i in idx],
+				"manual_override": bool(p.flags.get(OV.MANUAL_FLAG)),
+				"override_pendente": ov is not None and not p.flags.get(OV.MANUAL_FLAG),
+				"nota": (ov or {}).get("nota") or p.flags.get(OV.MANUAL_NOTE_FLAG) or "",
+				"cls": p.cls, "chords_mm": p.chords_mm, "area_mm2": p.area_mm2,
+				"limites": {"min_pontos": OV.MIN_POINTS, "area_min": OV.AREA_MIN_FRAC, "area_max": OV.AREA_MAX_FRAC}}
+
+	def _window(self, pid: str, origem=None, tamanho=None) -> tuple:
+		"""``(x0, y0, w, h)`` of the editor crop: the client's (validated) or the current one."""
+		x0, y0, x1, y1, _ = OV.crop_window(self.pr, pid)
+		if origem is None:
+			return x0, y0, x1 - x0, y1 - y0
+		W, H = OV.scan_size(self.pr, self.pr.piece(pid).scan_id)
+		try:
+			ox, oy = int(origem[0]), int(origem[1])
+			w, h = (int(tamanho[0]), int(tamanho[1])) if tamanho is not None else (x1 - x0, y1 - y0)
+		except (TypeError, ValueError, IndexError):
+			raise ValueError("origem / tamanho inválidos")
+		if ox < 0 or oy < 0 or w < 1 or h < 1 or ox + w > W or oy + h > H:
+			raise ValueError(f"recorte ({ox}, {oy}, {w}, {h}) fora do scan ({W} x {H})")
+		return ox, oy, w, h
+
+	def contour_png(self, pid: str) -> bytes:
+		"""``GET /api/pieces/{pid}/contorno.png``: the scan crop of the editor (RGB, no alpha)."""
+		x0, y0, w, h = self._window(pid)
+		rgb = self._scan_rgb(self.pr.piece(pid).scan_id)
+		ok, buf = cv2.imencode(".png", np.ascontiguousarray(rgb[y0:y0 + h, x0:x0 + w, ::-1]))
+		return buf.tobytes()
+
+	def _scan_points(self, pid: str, body: dict) -> tuple:
+		"""``(points in scan px, (x0, y0, w, h))`` from ``{contour (crop px), origem?, tamanho?}``."""
+		cnt = body.get("contour")
+		if not isinstance(cnt, list) or not cnt:
+			raise ValueError("falta o contorno (lista de pontos [x, y])")
+		x0, y0, w, h = self._window(pid, body.get("origem"), body.get("tamanho"))
+		try:
+			pts = np.asarray(cnt, float).reshape(-1, 2) + np.array([x0, y0], float)
+		except (TypeError, ValueError):
+			raise ValueError("contorno inválido: esperava uma lista de pontos [x, y]")
+		return pts, (x0, y0, w, h)
+
+	def contour_preview(self, pid: str, body: dict) -> bytes:
+		"""``POST /api/pieces/{pid}/contorno/preview``: the crop as RGBA, alpha = the drawn outline (the
+		same validation as the save; nothing is written)."""
+		pts, (x0, y0, w, h) = self._scan_points(pid, body)
+		clean, err = OV.check_override(self.pr, pid, pts)
+		if err:
+			raise ValueError(err)
+		rgb = self._scan_rgb(self.pr.piece(pid).scan_id)
+		al = np.zeros((h, w), np.uint8)
+		cv2.fillPoly(al, [np.round(clean - np.array([x0, y0], float)).astype(np.int32).reshape(-1, 1, 2)], 255)
+		bgra = np.dstack([np.ascontiguousarray(rgb[y0:y0 + h, x0:x0 + w, ::-1]), al])
+		ok, buf = cv2.imencode(".png", bgra)
+		return buf.tobytes()
+
+	def save_contour(self, pid: str, body: dict) -> dict:
+		"""``POST /api/pieces/{pid}/contorno``: validate, append to ``overrides.jsonl``, apply
+		(:func:`src.render.rebuild_piece`: npz, crop, overlay, ``piece_resegmented`` motivo ``manual``),
+		drop the server caches of the piece, re-clean / re-register it if placed, re-query what its
+		shape feeds (a loose piece: itself; a placed one: its cell, twin cell and their free
+		neighbours), SSE ``board_changed`` / ``fetch_changed`` / ``piece_changed``. ``{error}`` on a
+		validation failure (nothing written)."""
+		from src import render
+		from src.confirm import _around
+		from src.query import run_query
+		from src.state import LOOSE_STATES
+		nota = body.get("nota")
+		if nota is not None and not isinstance(nota, str):
+			return {"error": "nota deve ser texto"}
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			if self.job:
+				raise Busy(self.job)
+			self.sync_locked()
+			pr = self.pr
+			if pid not in pr.pieces:
+				return {"error": f"peça desconhecida {pid}"}
+			try:
+				pts, _ = self._scan_points(pid, body)
+			except ValueError as e:
+				return {"error": str(e)}
+			before = board_snapshot(pr.board, pr.pieces)
+			old = self.piece_summary(pid)
+			t0 = time.time()
+			rec = OV.append_override(pr, pid, pts, nota=(nota or "").strip())
+			if "error" in rec:
+				return {"error": rec["error"]}
+			r = render.rebuild_piece(pr, pid, progress=None)
+			self._known_stat = self._log_stat()
+			if r.get("error") or r.get("errors"):
+				msg = r.get("error") or "; ".join(r["errors"])
+				return {"error": f"contorno gravado em {OV.OVERRIDES_FILE} mas não aplicado: {msg}"}
+			bad = pr.check_invariants(disk=True)
+			# caches that hold this piece's crop / contour (the version-keyed ones follow the log by themselves)
+			self._pieces.clear()
+			self._sections.clear()
+			self._sheets.clear()
+			self._ghosts = None
+			memo = getattr(self, "_susp_pl", None)
+			if memo:
+				memo.pop(pid, None)
+			p = pr.piece(pid)
+			cells = []
+			if p.estado == "colocada" and p.celula is not None:
+				cells = [list(p.celula)]
+				b = self._board
+				if b is not None and b.get("snap") is not None:     # force a re-composition of the cell
+					k = (p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1
+					b["snap"] = list(b["snap"])
+					b["snap"][k] = ("__contorno_manual__", None)
+			n_prop = None
+			if not bad:
+				if p.estado == "colocada" and p.celula is not None:
+					entries = run_query(pr, only_cells=_around(pr, p.celula), only_pieces=set(), use_image=self.use_image)
+				elif p.estado in LOOSE_STATES or p.estado == "posicao_conhecida":
+					entries = run_query(pr, only_cells=set(), only_pieces={pid}, use_image=self.use_image)
+				else:
+					entries = None
+				if entries is not None:
+					n_prop = len([e for e in entries if e.get("piece")])
+			extra = self._after_write(before, [pid] if p.estado == "colocada" else [])
+			for c in cells:
+				if c not in extra["celulas_mudadas"]:
+					extra["celulas_mudadas"].append(c)
+			if cells:
+				self.emit("board_changed", {"versao": self.version(), "celulas": cells})
+			new = self.piece_summary(pid)
+			self.emit("piece_changed", {"piece": pid})
+			ch = r["changed"][0] if r["changed"] else None
+			msg = (f"{pid}: contorno manual aplicado (classe {old['cls']} → {new['cls']}, cordas "
+				   + "/".join(f"{x:.1f}" for x in (new["chords_mm"] or [])) + " mm)") if ch else f"{pid}: contorno igual ao atual"
+			return {"ok": True, "piece": new, "antes": old, "mensagens": [msg], "invariantes": bad, "override": rec,
+					"n_propostas": n_prop, "segundos": round(time.time() - t0, 2), **extra}
+		finally:
+			self.wlock.release()
+
 	def sync_locked(self) -> None:
 		st = self._log_stat()
 		if st != self._known_stat:
@@ -1226,6 +1408,55 @@ def create_app(gui: Gui):
 					 folha=f"/api/sheets/{gui.pr.piece(pid).scan_id}.jpg?highlight={pid}")
 			return d
 		return JSON(gui.read(run))
+
+	@app.get("/api/pieces/{pid}/contorno")
+	def piece_contour(pid: str):
+		ready()
+		if pid not in gui.pr.pieces:
+			raise HTTPException(404, detail=f"peça desconhecida {pid}")
+		return JSON(guard(lambda: gui.read(lambda: gui.contour_json(pid))))
+
+	@app.get("/api/pieces/{pid}/contorno.png")
+	def piece_contour_png(pid: str, v: Optional[str] = None):
+		ready()
+		if pid not in gui.pr.pieces:
+			raise HTTPException(404, detail=f"peça desconhecida {pid}")
+		return img(guard(lambda: gui.contour_png(pid)), "image/png", cache=v is not None)
+
+	@app.post("/api/pieces/{pid}/contorno/preview")
+	async def piece_contour_preview(pid: str, request: Request):
+		ready()
+		if pid not in gui.pr.pieces:
+			raise HTTPException(404, detail=f"peça desconhecida {pid}")
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		if not isinstance(body, dict):
+			return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		try:
+			data = await asyncio.to_thread(lambda: gui.contour_preview(pid, body))
+		except ValueError as e:
+			return JSON({"error": str(e)}, status_code=400)
+		except FileNotFoundError as e:
+			raise HTTPException(404, detail=str(e))
+		return img(data, "image/png", cache=False)
+
+	@app.post("/api/pieces/{pid}/contorno")
+	async def piece_contour_save(pid: str, request: Request):
+		ready()
+		if pid not in gui.pr.pieces:
+			raise HTTPException(404, detail=f"peça desconhecida {pid}")
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		if not isinstance(body, dict):
+			return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		r = await asyncio.to_thread(lambda: guard(lambda: gui.save_contour(pid, body)))
+		if "error" in r:
+			return JSON(r, status_code=400)
+		return JSON(r)
 
 	@app.get("/api/fetch")
 	def fetch():
