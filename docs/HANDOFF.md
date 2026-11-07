@@ -1,43 +1,40 @@
-# HANDOFF — 2026-11-07 (ronda 3: R0011/R0012 contra a máscara manual, ativos desatualizados, baías com tab, editor por traços; fechada)
+# HANDOFF — 2026-11-07 (ronda 4: Reports em linha, report na peça, falso alarme, copiar PNG, «Editar posicionamento»; fechada)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
 ## Estado
-- **Commits desta ronda** (todos em `main`, empurrados): `d0bd183` métrica `src/maskcmp.py` + medição GT/detetor (`comido.py`, COMIDO.md) + decisões; `7eea52c` ativos desatualizados (`render.stale_assets`/`rebuild_stale`, `rebuild_scans.py --stale`, `_clean_or_crop` por mtime); `1d9824c` segmentação: baías com tab inteiro e em peças de contacto + razão `baia`; `75345f5` grau `recorte` nas Suspeitas; `bcf0b87` editor de contorno por traços (backend `src/strokes.py` + `/contorno/resolver`, GUI `src/web/editor.js`, verificação de ativos no arranque do servidor); `281d55a` Alpes: S0024/S0025 refeitas (3 `piece_resegmented`, motivo `recover_tabs`) + lista recalculada; `db8d8f7` docs.
-- **Testes:** suite completa **310 passed, 1 skipped (205 s)** (OpenCV 4.11, venv4); OpenCV 5.0 [NT].
+- **Commits desta ronda** (todos em `main`, empurrados): `d0833c9` falso alarme reversível + junção suspeitas↔reports + SSE; `081c95c` GUI (report expandido na linha, report em linha na gaveta, chip «suspeita», Falso alarme, menu de contexto PNG); `6b9c8e9` pose manual (backend); `a29de9b` GUI «Editar posicionamento» (`src/web/pose.js`); o commit das docs. Ronda 3 (mesmo dia): `d0bd183`…`be51ac5` (R0011/R0012 com GT manual, ativos desatualizados, baías com tab, editor por traços).
+- **Testes:** suite completa **339 passed, 1 skipped (228 s)** (OpenCV 4.11, venv4); OpenCV 5.0 [NT].
 - **Interpretador:** `C:/Users/Tiago/AppData/Local/Temp/claude/c--Users-Tiago-Desktop-puzzle-piece-finder/f748cb5c-95ce-4ca7-bb40-feccfde7cc64/scratchpad/venv4/Scripts/python.exe` (`PYTHONIOENCODING=utf-8`; o `python` do PATH não tem numpy).
-- **Projeto `projects/alpes`:** log 2113 eventos, 958 peças, **613 colocadas**, 205 `em_seccao`, 134 `solta`, 1 `posicao_conhecida`, 5 `descartada`, invariantes OK. P0844/P0879/P0852 (blocos S0024/S0025, `em_seccao`) têm agora o tab inteiro (classes BTTT/BTTT/BTBT). Lista «ir buscar»: propostas gémeas iguais às da ronda anterior, `p_twin_placed` 102/2395 = 4,3 %, buracos 61, borda em falta 1.
-- **Reports: 7 abertos** (R0001, R0010, R0011, R0012, R0022, R0023, R0028); o Tiago fechou R0002–R0009 e R0024 e abriu R0028 (P0833). Nenhum fechado por mim.
-- **R0011/R0012 (P0651/P0657), resolvido na forma:** contra a máscara manual do Tiago, o índice atual perde só 6,8 / 1,2 mm² e a miniatura atual tem IoU 0,928 / 0,919; a «casa com topo em picos» é a silhueta do **índice de 2026-11-01** (IoU 0,971 / 0,955 com a captura), anterior ao passo dos contactos. Causa provável: a GUI do Tiago corre em `D:\DEKSTOP\puzzle_piece_finder` (ver `projects/alpes/erro_terminal.txt`) com `pieces/`/`crops/`/`render/` git-ignorados e velhos. **Correção:** o servidor verifica e refaz ativos desatualizados no arranque (`Gui._check_stale`; mensagem no progresso; `ativos` em `GET /api/status`), e `python tools/rebuild_scans.py --stale` faz o mesmo à mão. `docs/diagnostico/segmentacao/COMIDO.md`.
-- **GUI nova:** editor de contorno por traços em sobreposição de janela inteira («Editar contorno» na gaveta/painel da peça): laço/pincel/borracha (L/P/B), marcas é peça/não é peça/incerto (1/2/3, Shift/Alt), desfazer/refazer, resolução ao vivo (GrabCut Lab só croma, ~300 ms), 4 vistas (scan, máscara atual, diferença, recorte final), zoom/pan, «Afinar vértices» como retoque, gravar com nota. `docs/gui-design.md` §18; capturas `docs/gui/screenshots/contorno_tracos_*.png`. Bloco Suspeitas ganhou o grau `recorte` (hoje: as 12 peças do bloco c32|c33, marcadas como exceção por confirmar).
+- **Projeto `projects/alpes`:** não foi escrito nesta ronda: log 2113 eventos, 958 peças, 613 colocadas, 205 `em_seccao`, 134 `solta`, 1 `posicao_conhecida`, 5 `descartada`; sem falsos alarmes nem poses manuais (ficam para o Tiago usar). Lista «ir buscar»: 9 propostas aceites, `p_twin_placed` 102/2395 = 4,3 %.
+- **Reports: 7 abertos** (R0001, R0010, R0011, R0012, R0022, R0023, R0028). Nenhum fechado por mim. Suspeitas em `projects/alpes`: 0 impossível, 2 melhor rotação (P0833 em R0028 → aparece só na lista de reports com o chip «suspeita»; P0343), 12 recorte (bloco c32|c33, exceção por confirmar).
+- **GUI nova:** aba Reports sem seta: clicar numa linha localiza e expande o report ali mesmo (ações dentro); gaveta da peça/célula com o report aberto em linha e as ações; Suspeitas: itens com report aberto saem do bloco (chip «suspeita» na linha do report), botão «Falso alarme» (nota opcional) e lista recolhida «Falsos alarmes» com «Restaurar»; clique direito numa miniatura → «Copiar imagem (PNG)» / «Guardar PNG» (só a peça, fundo transparente; copiar só em localhost/https); «⤧ Editar posicionamento» na gaveta (peça colocada): arrastar/rodar/setas/Q/E, folgas N/E/S/W e consistência ao vivo, Gravar com nota, Repor automática, chip «pose manual». `docs/gui-design.md` §12/§13/§17 revistos, §19 (PNG) e §20 (pose) novos; capturas `docs/gui/screenshots/reports_linha_*.png`, `peca_report_inline.png`, `suspeitas_falso*.png`, `ctx_menu_png.png`, `pose_*.png`.
+- **Log:** 4 ações novas (`suspect_dismissed`, `suspect_restored`, `pose_set`, `pose_cleared`): um checkout anterior a `d0833c9`/`6b9c8e9` não consegue ler um log que as tenha. Na máquina da GUI: `git pull` ANTES de usar estas ações (e o arranque refaz ativos desatualizados sozinho, ronda 3).
 
 ## Espera pelo Tiago (decisões que são dele)
-1. **Na máquina onde corre a GUI (D:):** depois de `git pull`, arrancar o servidor (refaz sozinho os ativos desatualizados; espera-se «11 peças em 4 folhas … 0 eventos» na primeira vez, ~80 s) ou correr `python tools/rebuild_scans.py --stale`. **Fazer o pull ANTES de abrir a GUI com o código novo**, senão uma folha desatualizada é re-segmentada em D: e gera eventos no log de lá. Depois ver `P0651` e `P0657` na GUI: as miniaturas devem ter o tab N e os cantos; se sim, fechar R0011/R0012.
-2. **P0844 (S0024 nº 11), P0879 (S0025 nº 18), P0852 (S0024 nº 19):** confirmar fisicamente que o tab recuperado existe (as peças estão nos blocos legados; GUI: pesquisar o id).
-3. **Validação do editor:** recortar com o editor novo **10–12 peças de relva variadas** (3–4 por tipo: relva clara cor do papel, relva escura com sombra W/S, peças em contacto, peças com blank virado ao papel), em sacos/folhas diferentes de S0020. Esses recortes ficam **reservados como validação** (não entram na afinação) e `python -m src.overrides --project projects/alpes --pares` mede o erro automático contra eles. Dizer o que custou mais no editor.
-4. **P0833 (8,2, R0028) e P0343 (5,20):** continuam na lista Suspeitas por confirmar fisicamente (−90° / 180°).
-5. **R0023 (P0218):** o tab/F já está recuperado desde a ronda anterior; fechar?
-6. **R0001 (P0778):** sem a língua desde `_CONTACT_TRIM`; fechar?
-7. **Corte c32|c33** não simétrico: continua por confirmar fisicamente (as 12 peças aparecem em Suspeitas como exceção).
+1. **Ver na GUI** (depois de `git pull` + arrancar o servidor): aba Reports → clicar em R0028 (P0833): expande na linha, com o chip «suspeita · melhor rotação»; gaveta de (8,2) mostra o report em linha; bloco Suspeitas sem P0833. Clique direito numa miniatura → copiar/guardar PNG. Gaveta de (1,63) → «Editar posicionamento» (P0240): ver as folgas ao vivo; gravar só se quiser (fica registado como pose manual, reversível com «Repor automática»).
+2. **Falsos alarmes:** as 12 suspeitas `recorte` do bloco c32|c33 podem ser marcadas «Falso alarme» quando confirmar fisicamente o corte não simétrico; P0343 (5,20) e P0833 (8,2) continuam por confirmar.
+3. **Validação do editor de contorno (ronda 3):** recortar 10–12 peças de relva variadas (ficam reservadas; `python -m src.overrides --project projects/alpes --pares`).
+4. **P0844/P0879/P0852:** confirmar fisicamente o tab recuperado (ronda 3). **R0011/R0012:** fechar se as miniaturas de `P0651`/`P0657` aparecerem inteiras na máquina da GUI depois do pull. **R0023**, **R0001**: fechar?
 
 ## Pendentes técnicos (por ordem)
-1. **Editor:** «remover contorno manual» não existe na GUI (só gravar outro); o botão de colapsar a barra não tem atalho; peças claras/céu e traços humanos reais não medidos; p95 do solver 0,54–0,68 mm (meta 0,3 [F]): a experiência «pelar» a orla escura ficou só no script `tools/diagnostico/editor/tracos_gt.py` [NT fora das 2 peças].
-2. **Detetor de peça comida:** sinal (b) (perda de exibição) sem positivo de calibração; limiares (a) 1,75 mm e (c) 1,2 mm fixados em 5 positivos + 63 controlos [NT fora].
-3. **`stale_assets`:** só data/tamanho para `render/clean`; não deteta um clean mais novo feito com código de limpeza antigo. `check_invariants(disk=True)` continua sem ver ativos desatualizados (ficou em `render`, não em `state`).
-4. **Moldura (R0022):** `F_TRANSLATION` desligado por decisão do Tiago; arranjo global não avança.
-5. **Suspeitas em direto:** o cliente não ouve `suspeitas_changed`.
-6. **(26,1)/(25,1):** orla preta de sombra no lado S de P0663; meias-luas (P0196, P0204). **Lados F com reta RMS > 0,15 mm** ficam com rotação por cantos (P0218, P0199).
+1. **Pose manual:** gravar/repor demoram 4–9 s (a frio 20–28 s): não decomposto; `rebuild_stale` no arranque apaga poses manuais das folhas que re-segmenta (só testado via `piece_resegmented`); a cache `render/gui/board_60.json` recompõe-se uma vez no próximo arranque; pinça com um dedo sobre a peça [NT]; Firefox/Safari/toque físico [NT].
+2. **Falso alarme:** calibração da verificação com os falsos alarmes (hoje só contagem no resumo); a assinatura depende de o `k` do registo ser igual no CLI e no servidor (não comparado peça a peça).
+3. **PNG:** copiar só em contexto seguro (localhost/https); `--lan` por http só «Guardar».
+4. **Editor de contorno (ronda 3):** sem «remover contorno manual»; p95 do solver 0,54–0,68 mm; peças claras/traços humanos [NT].
+5. **Detetor de peça comida (ronda 3):** sinal (b) sem positivo; limiares fixados em 5 positivos + 63 controlos.
+6. **(26,1)/(25,1)**, lados F com reta RMS > 0,15 mm: como antes.
 
 ## Convenções que mordem
-- Nunca correr `tools/diagnostico/render/run_render.py` nem `verde_tabuleiro.py` sem `--project` apontado a uma cópia; `comido.py`, `baias.py`, `tracos_gt.py`, `moldura.py`, `pose_f.py`, `tools/diagnostico/reports/*.py` só leem.
-- `tools/rebuild_scans.py --project projects/alpes --scans S####[,…] --motivo … [--dry-run]` ou `--stale`: com o servidor parado e sem outro agente a escrever no log; depois `python -m src.query --project projects/alpes` (≈ 2,5 min) e commit de `log.jsonl`, `scans/*.json`, `fetch*`.
-- Escrita no log só por `src.confirm`/`src.reports`/`rebuild_scans`/o arranque do servidor (`rebuild_stale`, só quando há ativos desatualizados); `ingest_all.py` refaz o log e perde as colocações do Tiago: não usar.
-- Em `Bash`, heredocs com muitas aspas falham: escrever o ficheiro com a ferramenta Write e depois `cat >>`; consola cp1252: `PYTHONIOENCODING=utf-8`.
+- Nunca correr `tools/diagnostico/render/run_render.py` nem `verde_tabuleiro.py` sem `--project` apontado a uma cópia; os scripts de diagnóstico só leem e agora excluem poses manuais (`manual=False`).
+- `tools/rebuild_scans.py --project projects/alpes --scans S####[,…] --motivo … [--dry-run]` ou `--stale`: com o servidor parado; depois `python -m src.query --project projects/alpes` e commit de `log.jsonl`, `scans/*.json`, `fetch*`.
+- Escrita no log só por `src.confirm`/`src.reports`/`src.consistency --falso-alarme`/`rebuild_scans`/o servidor (gravar contorno, pose, falso alarme, `rebuild_stale` no arranque); `ingest_all.py` refaz o log e perde as colocações do Tiago: não usar.
+- Em `Bash`, heredocs com muitas aspas falham: escrever o ficheiro com a ferramenta Write e depois `cat >>`; consola cp1252: `PYTHONIOENCODING=utf-8`. Nunca `cat > "$VAR/..."` com variável por definir.
 - Commits em português, sem co-author. Suite completa > 200 s: em segundo plano.
 
 ## Links
-- Medições desta ronda: `docs/diagnostico/segmentacao/COMIDO.md` (+ `COMIDO_gt.jpg`, `COMIDO_alcance.jpg`, `COMIDO_baias.jpg`, `comido_resultados.json`, `comido_antigo.npz`), `docs/diagnostico/segmentacao/PRADO.md` §8, `docs/diagnostico/render/RENDER.md` §4.1, `docs/diagnostico/editor/TRACOS.md` (+ `TRACOS_gt.jpg`, `tracos_gt.json`), `docs/diagnostico/reports/R0011_R0012.md` (nota de resolução no topo).
-- Decisões: `docs/decisoes.md` (porta §6.1, moldura, P0395, c32|c33; solver do editor).
-- Estado e plano: `docs/estado-e-plano.md`; arquitetura: `ARCHITECTURE.md`; GUI: `docs/gui-design.md` (§18 editor por traços).
-- Prompt desta ronda: `docs/prompts/2026-11-07c-r0011-r0012-gt-editor-tracos.md` (fechado). Ronda anterior: `docs/prompts/2026-11-07b-moldura-reports-ancoras-rebuild-p0778.md`.
-- Reports: `python -m src.reports --project projects/alpes --list`; suspeitas: `python -m src.consistency --project projects/alpes`.
+- Medições desta ronda: `docs/diagnostico/reports/FALSOS_ALARMES.md`, `docs/diagnostico/render/POSE_MANUAL.md`; decisões (assinatura do falso alarme; sem snap, métricas com `manual=False`) em `docs/decisoes.md`.
+- Ronda 3: `docs/diagnostico/segmentacao/COMIDO.md`, `docs/diagnostico/editor/TRACOS.md`, `docs/diagnostico/render/RENDER.md` §4.1.
+- Estado e plano: `docs/estado-e-plano.md`; arquitetura: `ARCHITECTURE.md`; GUI: `docs/gui-design.md`.
+- Prompt desta ronda: `docs/prompts/2026-11-07d-reports-em-linha-falso-alarme-pose-manual.md` (fechado). Anterior: `docs/prompts/2026-11-07c-r0011-r0012-gt-editor-tracos.md`.
+- Reports: `python -m src.reports --project projects/alpes --list`; suspeitas: `python -m src.consistency --project projects/alpes [--list --falsos]`.
