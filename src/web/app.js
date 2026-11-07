@@ -421,7 +421,8 @@ function showTab(t) {
     const g = S.sections.find((x) => x.id === S.mesaOpen.id), c = g && (g.candidatos.find((x) => x.rank === S.mesaOpen.rank) || groupBest(g));
     if (c) { S.mesa = { id: g.id, rank: c.rank, footprint: c.footprint }; drawMesa(); }
   }
-  if (t !== "celula" && t !== "report" && S.sel) { S.sel = null; drawSel(); }
+  if (t !== "celula") S.pieceOpen = null;
+  if (t !== "celula" && S.sel) { S.sel = null; drawSel(); }
   if (t !== "mesa" && S.mesa) { S.mesa = null; drawMesa(); }
 }
 
@@ -576,8 +577,10 @@ function renderGuardadas() {
   T.append(d);
 }
 
-// ------------------------------------------------------------ reports (lista, detalhe, estados como eventos)
+// ------------------------------------------------------------ reports (lista com linha expandida, estados como eventos)
 const ESTADO_TXT = { aberto: "aberto", fechado: "resolvido", eliminado: "eliminado" };
+const TIPOS_TXT = { mal_lida: "mal lida / mal recortada", mal_colocada: "mal colocada", nao_encaixa: "não encaixa", outro: "outro" };
+const SUSP_GRAU_TXT = { impossivel: "impossível", melhor_rotacao: "melhor rotação", recorte: "recorte" };
 const when = (t) => (t ? String(t).replace("T", " ").slice(0, 16) : "");
 async function loadReports() {
   const r = await api("/api/reports?todos=true&eliminados=true");
@@ -585,13 +588,13 @@ async function loadReports() {
   loadSuspeitas().catch(() => {});
   S.reportFilter = S.reportFilter || "aberto";
   renderReports();
-  if (S.tab === "report" && S.reportOpen) {
-    const cur = S.reports.find((x) => x.id === S.reportOpen);
-    if (cur) renderReportDetail(cur);
-  }
+  S.reportScrollTo = null;
   renderBuscar();               // the cards' button is «Editar report» for pieces that already have one
   if (S.tab === "celula" && S.sel) openCell(S.sel[0], S.sel[1], { keep: true });
+  else if (S.tab === "celula" && S.pieceOpen) openPiece(S.pieceOpen);   // the drawer of a loose piece shows its reports inline
 }
+/** The open suspicion (if any) that a report refers to: the server marks it with ``report_aberto``. */
+const suspeitaDoReport = (r) => ((S.susp && S.susp.items) || []).find((it) => it.report_aberto === r.id) || null;
 function renderReports() {
   const T = $("#tab-reports"); T.replaceChildren();
   if (typeof renderSuspeitas === "function") renderSuspeitas(T);
@@ -609,23 +612,41 @@ function renderReports() {
   const rows = all.filter((r) => r.estado === f);
   if (!rows.length) { T.append(h("div", { class: "empty" }, h("strong", {}, `Sem reports ${f === "aberto" ? "abertos" : f === "fechado" ? "resolvidos" : "eliminados"}.`))); return; }
   for (const r of rows) {
-    // clickable (read-only): highlights the piece / cell on the board and STAYS in this tab; nothing is written
+    // click on the summary: highlights the piece / cell on the board (stays in this tab, writes nothing) AND the
+    // native <details> toggle expands / collapses the row. Only one row is open at a time (S.reportOpen).
     const go = () => locateReportInPlace(r).catch((e) => toast(e.message, true));
-    const row = h("div", { class: "card report-row" + (r.piece ? " has-thumb" : ""), "data-report": r.id, role: "button", tabindex: "0",
-      title: "Ver no tabuleiro", onclick: go,
-      onkeydown: (ev) => { if (ev.target === ev.currentTarget && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); go(); } } },
+    const sus = suspeitaDoReport(r);
+    const box = h("div", { class: "rexp" });
+    const sum = h("summary", { title: "Ver no tabuleiro e abrir / fechar o report", onclick: go },
       r.piece ? h("img", { class: "rthumb", loading: "lazy", src: `/api/pieces/${r.piece}.png?pose=scan&size=64`, alt: "", width: 64, height: 64 }) : null,
       h("div", { class: "rbody" },
         h("div", { class: "small rhead" }, h("b", {}, r.id),
           r.piece ? h("span", { class: "chip" }, r.piece) : null,
           r.cell ? h("span", { class: "chip" }, cellTxt(r.cell)) : null,
           !r.piece && !r.cell ? h("span", { class: "chip" }, "geral") : null,
+          sus ? h("span", { class: "chip suspeita", title: sus.texto || "" }, `suspeita · ${SUSP_GRAU_TXT[sus.grau] || sus.grau}`) : null,
           ` ${ESTADO_TXT[r.estado] || r.estado} · ${r.tipo}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "")),
         h("div", {}, r.texto || h("span", { class: "muted" }, "(sem texto)")),
-        r.nota ? h("div", { class: "small muted" }, `nota: ${r.nota}`) : null),
-      h("button", { class: "rgo", type: "button", "aria-label": `Abrir report ${r.id}`, title: "Abrir o report",
-        onclick: (ev) => { ev.stopPropagation(); openReportDetail(r); } }, "→"));
+        r.nota ? h("div", { class: "small muted" }, `nota: ${r.nota}`) : null));
+    const row = h("details", { class: "card report-row" + (r.piece ? " has-thumb" : ""), "data-report": r.id }, sum, box);
+    row.open = S.reportOpen === r.id;
+    if (row.open) box.append(reportDetailBody(r));
+    row.addEventListener("toggle", () => {
+      if (!row.isConnected) return;          // a stale event of a row that a re-render already replaced
+      if (row.open) {
+        S.reportOpen = r.id;
+        $$("details.report-row[open]", T).forEach((o) => { if (o !== row) o.open = false; });
+        if (!box.firstChild) box.append(reportDetailBody(r));
+      } else {
+        if (S.reportOpen === r.id) S.reportOpen = null;
+        box.replaceChildren();
+      }
+    });
     T.append(row);
+  }
+  if (S.reportScrollTo) {
+    const el = $$("details.report-row", T).find((x) => x.dataset.report === S.reportScrollTo);
+    if (el) el.scrollIntoView({ block: "start" });
   }
 }
 /** Row click: highlight + zoom on the board, WITHOUT leaving the Reports tab and without writing anything. */
@@ -643,25 +664,47 @@ async function locateReportInPlace(r) {
   if (r.cell) { showCellOnBoard(r.cell[0], r.cell[1]); return; }
   toast(`${r.id}: report geral, sem localização`);
 }
+/** Open the Reports tab with the row of ``r`` expanded, scrolled into view and located on the board. */
 function openReportDetail(r) {
+  const was = S.tab === "reports";
   S.reportOpen = r.id;
-  renderReportDetail(r);
-  showTab("report");
+  S.reportFilter = r.estado;
+  S.reportScrollTo = r.id;
+  showTab("reports");           // (reloads the list when coming from another tab; the scroll flag survives it)
+  renderReports();
+  if (was) S.reportScrollTo = null;
+  return locateReportInPlace(r).catch((e) => toast(e.message, true));
 }
-function renderReportDetail(r) {
-  const T = $("#tab-report"); T.replaceChildren();
+/** Detail of a report, shared by the expanded row (full) and the piece / cell drawer (``compacto``: id, state,
+ * type, date, text, note and actions; no thumbnails, capture or history). */
+function reportDetailBody(r, opts = {}) {
+  const compacto = !!opts.compacto;
   const ctx = { piece: r.piece || null, cell: r.cell || null, vista: r.vista || null };
-  const chips = h("div", { class: "rhead" },
-    r.piece ? h("button", { class: "chip chip-btn", type: "button", title: "ver no tabuleiro", onclick: () => locateReportInPlace(r).catch((e) => toast(e.message, true)) }, r.piece) : null,
-    r.cell ? h("button", { class: "chip chip-btn", type: "button", title: "ver no tabuleiro", onclick: () => showCellOnBoard(r.cell[0], r.cell[1]) }, cellTxt(r.cell)) : null,
-    !r.piece && !r.cell ? h("span", { class: "chip" }, "geral") : null);
-  const hist = [{ estado: "criado", t: r.t, nota: "" }].concat((r.historico && r.historico.length) ? r.historico
-    : (r.estado === "fechado" && r.fechado_em ? [{ estado: "fechado", t: r.fechado_em, nota: r.nota || "" }] : []));
-  const histTxt = { criado: "criado", aberto: "reaberto", fechado: "resolvido", eliminado: "eliminado" };
-  const nCap = !r.captura ? null : h("img", { class: "rcap", alt: `captura de ${r.id}`, src: `/api/reports/${r.id}/captura`, onerror: (ev) => ev.target.remove() });
+  const wrap = h("div", { class: "rdetail" });
+  const meta = `${TIPOS_TXT[r.tipo] || r.tipo} · ${when(r.t)}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "");
+  wrap.append(compacto
+    ? h("p", { class: "small rmeta" }, h("b", {}, r.id), " ", h("span", { class: `chip rstate st-${r.estado}` }, ESTADO_TXT[r.estado] || r.estado), ` ${meta}`)
+    : h("p", { class: "small muted rmeta" }, meta));
+  if (!compacto) {
+    if (r.piece) {
+      wrap.append(h("div", { class: "rthumbs" },
+        h("figure", {}, h("img", { src: `/api/pieces/${r.piece}.png?pose=board&size=160`, alt: `${r.piece} no tabuleiro`, width: 160, height: 160 }), h("figcaption", { class: "small muted" }, "no tabuleiro")),
+        h("figure", {}, h("img", { src: `/api/pieces/${r.piece}.png?pose=scan&size=160`, alt: `${r.piece} no scan`, width: 160, height: 160 }), h("figcaption", { class: "small muted" }, "no scan"))));
+    }
+    if (r.captura) wrap.append(h("img", { class: "rcap", alt: `captura de ${r.id}`, src: `/api/reports/${r.id}/captura`, onerror: (ev) => ev.target.remove() }));
+  }
+  wrap.append(h("p", { class: "rtexto" }, r.texto || h("span", { class: "muted" }, "(sem texto)")));
+  if (r.nota) wrap.append(h("p", { class: "small" }, h("b", {}, "Nota: "), r.nota));
+  if (!compacto) {
+    const hist = [{ estado: "criado", t: r.t, nota: "" }].concat((r.historico && r.historico.length) ? r.historico
+      : (r.estado === "fechado" && r.fechado_em ? [{ estado: "fechado", t: r.fechado_em, nota: r.nota || "" }] : []));
+    const histTxt = { criado: "criado", aberto: "reaberto", fechado: "resolvido", eliminado: "eliminado" };
+    wrap.append(h("div", { class: "small rhist" }, h("b", {}, "Histórico"),
+      h("ul", {}, hist.map((x) => h("li", {}, `${histTxt[x.estado] || x.estado} · ${when(x.t)}` + (x.nota ? ` · ${x.nota}` : ""))))));
+  }
   const act = h("div", { class: "actions rdetail-actions" });
   const btn = (txt, fn, cls = "") => h("button", { class: `btn slim ${cls}`.trim(), type: "button", onclick: fn }, txt);
-  act.append(btn("Ver no tabuleiro", () => locateReportInPlace(r).catch((e) => toast(e.message, true))));
+  if (!compacto) act.append(btn("Ver no tabuleiro", () => locateReportInPlace(r).catch((e) => toast(e.message, true))));
   if (r.estado === "aberto") {
     act.append(btn("Editar", () => openReport(ctx, r)));
     act.append(btn("Marcar resolvido", () => askEstado(r, "close"), "primary"));
@@ -672,22 +715,9 @@ function renderReportDetail(r) {
   } else {
     act.append(btn("Restaurar", () => setEstado(r, "restore"), "primary"));
   }
-  T.append(...[
-    h("div", { class: "cell-head" }, btn("← Reports", () => showTab("reports"))),
-    h("h3", { class: "rtitle" }, r.id, h("span", { class: `chip rstate st-${r.estado}` }, ESTADO_TXT[r.estado] || r.estado)),
-    h("p", { class: "small muted" }, `${TIPOS_TXT[r.tipo] || r.tipo} · ${when(r.t)}` + (r.n_edicoes ? ` · editado ${r.n_edicoes}×` : "")),
-    chips,
-    r.piece ? h("div", { class: "rthumbs" },
-      h("figure", {}, h("img", { src: `/api/pieces/${r.piece}.png?pose=board&size=160`, alt: `${r.piece} no tabuleiro`, width: 160, height: 160 }), h("figcaption", { class: "small muted" }, "no tabuleiro")),
-      h("figure", {}, h("img", { src: `/api/pieces/${r.piece}.png?pose=scan&size=160`, alt: `${r.piece} no scan`, width: 160, height: 160 }), h("figcaption", { class: "small muted" }, "no scan"))) : null,
-    nCap,
-    h("p", { class: "rtexto" }, r.texto || h("span", { class: "muted" }, "(sem texto)")),
-    r.nota ? h("p", { class: "small" }, h("b", {}, "Nota: "), r.nota) : null,
-    h("div", { class: "small rhist" }, h("b", {}, "Histórico"),
-      h("ul", {}, hist.map((x) => h("li", {}, `${histTxt[x.estado] || x.estado} · ${when(x.t)}` + (x.nota ? ` · ${x.nota}` : ""))))),
-    act].filter(Boolean));
+  wrap.append(act);
+  return wrap;
 }
-const TIPOS_TXT = { mal_lida: "mal lida / mal recortada", mal_colocada: "mal colocada", nao_encaixa: "não encaixa", outro: "outro" };
 function askEstado(r, acao) {
   const dlg = $("#estado-dlg"), form = $("#estado-form"), nota = $("#estado-nota");
   form.reset();
@@ -706,6 +736,9 @@ async function setEstado(r, acao, nota = "") {
   try {
     const n = await api(`/api/report/${r.id}/estado`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acao, nota }) });
     toast({ close: `${r.id} marcado como resolvido`, reopen: `${r.id} reaberto`, delete: `${r.id} eliminado (pode ser restaurado)`, restore: `${r.id} restaurado` }[acao] || `${r.id}: ${n.estado}`);
+    // the expanded row stays expanded across the reload (S.reportOpen); a report that changed state leaves the
+    // current filter, so follow it to the filter where it now lives
+    if (S.reportOpen === r.id && n.estado && n.estado !== S.reportFilter) S.reportFilter = n.estado;
     await loadReports();
   } catch (e) { toast(e.message, true); }
 }
@@ -717,13 +750,22 @@ function openReportsFor(ctx) {
   return (S.reports || []).filter((r) => r.estado === "aberto"
     && ((ctx.piece && r.piece === ctx.piece) || ((!ctx.piece || !r.piece) && same(r.cell, ctx.cell)))).sort((p, q) => (p.id < q.id ? 1 : -1));
 }
-function reportButton(ctx) {
+/** «⚠ Reportar» / «✎ Editar report». With ``inline`` (piece / cell drawer) the open reports are shown by
+ * ``reportInline`` instead, so the button only exists while there is none. */
+function reportButton(ctx, opts = {}) {
   const ex = openReportsFor(ctx);
   if (ex.length) {
+    if (opts.inline) return null;
     return h("button", { class: "btn slim report edit", type: "button", title: `já há um report aberto (${ex[0].id}): edita-o em vez de criar outro`, "aria-label": "Editar report",
       "data-report": ex[0].id, onclick: () => openReport(ctx, ex[0], ex.length) }, "✎ Editar report");
   }
   return h("button", { class: "btn slim report", type: "button", title: "avisar de um problema: fica guardado com uma captura do que vês", "aria-label": "Reportar um problema", onclick: () => openReport(ctx) }, "⚠ Reportar");
+}
+/** The open reports of this piece / cell as compact collapsible cards (drawer of a piece or cell). */
+function reportInline(ctx) {
+  return openReportsFor(ctx).map((r) => h("details", { class: "card report-inline", open: true, "data-report": r.id },
+    h("summary", {}, `Report ${r.id} · ${ESTADO_TXT[r.estado] || r.estado}`),
+    reportDetailBody(r, { compacto: true })));
 }
 function openReport(ctx, existing = null, nOpen = 0) {
   const dlg = $("#report-dlg");
@@ -766,6 +808,7 @@ function showCellOnBoard(l, c) {
   drawSel();
 }
 async function openCell(l, c, opts = {}) {
+  S.pieceOpen = null;
   S.sel = [l, c]; drawSel();
   if (opts.zoom) zoomCells(Math.max(1, l - 3), Math.max(1, c - 5), Math.min(S.rows, l + 3), Math.min(S.cols, c + 5));
   showTab("celula");
@@ -827,8 +870,10 @@ function renderCell(d) {
     hintBtns.push(h("button", { class: "btn slim", type: "button", title: "marcar a célula como vazia",
       onclick: (ev) => act({ acao: "cell_empty", cell: d.cell }, ev.currentTarget) }, "Está vazia"));
   }
-  wrap.append(h("div", { class: "actions" }, ...hintBtns, reportButton({ piece: d.peca ? d.peca.id : null, cell: d.cell, vista: "celula" }),
+  const rctx = { piece: d.peca ? d.peca.id : null, cell: d.cell, vista: "celula" };
+  wrap.append(h("div", { class: "actions" }, ...hintBtns, reportButton(rctx, { inline: true }),
     d.peca ? contourButton(d.peca.id, { kind: "cell", cell: d.cell }) : null));
+  for (const el of reportInline(rctx)) wrap.append(el);
   if (d.peca) {
     const p = d.peca;
     wrap.append(h("div", { class: "card" }, h("div", { class: "card-top" },
@@ -864,6 +909,7 @@ async function openPiece(pid) {
   if (d.celula && (d.estado === "colocada" || d.estado === "posicao_conhecida")) { openCell(d.celula[0], d.celula[1], { zoom: true }); return; }
   S.sel = null; drawSel();
   showTab("celula");
+  S.pieceOpen = pid;
   const T = $("#tab-celula");
   T.replaceChildren(h("div", { class: "cell-head" }, h("button", { class: "btn slim", type: "button", onclick: () => showTab(S.prevTab || "lotes") }, "← voltar"),
     h("h3", {}, d.lote !== null && d.lote !== undefined ? `Saco ${d.lote} · nº ${d.n_no_lote}` : d.id)));
@@ -871,7 +917,9 @@ async function openPiece(pid) {
     h("div", {}, pieceImage({ piece: d.id, pose_known: d.pose_tabuleiro !== null, ghost: null }), h("div", { class: "pimg-cap" }, d.pose_tabuleiro !== null ? "rodada como ficará" : "como foi digitalizada")),
     h("div", {}, h("div", { class: "small muted" }, `${d.id} · ${d.estado_txt}`), h("div", { class: "small muted" }, `classe ${d.cls || "?"} · ${d.n_flat} lado(s) liso(s)` + (d.seccao_id ? ` · grupo ${d.seccao_id}` : "")), manualBadge(d),
       h("button", { class: "linkish", type: "button", onclick: () => lightbox(`${d.folha}&max=1400&v=${S.ver}`, `Folha ${d.scan_id}`) }, "ver na folha do scan")))));
-  T.append(h("div", { class: "actions" }, reportButton({ piece: d.id, cell: null, vista: "peca" }), contourButton(d.id, { kind: "piece", pid: d.id })));
+  const pctx = { piece: d.id, cell: null, vista: "peca" };
+  T.append(h("div", { class: "actions" }, reportButton(pctx, { inline: true }), contourButton(d.id, { kind: "piece", pid: d.id })));
+  for (const el of reportInline(pctx)) T.append(el);
   if (d.propostas.length) for (const e of d.propostas) T.append(proposalCard(e));
   else T.append(h("p", { class: "note" }, "Sem proposta para esta peça por agora: fica na memória e volta a ser testada sempre que algo é colocado."));
   if (["solta", "emparelhada"].includes(d.estado)) {
@@ -964,9 +1012,7 @@ async function locateSheet(sid) {
   hit.scrollIntoView({ block: "start" });
 }
 async function locateReport(r) {
-  if (r.piece) return locatePiece(r.piece);
-  if (r.cell) return locateCell(r.cell[0], r.cell[1]);
-  toast(`${r.id}: report geral, sem peça nem célula para localizar`);
+  return openReportDetail(r);      // Reports tab, row expanded and located on the board
 }
 async function locateQuery(q) {
   const t = (q || "").trim();
@@ -1226,20 +1272,59 @@ function renderJobLog() {
   }
 }
 
-// ------------------------------------------------------------ suspeitas de orientação (só leitura, topo de Reports)
-// /api/suspeitas = src.consistency: peças colocadas com um lado T↔T / B↔B (impossível) ou com outra rotação
-// claramente melhor contra as vizinhas montadas. Nada é corrigido aqui: a linha só localiza a peça no tabuleiro.
+// ------------------------------------------------------------ suspeitas de orientação / recorte (topo de Reports)
+// /api/suspeitas = src.consistency: peças colocadas com um lado T↔T / B↔B (impossível), com outra rotação
+// claramente melhor contra as vizinhas montadas ou com o recorte a divergir da gémea. Nada é corrigido aqui:
+// a linha localiza a peça no tabuleiro. Uma suspeita com report aberto sai da lista (o report passa a ser o
+// trabalho) e aparece como chip na linha do report; «Falso alarme» (com nota) tira-a da lista até ser restaurada.
+// A GUI tolera um servidor sem estes campos (items sem report_aberto, sem falsos_alarmes).
 async function loadSuspeitas() {
   S.susp = await api("/api/suspeitas");
-  renderSuspeitas();
+  if (S.reports) renderReports(); else renderSuspeitas();   // renderReports also redraws this block and the chips «suspeita» on the report rows
+}
+const SUSP_GRAU = { impossivel: "impossível", melhor_rotacao: "melhor rotação", recorte: "Recorte" };
+function askFalsoAlarme(it) {
+  const dlg = $("#estado-dlg"), form = $("#estado-form"), nota = $("#estado-nota");
+  form.reset();
+  $("#estado-title").textContent = `Falso alarme ${it.piece} (${SUSP_GRAU_TXT[it.grau] || it.grau})`;
+  $("#estado-msg").textContent = `Marcar a suspeita de ${it.piece} como falso alarme? Sai da lista e pode ser restaurada. A nota é opcional.`;
+  nota.hidden = false;
+  form.onsubmit = async (ev) => {
+    ev.preventDefault();
+    const ok = $("#estado-ok"); ok.disabled = true;
+    try {
+      dlg.close();
+      await api(`/api/suspeitas/${it.piece}/falso-alarme`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grau: it.grau, nota: nota.value }) });
+      toast(`${it.piece}: falso alarme registado`);
+      await loadSuspeitas();
+    } catch (e) { toast(e.message, true); } finally { ok.disabled = false; }
+  };
+  dlg.showModal();
+}
+async function restaurarFalsoAlarme(f) {
+  try {
+    await api(`/api/suspeitas/${f.piece}/restaurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ grau: f.grau }) });
+    toast(`${f.piece}: suspeita restaurada`);
+    await loadSuspeitas();
+  } catch (e) { toast(e.message, true); }
 }
 function renderSuspeitas(T) {
   T = T || $("#tab-reports");
   const old = T.querySelector("details.suspeitas");
   if (!S.susp) { if (old) old.remove(); return; }
-  const items = S.susp.items || [], sm = S.susp.summary || {};
+  const all = S.susp.items || [], sm = S.susp.summary || {};
+  const items = all.filter((it) => !it.report_aberto);
+  const fas = S.susp.falsos_alarmes || [];
+  const nRep = S.susp.n_em_reports ?? (all.length - items.length);
+  const nFa = sm.n_falsos_alarmes ?? fas.length;
+  const nObs = sm.n_falsos_alarmes_obsoletos ?? fas.filter((f) => f.obsoleto).length;
+  const extra = [];
+  if (nRep > 0) extra.push(`+ ${nRep} em reports`);
+  if (nFa > 0) extra.push(`${nFa} falso${nFa === 1 ? "" : "s"} alarme${nFa === 1 ? "" : "s"}` + (nObs > 0 ? ` (${nObs} obsoleto${nObs === 1 ? "" : "s"})` : ""));
   const d = h("details", { class: "suspeitas", id: "suspeitas" },
-    h("summary", {}, `Suspeitas (${items.length})`),
+    h("summary", { "data-extra": extra.length ? extra.join(" · ") : null }, `Suspeitas (${items.length})`),   // data-extra: shown by CSS (::after) while closed
+    extra.length ? h("p", { class: "small muted susp-extra" }, extra.join(" · ")) : null,
     h("p", { class: "small muted" }, `Orientação (contra as vizinhas montadas) e recorte (contra a gémea): ${sm.n_verificadas ?? "—"} de ${sm.n_colocadas ?? "—"} peças verificadas`
       + (sm.n_sem_cantos ? ` · ${sm.n_sem_cantos} sem cantos (não verificadas)` : "") + ". Só leitura: nada é corrigido aqui."));
   d.open = old ? old.open : !!S.suspOpen;
@@ -1254,23 +1339,101 @@ function renderSuspeitas(T) {
   q.addEventListener("input", apply);
   d.append(q);
   if (!items.length) d.append(h("div", { class: "empty" }, h("strong", {}, "Sem suspeitas.")));
-  const GRAU = { impossivel: "impossível", melhor_rotacao: "melhor rotação", recorte: "Recorte" };
   for (const it of items) {
     const [l, c] = it.cell;
     const go = () => showCellOnBoard(l, c);
     d.append(h("div", { class: "card suspeita-row", role: "button", tabindex: "0", title: "Ver no tabuleiro",
       "data-piece": it.piece, "data-grau": it.grau,
-      "data-q": norm([it.piece, `${l},${c}`, it.grau, GRAU[it.grau], it.texto, ...(it.falhas || [])].join(" ")),
-      onclick: go, onkeydown: (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } } },
+      "data-q": norm([it.piece, `${l},${c}`, it.grau, SUSP_GRAU[it.grau], it.texto, ...(it.falhas || [])].join(" ")),
+      onclick: go, onkeydown: (ev) => { if (ev.target === ev.currentTarget && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); go(); } } },
       h("img", { class: "rthumb", loading: "lazy", src: `/api/pieces/${it.piece}.png?pose=board&size=64`, alt: "", width: 64, height: 64 }),
       h("div", { class: "rbody" },
         h("div", { class: "small rhead" }, h("span", { class: "chip" }, it.piece), h("span", { class: "chip" }, cellTxt(it.cell)),
-          h("span", { class: "chip grau " + it.grau }, GRAU[it.grau] || it.grau)),
+          h("span", { class: "chip grau " + it.grau }, SUSP_GRAU[it.grau] || it.grau)),
         h("div", {}, it.texto),
-        it.falhas && it.falhas.length ? h("div", { class: "small muted" }, it.falhas.join(" · ")) : null)));
+        it.falhas && it.falhas.length ? h("div", { class: "small muted" }, it.falhas.join(" · ")) : null,
+        h("div", { class: "actions" }, h("button", { class: "btn slim fa", type: "button", title: "a suspeita está errada: tira-a da lista (pode ser restaurada)",
+          onclick: (ev) => { ev.stopPropagation(); askFalsoAlarme(it); } }, "Falso alarme")))));
+  }
+  if (fas.length) {
+    const fd = h("details", { class: "falsos" }, h("summary", {}, `Falsos alarmes (${fas.length})`));
+    fd.open = !!S.falsosOpen;
+    fd.addEventListener("toggle", () => { S.falsosOpen = fd.open; });
+    for (const f of fas) {
+      fd.append(h("div", { class: "card falso-row", "data-piece": f.piece, "data-grau": f.grau },
+        h("div", { class: "rbody" },
+          h("div", { class: "small rhead" }, h("span", { class: "chip" }, f.piece), f.cell ? h("span", { class: "chip" }, cellTxt(f.cell)) : null,
+            h("span", { class: "chip grau " + f.grau }, SUSP_GRAU[f.grau] || f.grau),
+            f.obsoleto ? h("span", { class: "chip obsoleto", title: "a peça mudou desde que marcaste o falso alarme" }, "obsoleto") : null,
+            h("span", { class: "muted" }, when(f.t))),
+          f.nota ? h("div", { class: "small muted" }, `nota: ${f.nota}`) : null),
+        h("button", { class: "btn slim", type: "button", onclick: () => restaurarFalsoAlarme(f) }, "Restaurar")));
+    }
+    d.append(fd);
   }
   apply();
   if (old) old.replaceWith(d); else T.prepend(d);
+}
+
+// ------------------------------------------------------------ miniaturas: botão direito → copiar / guardar PNG (§19)
+// Source: /api/pieces/<id>.png?pose=board|scan&size=600 (just the piece, transparent background, no overlays).
+const pngUrl = (pid, pose) => `/api/pieces/${pid}.png?pose=${pose}&size=600&v=${S.ver}`;
+const canCopyPng = () => !!(window.isSecureContext && navigator.clipboard && navigator.clipboard.write && window.ClipboardItem);
+const COPY_NA = "Copiar não disponível neste browser/endereço (precisa de localhost ou https): usa Guardar PNG";
+function closePngMenu() { const m = $("#ctx-menu"); if (m) m.remove(); }
+async function savePng(pid, pose) {
+  try {
+    const r = await fetch(pngUrl(pid, pose));
+    if (!r.ok) throw new Error(`erro ${r.status}`);
+    const url = URL.createObjectURL(await r.blob());
+    const a = h("a", { href: url, download: `${pid}_${pose}.png` });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (e) { toast(`Não consegui guardar a imagem: ${e.message}`, true); }
+}
+async function copyPng(pid, pose) {
+  if (!canCopyPng()) { toast(COPY_NA, true); return; }
+  const blobP = fetch(pngUrl(pid, pose)).then((r) => { if (!r.ok) throw new Error(`erro ${r.status}`); return r.blob(); });
+  blobP.catch(() => {});
+  try {
+    try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blobP })]); }
+    catch (e1) { const b = await blobP; await navigator.clipboard.write([new ClipboardItem({ "image/png": b })]); }
+    toast(`Imagem de ${pid} copiada`);
+  } catch (e) {
+    toast(`Não consegui copiar (${e.message || e}): a guardar o PNG`, true);
+    savePng(pid, pose);
+  }
+}
+function showPngMenu(ev, pid, pose) {
+  closePngMenu();
+  const ok = canCopyPng();
+  const m = h("div", { id: "ctx-menu", role: "menu", "aria-label": `Imagem de ${pid}` },
+    h("button", { type: "button", role: "menuitem", "data-act": "copiar", "aria-disabled": ok ? null : "true", class: ok ? "" : "off",
+      title: ok ? null : COPY_NA, onclick: () => { closePngMenu(); copyPng(pid, pose); } }, "Copiar imagem (PNG)"),
+    h("button", { type: "button", role: "menuitem", "data-act": "guardar", onclick: () => { closePngMenu(); savePng(pid, pose); } }, "Guardar PNG"));
+  document.body.append(m);
+  const r = m.getBoundingClientRect();
+  m.style.left = `${Math.max(4, Math.min(ev.clientX, innerWidth - r.width - 4))}px`;
+  m.style.top = `${Math.max(4, Math.min(ev.clientY, innerHeight - r.height - 4))}px`;
+  m.querySelector("button").focus();
+}
+/** Thumbnails that carry a piece image: .pimg (drawer / cards), img.rthumb (report and suspicion rows),
+ * .rthumbs img (expanded report). The SVG overlay of .pimg sits on top of the <img>, so the listener is on the
+ * container and reads the pose from the image URL. */
+function initPngMenu() {
+  document.addEventListener("contextmenu", (ev) => {
+    const box = ev.target.closest && ev.target.closest(".pimg, img.rthumb, .rthumbs img");
+    if (!box) return;
+    const img = box.tagName === "IMG" ? box : box.querySelector("img");
+    const m = img && /\/api\/pieces\/(P\d+)\.png\?(?:[^#]*&)?pose=(board|scan)/.exec(img.getAttribute("src") || "");
+    if (!m) return;
+    ev.preventDefault();
+    showPngMenu(ev, m[1], m[2]);
+  });
+  document.addEventListener("pointerdown", (ev) => { if (!ev.target.closest || !ev.target.closest("#ctx-menu")) closePngMenu(); }, true);
+  window.addEventListener("scroll", closePngMenu, true);
+  window.addEventListener("resize", closePngMenu);
+  window.addEventListener("blur", closePngMenu);
 }
 
 // ------------------------------------------------------------ events (SSE) + start-up
@@ -1299,6 +1462,8 @@ function connectEvents() {
   es.addEventListener("hello", (e) => { const st = JSON.parse(e.data); setJob(st.job); });
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) scheduleReload("board"); });
   es.addEventListener("fetch_changed", () => scheduleReload("fetch"));
+  let suspTimer = null;
+  es.addEventListener("suspeitas_changed", () => { clearTimeout(suspTimer); suspTimer = setTimeout(() => loadSuspeitas().catch(() => {}), 300); });
   for (const ev of ["report_added", "report_edited", "report_changed"]) es.addEventListener(ev, () => loadReports().catch(() => {}));
   es.addEventListener("piece_changed", () => { if (S.lots) loadLots().catch(() => {}); });
   es.addEventListener("ingest_progress", (e) => {
@@ -1333,6 +1498,7 @@ async function boot() {
   tgs.onchange = () => { S.showSug = tgs.checked; lsSet("tg-sug", tgs.checked ? "1" : "0"); drawSuggestions(); };
   document.addEventListener("keydown", (e) => {
     if (S.ced) { cedKey(e); return; }
+    if (e.key === "Escape" && $("#ctx-menu")) { closePngMenu(); return; }
     if (e.key === "Escape" && $("#sug-pick")) { hideSugPicker(); return; }
     if (e.key === "Escape") { if (!$("#lightbox").hidden) $("#lightbox").hidden = true; else if (S.tab === "celula") showTab(S.prevTab); }
   });
@@ -1343,6 +1509,7 @@ async function boot() {
   lg.open = stored === null ? window.innerHeight >= 900 : stored === "1";
   lg.addEventListener("toggle", () => { lsSet("legend-open", lg.open ? "1" : "0"); setView(S.vb); });
   initPointer();
+  initPngMenu();
   connectEvents();
   const st = await api("/api/status");
   S.status = st; setJob(st.job);

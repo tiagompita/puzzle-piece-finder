@@ -134,19 +134,19 @@ def test_report_row_click_locates_without_writing(srv, page):
     page.evaluate("showTab('reports')")
     page.wait_for_selector("#tab-reports .report-row[data-report='R0001']", timeout=15_000)
     row = page.locator("#tab-reports .report-row[data-report='R0001']")
-    assert row.get_attribute("role") == "button" and row.get_attribute("tabindex") == "0"
+    assert row.evaluate("e => e.tagName") == "DETAILS"          # a linha é um <details> (o resumo é o alvo do clique)
     chips = row.locator(".chip").all_inner_texts()
     assert "P0001" in chips and "(2, 3)" in chips, chips
     assert row.locator("img.rthumb").count() == 1
     with open(gui.pr.log_path, encoding="utf-8") as f:
         before = sum(1 for _ in f)
-    row.click()
+    row.locator("> summary").click()
     page.wait_for_function("S.sel && S.sel[0] === 2 && S.sel[1] === 3", timeout=15_000)
     # o clique já não muda de aba: realça a célula no tabuleiro e fica em «Reports»
     assert page.evaluate("document.querySelector('#tab-reports').classList.contains('on')")
     assert page.evaluate("S.tab") == "reports" and page.evaluate("S.sel") == [2, 3]
     page.evaluate("S.sel = null")
-    page.focus("#tab-reports .report-row[data-report='R0001']")
+    page.focus("#tab-reports .report-row[data-report='R0001'] > summary")
     page.keyboard.press("Enter")
     page.wait_for_function("S.sel && S.sel[0] === 2 && S.sel[1] === 3", timeout=15_000)
     assert page.evaluate("S.tab") == "reports"
@@ -156,6 +156,7 @@ def test_report_row_click_locates_without_writing(srv, page):
     # search by report id reaches the same place
     page.evaluate("showTab('buscar')")
     _search(page, "r1")
-    page.wait_for_function("S.tab === 'celula' && S.sel && S.sel[0] === 2", timeout=15_000)
+    page.wait_for_function("S.tab === 'reports' && S.sel && S.sel[0] === 2 && S.reportOpen === 'R0001'", timeout=15_000)
+    page.wait_for_selector("#tab-reports details.report-row[data-report='R0001'][open]", timeout=15_000)
     with open(gui.pr.log_path, encoding="utf-8") as f:
         assert sum(1 for _ in f) == before

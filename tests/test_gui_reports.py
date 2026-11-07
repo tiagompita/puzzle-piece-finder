@@ -49,9 +49,10 @@ def test_reports_panel(synth):
         assert len(rows) == 1 and rows[0].startswith("R0003") and "resolvido" in rows[0] and "feito" in rows[0]
         pg.click("#reports-filter [data-filter=aberto]")
         assert pg.locator("#tab-reports .report-row").count() == 2
-        # a lista não muda estados: só a seta «→» (abre o detalhe), exatamente uma por linha
-        assert pg.locator("#tab-reports .report-row button").count() == 2
-        assert pg.locator("#tab-reports .report-row button.rgo").count() == 2
+        # a lista não muda estados: cada linha é um <details> fechado, sem botões (a seta «→» deixou de existir)
+        assert pg.locator("#tab-reports details.report-row").count() == 2
+        assert pg.locator("#tab-reports .report-row button").count() == 0
+        assert pg.locator("#tab-reports button.rgo").count() == 0
         br.close()
     from src import reports
     assert [r["estado"] for r in reports.read_reports(gui.pr)] == ["aberto", "aberto", "fechado"]
@@ -72,7 +73,7 @@ def _fresh(tmp_path):
     return pr
 
 
-def test_arrow_opens_detail(tmp_path):
+def test_row_click_locates_and_expands(tmp_path):
     pr = _fresh(tmp_path)
     gui, server, th, base = _serve(pr.path, str(tmp_path / "uploads"))
     errs = []
@@ -84,18 +85,40 @@ def test_arrow_opens_detail(tmp_path):
             pg.goto(base + "/")
             pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
             pg.evaluate("showTab('reports')")
-            pg.wait_for_selector("#tab-reports .report-row", timeout=30_000)
+            pg.wait_for_selector("#tab-reports details.report-row", timeout=30_000)
             assert pg.locator("#tabs button").count() == 6                       # o detalhe não tem botão de aba
-            pg.click("#tab-reports [aria-label='Abrir report R0001']")
-            pg.wait_for_selector("#tab-report.on", timeout=15_000)
-            assert "R0001" in pg.inner_text("#tab-report")
-            assert pg.evaluate("S.tab") == "report"
-            assert pg.locator("#tab-report .rthumbs img").count() == 2
-            # os chips da célula realçam no tabuleiro sem mudar de aba
-            pg.click("#tab-report .chip-btn >> text=(3, 4)")
-            assert pg.evaluate("S.sel") == [3, 4] and pg.evaluate("S.tab") == "report"
-            pg.click("#tab-report >> text=← Reports")
-            pg.wait_for_selector("#tab-reports.on", timeout=5_000)
+            assert pg.locator("#tab-report").count() == 0                        # nem secção própria
+            lp = pr.log_path
+            n0 = _nlines(lp)
+            r1 = "#tab-reports details.report-row[data-report='R0001']"
+            r2 = "#tab-reports details.report-row[data-report='R0002']"
+            assert pg.locator(f"{r1}[open]").count() == 0
+            pg.click(f"{r1} > summary")                                         # localiza E expande
+            pg.wait_for_selector(f"{r1}[open] .rthumbs img", timeout=15_000)
+            pg.wait_for_function("S.sel", timeout=15_000)
+            cel = pg.evaluate("fetch('/api/pieces/' + S.reports[0].piece).then((r) => r.json())")["celula"]
+            assert pg.evaluate("S.sel") == cel
+            assert pg.evaluate("S.tab") == "reports" and pg.evaluate("S.reportOpen") == "R0001"
+            assert pg.locator(f"{r1} .rthumbs img").count() == 2
+            assert "recorte comido" in pg.inner_text(f"{r1} .rexp")
+            assert pg.locator("#tab-reports details.report-row[open]").count() == 1
+            # clicar noutra fecha a primeira (só uma aberta de cada vez)
+            pg.click(f"{r2} > summary")
+            pg.wait_for_selector(f"{r2}[open]")
+            pg.wait_for_selector(f"{r1}:not([open])")
+            assert pg.locator("#tab-reports details.report-row[open]").count() == 1
+            assert pg.evaluate("S.reportOpen") == "R0002"
+            # a linha aberta sobrevive a um novo render / carregamento
+            pg.evaluate("loadReports()")
+            pg.wait_for_timeout(500)
+            assert pg.locator(f"{r2}[open]").count() == 1 and pg.evaluate("S.reportOpen") == "R0002"
+            # teclado: Enter no resumo abre / fecha
+            pg.focus(f"{r1} > summary")
+            pg.keyboard.press("Enter")
+            pg.wait_for_selector(f"{r1}[open]")
+            pg.keyboard.press("Enter")
+            pg.wait_for_selector(f"{r1}:not([open])")
+            assert _nlines(lp) == n0                                             # só leitura
             br.close()
         assert errs == []
     finally:
@@ -117,9 +140,10 @@ def test_detail_state_actions_append_only(tmp_path):
             pg.goto(base + "/")
             pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
             pg.evaluate("showTab('reports')")
-            pg.wait_for_selector("#tab-reports .report-row", timeout=30_000)
-            pg.click("#tab-reports [aria-label='Abrir report R0001']")
-            pg.wait_for_selector("#tab-report.on")
+            pg.wait_for_selector("#tab-reports details.report-row", timeout=30_000)
+            row = "#tab-reports details.report-row[data-report='R0001']"
+            pg.click(f"{row} > summary")
+            pg.wait_for_selector(f"{row}[open] .rdetail-actions")
 
             def step(click, toast_txt):
                 with open(rp, "rb") as f:
@@ -133,40 +157,81 @@ def test_detail_state_actions_append_only(tmp_path):
 
             # resolver com nota
             def resolve():
-                pg.click("#tab-report .btn >> text=Marcar resolvido")
+                pg.click(f"{row} .btn >> text=Marcar resolvido")
                 pg.wait_for_selector("#estado-dlg[open]")
                 pg.fill("#estado-nota", "corrigido")
                 pg.click("#estado-ok")
             step(resolve, "marcado como resolvido")
-            assert "resolvido" in pg.inner_text("#tab-report") and "corrigido" in pg.inner_text("#tab-report")
-            step(lambda: pg.click("#tab-report .btn >> text=Reabrir"), "reaberto")
-            assert pg.locator("#tab-report .btn", has_text="Marcar resolvido").count() == 1
+            # a linha continua expandida (o filtro segue o estado novo)
+            pg.wait_for_selector(f"{row}[open]", timeout=10_000)
+            assert "resolvido" in pg.inner_text(row) and "corrigido" in pg.inner_text(row)
+            step(lambda: pg.click(f"{row} .btn >> text=Reabrir"), "reaberto")
+            pg.wait_for_selector(f"{row}[open] .btn:has-text('Marcar resolvido')", timeout=10_000)
+            assert pg.locator(f"{row} .btn", has_text="Marcar resolvido").count() == 1
 
             def delete():
-                pg.click("#tab-report .btn >> text=Eliminar")
+                pg.click(f"{row} .btn >> text=Eliminar")
                 pg.wait_for_selector("#estado-dlg[open]")
                 assert "Eliminar R0001? Fica escondido e pode ser restaurado." in pg.inner_text("#estado-msg")
                 pg.click("#estado-ok")
             step(delete, "eliminado")
-            assert pg.locator("#tab-report .btn", has_text="Restaurar").count() == 1
-            # filtro «Eliminados»
-            pg.click("#tab-report >> text=← Reports")
+            pg.wait_for_selector(f"{row}[open] .btn:has-text('Restaurar')", timeout=10_000)
+            # filtros
             pg.click("#reports-filter [data-filter=aberto]")
-            assert pg.locator("#tab-reports .report-row").count() == 1            # só R0002
+            assert pg.locator("#tab-reports details.report-row").count() == 1            # só R0002
             pg.click("#reports-filter [data-filter=eliminado]")
-            rows = pg.eval_on_selector_all("#tab-reports .report-row", "els => els.map((e) => e.innerText)")
+            rows = pg.eval_on_selector_all("#tab-reports details.report-row", "els => els.map((e) => e.innerText)")
             assert len(rows) == 1 and rows[0].startswith("R0001") and "eliminado" in rows[0]
-            pg.click("#tab-reports [aria-label='Abrir report R0001']")
-            pg.wait_for_selector("#tab-report.on")
-            step(lambda: pg.click("#tab-report .btn >> text=Restaurar"), "restaurado")
-            assert pg.locator("#tab-report .btn", has_text="Marcar resolvido").count() == 1   # voltou a aberto
+            assert pg.locator(f"{row}[open]").count() == 1                              # continua expandida
+            step(lambda: pg.click(f"{row} .btn >> text=Restaurar"), "restaurado")
+            pg.wait_for_selector(f"{row} .btn:has-text('Marcar resolvido')", timeout=10_000)   # voltou a aberto
             br.close()
         assert errs == []
     finally:
         server.should_exit = True
         th.join(10)
-    got = reports.read_reports(Project_open(pr.path))
-    assert [r["estado"] for r in got] == ["aberto", "aberto"] and got[0]["n_estados"] == 4
+
+
+def test_piece_drawer_shows_report_inline(tmp_path):
+    """Gaveta de uma peça solta (openPiece) com report aberto: card ``details.report-inline`` com as ações, sem
+    o botão «Editar report»; «Marcar resolvido» fecha o report e a gaveta refresca para «⚠ Reportar»."""
+    from src import reports
+    from src.query import run_query
+    pr, placed, tw, dec = _project(tmp_path)
+    run_query(pr, use_image=False)
+    reports.add_report(pr, tipo="nao_encaixa", texto="gaveta da solta", piece=tw, vista="peca")
+    gui, server, th, base = _serve(pr.path, str(tmp_path / "uploads"))
+    errs = []
+    try:
+        with sync_api.sync_playwright() as pw:
+            br, pg = _page(pw)
+            pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
+            pg.on("pageerror", lambda e: errs.append(str(e)))
+            pg.goto(base + "/")
+            pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+            pg.evaluate("loadReports()")
+            pg.wait_for_function("S.reports && S.reports.length === 1")
+            pg.evaluate(f"openPiece('{tw}')")
+            ins = "#tab-celula details.report-inline"
+            pg.wait_for_selector(ins, timeout=15_000)
+            assert pg.evaluate("S.pieceOpen") == tw
+            assert pg.locator(ins).count() == 1 and pg.get_attribute(ins, "open") is not None
+            assert pg.locator(f"{ins} .rthumbs").count() == 0 and pg.locator(f"{ins} .rcap").count() == 0   # compacto
+            txt = pg.inner_text(ins)
+            assert "R0001" in txt and "aberto" in txt and "gaveta da solta" in txt and "não encaixa" in txt
+            for b in ("Editar", "Marcar resolvido", "Eliminar"):
+                assert pg.locator(f"{ins} .btn", has_text=b).count() == 1, b
+            assert pg.locator("#tab-celula > .actions .btn.report").count() == 0      # nem «Reportar» nem «Editar report» (o cartão da proposta mantém o seu)
+            pg.click(f"{ins} .btn >> text=Marcar resolvido")
+            pg.wait_for_selector("#estado-dlg[open]")
+            pg.click("#estado-ok")
+            pg.wait_for_selector("#tab-celula > .actions .btn.report:has-text('Reportar')", timeout=15_000)
+            assert pg.locator(ins).count() == 0
+            br.close()
+        assert errs == []
+    finally:
+        server.should_exit = True
+        th.join(10)
 
 
 def Project_open(path):

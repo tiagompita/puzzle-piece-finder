@@ -94,3 +94,95 @@ def test_suspeitas_block_filter_and_locate(srv, page):
     assert page.input_value("#tab-reports .susp-filter") == "2,4"
     assert page.locator("#tab-reports details.suspeitas").count() == 1
     assert _log(gui) == log0                            # read-only
+
+
+# ------------------------------------------------------------ report aberto esconde a suspeita; «Falso alarme»
+def _has_fa():
+    from src import consistency
+    return hasattr(consistency, "suspect_signature")
+
+
+@pytest.fixture()
+def fresh(tmp_path):
+    """Servidor próprio (estado mutável: reports e falsos alarmes) + página, no projeto de uma fila com B rodada."""
+    import uvicorn
+    from src.query import run_query
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    run_query(pr, use_image=False)
+    gui = S.Gui(pr.path, prepare=False, use_image=False, uploads=str(tmp_path / "uploads"), log=None)
+    s = socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+    server = uvicorn.Server(uvicorn.Config(S.create_app(gui), host="127.0.0.1", port=port, log_level="warning"))
+    th = threading.Thread(target=server.run, daemon=True)
+    th.start()
+    t0 = time.time()
+    while not server.started and time.time() - t0 < 30:
+        time.sleep(0.1)
+    errs = []
+    with sync_api.sync_playwright() as pw:
+        try:
+            br = pw.chromium.launch()
+        except Exception as e:
+            pytest.skip(f"chromium indisponível: {e}")
+        pg = br.new_page(viewport={"width": 1400, "height": 900})
+        pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        pg.goto(f"http://127.0.0.1:{port}/")
+        pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+        yield pg, gui, ids
+        br.close()
+    server.should_exit = True
+    th.join(10)
+    assert errs == []
+
+
+@pytest.mark.skipif(not _has_fa(), reason="backend de falso alarme ainda não disponível")
+def test_open_report_hides_suspicion_and_close_brings_it_back(fresh):
+    pg, gui, ids = fresh
+    b = ids["B"]
+    pg.evaluate("showTab('reports')")
+    pg.wait_for_selector(f"#tab-reports .suspeita-row[data-piece='{b}']", state="attached", timeout=30_000)
+    assert pg.inner_text("#tab-reports details.suspeitas > summary") == "Suspeitas (1)"
+    r = pg.evaluate("""fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ piece: '%s', cell: [2, 4], tipo: 'mal_colocada', texto: 'rodada' }) }).then((x) => x.json())""" % b)
+    assert r.get("id") == "R0001", r
+    pg.wait_for_selector("#tab-reports details.report-row[data-report='R0001']", timeout=15_000)
+    # a suspeita sai do bloco (summary a 0), fica o resumo «+ 1 em reports» e o chip na linha do report
+    pg.wait_for_function("document.querySelector('#tab-reports details.suspeitas > summary').textContent === 'Suspeitas (0)'", timeout=15_000)
+    assert pg.locator(f"#tab-reports .suspeita-row[data-piece='{b}']").count() == 0
+    assert "+ 1 em reports" in pg.text_content("#tab-reports details.suspeitas .susp-extra")
+    chip = pg.locator("#tab-reports details.report-row[data-report='R0001'] .chip.suspeita")
+    pg.wait_for_selector("#tab-reports details.report-row[data-report='R0001'] .chip.suspeita", timeout=15_000)
+    assert "suspeita · impossível" in chip.inner_text()
+    # fechar o report pela linha expandida: a suspeita volta
+    pg.click("#tab-reports details.report-row[data-report='R0001'] > summary")
+    pg.click("#tab-reports details.report-row[data-report='R0001'] .btn >> text=Marcar resolvido")
+    pg.wait_for_selector("#estado-dlg[open]")
+    pg.click("#estado-ok")
+    pg.wait_for_selector(f"#tab-reports .suspeita-row[data-piece='{b}']", state="attached", timeout=15_000)
+    assert pg.inner_text("#tab-reports details.suspeitas > summary") == "Suspeitas (1)"
+
+
+@pytest.mark.skipif(not _has_fa(), reason="backend de falso alarme ainda não disponível")
+def test_falso_alarme_button_hides_and_restore_brings_back(fresh):
+    pg, gui, ids = fresh
+    b = ids["B"]
+    pg.evaluate("showTab('reports')")
+    row = f"#tab-reports .suspeita-row[data-piece='{b}']"
+    pg.wait_for_selector(row, state="attached", timeout=30_000)
+    pg.click("#tab-reports details.suspeitas > summary")
+    pg.click(f"{row} .btn.fa")
+    pg.wait_for_selector("#estado-dlg[open]")
+    assert f"Falso alarme {b} (impossível)" in pg.inner_text("#estado-title")
+    pg.fill("#estado-nota", "vi ao vivo: está bem")
+    pg.click("#estado-ok")
+    pg.wait_for_selector(f"#toast :text('{b}: falso alarme registado')", timeout=15_000)
+    pg.wait_for_function(f"document.querySelectorAll(\"#tab-reports .suspeita-row[data-piece='{b}']\").length === 0", timeout=15_000)
+    assert pg.inner_text("#tab-reports details.suspeitas > summary") == "Suspeitas (0)"
+    assert "1 falso alarme" in pg.text_content("#tab-reports details.suspeitas .susp-extra")
+    pg.click("#tab-reports details.falsos > summary")
+    fr = pg.locator(f"#tab-reports details.falsos .falso-row[data-piece='{b}']")
+    assert fr.count() == 1 and "vi ao vivo: está bem" in fr.inner_text() and "impossível" in fr.inner_text()
+    fr.locator("text=Restaurar").click()
+    pg.wait_for_selector(row, state="attached", timeout=15_000)
+    assert pg.inner_text("#tab-reports details.suspeitas > summary") == "Suspeitas (1)"
+    assert pg.locator("#tab-reports details.falsos").count() == 0

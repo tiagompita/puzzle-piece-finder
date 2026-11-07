@@ -87,13 +87,13 @@ def test_layout(base, browser, w, h, dsf):
                     "{deltaY: -400, bubbles: true, cancelable: true, clientX: 300, clientY: 200}))")
         assert pg.get_attribute("#board", "viewBox") != vb0
         # no horizontal scroll anywhere (document, panel, every tab), vertical scroll only inside the panel
-        for tab in ("buscar", "lotes", "mesa", "importar", "reports", "report"):
-            if tab == "report":
-                pg.evaluate("openReportDetail(S.reports[0])")
+        for tab in ("buscar", "lotes", "mesa", "importar", "reports"):
+            if tab == "reports":
+                # a linha do report expandida (miniaturas, captura, histórico, ações) dentro da própria aba
+                pg.evaluate("S.reportOpen = S.reports[0].id; showTab('reports')")
+                pg.wait_for_selector("#tab-reports details.report-row[open] .rthumbs img", timeout=15_000)
             else:
                 pg.evaluate(f"showTab('{tab}')")
-            if tab == "reports":
-                pg.wait_for_selector("#tab-reports .report-row", timeout=15_000)
             pg.wait_for_timeout(300)
             assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), tab
             assert pg.evaluate("document.documentElement.scrollHeight <= innerHeight"), tab
@@ -152,6 +152,14 @@ def test_tabs_in_top_bar(base, browser, w, h):
             assert pg.evaluate(f"document.querySelector('#tab-{tab}').classList.contains('on')"), tab
             assert pg.evaluate(f"document.querySelector('#tabs button[data-tab={tab}]').classList.contains('on')"), tab
         assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        # a aba Reports com uma linha expandida não tem overflow horizontal (nem no painel, nem no conteúdo da linha)
+        pg.evaluate("S.reportOpen = S.reports[0].id; showTab('reports')")
+        pg.wait_for_selector("#tab-reports details.report-row[open] .rthumbs img", timeout=15_000)
+        pg.wait_for_timeout(300)
+        assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        assert pg.evaluate("(() => { const t = document.querySelector('#tab-reports'); return t.scrollWidth <= t.clientWidth + 1; })()")
+        assert pg.evaluate("(() => { const e = document.querySelector('#tab-reports details.report-row[open]'); const p = document.querySelector('#tab-reports').getBoundingClientRect();"
+                           " return [...e.querySelectorAll('*')].every((x) => x.getBoundingClientRect().right <= p.right + 1); })()")
     finally:
         pg.close()
 

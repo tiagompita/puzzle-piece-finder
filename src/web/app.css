@@ -425,15 +425,15 @@ details.guardadas > summary { cursor: pointer; font-weight: 700; padding: 6px 0;
     min-height: 44px; box-shadow: 0 6px 20px rgba(0, 0, 0, .5); }
 }
 
-/* aba Reports: linhas clicáveis (só leitura) com miniatura da peça e chips do ID e da célula */
-.report-row { cursor: pointer; }
-.report-row { display: flex; align-items: flex-start; gap: 10px; }
-.rgo { flex: 0 0 auto; min-width: 32px; min-height: 32px; width: 36px; height: 36px; margin-left: auto; align-self: center; padding: 0; border-radius: 8px; border: 1px solid var(--line); background: var(--bg3); color: inherit; font-size: 18px; cursor: pointer; }
-.rgo:hover, .rgo:focus-visible { border-color: var(--amber); outline: none; }
+/* aba Reports: linhas <details> (resumo clicável: localiza no tabuleiro + expande), miniatura, chips */
+details.report-row { padding: 8px 10px; }
+.report-row > summary { cursor: pointer; display: flex; align-items: flex-start; gap: 10px; list-style: none; }
+.report-row > summary::-webkit-details-marker { display: none; }
+.report-row > summary::after { content: "˅"; margin-left: auto; align-self: center; font-weight: 700; font-size: 1.15em; line-height: 1; color: var(--muted); flex: 0 0 auto; padding-left: 4px; }
+.report-row[open] > summary::after { content: "˄"; }
 .rthumb { flex: 0 0 64px; }
-#tab-report { overflow-wrap: anywhere; }
-#tab-report .rtitle { margin: 10px 0 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-#tab-report .chip-btn { background: var(--bg3); border: 1px solid var(--line); color: inherit; cursor: pointer; min-height: 28px; }
+.rexp { overflow-wrap: anywhere; }
+.rexp:not(:empty) { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 6px; }
 .rstate { background: var(--bg3); border: 1px solid var(--line); }
 .rthumbs { display: flex; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
 .rthumbs figure { margin: 0; text-align: center; }
@@ -441,15 +441,20 @@ details.guardadas > summary { cursor: pointer; font-weight: 700; padding: 6px 0;
 .rcap { display: block; max-width: 100%; height: auto; border-radius: 6px; margin: 8px 0; }
 .rhist ul { margin: 4px 0 0; padding-left: 18px; }
 .rdetail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rtexto { margin: 6px 0; }
+.rmeta { margin: 0 0 4px; }
+details.report-inline { margin: 8px 0; padding: 6px 10px; border-left: 3px solid var(--amber); overflow-wrap: anywhere; }
+details.report-inline > summary { cursor: pointer; font-weight: 650; padding: 2px 0; }
 #estado-dlg { background: #1c1f24; color: inherit; border: 1px solid var(--line); border-radius: 12px; max-width: 420px; width: calc(100% - 32px); }
 #estado-dlg::backdrop { background: rgba(0, 0, 0, .6); }
 #estado-dlg textarea { width: 100%; box-sizing: border-box; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 10px; }
-.report-row:hover, .report-row:focus-visible { border-color: var(--muted); outline: none; }
-.report-row:focus-visible { box-shadow: 0 0 0 2px var(--amber); }
+.report-row:hover, .report-row:focus-within { border-color: var(--muted); }
+.report-row > summary:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--amber); border-radius: 6px; }
 .rthumb { width: 64px; height: 64px; object-fit: contain; border-radius: 6px; background: #262626; }
 .rbody { min-width: 0; flex: 1 1 auto; }
 .rhead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 2px; }
 .report-row .chip { background: var(--bg3); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.chip.suspeita { background: rgba(255, 176, 0, .18); color: var(--amber); border-color: rgba(255, 176, 0, .5); }
 .lot-hit { margin: 0 0 10px; }
 @media (max-width: 480px) {
   /* 360 px: name + lupa + three toggles must stay on one row (top bar <= 110 px with the tabs row) */
@@ -535,3 +540,23 @@ body.ced-open { overflow: hidden; }
   #ced-views { flex: 1 1 0; }
   .ced-row { gap: 6px; }
 }
+
+.suspeita-row .chip.grau.recorte, .falso-row .chip.grau.recorte { background: rgba(180, 140, 255, .2); color: var(--violet); border-color: rgba(180, 140, 255, .5); }
+.falso-row .chip.grau.impossivel { background: rgba(255, 90, 82, .18); color: var(--red); }
+.falso-row .chip.grau.melhor_rotacao { background: rgba(255, 176, 0, .18); color: var(--amber); }
+.chip.obsoleto { background: rgba(255, 176, 0, .18); color: var(--amber); border: 1px solid rgba(255, 176, 0, .5); }
+.susp-extra { margin: 2px 0 6px; }
+.suspeita-row .actions { margin-top: 4px; }
+details.falsos { margin-top: 10px; }
+details.falsos > summary { cursor: pointer; padding: 4px 0; color: var(--muted); }
+.falso-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; }
+.falso-row .chip { background: var(--bg3); border: 1px solid var(--line); }
+/* menu de contexto das miniaturas (copiar / guardar PNG) */
+#ctx-menu { position: fixed; z-index: 500; min-width: 190px; padding: 4px; background: #1c1f24; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .55); display: flex; flex-direction: column; }
+#ctx-menu button { background: transparent; border: 0; color: inherit; text-align: left; padding: 9px 12px; border-radius: 7px; font: inherit; cursor: pointer; min-height: 36px; }
+#ctx-menu button:hover, #ctx-menu button:focus-visible { background: var(--bg3); outline: none; }
+#ctx-menu button.off { color: var(--muted); cursor: not-allowed; }
+details.suspeitas:not([open]) > summary[data-extra]::after { content: " · " attr(data-extra); font-weight: 400; font-size: 12px; color: var(--muted); }
+/* linha de report aberta: o texto e a nota já estão no corpo, o resumo fica só com o cabeçalho */
+.report-row[open] > summary .rbody > div:not(.rhead) { display: none; }
+.falso-row .btn { flex: 0 0 auto; white-space: nowrap; }
