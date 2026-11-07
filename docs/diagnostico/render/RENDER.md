@@ -162,6 +162,27 @@ Overlays: apagados os de S0003 e S0013 (e o npz de S0013), foram os dois regener
 
 Extrapolação para os 26 scans: ≈ 3 min + 32 s [NT]. O caminho de abortar por bbox divergente não foi exercitado [NT].
 
+### 4.1 Ativos desatualizados depois de `git pull` (2026-11-07; R0011/R0012, `docs/diagnostico/segmentacao/COMIDO.md`)
+
+O `log.jsonl` vai pelo git; `pieces/*.npz`, `crops/` e `render/` não (`.gitignore`). Um PC que recebe um log com eventos `piece_resegmented` fica com as silhuetas antigas: a GUI do Tiago (`D:\DEKSTOP\puzzle_piece_finder`) mostrava P0651/P0657 do índice de 2026-11-01 (COMIDO §2–§3). Para isso, **depois de cada `git pull` nesse PC**:
+
+```
+python tools/rebuild_scans.py --project projects/alpes --stale --dry-run   # lista
+python tools/rebuild_scans.py --project projects/alpes --stale             # re-segmenta só essas folhas
+```
+
+- `render.stale_assets(project)` compara, por peça, o npz e o recorte com o log: npz ou contorno em falta, área do contorno preenchido (tolerância `STALE_AREA_FRAC` 0,5 %; medido em `projects/alpes`: diferença máxima 2,3e-5, só arredondamento), bbox do contorno com a margem de 2 % da segmentação (0 diferenças), classe e cordas do npz (`STALE_CHORD_MM` 0,05 mm; 0,000 medido) e tamanho do recorte (0 diferenças). A área `area_mm2` do npz (polígono) não serve: difere 1,2 % em mediana da área em píxeis do log. Em `projects/alpes`: **0 peças, 1,1 s** [V].
+- `render.rebuild_stale(project)` = `rebuild_assets(force_scans=<folhas listadas>, refresh_crops=<recortes com outro tamanho>, clean=False, register=False)`, e volta a verificar. Com o mesmo código que escreveu o log não há eventos; se houver, o resumo avisa (`aviso`: «este código segmenta de outro modo») e regista-os com motivo `stale`.
+- `render._clean_or_crop` deixa de usar um `render/clean/P####.png` mais antigo do que `crops/P####.png` ou de outro tamanho (apaga-o e limpa na hora).
+- **Medido numa cópia desatualizada** (`projects/alpes` com o npz, os recortes e 161 `render/clean` de S0003/S0009/S0020/S0023 da cópia de 2026-11-01) [V]:
+  - `check_invariants(disk=True)` dava OK: os invariantes não viam o problema;
+  - `stale_assets` lista **11 peças em 4 folhas**, exatamente as 11 com eventos `piece_resegmented` no log (P0058, P0059, P0064, P0065, P0199, P0218, P0223, P0651, P0657, P0777, P0778; motivos bbox/área/forma/recorte; as 9 de COMIDO §3.1 mais P0059 e P0778, que mudaram < 1 % de área);
+  - antes, a miniatura de P0651/P0657 contra a GT: IoU **0,678 / 0,661** (silhueta antiga desenhada na origem da bbox nova);
+  - `--stale`: 4 folhas re-segmentadas em 39 s, **0 eventos** (log 2109 → 2109), `check_invariants(disk=True)` OK, `stale_assets` depois 0;
+  - depois, IoU contra a GT **0,928 / 0,919**, os números de COMIDO §2.
+- **Limite [NT]:** um `render/clean` mais novo do que o recorte mas feito por código de limpeza antigo não é detetado (o teste é por data e tamanho).
+- **A GUI:** a função fica pronta para o `prepare` do servidor (a ligar à parte, sem mexer aqui em `src/server.py`): ao abrir o projeto, se `stale_assets` não estiver vazio, avisar e propor o rebuild dessas folhas.
+
 ## 5. Não verificado
 
 - OpenCV 5.0 [NT] (só 4.11).

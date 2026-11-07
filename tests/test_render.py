@@ -664,3 +664,74 @@ def test_rebuild_force_scans_aborts_sheet_when_count_changes(tmp_path):
     out = R.rebuild_assets(pr, force_scans=[sid], segment=_fake_segment(moved), clean=False, register=False)
     assert out["changed"] == [] and len(out["errors"]) == 1 and "ordem" in out["errors"][0]
     assert len(pr.events()) == st[2]
+
+
+# ---------------------------------------------------------------- stale assets (log pulled, npz/crops not)
+def test_stale_assets_empty_on_coherent_project(tmp_path):
+    pr, sid = _ingested(tmp_path)
+    st = R.stale_assets(pr)
+    assert st["n_pecas"] == 0 and st["n_folhas"] == 0 and st["sheets"] == {}
+
+
+def _shrink_npz_contour(pr, sid, pid, f=0.85):
+    npz = pr.p("pieces", f"{sid}.npz")
+    with np.load(npz) as z:
+        d = {k: z[k] for k in z.files}
+    c = d[f"{pid}__contour_px"].astype(float)
+    ctr = c.mean(0)
+    d[f"{pid}__contour_px"] = np.round((c - ctr) * f + ctr).astype(np.int32)
+    np.savez_compressed(npz, **d)
+
+
+def test_stale_assets_lists_shrunk_contour_and_rebuild_stale_restores(tmp_path):
+    pr, sid = _ingested(tmp_path)
+    pid = sorted(pr.pieces)[1]
+    with np.load(pr.p("pieces", f"{sid}.npz")) as z:
+        good = z[f"{pid}__contour_px"].copy()
+    _shrink_npz_contour(pr, sid, pid)
+    st = R.stale_assets(pr)
+    assert st["n_folhas"] == 1 and st["sheets"][sid]["pecas"] == [pid]
+    assert {"bbox", "área"} <= set(st["pecas"][pid])
+    n_log = len(pr.events())
+    out = R.rebuild_stale(pr, progress=None)
+    assert out["folhas"] == [sid] and out["pecas"] == [pid] and out["errors"] == []
+    assert out["eventos"] == 0 and out["aviso"] is None and out["depois"]["n_pecas"] == 0
+    assert len(pr.events()) == n_log
+    q = Project.open(pr.path)
+    assert R.stale_assets(q)["n_pecas"] == 0 and q.check_invariants(disk=True) == []
+    with np.load(q.p("pieces", f"{sid}.npz")) as z:
+        assert np.array_equal(z[f"{pid}__contour_px"], good)
+
+
+def test_stale_assets_crop_of_other_size_is_refreshed(tmp_path):
+    pr, sid = _ingested(tmp_path)
+    pid = sorted(pr.pieces)[0]
+    fp = pr.p(pr.piece(pid).crop_path)
+    good = np.asarray(Image.open(fp)).copy()
+    Image.fromarray(np.ascontiguousarray(good[5:-5, 5:-5])).save(fp)
+    st = R.stale_assets(pr)
+    assert st["pecas"] == {pid: ["recorte"]}
+    out = R.rebuild_stale(pr, progress=None)
+    assert out["eventos"] == 0 and out["depois"]["n_pecas"] == 0
+    assert np.array_equal(np.asarray(Image.open(fp)), good)
+
+
+def test_clean_or_crop_ignores_stale_clean_file(tmp_path):
+    pr, sid = _ingested(tmp_path)
+    pid = sorted(pr.pieces)[0]
+    crop = pr.p(pr.piece(pid).crop_path)
+    fresh = R._clean_or_crop(pr, pid)                       # no render/clean: computed on the fly
+    os.makedirs(pr.p("render", "clean"), exist_ok=True)
+    fp = pr.p("render", "clean", f"{pid}.png")
+    bogus = np.zeros_like(fresh)
+    bogus[..., 0] = 255
+    bogus[..., 3] = 255
+    Image.fromarray(bogus).save(fp)
+    t = os.path.getmtime(crop)
+    os.utime(fp, (t - 100, t - 100))                         # older than the crop -> stale
+    assert np.array_equal(R._clean_or_crop(pr, pid), fresh) and not os.path.exists(fp)
+    Image.fromarray(bogus[2:, 2:]).save(fp)                  # newer but another size -> stale
+    assert np.array_equal(R._clean_or_crop(pr, pid), fresh) and not os.path.exists(fp)
+    Image.fromarray(bogus).save(fp)                          # newer and same size -> used as is
+    os.utime(fp, (t + 100, t + 100))
+    assert np.array_equal(R._clean_or_crop(pr, pid), bogus)

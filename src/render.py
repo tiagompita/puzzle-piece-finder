@@ -78,6 +78,7 @@ __all__ = [
 	"initial_theta", "baseline_placement", "image_refine", "register_piece", "register_all", "registered_theta",
 	"seam_gaps", "relax", "bg_distance", "fringe_masks", "decontaminate", "clean_crop", "clean_all", "compose_board",
 	"compose_zone_vs_art", "rebuild_assets", "rebuild_piece", "load_placements", "save_placements", "main",
+	"stale_assets", "rebuild_stale", "STALE_AREA_FRAC", "STALE_CHORD_MM",
 	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
 	"paper_pocket_mask", "PAPER_POCKETS", "PAPER_POCKET_DIST_MAX",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
@@ -1125,15 +1126,29 @@ def clean_all(project, *, shadow: bool = SHADOW_DEFAULT, force: bool = False,
 
 # ---------------------------------------------------------------- composition
 def _clean_or_crop(project, pid: str) -> Optional[np.ndarray]:
+	"""Cleaned crop of ``pid``: ``render/clean/P####.png`` when it is up to date (not older than
+	``crops/P####.png`` and of the same size: the rule of :func:`clean_all`), else :func:`clean_crop` on the
+	fly; a stale ``render/clean`` file (e.g. left behind by a sheet re-segmented in another checkout) is deleted."""
+	from PIL import Image
 	fp = project.p("render", "clean", f"{pid}.png")
+	p = project.piece(pid)
+	src = project.p(p.crop_path) if p.crop_path else None
 	if os.path.exists(fp):
-		from PIL import Image
 		with Image.open(fp) as im:
-			return np.asarray(im.convert("RGBA")).copy()
+			cl = np.asarray(im.convert("RGBA")).copy()
+		ok = src is not None and os.path.exists(src) and os.path.getmtime(fp) >= os.path.getmtime(src)
+		if ok:
+			with Image.open(src) as im:
+				ok = im.size == (cl.shape[1], cl.shape[0])
+		if ok:
+			return cl
+		try:
+			os.remove(fp)
+		except OSError:
+			pass
 	rgba = project.crop_rgba(pid)
 	if rgba is None:
 		return None
-	p = project.piece(pid)
 	return clean_crop(rgba, project.profile.background_lab, _scan_mmpp(project, p.scan_id))
 
 
@@ -1551,7 +1566,8 @@ def rebuild_piece(project, piece: str, *, progress=None) -> dict:
 
 
 def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, register: bool = True,
-				   force_scans=None, motivo: str = "recover_bays", segment=None, dry_run: bool = False) -> dict:
+				   force_scans=None, motivo: str = "recover_bays", segment=None, dry_run: bool = False,
+				   refresh_crops=None) -> dict:
 	"""Regenerate ``pieces/S####.npz`` and ``crops/P####.png`` from the scans (missing ones, or ``force_scans``).
 
 	For each scan of ``project.model.scans`` (or only ``scans``) with a missing npz or crop, and for
@@ -1572,6 +1588,8 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 	those pieces the display caches (``render/clean``, the scan's sheets, the GUI board raster,
 	their ``placements.json`` entries) are dropped. The sheet ``overlays/S####.jpg`` is rewritten
 	when missing or when a contour changed. ``dry_run`` = report only, nothing written.
+	``refresh_crops`` (piece ids): crops rewritten as if missing (a crop of another size than its bbox,
+	:func:`stale_assets`), even when the contour is unchanged.
 
 	Manual overrides (:func:`src.overrides.latest_overrides`): for a piece with one, the drawn polygon
 	replaces the segmented contour (npz arrays, crop cut from the scan by the polygon, bbox of the
@@ -1619,6 +1637,7 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 			continue
 		npz = project.p("pieces", f"{sid}.npz")
 		missing_crop = {p.id for p in pcs if p.crop_path and not os.path.exists(project.p(p.crop_path))}
+		missing_crop |= {p.id for p in pcs if p.crop_path and p.id in set(refresh_crops or ())}
 		have_npz = os.path.exists(npz)
 		manual = {q.id: manual_all[q.id] for q in pcs if q.id in manual_all}
 		old = None
@@ -1773,6 +1792,126 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 		clean_all(project, progress=progress)
 	if register:
 		register_all(project, progress=progress)
+	return out
+
+
+STALE_AREA_FRAC = 0.005         # stale_assets: filled-contour area vs the log's area_mm2 (measured max 2.3e-5 on 958 pieces)
+STALE_CHORD_MM = 0.05           # stale_assets: npz chords vs the log's chords_mm (measured max 0.000 on 958 pieces)
+
+
+def _padded_bbox(c: np.ndarray, W: Optional[int], H: Optional[int], pad_ratio: float = OV.PAD_RATIO) -> list:
+	"""Crop bbox of a scan contour the way ``segmentation._scan_record`` / :func:`src.overrides.rasterize_polygon`
+	pad it (``pad_ratio`` x the long side, clipped to the scan when its size is known)."""
+	ox, oy, ow, oh = cv2.boundingRect(np.asarray(c).reshape(-1, 1, 2).astype(np.int32))
+	pad = int(round(pad_ratio * max(ow, oh)))
+	x0, y0 = max(0, ox - pad), max(0, oy - pad)
+	w, h = ow + 2 * pad, oh + 2 * pad
+	if W is not None and H is not None:
+		w, h = min(W - x0, w), min(H - y0, h)
+	return [int(x0), int(y0), int(w), int(h)]
+
+
+def stale_assets(project) -> dict:
+	"""Pieces whose gitignored assets (``pieces/S####.npz``, ``crops/P####.png``) do not match the log.
+
+	The log travels with git, the arrays and crops do not: a checkout that pulled a log with
+	``piece_resegmented`` events keeps the old silhouettes (R0011/R0012, COMIDO.md). Per piece of every
+	sheet of the log: ``npz em falta``; ``contorno em falta`` (no ``P####__contour_px``); ``área`` (filled
+	contour x mmpp^2 vs ``area_mm2`` beyond :data:`STALE_AREA_FRAC`); ``bbox`` (contour bbox padded like the
+	segmentation vs ``bbox``); ``recorte em falta`` / ``recorte`` (crop size != bbox w, h); ``forma`` (npz
+	``cls`` or ``side_chord_mm`` vs ``cls`` / ``chords_mm`` beyond :data:`STALE_CHORD_MM`). Manual overrides
+	are compared the same way (their npz contour is the rasterised polygon). Reads the disk only.
+
+	Returns ``{sheets: {sid: {motivos: [...], pecas: [...]}}, pecas: {pid: [motivos]}, n_pecas, n_folhas}``.
+	"""
+	from PIL import Image
+	out = {"sheets": {}, "pecas": {}}
+	by_sheet = {}
+	for p in project.pieces.values():
+		by_sheet.setdefault(p.scan_id, []).append(p)
+	for sid in sorted(by_sheet):
+		pcs = sorted(by_sheet[sid], key=lambda q: q.id)
+		bad = {}
+		npz = project.p("pieces", f"{sid}.npz")
+		try:
+			W, H = OV.scan_size(project, sid)
+		except (FileNotFoundError, OSError, KeyError, ValueError):
+			W = H = None
+		mmpp = _scan_mmpp(project, sid)
+		if not os.path.exists(npz):
+			bad = {q.id: ["npz em falta"] for q in pcs}
+		else:
+			with np.load(npz, allow_pickle=False) as z:
+				keys = set(z.files)
+				for q in pcs:
+					why = []
+					pre = f"{q.id}__"
+					if pre + "contour_px" not in keys:
+						why.append("contorno em falta")
+					else:
+						c = np.asarray(z[pre + "contour_px"]).reshape(-1, 2).astype(np.int32)
+						bb = _padded_bbox(c, W, H)
+						if q.bbox is not None and bb != [int(v) for v in q.bbox]:
+							why.append("bbox")
+						m = np.zeros((bb[3], bb[2]), np.uint8)
+						cv2.drawContours(m, [(c - np.array(bb[:2], np.int32)).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+						if q.area_mm2 and abs(float(m.sum()) * mmpp * mmpp - float(q.area_mm2)) > STALE_AREA_FRAC * float(q.area_mm2):
+							why.append("área")
+						if pre + "side_chord_mm" in keys:
+							ch = np.asarray(z[pre + "side_chord_mm"], float).reshape(-1)
+							lc = np.asarray(q.chords_mm or [], float).reshape(-1)
+							cls_npz = str(z[pre + "cls"]) if pre + "cls" in keys else ""
+							if (cls_npz != (q.cls or "") or len(ch) != len(lc)
+									or (len(ch) and float(np.abs(ch - lc).max()) > STALE_CHORD_MM)):
+								why.append("forma")
+					if q.crop_path:
+						fp = project.p(q.crop_path)
+						if not os.path.exists(fp):
+							why.append("recorte em falta")
+						elif q.bbox is not None:
+							with Image.open(fp) as im:
+								if im.size != (int(q.bbox[2]), int(q.bbox[3])):
+									why.append("recorte")
+					if why:
+						bad[q.id] = why
+		if bad:
+			out["sheets"][sid] = {"motivos": sorted({w for v in bad.values() for w in v}), "pecas": sorted(bad)}
+			out["pecas"].update(bad)
+	out["n_pecas"] = len(out["pecas"])
+	out["n_folhas"] = len(out["sheets"])
+	return out
+
+
+def rebuild_stale(project, *, progress=print, dry_run: bool = False, segment=None) -> dict:
+	"""Re-segment only the sheets listed by :func:`stale_assets` (:func:`rebuild_assets` with ``force_scans``,
+	``refresh_crops`` = the pieces with a stale crop, no ``clean`` / ``register``) and check again.
+
+	With the code that wrote the log the new silhouettes are the log's: ``eventos`` = 0. Events
+	(``piece_resegmented``, motivo ``stale``) mean this checkout segments differently from the one that
+	wrote the log; they are named in ``aviso``. Returns ``{antes, folhas, pecas, eventos, changed, errors,
+	depois, aviso}`` (``depois`` = :func:`stale_assets` after the rebuild; None with ``dry_run``)."""
+	st = stale_assets(project)
+	out = {"antes": st, "folhas": sorted(st["sheets"]), "pecas": sorted(st["pecas"]), "eventos": 0, "changed": [],
+		   "errors": [], "depois": None, "aviso": None}
+	if not st["sheets"]:
+		if progress:
+			progress("ativos coerentes com o log: nada a refazer")
+		return out
+	if progress:
+		progress(f"{st['n_pecas']} peças desatualizadas em {st['n_folhas']} folhas: {', '.join(out['folhas'])}")
+	refresh = [pid for pid, why in st["pecas"].items() if any(w.startswith("recorte") for w in why)]
+	r = rebuild_assets(project, progress=progress, scans=out["folhas"], force_scans=out["folhas"], clean=False,
+					   register=False, motivo="stale", segment=segment, dry_run=dry_run, refresh_crops=refresh)
+	out["changed"], out["errors"] = list(r.get("changed") or []), list(r.get("errors") or [])
+	out["eventos"] = 0 if dry_run else len(out["changed"])
+	if out["changed"]:
+		out["aviso"] = (f"{len(r['changed'])} silhuetas diferentes do log ({', '.join(c['piece'] for c in r['changed'])}): "
+						"este código segmenta de outro modo do que o que escreveu o log"
+						+ ("" if dry_run else "; registadas como piece_resegmented (motivo stale)"))
+		if progress:
+			progress("AVISO " + out["aviso"])
+	if not dry_run:
+		out["depois"] = stale_assets(project)
 	return out
 
 
