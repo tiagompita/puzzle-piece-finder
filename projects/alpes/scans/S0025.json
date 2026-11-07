@@ -19,11 +19,8 @@
    "index_in_scan": 0,
    "lote": null,
    "n_no_lote": 1,
-   "estado": "colocada",
-   "celula": [
-    14,
-    61
-   ],
+   "estado": "em_seccao",
+   "celula": null,
    "theta_deg": null,
    "seccao_id": "G0084",
    "same_as": null,
@@ -62,11 +59,8 @@
    "index_in_scan": 1,
    "lote": null,
    "n_no_lote": 2,
-   "estado": "colocada",
-   "celula": [
-    15,
-    61
-   ],
+   "estado": "em_seccao",
+   "celula": null,
    "theta_deg": null,
    "seccao_id": "G0084",
    "same_as": null,

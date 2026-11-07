@@ -5383,7 +5383,7 @@
    },
    {
     "estado": "colocada",
-    "peca_id": "P0862",
+    "peca_id": "P0840",
     "fonte": "legado_scan",
     "foto_id": null
    },
@@ -5756,20 +5756,20 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
-    "foto_id": null
-   },
-   {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0847",
+    "fonte": "legado_scan",
     "foto_id": null
    },
    {
     "estado": "colocada",
-    "peca_id": "P0863",
+    "peca_id": "P0848",
+    "fonte": "legado_scan",
+    "foto_id": null
+   },
+   {
+    "estado": "colocada",
+    "peca_id": "P0839",
     "fonte": "legado_scan",
     "foto_id": null
    },

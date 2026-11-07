@@ -1,5 +1,5 @@
 {
- "t": "2026-11-05T21:43:27",
+ "t": "2026-11-06T23:55:59",
  "entries": [
   {
    "origin": "gemeo",
@@ -3646,75 +3646,6 @@
    "lote": null,
    "n_no_lote": null,
    "cell": [
-    15,
-    59
-   ],
-   "decision": "por_ancorar",
-   "margin": 3.318,
-   "dE": null,
-   "d1_mm": null,
-   "reasons": [
-    "2 peças; top-3 [([15, 59], 0), ([28, 57], 270), ([28, 57], 180)]"
-   ],
-   "query": null,
-   "pair": null,
-   "rank": null,
-   "score": null,
-   "phi_deg": null,
-   "section": "G0077",
-   "candidates": [
-    {
-     "cell0": [
-      15,
-      59
-     ],
-     "rot": 0,
-     "mirror": false,
-     "score": 6.986,
-     "margin": 3.318
-    },
-    {
-     "cell0": [
-      28,
-      57
-     ],
-     "rot": 270,
-     "mirror": false,
-     "score": 23.177,
-     "margin": 3.318
-    },
-    {
-     "cell0": [
-      28,
-      57
-     ],
-     "rot": 180,
-     "mirror": false,
-     "score": 23.183,
-     "margin": 3.318
-    }
-   ],
-   "ordem": 8,
-   "scan_id": null,
-   "crop_path": null,
-   "clean_path": null,
-   "twin_id": null,
-   "twin_cell": [
-    33,
-    6
-   ],
-   "sheet": null,
-   "ghost": null,
-   "theta_deg": null,
-   "pose_known": false,
-   "pose_reason": "sem peça"
-  },
-  {
-   "origin": "seccao",
-   "piece": null,
-   "lote": null,
-   "n_no_lote": null,
-   "cell": [
     17,
     35
    ],
@@ -3763,7 +3694,7 @@
      "margin": 1.907
     }
    ],
-   "ordem": 9,
+   "ordem": 8,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -3832,7 +3763,7 @@
      "margin": 1.866
     }
    ],
-   "ordem": 10,
+   "ordem": 9,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -3901,7 +3832,7 @@
      "margin": 1.741
     }
    ],
-   "ordem": 11,
+   "ordem": 10,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -4451,7 +4382,7 @@
      "margin": 1.661
     }
    ],
-   "ordem": 12,
+   "ordem": 11,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5001,7 +4932,7 @@
      "margin": 1.64
     }
    ],
-   "ordem": 13,
+   "ordem": 12,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5070,7 +5001,7 @@
      "margin": 1.639
     }
    ],
-   "ordem": 14,
+   "ordem": 13,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5139,7 +5070,7 @@
      "margin": 1.418
     }
    ],
-   "ordem": 15,
+   "ordem": 14,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5208,7 +5139,7 @@
      "margin": 1.322
     }
    ],
-   "ordem": 16,
+   "ordem": 15,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5277,7 +5208,7 @@
      "margin": 1.289
     }
    ],
-   "ordem": 17,
+   "ordem": 16,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5285,6 +5216,75 @@
    "twin_cell": [
     31,
     27
+   ],
+   "sheet": null,
+   "ghost": null,
+   "theta_deg": null,
+   "pose_known": false,
+   "pose_reason": "sem peça"
+  },
+  {
+   "origin": "seccao",
+   "piece": null,
+   "lote": null,
+   "n_no_lote": null,
+   "cell": [
+    14,
+    61
+   ],
+   "decision": "por_ancorar",
+   "margin": 1.197,
+   "dE": null,
+   "d1_mm": null,
+   "reasons": [
+    "2 peças; top-3 [([14, 61], 90), ([14, 62], 90), ([15, 44], 90)]"
+   ],
+   "query": null,
+   "pair": null,
+   "rank": null,
+   "score": null,
+   "phi_deg": null,
+   "section": "G0084",
+   "candidates": [
+    {
+     "cell0": [
+      14,
+      61
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 13.871,
+     "margin": 1.197
+    },
+    {
+     "cell0": [
+      14,
+      62
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 16.607,
+     "margin": 1.197
+    },
+    {
+     "cell0": [
+      15,
+      44
+     ],
+     "rot": 90,
+     "mirror": false,
+     "score": 16.909,
+     "margin": 1.197
+    }
+   ],
+   "ordem": 17,
+   "scan_id": null,
+   "crop_path": null,
+   "clean_path": null,
+   "twin_id": null,
+   "twin_cell": [
+    34,
+    4
    ],
    "sheet": null,
    "ghost": null,
@@ -7017,75 +7017,6 @@
    "lote": null,
    "n_no_lote": null,
    "cell": [
-    15,
-    61
-   ],
-   "decision": "por_ancorar",
-   "margin": 1.116,
-   "dE": null,
-   "d1_mm": null,
-   "reasons": [
-    "2 peças; top-3 [([15, 61], 270), ([15, 57], 270), ([15, 58], 270)]"
-   ],
-   "query": null,
-   "pair": null,
-   "rank": null,
-   "score": null,
-   "phi_deg": null,
-   "section": "G0075",
-   "candidates": [
-    {
-     "cell0": [
-      15,
-      61
-     ],
-     "rot": 270,
-     "mirror": false,
-     "score": 10.271,
-     "margin": 1.116
-    },
-    {
-     "cell0": [
-      15,
-      57
-     ],
-     "rot": 270,
-     "mirror": false,
-     "score": 11.463,
-     "margin": 1.116
-    },
-    {
-     "cell0": [
-      15,
-      58
-     ],
-     "rot": 270,
-     "mirror": false,
-     "score": 12.188,
-     "margin": 1.116
-    }
-   ],
-   "ordem": 22,
-   "scan_id": null,
-   "crop_path": null,
-   "clean_path": null,
-   "twin_id": null,
-   "twin_cell": [
-    33,
-    4
-   ],
-   "sheet": null,
-   "ghost": null,
-   "theta_deg": null,
-   "pose_known": false,
-   "pose_reason": "sem peça"
-  },
-  {
-   "origin": "seccao",
-   "piece": null,
-   "lote": null,
-   "n_no_lote": null,
-   "cell": [
     16,
     48
    ],
@@ -7134,7 +7065,7 @@
      "margin": 1.08
     }
    ],
-   "ordem": 23,
+   "ordem": 22,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7203,7 +7134,7 @@
      "margin": 1.076
     }
    ],
-   "ordem": 24,
+   "ordem": 23,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7753,7 +7684,7 @@
      "margin": 1.074
     }
    ],
-   "ordem": 25,
+   "ordem": 24,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7822,7 +7753,7 @@
      "margin": 1.073
     }
    ],
-   "ordem": 26,
+   "ordem": 25,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7891,7 +7822,7 @@
      "margin": 1.067
     }
    ],
-   "ordem": 27,
+   "ordem": 26,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7960,7 +7891,7 @@
      "margin": 1.059
     }
    ],
-   "ordem": 28,
+   "ordem": 27,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8029,7 +7960,7 @@
      "margin": 1.057
     }
    ],
-   "ordem": 29,
+   "ordem": 28,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8098,7 +8029,7 @@
      "margin": 1.055
     }
    ],
-   "ordem": 30,
+   "ordem": 29,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8167,7 +8098,7 @@
      "margin": 1.045
     }
    ],
-   "ordem": 31,
+   "ordem": 30,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8236,7 +8167,7 @@
      "margin": 1.039
     }
    ],
-   "ordem": 32,
+   "ordem": 31,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8305,7 +8236,7 @@
      "margin": 1.031
     }
    ],
-   "ordem": 33,
+   "ordem": 32,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8374,7 +8305,7 @@
      "margin": 1.03
     }
    ],
-   "ordem": 34,
+   "ordem": 33,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8443,7 +8374,7 @@
      "margin": 1.02
     }
    ],
-   "ordem": 35,
+   "ordem": 34,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8993,7 +8924,7 @@
      "margin": 1.017
     }
    ],
-   "ordem": 36,
+   "ordem": 35,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9062,7 +8993,7 @@
      "margin": 1.011
     }
    ],
-   "ordem": 37,
+   "ordem": 36,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9131,7 +9062,7 @@
      "margin": 1.007
     }
    ],
-   "ordem": 38,
+   "ordem": 37,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9200,7 +9131,7 @@
      "margin": 1.005
     }
    ],
-   "ordem": 39,
+   "ordem": 38,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9750,7 +9681,7 @@
      "margin": 1.003
     }
    ],
-   "ordem": 40,
+   "ordem": 39,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9819,7 +9750,7 @@
      "margin": 1.001
     }
    ],
-   "ordem": 41,
+   "ordem": 40,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9888,7 +9819,7 @@
      "margin": 1.001
     }
    ],
-   "ordem": 42,
+   "ordem": 41,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -9957,7 +9888,7 @@
      "margin": 0.874
     }
    ],
-   "ordem": 43,
+   "ordem": 42,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -10026,7 +9957,7 @@
      "margin": 0.868
     }
    ],
-   "ordem": 44,
+   "ordem": 43,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -10576,7 +10507,7 @@
      "margin": 0.835
     }
    ],
-   "ordem": 45,
+   "ordem": 44,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
