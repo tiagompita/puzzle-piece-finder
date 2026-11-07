@@ -25,3 +25,7 @@
 {"id": "R0025", "t": "2026-11-05T20:45:57", "tipo": "mal_lida", "texto": "", "piece": "P0657", "cell": [45, 1], "scan_id": "S0020", "n_no_lote": 30, "lote": null, "crop_path": "crops/P0657.png", "captura": "reports/R0025.jpg", "vista": "celula", "estado": "fechado", "fechado_em": "2026-11-05T21:39:36", "nota": "duplicado de R0012"}
 {"id": "R0026", "t": "2026-11-05T20:45:59", "tipo": "mal_lida", "texto": "", "piece": "P0651", "cell": [44, 1], "scan_id": "S0020", "n_no_lote": 24, "lote": null, "crop_path": "crops/P0651.png", "captura": "reports/R0026.jpg", "vista": "celula", "estado": "fechado", "fechado_em": "2026-11-05T21:39:36", "nota": "duplicado de R0011"}
 {"id": "R0027", "t": "2026-11-05T20:52:55", "tipo": "mal_colocada", "texto": "", "piece": "P0862", "cell": [14, 61], "scan_id": "S0025", "n_no_lote": 1, "lote": null, "crop_path": "crops/P0862.png", "captura": "reports/R0027.jpg", "vista": "celula", "estado": "aberto"}
+{"evento": "estado", "id": "R0018", "t": "2026-11-07T04:56:08", "acao": "close", "nota": "verificado pelo Tiago 2026-11-07", "estado": "fechado"}
+{"evento": "estado", "id": "R0019", "t": "2026-11-07T04:56:08", "acao": "close", "nota": "verificado pelo Tiago 2026-11-07", "estado": "fechado"}
+{"evento": "estado", "id": "R0020", "t": "2026-11-07T04:56:09", "acao": "close", "nota": "verificado pelo Tiago 2026-11-07", "estado": "fechado"}
+{"evento": "estado", "id": "R0027", "t": "2026-11-07T04:56:09", "acao": "close", "nota": "verificado pelo Tiago 2026-11-07", "estado": "fechado"}
