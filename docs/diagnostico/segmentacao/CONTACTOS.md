@@ -75,7 +75,7 @@ Faz-se só com `split_contacts=True` (valor por omissão). Com `split_contacts=F
   - Confiança `alta`. [V]
   - **A conectividade sozinha NÃO resolve este par.** A sombra projetada liga a ponta da saliência à #4 no limiar (vê-se no `threshold_mask`), por isso o componente toca os dois núcleos e foi a bacia (passo b) que decidiu. [V] (`metodo = watershed`)
   - Resta um pequeno triângulo de fundo (≈ 1 mm) entre o topo da saliência e o lábio da #4, incluído no contorno da #3. [V, visto]
-- **S0020 #24/#30** (P0651 colocada em (45,1), P0657 em (44,1)). Antes, a separação a baixa resolução cortou as duas peças à toa: TTFF com cordas 15,47/14,48, e a outra sem 4 cantos. Depois, as duas peças saem inteiras e plausíveis para peças da borda esquerda: TTFT e TBFB, com um F cada.
+- **S0020 #24/#30** (P0651 colocada em (44,1), P0657 em (45,1); ordem corrigida 2026-11-07, TRIAGEM §5). Antes, a separação a baixa resolução cortou as duas peças à toa: TTFF com cordas 15,47/14,48, e a outra sem 4 cantos. Depois, as duas peças saem inteiras e plausíveis para peças da borda esquerda: TTFT e TBFB, com um F cada.
   - Fica `baixa` porque o F da #30 mede 16,39 mm (< 17).
   - Visualmente é claramente melhor. [V, visto]
 - **S0003 (#18, #19, #24, #25).** É uma secção montada em L (fila de baixo + coluna da direita) da folha GT do canto BE. A #25 é um `is_cluster` que cobre a fila. A coluna estava partida em fragmentos antes e continua partida depois, de outra maneira (sem 4 cantos antes e depois, exceto a #24, que passa de FTFF lixo para sem 4 cantos).
