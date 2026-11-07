@@ -6,12 +6,13 @@ from src import render as R
 from src.legacy import side_compat
 from src.locate import CellArt, render_item, de_cell
 pr = Project.open(sys.argv[1]); prof = pr.profile
+print(R.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 art = CellArt.load(prof, R.REPO)
 OPP = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
 regs = {}
 def nk(q):
     if q not in regs:
-        regs[q] = R.register_piece(pr, q, image=False)
+        regs[q] = R.register_piece(pr, q, image=False, manual=False)
     return regs[q]['corner']['k']
 cells = [(42, 55), (43, 55), (44, 55), (45, 55), (44, 37), (45, 37), (43, 56)]
 pids = ['P0401', 'P0420', 'P0425', 'P0442', 'P0501', 'P0506', 'P0573']

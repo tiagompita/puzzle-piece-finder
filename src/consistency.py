@@ -154,20 +154,14 @@ def _step(v: float, step: float) -> float:
 
 
 def _pose_manual(p):
-	"""The piece's manual pose rounded for :func:`suspect_signature` (angles to 0.1°, offsets to 0.05 mm), or
-	None. ``pose_manual`` does not exist yet on :class:`src.state.Piece`: read with ``getattr``."""
+	"""The piece's manual pose (``Piece.pose_manual``, :meth:`src.state.Project.set_pose`) for
+	:func:`suspect_signature`: ``{theta_deg (0.1°), dx_mm, dy_mm (0.05 mm)}``, or None (its time stamp, note and
+	pivot are left out: setting the same pose again keeps the signature)."""
 	pm = getattr(p, "pose_manual", None)
-	if pm is None:
-		return None
 	if not isinstance(pm, dict):
-		return pm
-	out = {}
-	for k, v in sorted(pm.items()):
-		if isinstance(v, (int, float)) and not isinstance(v, bool):
-			out[k] = _step(v, 0.1 if ("theta" in k or "deg" in k) else 0.05)
-		else:
-			out[k] = v
-	return out
+		return None
+	return {"theta_deg": _step(pm.get("theta_deg") or 0.0, 0.1), "dx_mm": _step(pm.get("dx_mm") or 0.0, 0.05),
+			"dy_mm": _step(pm.get("dy_mm") or 0.0, 0.05)}
 
 
 def suspect_signature(item: dict, project, *, k0: Optional[int] = None) -> str:
@@ -352,7 +346,7 @@ def _item(project, pid: str, k0: int, res: dict, grau: str, ka: Optional[int]) -
 
 
 def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismissed: Optional[dict] = None,
-			 incluir_falsos: bool = False) -> dict:
+			 incluir_falsos: bool = False, incluir_pose_manual: bool = False) -> dict:
 	"""``{summary, items, falsos_alarmes}``: :func:`summary` and :func:`suspects` of one pass (see the module
 	docstring).
 
@@ -372,6 +366,13 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 	(hides the current item), ``obsoleto`` (the piece is flagged with that grade under another signature: it
 	is reported again) or ``sem_suspeita`` (not flagged with that grade now; the mark waits).
 	``summary`` adds ``n_falsos_alarmes`` (active) and ``n_falsos_alarmes_obsoletos``.
+
+	Manual pose (``Piece.pose_manual``, :func:`src.render.manual_pose`): the user placed the piece by hand, so
+	by default its orientation grades (``impossivel`` / ``melhor_rotacao``) are not reported nor counted (as
+	``recorte`` leaves out manual contours); ``n_pose_manual`` counts the checked pieces with one. With
+	``incluir_pose_manual`` they are graded with the ``k`` of the manual pose (``corner.k`` of its entry) and
+	reported. Every item of such a piece carries ``pose_manual: True``. As a neighbour, a piece always counts
+	with its effective pose (the manual one).
 	"""
 	placements = {} if placements is None else placements
 	ids = checked_ids(project)
@@ -415,6 +416,8 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 				return False
 		return True
 
+	from src.render import manual_pose
+	with_pm = {pid for pid in ids if manual_pose(project, pid) is not None}
 	items, n_ok, n_none, n_nb, n_expl = [], 0, 0, 0, 0
 	for pid in ids:
 		g = grade(pid)
@@ -424,7 +427,7 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 		n_ok += 1
 		k0, res, grau, ka = g
 		n_nb += res[k0]["n"] > 0
-		if grau is None:
+		if grau is None or (pid in with_pm and not incluir_pose_manual):
 			continue
 		if grau == "impossivel" and ka is None and explained(pid, k0, res):
 			n_expl += 1
@@ -432,6 +435,8 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 		items.append(_item(project, pid, k0, res, grau, ka))
 	items += _recorte_items(project, ids)
 	for it in items:
+		if it["piece"] in with_pm:
+			it["pose_manual"] = True
 		it["assinatura"] = suspect_signature(it, project, k0=k_of(it["piece"]) if it["grau"] == "recorte" else None)
 	items, falsos = _apply_dismissed(items, getattr(project, "falsos_alarmes", {}) if dismissed is None else dismissed,
 									 None if pieces is None else set(ids))
@@ -449,7 +454,7 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 				n_melhor_rotacao=sum(it["grau"] == "melhor_rotacao" for it in counted), n_explicadas=n_expl,
 				n_recorte=sum(it["grau"] == "recorte" for it in counted),
 				n_falsos_alarmes=sum(f["estado"] == "ativo" for f in falsos),
-				n_falsos_alarmes_obsoletos=sum(f["obsoleto"] for f in falsos))
+				n_falsos_alarmes_obsoletos=sum(f["obsoleto"] for f in falsos), n_pose_manual=len(with_pm))
 	return {"summary": summ, "items": shown, "falsos_alarmes": falsos}
 
 
@@ -483,7 +488,7 @@ def suspects(project, placements: Optional[dict] = None, *, pieces=None) -> list
 
 def summary(project, placements: Optional[dict] = None, *, pieces=None) -> dict:
 	"""``{n_colocadas, n_verificadas, n_sem_cantos, n_com_vizinhas, n_impossivel, n_melhor_rotacao, n_explicadas,
-	n_recorte, n_falsos_alarmes, n_falsos_alarmes_obsoletos}``."""
+	n_recorte, n_falsos_alarmes, n_falsos_alarmes_obsoletos, n_pose_manual}``."""
 	return evaluate(project, placements, pieces=pieces)["summary"]
 
 

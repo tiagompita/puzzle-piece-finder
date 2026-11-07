@@ -41,6 +41,11 @@ Design (docs/gui-design.md):
   ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``,
   ``suspeitas_changed`` (summary of ``/api/suspeitas`` + ``n_em_reports``: after a board write, a report write
   or a false-alarm mark), ``ready``.
+* **Manual pose** («Editar posicionamento», docs/diagnostico/render/POSE_MANUAL.md): ``GET /api/pieces/{id}/pose``
+  (contour in cell-width units about the pivot, not rotated, the neighbours, the SVG transform),
+  ``POST …/pose/avaliar`` (seams + orientation of a candidate pose, read-only, no lock),
+  ``POST …/pose`` and ``POST …/pose/repor`` (events ``pose_set`` / ``pose_cleared`` under the write lock,
+  incremental re-query, ``board_changed`` / ``fetch_changed`` / ``suspeitas_changed`` / ``piece_changed``).
 * **Suspects** (``/api/suspeitas``, :mod:`src.consistency`): items joined with the open reports
   (``report_aberto``); ``POST /api/suspeitas/{piece}/falso-alarme`` ``{grau, nota?}`` and
   ``POST …/restaurar`` ``{grau}`` log ``suspect_dismissed`` / ``suspect_restored`` under the write lock.
@@ -90,6 +95,8 @@ REGION_LRU = 24
 PIECE_LRU = 600
 SECTION_LRU = 64
 EVENTS_KEEP = 500
+POSE_CONTOUR_PTS = 300         # GET /pose: points of each contour (cell-width units)
+POSE_DIRS = {"N": (-1, 0), "E": (0, 1), "S": (1, 0), "W": (0, -1)}
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSET_DIRS = ("pieces", "crops", "overlays", "render")
@@ -171,16 +178,19 @@ def missing_assets(project) -> list:
 
 
 def board_snapshot(board, pieces: Optional[dict] = None) -> list:
-	"""``[(estado, peca_id[, theta_deg]), ...]`` row-major: what the raster depends on per cell.
+	"""``[(estado, peca_id[, theta_deg, pose_manual_t]), ...]`` row-major: what the raster depends on per cell.
 
-	With ``pieces`` (``Project.pieces``) each entry also carries the log pose of the cell's piece,
-	so a pose change alone (same piece, same cell) is a changed cell too."""
+	With ``pieces`` (``Project.pieces``) each entry also carries the log pose of the cell's piece and the
+	time stamp of its manual pose (``Piece.pose_manual['t']``, None without one), so a pose change alone
+	(same piece, same cell) is a changed cell too (re-composed with its neighbours, :func:`patch_regions`)."""
 	if pieces is None:
 		return [(cell["estado"], cell["peca_id"]) for _, cell in board.iter_cells()]
 	out = []
 	for _, cell in board.iter_cells():
 		p = pieces.get(cell["peca_id"]) if cell["peca_id"] else None
-		out.append((cell["estado"], cell["peca_id"], None if p is None else p.theta_deg))
+		pm = getattr(p, "pose_manual", None) if p is not None else None
+		out.append((cell["estado"], cell["peca_id"], None if p is None else p.theta_deg,
+					None if pm is None else pm.get("t")))
 	return out
 
 
@@ -810,7 +820,9 @@ class Gui:
 				"scan_id": p.scan_id, "seccao_id": p.seccao_id, "same_as": p.same_as, "cls": p.cls, "n_flat": p.n_flat,
 				"chords_mm": p.chords_mm, "area_mm2": p.area_mm2, "flags": {k: v for k, v in p.flags.items() if v},
 				"theta_deg": p.theta_deg, "contorno_manual": bool(p.flags.get(OV.MANUAL_FLAG)),
-				"contorno_nota": p.flags.get(OV.MANUAL_NOTE_FLAG) or ""}
+				"contorno_nota": p.flags.get(OV.MANUAL_NOTE_FLAG) or "",
+				"pose_manual": None if p.pose_manual is None else {k: p.pose_manual.get(k) for k in
+																	("theta_deg", "dx_mm", "dy_mm", "t", "nota")}}
 
 	def board_json(self) -> dict:
 		pr = self.pr
@@ -1211,6 +1223,231 @@ class Gui:
 			return self._after_suspect_write({"piece": pid, "grau": grau})
 		finally:
 			self.wlock.release()
+
+	# ------------------------------------------------------------ manual pose («Editar posicionamento»)
+	def _effective_entry(self, pid: str) -> dict:
+		"""The pose the board shows (:func:`src.render.effective_pose` over :meth:`placements` and the on-the-fly
+		registrations kept in ``_susp_pl``)."""
+		from src import render
+		return render.effective_pose(self.pr, pid, self._susp_placements())
+
+	def _pose_placed(self, pid: str):
+		"""The placed piece ``pid`` (FileNotFoundError if unknown, ValueError if not ``colocada``)."""
+		if pid not in self.pr.pieces:
+			raise FileNotFoundError(f"peça desconhecida {pid}")
+		p = self.pr.piece(pid)
+		if p.estado != "colocada" or p.celula is None:
+			raise ValueError(f"{pid} não está colocada (está '{p.estado}')")
+		return p
+
+	def _pose_limits(self) -> dict:
+		from src.state import POSE_MAX_FRAC
+		cm = self.pr.profile.cell_mm
+		return {"dx_max_mm": round(POSE_MAX_FRAC * float(cm["w"]), 4), "dy_max_mm": round(POSE_MAX_FRAC * float(cm["h"]), 4)}
+
+	def _pose_body(self, body: dict) -> tuple:
+		"""``(theta_deg, dx_mm, dy_mm)`` of a request body (ValueError with the reason, limits included)."""
+		if not isinstance(body, dict):
+			raise ValueError("o corpo deve ser um objeto JSON")
+		vals = []
+		for k in ("theta_deg", "dx_mm", "dy_mm"):
+			v = body.get(k)
+			if isinstance(v, bool) or not isinstance(v, (int, float)) or not np.isfinite(v):
+				raise ValueError(f"{k} deve ser um número")
+			vals.append(float(v))
+		lim = self._pose_limits()
+		if abs(vals[1]) > lim["dx_max_mm"] + 1e-9 or abs(vals[2]) > lim["dy_max_mm"] + 1e-9:
+			raise ValueError(f"deslocamento ({vals[1]:.2f}, {vals[2]:.2f}) mm fora dos limites "
+							 f"(±{lim['dx_max_mm']:.2f} × ±{lim['dy_max_mm']:.2f} mm)")
+		return tuple(vals)
+
+	def _svg_of(self, cell, e: dict) -> dict:
+		"""Transform of a contour of :meth:`pose_json` into the board SVG (cell-width units, y = row × hr)."""
+		w, h = float(self.pr.profile.cell_mm["w"]), float(self.pr.profile.cell_mm["h"])
+		tx = (int(cell[1]) - 0.5) + float(e.get("dx_mm") or 0.0) / w
+		ty = (int(cell[0]) - 0.5) * (h / w) + float(e.get("dy_mm") or 0.0) / w
+		th = float(e["theta_deg"])
+		return {"translate": [round(tx, 5), round(ty, 5)], "rotate_deg": round(th, 4),
+				"transform": f"translate({tx:.5f} {ty:.5f}) rotate({th:.4f})"}
+
+	def _pose_contour(self, pid: str, pivot_mm) -> list:
+		"""``Shape.c`` (scan mm) relative to ``pivot_mm``, not rotated, divided by the cell width, <= ``POSE_CONTOUR_PTS``."""
+		sh = self.pr.shape(pid)
+		if sh is None:
+			return []
+		c = np.asarray(sh.c, float).reshape(-1, 2)
+		idx = np.unique(np.linspace(0, len(c), min(POSE_CONTOUR_PTS, len(c)), endpoint=False).astype(int))
+		g = (c[idx] - np.asarray(pivot_mm, float)) / float(self.pr.profile.cell_mm["w"])
+		return [[round(float(x), 4), round(float(y), 4)] for x, y in g]
+
+	def _neighbours_placed(self, cell) -> dict:
+		"""``{N|E|S|W: piece id | None}``: the ``colocada`` pieces around ``cell``."""
+		out = {}
+		for d, (dl, dc) in POSE_DIRS.items():
+			lc = (int(cell[0]) + dl, int(cell[1]) + dc)
+			q = None
+			if self.pr.profile.in_grid(*lc):
+				cv = self.pr.board[lc]
+				q = cv["peca_id"] if cv["estado"] == "colocada" else None
+			out[d] = q
+		return out
+
+	def pose_json(self, pid: str) -> dict:
+		"""``GET /api/pieces/{pid}/pose`` (docs/diagnostico/render/POSE_MANUAL.md §Contrato)."""
+		from src import render
+		p = self._pose_placed(pid)
+		pr = self.pr
+		w, h = float(pr.profile.cell_mm["w"]), float(pr.profile.cell_mm["h"])
+		e = self._effective_entry(pid)
+		if "error" in e:
+			raise ValueError(e["error"])
+		auto = e if not e.get("manual") else render.register_piece(pr, pid, art=None, image=False, manual=False)
+		viz = {}
+		for d, q in self._neighbours_placed(p.celula).items():
+			if q is None:
+				viz[d] = None
+				continue
+			eq = self._effective_entry(q)
+			if "error" in eq:
+				viz[d] = None
+				continue
+			cq = pr.piece(q).celula
+			viz[d] = {"piece": q, "cell": list(cq), "theta_deg": float(eq["theta_deg"]), "dx_mm": float(eq.get("dx_mm") or 0.0),
+					  "dy_mm": float(eq.get("dy_mm") or 0.0), "manual": bool(eq.get("manual")),
+					  "contorno": self._pose_contour(q, eq["pivot_mm"]), "svg": self._svg_of(cq, eq)}
+		pm = p.pose_manual
+		return {"piece": pid, "cell": list(p.celula), "w_mm": w, "h_mm": h, "hr": h / w,
+				"pivot_mm": [float(v) for v in e["pivot_mm"]],
+				"efetiva": render.pose_brief(e), "automatica": {k: v for k, v in render.pose_brief(auto).items() if k != "manual"},
+				"manual": None if pm is None else {k: pm.get(k) for k in ("theta_deg", "dx_mm", "dy_mm", "pivot_mm", "t", "nota")},
+				"limites": self._pose_limits(), "contorno": self._pose_contour(pid, e["pivot_mm"]),
+				"svg": self._svg_of(p.celula, e), "vizinhas": viz}
+
+	def pose_evaluate(self, pid: str, body: dict) -> dict:
+		"""``POST /api/pieces/{pid}/pose/avaliar``: the seams and the orientation check of a candidate pose, nothing
+		written, no lock. ``{juntas: {N|E|S|W: {piece, gap_mm, gap_sil_mm} | None}, pior_mm, pior_dir, consistencia:
+		{grau, falhas, texto}, ms}``."""
+		t0 = time.time()
+		th, dx, dy = self._pose_body(body)
+		self._pose_placed(pid)
+		out = self._evaluate_pose(pid, th, dx, dy)
+		out["ms"] = round(1000 * (time.time() - t0), 1)
+		return out
+
+	def _evaluate_pose(self, pid: str, th: float, dx: float, dy: float, *, effective: bool = False) -> dict:
+		"""Seams of ``pid`` with its placed neighbours (their effective poses) and the orientation grade, with the
+		candidate pose (or, ``effective``, the stored one)."""
+		from src import consistency, render
+		pr = self.pr
+		p = pr.piece(pid)
+		cur = self._effective_entry(pid)
+		cand = cur if effective else render.candidate_entry(pr, pid, th, dx, dy, pivot_mm=cur.get("pivot_mm"))
+		nb = self._neighbours_placed(p.celula)
+		pl = {pid: cand}
+		for q in nb.values():
+			if q is not None:
+				eq = self._effective_entry(q)
+				if "error" not in eq:
+					pl[q] = eq
+		shapes = {q: pr.shape(q) for q in pl}
+		gaps = render.seam_gaps(pr, pl, shapes=shapes)
+		inv = {"E": "W", "S": "N"}
+		juntas = {d: None for d in POSE_DIRS}
+		for g in gaps:
+			if pid not in (g["a"], g["b"]):
+				continue
+			d = g["dir"] if g["a"] == pid else inv[g["dir"]]
+			q = g["b"] if g["a"] == pid else g["a"]
+			juntas[d] = {"piece": q, "gap_mm": round(float(g["gap_mm"]), 3), "gap_sil_mm": round(float(g["gap_sil_mm"]), 3)}
+		vals = [(abs(j["gap_mm"]), d, j["gap_mm"]) for d, j in juntas.items() if j is not None]
+		worst = max(vals) if vals else None
+		pl_all = dict(self._susp_placements())
+		pl_all.update(pl)
+		r = consistency.evaluate(pr, pl_all, pieces=[pid], dismissed={}, incluir_pose_manual=True)
+		it = next((x for x in r["items"] if x["piece"] == pid and x["grau"] in ("impossivel", "melhor_rotacao")), None)
+		cons = ({"grau": None, "falhas": [], "texto": "sem falhas de orientação"} if it is None
+				else {"grau": it["grau"], "falhas": it["falhas"], "texto": it["texto"]})
+		return {"juntas": juntas, "pior_mm": None if worst is None else worst[2], "pior_dir": None if worst is None else worst[1],
+				"consistencia": cons}
+
+	def _pose_write(self, pid: str, fn) -> dict:
+		"""Common cycle of the pose writes (under ``wlock``): ``fn(p, entry_before) -> extra dict`` logs the event,
+		then save, invariants on disk, caches, incremental re-query of the cell / twin cell / free neighbours (the
+		twin's proposal pose and ghost come from this pose), :meth:`_after_write` (``board_changed`` /
+		``fetch_changed`` / ``suspeitas_changed``, the placement re-registered into ``placements.json``),
+		``piece_changed``."""
+		from src.confirm import _around
+		from src.query import run_query
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			if self.job:
+				raise Busy(self.job)
+			self.sync_locked()
+			t0 = time.time()
+			try:
+				p = self._pose_placed(pid)
+			except ValueError as e:
+				return {"error": str(e)}
+			pr = self.pr
+			before = board_snapshot(pr.board, pr.pieces)
+			e0 = self._effective_entry(pid)
+			if "error" in e0:
+				return {"error": e0["error"]}
+			try:
+				extra = fn(p, e0)
+			except StateError as e:
+				return {"error": str(e)}
+			pr.save()
+			bad = pr.check_invariants(disk=True)
+			self._known_stat = self._log_stat()
+			self._placements = None
+			memo = getattr(self, "_susp_pl", None)
+			if memo:
+				memo.pop(pid, None)
+			if not bad:
+				run_query(pr, only_cells=_around(pr, p.celula), only_pieces=set(), use_image=self.use_image)
+			w = self._after_write(before, [pid])
+			self.emit("piece_changed", {"piece": pid})
+			return dict(extra, ok=True, piece=pid, invariantes=bad, segundos=round(time.time() - t0, 2), **w)
+		finally:
+			self.wlock.release()
+
+	def set_pose(self, pid: str, body: dict) -> dict:
+		"""``POST /api/pieces/{pid}/pose`` ``{theta_deg, dx_mm, dy_mm, nota?}``: event ``pose_set`` (pivot = the one of the
+		current effective pose) -> ``{ok, piece, antes, depois, juntas, invariantes, segundos, celulas_mudadas}``."""
+		from src import render
+		th, dx, dy = self._pose_body(body)
+		nota = body.get("nota")
+		if nota is not None and not isinstance(nota, str):
+			raise ValueError("nota deve ser texto")
+
+		def do(p, e0):
+			antes = render.pose_brief(e0)
+			self.pr.set_pose(pid, th, dx, dy, nota=(nota or "").strip(), antes=antes, pivot_mm=e0["pivot_mm"])
+			return {"antes": antes}
+
+		r = self._pose_write(pid, do)
+		if "error" not in r:
+			r["depois"] = render.pose_brief(self._effective_entry(pid))
+			r["juntas"] = self._evaluate_pose(pid, 0.0, 0.0, 0.0, effective=True)["juntas"]
+		return r
+
+	def clear_pose(self, pid: str) -> dict:
+		"""``POST /api/pieces/{pid}/pose/repor``: event ``pose_cleared`` -> ``{ok, piece, antes, automatica, juntas,
+		invariantes, segundos, celulas_mudadas}`` (``{error}`` if the piece has no manual pose)."""
+		from src import render
+
+		def do(p, e0):
+			antes = render.pose_brief(e0)
+			self.pr.clear_pose(pid, antes={k: antes[k] for k in ("theta_deg", "dx_mm", "dy_mm")})
+			return {"antes": antes}
+
+		r = self._pose_write(pid, do)
+		if "error" not in r:
+			r["automatica"] = render.pose_brief(self._effective_entry(pid))
+			r["juntas"] = self._evaluate_pose(pid, 0.0, 0.0, 0.0, effective=True)["juntas"]
+		return r
 
 	def _after_suspect_write(self, out: dict) -> dict:
 		"""Save, invariants on disk, drop the suspects caches, SSE ``suspeitas_changed`` (under ``wlock``)."""
@@ -1696,6 +1933,50 @@ def create_app(gui: Gui):
 					 folha=f"/api/sheets/{gui.pr.piece(pid).scan_id}.jpg?highlight={pid}")
 			return d
 		return JSON(gui.read(run))
+
+	@app.get("/api/pieces/{pid}/pose")
+	def piece_pose(pid: str):
+		ready()
+		if pid not in gui.pr.pieces:
+			raise HTTPException(404, detail=f"peça desconhecida {pid}")
+		try:
+			return JSON(guard(lambda: gui.read(lambda: gui.pose_json(pid))))
+		except HTTPException as e:
+			if e.status_code == 400:
+				return JSON({"error": str(e.detail)}, status_code=400)
+			raise
+
+	async def _pose_post(request: Request, fn, body_needed: bool = True):
+		ready()
+		body = {}
+		if body_needed:
+			try:
+				body = await request.json()
+			except ValueError:
+				return JSON({"error": "corpo JSON inválido"}, status_code=400)
+			if not isinstance(body, dict):
+				return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		try:
+			r = await asyncio.to_thread(lambda: guard(lambda: fn(body)))
+		except HTTPException as e:
+			if e.status_code == 400:
+				return JSON({"error": str(e.detail)}, status_code=400)
+			raise
+		if "error" in r:
+			return JSON(r, status_code=400)
+		return JSON(r)
+
+	@app.post("/api/pieces/{pid}/pose/avaliar")
+	async def piece_pose_evaluate(pid: str, request: Request):
+		return await _pose_post(request, lambda body: gui.read(lambda: gui.pose_evaluate(pid, body)))
+
+	@app.post("/api/pieces/{pid}/pose")
+	async def piece_pose_set(pid: str, request: Request):
+		return await _pose_post(request, lambda body: gui.set_pose(pid, body))
+
+	@app.post("/api/pieces/{pid}/pose/repor")
+	async def piece_pose_clear(pid: str, request: Request):
+		return await _pose_post(request, lambda body: gui.clear_pose(pid), body_needed=False)
 
 	@app.get("/api/pieces/{pid}/contorno")
 	def piece_contour(pid: str):

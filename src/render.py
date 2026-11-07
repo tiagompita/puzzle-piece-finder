@@ -76,6 +76,7 @@ __all__ = [
 	"INTERIOR_MM", "SEAM_TRIM", "BLEED_MM", "RELAX_GAP_MM", "RELAX_MAX_MM", "DIRS",
 	"cell_corners_mm", "cell_centre_mm", "kabsch_2d", "corner_register", "pose_matrix", "board_contour",
 	"initial_theta", "baseline_placement", "image_refine", "register_piece", "register_all", "registered_theta",
+	"manual_pose", "manual_pose_note", "effective_pose", "pose_brief", "candidate_entry",
 	"seam_gaps", "relax", "bg_distance", "fringe_masks", "decontaminate", "clean_crop", "clean_all", "compose_board",
 	"compose_zone_vs_art", "rebuild_assets", "rebuild_piece", "load_placements", "save_placements", "main",
 	"stale_assets", "rebuild_stale", "STALE_AREA_FRAC", "STALE_CHORD_MM",
@@ -585,9 +586,73 @@ def cell_centre_mm_from_art(art: CellArt, cell) -> np.ndarray:
 
 
 # ---------------------------------------------------------------- registration
+def manual_pose(project, pid: str) -> Optional[dict]:
+	"""The piece's ``pose_manual`` (:meth:`src.state.Project.set_pose`) when it applies to its current cell, else None."""
+	p = project.piece(pid)
+	pm = getattr(p, "pose_manual", None)
+	if pm is None or p.celula is None or [int(v) for v in (pm.get("cell") or [])] != [int(v) for v in p.celula]:
+		return None
+	return pm
+
+
+def _manual_entry_ok(project, pid: str, pl: dict) -> bool:
+	"""``pl`` (a placement entry) agrees with the piece's manual pose: the manual pose itself when there is one
+	(unless the entry was asked without it, ``manual_ignorada``), not a manual entry when there is none."""
+	pm = manual_pose(project, pid)
+	if pm is None:
+		return not pl.get("manual")
+	if pl.get("manual_ignorada"):
+		return True
+	return bool(pl.get("manual")) and all(abs(float(pl.get(k) or 0.0) - float(pm[k])) < 1e-9
+										  for k in ("theta_deg", "dx_mm", "dy_mm"))
+
+
+def manual_pose_note(project) -> str:
+	"""One output line for the metric tools, which measure with the automatic pose (``manual=False``)."""
+	n = sum(1 for pid in placed_ids(project) if manual_pose(project, pid) is not None)
+	return f"{n} peças com pose manual: medidas com a pose automática (manual=False)"
+
+
+def _manual_entry(project, pid: str, pm: dict, sh, profile) -> dict:
+	""":func:`register_piece` result of a piece with a manual pose (no registration: the stored pose)."""
+	p = project.piece(pid)
+	th = float(pm["theta_deg"])
+	corner = None
+	if sh is not None and sh.ok and len(sh.corners) == 4:
+		cr = corner_register(sh, profile, tuple(p.celula), th)
+		if cr.get("ok"):
+			k, _thk, _rms, fok = min(cr["cands"], key=lambda cd: abs(float(wrap_deg(cd[1] - th))))
+			corner = {"theta_deg": th, "k": int(k), "f_ok": bool(fok), "residual_mm": None, "shape_residual_mm": None,
+					  "dtheta0_deg": None, "ambiguous": False}
+	return {"cell": list(p.celula), "theta_deg": th, "dx_mm": float(pm["dx_mm"]), "dy_mm": float(pm["dy_mm"]),
+			"pivot_mm": [float(v) for v in pm["pivot_mm"]], "method": "manual", "manual": True, "rotation": "manual",
+			"theta0": None if p.theta_deg is None else float(p.theta_deg), "corner": corner, "image": None, "score": None,
+			"residual_mm": None, "shape_residual_mm": None, "manual_t": pm.get("t"), "manual_nota": pm.get("nota") or ""}
+
+
+def candidate_entry(project, pid: str, theta_deg: float, dx_mm: float, dy_mm: float, pivot_mm=None) -> dict:
+	"""A placement entry for a pose not yet stored (the «avaliar» of the pose editor), built as a manual one in
+	the piece's current cell (``corner.k`` = the cyclic assignment closest to ``theta_deg``). ``pivot_mm``:
+	default the body centre (the pivot :meth:`src.state.Project.set_pose` stores)."""
+	p = project.piece(pid)
+	sh = project.shape(pid)
+	if pivot_mm is None:
+		pivot_mm = body_center_mm(sh)
+	pm = {"cell": list(p.celula), "theta_deg": float(theta_deg), "dx_mm": float(dx_mm), "dy_mm": float(dy_mm),
+		  "pivot_mm": [float(v) for v in pivot_mm], "t": None, "nota": ""}
+	return _manual_entry(project, pid, pm, sh, project.profile)
+
+
 def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=None, image: bool = True,
-				   _cache: Optional[dict] = None) -> dict:
+				   _cache: Optional[dict] = None, manual: bool = True) -> dict:
 	"""Fine registration of a placed piece in its cell (see the module docstring).
+
+	Manual pose (``Piece.pose_manual`` for the current cell, :meth:`src.state.Project.set_pose`): with ``manual``
+	(default) it is returned as is, nothing registered: ``method = rotation = 'manual'``, ``manual`` True,
+	``corner = {theta_deg, k (the cyclic assignment whose corner rotation is closest to theta, among all 4),
+	f_ok, residual_mm None, ...}``, ``image`` / ``score`` / residuals None. ``manual=False`` gives the automatic
+	pose (the metric tools: a hand-set pose is not a measurement), marked ``manual_ignorada`` when the piece has a
+	manual pose so :func:`compose_board` keeps it.
 
 	Returns ``{cell, theta_deg, dx_mm, dy_mm, pivot_mm, residual_mm, shape_residual_mm, method,
 	score, theta0, corner: {...}, image: {...}}`` with ``method`` in ``corners | corners+image |
@@ -616,10 +681,15 @@ def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=
 	if sh is None:
 		return {"error": f"{pid} sem forma (pieces/{p.scan_id}.npz em falta?)"}
 	cell = tuple(p.celula)
+	pm = manual_pose(project, pid)
+	if pm is not None and manual:
+		return _manual_entry(project, pid, pm, sh, profile)
 	th0 = initial_theta(project, pid, _cache)
 	piv = body_center_mm(sh)
 	out = {"cell": list(cell), "theta0": th0, "pivot_mm": [float(v) for v in piv], "dx_mm": 0.0, "dy_mm": 0.0,
 		   "residual_mm": None, "shape_residual_mm": None, "score": None, "corner": None, "image": None}
+	if pm is not None:
+		out["manual_ignorada"] = True
 	cr = corner_register(sh, profile, cell, th0)
 	rgba = None
 	mmpp = _scan_mmpp(project, p.scan_id)
@@ -717,10 +787,18 @@ def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=
 
 
 def _entry_key(project, pid: str) -> list:
+	"""Cache key of a placement entry: cell, log theta, scan, index, section anchor; plus, only when the piece
+	has a manual pose, ``['manual', t, theta, dx, dy]`` (so the keys of pieces without one, and the caches
+	written before the manual pose existed, keep matching)."""
 	p = project.piece(pid)
 	a = project.sections[p.seccao_id].anchor if p.seccao_id in project.sections else {}
-	return [list(p.celula) if p.celula else None, p.theta_deg, p.scan_id, p.index_in_scan, a.get("rot"),
-			a.get("l0"), a.get("c0")]
+	key = [list(p.celula) if p.celula else None, p.theta_deg, p.scan_id, p.index_in_scan, a.get("rot"),
+		   a.get("l0"), a.get("c0")]
+	pm = manual_pose(project, pid)
+	if pm is not None:
+		key.append(["manual", pm.get("t"), round(float(pm["theta_deg"]), 4), round(float(pm["dx_mm"]), 4),
+					round(float(pm["dy_mm"]), 4)])
+	return key
 
 
 def load_placements(project) -> dict:
@@ -779,12 +857,15 @@ def placed_ids(project) -> list:
 
 
 def register_all(project, *, art: Optional[CellArt] = None, image: bool = True, force: bool = False, relax_pass=None,
-				 progress=print) -> dict:
+				 progress=print, manual: bool = True) -> dict:
 	"""Register every placed piece (cache-aware) and write ``render/placements.json``.
 
 	An entry is reused when the log length is unchanged, or when its key (cell, log theta,
-	scan, index, section anchor) is unchanged. ``relax_pass``: None = automatic (only when
-	|gap| > ``RELAX_GAP_MM`` on more than ``RELAX_SHARE`` of the seams), True / False to force.
+	scan, index, section anchor, manual pose) is unchanged. ``relax_pass``: None = automatic (only when
+	|gap| > ``RELAX_GAP_MM`` on more than ``RELAX_SHARE`` of the seams), True / False to force; the
+	relaxation never moves a manual pose. ``manual=False`` (metric tools on a copy): the automatic pose
+	of every piece; the entries of pieces with a manual pose get a key that never matches
+	:func:`_entry_key` (suffix ``'auto'``), so the GUI does not draw them.
 	Returns ``{pid: placement}``.
 	"""
 	if image and art is None:
@@ -796,11 +877,15 @@ def register_all(project, *, art: Optional[CellArt] = None, image: bool = True, 
 	ids = placed_ids(project)
 	for i, pid in enumerate(ids):
 		key = _entry_key(project, pid)
+		has_pm = manual_pose(project, pid) is not None
+		if not manual and has_pm:
+			key = key + ["auto"]
 		e = old["placements"].get(pid)
-		if e is not None and not force and (same_log or e.get("key") == key) and e.get("image_used") == bool(image):
+		if (e is not None and not force and (same_log or e.get("key") == key) and e.get("image_used") == bool(image)
+				and bool(e.get("manual")) == (manual and has_pm) and bool(e.get("manual_ignorada")) == (not manual and has_pm)):
 			out[pid] = e
 			continue
-		r = register_piece(project, pid, art=art, image=image, _cache=cache)
+		r = register_piece(project, pid, art=art, image=image, _cache=cache, manual=manual)
 		if "error" in r:
 			if progress:
 				progress(f"  {pid}: {r['error']}")
@@ -824,9 +909,28 @@ def register_all(project, *, art: Optional[CellArt] = None, image: bool = True, 
 	return out
 
 
+def effective_pose(project, pid: str, placements: Optional[dict] = None) -> dict:
+	"""The pose the board shows for a placed piece: the ``placements`` entry (default ``render/placements.json``)
+	when its key holds and it agrees with the manual pose, else :func:`register_piece` without the image (the
+	manual pose when there is one). ``{'error': str}`` if the piece cannot be registered."""
+	if placements is None:
+		placements = load_placements(project)["placements"]
+	e = placements.get(pid)
+	if e is not None and e.get("key") == _entry_key(project, pid) and _manual_entry_ok(project, pid, e):
+		return e
+	return register_piece(project, pid, art=None, image=False)
+
+
+def pose_brief(e: dict) -> dict:
+	"""``{theta_deg, dx_mm, dy_mm, method, manual}`` of a placement entry (the ``antes`` of ``pose_set``)."""
+	return {"theta_deg": float(e["theta_deg"]), "dx_mm": float(e.get("dx_mm") or 0.0), "dy_mm": float(e.get("dy_mm") or 0.0),
+			"method": e.get("method"), "manual": bool(e.get("manual"))}
+
+
 def registered_theta(project, pid: str) -> Optional[float]:
 	"""Board rotation (deg, complex convention) of a placed piece from the registration cache
-	(computed on the fly without the image step if absent); None if the piece is not placed."""
+	(computed on the fly without the image step if absent; the manual pose when there is one, through
+	the key); None if the piece is not placed."""
 	p = project.piece(pid)
 	if p.estado != "colocada" or p.celula is None:
 		return None
@@ -928,7 +1032,7 @@ def relax(project, placements: dict, *, max_mm: float = RELAX_MAX_MM, iters: int
 			push[g["a"]].append(0.5 * g["gap_mm"] * u)
 			push[g["b"]].append(-0.5 * g["gap_mm"] * u)
 		for k, v in push.items():
-			if not v:
+			if not v or out[k].get("method") == "manual":     # a pose set by hand is never moved
 				continue
 			# border pieces keep their F line(s) on the target: no move normal to a used F side
 			step = _drop_f_normal(0.5 * np.mean(v, axis=0), out[k].get("f_offset"))
@@ -1403,7 +1507,7 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 		jobs = []
 		for pid in ids:
 			pl = placements.get(pid)
-			if pl is None:
+			if pl is None or not _manual_entry_ok(project, pid, pl):
 				pl = register_piece(project, pid, art=None, image=False)
 				if "error" in pl:
 					continue

@@ -823,3 +823,101 @@ def test_suspeitas_falso_alarme_and_restaurar_endpoints(susp_env):
     pr = _ok_on_disk(gui.path)
     assert len(pr.events()) == n0 + 2 and pr.events()[-1]["action"] == "suspect_restored" and pr.falsos_alarmes == {}
     assert [x["piece"] for x in cl.get("/api/suspeitas").json()["items"]] == [b]
+
+
+# ---------------------------------------------------------------- pose manual («Editar posicionamento»)
+def test_pose_get_contour_neighbours_and_svg(susp_env):
+    gui, cl, ids = susp_env
+    a, b, c = ids["A"], ids["B"], ids["C"]
+    r = cl.get(f"/api/pieces/{a}/pose")
+    assert r.status_code == 200, r.text
+    d = r.json()
+    w, h = d["w_mm"], d["h_mm"]
+    assert d["piece"] == a and d["cell"] == [2, 3] and abs(d["hr"] - h / w) < 1e-12 and d["manual"] is None
+    assert d["efetiva"]["manual"] is False and d["efetiva"]["method"] == d["automatica"]["method"] != "manual"
+    assert d["limites"] == {"dx_max_mm": round(0.5 * w, 4), "dy_max_mm": round(0.5 * h, 4)}
+    assert 20 <= len(d["contorno"]) <= S.POSE_CONTOUR_PTS
+    assert max(abs(x) for p in d["contorno"] for x in p) < 0.9          # cell-width units about the pivot
+    assert d["vizinhas"]["W"]["piece"] == c and d["vizinhas"]["E"]["piece"] == b
+    assert d["vizinhas"]["N"] is None and d["vizinhas"]["S"] is None and d["vizinhas"]["E"]["contorno"]
+    # the SVG transform: translate(column - 0.5 + dx / w, (row - 0.5) * hr + dy / w) rotate(theta)
+    tx, ty = d["svg"]["translate"]
+    assert abs(tx - (3 - 0.5 + d["efetiva"]["dx_mm"] / w)) < 1e-4 and abs(ty - (1.5 * d["hr"] + d["efetiva"]["dy_mm"] / w)) < 1e-4
+    assert d["svg"]["rotate_deg"] == round(d["efetiva"]["theta_deg"], 4)
+    # a contour point mapped by that transform is the board-mm point of the registration / w
+    from src import render as R
+    e = R.register_piece(gui.pr, a, art=None, image=False)
+    sh = gui.pr.shape(a)
+    p0 = (np.asarray(sh.c[0]) - np.asarray(d["pivot_mm"])) / w
+    th = np.radians(d["svg"]["rotate_deg"])
+    svg_pt = np.array([tx + np.cos(th) * p0[0] - np.sin(th) * p0[1], ty + np.sin(th) * p0[0] + np.cos(th) * p0[1]])
+    board_pt = R.board_contour(sh, e, gui.pr.profile)[0] / w
+    assert np.allclose(svg_pt, board_pt, atol=1e-3)
+    assert cl.get("/api/pieces/P9999/pose").status_code == 404
+
+
+def test_pose_evaluate_set_and_reset(susp_env):
+    gui, cl, ids = susp_env
+    a, b = ids["A"], ids["B"]
+    d = cl.get(f"/api/pieces/{b}/pose").json()
+    th = d["efetiva"]["theta_deg"]
+    n0 = len(Project.open(gui.path).events())
+    r = cl.post(f"/api/pieces/{b}/pose/avaliar", json={"theta_deg": th, "dx_mm": 0.0, "dy_mm": 0.0})
+    assert r.status_code == 200, r.text
+    v = r.json()
+    assert v["juntas"]["W"]["piece"] == a and v["juntas"]["E"] is None and v["ms"] >= 0
+    assert v["pior_dir"] == "W" and v["consistencia"]["grau"] == "impossivel"
+    v2 = cl.post(f"/api/pieces/{b}/pose/avaliar", json={"theta_deg": th - 90.0, "dx_mm": 0.0, "dy_mm": 0.0}).json()
+    assert v2["consistencia"]["grau"] is None
+    v3 = cl.post(f"/api/pieces/{b}/pose/avaliar", json={"theta_deg": th - 90.0, "dx_mm": -0.5, "dy_mm": 0.0}).json()
+    assert v3["juntas"]["W"]["gap_mm"] < v2["juntas"]["W"]["gap_mm"]                  # towards A: the seam closes
+    assert len(Project.open(gui.path).events()) == n0                                  # nothing written
+    # errors: out of the limits, not a number, unknown piece
+    for bad in ({"theta_deg": 0, "dx_mm": 50, "dy_mm": 0}, {"theta_deg": "x", "dx_mm": 0, "dy_mm": 0}, {"theta_deg": 0}):
+        rr = cl.post(f"/api/pieces/{b}/pose/avaliar", json=bad)
+        assert rr.status_code == 400 and "error" in rr.json(), bad
+        assert cl.post(f"/api/pieces/{b}/pose", json=bad).status_code == 400
+    assert cl.post("/api/pieces/P9999/pose/avaliar", json={"theta_deg": 0, "dx_mm": 0, "dy_mm": 0}).status_code == 404
+    assert cl.post(f"/api/pieces/{b}/pose/repor").status_code == 400                     # no manual pose yet
+    gui.job = "importar x"
+    try:
+        assert cl.post(f"/api/pieces/{b}/pose", json={"theta_deg": th, "dx_mm": 0, "dy_mm": 0}).status_code == 409
+    finally:
+        gui.job = None
+    # write: one pose_set event, the cell raster changes, suspects see the manual pose
+    before = cl.get("/api/board.jpg?ppc=120&region=2,4,2,4").content
+    seq0 = gui.seq
+    r = cl.post(f"/api/pieces/{b}/pose", json={"theta_deg": th - 90.0, "dx_mm": -0.3, "dy_mm": 0.1, "nota": "rodada à mão"})
+    assert r.status_code == 200, r.text
+    s = r.json()
+    assert s["ok"] and s["invariantes"] == [] and s["antes"]["manual"] is False and s["depois"]["method"] == "manual"
+    assert abs(s["depois"]["dx_mm"] + 0.3) < 1e-9 and s["juntas"]["W"]["piece"] == a and [2, 4] in s["celulas_mudadas"]
+    names = [n for _, n, _ in gui.events_after(seq0)]
+    assert {"board_changed", "fetch_changed", "suspeitas_changed", "piece_changed"} <= set(names)
+    pr = _ok_on_disk(gui.path)
+    evs = pr.events()[n0:]
+    # one state event; the incremental re-query adds its informative fetch_listed
+    assert [e["action"] for e in evs] == ["pose_set", "fetch_listed"] and evs[0]["nota"] == "rodada à mão"
+    assert pr.piece(b).pose_manual["dx_mm"] == -0.3
+    after = cl.get("/api/board.jpg?ppc=120&region=2,4,2,4").content
+    assert after != before
+    full = cl.get("/api/board.jpg?ppc=60")
+    assert full.status_code == 200
+    assert cl.get(f"/api/pieces/{b}").json()["pose_manual"]["nota"] == "rodada à mão"
+    g = cl.get(f"/api/pieces/{b}/pose").json()
+    assert g["efetiva"]["manual"] is True and g["manual"]["dx_mm"] == -0.3 and g["automatica"]["method"] != "manual"
+    sp = cl.get("/api/suspeitas").json()
+    assert sp["summary"]["n_pose_manual"] == 1 and sp["summary"]["n_impossivel"] == 0
+    # reset: pose_cleared, back to the automatic pose
+    r = cl.post(f"/api/pieces/{b}/pose/repor")
+    assert r.status_code == 200, r.text
+    assert r.json()["antes"]["manual"] is True and r.json()["automatica"]["manual"] is False
+    pr = _ok_on_disk(gui.path)
+    assert [e["action"] for e in pr.events()[-2:]] == ["pose_cleared", "fetch_listed"] and pr.piece(b).pose_manual is None
+    assert cl.get("/api/suspeitas").json()["summary"]["n_impossivel"] == 1
+    # a piece not placed: 400
+    gui.pr.unplace(a)
+    gui.pr.save()
+    rr = cl.post(f"/api/pieces/{a}/pose", json={"theta_deg": 0, "dx_mm": 0, "dy_mm": 0})
+    assert rr.status_code == 400 and "não está colocada" in rr.json()["error"]
+    assert cl.get(f"/api/pieces/{a}/pose").status_code == 400

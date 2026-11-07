@@ -344,6 +344,7 @@ def main(argv=None) -> int:
 		sys.stdout.reconfigure(encoding="utf-8")
 	os.makedirs(DOCS, exist_ok=True)
 	pr = Project.open(a.project)
+	print(R.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	res = {"project": os.path.relpath(pr.path, ROOT).replace("\\", "/")}
 	t0 = time.time()
 	res["calibracao_verde"] = calibrate_green(pr)
@@ -358,7 +359,7 @@ def main(argv=None) -> int:
 	ids = R.placed_ids(pr)
 	base = {pid: R.baseline_placement(pr, pid) for pid in ids}
 	t = time.time()
-	final = R.register_all(pr, art=art, image=True, force=True)
+	final = R.register_all(pr, art=art, image=True, force=True, manual=False)
 	res["t_register_s"] = round(time.time() - t, 1)
 	corners = {}
 	for pid, e in final.items():

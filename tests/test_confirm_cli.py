@@ -55,3 +55,30 @@ def test_unplace_and_theta_refusals(tmp_path):
     # without --theta the list pose is used
     assert cmain([t, "--cell", "3", "4", "--no-requery", "--project", path]) == 0
     assert abs(Project.open(path).piece(t).theta_deg - float(te["theta_deg"])) < 1e-9
+
+
+def test_pose_and_pose_repor(tmp_path, capsys):
+    from src import render as R
+    pr, q, t, d = _project(tmp_path)
+    path = pr.path
+    th = R.register_piece(pr, q, art=None, image=False)["theta_deg"]
+    assert cmain([q, "--pose", f"{th + 4.0}", "0.4", "-0.2", "--nota", "à mão", "--no-requery", "--project", path]) == 0
+    out = capsys.readouterr().out
+    assert "pose manual" in out and "Suspeitas novas" in out
+    p1 = Project.open(path)
+    pm = p1.piece(q).pose_manual
+    assert abs(pm["theta_deg"] - (th + 4.0)) < 1e-9 and (pm["dx_mm"], pm["dy_mm"]) == (0.4, -0.2) and pm["nota"] == "à mão"
+    ev = _events(p1, "pose_set")[-1]
+    assert ev["antes"]["manual"] is False and abs(ev["antes"]["theta_deg"] - th) < 1e-9
+    assert R.register_piece(p1, q, art=None, image=False)["method"] == "manual"
+    assert p1.check_invariants(disk=True) == []
+    # refusals: out of limits, a loose piece, nothing to reset on it
+    assert cmain([q, "--pose", "0", "30", "0", "--no-requery", "--project", path]) == 1
+    assert cmain([t, "--pose", "0", "0", "0", "--no-requery", "--project", path]) == 1
+    assert cmain([t, "--pose-repor", "--no-requery", "--project", path]) == 1
+    # reset, with the incremental re-query
+    assert cmain([q, "--pose-repor", "--no-image", "--project", path]) == 0
+    p2 = Project.open(path)
+    assert p2.piece(q).pose_manual is None and _events(p2, "pose_cleared")[-1]["antes"]["dx_mm"] == 0.4
+    assert "reconsulta" in capsys.readouterr().out
+    assert p2.check_invariants(disk=True) == []

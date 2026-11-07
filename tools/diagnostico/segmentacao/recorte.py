@@ -17,7 +17,7 @@ distance to the twin's stored shape. Results cached in ``$PPF_SCRATCH/recorte/<s
 and the top pieces): (b) appendage (``_appendage``, opening radius 0.3 / 0.5 / 0.8 mm), (c) maximum
 second difference of the T/B side profiles (mm), and the reference of (a): ``side_complement`` of the
 facing sides of every pair of board-adjacent placed pieces (pose ``k`` from
-``render.register_piece(image=False)``). Only reads the project.
+``render.register_piece(image=False, manual=False)``). Only reads the project.
 """
 
 from __future__ import annotations
@@ -196,6 +196,7 @@ def indice(a) -> int:
 	from src.state import Project
 	proj = a.project if os.path.isabs(a.project) else os.path.join(ROOT, a.project)
 	pr = Project.open(proj)
+	print(render.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	mm = 25.4 / 300.0
 	rows = []
 	keep = SEG._SUSPECT_SPUR_MM
@@ -229,7 +230,7 @@ def indice(a) -> int:
 	ids = sorted(q for q, p in pr.pieces.items() if p.estado in ("colocada", "posicao_conhecida") and p.celula is not None)
 	K, cache = {}, {}
 	for q in ids:
-		e = render.register_piece(pr, q, art=None, image=False, _cache=cache)
+		e = render.register_piece(pr, q, art=None, image=False, _cache=cache, manual=False)
 		k = None if "error" in e else (e.get("corner") or {}).get("k")
 		if k is not None:
 			K[q] = int(k)

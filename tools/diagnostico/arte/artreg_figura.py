@@ -40,6 +40,7 @@ def main():
 	ap.add_argument("--out", default=os.path.join(REPO, "docs", "diagnostico", "arte", "artreg_antes_depois.jpg"))
 	args = ap.parse_args()
 	pr = Project.open(args.project)
+	print(render.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	prof = pr.profile
 	prior = dict(prof.art)
 	prior.pop("registration", None)
@@ -56,7 +57,7 @@ def main():
 	a1[~v1] = (40, 40, 40)
 	pl = {}
 	for pid in render.placed_ids(pr):
-		r = render.register_piece(pr, pid, art=None, image=False)
+		r = render.register_piece(pr, pid, art=None, image=False, manual=False)
 		if "error" not in r:
 			pl[pid] = r
 	blocks = []

@@ -735,3 +735,85 @@ def test_clean_or_crop_ignores_stale_clean_file(tmp_path):
     Image.fromarray(bogus).save(fp)                          # newer and same size -> used as is
     os.utime(fp, (t + 100, t + 100))
     assert np.array_equal(R._clean_or_crop(pr, pid), bogus)
+
+
+# ---------------------------------------------------------------- manual pose («Editar posicionamento»)
+def _mark_piece(pr, pid):
+    """Paint a purple mark halfway between the body centre and a corner of ``pid``'s crop; ``(mark_mm, pivot)``."""
+    from src.query import _body_center
+    p = pr.piece(pid)
+    sh = pr.shape(pid)
+    piv = _body_center(sh)
+    mark_mm = piv + 0.5 * (sh.c[sh.corners[0]] - piv)
+    fp = pr.p(p.crop_path)
+    rgba = np.asarray(Image.open(fp).convert("RGBA")).copy()
+    cx, cy = np.round(mark_mm / MMPP - np.asarray(p.bbox[:2], float)).astype(int)
+    r = int(round(1.5 / MMPP))
+    rgba[cy - r:cy + r, cx - r:cx + r, :3] = (120, 0, 160)
+    Image.fromarray(rgba).save(fp)
+    return mark_mm, piv
+
+
+def _mark_at(pr, cell, ppc=200.0):
+    img = R.compose_board(pr, ppc, region=(cell[0], cell[1], cell[0], cell[1]), layers=("pieces",))
+    ppm = ppc / float(pr.profile.cell_mm["w"])
+    ys, xs = np.nonzero(np.abs(img.astype(int) - (160, 0, 120)).max(-1) < 25)
+    assert len(xs) > 100
+    origin = np.array([(cell[1] - 1) * pr.profile.cell_mm["w"], (cell[0] - 1) * pr.profile.cell_mm["h"]])
+    return np.array([xs.mean(), ys.mean()]) / ppm + origin, img
+
+
+def test_register_piece_returns_manual_pose_and_board_draws_it(tmp_path):
+    from test_query import _project
+    pr, placed, tw, dec = _project(tmp_path)
+    cell = (2, 3)
+    mark_mm, piv = _mark_piece(pr, placed)
+    auto = R.register_piece(pr, placed, art=None, image=False)
+    assert auto["method"] != "manual" and not auto.get("manual")
+    key0 = R._entry_key(pr, placed)
+    got0, img0 = _mark_at(pr, cell)
+    want0 = R._R(auto["theta_deg"]) @ (mark_mm - np.asarray(auto["pivot_mm"])) + R.cell_centre_mm(pr.profile, *cell)
+    assert np.linalg.norm(got0 - want0) < 1.0
+    th, dx, dy = auto["theta_deg"] + 25.0, 1.5, -1.0
+    pr.set_pose(placed, th, dx, dy, pivot_mm=auto["pivot_mm"])
+    e = R.register_piece(pr, placed, art=None, image=True)
+    assert e["method"] == "manual" and e["manual"] is True and e["rotation"] == "manual" and e["image"] is None
+    assert abs(R.wrap_deg(e["theta_deg"] - th)) < 1e-9 and (e["dx_mm"], e["dy_mm"]) == (dx, dy)
+    assert e["pivot_mm"] == auto["pivot_mm"] and e["theta0"] == pr.piece(placed).theta_deg
+    # corner.k: the assignment whose corner rotation is closest to theta (here the automatic one, 25° away)
+    assert e["corner"]["k"] == auto["corner"]["k"] and e["corner"]["residual_mm"] is None
+    a2 = R.register_piece(pr, placed, art=None, image=False, manual=False)
+    assert a2["theta_deg"] == auto["theta_deg"] and a2["manual_ignorada"] is True and not a2.get("manual")
+    assert R._entry_key(pr, placed) != key0
+    assert R.effective_pose(pr, placed, {placed: dict(auto, key=key0)})["method"] == "manual"   # stale entry dropped
+    # the board shows the manual pose, also when handed the stale automatic entry
+    want = R._R(th) @ (mark_mm - np.asarray(auto["pivot_mm"])) + R.cell_centre_mm(pr.profile, *cell) + np.array([dx, dy])
+    got, img = _mark_at(pr, cell)
+    assert np.linalg.norm(got - want) < 1.0, (got, want)
+    img2 = R.compose_board(pr, 200.0, region=(2, 3, 2, 3), layers=("pieces",), placements={placed: auto})
+    assert np.array_equal(img2, img)
+    assert not np.array_equal(img, img0)
+    assert R.registered_theta(pr, placed) == e["theta_deg"]
+    assert "1 peças com pose manual" in R.manual_pose_note(pr)
+
+
+def test_relax_keeps_manual_pose_and_seam_gaps_see_candidate(tmp_path):
+    from test_consistency import _row_project
+    pr, ids = _row_project(tmp_path)
+    c, a, b = ids["C"], ids["A"], ids["B"]
+    pl = {q: R.register_piece(pr, q, art=None, image=False) for q in (c, a, b)}
+    g0 = {g["dir"] + g["a"]: g["gap_mm"] for g in R.seam_gaps(pr, pl)}
+    # the candidate of the pose editor: A 1 mm towards B
+    cand = R.candidate_entry(pr, a, pl[a]["theta_deg"], 1.0, 0.0)
+    assert cand["method"] == "manual" and cand["corner"]["k"] == pl[a]["corner"]["k"]
+    g1 = {g["dir"] + g["a"]: g["gap_mm"] for g in R.seam_gaps(pr, dict(pl, **{a: cand}), shapes={})}
+    # A-B closes and C-A opens by the same amount; the median over a tab / blank side moves ~0.67 mm per mm
+    # (the side is not normal to the move everywhere), measured 0.96 -> 0.289 / 1.631
+    assert g0["E" + a] - g1["E" + a] > 0.5 and g1["E" + c] - g0["E" + c] > 0.5
+    assert abs((g0["E" + a] - g1["E" + a]) - (g1["E" + c] - g0["E" + c])) < 0.05
+    # relax never moves a manual pose (and still moves the others)
+    pr.set_pose(a, pl[a]["theta_deg"], 0.45, 0.0)
+    pm = dict(pl, **{a: R.register_piece(pr, a, art=None, image=False)})
+    out = R.relax(pr, pm)
+    assert (out[a]["dx_mm"], out[a]["dy_mm"]) == (0.45, 0.0) and not out[a].get("relaxed")
+    assert out[b].get("relaxed") or out[c].get("relaxed")

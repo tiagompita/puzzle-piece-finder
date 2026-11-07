@@ -4,7 +4,7 @@ Uso, da raiz (sempre com ``--project`` numa CÓPIA de ``projects/alpes``)::
 
     python tools/diagnostico/reports/triagem_r3.py --project <cópia> [--scratch DIR] [--no-figs] [--no-holes]
 
-A cópia deve ter ``render/placements.json`` feito por ``render.register_all(image=True)`` (variante «image»); a pose
+A cópia deve ter ``render/placements.json`` feito por ``render.register_all(image=True, manual=False)`` (variante «image»); a pose
 que a GUI mostra hoje (sem ``placements.json`` local) é recalculada aqui com ``register_piece(image=False)``
 (variante «gui»). Nada é escrito no projeto: a saída vai para ``docs/diagnostico/reports/`` (JSON, tabelas
 geradas, figuras <= 300 KB) e para ``--scratch`` (vistas grandes).
@@ -474,10 +474,11 @@ def main(argv=None):
     os.makedirs(OUT_DIR, exist_ok=True)
     placed = R.placed_ids(pr)
     shapes = {pid: pr.shape(pid) for pid in pr.pieces if pr.piece(pid).estado != "descartada"}
-    PLimg = R.load_placements(pr)["placements"]
+    PLimg = {k: v for k, v in R.load_placements(pr)["placements"].items() if not v.get("manual")}  # pose automática
+    print(R.manual_pose_note(pr))
     PL = {}
     for pid in placed:
-        r = R.register_piece(pr, pid, art=None, image=False)
+        r = R.register_piece(pr, pid, art=None, image=False, manual=False)
         if "error" not in r:
             PL[pid] = r
     T["registo_gui_s"] = time.time() - t0

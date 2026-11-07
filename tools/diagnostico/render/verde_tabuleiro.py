@@ -52,7 +52,7 @@ def piece_metrics(pr, pid, PL, ppc):
     W, H = int(round((reg[3] - reg[1] + 1) * w_mm * ppm)), int(round((reg[2] - reg[0] + 1) * h_mm * ppm))
     pl = PL.get(pid)
     if pl is None or pl.get("key") != R._entry_key(pr, pid):
-        pl = R.register_piece(pr, pid, art=None, image=False)
+        pl = R.register_piece(pr, pid, art=None, image=False, manual=False)
     mmpp = R._scan_mmpp(pr, p.scan_id)
     A = R._crop_to_out(pl["theta_deg"], pl["pivot_mm"], R.cell_centre_mm(prof, *pl["cell"]), (pl["dx_mm"], pl["dy_mm"]),
                        np.asarray(p.bbox[:2], float), mmpp, (ppm, ppm), (ox, oy))
@@ -180,7 +180,8 @@ def main(argv=None):
     t0 = time.time()
     pr = Project.open(args.project)
     R_BG[0] = pr.profile.background_lab
-    PL = R.load_placements(pr)["placements"] or {}
+    PL = {k: v for k, v in (R.load_placements(pr)["placements"] or {}).items() if not v.get("manual")}  # pose automática
+    print(R.manual_pose_note(pr))
     ppc = float(pr.profile.cell_mm["w"]) / (25.4 / 300.0)            # vista da célula a 300 dpi
     res = {"targets": [], "sample": [], "seed": args.seed}
     fig_rows, zoom_rows = [], []

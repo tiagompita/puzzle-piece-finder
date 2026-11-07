@@ -5,7 +5,7 @@ Uso, da raiz (sempre numa CÓPIA de ``projects/alpes``; ``projects/alpes`` é re
     python tools/diagnostico/render/moldura.py --project <cópia> [--target grow|borda] [--relax MAX_MM,ITERS]
         [--fig-full <jpg fora do repo>] [--no-holes] [--no-fig] [--no-compare]
 
-Pose = a da GUI (``render.register_piece(image=False)``, registada na hora). Para cada lado F de cada peça de moldura
+Pose = a da GUI (``render.register_piece(image=False, manual=False)``, registada na hora). Para cada lado F de cada peça de moldura
 colocada (cantos do puzzle: 2 F): reta ajustada aos 8-92 % do lado (como ``render.f_side_line``, aqui reimplementada
 para a medição não depender do código medido), levada ao tabuleiro com a pose; ``d_mm`` = distância perpendicular
 ASSINADA do ponto médio da reta à linha da borda (N y=0, W x=0, S y=rows*h, E x=cols*w), positiva = para fora do
@@ -150,7 +150,7 @@ def gui_poses(pr, ids, ft=None):
 		R.F_TRANSLATION = bool(ft)
 	out = {}
 	for pid in ids:
-		r = R.register_piece(pr, pid, art=None, image=False)
+		r = R.register_piece(pr, pid, art=None, image=False, manual=False)
 		if "error" not in r:
 			out[pid] = r
 	return out
@@ -353,6 +353,7 @@ def main(argv=None):
 	import triagem_r3 as TR
 	t0 = time.time()
 	pr = Project.open(args.project)
+	print(R.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	prof = pr.profile
 	grow = R._grow(prof)
 	ids = R.placed_ids(pr)

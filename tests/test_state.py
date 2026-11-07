@@ -718,3 +718,58 @@ def test_piece_discarded_clears_its_false_alarms(proj):
     proj.save()
     q = Project.open(proj.path)
     assert set(q.falsos_alarmes) == {(b, "recorte")} and q.check_invariants(disk=True) == []
+
+
+# ---------------------------------------------------------------- manual pose (pose_set / pose_cleared)
+def test_pose_set_cleared_replay_and_limits(proj):
+    a, b = _add(proj, 2)
+    proj.place(a, (2, 2), theta_deg=10.0)
+    with pytest.raises(StateError):
+        proj.set_pose(b, 0.0, 0.0, 0.0)                                         # not placed
+    w, h = proj.profile.cell_mm["w"], proj.profile.cell_mm["h"]
+    for bad in [(0.0, 0.5 * w + 0.01, 0.0), (0.0, 0.0, -0.5 * h - 0.01), (float("nan"), 0.0, 0.0), ("x", 0.0, 0.0)]:
+        with pytest.raises(StateError):
+            proj.set_pose(a, *bad)
+    with pytest.raises(StateError):
+        proj.clear_pose(a)                                                       # nothing to clear
+    antes = {"theta_deg": 9.5, "dx_mm": 0.0, "dy_mm": 0.0, "method": "corners", "manual": False}
+    ev = proj.set_pose(a, 370.0, 0.3, -0.2, nota="encosta à vizinha", antes=antes)
+    assert ev["action"] == "pose_set" and ev["theta_deg"] == 10.0 and ev["autor"] == "manual" and ev["antes"] == antes
+    pm = proj.piece(a).pose_manual
+    assert pm["cell"] == [2, 2] and (pm["theta_deg"], pm["dx_mm"], pm["dy_mm"]) == (10.0, 0.3, -0.2)
+    assert len(pm["pivot_mm"]) == 2 and pm["nota"] == "encosta à vizinha" and pm["t"] == ev["t"]
+    assert proj.set_pose(a, -180.0, 0.0, 0.0)["theta_deg"] == 180.0                # (-180, 180]
+    proj.save()
+    q = Project.open(proj.path)
+    assert q.piece(a).pose_manual == proj.piece(a).pose_manual and q.check_invariants(disk=True) == []
+    with open(q.p("scans", f"{q.piece(a).scan_id}.json"), encoding="utf-8") as f:
+        view = {d["id"]: d for d in json.load(f)["pieces"]}
+    assert view[a]["pose_manual"]["theta_deg"] == 180.0 and "pose_manual" not in view[b]
+    ev = q.clear_pose(a)
+    assert ev["action"] == "pose_cleared" and ev["antes"] == {"theta_deg": 180.0, "dx_mm": 0.0, "dy_mm": 0.0}
+    assert q.piece(a).pose_manual is None and q.check_invariants() == []
+    # the piece_added events carry no pose_manual key (older checkouts keep reading them)
+    assert all("pose_manual" not in e["piece"] for e in q.events() if e["action"] == "piece_added")
+
+
+def test_pose_manual_cleared_by_unplace_place_and_resegment(proj):
+    a, b = _add(proj, 2)
+    proj.place(a, (2, 2))
+    proj.set_pose(a, 5.0, 0.0, 0.0)
+    proj.unplace(a)
+    assert proj.piece(a).pose_manual is None
+    proj.place(a, (2, 2))
+    assert proj.piece(a).pose_manual is None
+    proj.set_pose(a, 5.0, 0.0, 0.0)
+    ev = proj.resegment_piece(a, motivo="manual", cls="BBBB")
+    assert ev["pose_manual_limpa"] is True and proj.piece(a).pose_manual is None
+    assert "pose_manual_limpa" not in proj.resegment_piece(a, motivo="manual", cls="BBBB")
+    proj.set_pose(a, 5.0, 0.0, 0.0)
+    proj.place(b, (3, 3))
+    proj.set_pose(b, 1.0, 0.1, 0.1)
+    proj.save()
+    assert Project.open(proj.path).check_invariants(disk=True) == []
+    # a pose in memory that is not in the log, or a pose of another cell, is a violation
+    proj.piece(b).pose_manual = dict(proj.piece(b).pose_manual, cell=[3, 4])
+    errs = proj.check_invariants()
+    assert "estado das peças != replay(log)" in errs and any("pose manual da célula" in e for e in errs)

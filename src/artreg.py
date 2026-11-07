@@ -264,7 +264,8 @@ def art_coverage(art_rgb: np.ndarray, M, rows: int, cols: int, cell_mm, content_
 
 # ---------------------------------------------------------------- I/O
 def render_board(project, px_per_cell: float = 50.0, progress=print):
-	"""Placed pieces only (corner registration, no image), as ``(rgb, mask, cells)``; nothing is written.
+	"""Placed pieces only (corner registration, no image, the automatic pose even where a manual one is set), as
+	``(rgb, mask, cells)``; nothing is written.
 
 	``rgb``/``mask`` span the whole grid (uniform px/mm, ``px_per_cell`` px per cell width);
 	``mask`` = piece pixels (rendered over a magenta sentinel).
@@ -273,11 +274,12 @@ def render_board(project, px_per_cell: float = 50.0, progress=print):
 	t0 = time.time()
 	pl = {}
 	for pid in render.placed_ids(project):
-		r = render.register_piece(project, pid, art=None, image=False)
+		r = render.register_piece(project, pid, art=None, image=False, manual=False)
 		if "error" not in r:
 			pl[pid] = r
 	if progress:
 		progress(f"  registo por cantos: {len(pl)} peças ({time.time() - t0:.0f} s)")
+		progress("  " + render.manual_pose_note(project))
 	bgr = render.compose_board(project, px_per_cell, layers=("pieces",), placements=pl, base_bgr=(255, 0, 255))
 	d = np.abs(bgr.astype(np.int16) - np.array([255, 0, 255], np.int16)).sum(-1)
 	mask = d > 60

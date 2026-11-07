@@ -66,7 +66,7 @@ def test_right_poses_no_suspects(tmp_path):
     assert r["items"] == []
     assert r["summary"] == dict(n_colocadas=3, n_verificadas=3, n_sem_cantos=0, n_com_vizinhas=3, n_impossivel=0,
                                 n_melhor_rotacao=0, n_explicadas=0, n_recorte=0, n_falsos_alarmes=0,
-                                n_falsos_alarmes_obsoletos=0)
+                                n_falsos_alarmes_obsoletos=0, n_pose_manual=0)
     assert _log_lines(pr) == log0
 
 
@@ -283,3 +283,29 @@ def test_cli_false_alarm_restore_and_list(tmp_path, capsys):
     assert C.main(["--project", path, "--restaurar", b, "--grau", "impossivel"]) == 1
     q = Project.open(path)
     assert len(q.events()) == n0 + 2 and [x["piece"] for x in C.evaluate(q)["items"]] == [b]
+
+
+# ---------------------------------------------------------------- pose manual (pose_set)
+def test_manual_pose_out_of_orientation_counts_unless_asked(tmp_path):
+    from src import render as R
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    b = ids["B"]
+    e = R.register_piece(pr, b, art=None, image=False)
+    pr.set_pose(b, e["theta_deg"], 0.2, 0.0)                     # the user keeps the wrong rotation by hand
+    r = C.evaluate(pr)
+    assert r["items"] == [] and r["summary"]["n_impossivel"] == 0 and r["summary"]["n_pose_manual"] == 1
+    r2 = C.evaluate(pr, incluir_pose_manual=True)
+    assert [(x["piece"], x["grau"], x["pose_manual"]) for x in r2["items"]] == [(b, "impossivel", True)]
+    s0 = r2["items"][0]["assinatura"]
+    assert r2["summary"]["n_impossivel"] == 1 and r2["summary"]["n_pose_manual"] == 1
+    # the manual pose is in the false-alarm signature (Piece.pose_manual, rounded)
+    pr.set_pose(b, e["theta_deg"], 0.4, 0.0)
+    assert C.evaluate(pr, incluir_pose_manual=True)["items"][0]["assinatura"] != s0
+    # a manual pose a quarter turn back: its k fixes B, nothing to report even when asked
+    pr.set_pose(b, e["theta_deg"] - 90.0, 0.0, 0.0)
+    assert R.register_piece(pr, b, art=None, image=False)["corner"]["k"] == (e["corner"]["k"] - 1) % 4
+    assert C.evaluate(pr, incluir_pose_manual=True)["items"] == []
+    pr.clear_pose(b)
+    r3 = C.evaluate(pr)
+    assert [x["piece"] for x in r3["items"]] == [b] and r3["summary"]["n_pose_manual"] == 0
+    assert "pose_manual" not in r3["items"][0]

@@ -55,7 +55,7 @@ from src.profile import PuzzleProfile
 
 __all__ = [
 	"SCHEMA_VERSION", "PIECE_STATES", "PAIR_STATES", "SECTION_KINDS", "CELL_STATES", "CELL_SOURCES", "ACTIONS",
-	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS", "SUSPECT_GRAUS",
+	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS", "SUSPECT_GRAUS", "POSE_MAX_FRAC",
 	"StateError", "Piece", "Pair", "Section", "Photo", "Board", "Model", "apply", "replay", "read_log",
 	"Project", "file_sha256", "section_cell",
 ]
@@ -77,10 +77,11 @@ ACTIONS = (
 	"cell_cleared_by_photo", "position_known", "position_placeable", "same_as", "lote_changed",
 	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
 	"report", "report_closed", "report_edited", "report_reopened", "report_deleted", "report_restored",
-	"piece_resegmented", "suspect_dismissed", "suspect_restored",
+	"piece_resegmented", "suspect_dismissed", "suspect_restored", "pose_set", "pose_cleared",
 )
 RESEGMENT_FIELDS = ("bbox", "cls", "n_flat", "chords_mm", "area_mm2", "shape_ok", "flags", "mean_lab")  # piece_resegmented
 SUSPECT_GRAUS = ("impossivel", "melhor_rotacao", "recorte")   # grades of src.consistency (suspect_dismissed)
+POSE_MAX_FRAC = 0.5           # pose_set: |dx| <= POSE_MAX_FRAC * cell width, |dy| <= POSE_MAX_FRAC * cell height
 ID_PREFIXES = ("S", "P", "T", "G", "F")
 LOOSE_STATES = ("solta", "emparelhada")
 _PLACEABLE_FROM = ("solta", "emparelhada", "posicao_conhecida")
@@ -120,7 +121,10 @@ class Piece:
 	``touches_strip``, ``is_cluster``, ``objeto_duplo``. ``chords_mm``: the 4 side chords
 	(empty if the shape has no 4 corners). ``bbox``: crop box in scan px (x, y, w, h).
 	``shape``: :class:`src.shape.Shape`, loaded on demand (:meth:`Project.shape`), never
-	serialised here.
+	serialised here. ``pose_manual``: the board pose set by hand (:meth:`Project.set_pose`)
+	``{cell, theta_deg, dx_mm, dy_mm, pivot_mm, autor, t, nota}`` (board mm, ``x_board = R(theta)
+	(x_scan - pivot) + centre(cell) + (dx, dy)``, theta clockwise on the screen), or None; only on a
+	``colocada`` piece, cleared by any new placement / removal / re-segmentation.
 	"""
 
 	id: str
@@ -142,11 +146,16 @@ class Piece:
 	bbox: Optional[list] = None
 	crop_path: Optional[str] = None
 	mean_lab: Optional[list] = None
+	pose_manual: Optional[dict] = None
 	shape: object = field(default=None, repr=False, compare=False)
 
 	def to_dict(self) -> dict:
+		"""Serialisable dict (``shape`` left out; ``pose_manual`` only when set, so the ``piece_added``
+		events stay readable by a checkout older than the manual pose)."""
 		d = {f.name: copy.deepcopy(getattr(self, f.name)) for f in fields(self) if f.name != "shape"}
 		d["celula"] = _cell_list(self.celula)
+		if d.get("pose_manual") is None:
+			d.pop("pose_manual", None)
 		return d
 
 	@classmethod
@@ -159,7 +168,8 @@ class Piece:
 	def dynamic(self) -> dict:
 		"""The part of the piece the log changes (compared by the invariants)."""
 		return {"estado": self.estado, "celula": self.celula, "theta_deg": self.theta_deg,
-				"seccao_id": self.seccao_id, "same_as": self.same_as, "lote": self.lote, "n_no_lote": self.n_no_lote}
+				"seccao_id": self.seccao_id, "same_as": self.same_as, "lote": self.lote, "n_no_lote": self.n_no_lote,
+				"pose_manual": self.pose_manual}
 
 
 @dataclass
@@ -382,6 +392,7 @@ def apply(m: Model, ev: dict) -> None:
 		p = _piece(m, ev["piece"])
 		cell = _cell(ev["cell"])
 		p.estado, p.celula = "colocada", cell
+		p.pose_manual = None     # a new placement: any manual pose belonged to the previous one
 		if ev.get("theta_deg") is not None:
 			p.theta_deg = float(ev["theta_deg"])
 		m.board.set(cell, {"estado": "colocada", "peca_id": p.id, "fonte": ev.get("fonte", "log"), "foto_id": None})
@@ -390,6 +401,7 @@ def apply(m: Model, ev: dict) -> None:
 		m.board.set(_cell(ev["cell"]), ev["restore"])
 		p.estado, p.celula = ev.get("to", "solta"), None
 		p.theta_deg = None      # the pose belonged to that placement
+		p.pose_manual = None
 	elif a == "position_known":
 		p = _piece(m, ev["piece"])
 		p.estado, p.celula = "posicao_conhecida", _cell(ev["cell"])
@@ -425,6 +437,7 @@ def apply(m: Model, ev: dict) -> None:
 		for pl in ev["placements"]:
 			p = m.pieces[pl["piece"]]
 			p.estado, p.celula = "colocada", _cell(pl["cell"])
+			p.pose_manual = None
 			m.board.set(p.celula, {"estado": "colocada", "peca_id": p.id, "fonte": "legado_scan", "foto_id": None})
 	elif a == "section_unanchored":
 		s = m.sections[ev["section"]]
@@ -433,9 +446,11 @@ def apply(m: Model, ev: dict) -> None:
 			p = m.pieces[pl["piece"]]
 			m.board.set(_cell(pl["cell"]), pl["restore"])
 			p.estado, p.celula = "em_seccao", None
+			p.pose_manual = None
 	elif a == "piece_discarded":
 		p = _piece(m, ev["piece"])
 		p.estado, p.celula = "descartada", None
+		p.pose_manual = None
 		for key in [k for k in m.falsos_alarmes if k[0] == p.id]:
 			del m.falsos_alarmes[key]
 	elif a == "suspect_dismissed":
@@ -468,6 +483,14 @@ def apply(m: Model, ev: dict) -> None:
 		for k in RESEGMENT_FIELDS:
 			if k in ev:
 				setattr(p, k, copy.deepcopy(ev[k]))
+		p.pose_manual = None     # the pivot and the contour changed: the manual pose no longer applies
+	elif a == "pose_set":
+		p = _piece(m, ev["piece"])
+		p.pose_manual = {"cell": _cell_list(ev["cell"]), "theta_deg": float(ev["theta_deg"]), "dx_mm": float(ev["dx_mm"]),
+						 "dy_mm": float(ev["dy_mm"]), "pivot_mm": [float(v) for v in ev["pivot_mm"]],
+						 "autor": ev.get("autor") or "manual", "t": ev.get("t"), "nota": ev.get("nota") or ""}
+	elif a == "pose_cleared":
+		_piece(m, ev["piece"]).pose_manual = None
 	elif a == "lote_changed":
 		lote = ev.get("lote")
 		sids = set(ev["scan_ids"])
@@ -1056,8 +1079,59 @@ class Project:
 			raise StateError(f"campos não estáticos em piece_resegmented: {bad}")
 		self._shape_cache.pop(piece_id, None)
 		extra = {"nota": str(nota)} if nota else {}
+		if p.pose_manual is not None:
+			extra["pose_manual_limpa"] = True     # informative: apply clears the manual pose anyway
 		return self._emit("piece_resegmented", piece=piece_id, scan_id=p.scan_id, index_in_scan=p.index_in_scan,
 						  motivo=motivo, **extra, **static)
+
+	def set_pose(self, piece_id: str, theta_deg: float, dx_mm: float, dy_mm: float, *, nota: str = "",
+				 antes: Optional[dict] = None, pivot_mm=None) -> dict:
+		"""Log ``pose_set``: the board pose of a ``colocada`` piece set by hand (``Piece.pose_manual``), in its
+		current cell: ``x_board = R(theta) (x_scan - pivot) + centre(cell) + (dx, dy)`` (board mm, y down, theta
+		clockwise on the screen, normalised to (-180, 180]). ``pivot_mm``: default the body centre of the
+		current shape (:func:`src.locate.body_center_mm`, the pivot of :func:`src.render.register_piece`).
+		``|dx| <= POSE_MAX_FRAC * w``, ``|dy| <= POSE_MAX_FRAC * h`` (nominal cell). ``antes``: the effective pose
+		it replaces ``{theta_deg, dx_mm, dy_mm, method, manual}`` (informative, for undo / audit).
+
+		Compatibility: the log is shared between machines; a checkout older than ``pose_set`` / ``pose_cleared``
+		cannot replay a log that holds them (``ação desconhecida``), the price already paid by
+		``piece_resegmented`` and ``suspect_dismissed``."""
+		p = self.piece(piece_id)
+		if p.estado != "colocada" or p.celula is None:
+			raise StateError(f"{piece_id} não está colocada (está '{p.estado}')")
+		try:
+			th, dx, dy = float(theta_deg), float(dx_mm), float(dy_mm)
+		except (TypeError, ValueError):
+			raise StateError("theta_deg, dx_mm e dy_mm têm de ser números") from None
+		if not all(np.isfinite([th, dx, dy])):
+			raise StateError("theta_deg, dx_mm e dy_mm têm de ser finitos")
+		w, h = float(self.profile.cell_mm["w"]), float(self.profile.cell_mm["h"])
+		if abs(dx) > POSE_MAX_FRAC * w + 1e-9 or abs(dy) > POSE_MAX_FRAC * h + 1e-9:
+			raise StateError(f"deslocamento ({dx:.2f}, {dy:.2f}) mm fora dos limites "
+							 f"(±{POSE_MAX_FRAC * w:.2f} × ±{POSE_MAX_FRAC * h:.2f} mm)")
+		th = th % 360.0
+		if th > 180.0:
+			th -= 360.0
+		if pivot_mm is None:
+			sh = self.shape(piece_id)
+			if sh is None:
+				raise StateError(f"{piece_id} sem forma: não há pivô para a pose")
+			from src.locate import body_center_mm
+			pivot_mm = body_center_mm(sh)
+		piv = [float(pivot_mm[0]), float(pivot_mm[1])]
+		return self._emit("pose_set", piece=piece_id, cell=p.celula, theta_deg=th, dx_mm=dx, dy_mm=dy, pivot_mm=piv,
+						  antes=antes, nota=str(nota or ""), autor="manual")
+
+	def clear_pose(self, piece_id: str, *, antes: Optional[dict] = None) -> dict:
+		"""Log ``pose_cleared``: back to the automatic pose (:func:`src.render.register_piece`). Error if the piece
+		has no manual pose. ``antes`` = the manual pose dropped ``{theta_deg, dx_mm, dy_mm}`` (default: the
+		stored one). Same log-compatibility note as :meth:`set_pose`."""
+		p = self.piece(piece_id)
+		if p.pose_manual is None:
+			raise StateError(f"{piece_id} não tem pose manual")
+		if antes is None:
+			antes = {k: p.pose_manual[k] for k in ("theta_deg", "dx_mm", "dy_mm")}
+		return self._emit("pose_cleared", piece=piece_id, cell=p.celula, antes=antes)
 
 	def dismiss_suspect(self, piece_id: str, grau: str, assinatura: str, *, cell, nota: str = "") -> dict:
 		"""Log ``suspect_dismissed``: the user says the suspect ``(piece_id, grau)`` of :mod:`src.consistency` is a
@@ -1221,6 +1295,11 @@ class Project:
 		for p in self.pieces.values():
 			if p.estado == "colocada" and seen.get(p.id) != p.celula:
 				errs.append(f"{p.id} colocada sem célula consistente ({p.celula})")
+			if p.pose_manual is not None:
+				if p.estado != "colocada":
+					errs.append(f"{p.id} com pose manual e estado '{p.estado}'")
+				elif _cell(p.pose_manual.get("cell")) != p.celula:
+					errs.append(f"{p.id}: pose manual da célula {p.pose_manual.get('cell')} != {p.celula}")
 		ids = [ev["piece"]["id"] for ev in self.events() if ev["action"] == "piece_added"]
 		if len(ids) != len(set(ids)):
 			errs.append("ids de peça repetidos no log")

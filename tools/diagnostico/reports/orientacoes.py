@@ -7,7 +7,7 @@ Uso, da raiz (sempre com uma CÓPIA de ``projects/alpes`` se a seguir se vai alt
     python tools/diagnostico/reports/orientacoes.py fig <antes.png> <depois.png> <saida.jpg> "P0083 (44,60)" "P0333 (6,22)"
     python tools/diagnostico/reports/orientacoes.py block <proj> <saida.json>
 
-Pose de todas as peças: ``render.register_piece(image=False)`` (a pose da GUI; o ``k`` dos cantos dá o lado
+Pose de todas as peças: ``render.register_piece(image=False, manual=False)`` (a pose da GUI; o ``k`` dos cantos dá o lado
 virado para cada direção). Por peça e direção N/E/S/W: vizinha montada (tipo dos dois lados, ``legacy.side_compat``:
 T<->B, RMS do perfil, |dCorda|; folga com sinal de ``render.seam_gaps``) ou borda (o lado tem de ser F). Imagem:
 ``locate.de_cell`` (dE, NCC de L*) com a peça desenhada na pose atual e nas outras 3 rotações (+90, 180, -90 no
@@ -57,7 +57,7 @@ class Poses:
 
 	def get(self, pid):
 		if pid not in self.pl:
-			e = R.register_piece(self.pr, pid, art=None, image=False, _cache=self.cache)
+			e = R.register_piece(self.pr, pid, art=None, image=False, _cache=self.cache, manual=False)
 			self.pl[pid] = None if "error" in e else e
 		return self.pl[pid]
 
@@ -139,6 +139,7 @@ def image_report(pr, poses, art, pid):
 
 def measure(proj, out, pids):
 	pr = Project.open(proj)
+	print(R.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	poses = Poses(pr)
 	art = CellArt.load(pr.profile, REPO)
 	by_cell = mounted(pr)
@@ -170,6 +171,7 @@ def measure(proj, out, pids):
 def view(proj, out, pids):
 	"""Vistas 3x3 a 300 dpi lado a lado (arte a 0.34 + peças + grelha), com o contorno da peça em vermelho."""
 	pr = Project.open(proj)
+	print(R.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	poses = Poses(pr)
 	prof = pr.profile
 	ppc = float(prof.cell_mm["w"]) / (25.4 / 300.0)
@@ -225,6 +227,7 @@ def fig(before, after, out, labels, max_bytes=300_000):
 
 def block(proj, out):
 	pr = Project.open(proj)
+	print(R.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	prof = pr.profile
 	poses = Poses(pr)
 	by_cell = mounted(pr)
@@ -303,6 +306,7 @@ def block_swap(proj, out, seed=20261107, n_random=20000):
 	contra o da gémea do outro bloco rodada 180° (sob simetria encaixaria igual); taxas de base: juntas montadas
 	de todo o tabuleiro e pares T/B ao acaso. Imagem: ``de_cell`` de cada peça na sua célula."""
 	pr = Project.open(proj)
+	print(R.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	prof = pr.profile
 	poses = Poses(pr)
 	art = CellArt.load(prof, REPO)

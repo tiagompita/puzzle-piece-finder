@@ -12,6 +12,8 @@ Usage::
 	python -m src.confirm --relot S0007 S0008 --lote 2
 	python -m src.confirm --cheia L,C [L,C ...]      # the user says these cells are assembled
 	python -m src.confirm --vazia L,C [L,C ...]      # the user says these cells are empty
+	python -m src.confirm P0123 --pose THETA DX DY [--nota TXT]   # manual board pose of a placed piece
+	python -m src.confirm P0123 --pose-repor                      # back to the automatic pose
 
 ``--cheia`` / ``--vazia`` (also ``python -m src.photo --cheia/--vazia``) log
 ``cell_occupied_by_user`` / ``cell_cleared_by_user`` (ground truth, ``fonte='tiago'``; see the
@@ -37,6 +39,13 @@ correction of a wrong orientation: ``--unplace`` then ``--cell L C --theta DEG``
 cell it is refused (the list pose is the measured one). ``--unplace`` (:meth:`src.state.Project.unplace`)
 takes a placed loose piece back to the pool (its cell gets back its previous state); a piece of a
 section is refused (use ``--unanchor``).
+
+``--pose THETA DX DY`` (:meth:`src.state.Project.set_pose`, event ``pose_set``): the board pose of a
+``colocada`` piece (a loose one, or a piece of an anchored section: both are ``colocada``) set by hand,
+``x_board = R(theta) (x_scan - pivot) + centre(cell) + (dx, dy)`` (degrees clockwise on the screen, board mm,
+y down; the pivot is the one of the pose shown now); ``--pose-repor`` (``pose_cleared``) goes back to the
+automatic registration. Both re-query the cell, its twin cell and their free neighbours (the twin's proposal
+pose and ghost follow this pose).
 
 ``--relot`` (:func:`relot`) moves whole sheets to another bag (``Project.set_lote``: continuous
 renumbering in the target bag, the sheets left behind keep their numbers) and rewrites their
@@ -115,7 +124,8 @@ def parse_cells(items) -> list:
 def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[str] = None, reject: bool = False,
 			position_known=None, anchor=None, rot: int = 0, mirror: bool = False, unanchor: Optional[str] = None,
 			discard: bool = False, reason: str = "", cell_full=None, cell_empty=None, requery: bool = True,
-			use_image: bool = True, unplace: bool = False, theta_deg: Optional[float] = None) -> dict:
+			use_image: bool = True, unplace: bool = False, theta_deg: Optional[float] = None, pose=None,
+			pose_repor: bool = False, nota: str = "") -> dict:
 	"""Apply one confirmation; returns ``{messages, affected_cells, affected_pieces, entries, invariants}``
 	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error).
 
@@ -123,7 +133,10 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 	(:meth:`src.state.Project.mark_cell_full` / ``mark_cell_empty``).
 
 	``theta_deg`` (with ``cell``): board pose when the fetch entry of that cell has none (refused
-	otherwise). ``unplace``: undo the placement of a loose piece (not of a section piece)."""
+	otherwise). ``unplace``: undo the placement of a loose piece (not of a section piece).
+
+	``pose`` = ``(theta_deg, dx_mm, dy_mm)``: manual board pose of a placed piece (``nota`` stored with it);
+	``pose_repor``: drop it (see the module docstring)."""
 	msgs, cells, pieces = [], set(), set()
 	try:
 		if cell_full is not None or cell_empty is not None:
@@ -173,6 +186,27 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			msgs.append(f"{piece_id} retirada de {c0} (volta a '{ev['to']}'; a célula volta a '{ev['restore']['estado']}')")
 			cells |= _around(pr, c0)
 			pieces.add(piece_id)
+		elif pose is not None or pose_repor:
+			from src import render
+			p = pr.piece(piece_id)
+			if p.estado != "colocada" or p.celula is None:
+				return {"error": f"{piece_id} está '{p.estado}': não está colocada"}
+			e0 = render.effective_pose(pr, piece_id)
+			if "error" in e0:
+				return {"error": e0["error"]}
+			antes = render.pose_brief(e0)
+			if pose is not None:
+				ev = pr.set_pose(piece_id, float(pose[0]), float(pose[1]), float(pose[2]), nota=nota, antes=antes,
+								 pivot_mm=e0["pivot_mm"])
+				msgs.append(f"{piece_id} em {tuple(p.celula)}: pose manual θ {ev['theta_deg']:.2f}°, "
+							f"dx {ev['dx_mm']:+.2f} mm, dy {ev['dy_mm']:+.2f} mm (antes θ {antes['theta_deg']:.2f}°, "
+							f"dx {antes['dx_mm']:+.2f}, dy {antes['dy_mm']:+.2f}, {antes['method']})")
+			else:
+				pr.clear_pose(piece_id, antes={k: antes[k] for k in ("theta_deg", "dx_mm", "dy_mm")})
+				a = render.pose_brief(render.effective_pose(pr, piece_id))
+				msgs.append(f"{piece_id} em {tuple(p.celula)}: pose manual retirada (θ {antes['theta_deg']:.2f}° → "
+							f"automática θ {a['theta_deg']:.2f}°, {a['method']})")
+			cells |= _around(pr, p.celula)
 		elif reject:
 			ents = _fetch_entries(pr, piece_id)
 			if not ents:
@@ -271,6 +305,9 @@ def main(argv=None) -> int:
 	g.add_argument("--relot", nargs="+", metavar="S", help="scans (folhas) a mudar de lote; exige --lote")
 	g.add_argument("--cheia", nargs="+", metavar="L,C", help="células que o utilizador diz estarem montadas")
 	g.add_argument("--vazia", nargs="+", metavar="L,C", help="células que o utilizador diz estarem vazias")
+	g.add_argument("--pose", nargs=3, type=float, metavar=("THETA", "DX", "DY"),
+				   help="pose manual da peça colocada: graus (sentido dos ponteiros no ecrã), dx e dy em mm (y para baixo)")
+	g.add_argument("--pose-repor", action="store_true", help="retira a pose manual (volta ao registo automático)")
 	ap.add_argument("--lote", type=int, default=None, help="lote de destino de --relot")
 	ap.add_argument("--origin", default=None, help="gemeo | par | borda | buraco | gt | manual (omissão: a da lista)")
 	ap.add_argument("--theta", type=float, default=None, metavar="DEG",
@@ -278,6 +315,7 @@ def main(argv=None) -> int:
 	ap.add_argument("--rot", type=int, default=0)
 	ap.add_argument("--mirror", action="store_true")
 	ap.add_argument("--reason", default="")
+	ap.add_argument("--nota", default="", help="nota da pose manual (--pose)")
 	ap.add_argument("--no-image", action="store_true")
 	ap.add_argument("--no-requery", action="store_true")
 	add_project_args(ap)
@@ -305,7 +343,7 @@ def main(argv=None) -> int:
 			return 1
 		print("fetch.md/fetch.json ainda têm os números antigos: corre `python -m src.query` para os atualizar")
 		return 0
-	needs_piece = args.cell or args.unplace or args.reject or args.position_known or args.discard
+	needs_piece = args.cell or args.unplace or args.reject or args.position_known or args.discard or args.pose or args.pose_repor
 	if needs_piece and not args.piece_id:
 		print("erro: falta o id da peça")
 		return 1
@@ -323,7 +361,8 @@ def main(argv=None) -> int:
 		r = confirm(pr, args.piece_id, cell=args.cell, origin=args.origin, reject=args.reject,
 					position_known=args.position_known, anchor=args.anchor, rot=args.rot, mirror=args.mirror,
 					unanchor=args.unanchor, discard=args.discard, reason=args.reason, cell_full=full, cell_empty=empty,
-					requery=not args.no_requery, use_image=not args.no_image, unplace=args.unplace, theta_deg=args.theta)
+					requery=not args.no_requery, use_image=not args.no_image, unplace=args.unplace, theta_deg=args.theta,
+					pose=args.pose, pose_repor=args.pose_repor, nota=args.nota)
 	except ImportError as e:
 		print(f"aplicado, mas a nova consulta falhou: {e}")
 		return 1
@@ -332,7 +371,7 @@ def main(argv=None) -> int:
 		return 1
 	for m in r["messages"]:
 		print(m)
-	if args.cell or args.unplace or args.position_known or args.anchor or args.unanchor:
+	if args.cell or args.unplace or args.position_known or args.anchor or args.unanchor or args.pose or args.pose_repor:
 		from src.consistency import suspects_lines   # orientation check of the changed area (read-only, never blocks)
 		print("\n".join(suspects_lines(pr, r["affected_cells"])))
 	if r["invariants"]:

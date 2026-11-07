@@ -92,6 +92,7 @@ class Ctx:
 	def __init__(self, proj: str):
 		self.proj = proj
 		self.pr = Project.open(proj)
+		print(R.manual_pose_note(self.pr))   # as poses manuais não entram nas métricas
 		self.prof = self.pr.profile
 		self.mm = 25.4 / float(self.prof.dpi or 300)
 		self.bg = self.prof.background_lab
@@ -155,7 +156,7 @@ class Ctx:
 			return self._pl
 		pl = {}
 		for pid in R.placed_ids(self.pr):
-			r = R.register_piece(self.pr, pid, image=False)
+			r = R.register_piece(self.pr, pid, image=False, manual=False)
 			if "error" not in r:
 				pl[pid] = r
 		with open(fp, "wb") as f:
@@ -393,7 +394,7 @@ def signals(ctx: Ctx, item: dict, pls: dict) -> dict:
 			saved = ctx.pr._shape_cache[item["pid"]]
 			ctx.pr._shape_cache[item["pid"]] = sh
 			try:
-				pl = R.register_piece(ctx.pr, item["pid"], image=False)
+				pl = R.register_piece(ctx.pr, item["pid"], image=False, manual=False)
 			finally:
 				ctx.pr._shape_cache[item["pid"]] = saved
 			p2 = dict(pls)
@@ -632,7 +633,7 @@ def cmd_gt(ctx: Ctx, a) -> int:
 		disp_ref = R.piece_rgba_for_display(pr, pid)
 		same_disp = bool(np.array_equal(disp_ref[..., 3] > 127, L["display"]))
 		sh = analyse(pr.contour_px(pid), mm)
-		pl = R.register_piece(pr, pid, image=False)
+		pl = R.register_piece(pr, pid, image=False, manual=False)
 		bs = board_silhouette(ctx, pid, pl, None)
 		oidx = fill_contour(old[pid], gt.shape)
 		orgba, oxy = crop_of(rgb, old[pid])

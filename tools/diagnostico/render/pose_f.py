@@ -7,7 +7,7 @@ Uso, da raiz (sempre numa CÓPIA de ``projects/alpes``)::
 
 Mede no mesmo processo a pose da GUI (``register_piece(image=False)``) com o interruptor desligado e ligado e,
 se ``--before-placements`` for dado, também a pose com imagem: antes = ``render/placements.json`` dessa cópia, depois
-= ``render.register_all(image=True, force=True)`` na cópia ``--project`` (escreve lá ``render/placements.json``).
+= ``render.register_all(image=True, force=True, manual=False)`` na cópia ``--project`` (escreve lá ``render/placements.json``).
 Reutiliza ``tools/diagnostico/reports/triagem_r3.py`` (folga por junta igual a ``render.seam_gaps``, inclinação do
 lado F) e ``verde_tabuleiro.holes`` (buracos a 120 px/célula, magenta, inset 0,4 mm).
 
@@ -45,7 +45,7 @@ def gui_poses(pr, ids, on):
 	R.F_ROTATION = bool(on)
 	out = {}
 	for pid in ids:
-		r = R.register_piece(pr, pid, art=None, image=False)
+		r = R.register_piece(pr, pid, art=None, image=False, manual=False)
 		if "error" not in r:
 			out[pid] = r
 	return out
@@ -217,6 +217,7 @@ def main(argv=None):
 	T, t0 = {}, time.time()
 	F0 = R.F_ROTATION
 	pr = Project.open(args.project)
+	print(R.manual_pose_note(pr))   # as poses manuais não entram nas métricas
 	ids = R.placed_ids(pr)
 	shapes = {pid: pr.shape(pid) for pid in pr.pieces if pr.piece(pid).estado != "descartada"}
 	res = {"log_len": R._log_len(pr), "n_placed": len(ids)}
@@ -287,10 +288,10 @@ def main(argv=None):
 	if args.before_placements and not args.no_register_all:
 		prb = Project.open(args.before_placements)
 		with open(prb.p("render", "placements.json"), encoding="utf-8") as fh:   # lido em bruto: sem a chave f_rotation seria «stale»
-			PLib = {p: e for p, e in json.load(fh)["placements"].items() if p in PLa}
+			PLib = {p: e for p, e in json.load(fh)["placements"].items() if p in PLa and not e.get("manual")}
 		R.F_ROTATION = True
 		t = time.time()
-		PLia = R.register_all(pr, image=True, force=True)
+		PLia = R.register_all(pr, image=True, force=True, manual=False)
 		T["register_all_image_s"] = time.time() - t
 		PLib = {p: e for p, e in PLib.items() if p in PLia}
 		PLia = {p: e for p, e in PLia.items() if p in PLib}
