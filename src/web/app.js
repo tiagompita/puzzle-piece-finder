@@ -178,6 +178,7 @@ function initPointer() {
   let start = null, pinch = null, moved = false;
   el.addEventListener("wheel", (e) => {
     if (e.ctrlKey || e.metaKey) return;   // Ctrl+wheel / trackpad pinch = browser page zoom
+    if (S.pose && e.altKey) { e.preventDefault(); poseWheel(e); return; }   // Alt+wheel = rotate the piece (pose.js)
     e.preventDefault();
     const f = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0018));
     zoomAt(f, e.clientX, e.clientY);
@@ -223,7 +224,7 @@ function initPointer() {
     el.classList.remove("dragging");
     if (ptrs.size < 2) pinch = null;
     if (ptrs.size === 0) {
-      if (!moved && start && e.type === "pointerup") {
+      if (!moved && start && e.type === "pointerup" && !S.pose) {
         const p = clientToBoard(e.clientX, e.clientY);
         const c = Math.floor(p.x) + 1, l = Math.floor(p.y / S.hr) + 1;
         hideSugPicker();
@@ -409,6 +410,7 @@ async function loadAll() {
 
 // ------------------------------------------------------------ tabs
 function showTab(t) {
+  if (S.pose && t !== "celula") poseClose();   // leaving the cell drawer abandons an open pose edit
   if (t !== "celula") S.prevTab = t;
   if (t === "buscar") $("#n-buscar").classList.remove("aviso");
   S.tab = t;
@@ -819,6 +821,7 @@ async function openCell(l, c, opts = {}) {
   try { d = await api(`/api/cell/${l}/${c}`); } catch (e) { toast(e.message, true); return; }
   if (!S.sel || S.sel[0] !== l || S.sel[1] !== c) return;
   T.replaceChildren(renderCell(d));
+  if (S.pose) poseMountPanel();
 }
 function zoomFigure(d) {
   const [l0, c0, l1, c1] = d.zoom.region;
@@ -872,14 +875,15 @@ function renderCell(d) {
   }
   const rctx = { piece: d.peca ? d.peca.id : null, cell: d.cell, vista: "celula" };
   wrap.append(h("div", { class: "actions" }, ...hintBtns, reportButton(rctx, { inline: true }),
-    d.peca ? contourButton(d.peca.id, { kind: "cell", cell: d.cell }) : null));
+    d.peca ? contourButton(d.peca.id, { kind: "cell", cell: d.cell }) : null,
+    d.peca && d.estado === "colocada" ? poseButton(d.peca.id) : null));
   for (const el of reportInline(rctx)) wrap.append(el);
   if (d.peca) {
     const p = d.peca;
     wrap.append(h("div", { class: "card" }, h("div", { class: "card-top" },
       h("div", {}, pieceImage({ piece: p.id, pose_known: true, ghost: null }), h("div", { class: "pimg-cap" }, "como está no tabuleiro")),
       h("div", {}, h("div", { class: "who" }, p.lote !== null && p.lote !== undefined ? ["Saco ", h("span", { class: "n" }, p.lote), " · nº ", h("span", { class: "n" }, p.n_no_lote)] : p.id),
-        h("div", { class: "small muted" }, `${p.id} · classe ${p.cls || "?"} · ${p.n_flat} lado(s) liso(s)`), manualBadge(p),
+        h("div", { class: "small muted" }, `${p.id} · classe ${p.cls || "?"} · ${p.n_flat} lado(s) liso(s)`), manualBadge(p), poseBadge(p),
         p.scan_id ? h("button", { class: "linkish", type: "button", onclick: () => lightbox(`/api/sheets/${p.scan_id}.jpg?highlight=${p.id}&max=1400&v=${S.ver}`, `Folha ${p.scan_id}`) }, "ver na folha do scan") : null)),
       h("div", { class: "actions" },
         d.pode_desfazer ? h("button", { class: "btn danger", type: "button", onclick: (ev) => { if (confirm(`Retirar ${p.id} de ${cellTxt(d.cell)}?`)) act({ acao: "unplace", piece: p.id }, ev.currentTarget); } }, "Desfazer colocação") : null,
@@ -915,7 +919,7 @@ async function openPiece(pid) {
     h("h3", {}, d.lote !== null && d.lote !== undefined ? `Saco ${d.lote} · nº ${d.n_no_lote}` : d.id)));
   T.append(h("div", { class: "card" }, h("div", { class: "card-top" },
     h("div", {}, pieceImage({ piece: d.id, pose_known: d.pose_tabuleiro !== null, ghost: null }), h("div", { class: "pimg-cap" }, d.pose_tabuleiro !== null ? "rodada como ficará" : "como foi digitalizada")),
-    h("div", {}, h("div", { class: "small muted" }, `${d.id} · ${d.estado_txt}`), h("div", { class: "small muted" }, `classe ${d.cls || "?"} · ${d.n_flat} lado(s) liso(s)` + (d.seccao_id ? ` · grupo ${d.seccao_id}` : "")), manualBadge(d),
+    h("div", {}, h("div", { class: "small muted" }, `${d.id} · ${d.estado_txt}`), h("div", { class: "small muted" }, `classe ${d.cls || "?"} · ${d.n_flat} lado(s) liso(s)` + (d.seccao_id ? ` · grupo ${d.seccao_id}` : "")), manualBadge(d), poseBadge(d),
       h("button", { class: "linkish", type: "button", onclick: () => lightbox(`${d.folha}&max=1400&v=${S.ver}`, `Folha ${d.scan_id}`) }, "ver na folha do scan")))));
   const pctx = { piece: d.id, cell: null, vista: "peca" };
   T.append(h("div", { class: "actions" }, reportButton(pctx, { inline: true }), contourButton(d.id, { kind: "piece", pid: d.id })));
@@ -1498,6 +1502,7 @@ async function boot() {
   tgs.onchange = () => { S.showSug = tgs.checked; lsSet("tg-sug", tgs.checked ? "1" : "0"); drawSuggestions(); };
   document.addEventListener("keydown", (e) => {
     if (S.ced) { cedKey(e); return; }
+    if (S.pose) { poseKey(e); return; }
     if (e.key === "Escape" && $("#ctx-menu")) { closePngMenu(); return; }
     if (e.key === "Escape" && $("#sug-pick")) { hideSugPicker(); return; }
     if (e.key === "Escape") { if (!$("#lightbox").hidden) $("#lightbox").hidden = true; else if (S.tab === "celula") showTab(S.prevTab); }

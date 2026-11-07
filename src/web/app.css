@@ -560,3 +560,33 @@ details.suspeitas:not([open]) > summary[data-extra]::after { content: " · " att
 /* linha de report aberta: o texto e a nota já estão no corpo, o resumo fica só com o cabeçalho */
 .report-row[open] > summary .rbody > div:not(.rhead) { display: none; }
 .falso-row .btn { flex: 0 0 auto; white-space: nowrap; }
+
+/* editar posicionamento (pose.js, docs/gui-design.md §20) */
+#pose-layer .pose-neigh { fill: rgba(51, 214, 255, .10); stroke: #33d6ff; stroke-width: 1.5px; vector-effect: non-scaling-stroke; pointer-events: none; }
+#pose-layer .pose-contour { fill: rgba(0, 0, 0, .001); stroke: var(--amber); stroke-width: 2px; vector-effect: non-scaling-stroke; cursor: move; pointer-events: all; }
+#pose-layer .pose-contour.grab { cursor: grabbing; }
+#pose-layer .pose-arm { stroke: var(--amber); stroke-width: 1.2px; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+#pose-layer .pose-pivot { fill: var(--amber); pointer-events: none; }
+#pose-layer .pose-rot { fill: var(--amber); stroke: #fff; stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+#pose-layer .pose-rot-hit { fill: rgba(0, 0, 0, .001); cursor: grab; pointer-events: all; }
+body[data-pose] #board { cursor: default; }
+.pose-panel { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--amber); border-radius: 10px; background: var(--bg2, rgba(255, 176, 0, .05)); }
+.pose-panel h2 { margin-top: 0; text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--amber); }
+.pose-fields { display: flex; flex-wrap: wrap; gap: 8px; }
+.pose-f { display: inline-flex; align-items: center; gap: 4px; }
+.pose-f span { font-weight: 700; min-width: 1.4em; }
+.pose-f input { width: 5.6em; min-height: 36px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg3); color: var(--text); font: inherit; font-variant-numeric: tabular-nums; }
+.pose-f em { font-style: normal; color: var(--muted); font-size: 12px; }
+.pose-juntas { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin: 10px 0 6px; }
+.pose-j { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 6px; min-width: 0; }
+.pose-gap { font-weight: 700; font-variant-numeric: tabular-nums; }
+.pose-gap.ok, .pose-cons.ok { color: #8fdc98; }
+.pose-gap.mid, .pose-cons.mid { color: var(--amber); }
+.pose-gap.bad, .pose-cons.bad { color: var(--red); }
+.pose-nota { display: block; margin-top: 8px; }
+.pose-nota input { width: 100%; box-sizing: border-box; min-height: 36px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg3); color: var(--text); font: inherit; }
+.pose-help { margin: 8px 0 0; }
+@media (max-width: 900px) {
+  .pose-panel .btn, .pose-f input, .pose-nota input { min-height: 44px; }
+  .pose-juntas { grid-template-columns: 1fr; }
+}
