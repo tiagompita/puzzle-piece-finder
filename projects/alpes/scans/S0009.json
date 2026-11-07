@@ -246,16 +246,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "recuperado_mm2": 12.36
    },
-   "area_mm2": 351.15,
+   "area_mm2": 363.5,
    "cls": "BFBT",
    "n_flat": 1,
    "chords_mm": [
-    19.234,
-    17.882,
-    18.213,
-    15.412
+    19.052,
+    17.95,
+    18.216,
+    18.531
    ],
    "shape_ok": true,
    "bbox": [
@@ -266,9 +267,9 @@
    ],
    "crop_path": "crops/P0199.png",
    "mean_lab": [
-    25.95,
-    -7.99,
-    11.22
+    27.12,
+    -8.76,
+    12.21
    ]
   },
   {
@@ -1063,16 +1064,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "recuperado_mm2": 17.87
    },
-   "area_mm2": 340.23,
-   "cls": "BBBT",
-   "n_flat": 0,
+   "area_mm2": 358.1,
+   "cls": "BFBT",
+   "n_flat": 1,
    "chords_mm": [
-    18.215,
-    18.551,
-    19.889,
-    17.41
+    18.444,
+    18.272,
+    19.947,
+    17.383
    ],
    "shape_ok": true,
    "bbox": [
@@ -1083,9 +1085,9 @@
    ],
    "crop_path": "crops/P0218.png",
    "mean_lab": [
-    42.06,
-    -6.63,
-    26.4
+    43.11,
+    -7.68,
+    27.49
    ]
   },
   {
@@ -1278,16 +1280,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "recuperado_mm2": 13.25
    },
-   "area_mm2": 362.47,
+   "area_mm2": 375.71,
    "cls": "BBTF",
    "n_flat": 1,
    "chords_mm": [
-    15.962,
-    18.655,
-    16.632,
-    19.078
+    19.672,
+    18.689,
+    16.671,
+    18.878
    ],
    "shape_ok": true,
    "bbox": [
@@ -1298,9 +1301,9 @@
    ],
    "crop_path": "crops/P0223.png",
    "mean_lab": [
-    50.44,
-    -14.12,
-    32.7
+    50.92,
+    -14.55,
+    33.1
    ]
   },
   {
