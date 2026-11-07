@@ -361,13 +361,24 @@ def side_costs(hs: HoleSide, pool: PoolArrays, calib: FitCalibration) -> dict:
 		de = np.full(pool.chord.shape, np.nan)
 	else:
 		diff = np.linalg.norm(hs.strip[None, None] - pool.strips[:, :, ::-1], axis=-1)     # (P, 4, N_STRIP), mirrored
-		valid = np.isfinite(diff).sum(-1)
-		with np.errstate(all="ignore"):
-			med = np.nanmedian(np.where(np.isfinite(diff), diff, np.nan), axis=-1)
-		de = np.where(valid >= MIN_VALID, med, np.nan)
+		de = _nanmedian_last(diff)
 	cost = rms / RMS_SCALE + de / DE_SCALE + pen
 	cost = np.where(comp & ~hard & np.isfinite(cost), cost, np.inf)
 	return {"rms": rms, "dl": dl, "dE": de, "pen": pen, "cost": cost, "comp": comp, "hard": hard}
+
+
+def _nanmedian_last(x: np.ndarray, min_valid: int = MIN_VALID) -> np.ndarray:
+	"""Median over the last axis ignoring NaN (same values as ``np.nanmedian``), NaN where fewer than ``min_valid``
+	finite entries; a sort with NaN pushed to +inf, much faster than ``nanmedian`` on (P, 4, 12) blocks."""
+	fin = np.isfinite(x)
+	v = fin.sum(-1)
+	d = np.sort(np.where(fin, x, np.inf), axis=-1)
+	lo = np.maximum((v - 1) // 2, 0)
+	hi = np.maximum(v // 2, 0)
+	a = np.take_along_axis(d, lo[..., None], -1)[..., 0]
+	b = np.take_along_axis(d, hi[..., None], -1)[..., 0]
+	med = 0.5 * (a + b)
+	return np.where(v >= min_valid, med, np.nan)
 
 
 def _f_mask(hole: HoleQuery, pool: PoolArrays, sigma: int) -> np.ndarray:
@@ -496,6 +507,8 @@ def rank_hole(hole: HoleQuery, pool, *, calib: FitCalibration, sigma: int = 1, t
 	if not calib.calibrated:
 		reasons.append("parâmetros por calibrar (valores por omissão)")
 	return {"cell": tuple(hole.cell), "m": hole.m, "zone": hole.zone, "n_pool": len(pa.ids), "n_finite": len(order),
+			"sides": [{"direction": hs.direction, "piece": hs.piece_id, "kind": hs.side.kind, "scan_id": hs.scan_id} for hs in hole.sides],
+			"f_required": list(hole.f_required),
 			"d1": d1, "d2": d2, "margin": margin, "confidence": conf, "candidates": cands,
 			"ranking": [{"id": pa.ids[i], "J": float(J[i]), "rot": int(rot[i])} for i in order],
 			"reasons": reasons, "version": FIT_VERSION, "calib": calib.to_dict()}
@@ -503,7 +516,8 @@ def rank_hole(hole: HoleQuery, pool, *, calib: FitCalibration, sigma: int = 1, t
 
 def assign(results: list) -> dict:
 	"""Joint assignment holes x pieces over several :func:`rank_hole` results: greedy by ``J`` over every
-	finite (hole, piece) pair; each piece ends in one hole and each hole with one piece. Annotates each
+	finite (hole, piece) pair (ties broken towards the hole with more neighbours, then hole order, then piece
+	id); each piece ends in one hole and each hole with one piece. Annotates each
 	result with ``assigned`` (piece id or None) and, on its candidates, ``melhor_para`` = the cell that
 	took that piece when it is not this one. Returns ``{cell: piece}``."""
 	pairs = []
@@ -511,10 +525,10 @@ def assign(results: list) -> dict:
 		if "error" in r:
 			continue
 		for e in r.get("ranking", []):
-			pairs.append((e["J"], h, e["id"]))
+			pairs.append((round(float(e["J"]), 6), -int(r.get("m", 0)), h, e["id"]))     # ties (to 1e-6): more neighbours first
 	pairs.sort()
 	hole_of, piece_of = {}, {}
-	for J, h, pid in pairs:
+	for J, _negm, h, pid in pairs:
 		if h in hole_of or pid in piece_of:
 			continue
 		hole_of[h], piece_of[pid] = pid, h
@@ -568,6 +582,19 @@ class _Cache:
 						self.strips[k] = z[k]
 			except (OSError, ValueError):
 				self.strips = {}
+
+	def rebind(self, project) -> "_Cache":
+		"""Point the cache at a reopened project object: entries of pieces whose bbox changed (re-segmented) or that
+		disappeared are dropped; the rest (strips, eroded sides, shapes) is kept."""
+		old = self.pr
+		self.pr = project
+		for pid in list(set(self.strips) | set(self.sides) | set(self.shapes)):
+			p, q = project.pieces.get(pid), old.pieces.get(pid)
+			if p is None or q is None or list(p.bbox) != list(q.bbox):
+				self.strips.pop(pid, None)
+				self.sides.pop(pid, None)
+				self.shapes.pop(pid, None)
+		return self
 
 	def shape(self, pid):
 		if pid not in self.shapes:
