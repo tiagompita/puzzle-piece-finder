@@ -262,3 +262,61 @@ def test_ingest_propagates_contacto(tmp_path):
         if c["confianca"] == "baixa" and not p.flags.get("objeto_duplo"):
             assert _piece_colour(p) == COL_CONTACT_LOW
     assert os.path.exists(pr.p("overlays", "S0001.jpg"))
+
+
+def test_segment_scan_recovers_eaten_meadow_corner():
+    """A paper-like patch at a body corner, cut by the band without the step, is grown back with it.
+
+    tests/synth.meadow_scan: the low-res separation sees the light patch as background and the
+    1.5 mm band keeps only a rim of it (IoU < 0.97, the top chord short); with ``recover_bays``
+    the piece matches its GT (IoU >= 0.99), carries ``recuperado_mm2`` and keeps its 4 sides.
+    """
+    from synth import meadow_scan
+    from src.shape import analyse
+    img, gts, patch = meadow_scan()
+    off = segment_scan(img, dpi=300, normalize_rotation=False, recover_bays=False)
+    on = segment_scan(img, dpi=300, normalize_rotation=False, recover_bays=True)
+    assert off["count"] == on["count"] == 4
+    (pa_off, ia_off), = _match_gt(off, gts[:1])
+    (pa_on, ia_on), = _match_gt(on, gts[:1])
+    assert pa_off["index"] == pa_on["index"]
+    assert ia_off < 0.97, ia_off
+    assert "recuperado_mm2" not in pa_off
+    assert ia_on >= 0.99, ia_on
+    patch_mm2 = float(patch.sum()) * on["mm_per_px"] ** 2
+    assert 0.5 * patch_mm2 <= pa_on["recuperado_mm2"] <= 1.2 * patch_mm2, (pa_on["recuperado_mm2"], patch_mm2)
+    s = analyse(pa_on["contour"], on["mm_per_px"])
+    assert s.ok and s.cls == analyse(_match_gt(on, gts[1:2])[0][0]["contour"], on["mm_per_px"]).cls
+    assert min(s.lens) > 17.5, s.lens
+
+
+def test_segment_scan_recover_bays_keeps_blanks():
+    """Real blanks are background in the threshold: pieces without a patch are not touched."""
+    import cv2
+    from synth import meadow_scan
+    img, gts, _ = meadow_scan()
+    off = segment_scan(img, dpi=300, normalize_rotation=False, recover_bays=False)
+    on = segment_scan(img, dpi=300, normalize_rotation=False, recover_bays=True)
+    for (p_off, _), (p_on, i_on) in zip(_match_gt(off, gts[1:]), _match_gt(on, gts[1:])):
+        assert "recuperado_mm2" not in p_on
+        assert np.array_equal(np.asarray(p_off["contour"]), np.asarray(p_on["contour"]))
+        assert i_on >= 0.99, i_on
+    # The patched piece keeps its two blanks open: nothing outside its GT mask is added.
+    (pa, _), = _match_gt(on, gts[:1])
+    m = np.zeros(gts[0].shape, np.uint8)
+    cv2.drawContours(m, [np.asarray(pa["contour"]).astype(np.int32).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+    outside_mm2 = float(((m > 0) & ~gts[0]).sum()) * on["mm_per_px"] ** 2
+    assert outside_mm2 < 2.0, outside_mm2
+
+
+def test_segment_scan_recover_bays_module_switch(monkeypatch):
+    """``recover_bays=None`` follows the module switch ``_RECOVER_BAYS``."""
+    from synth import meadow_scan
+    import src.segmentation as SEG
+    img, gts, _ = meadow_scan()
+    monkeypatch.setattr(SEG, "_RECOVER_BAYS", False)
+    (p, _), = _match_gt(segment_scan(img, dpi=300, normalize_rotation=False), gts[:1])
+    assert "recuperado_mm2" not in p
+    monkeypatch.setattr(SEG, "_RECOVER_BAYS", True)
+    (p, _), = _match_gt(segment_scan(img, dpi=300, normalize_rotation=False), gts[:1])
+    assert p.get("recuperado_mm2", 0) > 0

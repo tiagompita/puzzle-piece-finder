@@ -183,6 +183,54 @@ def interlocked_scan(gap_px=1, seed=0, body_gap_mm=1.0, colours=((50, 90, 180), 
     return Image.fromarray(img), masks
 
 
+# Light, paper-like art patch (CIE Lab): the measured eaten meadow of S0009 (P0218), about
+# (dL, da, db) = (-40, +25, -1) OpenCV 8-bit units from the green paper.
+MEADOW_LAB = (62.0, -26.0, 47.0)
+
+
+def meadow_scan(seed=0, patch_mm=5.0, colour=(50, 90, 180)):
+    """Synthetic 300 dpi scan on the project green: a corner of piece A painted the meadow colour.
+
+    Four separated pieces (top, right, bottom, left kinds): A = ``BTBT`` (blanks on top and
+    bottom) with a ``patch_mm`` square of :data:`MEADOW_LAB` at the top-right corner of its
+    body (touching the edge of the top blank's mouth side), B = ``BTBT`` without a patch (a
+    control with real blanks), C = ``TBTB``, D = ``BTBT``. The low-resolution, chroma-weighted
+    separation of ``segment_pieces`` sees the patch as background and cuts it out of A (deeper
+    than the 1.5 mm band); the full-resolution threshold holds it. Pieces are ``colour`` with
+    per-pixel noise.
+
+    Returns ``(PIL image, [mask_A, mask_B, mask_C, mask_D], patch_mask)`` (full-size bool).
+    """
+    from PIL import Image
+    rng = np.random.default_rng(seed)
+    H, W = 900, 1900
+    y_mm = 450 * MMPP - L0 / 2
+    specs = [((300 * MMPP, y_mm), "BTBT"), ((700 * MMPP, y_mm), "BTBT"),
+             ((1100 * MMPP, y_mm), "TBTB"), ((1500 * MMPP, y_mm), "BTBT")]
+    masks = []
+    for tl, kinds in specs:
+        c = _piece_contour_px(tl, kinds)
+        m = np.zeros((H, W), np.uint8)
+        cv2.fillPoly(m, [np.round(c * 16).astype(np.int32).reshape(-1, 1, 2)], 1, shift=4)
+        masks.append(m > 0)
+    x0, y0 = specs[0][0]
+    patch = np.zeros((H, W), bool)
+    px0, py0 = int(round((x0 + L0 - patch_mm) / MMPP)), int(round(y0 / MMPP))
+    pw = int(round(patch_mm / MMPP))
+    patch[py0 - 2:py0 + pw, px0:px0 + pw + 2] = True
+    patch &= masks[0]
+    img = np.empty((H, W, 3), np.uint8)
+    img[:] = lab_to_rgb(SCAN_BG_LAB)
+    img = np.clip(img + rng.normal(0, 3, (H, W, 3)), 0, 255).astype(np.uint8)
+    for m in masks:
+        sel = m & ~patch
+        tex = np.asarray(colour, float) + rng.normal(0, 12, (int(sel.sum()), 1))
+        img[sel] = np.clip(tex, 0, 255).astype(np.uint8)
+    tex = np.asarray(lab_to_rgb(MEADOW_LAB), float) + rng.normal(0, 4, (int(patch.sum()), 3))
+    img[patch] = np.clip(tex, 0, 255).astype(np.uint8)
+    return Image.fromarray(img), masks, patch
+
+
 def mask_iou(contour_px, gt_mask):
     """IoU between the filled ``contour_px`` (full-image px) and a full-size bool GT mask."""
     m = np.zeros(gt_mask.shape, np.uint8)

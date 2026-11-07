@@ -2273,6 +2273,143 @@ def _resolve_contact_group(
 	return {"contours": new_contours, "iou": ious, "metodo": metodo}
 
 
+# ===== Eaten-meadow recovery on scans (paper-coloured art cut by the band) =====
+# The low-res segment_pieces contour can cut a light, paper-like patch of art (meadow)
+# deeper than the 1.5 mm band, while the full-res threshold (after its closing) holds it
+# (measured on S0009 P0218/P0223/P0199, docs/diagnostico/segmentacao/PRADO.md).
+# Module switch of the step (segment_scan(recover_bays=None) follows it).
+_RECOVER_BAYS = True
+# Candidate pixels must lie inside the piece contour's minAreaRect dilated by this (mm).
+_BAY_RECT_PAD_MM = 0.3
+# Radius (mm) of the disk opening a candidate must survive. On the 27 project sheets the
+# candidates that are cast-shadow corners / a tab across a block seam / the paper strip
+# have an inscribed radius <= 0.96 mm, the three eaten-meadow bays >= 1.34 mm (PRADO.md).
+_BAY_OPEN_MM = 1.1
+# Accept a recovery only if it adds at most this fraction of the area, and at least
+# _BAY_MIN_MM2 (below that it is boundary noise, not an eaten bay).
+_BAY_MAX_GAIN = 0.10
+_BAY_MIN_MM2 = 2.0
+
+
+def _recover_bay_contour(
+	c: np.ndarray,
+	cand: np.ndarray,
+	org: tuple[int, int],
+	mm_per_px: float,
+) -> tuple[np.ndarray, float] | None:
+	"""Contour of piece ``c`` grown into the eaten bays of ``cand``, and the area gained (px).
+
+	``c`` is the current piece contour (photo px), ``cand`` the window (top-left ``org``)
+	mask of the full-res threshold AND the piece's Voronoi cell, NOT clipped to the band.
+	The recovered pixels are those of ``cand`` outside the filled contour, inside its
+	``minAreaRect`` dilated ``_BAY_RECT_PAD_MM``, that survive a disk opening of radius
+	``_BAY_OPEN_MM`` in a component touching the piece (then re-grown by the same disk,
+	bounded by the candidates), plus the candidates connected to them inside the convex
+	hull of piece + recovered region. Pure geometry: shape validation is the caller's.
+	Returns ``None`` when nothing qualifies.
+	"""
+	x0, y0 = org
+	h, w = cand.shape
+	loc = (np.asarray(c).reshape(-1, 2) - [x0, y0]).astype(np.int32).reshape(-1, 1, 2)
+	cm = np.zeros((h, w), np.uint8)
+	cv2.drawContours(cm, [loc], -1, 1, thickness=cv2.FILLED)
+	rect = np.zeros((h, w), np.uint8)
+	box = cv2.boxPoints(cv2.minAreaRect(loc)).astype(np.int32)
+	cv2.fillPoly(rect, [box], 1)
+	pad = max(1, int(round(_BAY_RECT_PAD_MM / mm_per_px)))
+	rect = cv2.dilate(rect, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * pad + 1, 2 * pad + 1)))
+	extra = ((cand > 0) & (rect > 0) & (cm == 0)).astype(np.uint8)
+	if not extra.any():
+		return None
+	r = max(1, int(round(_BAY_OPEN_MM / mm_per_px)))
+	disk = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+	core = cv2.morphologyEx(extra, cv2.MORPH_OPEN, disk)
+	if not core.any():
+		return None
+	n, cc = cv2.connectedComponents(core, connectivity=8)
+	touch = cv2.dilate(cm, np.ones((3, 3), np.uint8)) > 0
+	# A component of the opened candidates counts when, re-grown by the disk (bounded by
+	# the candidates, which restores the corners the opening rounded), it touches the piece.
+	grown = np.zeros((h, w), bool)
+	for k in range(1, n):
+		comp_g = (cv2.dilate((cc == k).astype(np.uint8), disk) > 0) & (extra > 0)
+		if (comp_g & touch).any():
+			grown |= comp_g
+	if not grown.any():
+		return None
+	# Thin slivers of the same bay (thinner than the disk, e.g. along the piece edge next to
+	# it) join through connectivity, but only inside the convex hull of piece + bay: a
+	# cast-shadow strip on the outer side of a straight edge stays out.
+	pts = np.vstack([loc.reshape(-1, 2), np.column_stack(np.nonzero(grown)[::-1])]).astype(np.int32)
+	hull = np.zeros((h, w), np.uint8)
+	cv2.fillPoly(hull, [cv2.convexHull(pts)], 1)
+	_, cc2 = cv2.connectedComponents(((extra > 0) & (hull > 0)).astype(np.uint8), connectivity=8)
+	hit = np.unique(cc2[grown])
+	rec = grown | np.isin(cc2, hit[hit > 0])
+	new_c, new_m = _largest_filled(((cm > 0) | rec).astype(np.uint8))
+	if new_c is None:
+		return None
+	gain = float((new_m > 0).sum()) - float(cm.sum())
+	return new_c + np.array([x0, y0]), gain
+
+
+def _recover_scan_bays(
+	pieces: list[dict],
+	seg_contours: list[np.ndarray],
+	thr: np.ndarray,
+	vor: np.ndarray,
+	rgb: np.ndarray,
+	mm_per_px: float,
+	reach: int,
+	pad_ratio: float,
+	normalize_rotation: bool,
+) -> None:
+	"""Grow, in place, refined pieces whose contour skipped a bay of their own art.
+
+	The scan contour is clipped to a band of ``band_mm`` around the low-res
+	``segment_pieces`` contour; where that contour cut a light, paper-coloured patch of
+	art deeper than the band (meadow at a corner, TRIAGEM-2026-11-07 §4), the threshold
+	still holds the patch but the band drops it. For each refined, non-cluster piece
+	outside any contact group, :func:`_recover_bay_contour` proposes the grown contour;
+	it is adopted only when the gain is in ``[_BAY_MIN_MM2, _BAY_MAX_GAIN * area]``, the
+	new shape has 4 corners (:func:`src.shape.analyse`) and no more shape violations
+	(:func:`_shape_violations`: chords in ``_CONTACT_CHORD_MM``, no F shorter than
+	``_CONTACT_FALSE_FLAT_MM``) than the old one. Adopted pieces get the new record and
+	``recuperado_mm2`` (area gained, mm^2). A real blank is background in the threshold,
+	so it is never a candidate.
+	"""
+	from .shape import analyse
+	H, W = thr.shape
+	mm2 = mm_per_px * mm_per_px
+	for q, p in enumerate(pieces):
+		if p["is_cluster"] or not p.get("refined") or p.get("contacto"):
+			continue
+		c = np.asarray(p["contour"]).reshape(-1, 2)
+		x, y, w, h = cv2.boundingRect(np.vstack([seg_contours[q], c]).astype(np.int32).reshape(-1, 1, 2))
+		x0, y0 = max(0, x - reach), max(0, y - reach)
+		x1, y1 = min(W, x + w + reach), min(H, y + h + reach)
+		cand = (thr[y0:y1, x0:x1] > 0) & (vor[y0:y1, x0:x1] == q + 1)
+		out = _recover_bay_contour(c, cand.astype(np.uint8), (x0, y0), mm_per_px)
+		if out is None:
+			continue
+		new_c, gain = out
+		area = float(p["area_px"])
+		if gain * mm2 < _BAY_MIN_MM2 or gain > _BAY_MAX_GAIN * area:
+			continue
+		if not analyse(new_c, mm_per_px).ok:
+			continue
+		v_old, _ = _shape_violations([c], mm_per_px, False)
+		v_new, _ = _shape_violations([new_c], mm_per_px, False)
+		if v_new[0] > v_old[0]:
+			continue
+		rec = _scan_record(new_c, rgb, pad_ratio, normalize_rotation)
+		if rec is None:
+			continue
+		p.update(rec)
+		p["roughness"] = _contour_roughness(p["contour"])
+		p["recuperado_mm2"] = round((float(p["area_px"]) - area) * mm2, 2)
+
+
 def _scan_record(c: np.ndarray, rgb: np.ndarray, pad_ratio: float, normalize_rotation: bool) -> dict | None:
 	"""Piece record (``_compose_piece_fullres`` keys) of a full-res contour ``c`` (photo px)."""
 	H, W = rgb.shape[:2]
@@ -2612,6 +2749,7 @@ def segment_scan(
 	open_mm: float = 0.42,
 	close_mm: float = 0.76,
 	split_contacts: bool = True,
+	recover_bays: bool | None = None,
 	debug: bool = False,
 	**segment_pieces_kwargs,
 ) -> dict:
@@ -2661,6 +2799,11 @@ def segment_scan(
 			then by a seam watershed, validated by shape (:func:`_split_scan_contacts`,
 			docs/diagnostico/segmentacao/CONTACTOS.md). ``False`` reproduces the
 			previous output bit for bit. Never changes the number of pieces.
+		recover_bays: grow a piece into a bay of its own paper-coloured art that the
+			threshold holds but the band dropped (:func:`_recover_scan_bays`,
+			docs/diagnostico/segmentacao/PRADO.md); ``None`` follows the module switch
+			``_RECOVER_BAYS``. ``False`` reproduces the previous output bit for bit.
+			Runs after the contact step and skips contact-group members.
 		debug: attach ``segment_pieces``' debug images (``strip_mask``
 			included), with ``threshold_mask``, ``scan_strip_mask`` (full-res
 			strip removed from the threshold), ``voronoi`` (cell labels as
@@ -2680,7 +2823,8 @@ def segment_scan(
 		keep the ``segment_pieces`` contour and crop) and ``roughness``
 		(perimeter / smoothed perimeter; a diagnostic, never a gate); members of a
 		contact group also carry ``contacto`` (``com``, ``confianca`` alta/baixa,
-		``metodo``, ``alterado``). On failure
+		``metodo``, ``alterado``); pieces grown by ``recover_bays`` carry
+		``recuperado_mm2`` (area added, mm^2). On failure
 		the ``segment_pieces`` error dict with ``method`` and ``mm_per_px`` added.
 	"""
 	mm_per_px = 25.4 / float(dpi)
@@ -2750,6 +2894,10 @@ def segment_scan(
 		_split_scan_contacts(
 			pieces, thr, thr_open, lab, vor, band, rgb, mm_per_px, close_px, pad_ratio, normalize_rotation,
 		)
+	# Eaten bays: light art the low-res contour cut deeper than the band (the threshold
+	# still holds it); grown back inside the piece's rectangle, validated by shape.
+	if _RECOVER_BAYS if recover_bays is None else recover_bays:
+		_recover_scan_bays(pieces, seg_contours, thr, vor, rgb, mm_per_px, reach, pad_ratio, normalize_rotation)
 	del lab
 
 	res["scan_background_lab"] = (float(bg[0]), float(bg[1]), float(bg[2]))

@@ -261,6 +261,8 @@ def ingest_scan(project, scan_path: str, lote: Optional[int], *, dpi: float = 30
 								 "confianca": str(p["contacto"].get("confianca", "alta")),
 								 "metodo": str(p["contacto"].get("metodo", "")),
 								 "alterado": bool(p["contacto"].get("alterado"))}
+		if p.get("recuperado_mm2"):
+			flags["recuperado_mm2"] = float(p["recuperado_mm2"])
 		pid_next = f"P{int(project.meta['next_ids']['P']):04d}"
 		crop_rel = f"crops/{pid_next}.png"
 		Image.fromarray(np.ascontiguousarray(rgba)).save(project.p(crop_rel))
