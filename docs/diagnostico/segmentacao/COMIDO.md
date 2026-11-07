@@ -314,3 +314,88 @@ pytest tests/test_maskcmp.py
   - 0 impossível, 2 melhor rotação (P0833, P0343, as de antes);
   - **12 recorte, exatamente o bloco c32|c33** (P0289–P0294, P0492–P0494, P0496–P0498; `nn_max` 2,99–6,51 mm), todas com o texto da exceção; nenhuma outra peça.
   - `evaluate`: **4,3 s antes, 5,4–5,7 s depois** (+1,1–1,4 s, o cálculo `nn_max` em 512 × 512 pontos para as peças com gémea no tabuleiro).
+
+## 10. Correção, parte 2 (2026-11-07): tabs inteiros fora do contorno, peças de contacto, razão `baia` e verificação no arranque
+
+### 10.1 Tabs inteiros (`src/segmentation.py`, `_recover_bay_contour` / `_recover_scan_bays`)
+
+**O que mudou.** O passo das baías (PRADO §2) só aceitava candidatos dentro do `minAreaRect` do contorno, alargado 0,3 mm. Um tab perdido fica fora desse retângulo (39–70 % da área, §6), por isso nunca era recuperado.
+- Há agora uma segunda passagem, `_recover_tab_components`, com o interruptor `_BAY_TABS` (ligado).
+- Candidatos fora do contorno, no limiar e na célula de Voronoi da peça, sem o retângulo.
+- Cada componente tem de cumprir quatro condições:
+  - sobreviver à mesma abertura de 1,1 mm (`_BAY_OPEN_MM`);
+  - sair do retângulo;
+  - ter raio inscrito ≥ `_BAY_TAB_RIN_MM` = 1,2 mm (o sinal (c) do §5: controlos ≤ 0,96, reais ≥ 1,34);
+  - tocar a peça ao longo de pelo menos `_BAY_TAB_THROAT_MM` = 2,5 mm (a base de um tab).
+- A janela de procura cresce `_BAY_TAB_REACH_MM` = 6 mm.
+- A validação continua a mesma: ganho entre 2 mm² e 10 % da área, 4 cantos, sem mais violações de forma (`_shape_violations`).
+
+**Peças de contacto.** Com `_BAY_CONTACT` (ligado), os membros de grupos de contacto entram também no passo. Os candidatos ficam a ≥ 1,0 mm de qualquer outra peça (`_BAY_CONTACT_GAP_MM`). A partição de CONTACTOS não é tocada.
+
+**Duas formas medidas nas 27 folhas** (`tools/diagnostico/segmentacao/baias.py`; antes = `off`, os três interruptores desligados) [V]:
+
+| variante | peças alteradas | contagem e numeração | tempo das 27 folhas |
+|---|---|---|---|
+| `off` (código anterior) | **0**: igual ao índice, contorno a contorno | 27/27 iguais | 90,0 s |
+| A: tabs (abertura + raio + garganta) | P0844, P0852, P0879 | 27/27 iguais | 98,4 s |
+| B: retângulo alargado para 6 mm, a validação de forma decide | as mesmas 3 | 27/27 iguais | 173,7 s |
+| **C = A + peças de contacto (por omissão)** | **as mesmas 3**; a extensão aos contactos não mudou nenhuma peça | 27/27 iguais | 98,9–103,1 s |
+
+- **Escolhida A/C.**
+- A é cirúrgica: só muda o lado do tab.
+- B mexe também nas cordas dos outros lados, porque o retângulo de 6 mm apanha a sombra. Em P0879 a corda W passa de 16,86 para 16,39 mm. B é também 1,9 vezes mais lenta.
+
+**Porta (antes → depois)** [V salvo indicação]:
+
+1. **Os 3 alvos ganham o tab** (figura `COMIDO_baias.jpg`, vista: antes a vermelho, depois a ciano, área ganha a magenta; os rótulos mostram `index_in_scan`):
+
+   | peça | área (mm²) | ganho | classe | lado N | cordas (mm) |
+   |---|---|---|---|---|---|
+   | P0844 (S0024 nº 11) | 378,0 → 398,5 | +20,5 mm², 5,4 % | BTFT → **BTTT** | F → T | [19,17; 17,61; 18,20; 15,74] → [18,85; 17,61; 18,16; 16,26] |
+   | P0879 (S0025 nº 18) | 360,1 → 379,6 | +19,4 mm², 5,4 % | BTTF → **BTTT** | F → T | — |
+   | P0852 (S0024 nº 19) | 361,6 → 380,5 | +18,9 mm², 5,2 % | BTBT, igual | já T (tab truncado); agora inteiro | — |
+
+   - Nenhum fica à justa do limite de 10 %.
+   - **P0852 na sua secção G0070:** o lado N fica contra o S da vizinha de cima P0849, T↔B, e o `side_complement` passa de 1,33 para 1,26 mm.
+   - P0844 e P0879 estão em secções de uma só peça, sem gémea colocada: `legacy.solve` e `free_dist` **[NT]**.
+2. **E-sym bit a bit igual.** Os contornos de A1, A2 e B2 são iguais com os interruptores desligados e por omissão, 20/20 em cada folha, e nenhuma tem a razão `baia`. `tests/test_segment_scan_esym.py` (`slow`) passa.
+3. **As 27 folhas:** contagem e numeração iguais; só mudam os 3 alvos. S0023 e S0020 ficam inalteradas.
+4. **GT de P0651/P0657 inalterada:** o contorno de S0020 é igual, logo as métricas do §2 são as mesmas (IoU 0,928 / 0,919 da exibida).
+5. **Controlos** P0156, P0195 e P0445: iguais (na figura, sem magenta).
+6. **Testes:** `pytest tests/test_segmentation.py tests/test_segment_scan_esym.py` dá 21 passed. Há 3 testes novos:
+   - `_recover_bay_contour` direto: um quadrado sem o tab e um limiar com ele. Com `tabs=False` devolve `None`, ou seja, falha sem a extensão. Com `tabs=True` recupera o tab dentro de 3 % da área;
+   - uma faixa de sombra de 0,6 mm ao longo de um lado não é recuperada;
+   - a razão `baia` aparece com o tab e não aparece com a faixa.
+
+### 10.2 Razão `baia` em `_flag_suspect_cuts` (só sinaliza)
+- **Interruptor e regra:** `_FLAG_BAYS` (ligado). É o sinal (c) do §5 sobre o limiar de `segment_scan`, calculado depois do passo das baías (`_bay_signal`):
+  - componentes do limiar fora do contorno, na célula própria (mais perto desta peça do que de qualquer outra), a ≥ 1,0 mm das outras e que tocam a peça;
+  - janela de 7 mm;
+  - raio inscrito > 1,2 mm → `razoes += ["baia"]`, com `baia_mm2` e `baia_r_mm`;
+  - `src/ingest.py` copia `suspeita_recorte` inteira para `flags` (`SEG_FLAG_KEYS`, linha 170) [V].
+- **Sem a recuperação** (variante `F`, em S0009/S0024/S0025) marca exatamente os 3 alvos: r 2,17 / 1,79 / 2,15 mm, 20,9 / 29,3 / 27,3 mm².
+- **Com a recuperação** (por omissão), nas 27 folhas marca só 2 peças, ambas `descartada` em S0003:
+  - P0053, 284 mm², sem classe: r 2,11 mm, 47,0 mm²;
+  - P0058, 643 mm², objeto duplo de contacto: r 1,91 mm, 46,1 mm².
+  - Nenhuma peça em uso fica marcada.
+- **Custo:** 3,2 s nas 27 folhas, cerca de 0,12 s por folha.
+- O grau `recorte` do `src/consistency.py` (§9) já lê `baia_mm2`.
+
+### 10.3 Verificação no arranque do servidor (`src/server.py`, `Gui._check_stale`)
+- **Quando corre:** em `_prepare`, depois da regra das pastas em falta e antes de compor o tabuleiro.
+- **O que faz:**
+  - corre `render.stale_assets`;
+  - se houver folhas desatualizadas, passa o estado a «a preparar» e escreve no progresso «N peças em M folhas desatualizadas (depois de um git pull?): a refazer…»;
+  - corre `render.rebuild_stale` e termina com «ativos refeitos: … 0 eventos» ou com o aviso de código diferente;
+  - guarda `stale_info` = `{desatualizados_antes, folhas, refeitos, eventos, restantes, segundos, aviso, erros}`, exposto em `GET /api/status` como `ativos`.
+- **Teste novo:** um projeto ingerido com o contorno de uma peça encolhido no npz. No arranque o npz é reposto, com 1 peça refeita, 0 eventos e o log igual. `/api/status` mostra `ativos`, e um segundo arranque não refaz nada.
+- **Teste existente alterado (declarado):** `test_prepare_runs_rebuild_when_assets_missing` passa a desligar `render.stale_assets` com monkeypatch.
+  - O projeto de `_project` é feito à mão: bbox com +10 px e área do polígono, não o que uma ingestão escreve.
+  - A verificação considerava-o desatualizado e chamava o `rebuild_assets` falso uma segunda vez.
+- **Tempo de arranque, cópia de `projects/alpes`** [V]:
+  - coerente: sem a verificação 2,1–2,2 s, com ela 3,1–3,2 s (+1,0 s, `segundos` 1,0);
+  - cópia desatualizada (a do §9), com o código final: 81,1 s no total, dos quais 48,5 s são o rebuild; 11 refeitas,
+    0 eventos, log 2109 → 2109, `check_invariants(disk=True)` OK; o segundo arranque leva 3,5 s e não refaz nada.
+- **Ordem a seguir [NT]:** refazer S0024/S0025 em C: (os 3 eventos `piece_resegmented`) e fazer push **antes** de a máquina D: correr este código.
+  - Caso contrário, uma folha desatualizada em D: re-segmentada com o código novo gera lá eventos com motivo `stale`.
+  - O log seria então escrito nas duas máquinas.

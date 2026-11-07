@@ -402,3 +402,57 @@ def test_segment_scan_s0023_pair_without_tongue():
         assert SEG._appendage(p["contour"], res["mm_per_px"])[0] < SEG._SUSPECT_SPUR_LEN_MM
     _, info = SEG._shape_violations([a["contour"], b["contour"]], res["mm_per_px"], True)
     assert info[0]["face"]["kinds"] in ("TB", "BT") and info[0]["face"]["rms_mm"] < SEG._SUSPECT_FACE_RMS_MM
+
+
+# ---------------------------------------------------------------- whole tab outside the contour (COMIDO.md §10)
+_MM = 25.4 / 300
+
+
+def _tab_scene(tab=True, strip=False):
+    """Window masks: a 220 px square body (contour = body only) and the threshold = body + a tab
+    (neck 50 px wide, head disc r 23 px) sticking 65 px (5.5 mm) out of the top side, beyond the minAreaRect;
+    or a 7 px (0.6 mm) cast-shadow strip along the right side."""
+    import cv2
+    h = w = 500
+    thr = np.zeros((h, w), np.uint8)
+    x0, y0, s = 140, 160, 220
+    thr[y0:y0 + s, x0:x0 + s] = 1
+    if tab:
+        cx = x0 + s // 2
+        thr[y0 - 40:y0, cx - 25:cx + 25] = 1
+        cv2.circle(thr, (cx, y0 - 42), 23, 1, -1)
+    if strip:
+        thr[y0 + 20:y0 + s - 20, x0 + s:x0 + s + 7] = 1
+    c = np.array([[x0, y0], [x0 + s - 1, y0], [x0 + s - 1, y0 + s - 1], [x0, y0 + s - 1]], np.int32)
+    return c, thr
+
+
+def test_recover_bay_contour_takes_back_a_whole_tab_only_with_tabs():
+    from src import segmentation as SEG
+    c, thr = _tab_scene()
+    assert SEG._recover_bay_contour(c, thr, (0, 0), _MM, tabs=False) is None          # the rectangle rule cannot
+    out = SEG._recover_bay_contour(c, thr, (0, 0), _MM, tabs=True)
+    assert out is not None
+    new_c, gain = out
+    tab_px = float(thr.sum()) - 220 * 220
+    assert abs(gain - tab_px) <= 0.03 * tab_px
+    assert new_c[:, 1].min() <= 160 - 65 + 2                                           # reaches the tab tip
+
+
+def test_recover_bay_contour_tabs_leave_a_shadow_strip():
+    from src import segmentation as SEG
+    c, thr = _tab_scene(tab=False, strip=True)
+    assert SEG._recover_bay_contour(c, thr, (0, 0), _MM, tabs=True) is None
+
+
+def test_flag_suspect_cuts_reason_baia():
+    from src import segmentation as SEG
+    c, thr = _tab_scene()
+    pieces = [{"index": 0, "contour": c, "is_cluster": False}]
+    SEG._flag_suspect_cuts(pieces, _MM, thr * 255)
+    fl = pieces[0]["suspeita_recorte"]
+    assert "baia" in fl["razoes"] and fl["baia_r_mm"] > SEG._BAY_FLAG_RIN_MM and fl["baia_mm2"] > 15
+    c2, thr2 = _tab_scene(tab=False, strip=True)
+    pieces = [{"index": 0, "contour": c2, "is_cluster": False}]
+    SEG._flag_suspect_cuts(pieces, _MM, thr2 * 255)
+    assert "suspeita_recorte" not in pieces[0]

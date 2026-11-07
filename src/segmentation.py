@@ -1970,7 +1970,7 @@ def _appendage(contour: np.ndarray, mm_per_px: float) -> tuple[float, float]:
 	return best
 
 
-def _flag_suspect_cuts(pieces: list[dict], mm_per_px: float) -> None:
+def _flag_suspect_cuts(pieces: list[dict], mm_per_px: float, thr: np.ndarray | None = None) -> None:
 	"""Add ``suspeita_recorte`` to the pieces whose cut looks wrong (in place; contours untouched).
 
 	Reasons: ``apendice`` (:func:`_appendage` longer than ``_SUSPECT_SPUR_LEN_MM``: a thread,
@@ -1978,7 +1978,9 @@ def _flag_suspect_cuts(pieces: list[dict], mm_per_px: float) -> None:
 	``watershed`` contact pair (a group of exactly 2) whose side facing the other is not T against B or
 	has a :func:`src.shape.side_complement` RMS above ``_SUSPECT_FACE_RMS_MM``: the cut that
 	made both sides does not mate). The flag is ``{'razoes': [...], 'apendice_mm',
-	'apendice_mm2', 'contacto_rms_mm' (only with the second reason)}``.
+	'apendice_mm2', 'contacto_rms_mm' (only with the second reason)}``. With ``thr`` (the full-res
+	threshold) and ``_FLAG_BAYS``: reason ``baia`` (:func:`_bay_signal` radius above ``_BAY_FLAG_RIN_MM``:
+	a tab / bay of the threshold left outside the contour), with ``baia_mm2`` and ``baia_r_mm``.
 	"""
 	by_index = {int(p["index"]): q for q, p in enumerate(pieces)}
 	face: dict[int, float] = {}
@@ -2003,10 +2005,17 @@ def _flag_suspect_cuts(pieces: list[dict], mm_per_px: float) -> None:
 			razoes.append("apendice")
 		if q in face and face[q] > _SUSPECT_FACE_RMS_MM:
 			razoes.append("corte_de_contacto")
+		bay = (0.0, 0.0)
+		if thr is not None and _FLAG_BAYS and not p.get("is_cluster"):
+			bay = _bay_signal(pieces, q, thr, mm_per_px)
+			if bay[0] > _BAY_FLAG_RIN_MM:
+				razoes.append("baia")
 		if razoes:
 			flag = {"razoes": razoes, "apendice_mm": round(length, 2), "apendice_mm2": round(area, 2)}
 			if "corte_de_contacto" in razoes:
 				flag["contacto_rms_mm"] = None if not np.isfinite(face[q]) else round(face[q], 2)
+			if "baia" in razoes:
+				flag["baia_r_mm"], flag["baia_mm2"] = round(bay[0], 2), round(bay[1], 2)
 			p["suspeita_recorte"] = flag
 
 
@@ -2107,6 +2116,28 @@ def _priority_flood(height: np.ndarray, markers: np.ndarray, region: np.ndarray)
 					cnt += 1
 					heapq.heappush(heap, (max(lev, hf[n_idx]), cnt, n_idx, lbl))
 	return lab.reshape(h, w)
+
+
+def _blackhat_gradient(lab: np.ndarray, mm_per_px: float) -> tuple[np.ndarray, np.ndarray]:
+	"""Landscape terms of the contact watershed (:func:`_resolve_contact_group`), unnormalised.
+
+	``lab``: OpenCV 8-bit Lab (any float/uint dtype, values 0..255). Returns ``(bh, grad)``
+	float32: black-hat of L* with an ellipse of ``_CONTACT_BLACKHAT_MM`` (dark gaps / shadow
+	lines narrower than that) and the max over the three channels of the Sobel gradient
+	magnitude of the Lab image blurred with sigma 1 px (colour edges). Also used by the stroke
+	editor (:mod:`src.strokes`).
+	"""
+	L = np.clip(lab[:, :, 0], 0, 255).astype(np.uint8)
+	bk = max(3, int(round(_CONTACT_BLACKHAT_MM / mm_per_px)) | 1)
+	bh = cv2.morphologyEx(L, cv2.MORPH_BLACKHAT,
+						  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (bk, bk))).astype(np.float32)
+	sm = cv2.GaussianBlur(np.ascontiguousarray(lab, np.float32), (0, 0), 1.0)
+	grad = np.zeros(lab.shape[:2], np.float32)
+	for ch in range(3):
+		gx = cv2.Sobel(sm[:, :, ch], cv2.CV_32F, 1, 0, ksize=3)
+		gy = cv2.Sobel(sm[:, :, ch], cv2.CV_32F, 0, 1, ksize=3)
+		grad = np.maximum(grad, np.sqrt(gx * gx + gy * gy))
+	return bh, grad
 
 
 def _largest_filled(mask: np.ndarray) -> tuple[np.ndarray | None, np.ndarray | None]:
@@ -2383,16 +2414,7 @@ def _resolve_contact_group(
 			else:
 				metodo = "watershed"
 				if bh is None:
-					L = np.clip(lab[y0:y1, x0:x1, 0], 0, 255).astype(np.uint8)
-					bk = max(3, int(round(_CONTACT_BLACKHAT_MM / mm_per_px)) | 1)
-					bh = cv2.morphologyEx(L, cv2.MORPH_BLACKHAT,
-										  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (bk, bk))).astype(np.float32)
-					sm = cv2.GaussianBlur(np.ascontiguousarray(lab[y0:y1, x0:x1], np.float32), (0, 0), 1.0)
-					grad = np.zeros(shp, np.float32)
-					for ch in range(3):
-						gx = cv2.Sobel(sm[:, :, ch], cv2.CV_32F, 1, 0, ksize=3)
-						gy = cv2.Sobel(sm[:, :, ch], cv2.CV_32F, 0, 1, ksize=3)
-						grad = np.maximum(grad, np.sqrt(gx * gx + gy * gy))
+					bh, grad = _blackhat_gradient(lab[y0:y1, x0:x1], mm_per_px)
 				height = (bh / max(float(np.percentile(bh[comp], 99)), 1.0)
 						  + grad / max(float(np.percentile(grad[comp], 99)), 1.0))
 				fl = _priority_flood(height, np.where(comp, core_lbl, 0), comp)
@@ -2441,6 +2463,25 @@ _BAY_OPEN_MM = 1.1
 # _BAY_MIN_MM2 (below that it is boundary noise, not an eaten bay).
 _BAY_MAX_GAIN = 0.10
 _BAY_MIN_MM2 = 2.0
+# Whole tabs outside the contour (docs/diagnostico/segmentacao/COMIDO.md §6, §10): a tab the low-res
+# contour lost lies beyond the minAreaRect, so the rectangle rule above never reaches it. Module switch
+# of the extension: candidates outside the rectangle, in the threshold and the piece's own Voronoi cell,
+# that survive the same _BAY_OPEN_MM opening, have an inscribed radius >= _BAY_TAB_RIN_MM and meet the
+# piece along at least _BAY_TAB_THROAT_MM (the base of a tab; a cast-shadow strip is thinner than the
+# opening, a lone speck does not touch). Searched up to _BAY_TAB_REACH_MM beyond the old window.
+_BAY_TABS = True
+_BAY_TAB_RIN_MM = 1.2
+_BAY_TAB_THROAT_MM = 2.5
+_BAY_TAB_REACH_MM = 6.0
+# Contact-group members (skipped by the step so far): recovered too, with the candidates kept at least
+# _BAY_CONTACT_GAP_MM away from every other piece (the contact partition is not touched). Module switch.
+_BAY_CONTACT = True
+_BAY_CONTACT_GAP_MM = 1.0
+# Flag only (_flag_suspect_cuts reason 'baia'): after the step, a threshold component outside the contour,
+# in the piece's own cell (nearest piece), >= _BAY_CONTACT_GAP_MM from the others, touching it, with an
+# inscribed radius above _BAY_FLAG_RIN_MM (COMIDO.md §5 signal (c): controls <= 0.96, eaten >= 1.34 mm).
+_FLAG_BAYS = True
+_BAY_FLAG_RIN_MM = 1.2
 
 
 def _recover_bay_contour(
@@ -2448,6 +2489,7 @@ def _recover_bay_contour(
 	cand: np.ndarray,
 	org: tuple[int, int],
 	mm_per_px: float,
+	tabs: bool = False,
 ) -> tuple[np.ndarray, float] | None:
 	"""Contour of piece ``c`` grown into the eaten bays of ``cand``, and the area gained (px).
 
@@ -2458,6 +2500,7 @@ def _recover_bay_contour(
 	``_BAY_OPEN_MM`` in a component touching the piece (then re-grown by the same disk,
 	bounded by the candidates), plus the candidates connected to them inside the convex
 	hull of piece + recovered region. Pure geometry: shape validation is the caller's.
+	``tabs``: also whole tabs beyond the rectangle (:func:`_recover_tab_components`, ``_BAY_TABS``).
 	Returns ``None`` when nothing qualifies.
 	"""
 	x0, y0 = org
@@ -2470,39 +2513,73 @@ def _recover_bay_contour(
 	cv2.fillPoly(rect, [box], 1)
 	pad = max(1, int(round(_BAY_RECT_PAD_MM / mm_per_px)))
 	rect = cv2.dilate(rect, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * pad + 1, 2 * pad + 1)))
-	extra = ((cand > 0) & (rect > 0) & (cm == 0)).astype(np.uint8)
-	if not extra.any():
-		return None
 	r = max(1, int(round(_BAY_OPEN_MM / mm_per_px)))
 	disk = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
-	core = cv2.morphologyEx(extra, cv2.MORPH_OPEN, disk)
-	if not core.any():
+	rec = np.zeros((h, w), bool)
+	extra = ((cand > 0) & (rect > 0) & (cm == 0)).astype(np.uint8)
+	core = cv2.morphologyEx(extra, cv2.MORPH_OPEN, disk) if extra.any() else extra
+	if core.any():
+		n, cc = cv2.connectedComponents(core, connectivity=8)
+		touch = cv2.dilate(cm, np.ones((3, 3), np.uint8)) > 0
+		# A component of the opened candidates counts when, re-grown by the disk (bounded by
+		# the candidates, which restores the corners the opening rounded), it touches the piece.
+		grown = np.zeros((h, w), bool)
+		for k in range(1, n):
+			comp_g = (cv2.dilate((cc == k).astype(np.uint8), disk) > 0) & (extra > 0)
+			if (comp_g & touch).any():
+				grown |= comp_g
+		if grown.any():
+			# Thin slivers of the same bay (thinner than the disk, e.g. along the piece edge next to
+			# it) join through connectivity, but only inside the convex hull of piece + bay: a
+			# cast-shadow strip on the outer side of a straight edge stays out.
+			pts = np.vstack([loc.reshape(-1, 2), np.column_stack(np.nonzero(grown)[::-1])]).astype(np.int32)
+			hull = np.zeros((h, w), np.uint8)
+			cv2.fillPoly(hull, [cv2.convexHull(pts)], 1)
+			_, cc2 = cv2.connectedComponents(((extra > 0) & (hull > 0)).astype(np.uint8), connectivity=8)
+			hit = np.unique(cc2[grown])
+			rec = grown | np.isin(cc2, hit[hit > 0])
+	if tabs:
+		rec = rec | _recover_tab_components(cand, cm > 0, rect > 0, rec, disk, mm_per_px)
+	if not rec.any():
 		return None
-	n, cc = cv2.connectedComponents(core, connectivity=8)
-	touch = cv2.dilate(cm, np.ones((3, 3), np.uint8)) > 0
-	# A component of the opened candidates counts when, re-grown by the disk (bounded by
-	# the candidates, which restores the corners the opening rounded), it touches the piece.
-	grown = np.zeros((h, w), bool)
-	for k in range(1, n):
-		comp_g = (cv2.dilate((cc == k).astype(np.uint8), disk) > 0) & (extra > 0)
-		if (comp_g & touch).any():
-			grown |= comp_g
-	if not grown.any():
-		return None
-	# Thin slivers of the same bay (thinner than the disk, e.g. along the piece edge next to
-	# it) join through connectivity, but only inside the convex hull of piece + bay: a
-	# cast-shadow strip on the outer side of a straight edge stays out.
-	pts = np.vstack([loc.reshape(-1, 2), np.column_stack(np.nonzero(grown)[::-1])]).astype(np.int32)
-	hull = np.zeros((h, w), np.uint8)
-	cv2.fillPoly(hull, [cv2.convexHull(pts)], 1)
-	_, cc2 = cv2.connectedComponents(((extra > 0) & (hull > 0)).astype(np.uint8), connectivity=8)
-	hit = np.unique(cc2[grown])
-	rec = grown | np.isin(cc2, hit[hit > 0])
 	new_c, new_m = _largest_filled(((cm > 0) | rec).astype(np.uint8))
 	if new_c is None:
 		return None
 	gain = float((new_m > 0).sum()) - float(cm.sum())
 	return new_c + np.array([x0, y0]), gain
+
+
+def _recover_tab_components(
+	cand: np.ndarray,
+	body: np.ndarray,
+	rect: np.ndarray,
+	rec: np.ndarray,
+	disk: np.ndarray,
+	mm_per_px: float,
+) -> np.ndarray:
+	"""Whole tabs outside the piece's rectangle (window masks, bool): components of the candidates outside
+	the filled contour ``body`` and the already recovered ``rec`` that survive the ``disk`` opening, reach
+	beyond ``rect``, touch ``body | rec`` along at least ``_BAY_TAB_THROAT_MM`` (re-grown by the disk,
+	bounded by the candidates) and have an inscribed radius >= ``_BAY_TAB_RIN_MM``. Pure geometry."""
+	out = (cand > 0) & ~body & ~rec
+	keep = np.zeros(out.shape, bool)
+	if not out.any():
+		return keep
+	core = cv2.morphologyEx(out.astype(np.uint8), cv2.MORPH_OPEN, disk)
+	if not core.any():
+		return keep
+	n, cc = cv2.connectedComponents(core, connectivity=8)
+	touch = cv2.dilate((body | rec).astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+	dt = cv2.distanceTransform(np.pad(out, 1).astype(np.uint8), cv2.DIST_L2, 5)[1:-1, 1:-1]
+	for k in range(1, n):
+		comp_g = (cv2.dilate((cc == k).astype(np.uint8), disk) > 0) & out
+		if not (comp_g & ~rect).any():
+			continue                                  # inside the rectangle: the rectangle path's business
+		throat = float((comp_g & touch).sum()) * mm_per_px
+		if throat < _BAY_TAB_THROAT_MM or float(dt[comp_g].max()) * mm_per_px < _BAY_TAB_RIN_MM:
+			continue
+		keep |= comp_g
+	return keep
 
 
 def _recover_scan_bays(
@@ -2522,7 +2599,10 @@ def _recover_scan_bays(
 	``segment_pieces`` contour; where that contour cut a light, paper-coloured patch of
 	art deeper than the band (meadow at a corner, TRIAGEM-2026-11-07 §4), the threshold
 	still holds the patch but the band drops it. For each refined, non-cluster piece
-	outside any contact group, :func:`_recover_bay_contour` proposes the grown contour;
+	outside any contact group (contact members too with ``_BAY_CONTACT``, the candidates kept
+	``_BAY_CONTACT_GAP_MM`` away from every other piece), :func:`_recover_bay_contour` proposes the grown
+	contour (whole tabs beyond the rectangle too with ``_BAY_TABS``, the window widened by
+	``_BAY_TAB_REACH_MM``);
 	it is adopted only when the gain is in ``[_BAY_MIN_MM2, _BAY_MAX_GAIN * area]``, the
 	new shape has 4 corners (:func:`src.shape.analyse`) and no more shape violations
 	(:func:`_shape_violations`: chords in ``_CONTACT_CHORD_MM``, no F shorter than
@@ -2533,15 +2613,20 @@ def _recover_scan_bays(
 	from .shape import analyse
 	H, W = thr.shape
 	mm2 = mm_per_px * mm_per_px
+	tabs = bool(_BAY_TABS)
+	reach_t = reach + int(round((_BAY_TAB_REACH_MM if tabs else max(0.0, _BAY_RECT_PAD_MM - 0.3)) / mm_per_px))
+	gap = max(1, int(round(_BAY_CONTACT_GAP_MM / mm_per_px)))
 	for q, p in enumerate(pieces):
-		if p["is_cluster"] or not p.get("refined") or p.get("contacto"):
+		if p["is_cluster"] or not p.get("refined") or (p.get("contacto") and not _BAY_CONTACT):
 			continue
 		c = np.asarray(p["contour"]).reshape(-1, 2)
 		x, y, w, h = cv2.boundingRect(np.vstack([seg_contours[q], c]).astype(np.int32).reshape(-1, 1, 2))
-		x0, y0 = max(0, x - reach), max(0, y - reach)
-		x1, y1 = min(W, x + w + reach), min(H, y + h + reach)
+		x0, y0 = max(0, x - reach_t), max(0, y - reach_t)
+		x1, y1 = min(W, x + w + reach_t), min(H, y + h + reach_t)
 		cand = (thr[y0:y1, x0:x1] > 0) & (vor[y0:y1, x0:x1] == q + 1)
-		out = _recover_bay_contour(c, cand.astype(np.uint8), (x0, y0), mm_per_px)
+		if p.get("contacto"):
+			cand &= ~_others_near(pieces, q, (x0, y0, x1, y1), gap)
+		out = _recover_bay_contour(c, cand.astype(np.uint8), (x0, y0), mm_per_px, tabs=tabs)
 		if out is None:
 			continue
 		new_c, gain = out
@@ -2560,6 +2645,62 @@ def _recover_scan_bays(
 		p.update(rec)
 		p["roughness"] = _contour_roughness(p["contour"])
 		p["recuperado_mm2"] = round((float(p["area_px"]) - area) * mm2, 2)
+
+
+def _others_near(pieces: list[dict], q: int, win: tuple[int, int, int, int], gap_px: int) -> np.ndarray:
+	"""Window ``(x0, y0, x1, y1)`` mask of the pixels within ``gap_px`` of a piece other than ``q`` (bool)."""
+	x0, y0, x1, y1 = win
+	m = np.zeros((y1 - y0, x1 - x0), np.uint8)
+	for k, o in enumerate(pieces):
+		if k == q:
+			continue
+		oc = np.asarray(o["contour"]).reshape(-1, 2).astype(np.int32)
+		bx, by, bw, bh = cv2.boundingRect(oc.reshape(-1, 1, 2))
+		if bx > x1 + gap_px or by > y1 + gap_px or bx + bw < x0 - gap_px or by + bh < y0 - gap_px:
+			continue
+		cv2.drawContours(m, [(oc - [x0, y0]).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+	if not m.any():
+		return m > 0
+	k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * gap_px + 1, 2 * gap_px + 1))
+	return cv2.dilate(m, k) > 0
+
+
+def _bay_signal(pieces: list[dict], q: int, thr: np.ndarray, mm_per_px: float) -> tuple[float, float]:
+	"""``(inscribed radius mm, area mm2)`` of the largest-radius threshold component outside piece ``q``'s
+	contour, in its own cell (nearer to it than to any other piece), at least ``_BAY_CONTACT_GAP_MM`` from
+	the others and touching it: what a lost tab / eaten bay leaves (COMIDO.md §5 signal (c)); (0, 0) if none."""
+	H, W = thr.shape
+	c = np.asarray(pieces[q]["contour"]).reshape(-1, 2).astype(np.int32)
+	x, y, w, h = cv2.boundingRect(c.reshape(-1, 1, 2))
+	pad = int(round((_BAY_TAB_REACH_MM + 1.0) / mm_per_px))       # a whole tab fits in the window
+	x0, y0, x1, y1 = max(0, x - pad), max(0, y - pad), min(W, x + w + pad), min(H, y + h + pad)
+	me = np.zeros((y1 - y0, x1 - x0), np.uint8)
+	cv2.drawContours(me, [(c - [x0, y0]).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+	oth = np.zeros_like(me)
+	for k, o in enumerate(pieces):
+		if k == q:
+			continue
+		oc = np.asarray(o["contour"]).reshape(-1, 2).astype(np.int32)
+		bx, by, bw, bh = cv2.boundingRect(oc.reshape(-1, 1, 2))
+		if bx > x1 or by > y1 or bx + bw < x0 or by + bh < y0:
+			continue
+		cv2.drawContours(oth, [(oc - [x0, y0]).reshape(-1, 1, 2)], -1, 1, thickness=cv2.FILLED)
+	d_me = cv2.distanceTransform((1 - me).astype(np.uint8), cv2.DIST_L2, 5)
+	d_ot = (cv2.distanceTransform((1 - oth).astype(np.uint8), cv2.DIST_L2, 5) if oth.any()
+			else np.full(me.shape, 1e9, np.float32))
+	cand = (thr[y0:y1, x0:x1] > 0) & (me == 0) & (d_me <= d_ot) & (d_ot * mm_per_px >= _BAY_CONTACT_GAP_MM)
+	if not cand.any():
+		return 0.0, 0.0
+	n, lab = cv2.connectedComponents(cand.astype(np.uint8), connectivity=8)
+	touch = (cv2.dilate(me, np.ones((3, 3), np.uint8)) > 0) & cand
+	ks = np.unique(lab[touch])
+	ks = ks[ks > 0]
+	if not len(ks):
+		return 0.0, 0.0
+	dt = cv2.distanceTransform(np.pad(np.isin(lab, ks), 1).astype(np.uint8), cv2.DIST_L2, 5)[1:-1, 1:-1]
+	best = max(ks, key=lambda k: float(dt[lab == k].max()))
+	comp = lab == best
+	return float(dt[comp].max()) * mm_per_px, float(comp.sum()) * mm_per_px * mm_per_px
 
 
 def _scan_record(c: np.ndarray, rgb: np.ndarray, pad_ratio: float, normalize_rotation: bool) -> dict | None:
@@ -2957,7 +3098,9 @@ def segment_scan(
 			threshold holds but the band dropped (:func:`_recover_scan_bays`,
 			docs/diagnostico/segmentacao/PRADO.md); ``None`` follows the module switch
 			``_RECOVER_BAYS``. ``False`` reproduces the previous output bit for bit.
-			Runs after the contact step and skips contact-group members.
+			Runs after the contact step. Whole tabs beyond the piece's rectangle are taken back too
+			(``_BAY_TABS``) and contact-group members are processed away from the other pieces
+			(``_BAY_CONTACT``); docs/diagnostico/segmentacao/COMIDO.md §10.
 		debug: attach ``segment_pieces``' debug images (``strip_mask``
 			included), with ``threshold_mask``, ``scan_strip_mask`` (full-res
 			strip removed from the threshold), ``voronoi`` (cell labels as
@@ -3054,8 +3197,8 @@ def segment_scan(
 	# still holds it); grown back inside the piece's rectangle, validated by shape.
 	if _RECOVER_BAYS if recover_bays is None else recover_bays:
 		_recover_scan_bays(pieces, seg_contours, thr, vor, rgb, mm_per_px, reach, pad_ratio, normalize_rotation)
-	# Suspect cuts (thread / shadow tongue / sliver, contact cut that does not mate): flag only.
-	_flag_suspect_cuts(pieces, mm_per_px)
+	# Suspect cuts (thread / shadow tongue / sliver, contact cut that does not mate, tab / bay left out): flag only.
+	_flag_suspect_cuts(pieces, mm_per_px, thr)
 	del lab
 
 	res["scan_background_lab"] = (float(bg[0]), float(bg[1]), float(bg[2]))
