@@ -17,8 +17,11 @@ Three steps, each usable on its own:
    the 4 corners, not the contour mean, which the tabs pull around). Border pieces
    (``F_ROTATION``): the rotation comes instead from the line fitted to the F side(s), laid on
    the border line (:func:`f_rotation`; only F sides whose contour is straight, line RMS <=
-   ``F_LINE_RMS_MAX``); the translation is unchanged (corner centroid on the cell centre), so a
-   non-rectangular cell no longer tilts the piece (RENDER.md §8). Secondary = image: the
+   ``F_LINE_RMS_MAX``), so a non-rectangular cell no longer tilts the piece (RENDER.md §8); the
+   translation stays the corner centroid on the cell centre unless ``F_TRANSLATION`` is on, which
+   moves the piece along the border normal(s) so that the same F line(s) lie on the border line +
+   the silhouette offset (:func:`f_translation`; the tangential component stays the corner one;
+   RENDER.md §9). Secondary = image: the
    crop rendered at the art scale is searched over +/- ``IMG_SEARCH_CELL`` cell and
    +/- ``IMG_ROT_DEG`` deg (RMS dE in Lab + ``GRAD_W`` x (1 - gradient-magnitude NCC), parabola
    refinement); it refines the corner pose only when it lowers the score and stays within
@@ -65,7 +68,7 @@ import numpy as np
 from src.locate import CellArt, body_beta_deg, body_center_mm, wrap_deg
 
 __all__ = [
-	"CORNER_RESIDUAL_MAX_MM", "F_ROTATION", "F_SPAN", "F_MAX_DEG", "F_LINE_RMS_MAX", "f_side_line", "f_rotation", "IMG_SEARCH_CELL", "IMG_ROT_DEG", "IMG_ACCEPT_MM", "IMG_ACCEPT_DEG", "GRAD_W", "IMG_NCC_MIN",
+	"CORNER_RESIDUAL_MAX_MM", "F_ROTATION", "F_SPAN", "F_MAX_DEG", "F_LINE_RMS_MAX", "F_TRANSLATION", "F_TARGET_GROW", "f_side_line", "f_side_fit", "f_rotation", "f_translation", "IMG_SEARCH_CELL", "IMG_ROT_DEG", "IMG_ACCEPT_MM", "IMG_ACCEPT_DEG", "GRAD_W", "IMG_NCC_MIN",
 	"BAND_MM", "LIGHT_BAND_MAX_MM", "BG_DIST_MAX", "PIECE_P5_FRAC", "LIGHT_BAND_MM", "LIGHT_PIECE_P5_MIN", "is_light", "BG_LUMA_WEIGHT", "SHADOW_L_DELTA", "SHADOW_CHROMA_MAX", "SHADOW_DEFAULT",
 	"INTERIOR_MM", "SEAM_TRIM", "BLEED_MM", "RELAX_GAP_MM", "RELAX_MAX_MM", "DIRS",
 	"cell_corners_mm", "cell_centre_mm", "kabsch_2d", "corner_register", "pose_matrix", "board_contour",
@@ -83,6 +86,8 @@ F_ROTATION = True              # border pieces: rotation from the line fitted to
 F_SPAN = (0.08, 0.92)          # ... line fitted on this share of the F side's chord (corner rounding left out)
 F_MAX_DEG = 10.0               # ... used only within this of the corner rotation (else the corner rotation is kept)
 F_LINE_RMS_MAX = 0.15          # ... and only from an F side whose contour is straight: line RMS (mm) at most this
+F_TRANSLATION = False          # border pieces: the same F line(s) also fix the translation normal to the border; OFF: gate failed (RENDER.md §9)
+F_TARGET_GROW = True           # ... target line = border + silhouette offset (grow) outside, as the Kabsch targets; False = the border itself
 IMG_SEARCH_CELL = 0.5          # image search: translation range (+/- fraction of a cell)
 IMG_ROT_DEG = 5                # image search: rotation range (+/- deg, 1 deg steps); only without corners:
                                # a 1 deg turn moves the body edge ~0.16 mm = 0.2 art px, not observable (RENDER.md §1)
@@ -222,14 +227,12 @@ def corner_register(shape, profile, cell, theta0: Optional[float] = None, grow: 
 			"cands": [(int(a), float(b), float(c), bool(d)) for a, b, c, d in cands]}
 
 
-def f_side_line(shape, i: int) -> Optional[tuple]:
-	"""Least-squares line through side ``i`` within ``F_SPAN`` of its chord: ``(angle_deg, rms_mm)``
-	(direction in the image frame, ``atan2(dy, dx)`` from corner ``i`` to corner ``i + 1``; RMS of the
-	points about the line), None with fewer than 6 points.
-
-	Meant for F sides: unlike the chord it does not depend on where exactly the two corners were
-	detected; the RMS says whether the contour there is a straight edge at all (a green / shadow
-	fringe inside the silhouette makes it bulge, RENDER.md §8).
+def f_side_fit(shape, i: int) -> Optional[dict]:
+	"""Least-squares line through side ``i`` within ``F_SPAN`` of its chord, in scan mm:
+	``{angle_deg, rms_mm, mid_mm, dir}`` (``angle_deg`` = direction in the image frame, ``atan2(dy, dx)``
+	from corner ``i`` to corner ``i + 1``; ``rms_mm`` = RMS of the points about the line; ``mid_mm`` =
+	the point of the line at the middle of the chord; ``dir`` = unit direction), None with fewer than
+	6 points. :func:`f_side_line` is its ``(angle_deg, rms_mm)``.
 	"""
 	a, b = int(shape.corners[i]), int(shape.corners[(i + 1) % 4])
 	seg = shape.c[a:b + 1] if b > a else np.vstack([shape.c[a:], shape.c[:b + 1]])
@@ -245,7 +248,21 @@ def f_side_line(shape, i: int) -> Optional[tuple]:
 		return None
 	coef = np.polyfit(x[sel], y[sel], 1)
 	rms = float(np.sqrt(np.mean((y[sel] - np.polyval(coef, x[sel])) ** 2)) * L)
-	return float(np.degrees(np.arctan2(u[1], u[0])) + np.degrees(np.arctan(float(coef[0])))), rms
+	d = u + float(coef[0]) * v
+	return {"angle_deg": float(np.degrees(np.arctan2(u[1], u[0])) + np.degrees(np.arctan(float(coef[0])))), "rms_mm": rms,
+			"mid_mm": p0 + 0.5 * L * u + float(np.polyval(coef, 0.5)) * L * v, "dir": d / np.linalg.norm(d)}
+
+
+def f_side_line(shape, i: int) -> Optional[tuple]:
+	"""Line through side ``i`` within ``F_SPAN`` of its chord (:func:`f_side_fit`): ``(angle_deg, rms_mm)``,
+	None with fewer than 6 points.
+
+	Meant for F sides: unlike the chord it does not depend on where exactly the two corners were
+	detected; the RMS says whether the contour there is a straight edge at all (a green / shadow
+	fringe inside the silhouette makes it bulge, RENDER.md §8).
+	"""
+	f = f_side_fit(shape, i)
+	return None if f is None else (f["angle_deg"], f["rms_mm"])
 
 
 def f_rotation(shape, k: int, theta_ref: float, rms_max: Optional[float] = None) -> Optional[dict]:
@@ -280,6 +297,60 @@ def f_rotation(shape, k: int, theta_ref: float, rms_max: Optional[float] = None)
 	th = float(np.average(est, weights=wts))
 	return {"theta_deg": th, "dtheta_deg": float(th - theta_ref), "n_f": len(est), "per_side": per,
 			"spread_deg": float(np.ptp(est)) if len(est) > 1 else 0.0}
+
+
+_OUT = {"N": (0.0, -1.0), "E": (1.0, 0.0), "S": (0.0, 1.0), "W": (-1.0, 0.0)}   # outward normal of a cell side (board mm)
+
+
+def f_translation(shape, fr: dict, theta_deg: float, pivot_mm, profile, cell, target_mm: float) -> Optional[dict]:
+	"""Translation normal to the border that puts the F line(s) of ``shape`` on the target line(s).
+
+	``fr`` = the :func:`f_rotation` result (its ``per_side`` says which F sides were used and the cell
+	direction each one faces). With the pose ``R(theta) (x - pivot) + centre(cell)`` (no ``d``), the
+	midpoint of each used F line (:func:`f_side_fit`) lands at signed distance ``e`` (mm, positive =
+	outside the board) from the target: the border line of the cell side moved ``target_mm`` outwards
+	(the silhouette offset: the scan silhouette sits that far outside the cut, as the grown Kabsch
+	targets). The translation is ``d = -sum(e_i n_i)`` (``n_i`` outward unit normal; puzzle corners: 2
+	orthogonal normals, so both F lines land on their targets; the tangential component stays the
+	corner one, i.e. 0). Only sides whose direction is a border direction of the cell count. Returns
+	``{per_side: [(i, dir, e_mm)], dx_mm, dy_mm}`` or None (no usable F side).
+	"""
+	if fr is None or shape is None:
+		return None
+	flat = profile.flat_directions(*cell)
+	w, h = float(profile.cell_mm["w"]), float(profile.cell_mm["h"])
+	l, c = int(cell[0]), int(cell[1])
+	edge = {"N": (l - 1) * h, "S": l * h, "W": (c - 1) * w, "E": c * w}     # border line position along its axis
+	A = pose_matrix(theta_deg, pivot_mm, cell_centre_mm(profile, l, c))
+	per, d = [], np.zeros(2)
+	seen = set()
+	for i, dr, _th, _rms, used in fr.get("per_side") or []:
+		if not used or dr not in flat or dr in seen:
+			continue
+		f = f_side_fit(shape, int(i))
+		if f is None:
+			continue
+		n = np.array(_OUT[dr])
+		q = _apply(A, f["mid_mm"])[0]
+		pos = edge[dr] * (1.0 if dr in ("S", "E") else -1.0)            # = (point on the border line) . n
+		e = float(q @ n - pos - float(target_mm))
+		per.append((int(i), dr, e))
+		d -= e * n
+		seen.add(dr)
+	if not per:
+		return None
+	return {"per_side": per, "dx_mm": float(d[0]), "dy_mm": float(d[1])}
+
+
+def _drop_f_normal(v, f_offset: Optional[dict]) -> np.ndarray:
+	"""``v`` (board mm) without its components along the outward normals of the F sides in ``f_offset``
+	(the :func:`f_translation` result; None = ``v`` unchanged). Used so that a later translation (image
+	refinement, :func:`relax`) keeps the F line(s) on their target."""
+	v = np.asarray(v, float).copy()
+	for _i, dr, _e in (f_offset or {}).get("per_side") or []:
+		n = np.array(_OUT[dr])
+		v -= float(v @ n) * n
+	return v
 
 
 def pose_matrix(theta_deg: float, pivot_mm, centre_mm, d_mm=(0.0, 0.0)) -> np.ndarray:
@@ -519,8 +590,11 @@ def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=
 	image | none`` (``dx/dy`` = body centre minus cell centre, board mm) or ``{'error': str}``.
 	With the corner solution, ``rotation`` says where the rotation came from: ``corners`` or ``F``
 	(``F_ROTATION`` on and the piece has an F side: the line fitted to the F side(s) laid on the
-	border line(s), :func:`f_rotation`, details in ``f_rotation``; the translation is still the
-	corner centroid on the cell centre). ``method`` keeps its values (``corners`` / ``corners+image``).
+	border line(s), :func:`f_rotation`, details in ``f_rotation``; the translation is the corner
+	centroid on the cell centre, or, with ``F_TRANSLATION``, the move normal to the border that lays
+	the F line(s) on the target line, details in ``f_offset``, :func:`f_translation`; an accepted image
+	refinement is added to it without its component normal to a used F side). ``method`` keeps its
+	values (``corners`` / ``corners+image``).
 
 	Gate of the corner solution: ``shape_residual_mm`` (corners against their best-fit
 	rectangle, i.e. corner-detection consistency) <= ``CORNER_RESIDUAL_MAX_MM``.
@@ -588,8 +662,15 @@ def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=
 				out["residual_mm"] = float(np.sqrt(np.mean(np.sum((Q - Tc) ** 2, 1))))
 				out["rotation"] = "F"
 				out["f_rotation"] = fr
+				if F_TRANSLATION:
+					# translation normal to the border from the same F line(s): the F line on the target line
+					# (border + silhouette offset outside); the tangential component stays the corner one
+					ft = f_translation(sh, fr, theta, piv, profile, cell, _grow(profile) if F_TARGET_GROW else 0.0)
+					if ft is not None:
+						out.update(dx_mm=ft["dx_mm"], dy_mm=ft["dy_mm"], f_offset=ft)
 			out.update(theta_deg=float(theta), method="corners")
-			r = _img(theta, rot=0)    # translation only: rotation is not observable at the art scale
+			d0 = (float(out["dx_mm"]), float(out["dy_mm"]))
+			r = _img(theta, d=d0, rot=0)    # translation only: rotation is not observable at the art scale
 			if r is not None:
 				out["image"] = r
 				out["score"] = r["score0"]
@@ -597,7 +678,10 @@ def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=
 					  and np.hypot(r["ddx_mm"], r["ddy_mm"]) <= IMG_ACCEPT_MM and abs(r["dtheta_deg"]) <= IMG_ACCEPT_DEG)
 				out["image"]["accepted"] = bool(ok)
 				if ok:
-					out.update(theta_deg=float(theta + r["dtheta_deg"]), dx_mm=r["ddx_mm"], dy_mm=r["ddy_mm"],
+					# added to the F offset; its component normal to a used F side is dropped (the F line is
+					# far more precise than the image at 0.75 mm/px, RENDER.md §1, §9)
+					dd = _drop_f_normal(np.array([r["ddx_mm"], r["ddy_mm"]]), out.get("f_offset"))
+					out.update(theta_deg=float(theta + r["dtheta_deg"]), dx_mm=d0[0] + float(dd[0]), dy_mm=d0[1] + float(dd[1]),
 							   method="corners+image", score=r["score"])
 			return out
 		cands = [float(theta)]
@@ -642,14 +726,23 @@ def load_placements(project) -> dict:
 		return {"log_len": None, "version": PLACEMENTS_VERSION, "placements": {}}
 	with open(fp, encoding="utf-8") as f:
 		d = json.load(f)
-	if d.get("version") != PLACEMENTS_VERSION or bool(d.get("f_rotation", False)) != bool(F_ROTATION):
-		# another registration rule (F_ROTATION switched since the file was written): stale
+	rule = _rule_flags()
+	if d.get("version") != PLACEMENTS_VERSION or any(d.get(k, False) != v for k, v in rule.items()):
+		# another registration rule (F_ROTATION / F_TRANSLATION / its target switched since the file was
+		# written; a file without the keys predates them): stale
 		return {"log_len": None, "version": PLACEMENTS_VERSION, "placements": {}}
 	return d
 
 
+def _rule_flags() -> dict:
+	"""Registration-rule switches stored in ``placements.json``: ``f_rotation`` (bool), ``f_translation``
+	(False, or the target: ``"grow"`` = border + silhouette offset, ``"borda"`` = the border line)."""
+	return {"f_rotation": bool(F_ROTATION),
+			"f_translation": (("grow" if F_TARGET_GROW else "borda") if (F_ROTATION and F_TRANSLATION) else False)}
+
+
 def save_placements(project, d: dict) -> str:
-	d["f_rotation"] = bool(F_ROTATION)
+	d.update(_rule_flags())
 	fp = project.p("render", "placements.json")
 	os.makedirs(os.path.dirname(fp), exist_ok=True)
 	tmp = fp + ".tmp"
@@ -833,8 +926,9 @@ def relax(project, placements: dict, *, max_mm: float = RELAX_MAX_MM, iters: int
 		for k, v in push.items():
 			if not v:
 				continue
-			step = 0.5 * np.mean(v, axis=0)
-			cur = np.array([out[k]["dx_mm"], out[k]["dy_mm"]]) + step
+			# border pieces keep their F line(s) on the target: no move normal to a used F side
+			step = _drop_f_normal(0.5 * np.mean(v, axis=0), out[k].get("f_offset"))
+			cur =np.array([out[k]["dx_mm"], out[k]["dy_mm"]]) + step
 			dd = cur - base[k]
 			n = np.linalg.norm(dd)
 			if n > max_mm:

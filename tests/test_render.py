@@ -527,3 +527,61 @@ def test_f_side_parallel_to_border_after_registration(tmp_path):
     assert abs(_f_board_tilt(pr, pid, pl)) < 0.2
     assert pl["dx_mm"] == 0.0 and pl["dy_mm"] == 0.0
     assert abs(float(R.wrap_deg(R.registered_theta(pr, pid) - pl["theta_deg"]))) < 1e-9
+
+
+def _f_board_offset(pr, pid, pl):
+    """Signed distance (mm, + = outside the board) of the F line (8-92 % fit, midpoint) from the border line."""
+    sh = pr.shape(pid)
+    k = int(pl["corner"]["k"])
+    i = next(i for i, s in enumerate(sh.sides) if s.kind == "F")
+    assert R.DIRS[(i + k) % 4] == "N"
+    q = R._apply(R.placement_matrix(pl, pr.profile), R.f_side_fit(sh, i)["mid_mm"])[0]
+    return -float(q[1])                                                # N border of row 1: y = 0, outward = -y
+
+
+def test_f_side_on_border_line_for_short_cell(tmp_path, monkeypatch):
+    """With ``F_TRANSLATION`` the F line of the short-cell border piece lies on the target line (border
+    + silhouette offset outside, ``F_TARGET_GROW``) within 0.1 mm, still parallel; the move is normal to
+    the border only (dx = 0 on an N border) and is recorded in ``f_offset``. Off: the corner centroid
+    leaves it ~0.7 mm off (the RENDER.md §9 defect). Target ``borda``: on the border line itself."""
+    pr, pid = _short_side_border_piece(tmp_path)
+    grow = R._grow(pr.profile)
+    monkeypatch.setattr(R, "F_TRANSLATION", False)
+    off = R.register_piece(pr, pid, image=False)
+    assert off["dx_mm"] == 0.0 and off["dy_mm"] == 0.0 and "f_offset" not in off
+    assert abs(_f_board_offset(pr, pid, off) - grow) > 0.3
+    monkeypatch.setattr(R, "F_TRANSLATION", True)
+    pl = R.register_piece(pr, pid, image=False)
+    assert pl["method"] == "corners" and pl["rotation"] == "F"
+    assert abs(_f_board_offset(pr, pid, pl) - grow) < 0.1
+    assert abs(_f_board_tilt(pr, pid, pl)) < 0.2
+    assert pl["dx_mm"] == 0.0 and abs(pl["dy_mm"]) > 0.3
+    (i, dr, e), = pl["f_offset"]["per_side"]
+    assert dr == "N" and abs(pl["dy_mm"] - e) < 1e-9                   # N: outward normal (0, -1), d = -e n
+    monkeypatch.setattr(R, "F_TARGET_GROW", False)
+    pb = R.register_piece(pr, pid, image=False)
+    assert abs(_f_board_offset(pr, pid, pb)) < 0.1
+
+
+def test_drop_f_normal_keeps_border_offset():
+    """A later move (image refinement, :func:`relax`) loses its component normal to a used F side:
+    the F line stays on its target; tangential moves pass; corners lose both."""
+    fo = {"per_side": [(0, "N", 0.4)], "dx_mm": 0.0, "dy_mm": -0.4}
+    assert np.allclose(R._drop_f_normal([0.3, 0.2], fo), [0.3, 0.0])
+    assert np.allclose(R._drop_f_normal([0.3, 0.2], {"per_side": [(0, "N", 0.1), (3, "W", 0.2)]}), [0.0, 0.0])
+    assert np.allclose(R._drop_f_normal([0.3, 0.2], None), [0.3, 0.2])
+
+
+def test_placements_cache_stale_when_f_translation_switches(tmp_path, monkeypatch):
+    """``placements.json`` written under another F_TRANSLATION / target is ignored (the piece is registered
+    on the fly), so switching the rule reaches the GUI."""
+    pr, pid = _short_side_border_piece(tmp_path)
+    monkeypatch.setattr(R, "F_TRANSLATION", False)
+    R.save_placements(pr, {"log_len": 1, "version": R.PLACEMENTS_VERSION, "placements": {pid: {"theta_deg": 1.0}}})
+    assert pid in R.load_placements(pr)["placements"]
+    monkeypatch.setattr(R, "F_TRANSLATION", True)
+    assert R.load_placements(pr)["placements"] == {}
+    R.save_placements(pr, {"log_len": 1, "version": R.PLACEMENTS_VERSION, "placements": {pid: {"theta_deg": 1.0}}})
+    assert pid in R.load_placements(pr)["placements"]
+    monkeypatch.setattr(R, "F_TARGET_GROW", not R.F_TARGET_GROW)
+    assert R.load_placements(pr)["placements"] == {}

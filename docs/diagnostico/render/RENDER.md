@@ -309,3 +309,84 @@ Regra ligada na mesma: é a regra do §6.1, já ligada nas miniaturas.
   - **P0240, depois:** os 4 cantos ficam alinhados com a grelha e o lado de cima assenta na linha da borda. A diferença na sobreposição com a vizinha W (−0,82 → −0,62 mm) não se distingue a olho.
   - **P0590, antes:** a base desce para a direita e o canto inferior direito sai abaixo do tabuleiro; ao longo da borda vê-se uma cunha escura.
   - **P0590, depois:** a base fica horizontal, na linha da borda.
+
+## 9. Translação das peças de moldura pelo lado F (2026-11-07; R0022 P0240, P0590): **porta [F], interruptor DESLIGADO**
+
+**Pedido:** depois do §8 o F de P0240 (1,63) e das peças à esquerda fica paralelo à borda mas não encostado. Com a rotação pelo F a translação continuava a dos cantos (centróide dos 4 cantos no centro da célula), e numa célula não retangular isso afasta o F da borda.
+
+**Medição** (`tools/diagnostico/render/moldura.py --project <cópia> --target grow --relax 1.5,20`, 225 s; `moldura.json`):
+- Pose da GUI (`register_piece(image=False)`), cópia `alpes_f` = `projects/alpes` com log 2072, 607 colocadas, 954 juntas. São 216 peças de moldura e 220 lados F (4 cantos, 8 lados).
+- `d_F` = distância assinada entre o ponto médio da reta do F (8–92 %) e a linha da borda, positiva para fora.
+
+**Antes (hoje):**
+- `d_F` mediana **+0,205 mm**, \|d\| p95 0,82, máximo 1,66 (P0671 (1,1) N). 143 lados com \|d\| > 0,2 e 60 com \|d\| > 0,5.
+- Face ao alvo `borda + 0,48` (convenção dos alvos de Kabsch e de `seam_gaps`): mediana −0,275, 149 lados > 0,2, 61 lados > 0,5.
+- Por borda (mediana d / d − 0,48):
+  - N +0,27 / −0,21;
+  - E +0,15 / −0,33;
+  - S +0,20 / −0,28;
+  - W +0,23 / −0,25.
+- O render não segue nenhuma das duas convenções: o F fica em média 0,2 mm fora da borda, com dispersão de ±0,8 mm de peça para peça.
+- **P0240:** N **−0,26** (o F fica 0,26 mm para dentro do tabuleiro, o que se vê). **P0590:** S **−0,73**.
+
+**Código** (`src/render.py`, `F_TRANSLATION`, **`False`**):
+- `f_side_fit` devolve a reta do F com o ponto médio e a direção (`f_side_line` passa a usá-la e o resultado é igual).
+- `f_translation` dá a translação `d = −Σ e_i n_i`, só pelos lados F usados na rotação. Nos cantos há 2 normais; a componente tangencial continua a dos cantos.
+- O resultado fica em `out["f_offset"]`.
+- O passo de imagem parte de `d` e SOMA `ddx/ddy`, sem a componente normal a um F usado (`_drop_f_normal`). `relax()` também não mexe nessa componente.
+- `placements.json` guarda `f_translation` (`False` | `"grow"` | `"borda"`); um ficheiro com outro valor é ignorado.
+- Alvo: `F_TARGET_GROW = True` (borda + 0,48), pela mesma convenção dos alvos de Kabsch e de `seam_gaps`. O alvo «borda» foi medido e é pior (abaixo).
+
+**Porta** (antes → depois, mesma cópia, pose da GUI):
+
+| porta | só a peça (pedido), alvo borda + 0,48 | idem, alvo borda | + `relax(1,5 mm, 20)` com o F bloqueado |
+|---|---|---|---|
+| (1) nenhuma junta piora > 0,2 mm | **60 [F]** (máx +0,81; 3 melhoram) | **46 [F]** (máx +1,01; 14 melhoram) | **15 [F]** (máx +0,58; 245 melhoram) |
+| (2) mediana \|folga\| não sobe | 0,183 → **0,195 [F]**; > 0,8 mm: 20 → 31 | 0,183 → **0,188 [F]**; > 0,8: 20 → 29 | 0,183 → **0,082 [V]**; > 0,8: 20 → 5; p95 0,60 → 0,35 |
+| (3) buracos ≤ 67 / 9 | 67 / 9 → **71 / 11 [F]** | não medido | 67 / 9 → **75 / 12 [F]** |
+| (4) \|d_F − alvo\| > 0,2 → 0 | lados usados 137 → **0 [V]**; todos 149 → **12 [F]** | usados → 0 | usados → 0; todos 13 |
+| resíduo da arte (`artreg`, células) | mediana 0,0460 → 0,0472, p95 0,0949 → 0,0907 (234 → 233 inliers): neutro | — | — |
+| E-sym / `pytest` | `test_segment_scan_esym.py` 2 passed (não depende de `render`); `test_render.py` 22 passed **[V]** | | |
+
+- **Porque falha (1):** a peça de moldura move-se até 1,2 mm na normal e a junta com a vizinha interior absorve esse movimento inteiro.
+  - Juntas interiores das peças de moldura: mediana da folga +0,14 → +0,35 mm, 55 de 127 pioram > 0,2. As juntas ao longo da borda quase não mudam: \|folga\| mediana 0,187 → 0,182, 5 de 215 pioram.
+  - Correlação entre o erro do F e a folga interior antes: **−0,37**. A peça que sai pelo F também já se sobrepõe à vizinha interior, ou seja, é maior do que a célula nominal (e vice-versa).
+  - O erro está na grelha nominal (células reais de tamanhos diferentes), não na pose da peça. Uma correção só da peça não o pode fechar.
+  - Com o F corrigido só a 50 %, 18 juntas pioram; a 25 %, 2. Corrigir em parte não põe o F na borda.
+  - Remover só o desvio à mediana de cada borda também falha: 45 juntas pioram.
+- Juntas que mais pioram (só a peça):
+  - P0063–P0590 (46–47,2): +0,04 → +0,85;
+  - P0349–P0350 (46–47,64): −0,65 → −1,35;
+  - P0069–P0348: +0,14 → +0,84;
+  - P0671–P0672: −0,37 → −1,02;
+  - P0057–P0595: +0,57 → +1,18;
+  - P0052–P0600: +0,50 → +1,10.
+- **Os 12 lados F fora do alvo:** 9 têm o contorno não reto (RMS > 0,15 mm: P0199, P0227, P0298, P0347, P0350 E, P0488, P0637, P0641, P0648, P0655). Os restantes são P0202 E e P0236 N, com reta boa mas sem a rotação pelo F, e por isso também sem a translação.
+
+| peça | d_F antes → depois (só a peça) | juntas vizinhas antes → só a peça \| + relax |
+|---|---|---|
+| P0240 (1,63) N | −0,26 → +0,48 (move 0,74 para fora) | E P0245 −0,61 → −0,63 \| −0,29; E P0236 −0,08 → −0,12 \| −0,16 (sem vizinha S) |
+| P0590 (47,2) S | −0,73 → +0,48 (1,21) | N P0063 +0,04 → **+0,85** \| +0,51; W P0670 −0,07 → −0,20 \| −0,21; E P0595 −0,34 → −0,30 \| −0,19 |
+| P0671 (1,1) N, W | +1,66 / +0,26 → +0,48 / +0,48 | S P0672 −0,37 → **−1,02** \| −0,39; E P0827 +0,54 → +0,52 \| +0,20 |
+| P0350 (47,64) S | +1,26 → +0,48 (E com RMS 0,19 fica fora) | N P0349 −0,65 → **−1,35** \| −0,51 |
+| P0245 (1,62) N | −0,48 → +0,48 | E P0251 −0,32 → −0,33 \| −0,21 |
+| P0656 (38,1) W | +1,20 → +0,48 | P0650 −0,23 → −0,17 \| −0,03 |
+
+**Figura** `moldura_antes_depois.jpg`:
+- Conteúdo: P0240, P0590 e 20 peças de moldura (os 4 cantos + 4 por borda, semente 20261107). Cada peça mostra a sua célula ± 0,35 célula a 300 dpi, com margem cinzenta fora do tabuleiro.
+- Linhas: amarelo = borda; ciano = alvo (0,48 mm para fora). Antes = contorno vermelho; depois (só a peça) = contorno verde.
+- **P0240:** antes, o bordo de cima fica abaixo da linha da borda, com uma faixa escura entre a peça e a borda (o defeito do report). Depois, o bordo desenhado encosta à borda e o contorno fica no alvo.
+- **P0590:** antes, a base fica acima da borda, com uma faixa cinzenta. Depois, a base encosta, mas abre-se uma fresta clara ao longo da junta N com P0063: os +0,85 mm da tabela.
+- **P0671:** antes, o canto sobe 1,7 mm acima da borda; depois fica no alvo.
+- **P0346** (43,64): depois de se mover 0,94 mm para fora, abre-se uma fresta escura em todo o lado W, contra P0067 (+0,06 → +0,64 mm).
+- P0298 e P0655 (lados F não retos) não mudam. Nas peças com o F já perto do alvo (P0012, P0528) não há diferença visível.
+
+**Decisão: `F_TRANSLATION = False` [F na porta].**
+- O código fica no módulo, testado, para a proposta abaixo.
+- Com o interruptor desligado, o `render` sai bit a bit igual ao anterior: `dx = dy = 0` no ramo F, `f_offset` ausente e `placements.json` com `f_translation: false`. Um ficheiro antigo sem essa chave continua válido.
+
+**Proposta (não implementada):**
+- Pôr o F na borda pede que as vizinhas interiores acompanhem: um arranjo global das translações. Seria um mínimo quadrado esparso em (dx, dy) das 607 peças, com folga 0 por junta, o F no alvo como restrição forte e um prior fraco no centro da célula.
+- O `relax()` atual com o F bloqueado é uma aproximação de Jacobi disso e já dá: mediana 0,183 → 0,082 mm e > 0,8 mm 20 → 5. Mesmo assim, 15 juntas pioram > 0,2 e os buracos vão a 75 / 12. Os buracos medem magenta dentro da janela da célula, e uma peça que sai do centro da sua célula abre magenta junto às células vazias.
+- A porta (1) «nenhuma junta piora» não é compatível com mover peças até 1,2 mm. Se se quiser seguir por aqui, a decisão é do Tiago/gestor: trocar a porta por mediana, p95 e > 0,8 mm.
+- A GUI também teria de usar uma pose global em cache. Hoje regista cada peça na hora; mexer em `server.py` fica fora desta ronda.
