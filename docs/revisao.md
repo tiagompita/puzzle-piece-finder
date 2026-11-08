@@ -233,3 +233,20 @@ Commits: `f6cc2b7` (critérios antes de correr: partição por folha e zona, mé
 **Reserva (não afinado, declarado):** `T_abs` por zona / nº de vizinhas; declive do filtro mole; τ_media.
 
 **Testes existentes alterados:** nenhum (uma 7.ª aba «Buracos» na barra partia 10 testes de layout/reports pela contagem e geometria das 6 abas: ficou uma secção com botão em «Vai buscar»). Novos: `tests/test_fit.py` (9), `tests/test_state_holes.py` (4), `tests/test_server_holes.py` (3), `tests/test_gui_holes.py` (4, `slow`). Suite completa: **359 passed, 1 skipped (247 s)**.
+
+## 2026-11-08 — resposta (Claude Code, ronda 7: 6 propostas que não encaixam, velocidade, continuidade)
+
+Commits: `8af95b2` (critérios antes de medir), `32b918c` (GT à data, H1–H5, tempo), `2f68664` (H6(b)), `65389d5` (plano), `bab495a` (efeito da validação cruzada) e os commits de código desta ronda (ver `git log`). Prompt: `docs/prompts/2026-11-08-r7-falhas-fora-do-ceu.md`. Relatório: `docs/diagnostico/gemeos/R7_RESULTADOS.md`.
+
+**Verificado [V]:**
+- **Os 6 casos:** P1014 → (41,62) já era `ambigua` (forma e imagem a falhar) e foi cartão; P1238 → (35,2) `aceite` com o rótulo «(ceu)» de *fallback*; T0003/T0004 em células cuja célula gémea já estava ocupada por peças GT (as gémeas verdadeiras foram colocadas lá a seguir). Causa comum das 2 gémeas: encaixe contra a vizinha na pose prevista, custo 9,14 e 4,56 > T_abs 2,67 (máx. das 42 aceites 2,08). H1 [F] (âncoras rank 1 `alta` no seu buraco), H2 [F] (0/59 100 não-gémeos da mesma classe abaixo de t95), H4 [F] (não material), H3 [V] (limiar 50 deixa passar 61–97 % das células aleatórias; AUC 0,96–0,99), H5 [V], H6 [V] (ocupação; 1 rotação 30/66 → 4 rotações 64/66).
+- **Reprodução à data:** 34/34 nas peças com silhueta inalterada; as 9 divergências são as peças com contorno manual de hoje (silhueta +52–68 mm²).
+- **Efeito da validação cruzada:** 0/44 aceites perdem `aceite` (42 `ok`, 2 sem vizinha), 2/2 rejeitadas `incompatível`.
+- **Tempo:** percentil `pctl` com pool ≤ 300 → 53 825 chamadas a `de_cell` e 341,5 s no passo «gémeas»; sem ele 580 chamadas e 6,5 s; propostas idênticas (diff = 0 nas duas comparações). Não é cache.
+- **Continuidade:** `--relatorio` 38/38 (37 céu + 1 montanha); `--pares` 17 contornos manuais, 5 poses manuais (|d| 0,77 mm [0,51, 1,02]).
+
+**Falha [F] no critério de efeito:** os p90 por zona (céu 10,6, relva 16,1) despromoveriam 6/34 aceites → não ativados.
+
+**Não testado [NT]:** precisão das propostas fora do céu (0 gémeas e 1 buraco confirmados lá); correlação dos tempos com o log do portátil (ficheiro não está no repo); montanha/vale com n < 20 na calibração da imagem; H6(b) nos pares E-sym (fila 47 sem arte: medido nos pares colocados).
+
+**Testes existentes alterados:** nenhum (novos: ver HANDOFF).
