@@ -19,38 +19,42 @@
    "index_in_scan": 0,
    "lote": 2,
    "n_no_lote": 43,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    45
+   ],
+   "theta_deg": -83.70986561676669,
    "seccao_id": null,
    "same_as": null,
    "flags": {
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "manual_override": true
    },
-   "area_mm2": 418.27,
+   "area_mm2": 349.81,
    "cls": "BBTT",
    "n_flat": 0,
    "chords_mm": [
-    19.193,
-    18.833,
-    18.13,
-    20.492
+    18.444,
+    18.05,
+    18.162,
+    19.119
    ],
    "shape_ok": true,
    "bbox": [
-    696,
-    256,
-    319,
-    315
+    710,
+    257,
+    305,
+    302
    ],
    "crop_path": "crops/P0186.png",
    "mean_lab": [
-    50.52,
-    -8.82,
-    5.93
+    54.06,
+    -4.52,
+    2.2
    ]
   },
   {
@@ -139,9 +143,12 @@
    "index_in_scan": 3,
    "lote": 2,
    "n_no_lote": 46,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    55
+   ],
+   "theta_deg": -167.24,
    "seccao_id": null,
    "same_as": null,
    "flags": {

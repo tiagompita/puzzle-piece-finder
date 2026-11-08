@@ -539,9 +539,12 @@
    "index_in_scan": 13,
    "lote": 8,
    "n_no_lote": 14,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    60
+   ],
+   "theta_deg": 92.44,
    "seccao_id": null,
    "same_as": null,
    "flags": {

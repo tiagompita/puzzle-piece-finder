@@ -419,9 +419,12 @@
    "index_in_scan": 10,
    "lote": 5,
    "n_no_lote": 11,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    44
+   ],
+   "theta_deg": -91.09256402198639,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1140,9 +1143,12 @@
    "index_in_scan": 27,
    "lote": 5,
    "n_no_lote": 28,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    15,
+    62
+   ],
+   "theta_deg": 4.6452836519043785,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1268,9 +1274,12 @@
    "index_in_scan": 31,
    "lote": 5,
    "n_no_lote": 31,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    2,
+    63
+   ],
+   "theta_deg": -89.72362528140796,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1278,37 +1287,29 @@
     "touches_strip": false,
     "is_cluster": false,
     "objeto_duplo": false,
-    "contacto": {
-     "com": [
-      24,
-      32
-     ],
-     "confianca": "alta",
-     "metodo": "conectividade",
-     "alterado": false
-    }
+    "manual_override": true
    },
-   "area_mm2": 399.25,
+   "area_mm2": 337.2,
    "cls": "BBTT",
    "n_flat": 0,
    "chords_mm": [
-    18.757,
-    19.307,
-    19.138,
-    18.588
+    18.134,
+    18.362,
+    18.389,
+    17.945
    ],
    "shape_ok": true,
    "bbox": [
-    791,
+    806,
     1562,
-    304,
-    317
+    288,
+    303
    ],
    "crop_path": "crops/P1064.png",
    "mean_lab": [
-    60.74,
-    -9.59,
-    26.8
+    66.27,
+    -6.28,
+    27.42
    ]
   },
   {
@@ -1317,9 +1318,12 @@
    "index_in_scan": 32,
    "lote": 5,
    "n_no_lote": 32,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    60
+   ],
+   "theta_deg": 87.04,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1454,9 +1458,12 @@
    "index_in_scan": 34,
    "lote": 5,
    "n_no_lote": 35,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    47
+   ],
+   "theta_deg": 90.15,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1494,9 +1501,12 @@
    "index_in_scan": 35,
    "lote": 5,
    "n_no_lote": 36,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    2,
+    36
+   ],
+   "theta_deg": -7.306208590113101,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1896,9 +1906,12 @@
    "index_in_scan": 45,
    "lote": 5,
    "n_no_lote": 45,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    58
+   ],
+   "theta_deg": -81.6306964979094,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -2095,9 +2108,12 @@
    "index_in_scan": 48,
    "lote": 5,
    "n_no_lote": 49,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    42
+   ],
+   "theta_deg": -90.59,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -2410,9 +2426,12 @@
    "index_in_scan": 55,
    "lote": 5,
    "n_no_lote": 56,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    62
+   ],
+   "theta_deg": 116.17465927911962,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -2420,37 +2439,29 @@
     "touches_strip": false,
     "is_cluster": false,
     "objeto_duplo": false,
-    "contacto": {
-     "com": [
-      48,
-      61
-     ],
-     "confianca": "alta",
-     "metodo": "conectividade",
-     "alterado": true
-    }
+    "manual_override": true
    },
-   "area_mm2": 388.47,
+   "area_mm2": 333.33,
    "cls": "BTBT",
    "n_flat": 0,
    "chords_mm": [
-    18.99,
-    18.209,
-    19.118,
-    17.572
+    18.833,
+    16.931,
+    19.337,
+    16.241
    ],
    "shape_ok": true,
    "bbox": [
-    2046,
+    2057,
     2669,
-    297,
-    368
+    287,
+    358
    ],
    "crop_path": "crops/P1089.png",
    "mean_lab": [
-    76.99,
-    -8.95,
-    35.4
+    84.27,
+    -5.09,
+    36.59
    ]
   },
   {

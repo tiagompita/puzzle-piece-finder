@@ -219,38 +219,42 @@
    "index_in_scan": 5,
    "lote": 5,
    "n_no_lote": 69,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    36
+   ],
+   "theta_deg": -6.639004902893703,
    "seccao_id": null,
    "same_as": null,
    "flags": {
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "manual_override": true
    },
-   "area_mm2": 449.63,
+   "area_mm2": 391.51,
    "cls": "BTTT",
    "n_flat": 0,
    "chords_mm": [
-    18.289,
-    18.185,
-    18.856,
-    18.846
+    17.54,
+    17.363,
+    17.886,
+    18.467
    ],
    "shape_ok": true,
    "bbox": [
-    1687,
+    1699,
     852,
-    317,
-    367
+    302,
+    357
    ],
    "crop_path": "crops/P1102.png",
    "mean_lab": [
-    74.9,
-    -6.28,
-    16.46
+    81.32,
+    -3.18,
+    15.59
    ]
   },
   {
