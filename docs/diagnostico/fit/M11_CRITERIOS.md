@@ -105,3 +105,24 @@ A configuração «passo 5» (erosão 0 e 0,48, `cut` = 1× duro, sem regra F, s
 ## 7. Figuras (cv-visual-verification)
 
 De S_V, cenário N = 100, configuração final: 6 **melhores** (1 em cada ⌊n/6⌋ dos acertos, sem escolher), 6 **piores** (pior rank da certa no pool completo, desempate pelo id) e 6 **«sem candidata fiável»** com a peça presente (os de menor margem), cada painel com a candidata **colocada no buraco** e as vizinhas (reutiliza `figs_buraco.draw`/`same_for`); abertas e descritas no relatório.
+
+## 8. Sugestões `alta` em «Vai buscar»: regra fixada em 2026-11-08, antes do código
+
+**Factos que levam à regra.** Em uso real (2026-11-08, `projects/alpes/log.jsonl`) os 10 buracos `alta` propostos pelo M11 foram confirmados fisicamente: 10 `hole_confirmed` com `rank 1`, `confianca alta`, `fit_version m11-1` (3 com m = 3, 7 com m = 2), 0 `hole_rejected`; todos céu. Precisão observada 10/10, Wilson 95 % 0,72–1,00. Decisão do Tiago (`docs/decisoes.md`): as `alta` entram em «Vai buscar»; o resto fica numa página própria.
+
+**Definições (fixas).**
+- **Sugestão `alta`** = a candidata **rank 1** de um buraco com `confianca == "alta"` (⇒ m ≥ 2, d1 ≤ T_abs, margem ≥ 1,5, §3) **e** coerente com a afetação conjunta (`atribuida == peça` ou `melhor_para` ausente). Um buraco `alta` cuja afetação dá a peça a outro buraco fica na página «Buracos» com a marca «afetação em conflito», não em «Vai buscar». Média / «baixa» / `sem` nunca entram em «Vai buscar».
+- **Decisão `alta`** (o que conta no contador) = evento `hole_confirmed` ou `hole_rejected` com `origin == "buraco"`, `confianca == "alta"` e `rank == 1`. Rejeições de rank 2–3 (feitas na página «Buracos») não contam contra a sugestão: a sugestão era a rank 1.
+- **Contador** = acertos (`hole_confirmed`) / falhas (`hole_rejected`) / total das decisões `alta` desde o início do projeto; precisão com IC de Wilson 95 % (`fit.wilson`).
+- **Janela de pausa** = as últimas `ALTA_JANELA = 20` decisões `alta` **posteriores ao último evento `holes_alta_resumed`** (todas, se houver menos de 20). Se a janela tiver ≥ `ALTA_MAX_FALHAS = 3` rejeições, as sugestões `alta` saem de «Vai buscar» (ficam na página «Buracos», grupo «alta · em pausa») e aparece um aviso, até o Tiago reativar (`holes_alta_resumed {autor, nota}`), o que reinicia a janela. Sem reinício a mesma janela voltava a pausar logo. Tudo é derivado do log: nenhum estado novo fora de `log.jsonl`.
+- **Rótulos da página «Buracos»** (GUI, não métrica): «média» = `media` com m ≥ 2; «baixa» = `media` com m = 1 (vizinha única nunca é alta); «sem candidata fiável» = `sem`. `fit.confidence` não muda.
+
+**Porquê 3 em 20 (limiar do Tiago; justificação e sensibilidade, para ele ajustar).** 3/20 corresponde a uma precisão observada ≤ 85 % na janela. Probabilidade de a regra disparar numa janela cheia de 20 decisões, por precisão verdadeira (binomial, P[X ≥ 3]):
+
+| precisão verdadeira | 95 % | 90 % | 85 % | 80 % | 70 % |
+|---|---|---|---|---|---|
+| P[pausa] | 7,5 % | 32 % | 60 % | 79 % | 96 % |
+
+Ou seja: quase não incomoda enquanto a precisão for ≈ 95 % (a observada é 100 % em 10), apanha quase de certeza uma queda para 80 % e fica a meio nos 90 %. A amostra atual (10/10, IC 72–100 %) não distingue 90 de 100 %, por isso a regra é uma rede, não uma medição; a medição é o contador. Alternativas rejeitadas: 2/20 dispararia em 26 % das janelas a 95 % de precisão (ruído); 5/20 deixaria passar 80 % em metade dos casos. As duas constantes vivem em `src/fit.py`.
+
+**O que fica por medir [NT].** Precisão fora do céu (0 decisões); a precisão a π real do lote (a janela mede a sugestão, não a peça ausente); n ≥ 60 do §15.6.
