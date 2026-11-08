@@ -57,9 +57,16 @@ Os outros 3 pares (T0001, T0002, T0005) tinham as 3 células livres dos dois lad
 | **H6(a)** pares: ocupação | T0003 (4,63): twin ocupada; (4,64): X e twin ocupadas. T0004 (4,62): twin ocupada; (44,2), (45,7): X ocupada. T0001/T0002/T0005: 9 células livres dos dois lados | **[V]** |
 | **H6(b)** pares: 1 rotação vs 4 | ver §2.1 | — |
 
-### 2.1 H6(b): localização conjunta dos 20 pares E-sym A1↔B2 (GT por casa)
+### 2.1 H6(b): localização conjunta de um par, 1 rotação (chamada atual) vs 4 rotações + forma (`r7_h6b.py`)
 
-(preenchido abaixo quando a medição terminar)
+- Os 20 pares E-sym A1↔B2 previstos nos critérios **não são medíveis**: a gémea está na fila 47, fora do ficheiro da arte (`rows_with_art [1, 46]`), e `score(X) = dE(A, X) + dE(B, twin(X))` fica inf nas duas variantes (medido: 20/20 inf). GT substituta (declarada): **66 pares gémeos entre peças colocadas** da GT de H2 com arte nas duas células (20 céu, 20 relva, 13 montanha, 13 vale; semente 20261108), cada par localizado como se as duas fossem soltas.
+
+| variante | top-1 | top-3 | top-10 | posição mediana da célula certa (3008) |
+|---|---|---|---|---|
+| atual (`theta_deg: 0.0`, sem `shape`: 1 rotação arbitrária) | **30/66** (céu 4/20, relva 1/20, montanha 13/13, vale 12/13) | 39/66 | 50/66 | 2 |
+| **4 rotações + `shape`** (protótipo EREAL2) | **64/66** (19/20, 19/20, 13/13, 13/13) | 65/66 | 65/66 | 1 |
+
+Montanha/vale saem bem com 1 rotação porque as páginas do legado estão alinhadas com os eixos (θ ≈ 0 por acaso); nas soltas de lote (orientação ao acaso) a chamada atual é um sorteio. Critério «material» (posição mediana ≥ 2× menor ou top-10 ≥ +5/20): **cumprido** [V, n = 66]. Nota: em EREAL2 §4 a localização por célula dava posição mediana 26 nos pares E-sym; aqui 1 em 64/66 porque as duas peças vêm do mesmo scan calibrado e a GT é de células interiores com textura (céu de lote: 19/20).
 
 ## 3. Correções (Parte 3)
 
