@@ -1,5 +1,5 @@
-"""Playwright (``slow``): sugestões ``alta`` em «Vai buscar» (chip «por buraco · alta», contador, nenhuma média / baixa lá),
-a página «Buracos» por grupos com as 3 melhores por buraco e «Não encaixa» em um clique (rank 2 gravado), a regra de
+"""Playwright (``slow``): sugestões ``alta`` em «Vai buscar» (chip «pelo encaixe · alta», contador, nenhuma média / baixa lá),
+a página «Buracos» por grupos com as 3 melhores pelo encaixe em cada buraco e «Não encaixa» em um clique (rank 2 gravado), a regra de
 pausa (aviso + «Reativar») — a 1366×768, 1366×768 a 150 % (911×512) e telemóvel, sem overflow.
 Projeto sintético de :func:`test_server_alta._alta_project` (o buraco (2,3) é ``alta`` com m = 2).
 """

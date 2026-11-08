@@ -554,7 +554,7 @@ const pendingPieces = () => fetchPieces().filter((e) => !e.estado_atual || ["sol
 function renderBuscar() {
   const T = $("#tab-buscar"); T.replaceChildren();
   const es = pendingPieces().filter((e) => !isStored(e));
-  // M11 (M11_CRITERIOS §8): the ``alta`` hole suggestions join the list (chip «por buraco · alta»); a piece / cell that is
+  // M11 (M11_CRITERIOS §8): the ``alta`` hole suggestions join the list (chip «pelo encaixe · alta»); a piece / cell that is
   // also a twin proposal is one fused card with both chips; média / baixa / sem never come here (page «Buracos»).
   const alta = typeof altaEntries === "function" ? altaEntries() : [];
   const nAll = es.length + alta.length;
@@ -569,7 +569,7 @@ function renderBuscar() {
     const nAc = es.filter((e) => e.decision === "aceite" || e.decision === "colocavel").length;
     const all = [...es, ...alta];
     T.append(h("p", { class: "summary" }, `${nAll} peças para ir buscar em ${new Set(all.map((e) => e.lote ?? "—")).size} saco(s): ` +
-      `${nAc} aceites, ${es.length - nAc} com dúvida` + (alta.length ? `, ${alta.length} por buraco (alta)` : "") +
+      `${nAc} aceites, ${es.length - nAc} com dúvida` + (alta.length ? `, ${alta.length} pelo encaixe (alta)` : "") +
       `. Pela ordem: as mais seguras primeiro. Todas têm uma vizinha montada para confirmar o encaixe.`),
       h("p", { class: "summary small" }, CARD_KEY));
     const by = new Map();

@@ -1,7 +1,7 @@
 /* Molde do buraco (M11, src/fit.py): «Candidatas para este buraco» na gaveta de uma célula vazia com ≥ 1 vizinha
  * montada, as sugestões `alta` em «Vai buscar» (M11_CRITERIOS §8: a rank 1 de um buraco `alta`, coerente com a afetação
  * conjunta; contador acertos/falhas/total com Wilson 95 % e regra de pausa 3 em 20), a página «Buracos» (média, baixa
- * = vizinha única, sem candidata fiável; 3 melhores por buraco, «Não encaixa» em um clique) e a camada #hole-layer no
+ * = vizinha única, sem candidata fiável; 3 melhores pelo encaixe em cada buraco, «Não encaixa» em um clique) e a camada #hole-layer no
  * tabuleiro. Confirmar/rejeitar grava hole_confirmed/hole_rejected (rank, custo, margem, confiança, versão do fit): é a
  * verdade de terreno de `python -m src.fit --relatorio`. Usa globais de app.js ($, $$, h, s, S, api, toast, fmt,
  * cellTxt, openCell, fitRect, refreshAfterWrite, reportButton, showTab, miniMap). Nada da simetria do puzzle está aqui.
@@ -53,7 +53,7 @@ function holesEntry() {
   const pc = r.por_confianca || {};
   const n = (pc.media || 0) + (pc.sem || 0);
   return h("div", { class: "holes-entry" },
-    h("button", { class: "btn slim", type: "button", "data-holes-entry": "1", title: "média, baixa (1 vizinha) e sem candidata fiável: as 3 melhores por buraco",
+    h("button", { class: "btn slim", type: "button", "data-holes-entry": "1", title: "média, baixa (1 vizinha) e sem candidata fiável: as 3 melhores pelo encaixe em cada buraco",
       onclick: () => showTab("buracos") }, "Buracos: média, baixa e sem fiável ", h("b", {}, n ? String(n) : "")),
     h("span", { class: "small muted" }, " «se não for esta, talvez seja uma destas» · pesquisa: «buracos»"));
 }
@@ -62,15 +62,15 @@ function holeConfChip(conf, m) {
   const txt = m === 1 && conf !== "sem" ? `${HOLE_CONF_SHORT[conf]} · 1 vizinha: baixa` : HOLE_CONF_SHORT[conf];
   return h("span", { class: cls, "data-conf": conf, title: HOLE_CONF_TXT[conf] }, txt);
 }
-/** Chip das sugestões por buraco em «Vai buscar» (distinto do .tag da decisão da gémea). */
+/** Chip das sugestões pelo encaixe (molde do buraco) em «Vai buscar» (distinto do .tag da decisão da gémea). */
 function holeSugChip(e) {
   const hl = (e && e.hole) || {};
-  return h("span", { class: "chip buraco", "data-chip": "buraco", title: `molde do buraco: ${hl.m || "?"} vizinhas, custo ${fmt(hl.J, 2)}, margem ${fmtMargin(hl.margem)}, ${hl.fit_version || ""}` }, "por buraco · alta");
+  return h("span", { class: "chip buraco", "data-chip": "buraco", title: `molde do buraco: ${hl.m || "?"} vizinhas, custo ${fmt(hl.J, 2)}, margem ${fmtMargin(hl.margem)}, ${hl.fit_version || ""}` }, "pelo encaixe · alta");
 }
 const fmtMargin = (m) => (m === null || m === undefined ? "—" : (m > 999 ? "> 999" : fmt(m, 2)));
 const altaPct = (c) => (c && c.precisao !== null && c.precisao !== undefined ? `${fmt(100 * c.precisao, 0)} %` : "—");
 const altaIc = (c) => (c && c.ic95 ? ` (IC 95 % ${fmt(100 * c.ic95[0], 0)}–${fmt(100 * c.ic95[1], 0)} %)` : "");
-/** Linha de estado das sugestões por buraco: a calcular (tiras n/N) · contador acertos/falhas/total com Wilson · aviso de pausa + «Reativar». */
+/** Linha de estado das sugestões pelo encaixe: a calcular (tiras n/N) · contador acertos/falhas/total com Wilson · aviso de pausa + «Reativar». */
 function altaBanner(where) {
   const a = altaInfo();
   const box = h("div", { class: "alta-banner", "data-alta": where });
@@ -84,14 +84,14 @@ function altaBanner(where) {
   const c = a.contador;
   const n = (a.entries || []).length;
   box.append(h("p", { class: "small alta-count", "data-acertos": c ? c.acertos : "", "data-falhas": c ? c.falhas : "", "data-total": c ? c.total : "" },
-    h("span", { class: "chip buraco" }, "por buraco · alta"),
+    h("span", { class: "chip buraco" }, "pelo encaixe · alta"),
     ` ${a.em_pausa ? "em pausa" : `${n} sugest${n === 1 ? "ão" : "ões"}`}`,
     c ? ` · acertos ${c.acertos} / falhas ${c.falhas} / total ${c.total} · precisão ${altaPct(c)}${altaIc(c)}` : "",
     c && c.janela ? h("span", { class: "muted" }, ` · últimas ${c.janela.n}: ${c.janela.falhas} falha${c.janela.falhas === 1 ? "" : "s"} (pausa a partir de ${c.janela.max_falhas} em ${c.janela.tamanho})`) : null));
   if (a.em_pausa) {
     box.append(h("p", { class: "note alta-pause hole-warn" },
       h("strong", {}, `≥ ${c.janela.max_falhas} rejeições nas últimas ${c.janela.n} decisões alta: `),
-      "as sugestões por buraco saíram de «Vai buscar» (estão na página «Buracos», grupo «alta · em pausa») até as reativares. ",
+      "as sugestões pelo encaixe saíram de «Vai buscar» (estão na página «Buracos», grupo «alta · em pausa») até as reativares. ",
       h("button", { class: "btn slim", type: "button", "data-alta-reativar": "1", onclick: (ev) => altaResume(ev.currentTarget) }, "Reativar sugestões alta")));
   }
   if (a.conflitos && a.conflitos.length && where === "buracos") {
@@ -232,13 +232,17 @@ function holeCard(hd, cd, i) {
   card.append(holeActions(hd.cell, cd.piece, () => holeShowOnBoard(hd, i), { cell: hd.cell, vista: "buraco" }));
   return card;
 }
-/** Botões Coloquei / Não encaixa (um clique, grava hole_rejected com rank, custo, margem, confiança, versão) / Ver no tabuleiro / Reportar. */
+/** Botões Coloquei / Não encaixa (um clique, grava hole_rejected com rank, custo, margem, confiança, versão) / Ver no tabuleiro (só localiza a célula,
+ * como nos outros cartões) / Pré-visualizar encaixe (desenha a candidata no buraco com as vizinhas; opcional, só com `desenho`) / Reportar. */
 function holeActions(cell, pid, onVer, rctx, opts = {}) {
   const acts = h("div", { class: "actions" });
   acts.append(h("button", { class: "btn primary", type: "button", "data-hole-act": "confirmar", onclick: (ev) => holeAct(cell, pid, "confirmar", ev.currentTarget, opts) }, "Coloquei"));
   acts.append(h("button", { class: "btn", type: "button", "data-hole-act": "rejeitar", title: "um clique: fica registado com rank, custo, margem, confiança e versão do fit",
     onclick: (ev) => holeAct(cell, pid, "rejeitar", ev.currentTarget, opts) }, "Não encaixa"));
-  if (onVer) acts.append(h("button", { class: "btn slim", type: "button", "data-hole-act": "ver", onclick: onVer }, "Ver no tabuleiro"));
+  if (cell) acts.append(h("button", { class: "btn slim", type: "button", "data-hole-act": "ver", title: "localizar a célula no tabuleiro (zoom e realce)",
+    onclick: () => showCellOnBoard(cell[0], cell[1]) }, "Ver no tabuleiro"));
+  if (onVer) acts.append(h("button", { class: "btn slim", type: "button", "data-hole-act": "prever", title: "desenhar a candidata encaixada no buraco, com as vizinhas (ciano)",
+    onclick: onVer }, "Pré-visualizar encaixe"));
   acts.append(reportButton({ piece: pid, cell, vista: (rctx && rctx.vista) || "buraco" }));
   return acts;
 }
@@ -268,7 +272,7 @@ async function holeAct(cell, pid, what, btn, opts = {}) {
   }
 }
 
-// ------------------------------------------------------------ «Vai buscar»: cartão de uma sugestão por buraco
+// ------------------------------------------------------------ «Vai buscar»: cartão de uma sugestão pelo encaixe (molde do buraco)
 /** Cartão de uma entrada `buracos_alta` de /api/fetch (mesma forma dos cartões de gémea: saco · nº, célula, chips, mini-SVG no buraco, razões, ações). */
 function altaCard(e) {
   const hl = e.hole || {};
@@ -297,7 +301,7 @@ function altaCard(e) {
   return card;
 }
 
-// ------------------------------------------------------------ página «Buracos»: média, baixa, sem fiável (3 melhores por buraco)
+// ------------------------------------------------------------ página «Buracos»: média, baixa, sem fiável (3 melhores pelo encaixe em cada buraco)
 function holeGroupOf(x, alta) {
   if (x.confianca === "alta") {
     const c0 = x.candidatas[0];

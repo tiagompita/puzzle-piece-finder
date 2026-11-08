@@ -92,7 +92,7 @@ def test_hole_block_layout(env, browser, w, h):
 	chip = pg.query_selector(".holes-block .hole-lead .chip")
 	assert chip is not None and chip.get_attribute("data-conf") in ("alta", "media", "sem")
 	# the three buttons of a card exist and have touch-friendly heights on the phone
-	for act in ("confirmar", "rejeitar", "ver"):
+	for act in ("confirmar", "rejeitar", "ver", "prever"):   # ronda 8: «ver» só localiza; «prever» desenha o encaixe
 		b = pg.query_selector(f".holes-block .hole-card [data-hole-act='{act}']")
 		assert b is not None
 		assert b.bounding_box()["height"] >= (40 if phone else 28)
@@ -101,8 +101,12 @@ def test_hole_block_layout(env, browser, w, h):
 	pb = pg.query_selector("#panel").bounding_box()
 	cb = cards[0].bounding_box()
 	assert cb["x"] >= pb["x"] - 1 and cb["x"] + cb["width"] <= pb["x"] + pb["width"] + 1
-	# «Ver no tabuleiro» draws the candidate and the neighbours on the board layer
+	# «Ver no tabuleiro» only locates the cell (as on every other card); «Pré-visualizar encaixe» draws the candidate
+	# and the neighbours on the board layer (ronda 8, 1.2)
 	pg.click(".holes-block .hole-card [data-hole-act='ver']")
+	assert pg.evaluate("Array.isArray(S.sel) && S.sel[0] === 2 && S.sel[1] === 3")
+	assert pg.evaluate("document.querySelectorAll('#hole-layer #hole-piece').length") == 0
+	pg.click(".holes-block .hole-card [data-hole-act='prever']")
 	pg.wait_for_selector("#hole-layer #hole-piece", timeout=5_000)
 	assert pg.evaluate("document.querySelectorAll('#hole-layer .hole-neigh').length") >= 2
 	# the «Buracos» tab lists the hole with its confidence and opens the cell
