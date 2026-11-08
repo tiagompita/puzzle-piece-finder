@@ -104,9 +104,30 @@ Feito: zonas no perfil (`image_zones[z] = {rows, dE_p90, rotulo}`, `PuzzleProfil
 - **Correção:** `find_twin(pctl=False)` por omissão (o percentil fica disponível para diagnóstico com `pctl=True`); nada muda nos limiares; a razão «imagem consistente» perde «, pct x %» (campo `image.pctl` = None). O passo «pares» (19,5 s com 451 soltas: `find_twin` de cada solta contra todas as outras, O(N²)) passa a ser o maior; não se otimiza nesta ronda (medido, declarado).
 - `GET /api/suspeitas` (11,9 s no arranque) e POST de confirmação (3,5 s): §4.1.
 
-### 4.1 Servidor na cópia
+### 4.1 Servidor na cópia (`alpes_r7_srv`, código desta ronda, cache `render/gui` apagada antes do 2.º arranque)
 
-(preenchido depois da implementação)
+| pedido | medido | explicação |
+|---|---|---|
+| `GET /api/suspeitas` **durante** «a compor o tabuleiro» (arranque, 34,7 s de composição) | **10,6 s** | `consistency.evaluate` (≈ 2 s a frio) a disputar o GIL com a composição do tabuleiro na thread de arranque; é a situação do portátil (11,9 s) |
+| `GET /api/suspeitas` com o tabuleiro pronto (1.ª vez) | 2,3 s | `evaluate` a frio + registos on-the-fly |
+| `GET /api/suspeitas` (2.ª vez) | 0,003–0,006 s | cache por versão do log |
+| `POST /api/confirm` (colocar P0113 em (4,50)) | 12,8 s | consulta incremental 8,4 s (gémeas 5,8; encaixe 0,3; escrever 2,3) + render do recorte + `evaluate` + arranque do thread de buracos, **enquanto a thread das tiras calculava 374 tiras a frio** (0,5 s por peça) |
+| `POST /api/confirm` (P0112 em (4,49)) | 8,0 s | consulta incremental 4,4 s (gémeas 2,5; escrever 1,9) + o resto, ainda com as tiras em curso |
+
+Os 3,5 s do Tiago são consistentes com a reconsulta incremental (2–6 s) sem a thread das tiras a frio. Nada corrigido aqui (seria preciso tirar a composição do tabuleiro e as tiras do caminho crítico do arranque, ou libertar o GIL: fora da ronda); fica como medição, com a causa identificada.
+
+## 6. O que mudou no código (commit `be82a34`; implementer, revisto pelo gestor)
+
+- `src/twin.py`: `find_twin(..., zone=None, pctl=False)`; `_image_threshold` devolve `(None, zona)` para zona sem p90 (só `zone=None` cai no maior p90); razão «zona X sem p90 calibrado: a imagem não decide (ΔE …)» e `aceite` → `ambigua`; rótulos de zona nas razões.
+- `src/profile.py`: `image_zones[z] = {rows, dE_p90, rotulo}`, `zone_of`, `zone_label`, `has_zone_rows`, validação; `projects/alpes/puzzle.json` com as 4 zonas (único toque no projeto real; p90 só no céu = 50).
+- `src/fit.py`: `zone_of(cell, profile=None)`; `hole_queries`/`report` passam o perfil (mesmos rótulos).
+- `src/locate.py`: `pair_locate(..., allowed=None)`.
+- `src/query.py`: `_Ctx.item` com `render.initial_theta` nas âncoras sem θ; `zone=` nas consultas de gémea/borda; `_cross_check`/`_fit_check`/`_eval_mapping`/`_fit_ctx` (encaixe na pose prevista ou `min4`; `fit._Cache` por execução, nunca gravada); pares com forma, 4 rotações, `allowed` (X e twin(X) livres) e a peça B na célula gémea; coluna «encaixe» no `fetch.md`; passo «encaixe» na linha de atividade (0,3 s na reconsulta).
+- `src/state.py`: `fetch_listed` regista `encaixe` (estado) e `decision_antes_encaixe` (GT futura do efeito da regra).
+- `src/web/app.js`/`app.css`: chips «encaixe incompatível» (vermelho) / «encaixe ok (N viz.)» no cartão [NT no browser].
+- Testes novos: `tests/test_twin_pctl_zone.py` (5), `test_profile_zones.py` (10), `test_query_encaixe.py` (6), `test_pair_locate_allowed.py` (2). **Testes existentes alterados (declarado): 3 linhas** — `tests/test_twin.py` linha 221 passa `pctl=True` (o percentil é opt-in) e o stub `pair_locate` de `tests/test_state.py` ganha `allowed=None` (assinatura nova); nenhuma asserção mudou. `tests/test_gui_guardadas.py::test_real_board_cells_without_orthogonal_neighbour_are_not_in_vai_buscar` falha também em HEAD antes desta ronda (dependente dos dados; não tocado) [NT a causa].
+- Efeito na lista real (cópia, 451 soltas): a única decisão que muda é **P1109 → (33,4): `aceite` → `ambigua`** («zona vale/aldeia sem p90 calibrado»); P0164 (33,3) idem na razão; as gémeas do céu ficam iguais; nenhuma proposta atual tem vizinha montada (todas `encaixe nao_testado`), por isso o chip vermelho só se verá quando houver uma proposta junto de peças colocadas.
+
 
 ## 5. Continuidade (Parte 5)
 

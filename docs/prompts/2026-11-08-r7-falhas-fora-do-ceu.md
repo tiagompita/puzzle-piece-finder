@@ -64,4 +64,12 @@ Formato da resposta final
 
 ## Resultado
 
-(preenchido no fim da ronda)
+Commits: `8af95b2` (critérios), `32b918c` (GT à data, H1–H5, tempo), `2f68664` (H6(b)), `65389d5` (plano + README_proposta), `bab495a` (efeito), `b0bf748` (decisões/revisão), `be82a34` (código), docs finais (HANDOFF, CLAUDE.md, ARCHITECTURE.md, relatório). Relatório completo: `docs/diagnostico/gemeos/R7_RESULTADOS.md`.
+
+- **Parte 1 [V]:** os 6 casos reconstruídos à data; 44 colocações por gémea (33 `aceite`, 10 `ambigua`), 38 buracos; 34/34 decisões reproduzidas nas peças com silhueta inalterada (as 9 outras têm contorno manual de hoje).
+- **Parte 2:** H1 [F], H2 [F], H3 [V] (teste quase vazio; rótulo falso), H4 [F] (não material), H5 [V] (explica as 2 gémeas), H6 [V] (ocupação; 1 rotação 30/66 → 4 rotações 64/66).
+- **Parte 3:** 3.1 feita (0/44 aceites perdem `aceite`; 2/2 rejeitadas `incompatível`); 3.2 parcial (zonas no perfil; p90 novos não ativados: despromoveriam 6/34); 3.3 não (H2 [F]).
+- **Parte 4 [V na cópia]:** percentil `pctl` com pool ≤ 300 → 341,5 s; sem ele 6,5 s; propostas idênticas; não é cache. `GET /api/suspeitas` 10,6 s durante a composição do tabuleiro (2,3 s depois); POST 8–13 s com a thread das tiras a frio.
+- **Parte 5:** `--relatorio` 38/38 (37 céu, 1 montanha; §15.6 por atingir); `--pares` 17 contornos, 5 poses; plano atualizado com o passo seguinte (GT fora do céu antes de limiares); `docs/README_proposta.md` rascunhado.
+- **Por fazer / decisões do Tiago:** ver `docs/HANDOFF.md`.
+
