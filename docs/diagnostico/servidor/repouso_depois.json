@@ -1,0 +1,170 @@
+{
+ "t": "2026-11-08T21:45:43",
+ "tag": "depois",
+ "project": "C:\\Users\\Tiago\\AppData\\Local\\Temp\\claude\\5927c0d9acbb3c52\\8c17e4f0-5407-448e-88e6-9b678e283bbd\\scratchpad\\alpes_r8",
+ "pid": 13268,
+ "janela_s": 60,
+ "espera_s": 60,
+ "cenarios": {
+  "a": {
+   "wall_s": 60.1,
+   "cpu_s": 0.062,
+   "pct_core": 0.1,
+   "n_threads": 19,
+   "top_threads": [
+    [
+     "9116",
+     0.1
+    ],
+    [
+     "18668",
+     0.0
+    ],
+    [
+     "16124",
+     0.0
+    ],
+    [
+     "17012",
+     0.0
+    ]
+   ],
+   "pids": [
+    13268,
+    16404
+   ],
+   "cenario": "a",
+   "paginas": 0,
+   "atividade_aberta": false,
+   "eventsource": true
+  },
+  "b": {
+   "wall_s": 60.0,
+   "cpu_s": 0.203,
+   "pct_core": 0.34,
+   "n_threads": 42,
+   "top_threads": [
+    [
+     "9116",
+     0.34
+    ],
+    [
+     "18668",
+     0.0
+    ],
+    [
+     "16124",
+     0.0
+    ],
+    [
+     "17012",
+     0.0
+    ]
+   ],
+   "pids": [
+    13268,
+    16404
+   ],
+   "cenario": "b",
+   "paginas": 1,
+   "atividade_aberta": false,
+   "eventsource": true
+  },
+  "c": {
+   "wall_s": 60.0,
+   "cpu_s": 0.062,
+   "pct_core": 0.1,
+   "n_threads": 43,
+   "top_threads": [
+    [
+     "9116",
+     0.1
+    ],
+    [
+     "18668",
+     0.0
+    ],
+    [
+     "16124",
+     0.0
+    ],
+    [
+     "17012",
+     0.0
+    ]
+   ],
+   "pids": [
+    13268,
+    16404
+   ],
+   "cenario": "c",
+   "paginas": 1,
+   "atividade_aberta": true,
+   "eventsource": true
+  },
+  "d": {
+   "wall_s": 60.0,
+   "cpu_s": 0.172,
+   "pct_core": 0.29,
+   "n_threads": 24,
+   "top_threads": [
+    [
+     "9116",
+     0.29
+    ],
+    [
+     "18668",
+     0.0
+    ],
+    [
+     "16124",
+     0.0
+    ],
+    [
+     "17012",
+     0.0
+    ]
+   ],
+   "pids": [
+    13268,
+    16404
+   ],
+   "cenario": "d",
+   "paginas": 3,
+   "atividade_aberta": false,
+   "eventsource": true
+  },
+  "e": {
+   "wall_s": 60.0,
+   "cpu_s": 0.141,
+   "pct_core": 0.23,
+   "n_threads": 26,
+   "top_threads": [
+    [
+     "9116",
+     0.23
+    ],
+    [
+     "18668",
+     0.0
+    ],
+    [
+     "16124",
+     0.0
+    ],
+    [
+     "17012",
+     0.0
+    ]
+   ],
+   "pids": [
+    13268,
+    16404
+   ],
+   "cenario": "e",
+   "paginas": 1,
+   "atividade_aberta": false,
+   "eventsource": false
+  }
+ }
+}

@@ -34,7 +34,19 @@ Método: `repouso.py` arranca o servidor com o interpretador do venv (no Windows
 
 ## 3. Correção (0.3) e medição «depois»
 
-(preenchido depois da implementação: SSE por espera com `asyncio.Event` por cliente acordado por `emit()`; meta < 1 % de um núcleo)
+Correção (`32fc4dc`, `src/server.py`): o gerador de `/api/events` deixa de acordar a cada 0,4 s; cada cliente regista um `asyncio.Event`, `emit()` acorda-os com `loop.call_soon_threadsafe(ev.set)` e o gerador faz `await asyncio.wait_for(ev.wait(), timeout=15)` (keep-alive só ao fim de 15 s; `id:`/`Last-Event-ID`/`retry` e o deque de 500 inalterados; a verificação de cliente desligado só ao acordar). Teste `tests/test_server_idle.py`: com 1 cliente SSE o gerador acorda ≤ 1 vez em 10 s (antes 25) e um evento chega em < 1 s.
+
+Medição «depois» (`repouso_depois.json`, mesma cópia, mesmo método, 60 s de assentamento; as tiras já estavam em cache):
+
+| cenário | separadores | Atividade | SSE | antes | **depois** |
+|---|---|---|---|---|---|
+| a | 0 | — | — | 0,18 | **0,10** |
+| b | 1 | fechada | sim | 0,60 (2.ª corrida) / 0,75 | **0,34** |
+| c | 1 | aberta | sim | 0,47 / 0,75 | **0,10** |
+| d | 3 | fechada | sim | 1,07 | **0,29** |
+| e | 1 | fechada | não | 0,23 | 0,23 |
+
+**Meta < 1 % de um núcleo cumprida em todos os cenários [V]** (3 separadores: 1,07 → 0,29). O que resta (0,1–0,3 %) é o event loop do uvicorn e as poucas linhas de keep-alive; não há diferença mensurável entre o painel «Atividade» aberto e fechado. Nota: a medição «depois» correu enquanto a importação do lote 9 e depois a suite de testes corriam noutros processos (contenção de CPU); o número do servidor é por processo e, se alguma coisa, ficou sobrestimado.
 
 ## 4. Regra para a fila de importação (0.4)
 
