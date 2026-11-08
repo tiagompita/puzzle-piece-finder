@@ -250,3 +250,19 @@ Commits: `8af95b2` (critérios antes de medir), `32b918c` (GT à data, H1–H5, 
 **Não testado [NT]:** precisão das propostas fora do céu (0 gémeas e 1 buraco confirmados lá); correlação dos tempos com o log do portátil (ficheiro não está no repo); montanha/vale com n < 20 na calibração da imagem; H6(b) nos pares E-sym (fila 47 sem arte: medido nos pares colocados).
 
 **Testes existentes alterados:** nenhum (novos: ver HANDOFF).
+
+## 2026-11-08 — resposta (Claude Code, ronda 8: ventoinhas em repouso, «pelo encaixe», importação PDF/multi-ficheiro, fila de importação)
+
+Commits: `15376ff`, `dbd2ecd`, `32fc4dc`, `7cf309f`, `45d10e2`, `c95c43c` e docs finais. Prompt: `docs/prompts/2026-11-08-r8-ventoinhas-importacao-fila.md`. Relatório: `docs/diagnostico/servidor/REPOUSO.md`.
+
+**Verificado [V]:**
+- **Ventoinhas:** `python.exe -` órfão de um `bash -c` de sessão anterior do Claude Code (heredoc mal fechado), 100 % de um núcleo durante ≈ 17 h (9 584 s de CPU), terminado por PID; nenhum servidor esquecido. Servidor em repouso (cópia, 60 s): antes 0,18 % / 0,60–0,75 % / 1,07 % (0, 1, 3 separadores; SSE por polling), depois **0,10 / 0,34 / 0,29 %** (SSE por espera): meta < 1 % cumprida.
+- **Importação:** `lote 9.pdf` → 2 folhas 2544×3504, dpi 300 (MediaBox 299,88, JFIF 300), JPEG extraídos byte a byte iguais aos `/Length` (1 967 544 / 1 494 788); no projeto real S0038 65 peças (1–65) e S0039 35 (66–100), escala 1,016 / 1,012, fundo ΔE 1,5 / 3,7, 0 avisos; repetição ignorada por sha256; invariantes OK.
+- **Fila:** na cópia, 2 trabalhos (lote 9 + PNG inválido): o 1.º concluído (100 peças, 143 s; lock tomado 4,8 s + 1,6 s nos commits e 78,8 s na consulta final), o 2.º falhado sem bloquear; um `POST /api/confirm` durante a segmentação respondeu 200 e os eventos ficaram ordenados no log.
+- **Testes:** 440 passed, 1 failed (pré-existente `test_gui_guardadas`, dados), 1 skipped; 30 testes novos.
+
+**Alterações de testes existentes (declaradas):** `tests/test_state.py` (2.ª importação ignorada; `relot` com 3 folhas distintas), `tests/test_gui_holes.py` (botões «ver»/«prever»), docstring de `tests/test_gui_buscar_buracos.py`.
+
+**Achado lateral corrigido:** `/api/fetch` escrevia `Infinity` (margem com d1 = 0) e o browser deixava a lista por carregar; inf/NaN → `null`.
+
+**Não testado [NT]:** PDF vetorial/JPX/Flate reais e `/Rotate`; espera > 80 s de uma confirmação durante a consulta final no real; retoma da fila depois de um reinício no real; Firefox/Safari/toque.

@@ -54,4 +54,9 @@ Formato da resposta final
 
 ## Resultado
 
-(preenchido no fim da ronda)
+- **Parte 0 [V]:** causa = `python.exe -` órfão de sessão anterior (100 % de um núcleo, 17 h), terminado por PID; servidor em repouso antes 0,18 / 0,60–0,75 / 1,07 % (0 / 1 / 3 separadores) → depois 0,10 / 0,34 / 0,29 % com SSE por espera (`REPOUSO.md`).
+- **Parte 1:** «por buraco» → «pelo encaixe» (valores guardados intactos); «Ver no tabuleiro» só localiza; «Pré-visualizar encaixe» desenha (`15376ff`).
+- **Parte 2:** `src/sheets.py` (PDF sem dependência), dpi pelo MediaBox validado pela corda das peças, aviso de fundo, idempotência por sha256, várias folhas por saco; lote 9 no projeto real: 65 + 35 peças, 0 avisos (`45d10e2`).
+- **Parte 3:** `src/import_queue.py` + trabalhador no servidor (sem polling), painel na gaveta, escritas esperam 90 s; testes de fila, concorrência, reinício simulado, Playwright e CPU em repouso (`32fc4dc`).
+- **Testes:** 440 passed, 1 failed (pré-existente), 1 skipped. Decisões do Tiago e pendentes em `docs/HANDOFF.md`.
+
