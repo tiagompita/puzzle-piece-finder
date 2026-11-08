@@ -688,3 +688,36 @@ body[data-pose] #board { cursor: default; }
 }
 .chip.encaixe-mau { background: rgba(255, 90, 82, .18); color: var(--red); border: 1px solid rgba(255, 90, 82, .5); }
 .chip.encaixe-ok { background: rgba(255, 255, 255, .06); color: var(--muted); border: 1px solid var(--line); font-weight: 500; }
+
+/* gaveta do fundo com dois separadores (queue.js, docs/gui-design.md §24): «Atividade» | «Fila de importação» */
+.act-tabs { display: flex; gap: 2px; min-width: 0; }
+.act-tab { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); background: var(--bg3); color: var(--muted); border-radius: 8px 8px 0 0;
+  font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; white-space: nowrap; }
+.act-tab[aria-selected="true"] { color: var(--text); background: var(--bg2); box-shadow: inset 0 -3px 0 var(--amber); }
+.act-tab-n:not(:empty) { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: var(--amber); color: var(--amber-ink); font-size: 11px; }
+#atividade[data-pane="atividade"] .fila-only { display: none; }
+#atividade[data-pane="fila"] .act-only { display: none; }
+.fila-pane { flex: 1; min-height: 0; overflow: auto; padding: 4px 12px 10px; }
+.fila-jobs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+.fila-job { border: 1px solid var(--line); border-radius: 10px; background: var(--bg3); padding: 6px 10px; min-width: 0; font-size: 13px; }
+.fila-job.a_correr { border-color: var(--amber); }
+.fila-job.falhado { border-color: rgba(255, 90, 82, .6); }
+.fila-l1 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.fila-l1 > span { min-width: 0; overflow-wrap: anywhere; }
+.q-acts { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.q-acts .btn.slim { min-height: 32px; }
+.q-estado { background: var(--bg2); border: 1px solid var(--line); }
+.q-estado.a_correr { background: rgba(255, 176, 0, .18); color: var(--amber); border-color: rgba(255, 176, 0, .5); }
+.q-estado.concluido { background: rgba(110, 200, 120, .2); color: #8fdc98; border-color: transparent; }
+.q-estado.falhado { background: rgba(255, 90, 82, .18); color: var(--red); border-color: rgba(255, 90, 82, .5); }
+.q-estado.cancelado { color: var(--muted); }
+.q-erro { color: #ffb4ae; overflow-wrap: anywhere; margin-top: 2px; }
+.q-aviso { color: var(--amber); overflow-wrap: anywhere; margin-top: 2px; white-space: pre-wrap; }
+.import-queue { margin-top: 14px; min-width: 0; }
+.import-queue h3 { font-size: 15px; margin: 0 0 6px; }
+.fila-jobs.compact .fila-job { padding: 4px 8px; }
+@media (max-width: 900px) {
+  .act-tab { padding: 0 8px; font-size: 12px; }
+  .q-acts { margin-left: 0; }
+  .q-acts .btn.slim { min-height: 40px; min-width: 40px; }
+}

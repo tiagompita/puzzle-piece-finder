@@ -436,7 +436,8 @@ async function act(body, btn) {
   const btns = btn ? $$("button", btn.closest(".actions") || btn.parentElement) : [];
   btns.forEach((b) => (b.disabled = true));
   const old = btn ? btn.textContent : null;
-  if (btn) btn.textContent = "a gravar…";
+  // during an import the write waits for the lock (up to 90 s, then 409): say so on the button
+  if (btn) btn.textContent = (typeof queueBusy === "function" && queueBusy()) ? "a aguardar a importação…" : "a gravar…";
   try {
     const r = await api("/api/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     for (const m of r.mensagens || []) toast(m);
@@ -1276,45 +1277,59 @@ function showSugPicker(items, l, c, cx, cy) {
   pick.style.top = Math.max(4, Math.min(cy - r.top, r.height - hh - 4)) + "px";
 }
 
-// ------------------------------------------------------------ importar
+// ------------------------------------------------------------ importar (fila: queue.js, docs/gui-design.md §24)
+function nextFreeLote() {
+  const used = [...((S.lots || []).map((l) => l.lote || 0)), ...fetchPieces().map((e) => e.lote || 0),
+    ...((typeof Q !== "undefined" ? Q.jobs : []).filter((j) => j.estado === "em_fila" || j.estado === "a_correr").map((j) => j.lote || 0))];
+  return Math.max(0, ...used) + 1;
+}
 function renderImportar() {
   const T = $("#tab-importar");
-  if (T.dataset.built) { renderJobLog(); return; }
+  if (T.dataset.built) { renderJobLog(); if (typeof queueRenderSummary === "function") queueRenderSummary(); return; }
   T.dataset.built = "1";
-  const maxLote = Math.max(0, ...((S.lots || []).map((l) => l.lote || 0)), ...fetchPieces().map((e) => e.lote || 0));
   const form = h("form", { class: "form", id: "import-form" },
-    h("label", {}, "Scan do saco (JPEG/PNG, 300 dpi, fundo verde)", h("input", { type: "file", name: "file", accept: "image/*", required: true })),
-    h("label", {}, "Número do saco (lote)", h("input", { type: "number", name: "lote", min: 1, step: 1, value: maxLote + 1, required: true })),
-    h("label", {}, "Resolução (dpi)", h("input", { type: "number", name: "dpi", min: 100, max: 1200, step: 1, value: 300 })),
-    h("div", { class: "actions" }, h("button", { class: "btn primary", type: "submit", id: "import-btn" }, "Importar e procurar")));
+    h("label", {}, "Scans do saco (JPEG/PNG/TIFF ou PDF; várias folhas = vários ficheiros ou páginas)",
+      h("input", { type: "file", name: "files", accept: ".pdf,application/pdf,image/*", multiple: true, required: true })),
+    h("label", {}, "Número do saco (lote)", h("input", { type: "number", name: "lote", min: 1, step: 1, value: nextFreeLote(), required: true })),
+    h("label", {}, "Resolução (dpi, opcional: o ficheiro diz; senão 300)", h("input", { type: "number", name: "dpi", min: 50, max: 2400, step: 1, placeholder: "automático" })),
+    h("div", { class: "actions" }, h("button", { class: "btn primary", type: "submit", id: "import-btn" }, "Pôr na fila")));
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const fd = new FormData(form);
+    if (!fd.get("dpi")) fd.delete("dpi");
     S.jobLog = []; S.lastLote = Number(fd.get("lote"));
     $("#import-btn").disabled = true;
     try {
       const r = await api("/api/ingest", { method: "POST", body: fd });
-      S.jobLog.push({ msg: `ficheiro gravado em ${r.ficheiro}` });
+      const msg = `trabalho ${r.job} na fila (${r.folhas} folha${r.folhas === 1 ? "" : "s"})`;
+      S.jobLog.push({ msg });
+      for (const a of r.avisos || []) S.jobLog.push({ msg: `aviso: ${a}`, etapa: "aviso" });
+      for (const e of r.erros || []) S.jobLog.push({ msg: `erro: ${e}`, etapa: "erro" });
+      toast(msg);
+      form.reset();
+      form.querySelector("input[name=lote]").value = nextFreeLote();
       renderJobLog();
-    } catch (e) { toast(e.message, true); $("#import-btn").disabled = false; }
+      if (typeof queueLoad === "function") queueLoad().catch(() => {});
+    } catch (e) { toast(e.message, true); }
+    finally { $("#import-btn").disabled = false; }
   });
-  T.append(h("h2", {}, "Importar um scan"),
-    h("p", { class: "summary" }, "Um scan = uma folha de um saco. Um saco pode ter várias folhas: usa o mesmo número; a numeração continua."),
+  T.append(h("h2", {}, "Importar scans"),
+    h("p", { class: "summary" }, "Um saco pode ter várias folhas: escolhe vários ficheiros ou um PDF com uma página por folha; a numeração continua. " +
+      "Os trabalhos entram numa fila e correm um de cada vez; podes continuar a confirmar peças enquanto correm."),
     form,
     h("ol", { class: "joblog", id: "joblog" }),
-    h("p", { class: "note" }, "O ficheiro fica em images/pieces/lotes/ dentro do repositório: junta-o ao git para o outro PC conseguir regenerar os recortes. " +
-      "Depois de segmentar, a lista «vai buscar» é recalculada para todas as peças soltas (alguns minutos)."));
+    h("div", { id: "import-queue", class: "import-queue" }),
+    h("p", { class: "note" }, "Os ficheiros ficam em images/pieces/lotes/ dentro do repositório (as páginas dos PDF como JPEG ao lado): junta-os ao git para o outro PC conseguir regenerar os recortes. " +
+      "Uma folha já importada (mesmo ficheiro) é ignorada. No fim de cada trabalho a lista «vai buscar» é recalculada para todas as peças soltas (alguns minutos)."));
   renderJobLog();
+  if (typeof queueRenderSummary === "function") queueRenderSummary();
 }
 function renderJobLog() {
   const ol = $("#joblog"); if (!ol) return;
-  ol.replaceChildren(...S.jobLog.map((j) => h("li", { class: j.etapa === "erro" ? "err" : (j.fim ? "done" : "") }, j.msg)));
+  ol.replaceChildren(...S.jobLog.slice(-40).map((j) => h("li", { class: j.etapa === "erro" || j.etapa === "erro_folha" ? "err" : (j.fim ? "done" : "") }, j.msg)));
   const last = S.jobLog[S.jobLog.length - 1];
-  if (last && last.fim) {
-    $("#import-btn").disabled = false;
-    if (last.etapa !== "erro") ol.append(h("li", { class: "done" }, h("button", { class: "linkish", type: "button", onclick: () => showTab("buscar") }, "abrir «Vai buscar»"), " · ",
-      h("button", { class: "linkish", type: "button", onclick: () => { showTab("lotes"); loadLots(); } }, `ver o saco ${S.lastLote ?? ""}`)));
-  }
+  if (last && last.fim && last.etapa !== "erro") ol.append(h("li", { class: "done" }, h("button", { class: "linkish", type: "button", onclick: () => showTab("buscar") }, "abrir «Vai buscar»"), " · ",
+    h("button", { class: "linkish", type: "button", onclick: () => { showTab("lotes"); loadLots(); } }, `ver o saco ${S.lastLote ?? ""}`)));
 }
 
 // ------------------------------------------------------------ suspeitas de orientação / recorte (topo de Reports)
@@ -1498,13 +1513,19 @@ function scheduleReload(what) {
   }, 350);
 }
 function setJob(job) {
+  // the import queue's labels already say what runs («a importar saco 9 (folha 1/2)», «na fila: saco 9»)
   const pill = $("#job-pill");
-  pill.hidden = !job;
-  pill.textContent = job ? `a trabalhar: ${job}` : "";
+  const r = (typeof Q !== "undefined" && Q.resumo) ? Q.resumo : null;
+  const nq = r ? r.n_em_fila : 0;
+  const what = job ? (/^(a importar|na fila)/.test(job) ? job : `a trabalhar: ${job}`) : "";
+  const txt = [nq && !(job || "").startsWith("na fila") ? `fila: ${nq}` : "", what].filter(Boolean).join(" · ");
+  pill.hidden = !txt;
+  pill.textContent = txt;
 }
 function connectEvents() {
   const es = new EventSource("/api/events");
-  es.addEventListener("hello", (e) => { const st = JSON.parse(e.data); setJob(st.job); });
+  es.addEventListener("hello", (e) => { const st = JSON.parse(e.data); if (typeof Q !== "undefined" && st.fila) Q.resumo = st.fila; setJob(st.job); });
+  es.addEventListener("queue_changed", (e) => { if (typeof queueOnChanged === "function") queueOnChanged(JSON.parse(e.data)); });
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) scheduleReload("board"); });
   es.addEventListener("fetch_changed", () => scheduleReload("fetch"));
   let suspTimer = null;
@@ -1526,7 +1547,6 @@ function connectEvents() {
   es.addEventListener("ingest_progress", (e) => {
     const d = JSON.parse(e.data);
     S.jobLog.push(d); renderJobLog();
-    setJob(d.fim ? null : `importar (${d.etapa})`);
     if (d.fim) toast(d.msg, d.etapa === "erro");
   });
   es.addEventListener("prepare_progress", (e) => {
@@ -1569,6 +1589,7 @@ async function boot() {
   initPointer();
   initPngMenu();
   if (typeof initActivity === "function") initActivity();
+  if (typeof initQueue === "function") initQueue();
   connectEvents();
   const st = await api("/api/status");
   S.status = st; setJob(st.job);

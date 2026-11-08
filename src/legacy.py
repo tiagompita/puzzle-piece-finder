@@ -1367,6 +1367,8 @@ def ingest_page(project, scan_path: str, kind: str, page, *, auto_anchor: bool =
 	r = ingest_scan(project, scan_path, None, dpi=profile.dpi, kind=kind, segment=lambda *a, **k: seg)
 	if "error" in r:
 		return r
+	if r.get("skipped"):                       # same file bytes already a scan of the project (idempotent ingest)
+		return {"error": r["motivo"]}
 	art = _project_art(project, art)
 	if prior is None:
 		prior = _project_prior(project)

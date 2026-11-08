@@ -787,12 +787,21 @@ class Project:
 
 	# ------------------------------------------------------------ operations
 	def add_scan(self, path: Optional[str], dpi: float = 300, lote: Optional[int] = None, kind: str = "soltas",
-				 meta: Optional[dict] = None) -> str:
-		"""Register a scan (``lote`` = numbered bag); returns the scan id."""
-		sid = self._new_id("S")
+				 meta: Optional[dict] = None, unique: bool = False) -> str:
+		"""Register a scan (``lote`` = numbered bag); returns the scan id.
+
+		``unique``: a file whose sha256 is already registered (:meth:`scan_by_sha256`) raises :class:`StateError`
+		and logs nothing (the idempotent import of :func:`src.ingest.commit_sheet`; the default keeps the old
+		behaviour for the legacy tools and the tests that add the same file twice)."""
 		rel, sha = path, None
 		if path and os.path.exists(path):
 			sha = file_sha256(path)
+			if unique:
+				old = self.scan_by_sha256(sha)
+				if old is not None:
+					raise StateError(f"folha já importada como {old} (lote {self.model.scans[old].get('lote')})")
+		sid = self._new_id("S")
+		if path and os.path.exists(path):
 			repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 			ap = os.path.abspath(path)
 			rel = os.path.relpath(ap, repo).replace("\\", "/") if ap.lower().startswith(repo.lower()) else ap
@@ -800,6 +809,15 @@ class Project:
 				"date": _now(), "meta": meta or {}}
 		self._emit("scan_added", scan=scan)
 		return sid
+
+	def scan_by_sha256(self, sha: Optional[str]) -> Optional[str]:
+		"""Id of the first registered scan whose file has this sha256 (None if none / ``sha`` empty)."""
+		if not sha:
+			return None
+		for sid, scan in sorted(self.model.scans.items()):
+			if scan.get("sha256") == sha:
+				return sid
+		return None
 
 	def add_piece(self, scan_id: str, piece_dict: dict) -> str:
 		"""Add a loose piece of ``scan_id``; returns the piece id.

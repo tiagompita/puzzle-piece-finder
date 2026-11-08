@@ -132,21 +132,29 @@
 
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="ced" hidden role="dialog" aria-modal="true" aria-label="Editor de contorno"></div>
-<section id="atividade" hidden aria-label="Atividade do servidor">
+<section id="atividade" hidden aria-label="Atividade do servidor e fila de importação" data-pane="atividade">
   <div class="act-head">
-    <strong>Atividade</strong>
-    <span class="small muted" id="act-count"></span>
-    <div id="act-filters" class="act-filters" aria-label="filtrar por tipo e nível"></div>
-    <span class="small muted act-file" id="act-file"></span>
-    <button type="button" class="btn slim" id="act-clear" title="limpa só a vista; o ficheiro e o servidor mantêm tudo">limpar vista</button>
-    <button type="button" class="btn slim" id="act-close" aria-label="Fechar o painel de atividade">Fechar</button>
+    <div class="act-tabs" role="tablist" aria-label="painéis da gaveta">
+      <button type="button" role="tab" class="act-tab" id="act-tab-atividade" data-act-tab="atividade" aria-selected="true" aria-controls="act-lines">Atividade</button>
+      <button type="button" role="tab" class="act-tab" id="act-tab-fila" data-act-tab="fila" aria-selected="false" aria-controls="fila-pane">Fila de importação <span class="act-tab-n" id="fila-n"></span></button>
+    </div>
+    <span class="small muted act-only" id="act-count"></span>
+    <div id="act-filters" class="act-filters act-only" aria-label="filtrar por tipo e nível"></div>
+    <span class="small muted act-file act-only" id="act-file"></span>
+    <span class="small muted fila-only" id="fila-resumo"></span>
+    <button type="button" class="btn slim act-only" id="act-clear" title="limpa só a vista; o ficheiro e o servidor mantêm tudo">limpar vista</button>
+    <button type="button" class="btn slim" id="act-close" aria-label="Fechar a gaveta">Fechar</button>
   </div>
-  <ol id="act-lines" class="act-lines"></ol>
+  <ol id="act-lines" class="act-lines act-only" role="tabpanel" aria-labelledby="act-tab-atividade"></ol>
+  <div id="fila-pane" class="fila-pane fila-only" role="tabpanel" aria-labelledby="act-tab-fila">
+    <ol id="fila-jobs" class="fila-jobs"></ol>
+  </div>
 </section>
 <script src="editor.js"></script>
 <script src="pose.js"></script>
 <script src="holes.js"></script>
 <script src="activity.js"></script>
+<script src="queue.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

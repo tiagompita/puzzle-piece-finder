@@ -468,7 +468,7 @@ def test_grid_order():
     assert grid_order([]) == []
 
 
-def test_ingest_synthetic(tmp_path):
+def test_ingest_synthetic(tmp_path, capsys):
     from src.ingest import main
     bg = np.full((1000, 1400, 3), (40, 160, 60), np.uint8)
     rects = [(940, 310, 220, 210, (210, 170, 30)), (300, 320, 220, 210, (200, 40, 40)),
@@ -491,10 +491,13 @@ def test_ingest_synthetic(tmp_path):
         assert len(p.mean_lab) == 3
     assert os.path.exists(pr.p("overlays", "S0001.jpg"))
     assert pr.check_invariants(disk=True) == []
-    # a second scan of the same bag continues the numbering
+    # the same file again is ignored (sha256 already a scan of the project): same 3 pieces, «já importada»
+    # (a second, different sheet of the bag continues the numbering: tests/test_ingest_multi.py)
+    capsys.readouterr()
     assert main([str(scan), "--lote", "7", "--project", str(proj)]) == 0
+    assert "já importada como S0001" in capsys.readouterr().out
     pr = Project.open(str(proj))
-    assert sorted(p.n_no_lote for p in pr.pieces.values()) == [1, 2, 3, 4, 5, 6]
+    assert sorted(p.n_no_lote for p in pr.pieces.values()) == [1, 2, 3] and len(pr.model.scans) == 1
 
 
 def test_photo_from_json_cli(tmp_path):
@@ -614,10 +617,12 @@ def test_relot_cli_rewrites_overlays(tmp_path):
     bg = np.full((1000, 1400, 3), (40, 160, 60), np.uint8)
     for x, y in ((300, 320), (620, 330)):
         bg[y:y + 210, x:x + 220] = (200, 40, 40)
-    scan = tmp_path / "scan.png"
-    Image.fromarray(bg).save(scan)
     proj, pp = str(tmp_path / "proj"), _profile_path(tmp_path)
-    for _ in range(3):
+    for k in range(3):
+        # ronda 8: a importação é idempotente por sha256, por isso cada folha tem de ter bytes diferentes (1 píxel)
+        bg[5, 5] = (40 + k, 160, 60)
+        scan = tmp_path / f"scan{k}.png"
+        Image.fromarray(bg).save(scan)
         assert imain([str(scan), "--lote", "1", "--project", proj, "--profile", pp]) == 0
     ov = os.path.join(proj, "overlays", "S0003.jpg")
     t0 = os.path.getmtime(ov)

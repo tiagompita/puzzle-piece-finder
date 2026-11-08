@@ -12,9 +12,18 @@ Design (docs/gui-design.md):
 
 * **Writes** go through :func:`src.confirm.confirm` (place / reject / position known /
   anchor / unanchor / discard, then the incremental re-query), :meth:`Project.unplace`
-  and :func:`src.ingest.ingest_scan` + :func:`src.query.run_query`, all under one lock
-  (``Gui.wlock``). The log stays the source of truth (``board == replay(log)``). A write
-  while a background job (import, preparation) runs answers 409.
+  and the import queue (:func:`src.ingest.commit_sheet` + :func:`src.query.run_query`), all under one lock
+  (``Gui.wlock``). The log stays the source of truth (``board == replay(log)``). A write waits up to
+  :data:`WRITE_WAIT_S` for the lock (an import holds it for the commit of one sheet, seconds, and for the one full
+  re-query of a job) and answers 409 only after that, or while an *exclusive* job (``Gui.job`` set by anything but
+  the import queue) runs.
+* **Import queue** (:mod:`src.import_queue`, ``<project>/import_queue.jsonl``): ``POST /api/ingest`` takes one or
+  more files (images, PDF = one sheet per page, :mod:`src.sheets`) for one bag and appends a job; the thread
+  ``fila-importacao`` runs the jobs in order, waiting on ``Gui._qcond`` (no polling): per sheet
+  :func:`src.ingest.segment_sheet` **outside** the lock (minutes), then :func:`src.ingest.commit_sheet` under it;
+  one full :func:`src.query.run_query` per job. A sheet already imported (same sha256) is ``ignorada``. A job left
+  running by a restart goes back to the head of the queue. ``GET /api/import_queue``,
+  ``POST /api/import_queue/{id}/cancelar | repetir | mover``; SSE ``queue_changed``.
 * **Reads** never take the write lock; a read that races a write (``dict changed size``)
   is retried. If ``log.jsonl`` changes behind the server's back (a CLI run), the project is
   re-opened on the next request.
@@ -37,8 +46,9 @@ Design (docs/gui-design.md):
   trimap -> :mod:`src.strokes` -> polygon, read-only, no lock; contract in
   docs/diagnostico/editor/TRACOS.md) and the save (``overrides.jsonl`` via
   :func:`src.overrides.append_override`, then :func:`src.render.rebuild_piece`, under the same lock).
-* **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``, ``piece_changed``,
-  ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``,
+* **Events** (SSE ``/api/events``, delivered on :meth:`Gui.emit` by waking one ``asyncio.Event`` per client: an idle
+  server does no work per client; a keep-alive comment every 15 s): ``board_changed``, ``fetch_changed``,
+  ``piece_changed``, ``ingest_progress``, ``queue_changed``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``,
   ``suspeitas_changed`` (summary of ``/api/suspeitas`` + ``n_em_reports``: after a board write, a report write
   or a false-alarm mark), ``holes_changed``, ``holes_progress`` (strips ``n/N`` of a cold hole ranking),
   ``atividade`` (one activity line, :mod:`src.activity`), ``ready``.
@@ -68,6 +78,7 @@ import asyncio
 import collections
 import datetime as _dt
 import json
+import math
 import logging
 import os
 import re
@@ -83,6 +94,7 @@ import numpy as np
 
 from src import activity
 from src import overrides as OV
+from src.import_queue import ImportQueue, QueueError
 from src import strokes as ST
 from src.query import fetch_group, mounted_neighbours
 from src.state import Project, StateError
@@ -106,6 +118,9 @@ REGION_LRU = 24
 PIECE_LRU = 600
 SECTION_LRU = 64
 EVENTS_KEEP = 500
+WRITE_WAIT_S = 90.0            # a write waits this long for the lock (an import commit / re-query) before 409
+SSE_KEEPALIVE_S = 15.0
+QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file keeps all)
 POSE_CONTOUR_PTS = 300         # GET /pose: points of each contour (cell-width units)
 POSE_DIRS = {"N": (-1, 0), "E": (0, 1), "S": (1, 0), "W": (0, -1)}
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
@@ -169,7 +184,7 @@ def cell_text(cell: dict) -> str:
 	return CELL_SOURCE_TXT.get((cell["estado"], cell.get("fonte")), CELL_TXT.get(cell["estado"], cell["estado"]))
 ORIGIN_TXT = {"gemeo": "gémea colocada", "borda": "borda", "par": "par de soltas",
 			  "posicao_conhecida": "posição conhecida", "seccao": "grupo sem lugar", "buraco": "molde do buraco"}
-_LOG_TIPO = {"servidor": "servidor", "preparar": "arranque", "importar": "servidor"}
+_LOG_TIPO = {"servidor": "servidor", "preparar": "arranque", "importar": "importar"}
 _LOG_TAG = re.compile(r"^\[(\w+)\]\s*")
 
 
@@ -274,6 +289,20 @@ def _jpeg(img: np.ndarray, q: int = JPEG_Q) -> bytes:
 	return buf.tobytes()
 
 
+def _finite(o):
+	"""Copy of ``o`` with non-finite floats (inf / NaN, also numpy scalars) replaced by None, recursively in dicts,
+	lists and tuples; everything else is returned as is (``_json_default`` handles the rest)."""
+	if isinstance(o, float):
+		return o if math.isfinite(o) else None
+	if isinstance(o, dict):
+		return {k: _finite(v) for k, v in o.items()}
+	if isinstance(o, (list, tuple)):
+		return [_finite(v) for v in o]
+	if isinstance(o, np.floating):
+		return float(o) if np.isfinite(o) else None
+	return o
+
+
 def _json_default(o):
 	if isinstance(o, np.floating):
 		return float(o)
@@ -300,11 +329,12 @@ class Gui:
 	and the ghosts) in a background thread. ``use_image``: image tie-break in the
 	re-queries (``--no-image`` turns it off). ``uploads``: folder where imported scans are
 	saved (default ``images/pieces/lotes/`` in the repo, so they can be committed and the
-	assets rebuilt on another PC).
+	assets rebuilt on another PC). ``queue``: run the import-queue worker thread (``False`` in
+	tests that do not import; :meth:`stop` ends it).
 	"""
 
 	def __init__(self, project_path: str, *, prepare: bool = True, use_image: bool = True,
-				 uploads: Optional[str] = None, log="activity", ring=None):
+				 uploads: Optional[str] = None, log="activity", ring=None, queue: bool = True):
 		self.path = os.path.abspath(project_path)
 		self.pr = Project.open(self.path)
 		self.use_image = use_image
@@ -340,8 +370,32 @@ class Gui:
 		self._art = None
 		self.ingest_segment = None    # tests: replacement for segment_scan
 		self.stale_info = None        # start-up check of the assets against the log (render.stale_assets)
+		self._sse_waiters = set()     # one asyncio.Event per connected SSE client (set by emit, from any thread)
+		self._loop = None             # the server's event loop (stored by the first /api/events)
+		self._job_queue = False       # True while ``job`` is the import queue's label (writes wait instead of 409)
+		self._qcond = threading.Condition()
+		self._qstop = False
+		self._qthread = None
+		self.iq = None
+		if queue:
+			self.iq = ImportQueue(os.path.join(self.path, "import_queue.jsonl"))
+			back = self.iq.recover()
+			if back:
+				activity.get("importar").warning(f"fila: {', '.join(back)} interrompido(s) pelo reinício; de volta à cabeça da fila")
+			with self._qcond:
+				self._queue_label_locked()
+			self._qthread = threading.Thread(target=self._queue_worker, name="fila-importacao", daemon=True)
+			self._qthread.start()
 		if prepare:
 			threading.Thread(target=self._prepare, name="preparar", daemon=True).start()
+
+	def stop(self, timeout: float = 5.0) -> None:
+		"""End the import-queue worker (after the sheet in progress) and wake the SSE clients."""
+		with self._qcond:
+			self._qstop = True
+			self._qcond.notify_all()
+		if self._qthread is not None and self._qthread is not threading.current_thread():
+			self._qthread.join(timeout)
 
 	# ------------------------------------------------------------ events
 	def emit(self, name: str, data=None) -> None:
@@ -349,6 +403,27 @@ class Gui:
 			self.seq += 1
 			self.events.append((self.seq, name, data if data is not None else {}))
 			self.cond.notify_all()
+			waiters, loop = list(self._sse_waiters), self._loop
+		if loop is None or not waiters:
+			return
+		for ev in waiters:                           # emit runs in worker threads: wake the clients in their loop
+			try:
+				loop.call_soon_threadsafe(ev.set)
+			except RuntimeError:                     # loop closed (server stopping)
+				return
+
+	def sse_register(self, ev, loop) -> None:
+		with self.cond:
+			self._loop = loop
+			self._sse_waiters.add(ev)
+
+	def sse_unregister(self, ev) -> None:
+		with self.cond:
+			self._sse_waiters.discard(ev)
+
+	def _exclusive(self) -> bool:
+		"""An exclusive background job holds the project (``job`` set by anything but the import queue): writes get 409."""
+		return bool(self.job) and not self._job_queue
 
 	def events_after(self, n: int) -> list:
 		with self.cond:
@@ -479,6 +554,8 @@ class Gui:
 		finally:
 			self.state = "pronto"
 			self.emit("ready", {"versao": self.version()})
+			with self._qcond:                      # the import queue waits for the start-up rule
+				self._qcond.notify_all()
 
 	# ------------------------------------------------------------ fetch list
 	def fetch(self) -> dict:
@@ -692,10 +769,10 @@ class Gui:
 
 	def resume_alta(self, body: dict) -> dict:
 		"""``POST /api/holes/alta/reativar`` ``{nota?}``: log ``holes_alta_resumed`` (the pause window restarts)."""
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
-			if self.job:
+			if self._exclusive():
 				raise Busy(self.job)
 			self.sync_locked()
 			nota = str((body or {}).get("nota") or "").strip()[:200]
@@ -858,10 +935,10 @@ class Gui:
 		from src.confirm import confirm
 		pid = body.get("piece") if isinstance(body, dict) else None
 		gemea = bool(body.get("gemea")) if isinstance(body, dict) else False
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
-			if self.job:
+			if self._exclusive():
 				raise Busy(self.job)
 			self.sync_locked()
 			pr = self.pr
@@ -1330,7 +1407,7 @@ class Gui:
 			cnt = None
 		return {"estado": self.state, "job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
 				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info,
-				"contador_alta": cnt, "atividade_seq": self.ring.seq}
+				"contador_alta": cnt, "atividade_seq": self.ring.seq, "fila": self.queue_summary()}
 
 	# ------------------------------------------------------------ writes
 	def _after_write(self, before_snap: list, placed: list) -> dict:
@@ -1394,10 +1471,10 @@ class Gui:
 		acao = str(body.get("acao") or "")
 		pid = body.get("piece")
 		cell = body.get("cell")
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
-			if self.job:
+			if self._exclusive():
 				raise Busy(self.job)
 			self.sync_locked()
 			pr = self.pr
@@ -1479,7 +1556,7 @@ class Gui:
 				return {"error": "célula inválida"}
 			if not self.pr.profile.in_grid(*cell):
 				return {"error": f"célula {cell} fora da grelha"}
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
 			self.sync_locked()
@@ -1514,7 +1591,7 @@ class Gui:
 		"""``POST /api/report/{rid}/edit``: append an edit event to an open report (``reports.jsonl`` stays
 		append-only); like :meth:`add_report` it changes no board / fetch cache and re-joins the suspects."""
 		from src import reports
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
 			self.sync_locked()
@@ -1532,7 +1609,7 @@ class Gui:
 		"""``POST /api/report/{rid}/estado``: one state event (close / reopen / delete / restore); like
 		:meth:`add_report` it changes no board / fetch cache and re-joins the suspects."""
 		from src import reports
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
 			self.sync_locked()
@@ -1558,10 +1635,10 @@ class Gui:
 			return {"error": f"grau inválido {grau!r} (um de {', '.join(consistency.GRAUS)})"}
 		if nota is not None and not isinstance(nota, str):
 			return {"error": "nota deve ser texto"}
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
-			if self.job:
+			if self._exclusive():
 				raise Busy(self.job)
 			self.sync_locked()
 			pr = self.pr
@@ -1589,10 +1666,10 @@ class Gui:
 		grau = body.get("grau")
 		if grau not in consistency.GRAUS:
 			return {"error": f"grau inválido {grau!r} (um de {', '.join(consistency.GRAUS)})"}
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
-			if self.job:
+			if self._exclusive():
 				raise Busy(self.job)
 			self.sync_locked()
 			if pid not in self.pr.pieces:
@@ -1759,10 +1836,10 @@ class Gui:
 		``piece_changed``."""
 		from src.confirm import _around
 		from src.query import run_query
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
-			if self.job:
+			if self._exclusive():
 				raise Busy(self.job)
 			self.sync_locked()
 			t0 = time.time()
@@ -2067,10 +2144,10 @@ class Gui:
 		nota = body.get("nota")
 		if nota is not None and not isinstance(nota, str):
 			return {"error": "nota deve ser texto"}
-		if not self.wlock.acquire(timeout=0.5):
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
-			if self.job:
+			if self._exclusive():
 				raise Busy(self.job)
 			self.sync_locked()
 			pr = self.pr
@@ -2161,59 +2238,239 @@ class Gui:
 			entries = run_query(pr, only_cells=around(pr, cell), only_pieces={pid}, use_image=self.use_image)
 		return {"messages": [f"{pid} retirada de {tuple(cell)}"], "invariants": bad, "entries": entries}
 
-	def start_ingest(self, path: str, lote: Optional[int], dpi: float) -> dict:
-		"""Background job: ingest the scan, then a full re-query; progress by SSE ``ingest_progress``."""
-		if not self.wlock.acquire(timeout=0.5):
-			raise Busy(self.job or "ocupado")
-		try:
-			if self.job:
-				raise Busy(self.job)
-			self.job = f"importar {os.path.basename(path)}"
-			self.job_log = []
-		finally:
-			self.wlock.release()
-		threading.Thread(target=self._ingest, args=(path, lote, dpi), name="importar", daemon=True).start()
-		return {"ok": True, "job": self.job}
+	# ------------------------------------------------------------ import queue (src.import_queue; docs/gui-design.md §24)
+	def queue_summary(self) -> Optional[dict]:
+		if self.iq is None:
+			return None
+		with self._qcond:
+			return self.iq.summary()
+
+	def queue_json(self) -> dict:
+		""" ``GET /api/import_queue``: ``{fila: snapshot (running, queued in order, the last finished), resumo}``."""
+		if self.iq is None:
+			return {"fila": [], "resumo": None, "ativa": False}
+		with self._qcond:
+			snap = self.iq.snapshot()
+			summ = self.iq.summary()
+		done = [j for j in snap if j["estado"] in ("concluido", "falhado", "cancelado")]
+		keep = {j["id"] for j in done[:QUEUE_DONE_KEEP]}
+		snap = [j for j in snap if j["estado"] not in ("concluido", "falhado", "cancelado") or j["id"] in keep]
+		return {"fila": snap, "resumo": summ, "ativa": True, "job": self.job}
+
+	def _emit_queue(self) -> None:
+		self.emit("queue_changed", self.queue_json())
+
+	def _queue_label_locked(self) -> None:
+		"""``job`` while nothing runs: «na fila: saco N» for the next queued job, or None (under ``_qcond``). A job set
+		by someone else (an exclusive one) is left alone."""
+		if self.job and not self._job_queue:
+			return
+		nxt = self.iq.next_job() if self.iq is not None else None
+		if nxt is None:
+			self.job = None
+			self._job_queue = False
+		else:
+			self._job_queue = True
+			self.job = f"na fila: saco {nxt['lote']}"
+
+	def _set_job_label(self, label: str) -> None:
+		with self._qcond:
+			self._job_queue = True                  # flag first: a reader never sees a queue label as exclusive
+			self.job = label
+
+	def enqueue(self, lote: int, ficheiros: list, sheets: list, dpi: Optional[float] = None) -> dict:
+		"""Append an import job (one bag, its sheets in order); the worker is woken. ``{ok, job, folhas, avisos, erros}``."""
+		if self.iq is None:
+			raise Busy("fila de importação desligada")
+		rel = [self._rel(f) for f in ficheiros]
+		folhas = [dict(sh.to_dict(), caminho=sh.caminho) for sh in sheets]
+		avisos = [f"{os.path.basename(sh.origem)}" + (f" p.{sh.pagina}" if sh.pagina else "") + f": {a}"
+				  for sh in sheets for a in sh.avisos]
+		erros = [sh.erro for sh in sheets if sh.erro]
+		with self._qcond:
+			jid = self.iq.add(int(lote), rel, folhas, dpi=dpi)
+			if not self.iq.running():
+				self._queue_label_locked()
+			self._qcond.notify_all()
+		activity.get("importar").info(f"{jid}: saco {lote} na fila ({len(sheets)} folha{'s' if len(sheets) != 1 else ''}"
+									  f"{'; ' + str(len(erros)) + ' com erro' if erros else ''})")
+		self._emit_queue()
+		return {"ok": True, "job": jid, "folhas": len(sheets), "avisos": avisos, "erros": erros}
+
+	def queue_action(self, jid: str, acao: str, body: Optional[dict] = None) -> dict:
+		""" ``POST /api/import_queue/{id}/cancelar | repetir | mover {posicao}``."""
+		if self.iq is None:
+			raise Busy("fila de importação desligada")
+		with self._qcond:
+			if jid not in self.iq.state["jobs"]:
+				raise FileNotFoundError(f"trabalho desconhecido {jid}")
+			try:
+				if acao == "cancelar":
+					self.iq.cancel(jid)
+				elif acao == "repetir":
+					self.iq.retry(jid)
+				elif acao == "mover":
+					self.iq.move(jid, int((body or {}).get("posicao", 0)))
+				else:
+					raise ValueError(f"ação desconhecida {acao!r}")
+			except QueueError as e:
+				return {"error": str(e)}
+			if not self.iq.running():
+				self._queue_label_locked()
+			self._qcond.notify_all()
+		activity.get("importar").info(f"{jid}: {acao}")
+		self._emit_queue()
+		return dict(self.queue_json(), ok=True)
+
+	def start_ingest(self, path: str, lote: Optional[int], dpi: Optional[float] = None) -> dict:
+		"""One file for bag ``lote`` -> :meth:`enqueue` (kept for callers of the single-scan API)."""
+		from src.sheets import expand_sources
+		sheets = expand_sources([path], out_dir=os.path.dirname(os.path.abspath(path)))
+		return self.enqueue(int(lote), [path], sheets, dpi)
+
+	def _rel(self, fp: Optional[str]) -> Optional[str]:
+		if not fp:
+			return fp
+		ap = os.path.abspath(fp)
+		return os.path.relpath(ap, REPO).replace("\\", "/") if ap.lower().startswith(REPO.lower()) else ap
 
 	def _jp(self, msg: str, **data) -> None:
 		self.log(f"[importar] {msg}")
 		self.job_log.append(msg)
 		self.emit("ingest_progress", dict(data, msg=msg))
 
-	def _ingest(self, path: str, lote: Optional[int], dpi: float) -> None:
-		from src.ingest import ingest_scan
-		from src.query import run_query
-		with self.wlock:
-			try:
-				self.sync_locked()
-				t0 = time.time()
-				self._jp(f"a segmentar {os.path.basename(path)} (lote {lote})", etapa="segmentar")
-				r = ingest_scan(self.pr, path, lote, dpi=dpi, segment=self.ingest_segment)
-				if "error" in r:
-					self._jp(f"ERRO: {r['error']}", etapa="erro", fim=True)
+	def _queue_worker(self) -> None:
+		"""Thread ``fila-importacao``: wait on ``_qcond`` (woken by add / retry / move / cancel / the end of the start-up
+		rule / :meth:`stop`; no polling), run the first queued job, repeat."""
+		while True:
+			with self._qcond:
+				while not self._qstop and (self.state != "pronto" or self.iq.next_job() is None):
+					self._qcond.wait()
+				if self._qstop:
 					return
-				self._known_stat = self._log_stat()
-				n = len(r["pieces"])
-				self._jp(f"{n} peças no lote {lote} ({r['scan_id']}; {len(r['rejected'])} fragmentos rejeitados, "
-						 f"{len(r['double'])} possivelmente duplas) em {time.time() - t0:.0f} s", etapa="segmentado",
-						 scan_id=r["scan_id"], n=n)
+				job = self.iq.next_job()
+				self.iq.start(job["id"])
+				self.job_log = []
+			self._set_job_label(f"a importar saco {job['lote']}")
+			self._emit_queue()
+			try:
+				self._run_job(job)
+			except Exception as e:  # noqa: BLE001 - the queue goes on
+				self.log(traceback.format_exc())
+				with self._qcond:
+					if self.iq.job(job["id"])["estado"] == "a_correr":
+						self.iq.fail(job["id"], f"{type(e).__name__}: {e}")
+				self._jp(f"ERRO: {type(e).__name__}: {e}", etapa="erro", fim=True, job=job["id"])
+			finally:
+				with self._qcond:
+					self.job = None                     # label first, then the flag (see _set_job_label)
+					self._job_queue = False
+					self._queue_label_locked()
+				self._emit_queue()
+
+	def _run_job(self, job: dict) -> None:
+		"""One import job: each sheet segmented outside the lock, committed under it; one full re-query at the end."""
+		from src.ingest import commit_sheet, prepare_sheet, sheet_outcome
+		from src.query import run_query
+		from src.sheets import Sheet
+		jid, lote = job["id"], job["lote"]
+		alog = activity.get("importar")
+		keys = set(Sheet.__dataclass_fields__)
+		sheets = [Sheet(**{k: v for k, v in f.items() if k in keys}) for f in job["folhas"]]
+		n = len(sheets)
+		t0 = time.time()
+		alog.info(f"{jid}: saco {lote}, {n} folha{'s' if n != 1 else ''}: a começar")
+		rows, lock_s = [], []
+		for k, sh in enumerate(sheets, 1):
+			self._set_job_label(f"a importar saco {lote} (folha {k}/{n})")
+			name = os.path.basename(sh.caminho or sh.origem or "?")
+			base = {"k": k, "n": n, "caminho": sh.caminho, "origem": sh.origem, "pagina": sh.pagina}
+			self._jp(f"folha {k}/{n}: a segmentar {name} (saco {lote})", etapa="segmentar", job=jid, k=k, n=n)
+			if sh.erro or not sh.caminho:
+				r = dict(base, estado="erro", error=sh.erro or "folha sem imagem", avisos=list(sh.avisos))
+			else:
+				ts = time.time()
+				res = prepare_sheet(sh, self.pr, dpi=job.get("dpi"), segment=self.ingest_segment)
+				seg_s = time.time() - ts
+				with self.wlock:
+					self.sync_locked()
+					tl = time.perf_counter()
+					cr = commit_sheet(self.pr, res, lote)
+					self._known_stat = self._log_stat()
+					held = time.perf_counter() - tl
+				r = sheet_outcome(base, res, cr)
+				if r["estado"] == "ok":
+					lock_s.append(held)
+					r["segundos_segmentar"], r["segundos_wlock"] = round(seg_s, 1), round(held, 2)
+			rows.append(r)
+			nums = sorted(r.get("numbers", {}).values())
+			with self._qcond:
+				self.iq.sheet(jid, k, n, caminho=self._rel(sh.caminho), estado=r["estado"], scan_id=r.get("scan_id"),
+							  n_pecas=len(r.get("pieces") or []), avisos=r.get("avisos"), erro=r.get("error") or r.get("motivo"),
+							  numeros=[nums[0], nums[-1]] if nums else None)
+			if r["estado"] == "ok":
+				msg = (f"folha {k}/{n}: {r['scan_id']}, {len(r['pieces'])} peças no saco {lote} (números {nums[0]}–{nums[-1]}; "
+					   f"{len(r['rejected'])} fragmentos rejeitados, {len(r['double'])} possivelmente duplas) em "
+					   f"{r['segundos_segmentar']:.0f} s; gravada em {r['segundos_wlock']:.1f} s") if nums else \
+					  f"folha {k}/{n}: {r['scan_id']} sem peças"
+				self._jp(msg, etapa="segmentado", job=jid, k=k, n=n, scan_id=r["scan_id"], n_pecas=len(r["pieces"]))
 				self.emit("board_changed", {"versao": self.version(), "celulas": []})
-				t1 = time.time()
-				self._jp("a procurar gémeas e pares para todas as peças soltas (lista completa; pode demorar alguns minutos)",
-						 etapa="consultar")
+			elif r["estado"] == "ignorada":
+				self._jp(f"folha {k}/{n}: ignorada, {r['motivo']}", etapa="ignorada", job=jid, k=k, n=n, scan_id=r["scan_id"])
+			else:
+				activity.get("importar").error(f"{jid} folha {k}/{n}: {r.get('error')}")
+				self._jp(f"folha {k}/{n}: ERRO: {r.get('error')}", etapa="erro_folha", job=jid, k=k, n=n)
+			for a in r.get("avisos") or []:
+				alog.warning(f"{jid} folha {k}/{n}: {a}")
+			self._emit_queue()
+		ok = [r for r in rows if r["estado"] == "ok"]
+		ign = [r for r in rows if r["estado"] == "ignorada"]
+		n_pecas = sum(len(r["pieces"]) for r in ok)
+		if not ok and not ign:
+			err = next((r.get("error") for r in rows if r.get("error")), "nenhuma folha legível")
+			with self._qcond:
+				self.iq.fail(jid, err)
+			alog.error(f"{jid}: falhou ({err})")
+			self._jp(f"ERRO: {err}", etapa="erro", fim=True, job=jid)
+			return
+		propostas, q_s = None, None
+		if ok or job.get("tentativas", 0) > 1:
+			self._set_job_label(f"a importar saco {lote} (consulta)")
+			self._jp("a procurar gémeas e pares para todas as peças soltas (lista completa; pode demorar alguns minutos)",
+					 etapa="consultar", job=jid)
+			with self.wlock:
+				self.sync_locked()
+				tq = time.perf_counter()
 				entries = run_query(self.pr, use_image=self.use_image)
 				self._known_stat = self._log_stat()
-				mine = [e for e in entries if e.get("piece") in set(r["pieces"])]
-				self._jp(f"lista atualizada em {time.time() - t1:.0f} s: {len(mine)} propostas para peças deste scan, "
-						 f"{len([e for e in entries if e.get('piece')])} no total", etapa="pronto", fim=True,
-						 scan_id=r["scan_id"], n=n, propostas=len(mine))
-				self.emit("fetch_changed", {})
-				self.emit("board_changed", {"versao": self.version(), "celulas": []})
-			except Exception as e:  # noqa: BLE001 - reported to the page
-				self.log(traceback.format_exc())
-				self._jp(f"ERRO: {type(e).__name__}: {e}", etapa="erro", fim=True)
-			finally:
-				self.job = None
+				q_s = time.perf_counter() - tq
+			mine_ids = {pid for r in ok for pid in r["pieces"]}
+			mine = [e for e in entries if e.get("piece") in mine_ids]
+			propostas = len(mine)
+			self._placements = None
+			self._alta = None
+			self._holes = None
+			self._suspeitas = None
+			self.emit("fetch_changed", {})
+			self.emit("board_changed", {"versao": self.version(), "celulas": []})
+			try:
+				self.holes_json(wait=False)
+			except Exception as e:  # noqa: BLE001
+				self.log(f"[servidor] buracos não relançados: {e}")
+			self._emit_suspeitas()
+		secs = time.time() - t0
+		with self._qcond:
+			self.iq.done(jid, n_folhas=n, n_pecas=n_pecas, propostas=propostas, segundos=secs,
+						 wlock_folhas_s=[round(x, 2) for x in lock_s], wlock_consulta_s=None if q_s is None else round(q_s, 1))
+		lk = (f"wlock: {', '.join(f'{x:.1f}' for x in lock_s)} s por folha" if lock_s else "wlock: sem gravações") + \
+			 (f", consulta {q_s:.1f} s" if q_s is not None else "")
+		alog.info(f"{jid}: saco {lote} concluído em {secs:.0f} s: {len(ok)} folhas importadas, {len(ign)} ignoradas, "
+				  f"{len(rows) - len(ok) - len(ign)} com erro; {n_pecas} peças; {lk}")
+		txt = (f"saco {lote}: {n_pecas} peças em {len(ok)} folha{'s' if len(ok) != 1 else ''}"
+			   + (f", {len(ign)} já importada{'s' if len(ign) != 1 else ''}" if ign else "")
+			   + (f"; {propostas} propostas para estas peças" if propostas is not None else "") + f" ({secs:.0f} s)")
+		self._jp(txt, etapa="pronto", fim=True, job=jid, n=n_pecas, propostas=propostas,
+				 scan_id=(ok[-1]["scan_id"] if ok else None))
 
 
 # ---------------------------------------------------------------- routes
@@ -2226,7 +2483,9 @@ def create_app(gui: Gui):
 
 	class JSON(JSONResponse):
 		def render(self, content) -> bytes:
-			return json.dumps(content, ensure_ascii=False, default=_json_default).encode("utf-8")
+			# inf / NaN are not JSON: ``json.dumps`` would write ``Infinity`` and the browser's JSON.parse would fail
+			# (seen with ``margin`` when d1 = 0, ronda 8); they become null
+			return json.dumps(_finite(content), ensure_ascii=False, default=_json_default).encode("utf-8")
 
 	app = FastAPI(title="Puzzle Piece Finder — mesa de montagem", docs_url="/api/docs", openapi_url="/api/openapi.json")
 	app.add_middleware(GZipMiddleware, minimum_size=2000)
@@ -2634,46 +2893,96 @@ def create_app(gui: Gui):
 		return img(data, "image/png" if fp.lower().endswith(".png") else "image/jpeg", cache=False)
 
 	@app.post("/api/ingest")
-	async def post_ingest(file: UploadFile = File(...), lote: int = Form(...), dpi: float = Form(300)):
+	async def post_ingest(lote: int = Form(...), dpi: Optional[str] = Form(None),
+						  files: Optional[list[UploadFile]] = File(None), file: Optional[UploadFile] = File(None)):
+		"""One or more files (images / PDF) of bag ``lote`` -> one job at the end of the import queue (never 409 for an
+		import in progress). ``dpi`` empty = the file decides (PDF MediaBox / JFIF), else 300."""
+		from src.sheets import expand_sources, safe_stem
 		ready()
-		if gui.job:
-			raise HTTPException(409, detail=f"ocupado: {gui.job}")
-		name = re.sub(r"[^A-Za-z0-9._-]+", "_", os.path.basename(file.filename or "scan.jpg"))
+		ups = [f for f in (files or []) if f is not None and (f.filename or "")] + ([file] if file is not None else [])
+		if not ups:
+			raise HTTPException(400, detail="nenhum ficheiro")
+		try:
+			d = float(str(dpi).replace(",", ".")) if dpi not in (None, "") else None
+		except ValueError:
+			raise HTTPException(400, detail=f"dpi inválido {dpi!r}")
+		if d is not None and not (50 <= d <= 2400):
+			raise HTTPException(400, detail=f"dpi fora do intervalo 50–2400: {d:g}")
 		os.makedirs(gui.uploads, exist_ok=True)
 		stamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-		dst = os.path.join(gui.uploads, f"lote{int(lote):02d}_{stamp}_{name}")
-		with open(dst, "wb") as f:
-			while True:
-				chunk = await file.read(1 << 20)
-				if not chunk:
-					break
-				f.write(chunk)
-		r = guard(lambda: gui.start_ingest(dst, int(lote), float(dpi)))
-		return JSON(dict(r, ficheiro=os.path.relpath(dst, REPO).replace("\\", "/") if dst.lower().startswith(REPO.lower()) else dst))
+		paths = []
+		for up in ups:
+			name = re.sub(r"[^A-Za-z0-9._-]+", "_", os.path.basename(up.filename or "scan.jpg"))
+			dst = os.path.join(gui.uploads, f"lote{int(lote):02d}_{stamp}_{name}")
+			k = 2
+			while os.path.exists(dst) or dst in paths:
+				dst = os.path.join(gui.uploads, f"lote{int(lote):02d}_{stamp}_{k}_{name}")
+				k += 1
+			with open(dst, "wb") as f:
+				while True:
+					chunk = await up.read(1 << 20)
+					if not chunk:
+						break
+					f.write(chunk)
+			paths.append(dst)
+		sheets = await asyncio.to_thread(lambda: [sh for p in paths
+												  for sh in expand_sources([p], out_dir=gui.uploads, prefix=safe_stem(p))])
+		r = guard(lambda: gui.enqueue(int(lote), paths, sheets, d))
+		rel = [gui._rel(p) for p in paths]
+		return JSON(dict(r, ficheiro=rel[0], ficheiros=rel,
+						 paginas=[{"origem": gui._rel(sh.origem), "pagina": sh.pagina, "caminho": gui._rel(sh.caminho),
+								   "dpi": sh.dpi, "dpi_fontes": sh.dpi_fontes, "erro": sh.erro} for sh in sheets]))
+
+	@app.get("/api/import_queue")
+	def get_import_queue():
+		return JSON(gui.queue_json())
+
+	@app.post("/api/import_queue/{jid}/{acao}")
+	async def post_import_queue(jid: str, acao: str, request: Request):
+		if acao not in ("cancelar", "repetir", "mover"):
+			raise HTTPException(404, detail=f"ação desconhecida {acao!r}")
+		body = {}
+		if acao == "mover":
+			try:
+				body = await request.json()
+			except ValueError:
+				raise HTTPException(400, detail="corpo JSON inválido")
+			if not isinstance(body, dict) or not isinstance(body.get("posicao"), int):
+				return JSON({"error": "falta posicao (inteiro, 0 = a seguir)"}, status_code=400)
+		r = guard(lambda: gui.queue_action(jid, acao, body))
+		if "error" in r:
+			return JSON(r, status_code=400)
+		return JSON(r)
 
 	@app.get("/api/events")
 	async def events(request: Request):
+		"""SSE: the events after ``Last-Event-ID`` / ``?from=`` (else from now), delivered when :meth:`Gui.emit` wakes this
+		client's ``asyncio.Event`` (no polling); ``: keep-alive`` after :data:`SSE_KEEPALIVE_S` without events."""
 		last = int(request.headers.get("last-event-id") or request.query_params.get("from") or gui.seq)
+		loop = asyncio.get_running_loop()
+		wake = asyncio.Event()
 
 		async def gen():
 			nonlocal last
-			yield f"retry: 2000\nevent: hello\ndata: {json.dumps(gui.status_json(), default=_json_default)}\n\n"
-			idle = 0.0
-			while True:
-				if await request.is_disconnected():
-					break
-				evs = gui.events_after(last)
-				for n, name, data in evs:
-					last = n
-					yield f"id: {n}\nevent: {name}\ndata: {json.dumps(data, ensure_ascii=False, default=_json_default)}\n\n"
-				if evs:
-					idle = 0.0
-				else:
-					idle += 0.4
-					if idle >= 15:
-						idle = 0.0
+			gui.sse_register(wake, loop)
+			try:
+				yield f"retry: 2000\nevent: hello\ndata: {json.dumps(gui.status_json(), default=_json_default)}\n\n"
+				while True:
+					for n, name, data in gui.events_after(last):
+						last = n
+						yield f"id: {n}\nevent: {name}\ndata: {json.dumps(data, ensure_ascii=False, default=_json_default)}\n\n"
+					try:
+						await asyncio.wait_for(wake.wait(), timeout=SSE_KEEPALIVE_S)
+					except asyncio.TimeoutError:
 						yield ": keep-alive\n\n"
-				await asyncio.sleep(0.4)
+						if await request.is_disconnected():
+							break
+						continue
+					wake.clear()                     # cleared before reading: an emit after this wakes the next wait
+					if await request.is_disconnected():
+						break
+			finally:
+				gui.sse_unregister(wake)
 
 		return StreamingResponse(gen(), media_type="text/event-stream",
 								 headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})

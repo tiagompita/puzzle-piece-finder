@@ -1,6 +1,7 @@
 /* Painel «Atividade» (docs/gui-design.md §23): as últimas linhas do registo do servidor (src/activity.py) em tempo real
  * (SSE `atividade`), com filtro por tipo e por nível e o carimbo de tempo. Não é uma aba: é uma gaveta fixa no fundo do
- * ecrã, aberta por um botão na barra de ferramentas; fechada não ocupa espaço (display: none). Só leitura.
+ * ecrã, aberta por um botão na barra de ferramentas; fechada não ocupa espaço (display: none). Só leitura. A gaveta tem um
+ * segundo separador, «Fila de importação» (queue.js).
  * Usa globais de app.js ($, $$, h, api, lsGet, lsSet).
  */
 "use strict";
@@ -79,6 +80,7 @@ function actSetOpen(on) {
   for (const btn of $$("[data-act-toggle]")) { btn.setAttribute("aria-pressed", A.open ? "true" : "false"); if (A.open) btn.classList.remove("warn", "err"); }
   lsSet("atividade-open", A.open ? "1" : "0");
   if (A.open) actLoad().catch((e) => { const ol = $("#act-lines"); if (ol) ol.replaceChildren(h("li", { class: "act-line erro" }, e.message)); });
+  if (A.open && typeof queueOnOpen === "function") queueOnOpen();
 }
 function initActivity() {
   const btns = $$("[data-act-toggle]");

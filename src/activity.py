@@ -32,7 +32,7 @@ __all__ = [
 ]
 
 LOGGER = "ppf"
-TIPOS = ("servidor", "arranque", "consulta", "cache", "ativos", "progresso", "evento", "pedido", "buracos", "erro")
+TIPOS = ("servidor", "arranque", "consulta", "cache", "ativos", "progresso", "evento", "pedido", "buracos", "importar", "erro")
 NIVEIS = ("info", "aviso", "erro")
 _NIVEL = {logging.DEBUG: "info", logging.INFO: "info", logging.WARNING: "aviso", logging.ERROR: "erro", logging.CRITICAL: "erro"}
 SLOW_REQUEST_S = 1.0          # a request slower than this gets a line (tipo ``pedido``, nível info)
