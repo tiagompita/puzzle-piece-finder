@@ -70,7 +70,24 @@ Montanha/vale saem bem com 1 rotação porque as páginas do legado estão alinh
 
 ## 3. Correções (Parte 3)
 
-(preenchido depois da implementação e da medição do efeito)
+### 3.1 Validação cruzada gémea/par × encaixe (`query._cross_check`) — feita
+
+Para toda a entrada final de origem `gemeo`/`borda`/`par` com célula e ≥ 1 vizinha montada: `fit.side_costs` das vizinhas contra os lados da candidata na **pose prevista** (cadeia de pose; sem pose → melhor das 4 rotações, declarado `min4`); lado impossível (T↔T, B↔B, F fora da borda, corda acima do corte) ou custo conjunto `J` > `calibration.buraco.t_abs` (2,666) → `encaixe.estado = incompativel`, `aceite` → `ambigua` com `decision_antes_encaixe`, razão legível; `ok` e `nao_testado` registados do mesmo modo. Nunca apaga a proposta; recalculado em todas as execuções (completa e incremental), porque as vizinhas mudam.
+
+**Efeito medido à data de cada proposta (`r7_efeito.py`, `r7_efeito.json`; critério §4.1):**
+
+| conjunto | n | `encaixe` | perdem `aceite` | J máx. |
+|---|---|---|---|---|
+| colocações por gémea aceites pelo Tiago | 44 (33 listadas `aceite`, 10 `ambigua`, 1 sem entrada) | **ok 42**, `nao_testado` 2 (sem vizinha montada à data: P0147, P1132) | **0** (critério ≤ 2 ✓) | 2,08 |
+| gémeas rejeitadas | 2 | **incompatível 2/2** (P1014: «com a vizinha (42,62) P0071: custo 9,14 > T_abs 2,67 (ΔE da tira 85,9)»; P1238: «com a vizinha (35,1) P0638: custo 4,56 > 2,67 (ΔE da tira 40,6)») | P1238 `aceite` → `ambigua`; P1014 já era `ambigua` | — |
+
+[V] no critério fixado (0/44 e 2/2), com a ressalva de que n = 2 negativos só explica, não mede precisão. Pares: células X com X ou twin(X) ocupadas excluídas antes do top-3 (`pair_locate(allowed=…)`), 4 rotações + forma (§2.1); as entradas de T0003/T0004 à data deixariam de propor (4,63)/(4,62) (twin ocupada) — verificável por replay; os 3 pares vivos mantêm as células (todas livres dos dois lados).
+
+### 3.2 Imagem por zona — parcial
+
+Feito: zonas no perfil (`image_zones[z] = {rows, dE_p90, rotulo}`, `PuzzleProfile.zone_of`/`zone_label`, `fit.zone_of(cell, profile)`), zona verdadeira passada a `find_twin` e mostrada na razão; **zona sem `dE_p90` calibrado → «a imagem não decide» → nunca `aceite`** (montanha, vale e relva ficam `null` até haver GT). O 50 do céu mantém-se. **Não feito (critério de efeito falhou):** os p90 por zona medidos (céu 10,6, relva 16,1; montanha/vale n < 20) despromoveriam 6 das 34 aceites reproduzidas (todas certas) → fica como medição e decisão do Tiago.
+
+### 3.3 Limite de forma — não se faz (H2 [F]).
 
 ## 4. Velocidade (Parte 4; `r7_tempo.py`, consulta completa na cópia, estado reposto antes de cada variante, 1 corrida cada)
 

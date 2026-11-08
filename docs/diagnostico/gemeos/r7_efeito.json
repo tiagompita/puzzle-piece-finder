@@ -1,0 +1,909 @@
+{
+ "n_aceites": 44,
+ "n_aceites_listadas_aceite": 33,
+ "perderam_aceite": [],
+ "encaixe_aceites": {
+  "nao_testado": 2,
+  "ok": 42
+ },
+ "J_max_aceites": 2.0762051671066843,
+ "rejeitadas": [
+  {
+   "piece": "P1014",
+   "listed": "ambigua",
+   "depois": "ambigua",
+   "encaixe": "incompativel",
+   "J": 9.136527401197508,
+   "razao": "encaixe incompatível com a vizinha (42,62) P0071: custo 9,14 > T_abs 2,67 (ΔE da tira 85,9) (pose prevista)"
+  },
+  {
+   "piece": "P1238",
+   "listed": "aceite",
+   "depois": "ambigua",
+   "encaixe": "incompativel",
+   "J": 4.5638513695262715,
+   "razao": "encaixe incompatível com a vizinha (35,1) P0638: custo 4,56 > T_abs 2,67 (ΔE da tira 40,6) (pose prevista)"
+  }
+ ],
+ "criterio_4_1": {
+  "aceites_perdidas_max_2": true,
+  "rejeitadas_incompativeis": true
+ },
+ "segundos": 50.4,
+ "rows": [
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0147",
+   "cell": [
+    2,
+    61
+   ],
+   "zona": "céu",
+   "listed": null,
+   "decision_depois": null,
+   "perdeu_aceite": false,
+   "encaixe": "nao_testado",
+   "pose": null,
+   "J": null,
+   "m": null,
+   "motivo": "sem vizinha montada",
+   "razao": null,
+   "n_vizinhas": 0
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0100",
+   "cell": [
+    3,
+    37
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9870136392074836,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,99 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0098",
+   "cell": [
+    3,
+    36
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.133857132791547,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,13 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0120",
+   "cell": [
+    2,
+    28
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.6664926555738354,
+   "m": 2,
+   "motivo": null,
+   "razao": "encaixe com 2 vizinhas: custo 0,67 <= 2,67 (pose prevista)",
+   "n_vizinhas": 2
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0094",
+   "cell": [
+    3,
+    29
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.34553955771556,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,35 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0143",
+   "cell": [
+    3,
+    35
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.2541726879182022,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 1,25 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0126",
+   "cell": [
+    4,
+    40
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9323143204338433,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,93 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0106",
+   "cell": [
+    3,
+    45
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.980508095990873,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,98 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0119",
+   "cell": [
+    2,
+    48
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.0025864090796897,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,00 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0129",
+   "cell": [
+    2,
+    49
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.583865693856457,
+   "m": 2,
+   "motivo": null,
+   "razao": "encaixe com 2 vizinhas: custo 1,58 <= 2,67 (pose prevista)",
+   "n_vizinhas": 2
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0131",
+   "cell": [
+    3,
+    48
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9839869293057879,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,98 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0157",
+   "cell": [
+    2,
+    47
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9876853574041943,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 0,99 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0169",
+   "cell": [
+    2,
+    50
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9989025833198754,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 1,00 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0144",
+   "cell": [
+    2,
+    56
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9532868732113471,
+   "m": 2,
+   "motivo": null,
+   "razao": "encaixe com 2 vizinhas: custo 0,95 <= 2,67 (pose prevista)",
+   "n_vizinhas": 2
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0162",
+   "cell": [
+    3,
+    52
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.8144549203101169,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,81 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0133",
+   "cell": [
+    3,
+    28
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.1507961190175218,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 1,15 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0133",
+   "cell": [
+    3,
+    28
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.1507961190175218,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 1,15 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0163",
+   "cell": [
+    4,
+    28
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9784214693351074,
+   "m": 2,
+   "motivo": null,
+   "razao": "encaixe com 2 vizinhas: custo 0,98 <= 2,67 (pose prevista)",
+   "n_vizinhas": 2
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0923",
+   "cell": [
+    5,
+    63
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.2544397260362896,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,25 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0999",
+   "cell": [
+    4,
+    35
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.424663880776412,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,42 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1064",
+   "cell": [
+    2,
+    63
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.1119906450186599,
+   "m": 2,
+   "motivo": null,
+   "razao": "encaixe com 2 vizinhas: custo 1,11 <= 2,67 (pose prevista)",
+   "n_vizinhas": 2
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1044",
+   "cell": [
+    3,
+    44
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9960349233308841,
+   "m": 2,
+   "motivo": null,
+   "razao": "encaixe com 2 vizinhas: custo 1,00 <= 2,67 (pose prevista)",
+   "n_vizinhas": 2
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1082",
+   "cell": [
+    4,
+    42
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.1007404808766597,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,10 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1069",
+   "cell": [
+    2,
+    36
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.10186273646283,
+   "m": 4,
+   "motivo": null,
+   "razao": "encaixe com 4 vizinhas: custo 1,10 <= 2,67 (pose prevista)",
+   "n_vizinhas": 4
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1181",
+   "cell": [
+    4,
+    63
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.055985676181053,
+   "m": 2,
+   "motivo": null,
+   "razao": "encaixe com 2 vizinhas: custo 1,06 <= 2,67 (pose prevista)",
+   "n_vizinhas": 2
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1114",
+   "cell": [
+    4,
+    62
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.2681269623647364,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,27 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1235",
+   "cell": [
+    4,
+    41
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.0811302077599756,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 1,08 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1217",
+   "cell": [
+    4,
+    31
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.0310290767924162,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,03 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1192",
+   "cell": [
+    4,
+    30
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.0539846535070563,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 1,05 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1230",
+   "cell": [
+    3,
+    63
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.0985481762228382,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 1,10 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1245",
+   "cell": [
+    3,
+    57
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 2.0762051671066843,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 2,08 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1203",
+   "cell": [
+    4,
+    57
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.2978215140360874,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,30 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0105",
+   "cell": [
+    4,
+    43
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9534307552700738,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,95 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0165",
+   "cell": [
+    3,
+    54
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.2578009250646467,
+   "m": 2,
+   "motivo": null,
+   "razao": "encaixe com 2 vizinhas: custo 1,26 <= 2,67 (pose prevista)",
+   "n_vizinhas": 2
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0176",
+   "cell": [
+    4,
+    53
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.0971684981365661,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,10 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0935",
+   "cell": [
+    3,
+    55
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.3137730724574623,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,31 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0189",
+   "cell": [
+    4,
+    55
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9180080610348923,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,92 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1025",
+   "cell": [
+    4,
+    56
+   ],
+   "zona": "céu",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.0185805090962252,
+   "m": 3,
+   "motivo": null,
+   "razao": "encaixe com 3 vizinhas: custo 1,02 <= 2,67 (pose prevista)",
+   "n_vizinhas": 3
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1068",
+   "cell": [
+    4,
+    47
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9852279689117803,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,99 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1165",
+   "cell": [
+    3,
+    58
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.9915441353444748,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,99 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P0909",
+   "cell": [
+    3,
+    59
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.0761617799029053,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,08 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1272",
+   "cell": [
+    3,
+    60
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 1.2295227772358204,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 1,23 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1065",
+   "cell": [
+    4,
+    60
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "ok",
+   "pose": "prevista",
+   "J": 0.7773233750867623,
+   "m": 1,
+   "motivo": null,
+   "razao": "encaixe com 1 vizinha: custo 0,78 <= 2,67 (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "aceite_colocada",
+   "piece": "P1132",
+   "cell": [
+    5,
+    61
+   ],
+   "zona": "céu",
+   "listed": "aceite",
+   "decision_depois": "aceite",
+   "perdeu_aceite": false,
+   "encaixe": "nao_testado",
+   "pose": null,
+   "J": null,
+   "m": null,
+   "motivo": "vizinhas montadas sem forma ou pose no índice",
+   "razao": null,
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "rejeitada",
+   "piece": "P1014",
+   "cell": [
+    41,
+    62
+   ],
+   "zona": "relva",
+   "listed": "ambigua",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": false,
+   "encaixe": "incompativel",
+   "pose": "prevista",
+   "J": 9.136527401197508,
+   "m": 1,
+   "motivo": "custo 9,14 > T_abs 2,67",
+   "razao": "encaixe incompatível com a vizinha (42,62) P0071: custo 9,14 > T_abs 2,67 (ΔE da tira 85,9) (pose prevista)",
+   "n_vizinhas": 1
+  },
+  {
+   "tipo": "rejeitada",
+   "piece": "P1238",
+   "cell": [
+    35,
+    2
+   ],
+   "zona": "vale/aldeia",
+   "listed": "aceite",
+   "decision_depois": "ambigua",
+   "perdeu_aceite": true,
+   "encaixe": "incompativel",
+   "pose": "prevista",
+   "J": 4.5638513695262715,
+   "m": 1,
+   "motivo": "custo 4,56 > T_abs 2,67",
+   "razao": "encaixe incompatível com a vizinha (35,1) P0638: custo 4,56 > T_abs 2,67 (ΔE da tira 40,6) (pose prevista)",
+   "n_vizinhas": 1
+  }
+ ]
+}
