@@ -1,0 +1,74 @@
+{
+ "t": "2026-11-08T21:02:22",
+ "tag": "antes_b",
+ "project": "C:\\Users\\Tiago\\AppData\\Local\\Temp\\claude\\5927c0d9acbb3c52\\8c17e4f0-5407-448e-88e6-9b678e283bbd\\scratchpad\\alpes_r8",
+ "pid": 17380,
+ "janela_s": 60,
+ "espera_s": 240,
+ "cenarios": {
+  "b": {
+   "wall_s": 60.0,
+   "cpu_s": 0.359,
+   "pct_core": 0.6,
+   "n_threads": 41,
+   "top_threads": [
+    [
+     "15692",
+     0.52
+    ],
+    [
+     "2960",
+     0.08
+    ],
+    [
+     "5880",
+     0.0
+    ],
+    [
+     "5952",
+     0.0
+    ]
+   ],
+   "pids": [
+    17380,
+    16184
+   ],
+   "cenario": "b",
+   "paginas": 1,
+   "atividade_aberta": false,
+   "eventsource": true
+  },
+  "c": {
+   "wall_s": 60.1,
+   "cpu_s": 0.281,
+   "pct_core": 0.47,
+   "n_threads": 42,
+   "top_threads": [
+    [
+     "15692",
+     0.42
+    ],
+    [
+     "2960",
+     0.05
+    ],
+    [
+     "5880",
+     0.0
+    ],
+    [
+     "5952",
+     0.0
+    ]
+   ],
+   "pids": [
+    17380,
+    16184
+   ],
+   "cenario": "c",
+   "paginas": 1,
+   "atividade_aberta": true,
+   "eventsource": true
+  }
+ }
+}
