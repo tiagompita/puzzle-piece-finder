@@ -185,9 +185,12 @@
    "index_in_scan": 4,
    "lote": 1,
    "n_no_lote": 40,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    28
+   ],
+   "theta_deg": -136.07,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -217,7 +220,23 @@
     59.42,
     -10.07,
     -10.48
-   ]
+   ],
+   "pose_manual": {
+    "cell": [
+     3,
+     28
+    ],
+    "theta_deg": -140.3,
+    "dx_mm": 0.64,
+    "dy_mm": 0.549,
+    "pivot_mm": [
+     30.844605698451176,
+     82.60363155461447
+    ],
+    "autor": "manual",
+    "t": "2026-11-08T02:21:23",
+    "nota": ""
+   }
   },
   {
    "id": "P0134",
@@ -265,9 +284,12 @@
    "index_in_scan": 8,
    "lote": 1,
    "n_no_lote": 42,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    3,
+    46
+   ],
+   "theta_deg": -51.63900414784865,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -297,7 +319,23 @@
     46.27,
     -8.36,
     3.15
-   ]
+   ],
+   "pose_manual": {
+    "cell": [
+     3,
+     46
+    ],
+    "theta_deg": -51.63499999999999,
+    "dx_mm": 0.091,
+    "dy_mm": 0.823,
+    "pivot_mm": [
+     102.44979982173372,
+     94.4990211951717
+    ],
+    "autor": "manual",
+    "t": "2026-11-08T02:31:29",
+    "nota": ""
+   }
   },
   {
    "id": "P0136",
@@ -345,9 +383,12 @@
    "index_in_scan": 7,
    "lote": 1,
    "n_no_lote": 44,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    29
+   ],
+   "theta_deg": 17.691578428693788,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -425,9 +466,12 @@
    "index_in_scan": 10,
    "lote": 1,
    "n_no_lote": 46,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    7,
+    7
+   ],
+   "theta_deg": 12.143196262461117,
    "seccao_id": null,
    "same_as": null,
    "flags": {

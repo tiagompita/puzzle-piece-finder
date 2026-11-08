@@ -606,9 +606,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0177",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -938,9 +938,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0133",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1046,9 +1046,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0135",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1324,9 +1324,15 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0163",
+    "fonte": "log",
+    "foto_id": null
+   },
+   {
+    "estado": "colocada",
+    "peca_id": "P0137",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1372,27 +1378,21 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0104",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0095",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
-    "foto_id": null
-   },
-   {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0122",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1698,9 +1698,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0179",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -2054,9 +2054,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0123",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -2356,9 +2356,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0139",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -5008,9 +5008,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0125",
+    "fonte": "log",
     "foto_id": null
    },
    {
