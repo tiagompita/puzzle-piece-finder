@@ -489,6 +489,17 @@ function miniMap(cell) {
 }
 const DEC_TXT = { aceite: "aceite", ambigua: "ambígua", colocavel: "colocável", candidata: "candidata", proposto: "par proposto",
   confirmado: "confirmado", por_ancorar: "sem lugar" };
+// R7 §4.1: the proposal checked against the mounted neighbours (hole mould, ``e.encaixe`` from src/query.py _cross_check)
+function encaixeChip(e) {
+  const enc = e && e.encaixe;
+  if (!enc) return null;
+  const why = ((e.reasons || []).find((t) => String(t).startsWith("encaixe")) || enc.motivo || "");
+  if (enc.estado === "incompativel")
+    return [" ", h("span", { class: "chip encaixe-mau", "data-chip": "encaixe", title: why }, "encaixe incompatível")];
+  if (enc.estado === "ok")
+    return [" ", h("span", { class: "chip encaixe-ok", "data-chip": "encaixe", title: why }, `encaixe ok (${enc.m ?? "?"} viz.)`)];
+  return null;
+}
 function proposalCard(e, opts = {}) {
   // ``opts.hole``: the same piece / cell is also an ``alta`` hole suggestion (M11_CRITERIOS §8): one card, two chips,
   // and the actions record both the twin outcome and the hole decision (POST /api/holes/.../{confirmar|rejeitar} gemea:true)
@@ -499,7 +510,7 @@ function proposalCard(e, opts = {}) {
     h("div", { class: "who" }, e.lote !== null && e.lote !== undefined ? ["Saco ", h("span", { class: "n" }, e.lote), " · nº ",
       h("span", { class: "n" }, e.n_no_lote)] : [`${e.piece}`]),
     h("div", { class: "where" }, "→ célula ", h("b", {}, cellTxt(e.cell)), " ", h("span", { class: `tag ${e.decision}` }, DEC_TXT[e.decision] || e.decision),
-      hole ? [" ", h("span", { class: "chip ok", "data-chip": "gemea", title: "proposta pela gémea colocada" }, "gémea"), " ", holeSugChip(hole)] : null),
+      hole ? [" ", h("span", { class: "chip ok", "data-chip": "gemea", title: "proposta pela gémea colocada" }, "gémea"), " ", holeSugChip(hole)] : null, encaixeChip(e)),
     h("div", { class: "small muted" }, `${e.origem_txt || e.origin}` + (e.twin_id ? ` ${e.twin_id} em ${cellTxt(e.twin_cell)}` : "") +
       ` · ${e.piece}` + (e.pose_known ? ` · rodar ${fmt(e.theta_deg, 0)}°` : "")),
     h("ul", { class: "reasons" }, (e.razoes_txt || []).map((t) => h("li", {}, t))),

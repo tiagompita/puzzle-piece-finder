@@ -194,10 +194,17 @@ def wilson(k: int, n: int, z: float = 1.96):
 	return (max(0.0, c - h), min(1.0, c + h))
 
 
-def zone_of(cell) -> str:
-	"""Fixed row band of a cell (only to slice reports; GT.md): céu / montanha-floresta / vale-aldeia / relva."""
+def zone_of(cell, profile=None) -> str:
+	"""Row band of a cell (to slice reports; GT.md): céu / montanha-floresta / vale-aldeia / relva.
+
+	With a ``profile`` whose ``image_zones`` have ``rows``, the zone of the profile (its ``rotulo``;
+	``'?'`` for a row outside every zone); otherwise the fixed :data:`ZONES` (same labels for the Alpes)."""
 	if cell is None:
 		return "sem posição"
+	if profile is not None and getattr(profile, "has_zone_rows", None) and profile.has_zone_rows():
+		l, c = int(cell[0]), int(cell[1])
+		z = profile.zone_of(l, c) if profile.in_grid(l, c) else None
+		return profile.zone_label(z) if z is not None else "?"
 	for name, a, b in ZONES:
 		if a <= int(cell[0]) <= b:
 			return name
@@ -722,7 +729,7 @@ def hole_queries(project, *, cells=None, min_neighbours: int = 1, cache: Optiona
 			sides.append(HoleSide(piece_id=pid, direction=d, side=sds[i], f_adj=bool(fa[i]), strip=cache.strip(pid)[i],
 								  scan_id=project.piece(pid).scan_id))
 		if len(sides) >= min_neighbours:
-			out.append(HoleQuery(cell=lc, sides=sides, zone=zone_of(lc), f_required=tuple(sorted(prof.flat_directions(*lc)))))
+			out.append(HoleQuery(cell=lc, sides=sides, zone=zone_of(lc, prof), f_required=tuple(sorted(prof.flat_directions(*lc)))))
 	return out
 
 
@@ -881,6 +888,7 @@ def report(project) -> dict:
 	with ``rank``), by zone, number of neighbours and confidence; rejections by confidence; whether the
 	threshold of RESULTADOS.md §15.6 (n >= 60, >= 40 with >= 2 neighbours, cases outside the sky) is met."""
 	evs = _hole_events(project)
+	prof = project.profile
 	conf = [e for e in evs if e["action"] == "hole_confirmed" and e.get("rank") is not None]
 	rej = [e for e in evs if e["action"] == "hole_rejected"]
 
@@ -892,11 +900,11 @@ def report(project) -> dict:
 
 	by = {"zona": collections.defaultdict(list), "vizinhas": collections.defaultdict(list), "confianca": collections.defaultdict(list)}
 	for e in conf:
-		by["zona"][zone_of(e.get("cell"))].append(e)
+		by["zona"][zone_of(e.get("cell"), prof)].append(e)
 		by["vizinhas"][str(e.get("m"))].append(e)
 		by["confianca"][str(e.get("confianca"))].append(e)
 	n_m2 = sum(1 for e in conf if (e.get("m") or 0) >= 2)
-	n_fora_ceu = sum(1 for e in conf if zone_of(e.get("cell")) != "céu")
+	n_fora_ceu = sum(1 for e in conf if zone_of(e.get("cell"), prof) != "céu")
 	return {"n": len(conf), "n_m2": n_m2, "n_fora_ceu": n_fora_ceu, "total": agg(conf),
 			"por": {k: {kk: agg(v) for kk, v in sorted(d.items())} for k, d in by.items()},
 			"rejeicoes": {"n": len(rej), "por_confianca": dict(collections.Counter(str(e.get("confianca")) for e in rej))},

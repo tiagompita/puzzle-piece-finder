@@ -52,8 +52,9 @@ class PuzzleProfile:
 	``registration`` = ``{'matrix': [[a, b, tx], [c, d, ty]], 'units': 'board_mm->art_px', ...}``
 	written by :mod:`src.artreg`, see :meth:`art_matrix`), ``calibration``
 	(twin-search thresholds per modality, chord tolerances, minimum margin d2/d1),
-	``image_zones`` (per-zone image-consistency distributions), ``modalities``
-	(documentation only).
+	``image_zones`` (per-zone image thresholds: ``{zone: {'rows': [a, b], 'dE_p90': float | None,
+	'rotulo': str}}``, rows 1-based inclusive, non-overlapping; entries that are not dicts, e.g. a
+	``'nota'`` string, are documentation; see :meth:`zone_of`), ``modalities`` (documentation only).
 	"""
 
 	id: str
@@ -81,6 +82,49 @@ class PuzzleProfile:
 			raise ValueError(f"unsupported schema_version {self.schema_version} (expected {SCHEMA_VERSION})")
 		if float(self.dpi) <= 0:
 			raise ValueError("dpi must be positive")
+		self._check_zones()
+
+	# ------------------------------------------------------------ image zones (row bands)
+	def zones(self) -> dict:
+		"""The zone entries of ``image_zones`` (dict values only; a ``'nota'`` string is skipped)."""
+		return {k: v for k, v in (self.image_zones or {}).items() if isinstance(v, dict)}
+
+	def _check_zones(self) -> None:
+		spans = []
+		for k, v in self.zones().items():
+			r = v.get("rows")
+			if r is None:
+				continue
+			if len(r) != 2 or int(r[0]) != r[0] or int(r[1]) != r[1]:
+				raise ValueError(f"image_zones[{k!r}].rows must be [first, last] (integers), got {r!r}")
+			a, b = int(r[0]), int(r[1])
+			if not (1 <= a <= b <= self.rows):
+				raise ValueError(f"image_zones[{k!r}].rows {r!r} outside the grid rows 1..{self.rows}")
+			for k2, a2, b2 in spans:
+				if a <= b2 and a2 <= b:
+					raise ValueError(f"image_zones {k2!r} and {k!r} overlap (rows {a2}-{b2} / {a}-{b})")
+			spans.append((k, a, b))
+
+	def zone_of(self, l: int, c: int) -> Optional[str]:
+		"""Key of the first zone of ``image_zones`` whose ``rows`` contain row ``l`` (None if no zone has
+		``rows`` or none contains ``l``). ``c`` is accepted for a future column-aware zoning."""
+		self._check(l, c)
+		for k, v in self.zones().items():
+			r = v.get("rows")
+			if r is not None and int(r[0]) <= l <= int(r[1]):
+				return k
+		return None
+
+	def has_zone_rows(self) -> bool:
+		"""True if at least one zone of ``image_zones`` has ``rows`` (zones are row bands of this profile)."""
+		return any(v.get("rows") is not None for v in self.zones().values())
+
+	def zone_label(self, zone: Optional[str]) -> Optional[str]:
+		"""Readable name of a zone (its ``rotulo``, else the key); None for None."""
+		if zone is None:
+			return None
+		v = self.zones().get(zone)
+		return str(v.get("rotulo") or zone) if v is not None else str(zone)
 
 	# ------------------------------------------------------------ (de)serialisation
 	@classmethod

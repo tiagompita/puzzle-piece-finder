@@ -21,7 +21,13 @@ Pipeline of :func:`find_twin` (docs/plano-m10-m12.md §2.2, order = increasing c
    ``tests/test_twin_real.py``) against the twin cell ``profile.twin(*query.cell)``. It is a
    colour-consistency test: dE above the zone's p90 demotes ``aceite`` to ``ambigua``, the
    image never promotes, and it may reorder the shortlist only when d1 and d2 are both
-   <= t95 (EREAL2.md §8: "only the shape puts #4 in front");
+   <= t95 (EREAL2.md §8: "only the shape puts #4 in front"). The zone is the caller's
+   (``zone=profile.zone_of(*twin_cell)``); a zone without a calibrated p90 means the image
+   does not decide, so ``aceite`` becomes ``ambigua`` (the image is mandatory; R7_CRITERIOS
+   §4.2). Without ``zone`` the largest p90 of the profile is used (legacy fallback). The
+   percentile of the candidate's dE among all crops (``pctl``) is informative only and is
+   computed only on request (``pctl=True``, pool <= ``PCTL_MAX_N``): it costs one render
+   per loose piece and query and never enters the decision (R7_CRITERIOS §5);
 6. readable reasons.
 
 Nothing puzzle-specific: the twin cell and the twin rotation come from the profile.
@@ -44,7 +50,7 @@ __all__ = [
 
 RESCAN_MM = 0.27            # free RMS of a re-scan of the same piece (E-sym A1/A2)
 MODALITIES = ("silhueta_silhueta", "celula_silhueta")
-PCTL_MAX_N = 300            # percentile of the candidate's dE among all crops only up to this many candidates
+PCTL_MAX_N = 300            # find_twin(pctl=True): percentile of the candidate's dE among all crops only up to this many candidates
 IMAGE_TOPK = 3              # candidates tested against the art
 OFFSET_SMOOTH_SIGMA = 3.0   # contour smoothing (samples) for the normals of the isotropic offset (ereal.offset_z)
 
@@ -129,12 +135,24 @@ def decide(d1, margin, t95, tmax, margin_min) -> str:
 
 # ---------------------------------------------------------------- image helpers
 def _image_threshold(profile, zone):
-	"""p90 of dE for ``zone``; unknown zone -> the largest p90 available; None if the profile has none."""
-	zones = getattr(profile, "image_zones", None) or {}
-	if zone is not None and zone in zones and zones[zone].get("dE_p90") is not None:
-		return float(zones[zone]["dE_p90"]), zone
+	"""``(p90, zone)``: the dE p90 of ``zone``; ``(None, zone)`` if the zone is given but has no
+	calibrated p90 (or is not in ``image_zones``): the image does not decide there. Only with
+	``zone=None`` (caller without zones) the largest p90 of the profile is used, ``(None, None)``
+	if it has none. Non-dict entries of ``image_zones`` (a ``'nota'``) are ignored."""
+	zones = {k: v for k, v in (getattr(profile, "image_zones", None) or {}).items() if isinstance(v, dict)}
+	if zone is not None:
+		v = zones.get(zone)
+		if v is not None and v.get("dE_p90") is not None:
+			return float(v["dE_p90"]), zone
+		return None, zone
 	vals = [(float(v["dE_p90"]), k) for k, v in zones.items() if v.get("dE_p90") is not None]
 	return max(vals) if vals else (None, None)
+
+
+def _zone_label(profile, zone):
+	"""Readable zone name (``profile.zone_label`` when the profile has it, else the key)."""
+	f = getattr(profile, "zone_label", None)
+	return (f(zone) if callable(f) else zone) if zone is not None else None
 
 
 def _image_test(cand: TwinItem, theta_q, phi, cell, profile, art, mmpp):
@@ -156,7 +174,7 @@ def _image_test(cand: TwinItem, theta_q, phi, cell, profile, art, mmpp):
 
 # ---------------------------------------------------------------- the query
 def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "silhueta_silhueta",
-			  art: CellArt | None = None, topk: int = 3, zone: str | None = None) -> dict:
+			  art: CellArt | None = None, topk: int = 3, zone: str | None = None, pctl: bool = False) -> dict:
 	"""Find the twin of ``query`` among ``candidates`` (see the module docstring for the pipeline).
 
 	Returns ``{'candidates': [{'id', 'd1_mm', 'phi_deg', 'chord_ok', 'image': {'dE', 'ncc',
@@ -167,7 +185,11 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 	``{'error': str}``. ``single_candidate`` is set when exactly one candidate passes class +
 	chords with d1 <= tmax: the decision is then ``'sem'`` (not proposed, 2026-11-01) and
 	``decision_shape`` holds the shape decision without that rule. ``zone`` selects the image
-	p90 in ``profile.image_zones`` (unknown -> the largest p90).
+	p90 in ``profile.image_zones``; a zone without a calibrated p90 never gives ``'aceite'``
+	(reason «zona … sem p90 calibrado: a imagem não decide»); ``zone=None`` -> the largest p90
+	(legacy). ``pctl``: also compute ``image['pctl']`` (percentile of the candidate's dE among
+	every crop of the pool, only when the pool has <= ``PCTL_MAX_N`` crops; informative, slow:
+	one render per loose piece); otherwise ``image['pctl']`` is None.
 	"""
 	if modality not in MODALITIES:
 		return {"error": f"modalidade desconhecida: {modality!r} (use {MODALITIES})"}
@@ -276,9 +298,9 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 		if query.theta_deg is None:
 			reasons.append("theta_unknown: orientação da consulta desconhecida, melhor das 4 rotações")
 		p90, zname = _image_threshold(profile, zone)
-		with_img = [c for c in pool if c.rgba is not None and c.shape is not None]
+		with_img = [c for c in pool if c.rgba is not None and c.shape is not None] if pctl else []
 		dist_all = None
-		if len(with_img) <= PCTL_MAX_N:
+		if pctl and len(with_img) <= PCTL_MAX_N:
 			dw, pw = shape_distances(query.shape, [c.shape for c in with_img])
 			dist_all = np.array([_image_test(c, query.theta_deg, float(pw[k]), twin_cell, profile, art, mmpp)["dE"]
 								 for k, c in enumerate(with_img)])
@@ -313,14 +335,20 @@ def find_twin(query: TwinItem, candidates: list, *, profile, modality: str = "si
 				reasons.append(f"imagem da proposta {rows[0]['id']} não testada")
 				if dec == "aceite":
 					dec = "ambigua"
+			elif p90 is None and zone is not None:
+				# zone known but not calibrated: no image evidence either way; the image is mandatory -> never aceite
+				reasons.append(f"zona {_zone_label(profile, zone)} sem p90 calibrado: a imagem não decide "
+							   f"(ΔE {_fmt(im0['dE'], 1)})")
+				if dec == "aceite":
+					dec = "ambigua"
 			elif p90 is None:
 				reasons.append(f"ΔE {_fmt(im0['dE'], 1)} (perfil sem p90 de zona: não despromove)")
 			elif im0["dE"] > p90:
-				reasons.append(f"ΔE {_fmt(im0['dE'], 1)} > p90 {_fmt(p90, 0)} ({zname})")
+				reasons.append(f"ΔE {_fmt(im0['dE'], 1)} > p90 {_fmt(p90, 0)} ({_zone_label(profile, zname)})")
 				if dec == "aceite":
 					dec = "ambigua"
 			else:
-				reasons.append(f"imagem consistente: ΔE {_fmt(im0['dE'], 1)} <= p90 {_fmt(p90, 0)} ({zname})"
+				reasons.append(f"imagem consistente: ΔE {_fmt(im0['dE'], 1)} <= p90 {_fmt(p90, 0)} ({_zone_label(profile, zname)})"
 							   + (f", pct {_fmt(im0['pctl'], 1)} %" if im0["pctl"] is not None else ""))
 	single_row = None
 	if single:

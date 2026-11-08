@@ -605,7 +605,7 @@ def _twin_index(profile):
 	return Lt, Ct
 
 
-def pair_locate(a: dict, b: dict, profile, art: CellArt, *, topk: int = 3) -> dict:
+def pair_locate(a: dict, b: dict, profile, art: CellArt, *, topk: int = 3, allowed=None) -> dict:
 	"""Joint localisation of two loose twins by the image (prototype ``ereal2.joint_locate``).
 
 	a, b: ``{'rgba', 'shape' (optional, body centre and axis snapping), 'theta_deg' (board
@@ -614,7 +614,10 @@ def pair_locate(a: dict, b: dict, profile, art: CellArt, *, topk: int = 3) -> di
 	global rotation, A is rendered at cell X and B (rotation ``theta_A + phi +
 	profile.twin_rotation_deg()``) at ``profile.twin(X)``; score(X) = RMS dE(A, X) + RMS
 	dE(B, twin(X)), minimum over rotations. Cells are restricted to those with a twin and,
-	if A's number of F sides is known, with that many border sides.
+	if A's number of F sides is known, with that many border sides. Only A's ``theta_deg``
+	matters (B's pose is derived from it and ``phi``; ``b['theta_deg']`` is ignored).
+	``allowed``: optional ``(rows, cols)`` bool array; cells where it is False are never
+	proposed (e.g. X or ``twin(X)`` already occupied) and are not counted in ``n_cells_tested``.
 
 	``{'cells': [{'cell', 'score', 'rank', 'rot_deg'}] (top-k, rank 1-based),
 	'n_cells_tested', 'score_map': (rows, cols) array}`` or ``{'error': str}``.
@@ -648,6 +651,11 @@ def pair_locate(a: dict, b: dict, profile, art: CellArt, *, topk: int = 3) -> di
 	gbest = tot.argmin(0)
 	nF = a.get("n_flat", sa.n_flat if (sa is not None and sa.ok) else None)
 	comp = has_twin.copy()
+	if allowed is not None:
+		al = np.asarray(allowed, bool)
+		if al.shape != comp.shape:
+			return {"error": f"pair_locate: allowed must be {comp.shape}, got {al.shape}"}
+		comp &= al
 	if nF is not None:
 		Lg, Cg = np.mgrid[1:profile.rows + 1, 1:profile.cols + 1]
 		comp &= np.vectorize(lambda l, c: profile.n_flat_sides(int(l), int(c)))(Lg, Cg) == int(nF)

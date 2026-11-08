@@ -218,7 +218,7 @@ def test_image_demotes_wrong_colour_and_never_promotes():
     decoys = _decoys_img(rgb, 20, rng, [(3, 3), (4, 5), (5, 2)])
     # right shape, right colour -> aceite, the image is consistent
     good = _item(rgb, "T", tw, tcell, 90.0)
-    res = find_twin(q, [good] + decoys, profile=prof, art=art)
+    res = find_twin(q, [good] + decoys, profile=prof, art=art, pctl=True)  # ronda 7: o percentil é opt-in
     assert res["twin_cell"] == tcell and res["candidates"][0]["id"] == "T"
     assert res["decision"] == "aceite", res["reasons"]
     assert res["candidates"][0]["image"]["dE"] < 3.0

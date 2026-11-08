@@ -295,7 +295,7 @@ class _Stub:
                     "decision": "aceite", "margin": 2.1, "twin_cell": None, "reasons": ["stub"]}
         return {"candidates": [], "decision": "sem", "margin": None, "twin_cell": None, "reasons": ["stub sem"]}
 
-    def pair_locate(self, a, b, profile, art, *, topk=3):
+    def pair_locate(self, a, b, profile, art, *, topk=3, allowed=None):  # ronda 7: pair_locate ganhou allowed=
         self.pair_calls += 1
         return {"cells": [{"cell": (1, 3), "score": 0.5, "rank": 1}], "n_cells_tested": 24}
 

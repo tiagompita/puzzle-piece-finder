@@ -1246,9 +1246,18 @@ class Project:
 		return self._emit("same_as", piece=piece_id, other=other_id)
 
 	def fetch_listed(self, entries: list) -> dict:
-		"""Log a "go fetch" list (compact: order, piece, cell, origin, decision)."""
-		keep = ("ordem", "piece", "cell", "origin", "decision", "pair")
-		return self._emit("fetch_listed", entries=[{k: e.get(k) for k in keep if k in e} for e in entries])
+		"""Log a "go fetch" list (compact: order, piece, cell, origin, decision, pair; since ronda 7 also the
+		cross-check state ``encaixe`` (its ``estado``) and ``decision_antes_encaixe`` when present, so the effect
+		of the rule can be measured from the log)."""
+		keep = ("ordem", "piece", "cell", "origin", "decision", "pair", "decision_antes_encaixe")
+		out = []
+		for e in entries:
+			row = {k: e.get(k) for k in keep if k in e}
+			enc = e.get("encaixe")
+			if isinstance(enc, dict) and enc.get("estado"):
+				row["encaixe"] = enc["estado"]
+			out.append(row)
+		return self._emit("fetch_listed", entries=out)
 
 	# ------------------------------------------------------------ derived (in memory)
 	def _claimed_cells(self) -> set:

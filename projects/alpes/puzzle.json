@@ -17,6 +17,11 @@
     "buraco": {"erosion_mm": 0.6, "chord_cut": 2.0, "t_abs": 2.6656, "q": 0.9, "f_rule": true, "fit_version": "m11-1",
       "afinado_em": "2026-11-07", "fonte": "docs/diagnostico/fit/m11_afinacao.json (S_T: 144 buracos de 8 folhas, N = 32; M11_CRITERIOS.md §4)"}
   },
-  "image_zones": {"ceu": {"dE_p90": 50.0}},
+  "image_zones": {
+    "ceu": {"rows": [1, 14], "dE_p90": 50.0, "rotulo": "céu"},
+    "montanha": {"rows": [15, 27], "dE_p90": null, "rotulo": "montanha/floresta"},
+    "vale": {"rows": [28, 40], "dE_p90": null, "rotulo": "vale/aldeia"},
+    "relva": {"rows": [41, 47], "dE_p90": null, "rotulo": "relva"},
+    "nota": "faixas de filas de fit.ZONES (GT.md); dE_p90 do céu = p90 de pares céu×célula gémea (EREAL2 §3); p90 por zona medidos na ronda 7 (R7_RESULTADOS.md) não ativados"},
   "modalities": ["scan300"]
 }

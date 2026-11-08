@@ -18,6 +18,19 @@ Order of signals (docs/estado-e-plano.md §0, docs/plano-m10-m12.md §3.2):
 4. sections not anchored (their stored top-3; sections made only of ``same_as`` re-scans are skipped);
 5. the rest stays in memory (only counted).
 
+Cross-check with the hole mould (R7_CRITERIOS §4.1, :func:`_cross_check`): every final entry
+of origin ``gemeo`` / ``borda`` / ``par`` whose cell has a mounted neighbour is tested with
+:func:`src.fit.side_costs` against the neighbours' sides, in the predicted pose (the twin
+pose chain; unknown pose -> the best of the 4 rotations, declared). An impossible side (T↔T,
+B↔B, F off the border, chord above the cut) or a joint cost above
+``calibration.buraco.t_abs`` gives ``encaixe.estado = 'incompativel'`` and demotes ``aceite``
+to ``ambigua`` (``decision_antes_encaixe`` keeps the original); the proposal is never
+dropped. ``encaixe`` = ``{estado: ok | incompativel | nao_testado, pose, m, J, t_abs, lados,
+fit_version, motivo}``. Twin queries pass ``zone=profile.zone_of(*cell)`` (the image p90 of
+that zone; a zone without a calibrated p90 never gives ``aceite``). Pairs: ``pair_locate``
+with both shapes and the 4 rotations, never on a cell X with X or ``twin(X)`` occupied; the
+entry of piece A carries X and the entry of piece B carries ``twin(X)``.
+
 A twin query whose only surviving candidate is a lone one (``find_twin`` ->
 ``single_candidate``, decision ``sem`` since 2026-11-01) is not listed; it is kept for
 review in ``fetch.json`` -> ``suprimidas`` and counted in the footer of ``fetch.md``.
@@ -55,10 +68,12 @@ from typing import Optional
 
 import numpy as np
 
-__all__ = ["ORIGIN_STEP", "MAX_MISSING_BORDER", "MAX_BORDER_CANDIDATES", "run_query", "write_fetch",
+__all__ = ["ORIGIN_STEP", "CROSS_ORIGINS", "ENC_TAG", "MAX_MISSING_BORDER", "MAX_BORDER_CANDIDATES", "run_query", "write_fetch",
 		   "load_fetch", "render_fetch_md", "ghost_contour", "wrap180", "GHOST_MAX_PTS", "mounted_neighbours", "fetch_group",
 		   "main"]
 
+CROSS_ORIGINS = ("gemeo", "borda", "par")   # entries checked against the mounted neighbours (_cross_check)
+ENC_TAG = "encaixe"                         # reasons written by _cross_check start with this word
 ORIGIN_STEP = {"borda": 0, "gemeo": 1, "par": 2, "posicao_conhecida": 3, "seccao": 4}
 _DECISION_RANK = {"aceite": 0, "colocavel": 0, "ambigua": 1, "proposto": 1, "confirmado": 0, "candidata": 2,
 				  "por_ancorar": 2}
@@ -100,6 +115,8 @@ class _Ctx:
 		self.placements = None
 		self.sheet_index = None
 		self.sheet_index_dirty = False
+		self.fit = None              # lazy hole-mould context of _cross_check (never saved to disk)
+		self.pair_allowed = None     # lazy (rows, cols) mask of _step_pairs
 		if use_image:
 			try:
 				from src.locate import CellArt
@@ -112,8 +129,25 @@ class _Ctx:
 			sh = self.pr.shape(p.id)
 			rgba = self.pr.crop_rgba(p.id) if self.use_image else None
 			cell = p.celula if p.estado == "colocada" else None
-			self.items[p.id] = self.TwinItem(id=p.id, shape=sh, rgba=rgba, theta_deg=p.theta_deg, cell=cell)
+			theta = p.theta_deg
+			if theta is None and p.estado == "colocada":
+				# legacy-section pieces have no log theta: the section + anchor rotation (as the board render)
+				try:
+					from src import render
+					theta = render.initial_theta(self.pr, p.id)
+				except Exception:  # noqa: BLE001 - the pose is optional (find_twin then tries the 4 rotations)
+					theta = None
+			self.items[p.id] = self.TwinItem(id=p.id, shape=sh, rgba=rgba, theta_deg=theta, cell=cell)
 		return self.items[p.id]
+
+
+def _zone_kw(pr, cell) -> dict:
+	"""``{'zone': key}`` of ``cell`` in the profile (empty when the profile has no row zones)."""
+	try:
+		z = pr.profile.zone_of(*cell) if cell is not None else None
+	except (AttributeError, ValueError):
+		z = None
+	return {"zone": z} if z is not None else {}
 
 
 def _usable(pr, p) -> bool:
@@ -188,7 +222,7 @@ def _step_border(ctx, loose, only_cells, proposed, rej) -> list:
 		q = pr.piece(occ["peca_id"]) if occ and occ["estado"] == "colocada" else None
 		if q is not None and pr.shape(q.id) is not None:
 			res = ctx.find_twin(ctx.item(q), [ctx.item(p) for p in cands], profile=pr.profile, modality=MODALITY,
-								art=ctx.art, topk=TOPK)
+								art=ctx.art, topk=TOPK, **_zone_kw(pr, m))
 			if "error" in res:
 				ctx.notes.append(f"find_twin borda {m}: {res['error']}")
 				continue
@@ -221,7 +255,7 @@ def _step_twins(ctx, loose, only_cells, only_pieces, proposed, rej) -> list:
 		if not cands:
 			continue
 		res = ctx.find_twin(ctx.item(q), [ctx.item(p) for p in cands], profile=pr.profile, modality=MODALITY,
-							art=ctx.art, topk=TOPK)
+							art=ctx.art, topk=TOPK, **_zone_kw(pr, tw))
 		if "error" in res:
 			ctx.notes.append(f"find_twin {q.id}: {res['error']}")
 			continue
@@ -235,16 +269,44 @@ def _step_twins(ctx, loose, only_cells, only_pieces, proposed, rej) -> list:
 	return out
 
 
+def _cell_free_for_pair(pr, cell) -> bool:
+	"""A pair may go to ``cell`` (piece A) and ``twin(cell)`` (piece B) only if both exist and are not occupied."""
+	tw = pr.profile.twin(*cell) if pr.profile.in_grid(*cell) else None
+	return tw is not None and not pr.board.occupied(tuple(cell)) and not pr.board.occupied(tw)
+
+
+def _pair_allowed(pr) -> np.ndarray:
+	"""``(rows, cols)`` bool: cells X where a loose pair may be located (X and ``twin(X)`` free)."""
+	prof = pr.profile
+	al = np.zeros((prof.rows, prof.cols), bool)
+	for l in range(1, prof.rows + 1):
+		for c in range(1, prof.cols + 1):
+			al[l - 1, c - 1] = _cell_free_for_pair(pr, (l, c))
+	return al
+
+
 def _pair_entries(pr, t, lote) -> list:
+	"""One entry per piece of pair ``t``: A (``t.a``) goes to the first stored cell X whose X and ``twin(X)``
+	are still free, B (``t.b``) to ``twin(X)``; no such cell -> ``cell`` None and the reason says so."""
 	out = []
-	cell = _cl(t.cells[0]["cell"]) if t.cells else None
+	stored = [_cl(c["cell"]) for c in (t.cells or []) if c.get("cell")]
+	free = [x for x in stored if _cell_free_for_pair(pr, x)]
+	cell = free[0] if free else None
+	busy = [x for x in stored if x not in free]
 	img = t.image or {}
 	for a, b in ((t.a, t.b), (t.b, t.a)):
 		if lote is not None and pr.piece(a).lote != lote and pr.piece(b).lote != lote:
 			continue
-		out.append(_entry(pr, "par", a, cell, t.estado, margin=t.margin, dE=img.get("dE"), d1_mm=t.d1_mm, query=b,
-						  pair=t.id, score=t.d1_mm, reasons=[f"par com {b}"] + ([f"células {[c['cell'] for c in t.cells]}"]
-																			   if t.cells else [])))
+		mine = cell if (cell is None or a == t.a) else pr.profile.twin(*cell)
+		why = [f"par com {b}"]
+		if stored:
+			why.append(f"células {[list(x) for x in stored]}" + (f" (de {t.a}; {t.b} vai para a gémea)" if a == t.b else ""))
+		if busy:
+			why.append(f"células já ocupadas (ou com a gémea ocupada), excluídas: {[list(x) for x in busy]}")
+		if cell is None:
+			why.append("sem célula livre compatível" + ("" if stored else " (ou consulta sem imagem)"))
+		out.append(_entry(pr, "par", a, mine, t.estado, margin=t.margin, dE=img.get("dE"), d1_mm=t.d1_mm, query=b,
+						  pair=t.id, score=t.d1_mm, reasons=why))
 	return out
 
 
@@ -286,9 +348,12 @@ def _step_pairs(ctx, loose, only_pieces, proposed, lote) -> list:
 		if ctx.art is not None:
 			from src.locate import pair_locate
 			ia, ib = ctx.item(a), ctx.item(pr.piece(bid))
-			loc = pair_locate({"rgba": ia.rgba, "theta_deg": 0.0, "phi_deg": 0.0},
-							  {"rgba": ib.rgba, "theta_deg": 0.0, "phi_deg": float(c0.get("phi_deg") or 0.0)},
-							  pr.profile, ctx.art, topk=TOPK)
+			if ctx.pair_allowed is None:
+				ctx.pair_allowed = _pair_allowed(pr)
+			# A's pose unknown -> the 4 body-aligned rotations; B's pose follows from A's + phi (its theta is ignored)
+			loc = pair_locate({"rgba": ia.rgba, "shape": ia.shape, "theta_deg": None, "phi_deg": 0.0},
+							  {"rgba": ib.rgba, "shape": ib.shape, "theta_deg": 0.0, "phi_deg": float(c0.get("phi_deg") or 0.0)},
+							  pr.profile, ctx.art, topk=TOPK, allowed=ctx.pair_allowed)
 			cells = [{"cell": list(c["cell"]), "score": c.get("score"), "rank": c.get("rank")}
 					 for c in (loc.get("cells") or [])] if isinstance(loc, dict) else []
 		tid = pr.register_pair(a.id, bid, d1=c0.get("d1_mm"), margin=ra.get("margin"), image=c0.get("image"),
@@ -528,6 +593,167 @@ def _enrich(ctx, e: dict, write: bool) -> dict:
 	return e
 
 
+# ---------------------------------------------------------------- cross-check with the hole mould (R7_CRITERIOS §4.1)
+def _fc(x, nd: int = 2) -> str:
+	"""Number with a decimal comma for the reasons; ``∞`` / ``—`` for inf / None."""
+	if x is None:
+		return "—"
+	if not np.isfinite(x):
+		return "∞"
+	return f"{x:.{nd}f}".replace(".", ",")
+
+
+def _fit_ctx(ctx) -> dict:
+	"""Per-run hole-mould context: ``fit`` module, calibration, a strip cache (read from disk, never saved),
+	the board-direction cache and the side-map orientation (computed on first use)."""
+	if ctx.fit is None:
+		from src import fit
+		calib = fit.calibration(ctx.pr)
+		ctx.fit = {"F": fit, "calib": calib, "cache": fit._Cache(ctx.pr, calib), "dcache": {}, "sigma": None}
+	return ctx.fit
+
+
+def _eval_mapping(F, calib, hole, kinds, per, cd: dict) -> dict:
+	"""Cost of the candidate whose side ``cd[d]`` faces board direction ``d``: per-side records, the
+	impossible sides (kind, chord above the cut, F rule of the cell), the sides without a valid image strip,
+	and ``J`` = mean side cost (inf if a side is impossible or has no strip)."""
+	lados, imposs, sem_tira = [], [], []
+	for k, hs in enumerate(hole.sides):
+		j = int(cd[hs.direction])
+		c = per[k]
+		comp, hard = bool(c["comp"][0, j]), bool(c["hard"][0, j])
+		dE, cost = float(c["dE"][0, j]), float(c["cost"][0, j])
+		rec = {"dir": hs.direction, "vizinha": hs.piece_id, "tipo_vizinha": hs.side.kind, "lado": j, "tipo": str(kinds[j]),
+			   "comp": comp, "hard": hard, "rms": float(c["rms"][0, j]), "dl": float(c["dl"][0, j]),
+			   "dE": dE if np.isfinite(dE) else None, "custo": cost if np.isfinite(cost) else None}
+		lados.append(rec)
+		if not comp or hard:
+			imposs.append(rec)
+		elif not np.isfinite(dE):
+			sem_tira.append(rec)
+	f_bad = []
+	if calib.f_rule:
+		req = set(hole.f_required)
+		f_bad = [d for d in F.DIRS if (str(kinds[int(cd[d])]) == "F") != (d in req)]
+	costs = [r["custo"] for r in lados]
+	J = float(np.mean(costs)) if (costs and all(x is not None for x in costs) and not f_bad) else float("inf")
+	return {"lados": lados, "imposs": imposs, "sem_tira": sem_tira, "f_bad": f_bad, "J": J}
+
+
+def _side_txt(pr, rec) -> str:
+	p = pr.pieces.get(rec["vizinha"])
+	where = f"({p.celula[0]},{p.celula[1]}) " if p is not None and p.celula else ""
+	return f"{where}{rec['vizinha']}"
+
+
+def _fit_check(ctx, pid: str, cell: tuple, theta) -> dict:
+	"""``encaixe`` of piece ``pid`` in the empty ``cell`` against its mounted neighbours (see :func:`_cross_check`)."""
+	pr = ctx.pr
+	fc = _fit_ctx(ctx)
+	F, calib, cache, dcache = fc["F"], fc["calib"], fc["cache"], fc["dcache"]
+	base = {"estado": "nao_testado", "fit_version": F.FIT_VERSION, "t_abs": calib.t_abs}
+	holes = F.hole_queries(pr, cells=[tuple(cell)], cache=cache, dcache=dcache)
+	if not holes or not holes[0].sides:
+		return dict(base, motivo="vizinhas montadas sem forma ou pose no índice")
+	hole = holes[0]
+	items = F.pool_items(pr, pieces=[pid], cache=cache)
+	if not items:
+		return dict(base, motivo="candidata sem forma de 4 cantos")
+	it = items[0]
+	if it.strips is None or not np.isfinite(it.strips).any():
+		return dict(base, motivo="candidata sem tira de imagem")
+	pa = F.pool_arrays([it])
+	per = [F.side_costs(hs, pa, calib) for hs in hole.sides]
+	kinds = pa.kind[0]
+	cd = F.board_dirs(it.shape, theta) if theta is not None else None
+	if cd is not None:
+		pose, ev = "prevista", _eval_mapping(F, calib, hole, kinds, per, cd)
+	else:
+		if fc["sigma"] is None:
+			fc["sigma"] = F.board_sigma(pr, cache, dcache)
+		sg = fc["sigma"]
+		if "error" in sg:
+			return dict(base, motivo=f"pose desconhecida e orientação do mapa de lados indisponível ({sg['error']})")
+		sigma = int(sg["sigma"])
+		evs = [_eval_mapping(F, calib, hole, kinds, per, {d: (sigma * F.DIR_IDX[d] + r) % 4 for d in F.DIRS})
+			   for r in range(4)]
+		# best rotation: possible before impossible, with strips before without, then the cost
+		pose, ev = "min4", min(evs, key=lambda x: (bool(x["imposs"] or x["f_bad"]), bool(x["sem_tira"]), x["J"]))
+	out = dict(base, pose=pose, m=hole.m, J=(ev["J"] if np.isfinite(ev["J"]) else None), lados=ev["lados"])
+	pose_txt = "pose prevista" if pose == "prevista" else "melhor das 4 rotações: pose desconhecida"
+	if ev["imposs"] or ev["f_bad"]:
+		bits = []
+		for r in ev["imposs"]:
+			if not r["comp"]:
+				bits.append(f"lado {r['dir']} com {_side_txt(pr, r)}: {r['tipo']}↔{r['tipo_vizinha']}, impossível")
+			else:
+				bits.append(f"lado {r['dir']} com {_side_txt(pr, r)}: corda Δ {_fc(r['dl'], 1)} mm acima do corte, impossível")
+		for d in ev["f_bad"]:
+			bits.append(f"lado {d}: " + ("falta o lado F da borda" if d in hole.f_required else "lado F fora da borda"))
+		out.update(estado="incompativel", motivo="; ".join(bits))
+		out["razao"] = f"encaixe incompatível ({pose_txt}): " + "; ".join(bits)
+		return out
+	if ev["sem_tira"]:
+		out.update(motivo="sem tira de imagem válida no lado " + ", ".join(r["dir"] for r in ev["sem_tira"]))
+		out["razao"] = f"encaixe não testado: {out['motivo']}"
+		return out
+	J = ev["J"]
+	worst = max(ev["lados"], key=lambda r: r["custo"])
+	if calib.t_abs is not None and J > calib.t_abs:
+		dE_txt = f" (ΔE da tira {_fc(worst['dE'], 1)})" if worst["dE"] is not None else ""
+		if hole.m == 1:
+			txt = (f"encaixe incompatível com a vizinha {_side_txt(pr, worst)}: custo {_fc(J)} > T_abs {_fc(calib.t_abs)}"
+				   f"{dE_txt} ({pose_txt})")
+		else:
+			txt = (f"encaixe incompatível com {hole.m} vizinhas: custo {_fc(J)} > T_abs {_fc(calib.t_abs)}; pior lado "
+				   f"{worst['dir']} com {_side_txt(pr, worst)}: custo {_fc(worst['custo'])}{dE_txt} ({pose_txt})")
+		out.update(estado="incompativel", motivo=f"custo {_fc(J)} > T_abs {_fc(calib.t_abs)}", razao=txt)
+		return out
+	lim = f" <= {_fc(calib.t_abs)}" if calib.t_abs is not None else " (sem limiar absoluto calibrado)"
+	out.update(estado="ok", motivo=None,
+			   razao=f"encaixe com {hole.m} vizinha{'s' if hole.m != 1 else ''}: custo {_fc(J)}{lim} ({pose_txt})")
+	return out
+
+
+def _cross_check(ctx, e: dict) -> dict:
+	"""Check entry ``e`` (origin in :data:`CROSS_ORIGINS`, with piece and cell) against the mounted neighbours
+	of its cell with the hole mould (:mod:`src.fit`, R7_CRITERIOS §4.1) and write ``e['encaixe']``.
+
+	No mounted neighbour -> ``nao_testado`` (``sem vizinha montada``). Otherwise the candidate's sides face
+	the neighbours in the predicted pose ``e['theta_deg']`` (:func:`src.fit.board_dirs`; unknown pose or no
+	1-to-1 side map -> the best of the 4 rotations, ``pose: 'min4'``), each side costed with
+	:func:`src.fit.side_costs` (eroded sides, image strips, calibration ``buraco``). ``incompativel`` if a
+	side is impossible (T↔T / B↔B / F, chord above the cut), the cell's F rule fails, or the joint cost
+	``J`` (mean over the neighbours) is above ``t_abs``; then ``aceite`` -> ``ambigua`` and
+	``decision_antes_encaixe = 'aceite'``. A readable reason starting with :data:`ENC_TAG` is appended; a
+	previous cross-check of the same entry (kept from an older list) is undone first. Never removes the
+	entry. Returns ``e['encaixe']``."""
+	pr = ctx.pr
+	if e.get("decision_antes_encaixe"):
+		e["decision"] = e["decision_antes_encaixe"]
+	e.pop("decision_antes_encaixe", None)
+	e["reasons"] = [r for r in (e.get("reasons") or []) if not str(r).startswith(ENC_TAG)]
+	pid, cell = e.get("piece"), _cl(e.get("cell"))
+	try:
+		if mounted_neighbours(pr, cell) == 0:
+			enc = {"estado": "nao_testado", "motivo": "sem vizinha montada"}
+		elif pr.board.occupied(cell):
+			enc = {"estado": "nao_testado", "motivo": "célula ocupada"}
+		else:
+			enc = _fit_check(ctx, pid, cell, e.get("theta_deg"))
+	except Exception as ex:  # noqa: BLE001 - the list must still be written; the entry says why
+		enc = {"estado": "nao_testado", "motivo": f"erro no encaixe ({type(ex).__name__}: {ex})"}
+		ctx.notes.append(f"encaixe de {pid} em {cell}: {enc['motivo']}")
+	razao = enc.pop("razao", None)
+	if enc["estado"] == "incompativel" and e.get("decision") == "aceite":
+		e["decision_antes_encaixe"] = "aceite"
+		e["decision"] = "ambigua"
+	if razao:
+		e["reasons"].append(razao)
+	e["encaixe"] = enc
+	return enc
+
+
 # ---------------------------------------------------------------- main entry point
 def _valid_prior(pr, e, only_cells, only_pieces, rej) -> bool:
 	if ORIGIN_STEP.get(e["origin"], 9) >= 3:
@@ -633,6 +859,16 @@ def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, on
 			e.setdefault("theta_deg", None)
 			e["pose_known"], e["pose_reason"] = False, f"erro ao calcular a pose ({type(ex).__name__}: {ex})"
 			ctx.notes.append(f"entrada {i}: {e['pose_reason']}")
+	t = lap("enriquecer+folhas", t)
+	# cross-check with the mounted neighbours (always recomputed: the neighbours change), then re-sort by the final decision
+	for e in uniq:
+		if e.get("origin") in CROSS_ORIGINS and e.get("piece") and e.get("cell"):
+			_cross_check(ctx, e)
+	uniq.sort(key=lambda e: (ORIGIN_STEP.get(e["origin"], 9), _DECISION_RANK.get(e["decision"], 5),
+							 -(e["margin"] if isinstance(e.get("margin"), (int, float)) else 0.0), e.get("piece") or ""))
+	for i, e in enumerate(uniq, 1):
+		e["ordem"] = i
+	t = lap("encaixe", t)
 	if write:
 		_save_sheet_index(ctx)
 	listed = {e["piece"] for e in uniq if e.get("piece")}
@@ -676,6 +912,18 @@ def _pose_txt(e) -> str:
 	return f"{e['theta_deg']:.0f}°" if e.get("pose_known") and e.get("theta_deg") is not None else "?"
 
 
+def _enc_txt(e) -> str:
+	"""Cell of the «encaixe» column of fetch.md: ``ok 1,05`` / ``incomp. 4,56`` (``incomp. lado`` when a side is
+	impossible) / ``—``."""
+	enc = e.get("encaixe") or {}
+	J = enc.get("J")
+	if enc.get("estado") == "ok":
+		return f"ok {_fc(J)}" if J is not None else "ok"
+	if enc.get("estado") == "incompativel":
+		return f"incomp. {_fc(J)}" if J is not None else "incomp. lado"
+	return "—"
+
+
 def _fmt(v, nd=2):
 	if v is None:
 		return "—"
@@ -691,17 +939,20 @@ def render_fetch_md(project, entries: list, rest: list, notes: list, suppressed:
 		 f"Projeto `{project.meta['id']}`; {st['pecas']} peças; por estado {st['por_estado']}; tabuleiro "
 		 f"{st['celulas_ocupadas']} ocupadas / {project.profile.cell_count()}.",
 		 f"p_twin_placed = {st['p_twin_placed']:.3f} ({st['p_twin_placed_formula']}).", "",
-		 "| ordem | lote | nº no lote | id | célula | pose | origem | decisão | margem | ΔE | razões |",
-		 "|---:|---:|---:|---|---|---:|---|---|---:|---:|---|"]
+		 "| ordem | lote | nº no lote | id | célula | pose | origem | decisão | margem | ΔE | razões | encaixe |",
+		 "|---:|---:|---:|---|---|---:|---|---|---:|---:|---|---|"]
 	for e in entries:
 		pid = e.get("piece") or e.get("section") or "—"
 		cell = f"({e['cell'][0]},{e['cell'][1]})" if e.get("cell") else "—"
 		why = "; ".join(str(r) for r in (e.get("reasons") or [])).replace("|", "/")
 		L.append(f"| {e['ordem']} | {_fmt(e.get('lote'))} | {_fmt(e.get('n_no_lote'))} | {pid} | {cell} | "
 				 f"{_pose_txt(e) if e.get('piece') else '—'} | {e['origin']} | {e['decision']} | {_fmt(e.get('margin'))} | "
-				 f"{_fmt(e.get('dE'), 1)} | {why} |")
+				 f"{_fmt(e.get('dE'), 1)} | {why} | {_enc_txt(e)} |")
 	L += ["", "pose = rotação (graus, positiva no sentido dos ponteiros do relógio) que leva a peça, tal como está "
 		  "na folha do scan, à sua posição no tabuleiro; «?» = desconhecida (ver pose_reason em fetch.json)."]
+	L += ["", "encaixe = custo conjunto contra as vizinhas montadas (molde do buraco, pose prevista ou melhor das 4 "
+		  "rotações): «ok» <= T_abs, «incomp.» = lado impossível ou custo > T_abs (a decisão desce para ambígua); "
+		  "«—» = não testado (sem vizinha montada)."]
 	L += ["", f"Ficam na memória: {len(rest)} soltas sem proposta."]
 	for n in notes:
 		L.append(f"- nota: {n}")

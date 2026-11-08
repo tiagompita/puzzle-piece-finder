@@ -686,3 +686,5 @@ body[data-pose] #board { cursor: default; }
   #tg-act { display: none; }
   #z-act { display: block; }
 }
+.chip.encaixe-mau { background: rgba(255, 90, 82, .18); color: var(--red); border: 1px solid rgba(255, 90, 82, .5); }
+.chip.encaixe-ok { background: rgba(255, 255, 255, .06); color: var(--muted); border: 1px solid var(--line); font-weight: 500; }
