@@ -52,3 +52,9 @@
 {"id": "R0032", "t": "2026-11-08T17:00:55", "tipo": "outro", "texto": "A peça correta já está colocada ja posiçao sugerida", "piece": "P1163", "cell": [4, 62], "scan_id": "S0032", "n_no_lote": 55, "lote": 6, "crop_path": "crops/P1163.png", "captura": "reports/R0032.jpg", "vista": "cartao", "estado": "aberto"}
 {"id": "R0033", "t": "2026-11-08T17:05:11", "tipo": "outro", "texto": "Posiçao mal sugerida", "piece": "P1238", "cell": [35, 2], "scan_id": "S0034", "n_no_lote": 55, "lote": 7, "crop_path": "crops/P1238.png", "captura": "reports/R0033.jpg", "vista": "cartao", "estado": "aberto"}
 {"id": "R0034", "t": "2026-11-08T17:56:03", "tipo": "outro", "texto": "Posição sugerida errada", "piece": "P1060", "cell": [4, 62], "scan_id": "S0030", "n_no_lote": 27, "lote": 5, "crop_path": "crops/P1060.png", "captura": "reports/R0034.jpg", "vista": "cartao", "estado": "aberto"}
+{"evento": "estado", "id": "R0029", "t": "2026-11-08T22:18:30", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0030", "t": "2026-11-08T22:18:43", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0031", "t": "2026-11-08T22:18:51", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0032", "t": "2026-11-08T22:19:06", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0033", "t": "2026-11-08T22:19:13", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0034", "t": "2026-11-08T22:19:20", "acao": "close", "nota": "", "estado": "fechado"}

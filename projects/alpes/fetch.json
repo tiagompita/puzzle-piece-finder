@@ -1,5 +1,5 @@
 {
- "t": "2026-11-08T21:45:41",
+ "t": "2026-11-08T22:19:36",
  "entries": [
   {
    "origin": "gemeo",
@@ -18,7 +18,7 @@
     "205 candidatas; 0 sem 4 cantos; 159 de classe diferente (consulta BBBT); 40 falham as cordas; 6 passam",
     "forma aceite: d1 0,305 mm <= t95 0,507, margem 3,63 >= 1,5",
     "imagem consistente: ΔE 4,0 <= p90 50 (céu)",
-    "encaixe com 3 vizinhas: custo 1,28 <= 2,67 (pose prevista)"
+    "encaixe com 4 vizinhas: custo 1,14 <= 2,67 (pose prevista)"
    ],
    "query": "P0626",
    "pair": null,
@@ -530,8 +530,8 @@
     "fit_version": "m11-1",
     "t_abs": 2.6656,
     "pose": "prevista",
-    "m": 3,
-    "J": 1.2837461249449618,
+    "m": 4,
+    "J": 1.144727186319385,
     "lados": [
      {
       "dir": "N",
@@ -541,10 +541,10 @@
       "tipo": "B",
       "comp": true,
       "hard": false,
-      "rms": 0.6750900667981318,
-      "dl": 0.3272703288965353,
+      "rms": 0.6750900667981178,
+      "dl": 0.32727032889624397,
       "dE": 4.729351997375488,
-      "custo": 1.086653442281305
+      "custo": 1.0866534422812921
      },
      {
       "dir": "E",
@@ -554,10 +554,10 @@
       "tipo": "T",
       "comp": true,
       "hard": false,
-      "rms": 0.6578315743692196,
-      "dl": 0.20280130722210643,
+      "rms": 0.6578315743692232,
+      "dl": 0.20280130722229828,
       "dE": 12.54703140258789,
-      "custo": 1.8527318680726648
+      "custo": 1.852731868072668
      },
      {
       "dir": "S",
@@ -567,10 +567,23 @@
       "tipo": "B",
       "comp": true,
       "hard": false,
-      "rms": 0.4366104427197023,
-      "dl": 0.1546785389810701,
-      "dE": 5.1493449211120605,
-      "custo": 0.9118530644809155
+      "rms": 0.5900242169043122,
+      "dl": 0.8969651331579414,
+      "dE": 3.5299558639526367,
+      "custo": 0.8893812262055275
+     },
+     {
+      "dir": "W",
+      "vizinha": "P1021",
+      "tipo_vizinha": "T",
+      "lado": 0,
+      "tipo": "B",
+      "comp": true,
+      "hard": false,
+      "rms": 0.6310383843194157,
+      "dl": 0.10558304218622183,
+      "dE": 1.76470947265625,
+      "custo": 0.7501422087180533
      }
     ],
     "motivo": null
@@ -1634,555 +1647,6 @@
   },
   {
    "origin": "gemeo",
-   "piece": "P1383",
-   "lote": 9,
-   "n_no_lote": 50,
-   "cell": [
-    40,
-    63
-   ],
-   "decision": "ambigua",
-   "margin": 2.7431170419904283,
-   "dE": 81.26653783603203,
-   "d1_mm": 0.379772266172256,
-   "reasons": [
-    "204 candidatas; 0 sem 4 cantos; 159 de classe diferente (consulta BBBT); 41 falham as cordas; 4 passam",
-    "forma aceite: d1 0,380 mm <= t95 0,507, margem 2,74 >= 1,5",
-    "zona vale/aldeia sem p90 calibrado: a imagem não decide (ΔE 81,3)",
-    "encaixe incompatível com a vizinha (40,64) P0224: custo 10,13 > T_abs 2,67 (ΔE da tira 86,3) (pose prevista)"
-   ],
-   "query": "P0833",
-   "pair": null,
-   "rank": 1,
-   "score": 0.379772266172256,
-   "phi_deg": -169.45771214266395,
-   "cand_ids": [
-    "P1383",
-    "P1432",
-    "P0160"
-   ],
-   "ordem": 4,
-   "scan_id": "S0038",
-   "crop_path": "crops/P1383.png",
-   "clean_path": null,
-   "twin_id": "P0833",
-   "twin_cell": [
-    8,
-    2
-   ],
-   "sheet": "render/sheets/S0038_P1383.jpg",
-   "ghost": [
-    [
-     -0.1326,
-     -0.8927
-    ],
-    [
-     -0.0803,
-     -0.8918
-    ],
-    [
-     -0.0313,
-     -0.8808
-    ],
-    [
-     0.0108,
-     -0.8564
-    ],
-    [
-     0.0373,
-     -0.8124
-    ],
-    [
-     0.05,
-     -0.7614
-    ],
-    [
-     0.0397,
-     -0.7106
-    ],
-    [
-     0.0248,
-     -0.6614
-    ],
-    [
-     0.0098,
-     -0.6122
-    ],
-    [
-     0.0089,
-     -0.5582
-    ],
-    [
-     0.0449,
-     -0.5248
-    ],
-    [
-     0.093,
-     -0.511
-    ],
-    [
-     0.1437,
-     -0.5052
-    ],
-    [
-     0.196,
-     -0.5045
-    ],
-    [
-     0.2498,
-     -0.5083
-    ],
-    [
-     0.3015,
-     -0.5168
-    ],
-    [
-     0.3531,
-     -0.5254
-    ],
-    [
-     0.4047,
-     -0.5339
-    ],
-    [
-     0.4556,
-     -0.5286
-    ],
-    [
-     0.4682,
-     -0.4775
-    ],
-    [
-     0.4726,
-     -0.4221
-    ],
-    [
-     0.4808,
-     -0.3688
-    ],
-    [
-     0.4847,
-     -0.3131
-    ],
-    [
-     0.4885,
-     -0.2575
-    ],
-    [
-     0.4844,
-     -0.2046
-    ],
-    [
-     0.4498,
-     -0.1721
-    ],
-    [
-     0.4015,
-     -0.1568
-    ],
-    [
-     0.3503,
-     -0.1553
-    ],
-    [
-     0.2996,
-     -0.1611
-    ],
-    [
-     0.2458,
-     -0.1571
-    ],
-    [
-     0.2085,
-     -0.1253
-    ],
-    [
-     0.2077,
-     -0.0713
-    ],
-    [
-     0.2159,
-     -0.0179
-    ],
-    [
-     0.2376,
-     0.0285
-    ],
-    [
-     0.2763,
-     0.0635
-    ],
-    [
-     0.3286,
-     0.0644
-    ],
-    [
-     0.378,
-     0.0513
-    ],
-    [
-     0.4274,
-     0.0382
-    ],
-    [
-     0.4672,
-     0.0616
-    ],
-    [
-     0.4774,
-     0.114
-    ],
-    [
-     0.4812,
-     0.1697
-    ],
-    [
-     0.4803,
-     0.2237
-    ],
-    [
-     0.4886,
-     0.2771
-    ],
-    [
-     0.483,
-     0.3295
-    ],
-    [
-     0.4869,
-     0.3851
-    ],
-    [
-     0.486,
-     0.4392
-    ],
-    [
-     0.4851,
-     0.4932
-    ],
-    [
-     0.4753,
-     0.5414
-    ],
-    [
-     0.4333,
-     0.5641
-    ],
-    [
-     0.3839,
-     0.5772
-    ],
-    [
-     0.33,
-     0.5812
-    ],
-    [
-     0.2762,
-     0.5852
-    ],
-    [
-     0.2254,
-     0.5794
-    ],
-    [
-     0.1732,
-     0.5785
-    ],
-    [
-     0.1256,
-     0.563
-    ],
-    [
-     0.0817,
-     0.544
-    ],
-    [
-     0.0721,
-     0.4914
-    ],
-    [
-     0.0824,
-     0.4406
-    ],
-    [
-     0.0926,
-     0.3898
-    ],
-    [
-     0.0888,
-     0.3342
-    ],
-    [
-     0.0599,
-     0.2943
-    ],
-    [
-     0.0271,
-     0.2573
-    ],
-    [
-     -0.0252,
-     0.2564
-    ],
-    [
-     -0.0736,
-     0.2716
-    ],
-    [
-     -0.0817,
-     0.3231
-    ],
-    [
-     -0.0748,
-     0.3772
-    ],
-    [
-     -0.0563,
-     0.4253
-    ],
-    [
-     -0.0525,
-     0.4809
-    ],
-    [
-     -0.0651,
-     0.5297
-    ],
-    [
-     -0.1091,
-     0.5539
-    ],
-    [
-     -0.1573,
-     0.5696
-    ],
-    [
-     -0.2089,
-     0.5782
-    ],
-    [
-     -0.2605,
-     0.5867
-    ],
-    [
-     -0.3128,
-     0.5858
-    ],
-    [
-     -0.3651,
-     0.5849
-    ],
-    [
-     -0.4174,
-     0.584
-    ],
-    [
-     -0.4681,
-     0.5783
-    ],
-    [
-     -0.5177,
-     0.5691
-    ],
-    [
-     -0.5359,
-     0.5237
-    ],
-    [
-     -0.535,
-     0.4697
-    ],
-    [
-     -0.5295,
-     0.4172
-    ],
-    [
-     -0.5272,
-     0.3645
-    ],
-    [
-     -0.5182,
-     0.3152
-    ],
-    [
-     -0.5152,
-     0.2619
-    ],
-    [
-     -0.5023,
-     0.212
-    ],
-    [
-     -0.4919,
-     0.1639
-    ],
-    [
-     -0.4691,
-     0.1201
-    ],
-    [
-     -0.4337,
-     0.078
-    ],
-    [
-     -0.3876,
-     0.0788
-    ],
-    [
-     -0.3404,
-     0.0949
-    ],
-    [
-     -0.2912,
-     0.1053
-    ],
-    [
-     -0.2396,
-     0.0968
-    ],
-    [
-     -0.2028,
-     0.0632
-    ],
-    [
-     -0.195,
-     0.0116
-    ],
-    [
-     -0.2032,
-     -0.0418
-    ],
-    [
-     -0.2159,
-     -0.0929
-    ],
-    [
-     -0.2546,
-     -0.1248
-    ],
-    [
-     -0.2847,
-     -0.1583
-    ],
-    [
-     -0.3332,
-     -0.1667
-    ],
-    [
-     -0.3871,
-     -0.1627
-    ],
-    [
-     -0.4409,
-     -0.1587
-    ],
-    [
-     -0.4927,
-     -0.1611
-    ],
-    [
-     -0.517,
-     -0.2005
-    ],
-    [
-     -0.5208,
-     -0.2561
-    ],
-    [
-     -0.52,
-     -0.3101
-    ],
-    [
-     -0.5157,
-     -0.3603
-    ],
-    [
-     -0.5088,
-     -0.4098
-    ],
-    [
-     -0.4884,
-     -0.4542
-    ],
-    [
-     -0.4548,
-     -0.4942
-    ],
-    [
-     -0.4102,
-     -0.5116
-    ],
-    [
-     -0.3565,
-     -0.5158
-    ],
-    [
-     -0.3093,
-     -0.5335
-    ],
-    [
-     -0.2759,
-     -0.5636
-    ],
-    [
-     -0.2886,
-     -0.6147
-    ],
-    [
-     -0.2974,
-     -0.6678
-    ],
-    [
-     -0.3004,
-     -0.7198
-    ],
-    [
-     -0.2863,
-     -0.7666
-    ],
-    [
-     -0.256,
-     -0.8078
-    ],
-    [
-     -0.2203,
-     -0.8436
-    ],
-    [
-     -0.1798,
-     -0.875
-    ]
-   ],
-   "theta_deg": -173.53,
-   "pose_known": true,
-   "pose_reason": "theta P0833 (registo (cantos, sem imagem)) + phi + rotação do gémeo",
-   "encaixe": {
-    "estado": "incompativel",
-    "fit_version": "m11-1",
-    "t_abs": 2.6656,
-    "pose": "prevista",
-    "m": 1,
-    "J": 10.12572897828121,
-    "lados": [
-     {
-      "dir": "E",
-      "vizinha": "P0224",
-      "tipo_vizinha": "T",
-      "lado": 2,
-      "tipo": "B",
-      "comp": true,
-      "hard": false,
-      "rms": 1.6461221008712936,
-      "dl": 0.28696882240012656,
-      "dE": 86.29254150390625,
-      "custo": 10.12572897828121
-     }
-    ],
-    "motivo": "custo 10,13 > T_abs 2,67"
-   }
-  },
-  {
-   "origin": "gemeo",
    "piece": "P1368",
    "lote": 9,
    "n_no_lote": 35,
@@ -2197,7 +1661,8 @@
    "reasons": [
     "208 candidatas; 0 sem 4 cantos; 146 de classe diferente (consulta BTBT); 58 falham as cordas; 4 passam",
     "forma ambígua: d1 0,619 > t95 0,507",
-    "imagem consistente: ΔE 11,8 <= p90 50 (céu)"
+    "imagem consistente: ΔE 11,8 <= p90 50 (céu)",
+    "encaixe com 3 vizinhas: custo 1,07 <= 2,67 (pose prevista)"
    ],
    "query": "P0051",
    "pair": null,
@@ -2209,7 +1674,7 @@
     "P1382",
     "P1418"
    ],
-   "ordem": 5,
+   "ordem": 4,
    "scan_id": "S0038",
    "crop_path": "crops/P1368.png",
    "clean_path": null,
@@ -2705,10 +2170,54 @@
    "pose_known": true,
    "pose_reason": "theta P0051 (registo (cantos, sem imagem)) + phi + rotação do gémeo",
    "encaixe": {
-    "estado": "nao_testado",
+    "estado": "ok",
     "fit_version": "m11-1",
     "t_abs": 2.6656,
-    "motivo": "vizinhas montadas sem forma ou pose no índice"
+    "pose": "prevista",
+    "m": 3,
+    "J": 1.0664935807410367,
+    "lados": [
+     {
+      "dir": "E",
+      "vizinha": "P1089",
+      "tipo_vizinha": "T",
+      "lado": 2,
+      "tipo": "B",
+      "comp": true,
+      "hard": false,
+      "rms": 0.5819585126945418,
+      "dl": 0.04407830843359761,
+      "dE": 4.968692779541016,
+      "custo": 1.0259224593918468
+     },
+     {
+      "dir": "S",
+      "vizinha": "P1141",
+      "tipo_vizinha": "B",
+      "lado": 3,
+      "tipo": "T",
+      "comp": true,
+      "hard": false,
+      "rms": 0.5227970691079588,
+      "dl": 0.6381246728859189,
+      "dE": 8.388833999633789,
+      "custo": 1.3141534627887959
+     },
+     {
+      "dir": "W",
+      "vizinha": "P1272",
+      "tipo_vizinha": "T",
+      "lado": 0,
+      "tipo": "B",
+      "comp": true,
+      "hard": false,
+      "rms": 0.4600892738713603,
+      "dl": 0.23969280775481394,
+      "dE": 4.411418437957764,
+      "custo": 0.8594048200424675
+     }
+    ],
+    "motivo": null
    }
   },
   {
@@ -2733,7 +2242,7 @@
    "rank": null,
    "score": 0.2775371300865654,
    "phi_deg": null,
-   "ordem": 6,
+   "ordem": 5,
    "scan_id": "S0028",
    "crop_path": "crops/P0980.png",
    "clean_path": null,
@@ -2774,7 +2283,7 @@
    "rank": null,
    "score": 0.2775371300865654,
    "phi_deg": null,
-   "ordem": 7,
+   "ordem": 6,
    "scan_id": "S0032",
    "crop_path": "crops/P1113.png",
    "clean_path": null,
@@ -2815,7 +2324,7 @@
    "rank": null,
    "score": 0.3436895744965428,
    "phi_deg": null,
-   "ordem": 8,
+   "ordem": 7,
    "scan_id": "S0038",
    "crop_path": "crops/P1389.png",
    "clean_path": null,
@@ -2856,7 +2365,7 @@
    "rank": null,
    "score": 0.3436895744965428,
    "phi_deg": null,
-   "ordem": 9,
+   "ordem": 8,
    "scan_id": "S0039",
    "crop_path": "crops/P1425.png",
    "clean_path": null,
@@ -2897,7 +2406,7 @@
    "rank": null,
    "score": 0.4887513824426357,
    "phi_deg": null,
-   "ordem": 10,
+   "ordem": 9,
    "scan_id": "S0007",
    "crop_path": "crops/P0181.png",
    "clean_path": null,
@@ -2938,7 +2447,7 @@
    "rank": null,
    "score": 0.4887513824426357,
    "phi_deg": null,
-   "ordem": 11,
+   "ordem": 10,
    "scan_id": "S0028",
    "crop_path": "crops/P0968.png",
    "clean_path": null,
@@ -2979,7 +2488,7 @@
    "rank": null,
    "score": 0.4837089309364004,
    "phi_deg": null,
-   "ordem": 12,
+   "ordem": 11,
    "scan_id": "S0007",
    "crop_path": "crops/P0148.png",
    "clean_path": null,
@@ -3020,7 +2529,7 @@
    "rank": null,
    "score": 0.4837089309364004,
    "phi_deg": null,
-   "ordem": 13,
+   "ordem": 12,
    "scan_id": "S0029",
    "crop_path": "crops/P1030.png",
    "clean_path": null,
@@ -3093,7 +2602,7 @@
      "margin": 1.907
     }
    ],
-   "ordem": 14,
+   "ordem": 13,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -3162,7 +2671,7 @@
      "margin": 1.866
     }
    ],
-   "ordem": 15,
+   "ordem": 14,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -3231,7 +2740,7 @@
      "margin": 1.741
     }
    ],
-   "ordem": 16,
+   "ordem": 15,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -3781,7 +3290,7 @@
      "margin": 1.661
     }
    ],
-   "ordem": 17,
+   "ordem": 16,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -4331,7 +3840,7 @@
      "margin": 1.64
     }
    ],
-   "ordem": 18,
+   "ordem": 17,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -4400,7 +3909,7 @@
      "margin": 1.639
     }
    ],
-   "ordem": 19,
+   "ordem": 18,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -4469,7 +3978,7 @@
      "margin": 1.418
     }
    ],
-   "ordem": 20,
+   "ordem": 19,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -4538,7 +4047,7 @@
      "margin": 1.322
     }
    ],
-   "ordem": 21,
+   "ordem": 20,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -4607,7 +4116,7 @@
      "margin": 1.289
     }
    ],
-   "ordem": 22,
+   "ordem": 21,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -4676,7 +4185,7 @@
      "margin": 1.197
     }
    ],
-   "ordem": 23,
+   "ordem": 22,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -4745,7 +4254,7 @@
      "margin": 1.15
     }
    ],
-   "ordem": 24,
+   "ordem": 23,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5295,7 +4804,7 @@
      "margin": 1.136
     }
    ],
-   "ordem": 25,
+   "ordem": 24,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5364,7 +4873,7 @@
      "margin": 1.08
     }
    ],
-   "ordem": 26,
+   "ordem": 25,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5433,7 +4942,7 @@
      "margin": 1.076
     }
    ],
-   "ordem": 27,
+   "ordem": 26,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -5983,7 +5492,7 @@
      "margin": 1.074
     }
    ],
-   "ordem": 28,
+   "ordem": 27,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6052,7 +5561,7 @@
      "margin": 1.073
     }
    ],
-   "ordem": 29,
+   "ordem": 28,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6121,7 +5630,7 @@
      "margin": 1.067
     }
    ],
-   "ordem": 30,
+   "ordem": 29,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6190,7 +5699,7 @@
      "margin": 1.059
     }
    ],
-   "ordem": 31,
+   "ordem": 30,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6259,7 +5768,7 @@
      "margin": 1.057
     }
    ],
-   "ordem": 32,
+   "ordem": 31,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6328,7 +5837,7 @@
      "margin": 1.055
     }
    ],
-   "ordem": 33,
+   "ordem": 32,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6397,7 +5906,7 @@
      "margin": 1.045
     }
    ],
-   "ordem": 34,
+   "ordem": 33,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6466,7 +5975,7 @@
      "margin": 1.039
     }
    ],
-   "ordem": 35,
+   "ordem": 34,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6535,7 +6044,7 @@
      "margin": 1.031
     }
    ],
-   "ordem": 36,
+   "ordem": 35,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6604,7 +6113,7 @@
      "margin": 1.03
     }
    ],
-   "ordem": 37,
+   "ordem": 36,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -6673,7 +6182,7 @@
      "margin": 1.02
     }
    ],
-   "ordem": 38,
+   "ordem": 37,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7223,7 +6732,7 @@
      "margin": 1.017
     }
    ],
-   "ordem": 39,
+   "ordem": 38,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7292,7 +6801,7 @@
      "margin": 1.011
     }
    ],
-   "ordem": 40,
+   "ordem": 39,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7361,7 +6870,7 @@
      "margin": 1.007
     }
    ],
-   "ordem": 41,
+   "ordem": 40,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7430,7 +6939,7 @@
      "margin": 1.003
     }
    ],
-   "ordem": 42,
+   "ordem": 41,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7499,7 +7008,7 @@
      "margin": 1.001
     }
    ],
-   "ordem": 43,
+   "ordem": 42,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7568,7 +7077,7 @@
      "margin": 1.001
     }
    ],
-   "ordem": 44,
+   "ordem": 43,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -7637,7 +7146,7 @@
      "margin": 0.874
     }
    ],
-   "ordem": 45,
+   "ordem": 44,
    "scan_id": null,
    "crop_path": null,
    "clean_path": null,
@@ -8625,6 +8134,7 @@
   "P1380",
   "P1381",
   "P1382",
+  "P1383",
   "P1384",
   "P1385",
   "P1386",
@@ -8675,54 +8185,5 @@
   "P1433"
  ],
  "notes": [],
- "suprimidas": [
-  {
-   "origin": "borda",
-   "query": "P0512",
-   "piece": "P1422",
-   "lote": 9,
-   "n_no_lote": 89,
-   "cell": [
-    1,
-    29
-   ],
-   "candidate": {
-    "id": "P1422",
-    "d1_mm": 0.3678430399775536,
-    "phi_deg": 101.85756678987998,
-    "chord_ok": true,
-    "image": null
-   },
-   "d1_mm": 0.3678430399775536,
-   "decision_shape": "aceite",
-   "reason": "candidata única P1422: d1 0,368 mm, não proposta (decisão 2026-11-01)",
-   "cand_ids": [
-    "P1422"
-   ]
-  },
-  {
-   "origin": "gemeo",
-   "query": "P0512",
-   "piece": "P1422",
-   "lote": 9,
-   "n_no_lote": 89,
-   "cell": [
-    1,
-    29
-   ],
-   "candidate": {
-    "id": "P1422",
-    "d1_mm": 0.3678430399775536,
-    "phi_deg": 101.85756678987998,
-    "chord_ok": true,
-    "image": null
-   },
-   "d1_mm": 0.3678430399775536,
-   "decision_shape": "aceite",
-   "reason": "candidata única P1422: d1 0,368 mm, não proposta (decisão 2026-11-01)",
-   "cand_ids": [
-    "P1422"
-   ]
-  }
- ]
+ "suprimidas": []
 }

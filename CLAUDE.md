@@ -128,3 +128,16 @@ O estado corrente e as decisões que esperam pelo Tiago vivem em `docs/HANDOFF.m
 ## Reports
 
 At the start of every session run `python -m src.reports --project projects/alpes --list` and `python -m src.consistency --project projects/alpes`, treat the open reports and the suspects as the work list, and close each report only with Tiago's say-so (`--close R#### --nota`; also `--reopen`, `--delete` (soft, reversible), `--restore`; `--list --all --eliminados`). Reports come from the GUI button «Reportar» (types `mal_lida`, `mal_colocada`, `nao_encaixa`, `outro` + free text) and live in `projects/alpes/reports.jsonl` (append-only: the report line, `evento: "edicao"` lines and `evento: "estado"` lines, folded by `reports.read_reports`) with a server-made capture in `projects/alpes/reports/R####.jpg`; every action is also an informative event in `log.jsonl` (`report`, `report_edited`, `report_closed`, `report_reopened`, `report_deleted`, `report_restored`). One code path for GUI and CLI: `reports.set_state`.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
+
+No início da sessão, ler primeiro docs/STATUS.md. Usar o graphify só para perguntas sobre a estrutura do código.
