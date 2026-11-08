@@ -34,6 +34,7 @@
       <label class="toggle"><input type="checkbox" id="tg-ghost" checked><span>Fantasmas</span></label>
       <label class="toggle"><input type="checkbox" id="tg-grid" checked><span>Grelha</span></label>
       <label class="toggle"><input type="checkbox" id="tg-sug"><span>Sugestões</span></label>
+      <button type="button" class="toggle act-btn" id="tg-act" data-act-toggle="1" aria-pressed="false" aria-controls="atividade" title="registo de atividade do servidor (consultas, caches, eventos, pedidos lentos)"><span>Atividade</span></button>
     </div>
   </header>
 
@@ -64,6 +65,7 @@
       <button type="button" id="z-in" aria-label="Aproximar">+</button>
       <button type="button" id="z-out" aria-label="Afastar">−</button>
       <button type="button" id="z-fit" aria-label="Ver o tabuleiro inteiro" title="Ver o tabuleiro inteiro">⤢</button>
+      <button type="button" id="z-act" data-act-toggle="1" aria-pressed="false" aria-controls="atividade" aria-label="Atividade do servidor" title="registo de atividade do servidor">≣</button>
     </div>
     <div class="board-hint" id="board-hint">roda ou pinça: zoom · arrastar: mover · toque numa célula: abrir</div>
   </main>
@@ -130,9 +132,21 @@
 
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="ced" hidden role="dialog" aria-modal="true" aria-label="Editor de contorno"></div>
+<section id="atividade" hidden aria-label="Atividade do servidor">
+  <div class="act-head">
+    <strong>Atividade</strong>
+    <span class="small muted" id="act-count"></span>
+    <div id="act-filters" class="act-filters" aria-label="filtrar por tipo e nível"></div>
+    <span class="small muted act-file" id="act-file"></span>
+    <button type="button" class="btn slim" id="act-clear" title="limpa só a vista; o ficheiro e o servidor mantêm tudo">limpar vista</button>
+    <button type="button" class="btn slim" id="act-close" aria-label="Fechar o painel de atividade">Fechar</button>
+  </div>
+  <ol id="act-lines" class="act-lines"></ol>
+</section>
 <script src="editor.js"></script>
 <script src="pose.js"></script>
 <script src="holes.js"></script>
+<script src="activity.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

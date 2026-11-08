@@ -40,7 +40,16 @@ Design (docs/gui-design.md):
 * **Events** (SSE ``/api/events``): ``board_changed``, ``fetch_changed``, ``piece_changed``,
   ``ingest_progress``, ``prepare_progress``, ``report_added``, ``report_edited``, ``report_changed``,
   ``suspeitas_changed`` (summary of ``/api/suspeitas`` + ``n_em_reports``: after a board write, a report write
-  or a false-alarm mark), ``ready``.
+  or a false-alarm mark), ``holes_changed``, ``holes_progress`` (strips ``n/N`` of a cold hole ranking),
+  ``atividade`` (one activity line, :mod:`src.activity`), ``ready``.
+* **Activity** (:mod:`src.activity`, docs/gui-design.md §23): every ``Gui.log`` line, the start-up steps, the
+  queries (time per step), the caches (board, holes, strips), the progress of the long operations, every event
+  written to the log and the slow requests (> 1 s; never a line per trivial request) go to the terminal, to
+  ``<project>/logs/servidor-AAAAMMDD.log`` and to a ring the GUI panel reads (``GET /api/atividade``).
+* **Hole suggestions in «Vai buscar»** (M11_CRITERIOS §8, docs/gui-design.md §22): ``/api/fetch`` carries
+  ``buracos_alta`` (the rank-1 candidate of every ``alta`` hole that agrees with the joint assignment, the counter
+  of the ``alta`` decisions with Wilson 95 % and the pause state); ``POST /api/holes/alta/reativar`` logs
+  ``holes_alta_resumed``; ``POST /api/holes/{l}/{c}/confirmar|rejeitar`` accept ``gemea: true`` (fused card).
 * **Manual pose** («Editar posicionamento», docs/diagnostico/render/POSE_MANUAL.md): ``GET /api/pieces/{id}/pose``
   (contour in cell-width units about the pivot, not rotated, the neighbours, the SVG transform),
   ``POST …/pose/avaliar`` (seams + orientation of a candidate pose, read-only, no lock),
@@ -59,6 +68,7 @@ import asyncio
 import collections
 import datetime as _dt
 import json
+import logging
 import os
 import re
 import socket
@@ -71,6 +81,7 @@ from typing import Optional
 import cv2
 import numpy as np
 
+from src import activity
 from src import overrides as OV
 from src import strokes as ST
 from src.query import fetch_group, mounted_neighbours
@@ -157,7 +168,21 @@ def cell_text(cell: dict) -> str:
 	"""Plain text of a board cell: state plus who says so (photo only vs the user)."""
 	return CELL_SOURCE_TXT.get((cell["estado"], cell.get("fonte")), CELL_TXT.get(cell["estado"], cell["estado"]))
 ORIGIN_TXT = {"gemeo": "gémea colocada", "borda": "borda", "par": "par de soltas",
-			  "posicao_conhecida": "posição conhecida", "seccao": "grupo sem lugar"}
+			  "posicao_conhecida": "posição conhecida", "seccao": "grupo sem lugar", "buraco": "molde do buraco"}
+_LOG_TIPO = {"servidor": "servidor", "preparar": "arranque", "importar": "servidor"}
+_LOG_TAG = re.compile(r"^\[(\w+)\]\s*")
+
+
+def _activity_log(msg: str) -> None:
+	"""Default ``Gui.log``: a ``[tag] text`` line goes to the activity logger of that tag (``[preparar]`` -> ``arranque``);
+	a traceback is an error."""
+	m = _LOG_TAG.match(str(msg))
+	tipo = _LOG_TIPO.get(m.group(1), "servidor") if m else "servidor"
+	text = str(msg)[m.end():] if m else str(msg)
+	if text.startswith("Traceback") or text.startswith("ERRO"):
+		activity.get("erro").error(text.rstrip())
+	else:
+		activity.get(tipo).info(text)
 
 
 # ---------------------------------------------------------------- pure helpers
@@ -279,12 +304,20 @@ class Gui:
 	"""
 
 	def __init__(self, project_path: str, *, prepare: bool = True, use_image: bool = True,
-				 uploads: Optional[str] = None, log=print):
+				 uploads: Optional[str] = None, log="activity", ring=None):
 		self.path = os.path.abspath(project_path)
 		self.pr = Project.open(self.path)
 		self.use_image = use_image
 		self.uploads = uploads or os.path.join(REPO, "images", "pieces", "lotes")
-		self.log = log or (lambda *a, **k: None)
+		# ``log``: "activity" (default) routes every line to :mod:`src.activity` (silent until ``activity.setup``);
+		# a callable gets the line as before; None = silent.
+		self.log = _activity_log if log == "activity" else (log or (lambda *a, **k: None))
+		self.ring = ring if ring is not None else activity.RingHandler()
+		self.ring.callback = lambda rec: self.emit("atividade", rec)
+		self._trigger = "pedido"     # who asked for the next board (re)composition: arranque | escrita | externo | pedido
+		self._alta = None            # (version, fit.alta_counter)
+		self._holes_progress = None  # {n, N, segundos} while the strips of a cold hole ranking are computed
+		self._holes_hit_logged = None
 		self.wlock = threading.RLock()
 		self.rlock = threading.RLock()
 		self.cond = threading.Condition()
@@ -349,7 +382,9 @@ class Gui:
 				self.pr = Project.open(self.path)
 				self._known_stat = st
 				self._placements = None
-				self.log(f"[servidor] log.jsonl mudou fora do servidor: projeto reaberto")
+				self._alta = None
+				self._trigger = "externo"
+				self.log(f"[servidor] log.jsonl mudou fora do servidor: projeto reaberto (versão {st[0]})")
 				self.emit("board_changed", {"versao": st[0], "externo": True})
 				self.emit("fetch_changed", {})
 		finally:
@@ -371,6 +406,22 @@ class Gui:
 		self.log(line)
 		self.prep_log.append(msg)
 		self.emit("prepare_progress", {"msg": msg})
+
+	def activity_setup(self, *, console: bool = True, file: bool = True, stream=None):
+		""":func:`src.activity.setup` with this project's ``logs/`` folder and this GUI's ring (the server's ``main``)."""
+		return activity.setup(self.path if file else None, console=console, ring=self.ring, stream=stream)
+
+	def activity_json(self, desde: Optional[int] = None, n: int = 300) -> dict:
+		"""``GET /api/atividade``: the ring lines after ``desde`` (or the last ``n``), the types and levels."""
+		recs = self.ring.after(int(desde)) if desde is not None else self.ring.last(n)
+		return {"linhas": recs, "seq": self.ring.seq, "tipos": list(activity.TIPOS), "niveis": list(activity.NIVEIS),
+				"ficheiro": self._activity_file()}
+
+	def _activity_file(self) -> Optional[str]:
+		for hd in logging.getLogger(activity.LOGGER).handlers:
+			if isinstance(hd, activity.DailyFileHandler):
+				return hd.path or hd.path_for(_dt.date.today())
+		return None
 
 	def _check_stale(self) -> None:
 		"""Assets (npz, crops) against the log; stale sheets re-segmented (:func:`src.render.rebuild_stale`).
@@ -416,9 +467,12 @@ class Gui:
 			self._check_stale()
 			self._prep("a compor o tabuleiro")
 			t0 = time.time()
+			self._trigger = "arranque"
 			self.board_jpg(BOARD_PPC)
-			self._prep(f"tabuleiro pronto ({time.time() - t0:.1f} s)")
+			self._prep(f"tabuleiro pronto ({time.time() - t0:.1f} s; versão do log {self.version()})")
+			t1 = time.time()
 			self.ghosts()
+			activity.get("arranque").info(f"fantasmas prontos ({time.time() - t1:.1f} s)")
 		except Exception as e:  # noqa: BLE001 - the server must still come up; reported on the page
 			self._prep(f"ERRO na preparação: {type(e).__name__}: {e}")
 			self.log(traceback.format_exc())
@@ -562,9 +616,100 @@ class Gui:
 		if c is None or c.calib != cal:
 			c = F._Cache(self.pr, cal)
 			self._fitc = c
+			activity.get("cache").info(f"tiras das peças: {c.n_loaded} em cache (render/fit/strips.npz)"
+									   + ("" if c.n_loaded else "; a primeira lista de buracos calcula-as (≈ 0,3 s por peça)"))
 		elif c.pr is not self.pr:
 			c.rebind(self.pr)
 		return c
+
+	def _alta_counter(self) -> dict:
+		"""``fit.alta_counter`` of the current log (cached per version)."""
+		from src import fit as F
+		ver = self.version()
+		c = self._alta
+		if c is None or c[0] != ver:
+			c = (ver, F.alta_counter(self.pr))
+			self._alta = c
+		return c[1]
+
+	def alta_json(self) -> dict:
+		"""The ``alta`` hole suggestions for «Vai buscar» (M11_CRITERIOS §8): ``{a_calcular, em_pausa, contador,
+		progresso, entries, conflitos, n_alta}``. Each entry has the shape of a fetch entry (``origin='buraco'``,
+		``decision='alta'``, ``grupo='coloca_agora'``) plus ``hole`` (rank, J, margem, m, d1, d2, zona, vizinhas),
+		``desenho`` (as ``GET /api/holes/{l}/{c}``), ``fundida_com_gemea`` (the accepted twin proposal says the same
+		piece and cell: one card, two chips) and ``conflito_gemea`` (the twin proposal sends the piece elsewhere).
+		While paused the entries are still returned (the GUI moves them to the «Buracos» page)."""
+		from src import fit as F
+		hj = self.holes_json(wait=False)
+		cnt = self._alta_counter()
+		out = {"a_calcular": bool(hj.get("a_calcular")), "em_pausa": bool(cnt["em_pausa"]), "contador": cnt,
+			   "progresso": self._holes_progress if hj.get("a_calcular") else None, "entries": [], "conflitos": [],
+			   "n_alta": 0, "erro": hj.get("erro")}
+		if hj.get("a_calcular") or hj.get("erro"):
+			return out
+		twins = {}
+		for e in self.fetch_entries():
+			if e.get("piece") and e.get("cell") and e.get("origin") in ("gemeo", "borda") and e.get("decision") in ("aceite", "ambigua"):
+				twins.setdefault(e["piece"], []).append((tuple(e["cell"]), e))
+		rows = []
+		for h in hj.get("buracos", []):
+			if h["confianca"] != "alta" or not h["candidatas"]:
+				continue
+			out["n_alta"] += 1
+			c0 = h["candidatas"][0]
+			if int(c0["rank"]) != 1:
+				continue
+			if h.get("atribuida") not in (None, c0["piece"]):
+				out["conflitos"].append({"cell": h["cell"], "piece": c0["piece"], "atribuida": h["atribuida"]})
+				continue
+			pid = c0["piece"]
+			p = self.pr.pieces.get(pid)
+			tw = twins.get(pid, [])
+			same = [e for cl, e in tw if cl == tuple(h["cell"])]
+			other = [cl for cl, _ in tw if cl != tuple(h["cell"])]
+			e = {"origin": "buraco", "piece": pid, "lote": c0.get("lote"), "n_no_lote": c0.get("n_no_lote"), "scan_id": c0.get("scan_id"),
+				 "cell": list(h["cell"]), "decision": "alta", "margin": h.get("margem"), "dE": None, "d1_mm": None, "query": None, "pair": None,
+				 "rank": c0["rank"], "score": c0["J"], "phi_deg": None, "theta_deg": c0.get("theta_deg"),
+				 "pose_known": c0.get("theta_deg") is not None, "grupo": "coloca_agora", "origem_txt": ORIGIN_TXT["buraco"],
+				 "estado_atual": (p.estado if p is not None else None), "crop_path": (p.crop_path if p is not None else None),
+				 "vizinhas_montadas": h["m"], "reasons": list(h.get("razoes") or []),
+				 "razoes_txt": [f"{h['m']} vizinhas montadas ({', '.join(v['dir'] + ' ' + v['piece'] for v in h['vizinhas'])}): a forma e a imagem "
+								f"dos lados encaixam (custo {_fmt(c0['J'])})",
+								f"a 2.ª candidata fica a {('> 999' if (h.get('margem') or 0) > 999 else _fmt(h['margem']))}× (margem ≥ 1,5 exigida)"
+								+ (f"; {h['n_finitas']} de {h['n_pool']} soltas com custo finito" if h.get("n_pool") else "")],
+				 "hole": {"rank": c0["rank"], "J": c0["J"], "custo": c0["J"], "margem": h.get("margem"), "m": h["m"], "d1": h.get("d1"),
+						  "d2": h.get("d2"), "zona": h.get("zona"), "vizinhas": h["vizinhas"], "confianca": h["confianca"],
+						  "fit_version": F.FIT_VERSION, "candidatas": h["candidatas"]},
+				 "fundida_com_gemea": bool(same), "gemea_decision": (same[0].get("decision") if same else None),
+				 "twin_id": (same[0].get("twin_id") if same else None), "twin_cell": (same[0].get("twin_cell") if same else None),
+				 "conflito_gemea": (list(other[0]) if other else None), "desenho": self._hole_drawing(h)}
+			rows.append(e)
+		rows.sort(key=lambda e: (-(e["margin"] or 0.0), e["piece"]))
+		for i, e in enumerate(rows, 1):
+			e["ordem"] = i
+		out["entries"] = rows
+		return out
+
+	def resume_alta(self, body: dict) -> dict:
+		"""``POST /api/holes/alta/reativar`` ``{nota?}``: log ``holes_alta_resumed`` (the pause window restarts)."""
+		if not self.wlock.acquire(timeout=0.5):
+			raise Busy(self.job or "ocupado")
+		try:
+			if self.job:
+				raise Busy(self.job)
+			self.sync_locked()
+			nota = str((body or {}).get("nota") or "").strip()[:200]
+			cnt = self._alta_counter()
+			ev = self.pr.resume_alta(autor="tiago", nota=nota)
+			self.pr.save()
+			self._known_stat = self._log_stat()
+			self._alta = None
+			activity.get("buracos").info(f"sugestões alta reativadas (janela anterior: {cnt['janela']['falhas']} falhas em {cnt['janela']['n']})")
+			self.emit("fetch_changed", {})
+			self.emit("holes_changed", {"versao": self.version(), "reativado": True})
+			return {"ok": True, "evento": ev, "contador": self._alta_counter()}
+		finally:
+			self.wlock.release()
 
 	def _holes_empty(self, key, **extra) -> dict:
 		return {"versao": key[0], "a_calcular": True, "buracos": [], "resumo": {}, **extra}
@@ -578,6 +723,9 @@ class Gui:
 		key = (self.version(), id(self.pr))
 		c = getattr(self, "_holes", None)
 		if c is not None and c[0] == key:
+			if self._holes_hit_logged != key:
+				self._holes_hit_logged = key
+				activity.get("cache").info(f"buracos: cache usada (versão {key[0]}, {c[1].get('resumo', {}).get('n_buracos', 0)} buracos)")
 			return c[1]
 		th = getattr(self, "_holes_thread", None)
 		if th is not None and th.is_alive():
@@ -594,17 +742,32 @@ class Gui:
 		th.start()
 		return self._holes_empty(key)
 
+	def _holes_progress_cb(self, n: int, N: int, secs: float) -> None:
+		self._holes_progress = {"n": n, "N": N, "segundos": round(secs, 1)}
+		activity.get("progresso").info(f"tiras das peças montadas e soltas: {n}/{N} ({secs:.0f} s)")
+		self.emit("holes_progress", dict(self._holes_progress))
+
 	def _compute_holes(self, key) -> dict:
 		from src import fit as F
 		t0 = time.time()
+		activity.get("buracos").info(f"buracos: a recalcular o ranking (versão {key[0]})")
 		try:
 			cache = self._fit_cache()
-			r = self.read(lambda: F.rank_all(self.pr, calib=cache.calib, cache=cache))
+			r = self.read(lambda: F.rank_all(self.pr, calib=cache.calib, cache=cache, progress=self._holes_progress_cb))
 		except Exception as e:  # noqa: BLE001 - the ranking is informative; the GUI shows the error
 			self.log(f"[servidor] buracos não calculados: {e}")
 			r = {"error": str(e)}
+		self._holes_progress = None
 		out = self._holes_payload(r, key, time.time() - t0)
 		self._holes = (key, out)
+		rs = out["resumo"]
+		tiras = r.get("tiras") or {}
+		if "erro" in rs:
+			activity.get("buracos").warning(f"buracos: sem ranking ({rs['erro']}) em {time.time() - t0:.1f} s")
+		else:
+			activity.get("buracos").info(f"buracos: {rs['n_buracos']} buracos × {rs['n_soltas']} soltas em {rs['segundos']} s; "
+										 f"alta {rs['por_confianca'].get('alta', 0)} ({rs['alta_m2']} com ≥ 2 viz.), média {rs['por_confianca'].get('media', 0)}, "
+										 f"sem {rs['por_confianca'].get('sem', 0)}; tiras calculadas {tiras.get('calculadas', 0)}, em cache {tiras.get('em_cache', 0)}")
 		self.emit("holes_changed", dict(out["resumo"], versao=key[0]))
 		return out
 
@@ -694,6 +857,7 @@ class Gui:
 		from src import fit as F
 		from src.confirm import confirm
 		pid = body.get("piece") if isinstance(body, dict) else None
+		gemea = bool(body.get("gemea")) if isinstance(body, dict) else False
 		if not self.wlock.acquire(timeout=0.5):
 			raise Busy(self.job or "ocupado")
 		try:
@@ -722,10 +886,17 @@ class Gui:
 			before = board_snapshot(pr.board, pr.pieces)
 			t0 = time.time()
 			kw = {"use_image": self.use_image}
-			r = confirm(pr, pid, hole=((l, c), meta) if confirm_it else None, hole_reject=None if confirm_it else ((l, c), meta), **kw)
+			r = confirm(pr, pid, hole=((l, c), meta) if confirm_it else None, hole_reject=None if confirm_it else ((l, c), meta),
+						gemea=gemea, **kw)
 			if "error" in r:
 				self._known_stat = self._log_stat()
 				return {"error": r["error"]}
+			if meta.get("confianca") == "alta" and meta.get("rank") == 1:
+				self._alta = None
+				cnt = self._alta_counter()
+				activity.get("buracos").info(f"decisão alta {'confirmada' if confirm_it else 'REJEITADA'}: {pid} → ({l},{c}); contador "
+											 f"{cnt['acertos']}/{cnt['falhas']}/{cnt['total']}, janela {cnt['janela']['falhas']} falhas em {cnt['janela']['n']}"
+											 + ("; SUGESTÕES ALTA EM PAUSA" if cnt["em_pausa"] else ""))
 			now = board_snapshot(pr.board, pr.pieces)
 			placed = [p.id for p in pr.pieces.values() if p.estado == "colocada"
 					  and before[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]
@@ -757,6 +928,7 @@ class Gui:
 		if b is not None and b["ver"] == ver:
 			return b
 		jp, mp = self._disk_cache(BOARD_PPC)
+		from_disk = False
 		if b is None and os.path.exists(jp) and os.path.exists(mp):
 			try:
 				with open(mp, encoding="utf-8") as f:
@@ -764,11 +936,14 @@ class Gui:
 				img = cv2.imdecode(np.fromfile(jp, np.uint8), cv2.IMREAD_COLOR)
 				if img is not None and meta.get("snap") is not None and meta.get("pl_mtime") == plm:
 					b = {"ver": meta.get("ver"), "img": img, "snap": [tuple(x) for x in meta["snap"]], "jpg": None}
+					from_disk = True
 			except (OSError, ValueError):
 				b = None
 		rows, cols = self.pr.profile.rows, self.pr.profile.cols
 		t0 = time.time()
 		how = "completo"
+		ver0 = None if b is None else b.get("ver")
+		ch = []
 		if b is not None:
 			ch = changed_cells(b["snap"], snap, cols)
 			if not ch:
@@ -798,8 +973,11 @@ class Gui:
 				json.dump({"ver": ver, "ppc": BOARD_PPC, "pl_mtime": self._pl_mtime(), "snap": snap}, f)
 		except OSError as e:
 			self.log(f"[servidor] cache do tabuleiro não gravada: {e}")
+		trig, self._trigger = self._trigger, "pedido"
 		if how != "sem mudanças":
-			self.log(f"[servidor] tabuleiro {how} em {time.time() - t0:.1f} s")
+			cells = (" " + ", ".join(f"({l},{c})" for l, c in ch)) if 0 < len(ch) <= 5 else ""
+			activity.get("cache").info(f"tabuleiro {how}{cells} em {time.time() - t0:.1f} s (versão do log {ver0} → {ver}, gatilho: {trig}"
+									   + (", a partir da cache do disco render/gui" if from_disk else "") + ")")
 		return b
 
 	def board_jpg(self, ppc: float = BOARD_PPC, region: Optional[tuple] = None) -> bytes:
@@ -1047,8 +1225,13 @@ class Gui:
 			if pid and pid in self.pr.pieces:
 				e["estado_atual"] = self.pr.piece(pid).estado
 			entries.append(e)
+		try:
+			alta = self.alta_json()
+		except Exception as e:  # noqa: BLE001 - the twin list must never depend on the hole ranking
+			self.log(f"[servidor] sugestões de buraco indisponíveis: {e}")
+			alta = {"a_calcular": False, "em_pausa": False, "contador": None, "entries": [], "conflitos": [], "erro": str(e)}
 		return {"t": f.get("t"), "entries": entries, "suprimidas": f.get("suprimidas", []),
-				"notes": f.get("notes", []), "rest": len(f.get("rest", []) or [])}
+				"notes": f.get("notes", []), "rest": len(f.get("rest", []) or []), "buracos_alta": alta}
 
 	def cell_json(self, l: int, c: int) -> dict:
 		pr = self.pr
@@ -1141,14 +1324,21 @@ class Gui:
 		return out
 
 	def status_json(self) -> dict:
+		try:
+			cnt = self._alta_counter()
+		except Exception:  # noqa: BLE001
+			cnt = None
 		return {"estado": self.state, "job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
-				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info}
+				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info,
+				"contador_alta": cnt, "atividade_seq": self.ring.seq}
 
 	# ------------------------------------------------------------ writes
 	def _after_write(self, before_snap: list, placed: list) -> dict:
 		"""Refresh render assets of newly placed pieces, bump caches, emit events."""
 		self._known_stat = self._log_stat()
 		self._placements = None
+		self._alta = None
+		self._trigger = "escrita"
 		if placed:
 			self._refresh_render_assets(placed)
 		snap = board_snapshot(self.pr.board, self.pr.pieces)
@@ -1614,7 +1804,7 @@ class Gui:
 			raise ValueError("nota deve ser texto")
 
 		def do(p, e0):
-			antes = render.pose_brief(e0)
+			antes = render.pose_brief(e0, full=True)      # the automatic pose, kept whole: the pair (auto, manual) is the GT of --pares
 			self.pr.set_pose(pid, th, dx, dy, nota=(nota or "").strip(), antes=antes, pivot_mm=e0["pivot_mm"])
 			return {"antes": antes}
 
@@ -2042,6 +2232,17 @@ def create_app(gui: Gui):
 	app.add_middleware(GZipMiddleware, minimum_size=2000)
 	app.state.gui = gui
 
+	@app.middleware("http")
+	async def _slow_requests(request: Request, call_next):
+		"""One activity line per request slower than :data:`src.activity.SLOW_REQUEST_S`; nothing for the rest."""
+		t0 = time.perf_counter()
+		resp = await call_next(request)
+		path = request.url.path
+		if path != "/api/events":
+			activity.slow_request(request.method, path + (f"?{request.url.query}" if request.url.query else ""),
+								  time.perf_counter() - t0, resp.status_code)
+		return resp
+
 	def ready():
 		gui.sync()
 		if gui.state != "pronto":
@@ -2368,6 +2569,29 @@ def create_app(gui: Gui):
 		ready()
 		return JSON(gui.holes_json())
 
+	@app.get("/api/holes/alta")
+	def get_holes_alta():
+		ready()
+		return JSON(gui.read(gui.alta_json))
+
+	@app.post("/api/holes/alta/reativar")
+	async def post_holes_alta_reativar(request: Request):
+		ready()
+		try:
+			body = await request.json()
+		except ValueError:
+			body = {}
+		if not isinstance(body, dict):
+			return JSON({"error": "o corpo deve ser um objeto JSON"}, status_code=400)
+		r = await asyncio.to_thread(lambda: guard(lambda: gui.resume_alta(body)))
+		if "error" in r:
+			return JSON(r, status_code=400)
+		return JSON(r)
+
+	@app.get("/api/atividade")
+	def get_atividade(desde: Optional[int] = None, n: int = 300):
+		return JSON(gui.activity_json(desde, max(1, min(int(n), 1000))))
+
 	@app.get("/api/holes/{l}/{c}")
 	def get_hole(l: int, c: int):
 		ready()
@@ -2485,20 +2709,23 @@ def main(argv=None) -> int:
 	except ImportError:
 		print("erro: falta o uvicorn (pip install -r requirements.txt)")
 		return 1
+	ring = activity.RingHandler()
+	activity.setup(os.path.abspath(args.project), console=True, ring=ring)   # terminal + logs/servidor-AAAAMMDD.log + GUI ring
+	log = activity.get("arranque")
 	try:
-		gui = Gui(args.project, prepare=not args.no_prepare, use_image=not args.no_image, uploads=args.uploads)
+		gui = Gui(args.project, prepare=not args.no_prepare, use_image=not args.no_image, uploads=args.uploads, ring=ring)
 	except (StateError, ValueError) as e:
-		print(f"erro: {e}")
+		log.error(f"erro: {e}")
 		return 1
 	app = create_app(gui)
 	host = "0.0.0.0" if args.lan else "127.0.0.1"
-	print(f"mesa de montagem: projeto {gui.path}")
-	print(f"  abre http://127.0.0.1:{args.port}")
+	log.info(f"mesa de montagem: projeto {gui.path} ({len(gui.pr.pieces)} peças, versão do log {gui.version()})")
+	log.info(f"abre http://127.0.0.1:{args.port}; registo em {gui._activity_file()}")
 	if args.lan:
 		for ip in _lan_ips():
-			print(f"  na rede local: http://{ip}:{args.port}")
-		print("  AVISO: sem login. Qualquer pessoa nesta rede Wi-Fi pode ver e alterar o projeto. "
-			  "O firewall do Windows pode pedir autorização para a porta.")
+			log.info(f"na rede local: http://{ip}:{args.port}")
+		log.warning("sem login. Qualquer pessoa nesta rede Wi-Fi pode ver e alterar o projeto. "
+					"O firewall do Windows pode pedir autorização para a porta.")
 	uvicorn.run(app, host=host, port=args.port, log_level="warning")
 	return 0
 

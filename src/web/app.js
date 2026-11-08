@@ -303,7 +303,8 @@ function fetchClass(e) {
 function drawFetchLayer() {
   const g = $("#lyr-buscar"); g.replaceChildren();
   const seen = new Set();
-  for (const e of fetchPieces()) {
+  const alta = typeof altaEntries === "function" ? altaEntries() : [];
+  for (const e of [...fetchPieces(), ...alta]) {
     if (!e.cell || e.grupo === "guarda_posicao") continue;
     const k = e.cell.join(",");
     if (seen.has(k)) continue;
@@ -489,11 +490,16 @@ function miniMap(cell) {
 const DEC_TXT = { aceite: "aceite", ambigua: "ambígua", colocavel: "colocável", candidata: "candidata", proposto: "par proposto",
   confirmado: "confirmado", por_ancorar: "sem lugar" };
 function proposalCard(e, opts = {}) {
-  const card = h("div", { class: "card" + (e.decision === "ambigua" ? " amb" : ""), "data-piece": e.piece });
+  // ``opts.hole``: the same piece / cell is also an ``alta`` hole suggestion (M11_CRITERIOS §8): one card, two chips,
+  // and the actions record both the twin outcome and the hole decision (POST /api/holes/.../{confirmar|rejeitar} gemea:true)
+  const hole = opts.hole || null;
+  const card = h("div", { class: "card" + (e.decision === "ambigua" ? " amb" : "") + (hole ? " hole-fused" : ""), "data-piece": e.piece });
+  if (hole) { card.dataset.holePiece = e.piece; card.dataset.rank = hole.hole ? hole.hole.rank : 1; }
   const head = h("div", {},
     h("div", { class: "who" }, e.lote !== null && e.lote !== undefined ? ["Saco ", h("span", { class: "n" }, e.lote), " · nº ",
       h("span", { class: "n" }, e.n_no_lote)] : [`${e.piece}`]),
-    h("div", { class: "where" }, "→ célula ", h("b", {}, cellTxt(e.cell)), " ", h("span", { class: `tag ${e.decision}` }, DEC_TXT[e.decision] || e.decision)),
+    h("div", { class: "where" }, "→ célula ", h("b", {}, cellTxt(e.cell)), " ", h("span", { class: `tag ${e.decision}` }, DEC_TXT[e.decision] || e.decision),
+      hole ? [" ", h("span", { class: "chip ok", "data-chip": "gemea", title: "proposta pela gémea colocada" }, "gémea"), " ", holeSugChip(hole)] : null),
     h("div", { class: "small muted" }, `${e.origem_txt || e.origin}` + (e.twin_id ? ` ${e.twin_id} em ${cellTxt(e.twin_cell)}` : "") +
       ` · ${e.piece}` + (e.pose_known ? ` · rodar ${fmt(e.theta_deg, 0)}°` : "")),
     h("ul", { class: "reasons" }, (e.razoes_txt || []).map((t) => h("li", {}, t))),
@@ -509,7 +515,12 @@ function proposalCard(e, opts = {}) {
       h("div", { class: "sheet-cap" }, `folha ${e.scan_id}: nº ${e.n_no_lote ?? "?"} a âmbar (toca para ampliar)`)) : h("div"));
   card.append(mid);
   const acts = h("div", { class: "actions" });
-  if (e.cell && e.grupo === "guarda_posicao") {
+  if (hole && e.cell) {
+    acts.append(h("button", { class: "btn primary", type: "button", "data-hole-act": "confirmar", title: "regista a gémea confirmada e a decisão do buraco",
+      onclick: (ev) => holeAct(e.cell, e.piece, "confirmar", ev.currentTarget, { gemea: true }) }, "Coloquei"));
+    acts.append(h("button", { class: "btn", type: "button", "data-hole-act": "rejeitar", title: "um clique: rejeita a proposta de gémea e regista a decisão do buraco",
+      onclick: (ev) => holeAct(e.cell, e.piece, "rejeitar", ev.currentTarget, { gemea: true }) }, "Não encaixa"));
+  } else if (e.cell && e.grupo === "guarda_posicao") {
     acts.append(h("button", { class: "btn primary", type: "button", title: "sem vizinha montada para confirmar o encaixe: guarda a peça num saquinho com esta posição",
       onclick: (ev) => act({ acao: "position_known", piece: e.piece, cell: e.cell, origin: e.origin, nota: "saquinho" }, ev.currentTarget) }, `Guardei num saquinho ${cellTxt(e.cell)}`));
     acts.append(h("button", { class: "btn", type: "button", onclick: (ev) => act({ acao: "reject", piece: e.piece }, ev.currentTarget) }, "Não encaixa"));
@@ -532,27 +543,38 @@ const pendingPieces = () => fetchPieces().filter((e) => !e.estado_atual || ["sol
 function renderBuscar() {
   const T = $("#tab-buscar"); T.replaceChildren();
   const es = pendingPieces().filter((e) => !isStored(e));
-  $("#n-buscar").textContent = es.length ? String(es.length) : "";
+  // M11 (M11_CRITERIOS §8): the ``alta`` hole suggestions join the list (chip «por buraco · alta»); a piece / cell that is
+  // also a twin proposal is one fused card with both chips; média / baixa / sem never come here (page «Buracos»).
+  const alta = typeof altaEntries === "function" ? altaEntries() : [];
+  const nAll = es.length + alta.length;
+  $("#n-buscar").textContent = nAll ? String(nAll) : "";
   renderGuardadas();
-  if (!es.length) {
+  if (typeof altaBanner === "function") T.append(altaBanner("buscar"));
+  if (!nAll) {
     T.append(h("div", { class: "empty" }, h("strong", {}, "Nada a ir buscar agora."),
       "Importa o scan de um saco para o programa procurar gémeas e pares.",
       h("div", { class: "actions", style: "justify-content:center" }, h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, "Importar scan"))));
   } else {
     const nAc = es.filter((e) => e.decision === "aceite" || e.decision === "colocavel").length;
-    T.append(h("p", { class: "summary" }, `${es.length} peças para ir buscar em ${new Set(es.map((e) => e.lote ?? "—")).size} saco(s): ` +
-      `${nAc} aceites, ${es.length - nAc} com dúvida. Pela ordem: as mais seguras primeiro. Todas têm uma vizinha montada para confirmar o encaixe.`),
+    const all = [...es, ...alta];
+    T.append(h("p", { class: "summary" }, `${nAll} peças para ir buscar em ${new Set(all.map((e) => e.lote ?? "—")).size} saco(s): ` +
+      `${nAc} aceites, ${es.length - nAc} com dúvida` + (alta.length ? `, ${alta.length} por buraco (alta)` : "") +
+      `. Pela ordem: as mais seguras primeiro. Todas têm uma vizinha montada para confirmar o encaixe.`),
       h("p", { class: "summary small" }, CARD_KEY));
     const by = new Map();
-    for (const e of es) { const k = e.lote ?? "—"; if (!by.has(k)) by.set(k, []); by.get(k).push(e); }
+    for (const e of all) { const k = e.lote ?? "—"; if (!by.has(k)) by.set(k, []); by.get(k).push(e); }
     const keys = [...by.keys()].sort((a, b) => (a === "—") - (b === "—") || a - b);
-    T.append(h("h2", { class: "grupo-head", "data-grupo": "coloca_agora" }, `Coloca agora (${es.length})`, h("span", { class: "muted small" }, " têm uma vizinha montada para confirmar o encaixe")));
+    T.append(h("h2", { class: "grupo-head", "data-grupo": "coloca_agora" }, `Coloca agora (${nAll})`, h("span", { class: "muted small" }, " têm uma vizinha montada para confirmar o encaixe")));
     for (const k of keys) {
-      T.append(h("div", { class: "lot-head" }, h("span", { class: "bag" }, k === "—" ? "Sem saco" : `Saco ${k}`), h("span", { class: "muted small" }, `${by.get(k).length} peças`)));
-      for (const e of by.get(k).sort((a, b) => a.ordem - b.ordem)) T.append(proposalCard(e));
+      const xs = by.get(k);
+      T.append(h("div", { class: "lot-head" }, h("span", { class: "bag" }, k === "—" ? "Sem saco" : `Saco ${k}`), h("span", { class: "muted small" }, `${xs.length} peças`)));
+      const twins = xs.filter((e) => e.origin !== "buraco").sort((a, b) => a.ordem - b.ordem);
+      const holes = xs.filter((e) => e.origin === "buraco").sort((a, b) => a.ordem - b.ordem);
+      for (const e of twins) T.append(proposalCard(e, { hole: typeof altaFusedFor === "function" ? altaFusedFor(e) : null }));
+      for (const e of holes) T.append(altaCard(e));
     }
   }
-  if (typeof holesEntry === "function") T.append(holesEntry());     // M11: ranking dos buracos (secção à parte, não é proposta)
+  if (typeof holesEntry === "function") T.append(holesEntry());     // M11: média / baixa / sem fiável (página à parte)
   const sup = S.fetch.suprimidas || [];
   if (sup.length) {
     T.append(h("details", { class: "tech" }, h("summary", {}, `${sup.length} sugestões não mostradas (candidata única, por política)`),
@@ -987,7 +1009,7 @@ async function locatePiece(pid) {
     return;
   }
   if (d.celula && (d.estado === "colocada" || d.estado === "posicao_conhecida")) { await openCell(d.celula[0], d.celula[1], { zoom: true }); return; }
-  const e = pendingPieces().find((x) => x.piece === pid);
+  const e = pendingPieces().find((x) => x.piece === pid) || (typeof altaEntries === "function" ? altaEntries().find((x) => x.piece === pid) : null);
   if (e && highlightCard(isStored(e) ? "guardadas" : "buscar", pid)) {
     toast(`${pid}: ${isStored(e) ? "em «Guardadas»" : "em «Vai buscar»"} → célula ${cellTxt(e.cell)}`);
     return;
@@ -1479,7 +1501,17 @@ function connectEvents() {
   for (const ev of ["report_added", "report_edited", "report_changed"]) es.addEventListener(ev, () => loadReports().catch(() => {}));
   es.addEventListener("piece_changed", () => { if (S.lots) loadLots().catch(() => {}); });
   let holesTimer = null;
-  es.addEventListener("holes_changed", () => { clearTimeout(holesTimer); holesTimer = setTimeout(() => { if (typeof loadHoles === "function") loadHoles().catch(() => {}); if (S.tab === "celula" && S.sel) openCell(S.sel[0], S.sel[1], { keep: true }); }, 300); });
+  es.addEventListener("holes_changed", () => {
+    clearTimeout(holesTimer);
+    holesTimer = setTimeout(() => {
+      S.holesProgress = null;
+      if (typeof loadHoles === "function") loadHoles().catch(() => {});
+      scheduleReload("fetch");       // the «alta» suggestions of «Vai buscar» come with /api/fetch
+      if (typeof holesRefreshDrawer === "function") holesRefreshDrawer();   // only the «Candidatas» block, not the whole drawer
+    }, 300);
+  });
+  es.addEventListener("holes_progress", (e) => { S.holesProgress = JSON.parse(e.data); if (typeof renderAltaStatus === "function") renderAltaStatus(); });
+  es.addEventListener("atividade", (e) => { if (typeof actOnLine === "function") actOnLine(JSON.parse(e.data)); });
   es.addEventListener("ingest_progress", (e) => {
     const d = JSON.parse(e.data);
     S.jobLog.push(d); renderJobLog();
@@ -1525,6 +1557,7 @@ async function boot() {
   lg.addEventListener("toggle", () => { lsSet("legend-open", lg.open ? "1" : "0"); setView(S.vb); });
   initPointer();
   initPngMenu();
+  if (typeof initActivity === "function") initActivity();
   connectEvents();
   const st = await api("/api/status");
   S.status = st; setJob(st.job);

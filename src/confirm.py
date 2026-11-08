@@ -125,7 +125,7 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			position_known=None, anchor=None, rot: int = 0, mirror: bool = False, unanchor: Optional[str] = None,
 			discard: bool = False, reason: str = "", cell_full=None, cell_empty=None, requery: bool = True,
 			use_image: bool = True, unplace: bool = False, theta_deg: Optional[float] = None, pose=None,
-			pose_repor: bool = False, nota: str = "", hole=None, hole_reject=None) -> dict:
+			pose_repor: bool = False, nota: str = "", hole=None, hole_reject=None, gemea: bool = False) -> dict:
 	"""Apply one confirmation; returns ``{messages, affected_cells, affected_pieces, entries, invariants}``
 	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error).
 
@@ -136,7 +136,12 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 	otherwise). ``unplace``: undo the placement of a loose piece (not of a section piece).
 
 	``pose`` = ``(theta_deg, dx_mm, dy_mm)``: manual board pose of a placed piece (``nota`` stored with it);
-	``pose_repor``: drop it (see the module docstring)."""
+	``pose_repor``: drop it (see the module docstring).
+
+	``gemea`` (with ``hole`` / ``hole_reject``): the same piece and cell were also the accepted twin proposal (one
+	fused card in «Vai buscar»): the hole event is written as usual (the ground truth of the ranking) **and** the
+	twin outcome as today (``placed`` with origin ``gemeo`` + ``twin_confirmed``, or ``twin_rejected`` so the
+	proposal leaves the list), in one write and one re-query."""
 	msgs, cells, pieces = [], set(), set()
 	try:
 		if cell_full is not None or cell_empty is not None:
@@ -182,15 +187,28 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			hc, meta = (hole if hole is not None else hole_reject)
 			hc = (int(hc[0]), int(hc[1]))
 			meta = dict(meta or {})
+			e0 = _cell_entry(pr, piece_id, hc) if gemea else {}
+			tw_ok = bool(gemea and e0.get("origin") in ("gemeo", "borda"))
+			if gemea and not tw_ok:
+				msgs.append(f"aviso: {piece_id} não tem proposta de gémea para {hc} na lista atual; registado só como buraco")
 			if hole is not None:
 				th = meta.get("theta_deg")
-				pr.hole_confirm(piece_id, hc, meta=meta, theta_deg=(None if th is None else float(th)))
-				msgs.append(f"{piece_id} colocada em {hc} (origem buraco, rank {meta.get('rank')}, confiança {meta.get('confianca')}"
+				if th is None and tw_ok:
+					th = _entry_theta(e0)
+				pr.hole_confirm(piece_id, hc, meta=meta, theta_deg=(None if th is None else float(th)),
+								place_origin=(e0["origin"] if tw_ok else "buraco"))
+				if tw_ok:
+					pr.log_event(_CONFIRM_ACTION[e0["origin"]], piece=piece_id, cell=hc, origin=e0["origin"], query=e0.get("query"))
+				msgs.append(f"{piece_id} colocada em {hc} (origem {e0['origin'] if tw_ok else 'buraco'}"
+							+ (" + buraco" if tw_ok else "") + f", rank {meta.get('rank')}, confiança {meta.get('confianca')}"
 							+ (f", pose {float(th):.2f}°)" if th is not None else ")"))
 				cells |= _around(pr, hc)
 			else:
 				pr.hole_reject(piece_id, hc, meta=meta)
-				msgs.append(f"{piece_id} rejeitada para o buraco {hc} (rank {meta.get('rank')}, confiança {meta.get('confianca')})")
+				if tw_ok:
+					pr.log_event(_REJECT_ACTION[e0["origin"]], piece=piece_id, cell=hc, origin=e0["origin"], query=e0.get("query"))
+				msgs.append(f"{piece_id} rejeitada para o buraco {hc} (rank {meta.get('rank')}, confiança {meta.get('confianca')}"
+							+ (f"; proposta de gémea rejeitada também)" if tw_ok else ")"))
 				cells.add(hc)
 			pieces.add(piece_id)
 		elif unplace:
@@ -362,6 +380,8 @@ def main(argv=None) -> int:
 	ap.add_argument("--no-requery", action="store_true")
 	add_project_args(ap)
 	args = ap.parse_args(argv)
+	from src import activity
+	activity.setup(console=True)
 	if args.relot:
 		if args.lote is None:
 			print("erro: --relot exige --lote N")

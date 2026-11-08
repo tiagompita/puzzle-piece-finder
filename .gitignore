@@ -116,3 +116,5 @@ projects/*/pieces/
 projects/*/crops/
 projects/*/overlays/
 projects/*/render/
+# Server activity log (one file per day; src/activity.py) — already covered by logs/ above, listed for clarity
+projects/*/logs/

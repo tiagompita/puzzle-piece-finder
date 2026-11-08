@@ -78,7 +78,7 @@ ACTIONS = (
 	"cell_cleared_by_photo", "position_known", "position_placeable", "same_as", "lote_changed",
 	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
 	"report", "report_closed", "report_edited", "report_reopened", "report_deleted", "report_restored",
-	"piece_resegmented", "suspect_dismissed", "suspect_restored", "pose_set", "pose_cleared",
+	"piece_resegmented", "suspect_dismissed", "suspect_restored", "pose_set", "pose_cleared", "holes_alta_resumed",
 )
 RESEGMENT_FIELDS = ("bbox", "cls", "n_flat", "chords_mm", "area_mm2", "shape_ok", "flags", "mean_lab")  # piece_resegmented
 SUSPECT_GRAUS = ("impossivel", "melhor_rotacao", "recorte")   # grades of src.consistency (suspect_dismissed)
@@ -101,6 +101,27 @@ def _cell(v) -> Optional[tuple]:
 
 
 HOLE_META = ("rank", "custo", "margem", "confianca", "m", "fit_version", "nota")   # hole_confirmed / hole_rejected (M11)
+
+
+def _activity_line(ev: dict) -> None:
+	"""One ``ppf.evento`` line per event written (type, piece, cell, origin...); silent without :func:`src.activity.setup`."""
+	try:
+		from src import activity
+		parts = [ev["action"]]
+		for k in ("piece", "pair", "section", "scan"):
+			v = ev.get(k)
+			if isinstance(v, dict):
+				v = v.get("id")
+			if v:
+				parts.append(str(v))
+		if ev.get("cell") is not None:
+			parts.append(f"({ev['cell'][0]},{ev['cell'][1]})")
+		for k in ("origin", "rank", "confianca", "grau", "motivo", "to", "lote", "fonte"):
+			if ev.get(k) not in (None, ""):
+				parts.append(f"{'origem' if k == 'origin' else k} {ev[k]}")
+		activity.get("evento").info(" ".join(parts))
+	except Exception:  # noqa: BLE001 - a log line never fails a write
+		pass
 
 
 def _hole_meta(meta: dict) -> dict:
@@ -519,7 +540,7 @@ def apply(m: Model, ev: dict) -> None:
 				if p.id in nums:
 					p.n_no_lote = None if nums[p.id] is None else int(nums[p.id])
 	elif a in ("twin_confirmed", "hole_confirmed", "fetch_listed", "position_placeable", "report", "report_closed",
-			"report_edited", "report_reopened", "report_deleted", "report_restored"):
+			"report_edited", "report_reopened", "report_deleted", "report_restored", "holes_alta_resumed"):
 		pass  # informative events (metrics / notifications); no state change
 	else:
 		raise StateError(f"ação desconhecida no log: {a!r}")
@@ -669,6 +690,7 @@ class Project:
 		apply(self.model, ev)
 		with open(self.log_path, "a", encoding="utf-8", newline="\n") as f:
 			f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+		_activity_line(ev)
 		return ev
 
 	def log_event(self, action: str, **data) -> dict:
@@ -905,10 +927,12 @@ class Project:
 		return self._emit("position_known", piece=piece_id, cell=cell, origin=origin, theta_deg=theta_deg)
 
 	# ------------------------------------------------------------ hole mould (M11): ranking confirmed / refused physically
-	def hole_confirm(self, piece_id: str, cell, *, meta: Optional[dict] = None, theta_deg: Optional[float] = None) -> dict:
+	def hole_confirm(self, piece_id: str, cell, *, meta: Optional[dict] = None, theta_deg: Optional[float] = None,
+					 place_origin: str = "buraco") -> dict:
 		"""The user placed ``piece_id`` in the hole ``cell`` from the «candidatas para este buraco» list: log
 		``hole_confirmed`` (origin ``buraco`` + ``meta``: rank, custo, margem, confianca, m, fit_version; the
-		ground truth of :func:`src.fit.report`) and then :meth:`place` with ``origin='buraco'``."""
+		ground truth of :func:`src.fit.report`) and then :meth:`place` with ``origin=place_origin`` (``buraco``;
+		``gemeo`` when the same piece / cell was also the accepted twin proposal: one card, both records)."""
 		meta = dict(meta or {})
 		p = self.piece(piece_id)
 		cell = self._check_cell(cell)
@@ -917,8 +941,14 @@ class Project:
 		if self.board[cell]["estado"] == "colocada":
 			raise StateError(f"célula {cell} já tem a peça {self.board[cell]['peca_id']}")
 		ev = self._emit("hole_confirmed", piece=piece_id, cell=cell, origin="buraco", **_hole_meta(meta))
-		self.place(piece_id, cell, origin="buraco", rank=meta.get("rank"), score=meta.get("custo"), theta_deg=theta_deg)
+		self.place(piece_id, cell, origin=place_origin, rank=meta.get("rank"), score=meta.get("custo"), theta_deg=theta_deg)
 		return ev
+
+	def resume_alta(self, *, autor: str = "tiago", nota: str = "") -> dict:
+		"""Log ``holes_alta_resumed`` (informative): the user re-enables the ``alta`` hole suggestions in «Vai buscar»
+		after the pause rule of :func:`src.fit.alta_counter` fired; the decision window restarts here
+		(M11_CRITERIOS §8). Same log-compatibility note as :meth:`set_pose`."""
+		return self._emit("holes_alta_resumed", autor=str(autor or "tiago"), nota=str(nota or ""))
 
 	def hole_reject(self, piece_id: str, cell, *, meta: Optional[dict] = None) -> dict:
 		"""The user says ``piece_id`` does not fit the hole ``cell``: log ``hole_rejected`` (origin ``buraco`` + meta);

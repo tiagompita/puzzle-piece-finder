@@ -619,4 +619,70 @@ body[data-pose] #board { cursor: default; }
 }
 .holes-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 14px 0 6px; }
 .holes-entry b { color: var(--ok); margin-left: 4px; }
-@media (max-width: 900px) { .hole-card .actions .btn, .holes-entry .btn { min-height: 44px; } }
+@media (max-width: 900px) { .hole-card .actions .btn, .hole-sug .actions .btn, .hole-fused .actions .btn, .holes-entry .btn, .alta-banner .btn { min-height: 44px; } }
+
+/* sugestões por buraco em «Vai buscar» e página «Buracos» por grupos (holes.js, docs/gui-design.md §22) */
+.chip.buraco { background: rgba(41, 211, 230, .16); color: var(--cyan); border: 1px solid rgba(41, 211, 230, .45); }
+.card.hole-sug { border-color: rgba(41, 211, 230, .45); }
+.alta-banner { margin: 0 0 8px; }
+.alta-banner .alta-count { margin: 0 0 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
+.alta-banner .alta-pause { border-left: 3px solid var(--amber); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.alta-banner .alta-pause .btn { flex: 0 0 auto; }
+.hole-group { margin-top: 6px; }
+.hole-group > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; cursor: pointer; min-height: 36px; padding: 4px 6px;
+  border-radius: 8px; background: var(--bg3); list-style: none; }
+.hole-group > summary::-webkit-details-marker { display: none; }
+.hole-group > summary::before { content: "˅"; font-weight: 700; color: var(--muted); }
+.hole-group[open] > summary::before { content: "˄"; }
+.hole-group-t { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 12px; }
+.hole-group > summary b { color: var(--amber); }
+.hole-group-h { flex: 1 1 100%; }
+.hole-group[data-group="alta_pausa"] > summary { border-left: 3px solid var(--amber); }
+.hole-row { display: block; width: 100%; min-width: 0; padding: 0; border-radius: 10px; border: 1px solid var(--line); background: var(--bg3); color: var(--text); font: inherit; margin-top: 6px; }
+.hole-row > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 10px; cursor: pointer; list-style: none; min-height: 40px; }
+.hole-row > summary::-webkit-details-marker { display: none; }
+.hole-row > summary > span { min-width: 0; overflow-wrap: anywhere; }
+.hole-row-body { padding: 0 10px 10px; }
+.hole-row-body .card { margin-top: 8px; }
+
+/* painel «Atividade» (activity.js, docs/gui-design.md §23): gaveta fixa no fundo, fechada = display:none */
+.act-btn { border: 0; }
+.act-btn[aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--amber); }
+.act-btn.warn { box-shadow: inset 0 -3px 0 var(--amber); }
+.act-btn.err { box-shadow: inset 0 -3px 0 var(--red); }
+#atividade { position: fixed; left: 0; right: 0; bottom: 0; z-index: 35; height: min(42vh, 360px); display: flex; flex-direction: column;
+  background: rgba(20, 22, 25, .97); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(0, 0, 0, .45); }
+.act-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 12px; border-bottom: 1px solid var(--line); min-width: 0; }
+.act-filters { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.act-f { min-height: 28px; padding: 0 8px; font-size: 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg3); cursor: pointer; }
+.act-f[aria-pressed="true"] { background: var(--bg2); border-color: var(--muted); color: var(--text); }
+.act-f[aria-pressed="false"] { opacity: .5; }
+.act-nv.aviso[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+.act-nv.erro[aria-pressed="true"] { border-color: var(--red); color: var(--red); }
+.act-file { margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw; }
+.act-lines { list-style: none; margin: 0; padding: 4px 12px 10px; overflow: auto; flex: 1; min-height: 0; font-family: var(--mono); font-size: 12px; }
+.act-line { display: grid; grid-template-columns: 4.6em 3.4em 6.5em minmax(0, 1fr); gap: 0 8px; padding: 1px 0; border-bottom: 1px dotted rgba(255, 255, 255, .06); }
+.act-line .act-m { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+.act-t { color: var(--muted); }
+.act-k { color: var(--cyan); }
+.act-n.aviso { color: var(--amber); }
+.act-n.erro { color: var(--red); }
+.act-line.erro .act-m { color: #ffb4ae; }
+@media (max-width: 900px) {
+  #atividade { height: min(55vh, 420px); }
+  .act-line { grid-template-columns: 4.6em minmax(0, 1fr); }
+  .act-line .act-n, .act-line .act-k { display: none; }
+  .act-file { display: none; }
+  .act-btn span { max-width: none; }
+}
+/* botão «Atividade»: na barra do topo só acima de 1300 px (a barra está dimensionada e testada para 6 abas + pesquisa + 3 toggles);
+   abaixo disso é o botão «≣» dos controlos de zoom, sobre o tabuleiro (posição absoluta: zero espaço no layout) */
+.act-btn span::before { content: "≣"; font-weight: 700; margin-right: 6px; }
+#z-act { font-size: 18px; font-weight: 700; display: none; }
+#z-act[aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--amber); }
+#z-act.warn { box-shadow: inset 0 -3px 0 var(--amber); }
+#z-act.err { box-shadow: inset 0 -3px 0 var(--red); }
+@media (max-width: 1300px) {
+  #tg-act { display: none; }
+  #z-act { display: block; }
+}

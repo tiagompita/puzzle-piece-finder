@@ -38,6 +38,7 @@ import json
 import math
 import os
 import sys
+import time
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -54,6 +55,7 @@ __all__ = [
 	"lab_of", "eroded_sides", "side_strips", "side_orientation", "board_dirs", "zone_of", "wilson",
 	"pool_arrays", "side_costs", "joint_costs", "theta_for", "confidence", "rank_hole", "assign",
 	"calibration", "piece_strips", "hole_queries", "pool_items", "board_sigma", "rank_all", "report", "main",
+	"ALTA_JANELA", "ALTA_MAX_FALHAS", "alta_counter", "alta_suggestions",
 ]
 
 FIT_VERSION = "m11-1"
@@ -65,6 +67,12 @@ NORMAL_DEG = {"N": -90.0, "E": 0.0, "S": 90.0, "W": 180.0}   # outward normal of
 SIDE_TOL_DEG = 25.0            # a side faces a board direction if its outward normal is within this of it
 ZONES = (("céu", 1, 14), ("montanha/floresta", 15, 27), ("vale/aldeia", 28, 40), ("relva", 41, 47))  # fixed row bands (GT.md)
 CONFIDENCES = ("alta", "media", "sem")
+# «Vai buscar» pause rule (M11_CRITERIOS §8, decided by Tiago 2026-11-08): the last ALTA_JANELA ``alta`` rank-1 decisions
+# after the last ``holes_alta_resumed``; >= ALTA_MAX_FALHAS rejections among them pause the suggestions.
+ALTA_JANELA = 20
+ALTA_MAX_FALHAS = 3
+PROGRESS_EVERY_N = 20          # rank_all(progress=): a line every this many strips computed ...
+PROGRESS_EVERY_S = 5.0         # ... or every this many seconds
 
 # E5 constants (GT.md §5, RESULTADOS.md §11): fixed, never tuned
 RMS_SCALE = 1.1                # mm: median profile RMS of true adjacencies (LEGADO.md)
@@ -570,6 +578,8 @@ class _Cache:
 		self.pr, self.calib = project, calib
 		self.path = project.p(os.path.join("render", "fit", "strips.npz"))
 		self.strips, self.sides, self.shapes, self.dirty = {}, {}, {}, False
+		self.on_compute = None        # callback(pid) each time a strip is computed (progress of rank_all)
+		self.n_loaded = 0
 		if os.path.exists(self.path):
 			try:
 				z = np.load(self.path, allow_pickle=False)
@@ -580,6 +590,7 @@ class _Cache:
 					p = project.pieces.get(k)
 					if p is not None and bb is not None and list(bb) == list(p.bbox):
 						self.strips[k] = z[k]
+				self.n_loaded = len(self.strips)
 			except (OSError, ValueError):
 				self.strips = {}
 
@@ -605,7 +616,28 @@ class _Cache:
 		if pid not in self.strips:
 			self.strips[pid] = piece_strips(self.pr, pid)
 			self.dirty = True
+			if self.on_compute is not None:
+				self.on_compute(pid)
 		return self.strips[pid]
+
+	def strips_todo(self, cells=None, lote=None) -> list:
+		"""Pieces whose strips :func:`rank_all` will compute (not yet in the cache): the placed pieces that touch an
+		empty cell (the neighbours of the holes; ``cells`` limits them) and the loose pool. A cheap upper bound for
+		the progress line, not the ranking itself."""
+		pr = self.pr
+		todo = set()
+		cell_set = None if cells is None else {tuple(c) for c in cells}
+		for pid, p in pr.pieces.items():
+			if p.estado != "colocada" or p.celula is None or pid in self.strips:
+				continue
+			for n in pr.board.neighbours(tuple(p.celula)):
+				if not pr.board.occupied(n) and (cell_set is None or tuple(n) in cell_set):
+					todo.add(pid)
+					break
+		for p in pr.loose_pieces(lote):
+			if p.id not in self.strips:
+				todo.add(p.id)
+		return sorted(todo)
 
 	def eroded(self, pid):
 		if pid not in self.sides:
@@ -723,21 +755,50 @@ _CONF_ORDER = {"alta": 0, "media": 1, "sem": 2}
 
 
 def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[int] = None, cells=None, top: int = 3,
-			 min_neighbours: int = 1, joint: bool = True, cache: Optional[_Cache] = None) -> dict:
+			 min_neighbours: int = 1, joint: bool = True, cache: Optional[_Cache] = None, progress=None) -> dict:
 	"""Every hole of the board against the loose pool: ``{'holes': [rank_hole dicts, ordered by confidence
 	(alta with m >= 2 first, then alta, media, sem; margin within)], 'sigma', 'n_pool', 'n_holes', 'calib',
-	'assigned': {cell: piece}}`` or ``{'error'}``."""
+	'assigned': {cell: piece}, 'tiras': {'calculadas', 'previstas', 'em_cache', 'segundos'}}`` or ``{'error'}``.
+
+	``progress(n, N, segundos)``: called while the image strips are computed (the slow part of a cold start,
+	about 0.3 s per piece): once at the start with ``n = 0`` when ``N > 0``, then every :data:`PROGRESS_EVERY_N`
+	strips or :data:`PROGRESS_EVERY_S` seconds, and at the end. ``N`` = :meth:`_Cache.strips_todo` (an upper
+	bound). The ranking itself does not change with ``progress``."""
 	calib = calib or calibration(project)
 	cache = cache or _Cache(project, calib)
 	dcache = {}
-	sg = board_sigma(project, cache, dcache)
-	if "error" in sg:
-		return {"error": sg["error"], "sigma": None}
-	holes = hole_queries(project, cells=cells, min_neighbours=min_neighbours, cache=cache, dcache=dcache)
-	items = pool_items(project, lote=lote, cache=cache)
+	todo = cache.strips_todo(cells=cells, lote=lote)
+	n_cache0 = len(cache.strips)
+	done = [0]
+	t0 = time.time()
+	if progress is not None and todo:
+		progress(0, len(todo), 0.0)
+		last = [t0, 0]
+
+		def hook(pid):
+			done[0] += 1
+			now = time.time()
+			if done[0] - last[1] >= PROGRESS_EVERY_N or now - last[0] >= PROGRESS_EVERY_S or done[0] >= len(todo):
+				last[0], last[1] = now, done[0]
+				progress(done[0], len(todo), now - t0)
+		cache.on_compute = hook
+	else:
+		cache.on_compute = (lambda pid: done.__setitem__(0, done[0] + 1))
+	try:
+		sg = board_sigma(project, cache, dcache)
+		if "error" in sg:
+			return {"error": sg["error"], "sigma": None}
+		holes = hole_queries(project, cells=cells, min_neighbours=min_neighbours, cache=cache, dcache=dcache)
+		items = pool_items(project, lote=lote, cache=cache)
+	finally:
+		cache.on_compute = None
+	tiras = {"calculadas": done[0], "previstas": len(todo), "em_cache": n_cache0, "segundos": round(time.time() - t0, 1)}
+	if progress is not None and todo and done[0] < len(todo):
+		progress(done[0], len(todo), time.time() - t0)      # fewer than predicted (pieces without shape): close the line
 	cache.save()
 	if not items:
-		return {"error": "sem peças soltas no índice" + (f" (lote {lote})" if lote else ""), "sigma": sg["sigma"], "n_holes": len(holes)}
+		return {"error": "sem peças soltas no índice" + (f" (lote {lote})" if lote else ""), "sigma": sg["sigma"], "n_holes": len(holes),
+				"tiras": tiras}
 	pa = pool_arrays(items)
 	rej = _rejected_for(project)
 	res = [rank_hole(h, pa, calib=calib, sigma=sg["sigma"], top=top, exclude=rej.get(tuple(h.cell), ())) for h in holes]
@@ -747,7 +808,67 @@ def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[
 	for r in res:
 		r.pop("ranking", None)
 	return {"holes": res, "sigma": sg["sigma"], "n_sigma": sg["n"], "n_pool": len(items), "n_holes": len(holes),
-			"calib": calib.to_dict(), "assigned": {f"{c[0]},{c[1]}": p for c, p in assigned.items()}}
+			"calib": calib.to_dict(), "assigned": {f"{c[0]},{c[1]}": p for c, p in assigned.items()}, "tiras": tiras}
+
+
+def alta_suggestions(holes: list) -> list:
+	"""The ``alta`` suggestions for «Vai buscar» (M11_CRITERIOS §8) out of ``rank_all()['holes']``: one dict per hole
+	with ``confidence == 'alta'`` whose rank-1 candidate agrees with the joint assignment (``assigned`` is that piece,
+	or there is no assignment); ``{'hole': rank_hole dict, 'candidate': its rank-1 candidate}``. Holes whose
+	assignment goes to another piece are left out (``conflito`` in the GUI list), as are media / sem."""
+	out = []
+	for h in holes:
+		if h.get("confidence") != "alta" or not h.get("candidates"):
+			continue
+		c0 = h["candidates"][0]
+		if int(c0.get("rank") or 0) != 1:
+			continue
+		asg = h.get("assigned")
+		if asg is not None and asg != c0["id"]:
+			continue
+		out.append({"hole": h, "candidate": c0})
+	return out
+
+
+def _alta_decision(e: dict) -> bool:
+	return (e.get("action") in ("hole_confirmed", "hole_rejected") and e.get("origin") == "buraco"
+			and e.get("confianca") == "alta" and e.get("rank") is not None and int(e["rank"]) == 1)
+
+
+def alta_counter(project, events: Optional[list] = None) -> dict:
+	"""Counter and pause state of the ``alta`` suggestions (M11_CRITERIOS §8). A decision is a ``hole_confirmed`` /
+	``hole_rejected`` with origin ``buraco``, ``confianca == 'alta'`` and ``rank == 1`` (the suggested piece); the
+	window is the last :data:`ALTA_JANELA` decisions after the last ``holes_alta_resumed``; the suggestions are
+	paused while the window holds >= :data:`ALTA_MAX_FALHAS` rejections. Returns ``{acertos, falhas, total,
+	precisao, ic95, janela: {n, falhas, acertos, tamanho, max_falhas, em_pausa}, em_pausa, reativado_em,
+	ultima_decisao}``; everything is derived from the log."""
+	evs = project.events() if events is None else events
+	dec, start, resumed = [], 0, None
+	for e in evs:
+		if e.get("action") == "holes_alta_resumed":
+			start, resumed = len(dec), e.get("t")
+		elif _alta_decision(e):
+			dec.append(e)
+	ok = sum(1 for e in dec if e["action"] == "hole_confirmed")
+	bad = len(dec) - ok
+	lo, hi = wilson(ok, len(dec))
+	win = dec[start:][-ALTA_JANELA:]
+	wbad = sum(1 for e in win if e["action"] == "hole_rejected")
+	paused = wbad >= ALTA_MAX_FALHAS
+	return {"acertos": ok, "falhas": bad, "total": len(dec), "precisao": (ok / len(dec) if dec else None),
+			"ic95": ([lo, hi] if dec else None),
+			"janela": {"n": len(win), "falhas": wbad, "acertos": len(win) - wbad, "tamanho": ALTA_JANELA,
+					   "max_falhas": ALTA_MAX_FALHAS, "em_pausa": paused},
+			"em_pausa": paused, "reativado_em": resumed, "ultima_decisao": (dec[-1].get("t") if dec else None)}
+
+
+def format_counter(c: dict) -> str:
+	ic = f" (Wilson {_pct(*c['ic95'])})" if c.get("ic95") else ""
+	prec = f"{100 * c['precisao']:.0f} %" if c.get("precisao") is not None else "—"
+	w = c["janela"]
+	return (f"sugestões alta em «Vai buscar» (rank 1): acertos {c['acertos']} / falhas {c['falhas']} / total {c['total']}; precisão {prec}{ic}; "
+			f"janela {w['falhas']} falhas em {w['n']} (pausa a partir de {w['max_falhas']} em {w['tamanho']}): "
+			+ ("EM PAUSA" if c["em_pausa"] else "ativas") + (f"; reativadas em {c['reativado_em']}" if c.get("reativado_em") else ""))
 
 
 # ---------------------------------------------------------------- report over the confirmations (GT)
@@ -781,7 +902,8 @@ def report(project) -> dict:
 			"rejeicoes": {"n": len(rej), "por_confianca": dict(collections.Counter(str(e.get("confianca")) for e in rej))},
 			"limiar_15_6": {"n_ge_60": len(conf) >= 60, "n_m2_ge_40": n_m2 >= 40, "fora_do_ceu": n_fora_ceu > 0,
 							"atingido": len(conf) >= 60 and n_m2 >= 40 and n_fora_ceu > 0},
-			"versoes": sorted({str(e.get("fit_version")) for e in evs})}
+			"versoes": sorted({str(e.get("fit_version")) for e in evs}),
+			"alta": alta_counter(project)}
 
 
 def _pct(lo, hi):
@@ -799,6 +921,8 @@ def format_report(r: dict) -> str:
 	lim = r["limiar_15_6"]
 	lines.append("limiar do §15.6 (n ≥ 60, ≥ 40 com ≥ 2 vizinhas, casos fora do céu): " + ("ATINGIDO" if lim["atingido"] else "não atingido")
 				 + f" [n ≥ 60: {lim['n_ge_60']}, ≥ 2 viz. ≥ 40: {lim['n_m2_ge_40']}, fora do céu: {lim['fora_do_ceu']}]")
+	if r.get("alta"):
+		lines.append(format_counter(r["alta"]))
 	return "\n".join(lines)
 
 
@@ -820,7 +944,9 @@ def main(argv=None) -> int:
 	ap.add_argument("--json", metavar="FILE", help="escreve o resultado completo em JSON")
 	ap.add_argument("--relatorio", action="store_true", help="top-1/top-3 e Wilson sobre as confirmações físicas acumuladas")
 	a = ap.parse_args(argv)
+	from src import activity
 	from src.state import Project
+	activity.setup(console=True)
 	pr = Project.open(a.project)
 	if a.relatorio:
 		r = report(pr)
@@ -828,7 +954,9 @@ def main(argv=None) -> int:
 		if a.json:
 			json.dump(r, open(a.json, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 		return 0
-	res = rank_all(pr, lote=a.lote, cells=([tuple(a.cell)] if a.cell else None), top=a.top)
+	def prog(n, N, s):
+		activity.get("progresso").info(f"tiras das peças: {n}/{N} ({s:.0f} s)")
+	res = rank_all(pr, lote=a.lote, cells=([tuple(a.cell)] if a.cell else None), top=a.top, progress=prog)
 	if "error" in res:
 		print("erro:", res["error"])
 		return 1

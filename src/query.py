@@ -50,6 +50,7 @@ import glob
 import json
 import os
 import sys
+import time
 from typing import Optional
 
 import numpy as np
@@ -573,6 +574,14 @@ def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, on
 	loose = pr.loose_pieces(lote)
 	proposed = set()
 	entries = []
+	t_all = time.perf_counter()
+	steps = {}                   # activity line: seconds per step
+
+	def lap(name, t0):
+		steps[name] = steps.get(name, 0.0) + time.perf_counter() - t0
+		return time.perf_counter()
+
+	t = time.perf_counter()
 	if incremental:
 		prev = load_fetch(pr)
 		prior = prev.get("entries", [])
@@ -591,18 +600,23 @@ def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, on
 		ctx.suppressed = [s for s in prev.get("suprimidas", [])
 						  if _valid_prior_suppressed(pr, s, oc or set(), op or set(), rej)
 						  and (lote is None or s.get("lote") == lote)]
+	t = lap("anterior", t)
 	entries += _step_border(ctx, loose, oc if incremental else None, proposed, rej) if (not incremental or oc) else []
+	t = lap("borda", t)
 	entries += _step_twins(ctx, loose, oc, op, proposed, rej)
+	t = lap("gémeas", t)
 	if not incremental or op:
 		entries = [e for e in entries if e["origin"] != "par"]
 		entries += _step_pairs(ctx, loose, op if incremental else None, proposed, lote)
 	else:
 		entries = [e for e in entries if e["origin"] != "par"]
-		entries += [x for t in sorted(pr.pairs.values(), key=lambda t: t.id)
-					if t.estado != "rejeitado" and all(pr.piece(i).estado == "emparelhada" for i in (t.a, t.b))
-					for x in _pair_entries(pr, t, lote)]
+		entries += [x for tp in sorted(pr.pairs.values(), key=lambda tp: tp.id)
+					if tp.estado != "rejeitado" and all(pr.piece(i).estado == "emparelhada" for i in (tp.a, tp.b))
+					for x in _pair_entries(pr, tp, lote)]
+	t = lap("pares", t)
 	entries += _step_known(pr, lote)
 	entries += _step_sections(pr)
+	t = lap("conhecidas+secções", t)
 	seen, uniq = set(), []
 	for e in entries:
 		k = (e["origin"], e.get("piece"), tuple(e["cell"]) if e.get("cell") else None, e.get("section"))
@@ -629,11 +643,23 @@ def run_query(project, *, lote: Optional[int] = None, use_image: bool = True, on
 		if k not in seen_s and s.get("piece") not in listed:
 			seen_s.add(k)
 			suppressed.append(s)
+	t = lap("enriquecer+folhas", t)
 	if write:
 		write_fetch(pr, uniq, rest, ctx.notes, suppressed)
 	if log:
 		pr.fetch_listed(uniq)
 	pr.save()
+	lap("escrever", t)
+	try:
+		from src import activity
+		n_prop = sum(1 for e in uniq if e.get("piece"))
+		activity.get("consulta").info(
+			f"consulta {'incremental' if incremental else 'completa'}: {len(pr.pieces)} peças, {len(loose)} soltas"
+			+ (f", {len(oc or ())} células, {len(op or ())} peças pedidas" if incremental else "")
+			+ f" → {n_prop} propostas ({len(suppressed)} suprimidas) em {time.perf_counter() - t_all:.1f} s; passos: "
+			+ ", ".join(f"{k} {v:.1f}" for k, v in steps.items() if v >= 0.05))
+	except Exception:  # noqa: BLE001 - a log line never fails the query
+		pass
 	return uniq
 
 
@@ -872,6 +898,8 @@ def main(argv=None) -> int:
 	ap.add_argument("--no-image", action="store_true", help="sem desempate pela imagem (nem pair_locate)")
 	add_project_args(ap)
 	args = ap.parse_args(argv)
+	from src import activity
+	activity.setup(console=True)
 	try:
 		pr = open_project(args)
 		entries = run_query(pr, lote=args.lote, use_image=not args.no_image)
