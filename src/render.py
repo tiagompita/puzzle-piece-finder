@@ -921,10 +921,21 @@ def effective_pose(project, pid: str, placements: Optional[dict] = None) -> dict
 	return register_piece(project, pid, art=None, image=False)
 
 
-def pose_brief(e: dict) -> dict:
-	"""``{theta_deg, dx_mm, dy_mm, method, manual}`` of a placement entry (the ``antes`` of ``pose_set``)."""
-	return {"theta_deg": float(e["theta_deg"]), "dx_mm": float(e.get("dx_mm") or 0.0), "dy_mm": float(e.get("dy_mm") or 0.0),
-			"method": e.get("method"), "manual": bool(e.get("manual"))}
+def pose_brief(e: dict, full: bool = False) -> dict:
+	"""``{theta_deg, dx_mm, dy_mm, method, manual}`` of a placement entry (the ``antes`` of ``pose_set``); with
+	``full`` also ``pivot_mm``, ``residual_mm``, ``shape_residual_mm``, ``corner_k`` (the 90° assignment of the
+	corner registration) and ``rotation``: the pair (automatic pose, manual pose) that
+	``python -m src.overrides --pares`` measures (nothing is learnt from it)."""
+	out = {"theta_deg": float(e["theta_deg"]), "dx_mm": float(e.get("dx_mm") or 0.0), "dy_mm": float(e.get("dy_mm") or 0.0),
+		   "method": e.get("method"), "manual": bool(e.get("manual"))}
+	if full:
+		piv = e.get("pivot_mm")
+		cr = e.get("corner") or {}
+		out.update(pivot_mm=(None if piv is None else [float(piv[0]), float(piv[1])]),
+				   residual_mm=(None if e.get("residual_mm") is None else float(e["residual_mm"])),
+				   shape_residual_mm=(None if e.get("shape_residual_mm") is None else float(e["shape_residual_mm"])),
+				   corner_k=(None if cr.get("k") is None else int(cr["k"])), rotation=e.get("rotation"))
+	return out
 
 
 def registered_theta(project, pid: str) -> Optional[float]:

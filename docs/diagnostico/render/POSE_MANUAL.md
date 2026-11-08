@@ -163,3 +163,23 @@ y_svg = (l − 0,5)·hr + dy/w + sinθ·px + cosθ·py
   - Suspeitas: `n_pose_manual` 1, e as outras contagens ficam iguais (0 / 2 / 12).
 - **Repor:** eventos `pose_cleared` + `fetch_listed`, as juntas voltam a −0,615 / −0,078, e o raster da região volta a ficar igual ao inicial (0 px diferentes) **[V]**.
 - **Sensibilidade da métrica de junta (sintético, `test_render.py`):** deslocar 1 mm na normal muda o `gap_mm` de um lado com tab/baía em 0,67 mm (0,96 → 0,289 / 1,631). A mediana ao longo do lado não é linear no deslocamento: o cliente não deve converter a folga em deslocamento 1:1.
+
+## Pares (pose automática, pose manual): medição, sem aprendizagem (2026-11-08)
+
+Pedido do Tiago (ronda 6): guardar o par e resumir o desvio; **não** calibrar nada.
+
+- **O que fica gravado:** `pose_set.antes` passa a levar a pose automática inteira: `{theta_deg, dx_mm, dy_mm, method, manual, pivot_mm, residual_mm, shape_residual_mm, corner_k, rotation}` (`render.pose_brief(e, full=True)`, chamado por `server.set_pose`). Os 4 eventos anteriores têm só `{theta_deg, dx_mm, dy_mm, method, manual}`; como o pivô da pose manual é o da automática (`server.set_pose`, `pivot_mm=e0["pivot_mm"]`) e as duas são absolutas ao centro da célula, o desvio é a diferença direta e lê-se nos eventos antigos também.
+- **Relatório:** `python -m src.overrides --project projects/alpes --pares` acrescenta a secção «Poses manuais» (`overrides.pose_pairs` / `pose_summary`): por evento `pose_set` a peça, célula, zona (`fit.zone_of`), se a pose ainda está ativa, Δθ, Δx, Δy (manual − automática, mm do tabuleiro, y para baixo), |d|, direção dominante (N/E/S/W), deslocamento do centro do corpo (igual a |d| quando o pivô é o centro) e o método automático; resumos **por zona** e **por direção** com n, média e IC 95 % t de Student (tabela interna df 1–30; sem scipy). `--json-poses` dá o JSON; `--json` continua a ser a lista dos contornos.
+- **Medido em `projects/alpes` (2026-11-08, 4 poses, todas céu, todas `corners` com dx = dy = 0 na automática) [V]:**
+
+| peça | célula | Δθ ° | Δx mm | Δy mm | \|d\| mm | direção |
+|---|---|---|---|---|---|---|
+| P0833 | (8,2) | 0,00 | +0,27 | −0,37 | 0,46 | N |
+| P0133 | (3,28) | −4,08 | +0,64 | +0,55 | 0,84 | E |
+| P0177 | (2,37) | 0,00 | +1,01 | 0,00 | 1,01 | E |
+| P0135 | (3,46) | 0,00 | +0,09 | +0,82 | 0,83 | S |
+
+  Resumo: Δx média +0,50 IC95 [−0,14, +1,15]; Δy +0,25 [−0,60, +1,10]; Δθ −1,0° [−4,3, +2,2]; |d| 0,78 [0,41, 1,15]. Por direção n = 1–2: sem IC útil.
+
+- **A partir de que n o desvio seria utilizável (resposta, sem agir):** `n ≥ (t·σ/δ)²` por estrato, com δ = metade do passo que se quer resolver e σ o desvio-padrão medido pelo relatório. Com σ ≈ 0,4 mm (a ordem do que os 4 casos sugerem: |d| 0,46–1,01) e δ = 0,2 mm → n ≈ 15 por estrato; com 1/3 de peças de reserva (que nunca entram na calibração) → **≈ 20–25 por zona** (céu, montanha, vale, relva) para um parâmetro isotrópico, ou **≈ 60–100 no total** para um parâmetro que dependa da direção (banda da sombra só nos lados virados à sombra: 4 direções). Hoje n = 4 (uma zona, uma direção com n = 2): não se estima nem σ. **Aviso de viés de seleção:** as poses manuais são as peças que o Tiago achou mal desenhadas (a cauda do erro, como as 61 peças de julho), não uma amostra do registo; para calibrar é preciso juntar peças de reserva escolhidas ao acaso e medir também as que o Tiago não tocou.
+- **Parâmetros candidatos (nomes de hoje), nenhum ligado:** `calibration.celula_silhueta.offset_mm` 0,48 (a silhueta está fora da linha de corte, E-real), `calibration.buraco.erosion_mm` 0,60 (M11), a banda da sombra (`render.DISPLAY_SHADOW` 0,4 mm no desenho; S2 em `segmentation.py`, 1,2 mm nos lados virados à sombra), `F_TRANSLATION` (desligado; P0240 refutou o encosto do F), e o refinamento por imagem de `register_piece` (desligado, 0 aceites). Nada disto lê os pares: `--pares` é só medição.

@@ -28,6 +28,7 @@ small I/O part (reading the scan header, the jsonl file).
 
 import datetime as _dt
 import json
+import math
 import os
 from typing import Optional
 
@@ -42,7 +43,7 @@ __all__ = [
 	"validate_polygon", "manual_flags", "is_manual",
 	"overrides_path", "read_overrides", "latest_overrides", "has_override", "scan_file", "scan_size",
 	"load_scan_rgb", "reference_area_px", "check_override", "append_override", "crop_window",
-	"EXTRA_KEYS", "pair_metrics", "manual_pairs", "main",
+	"EXTRA_KEYS", "pair_metrics", "manual_pairs", "pose_pairs", "pose_summary", "mean_ci", "direction_of", "main",
 ]
 
 OVERRIDES_FILE = "overrides.jsonl"
@@ -483,26 +484,161 @@ def manual_pairs(project) -> list:
 	return out
 
 
+# ---------------------------------------------------------------- automatic vs manual POSE (pose_set events; measurement only)
+# Student t, 95 % two-sided, by degrees of freedom (1..30); 2.0 up to 60, 1.96 above. No scipy in the project.
+_T95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+		11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131, 16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+		21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060, 26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042}
+
+
+def t95(df: int) -> float:
+	if df < 1:
+		return float("nan")
+	return _T95.get(df, 2.0 if df <= 60 else 1.96)
+
+
+def mean_ci(xs) -> dict:
+	"""``{n, media, dp, lo, hi}``: mean and 95 % t interval of a sample (``lo``/``hi`` None when n < 2)."""
+	v = np.asarray([x for x in xs if x is not None and np.isfinite(x)], float)
+	n = int(v.size)
+	if n == 0:
+		return {"n": 0, "media": None, "dp": None, "lo": None, "hi": None}
+	m = float(v.mean())
+	if n < 2:
+		return {"n": 1, "media": m, "dp": None, "lo": None, "hi": None}
+	sd = float(v.std(ddof=1))
+	hw = t95(n - 1) * sd / math.sqrt(n)
+	return {"n": n, "media": m, "dp": sd, "lo": m - hw, "hi": m + hw}
+
+
+def direction_of(dx: float, dy: float) -> Optional[str]:
+	"""Board direction of a displacement (mm, y down): the dominant axis; None when (0, 0)."""
+	if abs(dx) < 1e-9 and abs(dy) < 1e-9:
+		return None
+	if abs(dx) >= abs(dy):
+		return "E" if dx > 0 else "W"
+	return "S" if dy > 0 else "N"
+
+
+def _wrap180(a: float) -> float:
+	a = (a + 180.0) % 360.0 - 180.0
+	return 180.0 if a == -180.0 else a
+
+
+def pose_pairs(project) -> list:
+	"""One row per ``pose_set`` event: the manual pose against the automatic one it replaced (``antes``), both
+	absolute about the cell centre with the same pivot (``x = R(θ)(x_scan − pivot) + centre + (dx, dy)``), so the
+	deviation is a plain difference: ``dtheta_deg``, ``dx_mm``, ``dy_mm`` (manual − automatic), ``d_mm`` =
+	|(dx, dy)|, ``direcao`` (dominant axis, y down = S), ``desloc_centro_mm`` (the displacement of the body centre
+	when the pivot is not that centre: the rotation moves it too), ``zona`` (:func:`src.fit.zone_of`), ``ativa``
+	(the piece still shows this manual pose), ``method_auto``, ``residual_auto``, ``corner_k_auto``. Nothing is
+	calibrated from this: it is the measurement ``--pares`` prints."""
+	from src.fit import zone_of
+	from src.locate import body_center_mm
+	rows = []
+	evs = [ev for ev in project.events() if ev.get("action") == "pose_set"]
+	last_idx = {ev.get("piece"): i for i, ev in enumerate(evs)}        # the last pose_set of each piece (same-second saves)
+	for i, ev in enumerate(evs):
+		a = ev.get("antes") or {}
+		pid = ev.get("piece")
+		p = project.pieces.get(pid)
+		pm = p.pose_manual if p is not None else None
+		th_m, th_a = float(ev["theta_deg"]), (None if a.get("theta_deg") is None else float(a["theta_deg"]))
+		dx, dy = float(ev["dx_mm"]) - float(a.get("dx_mm") or 0.0), float(ev["dy_mm"]) - float(a.get("dy_mm") or 0.0)
+		dth = None if th_a is None else _wrap180(th_m - th_a)
+		centre = None
+		if p is not None and dth is not None:
+			try:
+				sh = project.shape(pid)
+				piv = np.asarray(ev.get("pivot_mm") or a.get("pivot_mm") or body_center_mm(sh), float)
+				c = body_center_mm(sh) - piv
+				if np.hypot(*c) > 1e-6:
+					ra, rm = np.radians(th_a), np.radians(th_m)
+					rot = lambda t, v: np.array([math.cos(t) * v[0] - math.sin(t) * v[1], math.sin(t) * v[0] + math.cos(t) * v[1]])
+					d = rot(rm, c) + np.array([dx, dy]) - rot(ra, c)
+					centre = float(np.hypot(*d))
+				else:
+					centre = float(math.hypot(dx, dy))
+			except Exception:  # noqa: BLE001 - a piece without shape: the plain displacement stays
+				centre = None
+		rows.append({"piece": pid, "cell": list(ev.get("cell") or []), "zona": zone_of(ev.get("cell")), "t": ev.get("t"),
+					 "ativa": bool(pm is not None and pm.get("t") == ev.get("t") and last_idx.get(pid) == i), "theta_manual_deg": th_m, "theta_auto_deg": th_a,
+					 "dtheta_deg": dth, "dx_mm": dx, "dy_mm": dy, "d_mm": float(math.hypot(dx, dy)), "direcao": direction_of(dx, dy),
+					 "desloc_centro_mm": centre, "method_auto": a.get("method"), "residual_auto": a.get("residual_mm"),
+					 "corner_k_auto": a.get("corner_k"), "nota": ev.get("nota") or ""})
+	return rows
+
+
+def pose_summary(rows: list) -> dict:
+	"""``{total, por_zona: {zona: {campo: mean_ci}}, por_direcao: {dir: {...}}}`` over :func:`pose_pairs` rows
+	(fields ``dx_mm``, ``dy_mm``, ``dtheta_deg``, ``d_mm``)."""
+	fields = ("dx_mm", "dy_mm", "dtheta_deg", "d_mm")
+
+	def agg(rs):
+		return {f: mean_ci([r.get(f) for r in rs]) for f in fields}
+	by_z, by_d = {}, {}
+	for r in rows:
+		by_z.setdefault(r["zona"], []).append(r)
+		by_d.setdefault(r["direcao"] or "—", []).append(r)
+	return {"total": agg(rows), "n": len(rows), "n_ativas": sum(1 for r in rows if r["ativa"]),
+			"por_zona": {k: agg(v) for k, v in sorted(by_z.items())}, "por_direcao": {k: agg(v) for k, v in sorted(by_d.items())}}
+
+
+def _ci_txt(c: dict, nd: int = 2) -> str:
+	if not c or c["n"] == 0:
+		return "—"
+	s = f"n={c['n']} média {c['media']:+.{nd}f}"
+	if c["lo"] is not None:
+		s += f" IC95 [{c['lo']:+.{nd}f}, {c['hi']:+.{nd}f}]"
+	return s
+
+
+def format_pose_pairs(rows: list, summ: dict) -> str:
+	lines = ["## Poses manuais (pose_set: manual − automática, mm do tabuleiro, y para baixo; nada é calibrado daqui)",
+			 "| peça | célula | zona | t | ativa | Δθ ° | Δx mm | Δy mm | |d| mm | direção | desloc. centro mm | auto |",
+			 "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+	for r in rows:
+		res = r.get("residual_auto")
+		auto = (r["method_auto"] or "?") + ("" if res is None else f" ({float(res):.2f} mm)")
+		lines.append(f"| {r['piece']} | {tuple(r['cell']) if r['cell'] else '—'} | {r['zona']} | {r['t']} | {'sim' if r['ativa'] else 'não'} | "
+					 f"{_fmt(r['dtheta_deg'])} | {_fmt(r['dx_mm'])} | {_fmt(r['dy_mm'])} | {_fmt(r['d_mm'])} | {r['direcao'] or '—'} | "
+					 f"{_fmt(r['desloc_centro_mm'])} | {auto} |")
+	lines.append("")
+	lines.append(f"{summ['n']} poses manuais ({summ['n_ativas']} ativas); nenhuma calibração aplicada.")
+	for name, d in (("total", {"todas": summ["total"]}), ("por zona", summ["por_zona"]), ("por direção", summ["por_direcao"])):
+		lines.append(f"- {name}:")
+		for k, agg in d.items():
+			lines.append(f"  - {k}: Δx {_ci_txt(agg['dx_mm'])}; Δy {_ci_txt(agg['dy_mm'])}; Δθ {_ci_txt(agg['dtheta_deg'], 1)}; |d| {_ci_txt(agg['d_mm'])}")
+	return "\n".join(lines)
+
+
 def _fmt(v, nd=2):
 	return "—" if v is None else f"{v:.{nd}f}"
 
 
 def main(argv=None) -> int:
-	"""``python -m src.overrides --project <p> --pares [--json]``: the automatic-vs-manual table."""
+	"""``python -m src.overrides --project <p> --pares [--json]``: the automatic-vs-manual tables (contours, then poses)."""
 	import argparse
 	from src.state import Project
 	ap = argparse.ArgumentParser(prog="python -m src.overrides", description="Contornos manuais (overrides.jsonl).")
 	ap.add_argument("--project", required=True)
 	ap.add_argument("--pares", action="store_true", help="contorno automático vs manual por peça (maskcmp)")
-	ap.add_argument("--json", action="store_true", help="com --pares: JSON em vez da tabela")
+	ap.add_argument("--json", action="store_true", help="com --pares: JSON (lista dos contornos) em vez da tabela")
+	ap.add_argument("--json-poses", action="store_true", help="com --pares: JSON {poses, resumo} das poses manuais")
 	a = ap.parse_args(argv)
 	if not a.pares:
 		ap.print_help()
 		return 0
-	rows = manual_pairs(Project.open(a.project))
+	pr = Project.open(a.project)
+	rows = manual_pairs(pr)
+	prow = pose_pairs(pr)
+	if a.json_poses:
+		print(json.dumps({"poses": prow, "resumo": pose_summary(prow)}, ensure_ascii=False, indent=1))
+		return 0
 	if a.json:
 		print(json.dumps(rows, ensure_ascii=False, indent=1))
 		return 0
+	print("## Contornos manuais (automático vs manual, maskcmp)")
 	print("| peça | t | método | origem auto | IoU | em falta mm² | a mais mm² | p95 mm | prof. falta mm | prof. a mais mm |")
 	print("|---|---|---|---|---|---|---|---|---|---|")
 	for r in rows:
@@ -510,7 +646,8 @@ def main(argv=None) -> int:
 			  f"{_fmt(r['missing_mm2'])} | {_fmt(r['excess_mm2'])} | {_fmt(r['d_p95'])} | {_fmt(r['missing_depth_mm'])} | "
 			  f"{_fmt(r['excess_depth_mm'])} |")
 	n = sum(1 for r in rows if r["iou"] is not None)
-	print(f"\n{len(rows)} peças com contorno manual; {n} com contorno automático registado.")
+	print(f"\n{len(rows)} peças com contorno manual; {n} com contorno automático registado.\n")
+	print(format_pose_pairs(prow, pose_summary(prow)))
 	return 0
 
 
