@@ -32,29 +32,36 @@
     "touches_strip": false,
     "is_cluster": false,
     "objeto_duplo": false,
-    "manual_override": true
+    "contacto": {
+     "com": [
+      2
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
-   "area_mm2": 316.14,
+   "area_mm2": 378.19,
    "cls": "BBTT",
    "n_flat": 0,
    "chords_mm": [
-    16.681,
-    17.433,
-    17.617,
-    17.412
+    17.651,
+    18.19,
+    18.854,
+    17.26
    ],
    "shape_ok": true,
    "bbox": [
-    658,
-    223,
-    292,
-    303
+    644,
+    221,
+    306,
+    317
    ],
    "crop_path": "crops/P1021.png",
    "mean_lab": [
-    79.25,
-    -0.98,
-    0.92
+    72.05,
+    -5.35,
+    4.66
    ]
   },
   {

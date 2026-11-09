@@ -1287,29 +1287,37 @@
     "touches_strip": false,
     "is_cluster": false,
     "objeto_duplo": false,
-    "manual_override": true
+    "contacto": {
+     "com": [
+      24,
+      32
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
-   "area_mm2": 337.2,
+   "area_mm2": 399.25,
    "cls": "BBTT",
    "n_flat": 0,
    "chords_mm": [
-    18.134,
-    18.362,
-    18.389,
-    17.945
+    18.757,
+    19.307,
+    19.138,
+    18.588
    ],
    "shape_ok": true,
    "bbox": [
-    806,
+    791,
     1562,
-    288,
-    303
+    304,
+    317
    ],
    "crop_path": "crops/P1064.png",
    "mean_lab": [
-    66.27,
-    -6.28,
-    27.42
+    60.74,
+    -9.59,
+    26.8
    ]
   },
   {
@@ -2439,29 +2447,37 @@
     "touches_strip": false,
     "is_cluster": false,
     "objeto_duplo": false,
-    "manual_override": true
+    "contacto": {
+     "com": [
+      48,
+      61
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": true
+    }
    },
-   "area_mm2": 333.33,
+   "area_mm2": 388.47,
    "cls": "BTBT",
    "n_flat": 0,
    "chords_mm": [
-    18.833,
-    16.931,
-    19.337,
-    16.241
+    18.99,
+    18.209,
+    19.118,
+    17.572
    ],
    "shape_ok": true,
    "bbox": [
-    2057,
+    2046,
     2669,
-    287,
-    358
+    297,
+    368
    ],
    "crop_path": "crops/P1089.png",
    "mean_lab": [
-    84.27,
-    -5.09,
-    36.59
+    76.99,
+    -8.95,
+    35.4
    ]
   },
   {

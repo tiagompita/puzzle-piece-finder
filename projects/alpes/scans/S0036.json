@@ -822,7 +822,7 @@
    "index_in_scan": 20,
    "lote": 8,
    "n_no_lote": 21,
-   "estado": "solta",
+   "estado": "emparelhada",
    "celula": null,
    "theta_deg": null,
    "seccao_id": null,

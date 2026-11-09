@@ -317,30 +317,29 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false,
-    "manual_override": true
+    "objeto_duplo": false
    },
-   "area_mm2": 264.12,
+   "area_mm2": 314.53,
    "cls": "BBBT",
    "n_flat": 0,
    "chords_mm": [
-    18.015,
-    16.236,
-    18.777,
-    16.548
+    18.615,
+    16.922,
+    19.58,
+    17.04
    ],
    "shape_ok": true,
    "bbox": [
-    449,
+    440,
     396,
-    223,
-    296
+    232,
+    307
    ],
    "crop_path": "crops/P0916.png",
    "mean_lab": [
-    84.72,
-    0.19,
-    50.09
+    75.88,
+    -3.92,
+    45.8
    ]
   },
   {
@@ -1128,29 +1127,36 @@
     "touches_strip": false,
     "is_cluster": false,
     "objeto_duplo": false,
-    "manual_override": true
+    "contacto": {
+     "com": [
+      22
+     ],
+     "confianca": "alta",
+     "metodo": "conectividade",
+     "alterado": false
+    }
    },
-   "area_mm2": 367.1,
+   "area_mm2": 424.92,
    "cls": "BTTT",
    "n_flat": 0,
    "chords_mm": [
-    18.21,
-    17.452,
-    18.482,
-    16.35
+    18.869,
+    18.359,
+    19.229,
+    16.686
    ],
    "shape_ok": true,
    "bbox": [
-    768,
-    1482,
-    289,
-    375
+    757,
+    1480,
+    301,
+    386
    ],
    "crop_path": "crops/P0935.png",
    "mean_lab": [
-    78.22,
-    -0.63,
-    16.3
+    71.99,
+    -4.23,
+    17.2
    ]
   },
   {

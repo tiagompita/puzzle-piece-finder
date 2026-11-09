@@ -197,30 +197,29 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false,
-    "manual_override": true
+    "objeto_duplo": false
    },
-   "area_mm2": 307.02,
+   "area_mm2": 364.82,
    "cls": "BTBT",
    "n_flat": 0,
    "chords_mm": [
-    16.733,
-    17.887,
-    16.949,
-    18.838
+    17.055,
+    18.751,
+    17.914,
+    19.052
    ],
    "shape_ok": true,
    "bbox": [
-    2089,
+    2076,
     156,
-    359,
-    223
+    374,
+    233
    ],
    "crop_path": "crops/P0098.png",
    "mean_lab": [
-    78.26,
-    -5.3,
-    2.31
+    71.87,
+    -9.07,
+    5.55
    ]
   },
   {
@@ -490,30 +489,29 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false,
-    "manual_override": true
+    "objeto_duplo": false
    },
-   "area_mm2": 314.54,
+   "area_mm2": 367.23,
    "cls": "BBTT",
    "n_flat": 0,
    "chords_mm": [
-    18.785,
-    16.941,
-    16.589,
-    17.912
+    19.387,
+    17.556,
+    17.914,
+    17.91
    ],
    "shape_ok": true,
    "bbox": [
-    706,
-    961,
-    292,
-    296
+    693,
+    960,
+    305,
+    305
    ],
    "crop_path": "crops/P0105.png",
    "mean_lab": [
-    62.51,
-    -3.59,
-    -0.01
+    58.95,
+    -7.31,
+    3.47
    ]
   },
   {

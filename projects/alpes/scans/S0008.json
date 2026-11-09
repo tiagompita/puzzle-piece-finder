@@ -31,30 +31,29 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false,
-    "manual_override": true
+    "objeto_duplo": false
    },
-   "area_mm2": 349.81,
+   "area_mm2": 418.27,
    "cls": "BBTT",
    "n_flat": 0,
    "chords_mm": [
-    18.444,
-    18.05,
-    18.162,
-    19.119
+    19.193,
+    18.833,
+    18.13,
+    20.492
    ],
    "shape_ok": true,
    "bbox": [
-    710,
-    257,
-    305,
-    302
+    696,
+    256,
+    319,
+    315
    ],
    "crop_path": "crops/P0186.png",
    "mean_lab": [
-    54.06,
-    -4.52,
-    2.2
+    50.52,
+    -8.82,
+    5.93
    ]
   },
   {
