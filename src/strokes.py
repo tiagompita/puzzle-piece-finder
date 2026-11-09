@@ -32,6 +32,20 @@ component and fills holes; :func:`mascara_poligono` returns the outer pixel chai
 :func:`resolver` chains it all. Measured against two hand-cut masks in
 ``docs/diagnostico/editor/TRACOS.md`` (choice of :data:`SOLVER_OMISSAO` and of the constants).
 
+**Convention of the index** (``normalizar_indice``, docs/diagnostico/editor/CONVENCAO.md): the silhouettes
+of the index (``segment_scan``) include the cast shadow / penumbra (median 0.2-0.3 mm, 1.0-1.5 mm on the
+shadow sides); the solvers find the true edge. The twin thresholds and the hole erosion are calibrated on
+the index convention, so what the editor SAVES must follow it. :func:`delta_peca` runs the solver without
+strokes (``S0``) and measures the piece's own halo ``H = (auto & ~S0) | nucleo_sombra`` (local, per pixel;
+the black core of the shadow, dark and neutral, which the chroma-only solver keeps unless a ``fundo``
+stroke teaches it otherwise: TRACOS.md §2.4) and its scalar
+summary δ (minus the median signed offset of ``S0`` to the automatic boundary, dead-zone
+:data:`DELTA_ZONA_MORTA_PX`, clamp [0, :data:`DELTA_MAX_MM`]). :func:`influencia` is the region ``I`` the
+strokes may change (their footprint grown by band + reach + δ; a lasso whole). :func:`normalizar` builds
+the saved mask: the automatic outside ``I`` (a save without strokes is the identity), ``raw | H`` inside
+``I`` (a ``fundo`` stroke on the shadow line is a no-op by convention; a deeper cut survives), and regions
+gained beyond the automatic (a recovered bite) grown by δ so they carry the same halo as the rest.
+
 The RLE (:func:`rle_encode` / :func:`rle_decode`) is row-major, runs alternating background /
 piece and starting with background (a first run of 0 when the first pixel is piece).
 """
@@ -48,6 +62,9 @@ __all__ = [
 	"MAX_RAIO_PX",
 	"parametros", "validar_tracos", "traduzir_tracos", "rasterizar_tracos", "trimap", "dominio",
 	"solve_grabcut", "solve_watershed", "solve_limiar", "limpar", "mascara_poligono", "resolver",
+	"DELTA_MAX_MM", "DELTA_ZONA_MORTA_PX", "SOMBRA_L_MAX", "SOMBRA_CHROMA_MAX", "SOMBRA_BANDA_MM", "SOMBRA_TRACO_FRAC",
+	"SOMBRA_TRACO_MIN_MM2", "S0_INCERTO",
+	"desvio_assinado", "nucleo_sombra", "delta_peca", "tracos_de_sombra", "influencia", "normalizar",
 	"rle_encode", "rle_decode",
 ]
 
@@ -59,6 +76,14 @@ LIMPEZA_MM = 0.3        # closing / opening of the solved mask (kernel side, odd
 MAX_TRACOS = 2000       # payload guards
 MAX_PONTOS = 200000
 MAX_RAIO_PX = 500.0
+DELTA_MAX_MM = 0.8          # convention offset applied to gained regions: clamp (more is a solver failure, not a halo)
+DELTA_ZONA_MORTA_PX = 1.0   # |δ| of one pixel or less is quantisation (the flat synthetic scan gives exactly 1 px): no offset
+S0_INCERTO = "bgd"          # the halo estimate seeds the uncertain band as background: conservative towards the index
+SOMBRA_L_MAX = 60.0         # black core of the cast shadow (OpenCV 8-bit L*; measured 8-10 on the 17 records, paper ~200)
+SOMBRA_CHROMA_MAX = 40.0    # ... with low chroma (core ~7, its blurred rim up to ~35; the green penumbra ~45 is already outside S0)
+SOMBRA_BANDA_MM = 2.0       # ... within this depth of the automatic boundary (the shadow sides measure 1.0-1.5 mm, the core up to 1.9)
+SOMBRA_TRACO_FRAC = 0.6     # a ``fundo`` stroke with this share of its in-piece footprint on the halo is a shadow stroke: ignored
+SOMBRA_TRACO_MIN_MM2 = 1.5  # ... as is one that barely enters the piece (a graze of the brush along the edge)
 _NAO_MARCADO = -1
 
 # Default parameters of each solver (the caller's ``params`` override them; unknown keys are an error).
@@ -426,12 +451,21 @@ def mascara_poligono(mask: np.ndarray) -> Optional[np.ndarray]:
 
 def resolver(rgb_crop: np.ndarray, auto_mask: np.ndarray, tracos, mm_per_px: float,
 			 solver: str = SOLVER_OMISSAO, params: Optional[dict] = None, bg_lab=None,
-			 banda_mm: float = BANDA_MM, limpeza_mm: float = LIMPEZA_MM) -> dict:
+			 banda_mm: float = BANDA_MM, limpeza_mm: float = LIMPEZA_MM, normalizar_indice: bool = False,
+			 delta: Optional[dict] = None) -> dict:
 	"""Strokes -> trimap -> ``solver`` -> :func:`limpar` -> polygon, on the crop.
 
 	``tracos`` must be normalised (:func:`validar_tracos`). Returns ``{mask (bool, = the polygon
 	filled), contour ((n, 2) float, crop px), trimap, area_mm2, ms, solver, params}`` or
-	``{'error': str}`` (unknown solver, nothing left of the piece)."""
+	``{'error': str}`` (unknown solver, nothing left of the piece).
+
+	``normalizar_indice=True`` (the server's editor): the saved mask follows the convention of the index
+	(:func:`normalizar`; ``delta`` = a cached :func:`delta_peca` of the same crop / solver, else computed
+	here); ``fundo`` strokes that only mark the shadow (:func:`tracos_de_sombra`) are dropped before the
+	trimap and listed in ``tracos_ignorados``; the result carries ``aresta`` (the raw solver polygon),
+	``mask_bruta``, ``influencia``, ``delta_mm`` and ``identidade`` (no effective stroke: the mask IS the
+	automatic one, bit for bit). The raw path (default) is what the tests and
+	``tools/diagnostico/editor/tracos_gt.py`` measure."""
 	t0 = time.perf_counter()
 	if solver not in SOLVERS:
 		return {"error": f"solver desconhecido {solver!r} ({', '.join(SOLVERS)})"}
@@ -439,18 +473,170 @@ def resolver(rgb_crop: np.ndarray, auto_mask: np.ndarray, tracos, mm_per_px: flo
 		pr = parametros(solver, params)
 	except ValueError as e:
 		return {"error": str(e)}
+	ignorados = []
+	if normalizar_indice:
+		auto = np.asarray(auto_mask, bool)
+		if delta is None:
+			delta = delta_peca(rgb_crop, auto, mm_per_px, solver, pr, bg_lab, banda_mm, limpeza_mm)
+		ignorados = tracos_de_sombra(tracos, auto, delta["halo"], mm_per_px)
+		if ignorados:
+			tracos = [t for i, t in enumerate(tracos) if i not in set(ignorados)]
 	tri = trimap(auto_mask, tracos, mm_per_px, banda_mm)
 	raw = SOLVERS[solver](rgb_crop, tri, mm_per_px, bg_lab=bg_lab, **pr)
 	m = limpar(raw, mm_per_px, tri, limpeza_mm)
 	poly = mascara_poligono(m)
 	if poly is None or len(poly) < 3:
 		return {"error": "não sobrou nenhuma peça (marca alguma zona como peça)"}
+	extra = {}
+	if normalizar_indice:
+		raio = (banda_mm + float(pr.get("alcance_mm", 0.0)) + delta["delta_mm"]) / mm_per_px
+		infl = influencia(tracos, auto.shape, raio)
+		extra = {"aresta": poly, "mask_bruta": m, "delta_mm": delta["delta_mm"], "identidade": not infl.any(),
+				 "influencia": infl, "tracos_ignorados": ignorados}
+		m = normalizar(m, auto, delta["halo"], infl, delta["delta_mm"], mm_per_px, tri, limpeza_mm)
+		poly = mascara_poligono(m)
+		if poly is None or len(poly) < 3:
+			return {"error": "não sobrou nenhuma peça (marca alguma zona como peça)"}
 	fill = np.zeros(m.shape, np.uint8)
 	cv2.fillPoly(fill, [poly.astype(np.int32).reshape(-1, 1, 2)], 1)
 	fill = fill > 0
+	if normalizar_indice and extra["identidade"]:
+		fill = np.asarray(auto_mask, bool).copy()           # identity: the automatic mask itself, not a re-traced chain
 	return {"mask": fill, "contour": poly, "trimap": tri, "area_mm2": float(fill.sum()) * mm_per_px * mm_per_px,
-			"ms": (time.perf_counter() - t0) * 1000.0, "solver": solver, "params": pr}
+			"ms": (time.perf_counter() - t0) * 1000.0, "solver": solver, "params": pr, **extra}
 
+
+
+# ---------------------------------------------------------------- convention of the index
+def desvio_assinado(ref: np.ndarray, cand: np.ndarray) -> np.ndarray:
+	"""Signed distance (px) of every boundary pixel of ``cand`` to the boundary of ``ref``: > 0 outside ``ref``."""
+	from src.maskcmp import boundary
+	ref = np.asarray(ref, bool)
+	b = boundary(np.asarray(cand, bool))
+	if not b.any() or not ref.any() or ref.all():
+		return np.zeros(0, np.float32)
+	dout = cv2.distanceTransform((~ref).astype(np.uint8), cv2.DIST_L2, 5)
+	din = cv2.distanceTransform(ref.astype(np.uint8), cv2.DIST_L2, 5)
+	return np.where(ref, -din, dout)[b]
+
+
+def nucleo_sombra(rgb_crop: np.ndarray, auto_mask: np.ndarray, mm_per_px: float, l_max: float = SOMBRA_L_MAX,
+				  chroma_max: float = SOMBRA_CHROMA_MAX, banda_mm: float = SOMBRA_BANDA_MM,
+				  seed: Optional[np.ndarray] = None) -> np.ndarray:
+	"""Pixels of ``auto_mask`` that look like the black core of the cast shadow: L* < ``l_max`` and chroma <
+	``chroma_max`` (OpenCV 8-bit Lab), within ``banda_mm`` of the automatic boundary and 8-connected to its
+	outer 0.3 mm or to ``seed`` (the penumbra ``auto & ~s0``, which lies between the core and the paper).
+	Part of the silhouette by the convention of the index."""
+	auto = np.asarray(auto_mask, bool)
+	if not auto.any():
+		return auto.copy()
+	lab = cv2.cvtColor(np.ascontiguousarray(rgb_crop), cv2.COLOR_RGB2LAB).astype(np.float32)
+	chroma = np.hypot(lab[..., 1] - 128.0, lab[..., 2] - 128.0)
+	depth = cv2.distanceTransform(auto.astype(np.uint8), cv2.DIST_L2, 5)
+	cand = auto & (lab[..., 0] < l_max) & (chroma < chroma_max) & (depth <= banda_mm / mm_per_px)
+	if not cand.any():
+		return cand
+	band = auto & (depth <= max(1.0, 0.3 / mm_per_px))
+	seed = band if seed is None else (band | (np.asarray(seed, bool) & auto))
+	n, cc = cv2.connectedComponents((cand | seed).astype(np.uint8), connectivity=8)
+	keep = np.zeros(n, bool)
+	keep[np.unique(cc[seed])] = True
+	keep[0] = False
+	return cand & keep[cc]
+
+
+def delta_peca(rgb_crop: np.ndarray, auto_mask: np.ndarray, mm_per_px: float, solver: str = SOLVER_OMISSAO,
+			   params: Optional[dict] = None, bg_lab=None, banda_mm: float = BANDA_MM,
+			   limpeza_mm: float = LIMPEZA_MM) -> dict:
+	"""The piece's own convention offset: ``{s0 (bool mask: the solver without strokes, cleaned), halo
+	((auto & ~s0) | nucleo_sombra), nucleo (the shadow core alone), delta_mm (scalar, >= 0),
+	delta_bruto_mm (signed median, informative), n}``.
+
+	``s0`` is the solver on the automatic trimap with the uncertain band seeded as background
+	(:data:`S0_INCERTO`, GrabCut only): a flat-colour piece otherwise lends a spare GMM component to the
+	shadow and keeps it (measured on ``tests/synth.meadow_scan(sombra_mm=0.5)``: 4301 of 4435 shadow
+	pixels kept with ``perto``, 0 with ``bgd``, 0 piece pixels lost either way), and a halo estimate must
+	err towards the index. ``delta_mm`` = -median of the signed offset of ``s0``'s boundary to the
+	automatic boundary; up to :data:`DELTA_ZONA_MORTA_PX` it is 0; a negative median (solver outside the
+	automatic) gives 0 as well and is kept in ``delta_bruto_mm``; clamped at :data:`DELTA_MAX_MM`."""
+	auto = np.asarray(auto_mask, bool)
+	pr = parametros(solver, params)
+	if solver == "grabcut":
+		pr = dict(pr, incerto=S0_INCERTO)
+	tri = trimap(auto, [], mm_per_px, banda_mm)
+	raw = SOLVERS[solver](rgb_crop, tri, mm_per_px, bg_lab=bg_lab, **pr)
+	s0 = limpar(raw, mm_per_px, tri, limpeza_mm)
+	s = desvio_assinado(auto, s0)
+	med = float(np.median(s)) if len(s) else 0.0
+	d = -med
+	if d <= DELTA_ZONA_MORTA_PX:
+		d = 0.0
+	d_mm = min(d * mm_per_px, DELTA_MAX_MM)
+	nucleo = nucleo_sombra(rgb_crop, auto, mm_per_px, seed=auto & ~s0)
+	return {"s0": s0, "halo": (auto & ~s0) | nucleo, "nucleo": nucleo, "delta_mm": float(d_mm),
+			"delta_bruto_mm": float(med * mm_per_px), "n": int(len(s))}
+
+
+def tracos_de_sombra(tracos, auto_mask: np.ndarray, halo: np.ndarray, mm_per_px: float, frac: float = SOMBRA_TRACO_FRAC,
+					 min_mm2: float = SOMBRA_TRACO_MIN_MM2) -> list:
+	"""Indices of the ``fundo`` strokes that only mark the shadow: at least ``frac`` of their footprint
+	inside ``auto_mask`` lies on ``halo``, or the footprint enters the piece by less than ``min_mm2`` (a
+	graze of the brush along the edge). By the convention of the index these strokes are ignored (the
+	GUI shows them greyed)."""
+	auto = np.asarray(auto_mask, bool)
+	halo = np.asarray(halo, bool)
+	out = []
+	for i, t in enumerate(tracos or []):
+		if t["ferramenta"] == "borracha" or t["marca"] != "fundo":
+			continue
+		fp = _footprint(t, auto.shape) > 0
+		inside = fp & auto
+		n = int(inside.sum())
+		if n * mm_per_px * mm_per_px < min_mm2 or float((inside & halo).sum()) / n >= frac:
+			out.append(i)
+	return out
+
+
+def influencia(tracos, shape: tuple, raio_px: float) -> np.ndarray:
+	"""Bool mask of the pixels the strokes may change: the footprint of every ``laco`` / ``pincel``
+	grown by ``raio_px`` (the eraser only un-marks: it does not count). ``tracos`` normalised."""
+	m = np.zeros(shape[:2], np.uint8)
+	for t in tracos or []:
+		if t["ferramenta"] == "borracha":
+			continue
+		m |= _footprint(t, shape)
+	if not m.any():
+		return m > 0
+	r = int(round(raio_px))
+	if r > 0:
+		m = cv2.dilate(m, _ellipse(r))
+	return m > 0
+
+
+def normalizar(raw_mask: np.ndarray, auto_mask: np.ndarray, halo: np.ndarray, infl: np.ndarray, delta_mm: float,
+			   mm_per_px: float, tri: Optional[np.ndarray] = None, limpeza_mm: float = LIMPEZA_MM) -> np.ndarray:
+	"""The mask to save, in the convention of the index (module docstring): ``auto`` outside ``infl``;
+	inside, ``raw | halo`` plus the regions gained beyond ``auto`` grown by ``delta_mm``; the result is
+	cleaned (:func:`limpar` without marks) inside ``infl`` only, one component, holes filled, and the
+	certain-piece marks of ``tri`` re-imposed (certain-background marks are NOT: the halo belongs to the
+	silhouette by convention)."""
+	auto = np.asarray(auto_mask, bool)
+	infl = np.asarray(infl, bool)
+	if not infl.any():
+		return auto.copy()
+	raw = np.asarray(raw_mask, bool)
+	inside = raw | np.asarray(halo, bool)
+	gain = raw & ~auto & infl
+	d = delta_mm / mm_per_px
+	if d > 0 and gain.any():
+		inside |= cv2.distanceTransform((~gain).astype(np.uint8), cv2.DIST_L2, 5) <= d
+	comp = np.where(infl, inside, auto)
+	cleaned = limpar(comp, mm_per_px, None, limpeza_mm)
+	out = np.where(infl, cleaned, auto)
+	out = _fill_holes(_largest(out))
+	if tri is not None:
+		out |= tri == PECA_CERTA
+	return out
 
 # ---------------------------------------------------------------- RLE
 def rle_encode(mask: np.ndarray) -> dict:

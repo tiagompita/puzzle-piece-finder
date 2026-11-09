@@ -188,7 +188,7 @@ def interlocked_scan(gap_px=1, seed=0, body_gap_mm=1.0, colours=((50, 90, 180), 
 MEADOW_LAB = (62.0, -26.0, 47.0)
 
 
-def meadow_scan(seed=0, patch_mm=5.0, colour=(50, 90, 180)):
+def meadow_scan(seed=0, patch_mm=5.0, colour=(50, 90, 180), sombra_mm=0.0, sombra_dl=-45.0):
     """Synthetic 300 dpi scan on the project green: a corner of piece A painted the meadow colour.
 
     Four separated pieces (top, right, bottom, left kinds): A = ``BTBT`` (blanks on top and
@@ -198,6 +198,10 @@ def meadow_scan(seed=0, patch_mm=5.0, colour=(50, 90, 180)):
     separation of ``segment_pieces`` sees the patch as background and cuts it out of A (deeper
     than the 1.5 mm band); the full-resolution threshold holds it. Pieces are ``colour`` with
     per-pixel noise.
+
+    ``sombra_mm`` > 0 paints a cast shadow outside every piece on its left and bottom sides (the scanner
+    frame of the real scans): a ``sombra_mm`` band of the paper darkened by ``sombra_dl`` L* units (chroma
+    kept, like the real shadow: TRACOS.md §2.1). The returned masks stay the true piece masks.
 
     Returns ``(PIL image, [mask_A, mask_B, mask_C, mask_D], patch_mask)`` (full-size bool).
     """
@@ -221,6 +225,17 @@ def meadow_scan(seed=0, patch_mm=5.0, colour=(50, 90, 180)):
     patch &= masks[0]
     img = np.empty((H, W, 3), np.uint8)
     img[:] = lab_to_rgb(SCAN_BG_LAB)
+    if sombra_mm and sombra_mm > 0:
+        r = int(round(sombra_mm / MMPP))
+        union = np.zeros((H, W), bool)
+        for m in masks:
+            union |= m
+        shifted = np.zeros_like(union)
+        shifted[r:, :W - r] = union[:-r, r:]            # the shadow falls down-left of the piece
+        band = (cv2.dilate(shifted.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0) & ~union
+        band |= (cv2.dilate(union.astype(np.uint8), np.ones((2 * r + 1, 2 * r + 1), np.uint8)) > 0) & shifted & ~union
+        lab = list(SCAN_BG_LAB)
+        img[band] = lab_to_rgb((lab[0] + sombra_dl, lab[1], lab[2]))
     img = np.clip(img + rng.normal(0, 3, (H, W, 3)), 0, 255).astype(np.uint8)
     for m in masks:
         sel = m & ~patch

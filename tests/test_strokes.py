@@ -217,3 +217,94 @@ def test_every_solver_keeps_a_clean_piece(meadow, solver):
     keep = ~(cv2.dilate(meadow["patch"].astype(np.uint8), np.ones((31, 31), np.uint8)) > 0)
     assert _iou(meadow["gt"] & keep, r["mask"] & keep) >= 0.98
     assert len(r["contour"]) >= 20 and r["ms"] > 0
+
+
+# ---------------------------------------------------------------- convention of the index (normalizar_indice)
+@pytest.fixture(scope="module")
+def meadow_sombra():
+    """The meadow scan with a 0.8 mm cast shadow down-left of every piece; the automatic contour is the
+    segment_scan one (it includes the shadow, as the real index does)."""
+    from synth import meadow_scan
+    from src.segmentation import segment_scan
+    img, gts, patch = meadow_scan(sombra_mm=0.8)
+    rgb = np.asarray(img)
+    off = segment_scan(img, dpi=300, normalize_rotation=False, recover_bays=False)
+    best = None
+    for p in off["pieces"]:
+        m = M.fill_contour(np.asarray(p["contour"]).reshape(-1, 2), gts[1].shape)
+        iou = (m & gts[1]).sum() / (m | gts[1]).sum()
+        if best is None or iou > best[0]:
+            best = (iou, m)
+    ys, xs = np.nonzero(gts[1] | best[1])
+    pad = 36
+    sl = (slice(ys.min() - pad, ys.max() + pad), slice(xs.min() - pad, xs.max() + pad))
+    return {"rgb": np.ascontiguousarray(rgb[sl]), "auto": best[1][sl], "gt": gts[1][sl], "auto_iou": float(best[0])}
+
+
+def test_normalizar_no_stroke_is_identity(meadow, meadow_sombra):
+    """Without strokes the saved mask IS the automatic one (bit for bit), whatever δ is; the raw path differs."""
+    for mw in (meadow, meadow_sombra):
+        r = ST.resolver(mw["rgb"], mw["auto"], [], MMPP, normalizar_indice=True)
+        assert r["identidade"] is True and np.array_equal(r["mask"], mw["auto"])
+        assert r["tracos_ignorados"] == []
+        raw = ST.resolver(mw["rgb"], mw["auto"], [], MMPP)
+        assert not np.array_equal(raw["mask"], mw["auto"])        # the solver finds the edge, not the convention
+
+
+def test_delta_peca_measures_the_shadow(meadow, meadow_sombra):
+    """δ ≈ 0 on the flat scan (dead-zone), > 0 with the shadow; the halo lies where the shadow is."""
+    d0 = ST.delta_peca(meadow["rgb"], meadow["auto"], MMPP)
+    ds = ST.delta_peca(meadow_sombra["rgb"], meadow_sombra["auto"], MMPP)
+    assert d0["delta_mm"] == 0.0 and abs(d0["delta_bruto_mm"]) < 0.15
+    assert 0.1 <= ds["delta_mm"] <= 0.6, ds
+    halo_mm2 = ds["halo"].sum() * MMPP * MMPP
+    assert halo_mm2 > 10.0                                           # the shadow band of two sides
+    assert (ds["halo"] & meadow_sombra["gt"]).sum() <= 0.15 * ds["halo"].sum()  # ... and not the piece
+
+
+def test_fundo_on_the_shadow_line_is_a_no_op(meadow_sombra):
+    """A ``fundo`` brush along the shadow (inside the automatic, outside the true piece) is a shadow stroke:
+    ignored, listed, and the saved mask stays the automatic one."""
+    mw = meadow_sombra
+    shadow = mw["auto"] & ~mw["gt"]
+    ys, xs = np.nonzero(shadow)
+    # the left shadow strip: a vertical brush through its middle
+    x = float(np.percentile(xs, 5)) + 2
+    sel = np.abs(xs - x) < 3
+    tr = _norm([{"ferramenta": "pincel", "marca": "fundo", "raio_px": 4.0,
+                 "pontos": [[x, float(ys[sel].min() + 10)], [x, float(ys[sel].max() - 10)]]}])
+    r = ST.resolver(mw["rgb"], mw["auto"], tr, MMPP, normalizar_indice=True)
+    assert r["tracos_ignorados"] == [0] and r["identidade"] is True
+    assert np.array_equal(r["mask"], mw["auto"])
+    raw = ST.resolver(mw["rgb"], mw["auto"], tr, MMPP)
+    assert (mw["auto"] & ~raw["mask"]).sum() * MMPP * MMPP > 5.0    # the raw path does cut the shadow
+
+
+def test_normalizar_keeps_auto_outside_influence_and_the_peca_gain(meadow):
+    """A ``peca`` lasso in the eaten corner: the saved mask equals the automatic one outside the lasso's
+    influence region and recovers the corner inside it (IoU vs GT as good as the raw path, ±0.01)."""
+    inner = cv2.erode(meadow["patch"].astype(np.uint8), np.ones((9, 9), np.uint8)) > 0
+    tr = _norm([{"ferramenta": "laco", "marca": "peca", "pontos": c} for c in _outer(inner)])
+    n = ST.resolver(meadow["rgb"], meadow["auto"], tr, MMPP, normalizar_indice=True)
+    raw = ST.resolver(meadow["rgb"], meadow["auto"], tr, MMPP)
+    assert n["identidade"] is False and n["tracos_ignorados"] == []
+    outside = ~n["influencia"]
+    assert np.array_equal(n["mask"][outside], meadow["auto"][outside])
+    assert _iou(meadow["gt"], n["mask"]) >= _iou(meadow["gt"], raw["mask"]) - 0.01
+    assert (n["mask"] & meadow["patch"]).sum() >= 0.95 * meadow["patch"].sum()
+    assert len(n["aresta"]) >= 20 and n["delta_mm"] == 0.0
+
+
+def test_deep_fundo_cut_survives_normalisation(meadow):
+    """A ``fundo`` brush carving a notch from the edge well into the piece colour (not shadow) still cuts:
+    the convention protects the halo only. (A brush fully inside the piece is a hole: ``limpar`` fills it
+    on both paths, by design.)"""
+    ys, xs = np.nonzero(meadow["gt"])
+    cy = float(np.median(ys))
+    x0 = float(xs[np.abs(ys - cy) < 2].min())
+    tr = _norm([{"ferramenta": "pincel", "marca": "fundo", "raio_px": 6.0, "pontos": [[x0 - 15, cy], [x0 + 45, cy]]}])
+    n = ST.resolver(meadow["rgb"], meadow["auto"], tr, MMPP, normalizar_indice=True)
+    assert n["tracos_ignorados"] == [] and n["identidade"] is False
+    cut = meadow["auto"] & ~n["mask"]
+    assert cut.sum() * MMPP * MMPP > 3.0
+    assert np.array_equal(n["mask"][~n["influencia"]], meadow["auto"][~n["influencia"]])
