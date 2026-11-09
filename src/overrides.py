@@ -17,6 +17,17 @@ an override reads them)::
 	shadow halo of the index; lines without it predate 2026-11-09 and sit on the true edge), "delta_mm",
 	"derivado_de": t of the line a re-edit replaces, "motivo": "renormalizacao" | ..., "base_gemea": {id, t, rms_mm}
 
+**Two silhouettes per edited piece (A2, ronda 10, 2026-11-09; CONVENCAO.md §6).** A line with
+``convencao: "aresta+indice"`` also carries ``"aresta_px"``: the outline the user painted (the piece only, the
+cast shadow out; the official outline, used by the display crop, :func:`src.render.piece_rgba_for_display`,
+and by the twin suggestion). ``contour_px`` stays THE index silhouette (with the shadow halo of the index
+convention, derived from the edge by :mod:`src.strokes`): everything that reads the index (npz, shape, twin,
+fit, border, consistency, the board registration) reads ``contour_px`` and only it. When the derived index is
+the automatic contour bit for bit, the line also says ``"indice": "automatico"`` (its ``contour_px`` is that
+automatic contour): for the index it is a *reposição* (:func:`latest_overrides` leaves it out, no
+``manual_override``), it only changes the display (:func:`latest_arestas`). Old lines (no ``convencao``,
+``"indice"``, ``metodo: "reposicao"``) are read as before.
+
 :func:`manual_pairs` measures the automatic contour against the manual one per piece
 (``python -m src.overrides --project <p> --pares``). The override is applied by
 :func:`src.render.rebuild_assets` / :func:`src.render.rebuild_piece`: the polygon replaces the
@@ -48,6 +59,7 @@ __all__ = [
 	"load_scan_rgb", "reference_area_px", "check_override", "append_override", "crop_window",
 	"EXTRA_KEYS", "pair_metrics", "manual_pairs", "pose_pairs", "pose_summary", "mean_ci", "direction_of", "main",
 	"SUGESTAO_RMS_MAX", "twin_of", "twin_suggestion",
+	"CONVENCAO_ARESTA", "INDICE_AUTOMATICO", "index_inactive", "latest_arestas", "aresta_px",
 ]
 
 OVERRIDES_FILE = "overrides.jsonl"
@@ -63,7 +75,9 @@ MANUAL_FLAG = "manual_override"
 MANUAL_NOTE_FLAG = "manual_nota"
 _SEG_SILHOUETTE_KEYS = ("is_cluster", "contacto", "recuperado_mm2", "suspeita_recorte")   # facts of the segmented silhouette, dropped
 EXTRA_KEYS = ("metodo", "tracos", "origem", "tamanho", "solver", "mascara_rle", "auto_contour_px", "auto_area_mm2",
-			  "auto_origem", "convencao", "delta_mm", "derivado_de", "motivo", "base_gemea")
+			  "auto_origem", "convencao", "delta_mm", "derivado_de", "motivo", "base_gemea", "aresta_px", "indice")
+CONVENCAO_ARESTA = "aresta+indice"      # the line carries the painted edge (aresta_px) and the derived index (contour_px)
+INDICE_AUTOMATICO = "automatico"        # "indice" of a line whose derived index is the automatic contour (display only)
 
 
 # ---------------------------------------------------------------- pure helpers
@@ -336,16 +350,51 @@ def read_overrides(project) -> list:
 REPOSICAO = "reposicao"
 
 
+def index_inactive(o: dict) -> bool:
+	"""True when the line leaves the index on the automatic contour: a *reposição* (``metodo == "reposicao"``)
+	or an edge-only line (``indice == "automatico"``, A2)."""
+	return o.get("metodo") == REPOSICAO or o.get("indice") == INDICE_AUTOMATICO
+
+
 def latest_overrides(project, incluir_reposicao: bool = False) -> dict:
-	"""``{piece: override}``: the last line of each piece. A piece whose last line is a *reposição*
-	(``metodo == "reposicao"``: the user, or the renormalisation of 2026-11-09, put the automatic contour
-	back) is left out, so :func:`has_override` is False, the editor starts from the segmentation and
+	"""``{piece: override}``: the last line of each piece. A piece whose last line leaves the index on the
+	automatic contour (:func:`index_inactive`: a *reposição*, ``metodo == "reposicao"``: the user, or the
+	renormalisation of 2026-11-09, put the automatic contour back; or an edge-only line of A2, ``indice ==
+	"automatico"``) is left out, so :func:`has_override` is False, the editor starts from the segmentation and
 	:func:`src.render.rebuild_assets` re-segments it (``force_scans``) without ``manual_override``;
-	``incluir_reposicao=True`` returns those lines too (audit, ``--pares``)."""
+	``incluir_reposicao=True`` returns those lines too (audit, ``--pares``, the editor's strokes)."""
 	last = {o["piece"]: o for o in read_overrides(project) if o.get("piece")}
 	if incluir_reposicao:
 		return last
-	return {k: v for k, v in last.items() if v.get("metodo") != REPOSICAO}
+	return {k: v for k, v in last.items() if not index_inactive(v)}
+
+
+_ARESTA_CACHE = {}
+
+
+def latest_arestas(project) -> dict:
+	"""``{piece: line}`` for the pieces whose LAST line carries ``aresta_px`` (A2: the painted edge is the
+	official outline of the display). Cached by the file's size and mtime (the board drawing asks per piece)."""
+	fp = overrides_path(project)
+	try:
+		st = os.stat(fp)
+	except OSError:
+		return {}
+	key = (st.st_size, st.st_mtime_ns)
+	c = _ARESTA_CACHE.get(os.path.abspath(fp))
+	if c is not None and c[0] == key:
+		return c[1]
+	out = {k: v for k, v in latest_overrides(project, incluir_reposicao=True).items() if v.get("aresta_px")}
+	_ARESTA_CACHE[os.path.abspath(fp)] = (key, out)
+	return out
+
+
+def aresta_px(project, piece: str) -> Optional[np.ndarray]:
+	"""The painted edge of ``piece`` (scan px, ``(n, 2)`` float) from its last line, or None."""
+	o = latest_arestas(project).get(piece)
+	if o is None:
+		return None
+	return np.asarray(o["aresta_px"], float).reshape(-1, 2)
 
 
 def has_override(project, piece: str) -> bool:
@@ -428,6 +477,11 @@ def append_override(project, piece: str, contour_px, nota: str = "", extra: Opti
 	pts, err = check_override(project, piece, contour_px)
 	if err:
 		return {"error": err}
+	if "aresta_px" in extra:
+		apts, err = check_override(project, piece, extra["aresta_px"])
+		if err:
+			return {"error": f"aresta: {err}"}
+		extra["aresta_px"] = [[round(float(x), 2), round(float(y), 2)] for x, y in apts]
 	p = project.piece(piece)
 	rec = {"t": _dt.datetime.now().isoformat(timespec="seconds"), "autor": "manual", "scan_id": p.scan_id,
 		   "piece": piece, "index_in_scan": int(p.index_in_scan),
@@ -483,32 +537,38 @@ def twin_of(project, piece: str) -> Optional[tuple]:
 def twin_suggestion(project, piece: str) -> Optional[dict]:
 	"""The twin's saved manual contour, rotated by ``profile.twin_rotation_deg()`` and registered onto this
 	piece's automatic (segmented) contour (:func:`src.shape.register_rigid`), as a starting point for the
-	editor. Only from a twin whose last active override is a stroke save in the index convention
-	(``convencao: "indice"``). Returns None when there is no such twin / contour, else::
+	editor. From the twin's painted EDGE when its last line carries one (``aresta_px``, A2: the true edge does
+	not depend on the scan pose, the shadow halo does), else from a last active override that is a stroke save
+	in the index convention (``convencao: "indice"``, ronda 9). Returns None when there is no such twin /
+	contour, else::
 
-		{"gemea", "relacao", "t_gemea", "contour_px" (this piece's scan px, (n, 2) float),
-		 "rms_mm", "rms_cantos_mm", "theta_deg", "utilizavel" (rms <= SUGESTAO_RMS_MAX), "motivo"}
+		{"gemea", "relacao", "t_gemea", "contour_px" (this piece's scan px, (n, 2) float), "fonte" ("aresta" |
+		 "indice"), "rms_mm", "rms_cantos_mm", "theta_deg", "utilizavel" (rms <= SUGESTAO_RMS_MAX), "motivo"}
 	"""
 	from src.shape import register_rigid
 	tw = twin_of(project, piece)
 	if tw is None:
 		return None
 	tid, rel = tw
-	ov = latest_overrides(project).get(tid)
-	if ov is None or ov.get("metodo") != "tracos" or ov.get("convencao") != "indice":
-		return None
+	ov = latest_arestas(project).get(tid)
+	fonte, key = "aresta", "aresta_px"
+	if ov is None:
+		ov = latest_overrides(project).get(tid)
+		fonte, key = "indice", "contour_px"
+		if ov is None or ov.get("metodo") != "tracos" or ov.get("convencao") != "indice":
+			return None
 	own = project.contour_px(piece)
 	if own is None:
 		return None
 	p = project.piece(piece)
 	tp = project.piece(tid)
 	mm_t, mm_o = _mmpp(project, tp.scan_id), _mmpp(project, p.scan_id)
-	src_mm = np.asarray(ov["contour_px"], float).reshape(-1, 2) * mm_t
+	src_mm = np.asarray(ov[key], float).reshape(-1, 2) * mm_t
 	dst_mm = np.asarray(own, float).reshape(-1, 2) * mm_o
 	r = register_rigid(src_mm, dst_mm, rotation_deg=project.profile.twin_rotation_deg())
 	pts = r["points_mm"] / mm_o
 	ok = r["rms_mm"] is not None and r["rms_mm"] <= SUGESTAO_RMS_MAX
-	return {"gemea": tid, "relacao": rel, "t_gemea": ov["t"], "contour_px": pts, "rms_mm": round(float(r["rms_mm"]), 3),
+	return {"gemea": tid, "relacao": rel, "t_gemea": ov["t"], "contour_px": pts, "fonte": fonte, "rms_mm": round(float(r["rms_mm"]), 3),
 			"rms_cantos_mm": None if r["rms_cantos_mm"] is None else round(float(r["rms_cantos_mm"]), 3),
 			"theta_deg": round(float(r["theta_deg"]), 2), "utilizavel": bool(ok),
 			"motivo": None if ok else f"registo da gémea com RMS {r['rms_mm']:.2f} mm (> {SUGESTAO_RMS_MAX})"}

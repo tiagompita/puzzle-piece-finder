@@ -279,3 +279,61 @@ def test_reposicao_record_returns_piece_to_segmentation(tmp_path):
     # idempotent: a second forced rebuild changes nothing
     out2 = R.rebuild_assets(Project.open(q.path), force_scans=[sid], motivo="reposicao", clean=False, register=False, progress=None)
     assert out2["errors"] == [] and out2["changed"] == []
+
+
+# ---------------------------------------------------------------- A2 (ronda 10): painted edge + derived index
+def _shrunk(pr, pid, f=0.97):
+    c = OV.resample_closed(pr.contour_px(pid), 12.0)
+    return (c - c.mean(0)) * f + c.mean(0)
+
+
+def test_aresta_indice_line_roundtrip_and_old_lines(tmp_path):
+    """A ``convencao: "aresta+indice"`` line keeps both polygons (the edge validated like the index, rounded to
+    0.01 px); ``latest_arestas`` / ``aresta_px`` read it back; an edge-only line (``indice: "automatico"``) is a
+    reposição for the index; old lines (no ``convencao``, ``"indice"``, ``reposicao``) behave as before."""
+    pr, placed, tw, dec = _project(tmp_path)
+    assert OV.latest_arestas(pr) == {} and OV.aresta_px(pr, tw) is None
+    old = OV.append_override(pr, dec, _moved_contour(pr, dec, 5.0))                     # an old-style line
+    assert "error" not in old and OV.has_override(pr, dec) and dec not in OV.latest_arestas(pr)
+    edge = _shrunk(pr, tw)
+    idx = _moved_contour(pr, tw, 6.0)
+    bad = OV.append_override(pr, tw, idx, extra={"aresta_px": [[0, 0], [1, 0], [1, 1]], "convencao": OV.CONVENCAO_ARESTA})
+    assert bad["error"].startswith("aresta:") and len(OV.read_overrides(pr)) == 1
+    rec = OV.append_override(pr, tw, idx, extra={"metodo": "tracos", "aresta_px": edge, "convencao": OV.CONVENCAO_ARESTA})
+    assert "error" not in rec and rec["convencao"] == OV.CONVENCAO_ARESTA
+    back = OV.read_overrides(pr)[-1]
+    assert back == rec and np.allclose(back["aresta_px"], edge, atol=0.005)
+    assert np.allclose(OV.aresta_px(pr, tw), edge, atol=0.005) and OV.has_override(pr, tw)
+    assert OV.latest_overrides(pr)[tw]["t"] == rec["t"]                              # the index override is active
+    # an edge-only line: out of latest_overrides (a reposição of the index), in latest_arestas
+    auto = np.asarray(pr.contour_px(placed), float)
+    e2 = OV.append_override(pr, placed, auto, extra={"metodo": "tracos", "aresta_px": _shrunk(pr, placed),
+                                                     "convencao": OV.CONVENCAO_ARESTA, "indice": OV.INDICE_AUTOMATICO})
+    assert "error" not in e2 and OV.index_inactive(e2)
+    assert placed not in OV.latest_overrides(pr) and not OV.has_override(pr, placed)
+    assert OV.latest_overrides(pr, incluir_reposicao=True)[placed]["indice"] == "automatico"
+    assert set(OV.latest_arestas(pr)) == {tw, placed}
+    # a later reposição without an edge drops the edge too (the last line wins)
+    OV.append_override(pr, placed, auto, extra={"metodo": OV.REPOSICAO})
+    assert set(OV.latest_arestas(pr)) == {tw} and not OV.has_override(pr, placed)
+    assert OV.index_inactive({"metodo": "reposicao"}) and not OV.index_inactive({"metodo": "tracos", "convencao": "indice"})
+
+
+def test_twin_suggestion_from_the_twins_edge(tmp_path):
+    """The twin suggestion comes from the twin's painted edge when its last line carries one (``fonte:
+    "aresta"``), else from an index-convention stroke save (``fonte: "indice"``)."""
+    pr, placed, tw, dec = _project(tmp_path)
+    pr.place(tw, (3, 4), theta_deg=61.0)                     # the twin cell of (2, 3) in the 4 x 6 synthetic board
+    pr.save()
+    assert OV.twin_suggestion(pr, tw) is None
+    idx = _moved_contour(pr, placed, 0.0)
+    assert "error" not in OV.append_override(pr, placed, idx, extra={"metodo": "tracos", "convencao": "indice"})
+    sg = OV.twin_suggestion(pr, tw)
+    assert sg is not None and sg["fonte"] == "indice" and sg["gemea"] == placed
+    edge = _shrunk(pr, placed, 0.95)
+    assert "error" not in OV.append_override(pr, placed, idx, extra={"metodo": "tracos", "aresta_px": edge,
+                                                                     "convencao": OV.CONVENCAO_ARESTA})
+    sg2 = OV.twin_suggestion(pr, tw)
+    assert sg2["fonte"] == "aresta" and sg2["utilizavel"]
+    a1, a2 = OV.polygon_area(sg["contour_px"]), OV.polygon_area(sg2["contour_px"])
+    assert abs(a2 / a1 - 0.95 ** 2) < 0.02                                        # the edge, not the index

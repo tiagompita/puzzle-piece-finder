@@ -207,7 +207,8 @@ def test_contour_strokes_flow(tmp_path):
 
 
 def test_contour_convention_index(tmp_path):
-    """Convenção do índice (§18): aresta bruta, identidade sem traços, traços «fundo» possivelmente ignorados."""
+    """A2 (§18.6d): laranja = a aresta (o que se grava), tracejado branco = aresta sem traços, linha fina = silhueta
+    do índice derivada; sem traços «igual ao contorno atual»; a ajuda nova, sem número de largura do halo."""
     from src.query import run_query
     pr, placed, tw, dec = _project(tmp_path)
     run_query(pr, use_image=False)
@@ -219,15 +220,20 @@ def test_contour_convention_index(tmp_path):
             pg.on("dialog", lambda d: d.accept())
             _open_editor(pg, base)
             _settled(pg)
-            assert pg.evaluate("S.ced.res.identidade === true")
-            assert pg.evaluate("S.ced.res.aresta.length") >= 20
-            assert pg.evaluate("S.ced.res.convencao === 'indice'")
+            assert pg.evaluate("S.ced.res.identidade === true && S.ced.res.indice_igual === true")
+            assert pg.evaluate("S.ced.res.aresta_sem_tracos.length") >= 20 and pg.evaluate("S.ced.res.indice.length") >= 20
+            assert pg.evaluate("S.ced.res.convencao === 'aresta+indice'")
+            assert pg.evaluate("JSON.stringify(cedFinalPoly()) === JSON.stringify(S.ced.res.contour)")      # orange = the edge
             assert "igual ao contorno atual" in pg.inner_text("#ced-status")
+            help_txt = pg.inner_text("#ced .ced-help")
+            assert help_txt.startswith("Pinta só a peça") and "0,5 mm" not in help_txt and "silhueta alargada" in help_txt
+            assert "laranja: a peça" in pg.inner_text("#ced .ced-legend")
             c_in, c_edge, centre = _corner(pg)
             _set_tool(pg, "pincel", "fundo")
             _stroke(pg, [c_in, c_edge])
             _settled(pg)
             assert pg.evaluate("Array.isArray(S.ced.res.tracos_ignorados)")
+            assert "índice:" in pg.inner_text("#ced-status")
             br.close()
     finally:
         server.should_exit = True
@@ -282,12 +288,13 @@ def test_contour_twin_suggestion(tmp_path):
             _settled(pg)
             assert pg.evaluate("S.ced.base.tipo") == "gemea"
             assert pg.evaluate("S.ced.res.base") == "gemea"
-            assert pg.evaluate("S.ced.res.identidade") is True
+            assert pg.evaluate("S.ced.res.contour.length") >= 20
             pg.wait_for_selector("#ced-voltar-auto", state="visible")
             pg.click("#ced-save")
             pg.wait_for_function("S.ced === null", timeout=60_000)
             line = OV.read_overrides(gui.pr)[-1]
             assert line["piece"] == tw and line["auto_origem"] == "gemea" and line["base_gemea"]["id"] == placed
+            assert line["convencao"] == "aresta+indice" and line["aresta_px"]
             _open_editor(pg, base, cell=(3, 4))
             assert pg.evaluate("S.ced.sug") is None
             br.close()

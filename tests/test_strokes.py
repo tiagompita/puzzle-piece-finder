@@ -331,3 +331,76 @@ def test_normalizar_drops_small_gains_instead_of_growing_them():
     gained = (out & ~auto).sum() * MMPP * MMPP
     assert gained > 4.3                                             # kept and grown by δ
     assert np.array_equal(out[~infl], auto[~infl])
+
+
+# ---------------------------------------------------------------- A2 (ronda 10): the edge is official, the index is derived
+def _shadow_brush(mw):
+    """A ``fundo`` brush along the middle of the left shadow strip of ``meadow_sombra``."""
+    shadow = mw["auto"] & ~mw["gt"]
+    ys, xs = np.nonzero(shadow)
+    x = float(np.percentile(xs, 5)) + 2
+    sel = np.abs(xs - x) < 3
+    return {"ferramenta": "pincel", "marca": "fundo", "raio_px": 4.0,
+            "pontos": [[x, float(ys[sel].min() + 10)], [x, float(ys[sel].max() - 10)]]}
+
+
+def _excess_depth_mm(gt, m):
+    """Depth (mm) of the part of ``m`` outside ``gt`` (0 when none)."""
+    out = m & ~gt
+    if not out.any():
+        return 0.0
+    d = cv2.distanceTransform((~gt).astype(np.uint8), cv2.DIST_L2, 5)
+    return float(d[out].max()) * MMPP
+
+
+def test_a2_fundo_on_shadow_cuts_the_edge_and_keeps_the_index(meadow_sombra):
+    """A ``fundo`` brush only on the shadow: the EDGE loses that shadow (what is left outside the synthetic
+    piece on that side is <= 0.1 mm deep) and the INDEX is the automatic mask, bit for bit."""
+    mw = meadow_sombra
+    tr = _norm([_shadow_brush(mw)])
+    r = ST.resolver(mw["rgb"], mw["auto"], tr, MMPP, normalizar_indice=True)
+    assert r["tracos_ignorados"] == [0] and r["identidade"] is True and r["indice_automatico"] is True
+    assert np.array_equal(r["mask"], mw["auto"])
+    raw = ST.resolver(mw["rgb"], mw["auto"], tr, MMPP)
+    assert np.array_equal(r["mask_aresta"], raw["mask"])               # the edge IS the raw path with every stroke
+    zone = cv2.dilate(_ST_fp(tr[0], mw["auto"].shape).astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
+    assert _excess_depth_mm(mw["gt"], r["mask_aresta"] & zone) <= 0.1 + 1e-9
+    assert (mw["auto"] & ~r["mask_aresta"] & zone).sum() * MMPP * MMPP > 1.0   # the shadow under the brush went out
+
+
+def _ST_fp(t, shape):
+    return ST.rasterizar_tracos([t], shape) == ST.FUNDO_CERTO
+
+
+def test_a2_no_stroke_edge_is_s0_and_index_is_auto(meadow, meadow_sombra):
+    """Without strokes: the edge is the solver's own edge (the raw path without strokes, the editor's white
+    dashed line) and the index is the automatic mask bit for bit."""
+    for mw in (meadow, meadow_sombra):
+        r = ST.resolver(mw["rgb"], mw["auto"], [], MMPP, normalizar_indice=True)
+        s0 = ST.resolver(mw["rgb"], mw["auto"], [], MMPP)
+        assert np.array_equal(r["mask_aresta"], s0["mask"]) and np.array_equal(r["aresta"], s0["contour"])
+        assert r["indice_automatico"] is True and np.array_equal(r["mask"], mw["auto"])
+
+
+def test_a2_indice_de_aresta_identity_and_retouch(meadow):
+    """:func:`indice_de_aresta` with the edge equal to the solver's gives the stroke path's index; a retouch
+    that pushes the edge out carries the gain into the index (and only near it)."""
+    inner = cv2.erode(meadow["patch"].astype(np.uint8), np.ones((9, 9), np.uint8)) > 0
+    tr = _norm([{"ferramenta": "laco", "marca": "peca", "pontos": c} for c in _outer(inner)])
+    n = ST.resolver(meadow["rgb"], meadow["auto"], tr, MMPP, normalizar_indice=True)
+    d = ST.delta_peca(meadow["rgb"], meadow["auto"], MMPP)
+    rad = ST.raio_influencia(n["params"], n["delta_mm"], MMPP)
+    same = ST.indice_de_aresta(n["mask_aresta"], n["mask_aresta"], meadow["auto"], d, MMPP, rad,
+                               raw=n["mask_bruta"], infl=n["influencia"], tri=n["trimap_indice"])
+    assert np.array_equal(same, ST.normalizar(n["mask_bruta"], meadow["auto"], d["halo"], n["influencia"], d["delta_mm"],
+                                              MMPP, n["trimap_indice"]))
+    ys, xs = np.nonzero(meadow["auto"])
+    yc = int(np.median(ys))
+    x1 = int(xs[np.abs(ys - yc) < 2].max())
+    bump = n["mask_aresta"].copy()
+    bump[yc - 20:yc + 20, x1 - 2:x1 + 14] = True                      # 40 x 14 px ≈ 4 mm²
+    out = ST.indice_de_aresta(bump, n["mask_aresta"], meadow["auto"], d, MMPP, rad,
+                              raw=n["mask_bruta"], infl=n["influencia"], tri=n["trimap_indice"])
+    assert (out & ~meadow["auto"])[yc - 20:yc + 20, x1:x1 + 14].sum() > 0.8 * 40 * 12
+    far = ~(cv2.dilate((bump ^ n["mask_aresta"]).astype(np.uint8), np.ones((81, 81), np.uint8)) > 0) & ~n["influencia"]
+    assert np.array_equal(out[far], meadow["auto"][far])

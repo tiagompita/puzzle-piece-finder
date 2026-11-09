@@ -817,3 +817,28 @@ def test_relax_keeps_manual_pose_and_seam_gaps_see_candidate(tmp_path):
     out = R.relax(pr, pm)
     assert (out[a]["dx_mm"], out[a]["dy_mm"]) == (0.45, 0.0) and not out[a].get("relaxed")
     assert out[b].get("relaxed") or out[c].get("relaxed")
+
+
+def test_display_crop_uses_the_painted_edge(tmp_path):
+    """A2: a piece whose last override line carries ``aresta_px`` is shown with that edge (alpha = the edge,
+    inside the crop's own alpha, no fringe / shadow rule); a piece without one keeps the cleaned crop."""
+    from src import overrides as OV
+    from test_query import _project
+    pr, placed, tw, dec = _project(tmp_path)
+    before = R.piece_rgba_for_display(pr, placed)
+    c = OV.resample_closed(pr.contour_px(placed), 12.0)
+    edge = (c - c.mean(0)) * 0.9 + c.mean(0)
+    rec = OV.append_override(pr, placed, np.asarray(pr.contour_px(placed), float),
+                             extra={"metodo": "tracos", "aresta_px": edge, "convencao": OV.CONVENCAO_ARESTA,
+                                    "indice": OV.INDICE_AUTOMATICO})
+    assert "error" not in rec and R.has_aresta(pr, placed) and not R.has_aresta(pr, tw)
+    ar = R.aresta_rgba(pr, placed)
+    crop = pr.crop_rgba(placed)
+    assert ar.shape == crop.shape
+    n_edge = (ar[..., 3] > 0).sum()
+    assert abs(n_edge / (crop[..., 3] > 0).sum() - 0.81) < 0.03                    # 0.9² of the index area
+    shown = R.piece_rgba_for_display(pr, placed)
+    assert np.array_equal(shown[..., 3] > 0, ar[..., 3] > 0)
+    assert (before[..., 3] > 0).sum() > n_edge
+    assert np.array_equal(R._clean_or_crop(pr, tw), R.clean_crop(pr.crop_rgba(tw), pr.profile.background_lab,
+                                                                 R._scan_mmpp(pr, pr.piece(tw).scan_id)))

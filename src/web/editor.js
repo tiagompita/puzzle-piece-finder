@@ -16,9 +16,9 @@ const CED_RGB = { peca: "255,255,255", fundo: "0,0,0", incerto: "150,150,150" };
 const CED_MARCAS = [["peca", "É peça", "1"], ["fundo", "Não é peça", "2"], ["incerto", "Incerto", "3"]];
 const CED_FERRS = [["laco", "Laço", "L"], ["pincel", "Pincel", "P"], ["borracha", "Borracha", "B"]];
 const CED_VISTAS = [["scan", "Scan"], ["atual", "Atual"], ["diff", "Diferença"], ["final", "Final"]];
-const CED_AJUDA = "O índice guarda ≈ 0,5 mm de sombra e penumbra à volta da peça (é a convenção com que as gémeas e os buracos foram calibrados); a sombra só sai no desenho do tabuleiro. «Não é peça» serve para papel, outra peça ou sombra ALÉM dessa orla: um pincel só sobre a linha negra da sombra é ignorado (fica a cinzento). «É peça» sobre arte clara cor do papel que o automático cortou. «Incerto» onde quiser que o algoritmo decida. Linha branca tracejada = aresta detetada; laranja = o que se grava. Shift força «é peça», Alt força «não é peça».";
-const CED_SUG_TITLE = "a sugestão vem do contorno manual da gémea, rodado 180° e ajustado a esta peça; o que se grava segue a mesma convenção";
-const CED_LEGENDA = "ciano tracejado: atual · branco tracejado: aresta detetada · laranja: a gravar";
+const CED_AJUDA = "Pinta só a peça. «Não é peça» sobre a sombra ou a penumbra tira-as do contorno. O programa guarda à parte uma silhueta alargada com a sombra, só para as gémeas e os buracos; não precisas de a desenhar. «É peça» sobre arte clara cor do papel que o automático cortou. «Incerto» deixa o algoritmo decidir. Laranja = o que gravas (a peça); tracejado branco = aresta detetada; fino = silhueta derivada para as gémeas. Shift força «é peça», Alt força «não é peça».";
+const CED_SUG_TITLE = "a sugestão vem da aresta pintada da gémea (ou do seu contorno manual antigo), rodada 180° e ajustada a esta peça; a silhueta das gémeas deriva-se dela como de qualquer aresta";
+const CED_LEGENDA = "laranja: a peça (o que gravas) · branco tracejado: aresta detetada sem traços · fino ciano-claro: silhueta derivada (gémeas e buracos) · ciano tracejado: atual";
 
 async function openContourEditor(pid, back) {
   let d;
@@ -286,9 +286,8 @@ function cedRenderLayer() {
   ctx.clearRect(0, 0, E.layer.width, E.layer.height);
   E.tracos.slice(0, E.pos).forEach((t, i) => {
     ctx.globalCompositeOperation = t.ferramenta === "borracha" ? "destination-out" : "source-over";
-    const ign = E.ignorados && E.ignorados.has(i) && t.ferramenta !== "borracha";
-    const col = ign ? "150,150,150" : (t.marca ? CED_RGB[t.marca] : "0,0,0");
-    ctx.globalAlpha = ign ? 0.6 : 1;
+    const col = t.marca ? CED_RGB[t.marca] : "0,0,0";        // every stroke counts for the edge (A2)
+    ctx.globalAlpha = 1;
     ctx.fillStyle = ctx.strokeStyle = `rgb(${col})`;
     cedPaint(ctx, t);
   });
@@ -316,8 +315,10 @@ function cedDraw() {
   const SG = E.sug && E.sug.utilizavel && !E.sugIgnorada && !E.base ? E.sug.contour : null;
   if (A.length) { cedPath(ctx, A); ctx.setLineDash([4 * lw, 4 * lw]); ctx.strokeStyle = "rgba(41, 211, 230, .9)"; ctx.lineWidth = 1.2 * lw; ctx.stroke(); ctx.setLineDash([]); }
   if (SG && SG.length) { cedPath(ctx, SG); ctx.setLineDash([6 * lw, 4 * lw]); ctx.strokeStyle = "rgba(60,220,120,.9)"; ctx.lineWidth = 1.2 * lw; ctx.stroke(); ctx.setLineDash([]); }
-  const AR = E.res && E.res.aresta;
+  const AR = E.res && E.res.aresta_sem_tracos;
   if (AR && AR.length >= 3) { cedPath(ctx, AR); ctx.setLineDash([3 * lw, 3 * lw]); ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1 * lw; ctx.stroke(); ctx.setLineDash([]); }
+  const IX = E.res && !(E.vt && E.vt.edited) ? E.res.indice : null;      // the derived silhouette (after a retouch: recomputed on save)
+  if (IX && IX.length >= 3) { cedPath(ctx, IX); ctx.setLineDash([2 * lw, 2 * lw]); ctx.strokeStyle = "rgba(170, 240, 255, .9)"; ctx.lineWidth = 0.6 * lw; ctx.stroke(); ctx.setLineDash([]); }
   const poly = cedFinalPoly();
   if (poly.length) { cedPath(ctx, poly); ctx.fillStyle = "rgba(255, 176, 0, .2)"; ctx.fill(); ctx.strokeStyle = "#ffb000"; ctx.lineWidth = 1.2 * lw; ctx.stroke(); }
   const L = E.live;
@@ -442,11 +443,13 @@ function cedStatus() {
   let extra = "";
   const R = E.res;
   if (R && R.valido) {
-    if (R.identidade) extra = " · igual ao contorno atual";
+    const ret = E.vt && E.vt.edited;
+    if (!ret && R.indice_igual && R.aresta_delta_mm2 === 0) extra = " · igual ao contorno atual";
     else {
-      if (typeof R.delta_mm === "number") extra += ` · δ ${fmt(R.delta_mm, 2)} mm`;
-      const n = (R.tracos_ignorados || []).length;
-      if (n > 0) extra += ` · ${n} traço${n > 1 ? "s" : ""} de sombra ignorado${n > 1 ? "s" : ""}`;
+      if (!ret && typeof R.aresta_delta_mm2 === "number") extra += ` · aresta: Δ ${fmt(R.aresta_delta_mm2, 1)} mm²`;
+      const auto = E.d.manual_override ? "igual ao atual" : "igual ao automático";
+      extra += ret ? " · índice: recalculado ao gravar"
+        : (R.indice_igual ? ` · índice: ${auto}` : ` · índice: ${fmt(R.area_indice_mm2, 1)} mm²`);
     }
   }
   el.replaceChildren((v.texto ? v.texto + extra : "") || (E.busy ? "" : "—"), ...(v.aviso ? [h("span", { class: "ced-warn" }, ` · ${v.aviso}`)] : []));
@@ -512,7 +515,6 @@ async function cedFire() {
   E.busy = false; E.again = false;
   if (err) { E.res = { contour: [], area_mm2: 0, valido: false, erro: err, n_pontos: 0, ms: 0 }; toast(err, true); }
   else E.res = r;
-  E.ignorados = new Set((E.res && E.res.tracos_ignorados) || []);
   E.layerDirty = true;
   E.vt = null;
   if (E.retouch) cedVInit();

@@ -80,7 +80,7 @@ __all__ = [
 	"seam_gaps", "relax", "bg_distance", "fringe_masks", "decontaminate", "clean_crop", "clean_all", "compose_board",
 	"compose_zone_vs_art", "rebuild_assets", "rebuild_piece", "load_placements", "save_placements", "main",
 	"stale_assets", "rebuild_stale", "STALE_AREA_FRAC", "STALE_CHORD_MM",
-	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
+	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "aresta_rgba", "has_aresta", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
 	"paper_pocket_mask", "PAPER_POCKETS", "PAPER_POCKET_DIST_MAX",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
 ]
@@ -1240,11 +1240,42 @@ def clean_all(project, *, shadow: bool = SHADOW_DEFAULT, force: bool = False,
 
 
 # ---------------------------------------------------------------- composition
+def has_aresta(project, pid: str) -> bool:
+	"""True if ``pid``'s last override line carries a painted edge (A2): its display crop is :func:`aresta_rgba`."""
+	return pid in OV.latest_arestas(project)
+
+
+def aresta_rgba(project, pid: str) -> Optional[np.ndarray]:
+	"""Display crop of a piece with a painted edge (:func:`src.overrides.aresta_px`, A2): the stored crop with
+	alpha = the edge polygon filled (in crop px, origin ``bbox[:2]``) and inside the crop's own alpha (the crop
+	is the index silhouette, which holds the edge; outside it the stored colour is a fill), the colour under
+	alpha 0 that of the nearest visible pixel. None when the piece has no edge or no crop."""
+	a = OV.aresta_px(project, pid)
+	if a is None:
+		return None
+	rgba = project.crop_rgba(pid)
+	p = project.piece(pid)
+	if rgba is None or not p.bbox:
+		return None
+	m = np.zeros(rgba.shape[:2], np.uint8)
+	cv2.fillPoly(m, [np.round(a - np.asarray(p.bbox[:2], float)).astype(np.int32).reshape(-1, 1, 2)], 1)
+	out = np.array(rgba, np.uint8, copy=True)
+	out[..., 3] = np.where((m > 0) & (rgba[..., 3] > 0), 255, 0).astype(np.uint8)
+	if not out[..., 3].any():
+		return None
+	return _fill_transparent(out, BAND_MM / _scan_mmpp(project, p.scan_id))
+
+
 def _clean_or_crop(project, pid: str) -> Optional[np.ndarray]:
 	"""Cleaned crop of ``pid``: ``render/clean/P####.png`` when it is up to date (not older than
 	``crops/P####.png`` and of the same size: the rule of :func:`clean_all`), else :func:`clean_crop` on the
-	fly; a stale ``render/clean`` file (e.g. left behind by a sheet re-segmented in another checkout) is deleted."""
+	fly; a stale ``render/clean`` file (e.g. left behind by a sheet re-segmented in another checkout) is deleted.
+	A piece with a painted edge (:func:`src.overrides.aresta_px`, A2) gets :func:`aresta_rgba` instead: the user
+	drew the piece, no fringe rule applies."""
 	from PIL import Image
+	ar = aresta_rgba(project, pid)
+	if ar is not None:
+		return ar
 	fp = project.p("render", "clean", f"{pid}.png")
 	p = project.piece(pid)
 	src = project.p(p.crop_path) if p.crop_path else None
@@ -1404,7 +1435,7 @@ def piece_rgba_for_display(project, pid: str, *, theta_deg: Optional[float] = No
 		return None
 	p = project.piece(pid)
 	mmpp = _scan_mmpp(project, p.scan_id)
-	if DISPLAY_SHADOW:
+	if DISPLAY_SHADOW and not has_aresta(project, pid):        # a painted edge already leaves the shadow out
 		rgba = _drop_shadow_paper(project, pid, rgba)
 	rgba = _fill_transparent(rgba, BAND_MM / mmpp)
 	if size is None:
@@ -1528,7 +1559,7 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 			# the bleed keeps the cleaned silhouette: where the shadow rim is dropped, the gap it leaves at a seam
 			# or on the frontier is filled with the piece's own deep colour (as every hairline gap), never the base
 			rb = rgba
-			if clean and board_shadow:
+			if clean and board_shadow and not has_aresta(project, pid):
 				sh, pk = _display_masks(project, pid, rgba)
 				if (sh | pk).any():
 					dropped = np.array(rgba, np.uint8, copy=True)

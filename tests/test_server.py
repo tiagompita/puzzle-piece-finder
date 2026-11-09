@@ -592,6 +592,16 @@ def _bump_lasso(d, w=14):
             "pontos": [[x1 - 10, yc - 12], [x1 + w, yc - 12], [x1 + w, yc + 12], [x1 - 10, yc + 12]]}
 
 
+def _tip_lasso(d, w=20, half=14):
+    """A peca lasso (crop px) over the rightmost point of the current outline, w px beyond it
+    (connected to the piece, so the gain survives ``limpar``)."""
+    c = np.asarray(d["denso"], float)
+    k = int(np.argmax(c[:, 0]))
+    x1, yc = c[k]
+    return {"ferramenta": "laco", "marca": "peca",
+            "pontos": [[x1 - 12, yc - half], [x1 + w, yc - half], [x1 + w, yc + half], [x1 - 12, yc + half]]}
+
+
 def test_contorno_resolver(env):
     from src import overrides as OV
     from src import strokes as ST
@@ -923,45 +933,88 @@ def test_pose_evaluate_set_and_reset(susp_env):
     assert cl.get(f"/api/pieces/{a}/pose").status_code == 400
 
 
-def test_contorno_resolver_convencao_indice(env):
-    """The editor's solver answers in the convention of the index (src.strokes.normalizar): without strokes
-    the contour to save IS the current outline (``identidade``), the raw edge comes as ``aresta``, and a save
-    records ``convencao: "indice"`` and the client's ``delta_mm``."""
+def test_contorno_resolver_convencao_aresta_indice(env):
+    """A2 (ronda 10): the editor's solver answers with two silhouettes. ``contour`` is the EDGE (orange; without
+    strokes = the solver's own edge, ``aresta_sem_tracos``), ``indice`` / ``mascara_rle`` the index derived from
+    it (without strokes = the current outline bit for bit, ``indice_igual``). A stroke save records
+    ``convencao: "aresta+indice"``, the edge in ``aresta_px`` and the derived index in ``contour_px``."""
     from src import overrides as OV
     from src import strokes as ST
     gui, cl, placed, tw, dec = env
     d = cl.get(f"/api/pieces/{tw}/contorno").json()
+    assert d["aresta_gravada"] is None
     w, h = d["tamanho"]
     body = {"tracos": [], "origem": d["origem"], "tamanho": d["tamanho"]}
     s = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=body).json()
-    assert s["valido"] and s["identidade"] is True and s["convencao"] == "indice" and s["tracos_ignorados"] == []
+    assert s["valido"] and s["identidade"] is True and s["indice_igual"] is True and s["indice_automatico"] is True
+    assert s["convencao"] == OV.CONVENCAO_ARESTA and s["tracos_ignorados"] == []
     assert isinstance(s["delta_mm"], float) and 0.0 <= s["delta_mm"] <= ST.DELTA_MAX_MM
-    assert len(s["aresta"]) >= 20
+    assert s["contour"] == s["aresta_sem_tracos"] and len(s["contour"]) >= 20 and s["aresta_delta_mm2"] == 0.0
     assert np.array_equal(ST.rle_decode(s["mascara_rle"]), _fill_poly(d["denso"], (h, w)))   # bit for bit the current outline
-    # a peca lasso: not the identity, the raw edge differs from the saved contour, the save keeps the fields
+    # a peca lasso: the edge grows, the index follows; the save keeps both
     lasso = _bump_lasso(d)
     s2 = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=dict(body, tracos=[lasso])).json()
-    assert s2["valido"] and s2["identidade"] is False and s2["area_mm2"] > d["area_mm2"]
+    assert s2["valido"] and s2["identidade"] is False and s2["indice_igual"] is False and s2["area_mm2"] > d["area_mm2"] * 0.98
+    assert s2["area_indice_mm2"] > d["area_mm2"]
     r = cl.post(f"/api/pieces/{tw}/contorno", json=dict(body, tracos=[lasso], contour=s2["contour"], solver="grabcut",
                                                         delta_mm=s2["delta_mm"], nota="convenção"))
     assert r.status_code == 200, r.text
+    assert "aresta_px" not in r.json()["override"]
     line = OV.read_overrides(gui.pr)[-1]
-    assert line["piece"] == tw and line["convencao"] == "indice" and line["delta_mm"] == round(s2["delta_mm"], 3)
-    assert line["metodo"] == "tracos" and "convencao" in OV.EXTRA_KEYS
+    assert line["piece"] == tw and line["convencao"] == OV.CONVENCAO_ARESTA and line["delta_mm"] == round(s2["delta_mm"], 3)
+    assert line["metodo"] == "tracos" and "indice" not in line and "aresta_px" in OV.EXTRA_KEYS
+    org = np.asarray(d["origem"], float)
+    assert np.allclose(np.asarray(line["aresta_px"]), np.asarray(s2["contour"], float) + org)
+    assert np.array_equal(_fill_poly(np.asarray(line["contour_px"]) - org, (h, w)), _fill_poly(s2["indice"], (h, w)))
+    assert gui.pr.piece(tw).flags.get(OV.MANUAL_FLAG) is True and OV.has_override(gui.pr, tw)
+    d2 = cl.get(f"/api/pieces/{tw}/contorno").json()
+    assert len(d2["aresta_gravada"]) == len(line["aresta_px"]) and len(d2["tracos"]) == 1
+
+
+def test_contorno_save_edge_only_is_display_only(env):
+    """A stroke save whose derived index is the automatic contour bit for bit (here: no stroke at all) is an
+    edge-only line: ``indice: "automatico"``, ``contour_px`` = the automatic chain, no ``piece_resegmented``,
+    no ``manual_override``, out of ``latest_overrides`` and in ``latest_arestas``; the display crop is the edge."""
+    from src import overrides as OV
+    from src import render
+    gui, cl, placed, tw, dec = env
+    d = cl.get(f"/api/pieces/{placed}/contorno").json()
+    body = {"tracos": [], "origem": d["origem"], "tamanho": d["tamanho"]}
+    s = cl.post(f"/api/pieces/{placed}/contorno/resolver", json=body).json()
+    n_log = len(Project.open(gui.path).events())
+    r = cl.post(f"/api/pieces/{placed}/contorno", json=dict(body, contour=s["contour"], solver="grabcut"))
+    assert r.status_code == 200, r.text
+    out = r.json()
+    assert out["ok"] and "só muda o desenho" in out["mensagens"][0] and out["invariantes"] == []
+    pr = _ok_on_disk(gui.path)
+    assert len(pr.events()) == n_log                                        # nothing in the log
+    (line,) = OV.read_overrides(pr)
+    assert line["indice"] == OV.INDICE_AUTOMATICO and line["convencao"] == OV.CONVENCAO_ARESTA
+    assert np.array_equal(np.round(line["contour_px"]), np.round(np.asarray(d["denso"]) + d["origem"]))
+    assert not OV.has_override(pr, placed) and placed in OV.latest_arestas(pr)
+    assert not pr.piece(placed).flags.get(OV.MANUAL_FLAG)
+    ar = render.aresta_rgba(pr, placed)
+    crop = pr.crop_rgba(placed)
+    assert ar is not None and ar.shape == crop.shape and 0 < (ar[..., 3] > 0).sum() <= (crop[..., 3] > 0).sum()
+    assert cl.get(f"/api/pieces/{placed}.png?pose=board&size=120").status_code == 200
+    d2 = cl.get(f"/api/pieces/{placed}/contorno").json()
+    assert d2["aresta_gravada"] is not None and d2["manual_override"] is False
+    s2 = cl.post(f"/api/pieces/{placed}/contorno/resolver", json=body).json()
+    assert s2["aresta_ref"] == "gravada" and s2["aresta_delta_mm2"] == 0.0 and s2["indice_igual"] is True
 
 
 def test_contorno_sugestao_gemea(env):
-    """A piece without manual contour whose placed twin has a stroke save in the index convention gets
-    ``sugestao_gemea`` (the twin's contour registered onto it, crop px); ``/resolver`` and the save accept
-    ``base: {tipo: gemea, id, t}`` and record ``auto_origem: "gemea"`` + ``base_gemea``; a piece with its own
-    override, or whose twin has none, gets None."""
+    """A piece without manual contour whose placed twin has a stroke save gets ``sugestao_gemea`` from the
+    twin's EDGE (A2: ``fonte: "aresta"``, registered onto it, crop px); ``/resolver`` and the save accept
+    ``base: {tipo: gemea, id, t}`` and record ``auto_origem: "gemea"`` + ``base_gemea``; the index derived from
+    the twin's edge carries the bump; a piece with its own override, or whose twin has none, gets None."""
     from src import overrides as OV
     gui, cl, placed, tw, dec = env
     gui.pr.place(tw, (3, 4), theta_deg=61.0)                 # the twin cell of (2, 3) in the 4 x 6 synthetic board
     gui.pr.save()
     assert cl.get(f"/api/pieces/{tw}/contorno").json()["sugestao_gemea"] is None      # the twin has no override yet
     d = cl.get(f"/api/pieces/{placed}/contorno").json()
-    body = {"tracos": [_bump_lasso(d)], "origem": d["origem"], "tamanho": d["tamanho"]}
+    body = {"tracos": [_tip_lasso(d)], "origem": d["origem"], "tamanho": d["tamanho"]}    # > GANHO_MIN_MM2 beyond the edge
     s = cl.post(f"/api/pieces/{placed}/contorno/resolver", json=body).json()
     r = cl.post(f"/api/pieces/{placed}/contorno", json=dict(body, contour=s["contour"], solver="grabcut", delta_mm=s["delta_mm"]))
     assert r.status_code == 200, r.text
@@ -969,28 +1022,36 @@ def test_contorno_sugestao_gemea(env):
     d2 = cl.get(f"/api/pieces/{tw}/contorno").json()
     sg = d2["sugestao_gemea"]
     assert sg and sg["gemea"] == placed and sg["relacao"] == "celula" and sg["utilizavel"] is True and sg["motivo"] is None
-    assert sg["rms_mm"] < 0.5 and len(sg["contour"]) >= 20
+    assert sg["fonte"] == "aresta" and sg["rms_mm"] < 0.5 and len(sg["contour"]) >= 20
     w, h = d2["tamanho"]
     sug = _fill_poly(sg["contour"], (h, w))
     auto = _fill_poly(d2["denso"], (h, w))
     assert (sug & auto).sum() / (sug | auto).sum() > 0.9                              # the twin is this piece (synthetic exact twin)
-    assert sug.sum() > auto.sum()                                                      # ... with the lasso bump carried over
+    bump = sug & ~auto
+    assert bump.sum() * d2["mmpp"] ** 2 > 3.0                                         # ... with the lasso bump carried over
     base = {"tipo": "gemea", "id": sg["gemea"], "t": sg["t_gemea"]}
     body2 = {"tracos": [], "origem": d2["origem"], "tamanho": d2["tamanho"], "base": base}
     s2 = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=body2).json()
-    assert s2["valido"] and s2["base"] == "gemea" and s2["identidade"] is True
-    m2 = ST_rle(s2["mascara_rle"])                                                     # no stroke: the suggestion itself
-    assert (m2 & sug).sum() / (m2 | sug).sum() > 0.995                                # (2-decimal client rounding vs the server's)
+    assert s2["valido"] and s2["base"] == "gemea" and s2["indice_igual"] is False
+    a2 = _fill_poly(s2["contour"], (h, w))                                             # no stroke: the edge IS the suggestion
+    assert (a2 & sug).sum() / (a2 | sug).sum() > 0.995
+    m2 = ST_rle(s2["mascara_rle"])                                                     # the index: own outline + the bump
+    mm2 = d2["mmpp"] ** 2                                                              # the bump is carried, registration slivers are not
+    gain, loss = m2 & ~auto, auto & ~m2
+    assert gain.sum() * mm2 > 3.0 and loss.sum() * mm2 < 3.0
+    near = cv2.dilate(bump.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
+    assert (gain & near).sum() >= 0.95 * gain.sum()
     bad = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=dict(body2, base={"tipo": "gemea", "id": placed, "t": "1999"}))
     assert bad.status_code == 400 and "sugestão" in bad.json()["error"]
     r2 = cl.post(f"/api/pieces/{tw}/contorno", json=dict(body2, contour=s2["contour"], solver="grabcut", delta_mm=s2["delta_mm"]))
     assert r2.status_code == 200, r2.text
     line = OV.read_overrides(gui.pr)[-1]
     assert line["piece"] == tw and line["auto_origem"] == "gemea" and line["base_gemea"] == {"id": placed, "t": sg["t_gemea"], "rms_mm": sg["rms_mm"]}
-    assert line["convencao"] == "indice"
+    assert line["convencao"] == OV.CONVENCAO_ARESTA and "indice" not in line
     assert cl.get(f"/api/pieces/{tw}/contorno").json()["sugestao_gemea"] is None      # now it has its own
 
 
 def ST_rle(rle):
     from src import strokes as ST
     return ST.rle_decode(rle)
+

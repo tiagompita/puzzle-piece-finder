@@ -217,21 +217,33 @@ def missing_assets(project) -> list:
 	return out
 
 
-def board_snapshot(board, pieces: Optional[dict] = None) -> list:
-	"""``[(estado, peca_id[, theta_deg, pose_manual_t]), ...]`` row-major: what the raster depends on per cell.
+def board_snapshot(board, pieces: Optional[dict] = None, arestas: Optional[dict] = None) -> list:
+	"""``[(estado, peca_id[, theta_deg, pose_manual_t[, aresta_t]]), ...]`` row-major: what the raster depends on
+	per cell.
 
 	With ``pieces`` (``Project.pieces``) each entry also carries the log pose of the cell's piece and the
 	time stamp of its manual pose (``Piece.pose_manual['t']``, None without one), so a pose change alone
-	(same piece, same cell) is a changed cell too (re-composed with its neighbours, :func:`patch_regions`)."""
+	(same piece, same cell) is a changed cell too (re-composed with its neighbours, :func:`patch_regions`).
+	With ``arestas`` (:func:`src.overrides.latest_arestas`) a piece with a painted edge adds the ``t`` of that
+	line (only those entries grow: a stored snapshot of the other cells stays equal), so an edge-only save,
+	which writes nothing to the log, still re-composes its cell."""
 	if pieces is None:
 		return [(cell["estado"], cell["peca_id"]) for _, cell in board.iter_cells()]
 	out = []
 	for _, cell in board.iter_cells():
 		p = pieces.get(cell["peca_id"]) if cell["peca_id"] else None
 		pm = getattr(p, "pose_manual", None) if p is not None else None
-		out.append((cell["estado"], cell["peca_id"], None if p is None else p.theta_deg,
-					None if pm is None else pm.get("t")))
+		e = (cell["estado"], cell["peca_id"], None if p is None else p.theta_deg, None if pm is None else pm.get("t"))
+		a = (arestas or {}).get(cell["peca_id"]) if cell["peca_id"] else None
+		out.append(e if a is None else e + (a.get("t"),))
 	return out
+
+
+def _fill_mask(poly, shape: tuple) -> np.ndarray:
+	"""Bool mask of a polygon (crop px, rounded to int) filled in shape (h, w)."""
+	m = np.zeros(shape[:2], np.uint8)
+	cv2.fillPoly(m, [np.round(np.asarray(poly, float)).astype(np.int32).reshape(-1, 1, 2)], 1)
+	return m > 0
 
 
 def changed_cells(old: list, new: list, cols: int) -> list:
@@ -960,7 +972,7 @@ class Gui:
 				meta["nota"] = nota[:200]
 			if cd is None:
 				meta["nota"] = (meta.get("nota", "") + " fora do top-3 mostrado").strip()
-			before = board_snapshot(pr.board, pr.pieces)
+			before = board_snapshot(pr.board, pr.pieces, OV.latest_arestas(pr))
 			t0 = time.time()
 			kw = {"use_image": self.use_image}
 			r = confirm(pr, pid, hole=((l, c), meta) if confirm_it else None, hole_reject=None if confirm_it else ((l, c), meta),
@@ -974,7 +986,7 @@ class Gui:
 				activity.get("buracos").info(f"decisão alta {'confirmada' if confirm_it else 'REJEITADA'}: {pid} → ({l},{c}); contador "
 											 f"{cnt['acertos']}/{cnt['falhas']}/{cnt['total']}, janela {cnt['janela']['falhas']} falhas em {cnt['janela']['n']}"
 											 + ("; SUGESTÕES ALTA EM PAUSA" if cnt["em_pausa"] else ""))
-			now = board_snapshot(pr.board, pr.pieces)
+			now = board_snapshot(pr.board, pr.pieces, OV.latest_arestas(pr))
 			placed = [p.id for p in pr.pieces.values() if p.estado == "colocada"
 					  and before[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]
 					  != now[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]]
@@ -1000,7 +1012,7 @@ class Gui:
 		"""The full-board raster at ``BOARD_PPC`` for the current log (composed / patched / from disk)."""
 		ver = self.version()
 		plm = self._pl_mtime()
-		snap = self.read(lambda: board_snapshot(self.pr.board, self.pr.pieces))
+		snap = self.read(lambda: board_snapshot(self.pr.board, self.pr.pieces, OV.latest_arestas(self.pr)))
 		b = self._board
 		if b is not None and b["ver"] == ver:
 			return b
@@ -1418,7 +1430,7 @@ class Gui:
 		self._trigger = "escrita"
 		if placed:
 			self._refresh_render_assets(placed)
-		snap = board_snapshot(self.pr.board, self.pr.pieces)
+		snap = board_snapshot(self.pr.board, self.pr.pieces, OV.latest_arestas(self.pr))
 		ch = changed_cells(before_snap, snap, self.pr.profile.cols)
 		self.emit("board_changed", {"versao": self.version(), "celulas": [list(x) for x in ch]})
 		self.emit("fetch_changed", {})
@@ -1478,7 +1490,7 @@ class Gui:
 				raise Busy(self.job)
 			self.sync_locked()
 			pr = self.pr
-			before = board_snapshot(pr.board, pr.pieces)
+			before = board_snapshot(pr.board, pr.pieces, OV.latest_arestas(pr))
 			if pid is not None and pid not in pr.pieces:
 				return {"error": f"peça desconhecida {pid}"}
 			kw = {"use_image": self.use_image}
@@ -1521,7 +1533,7 @@ class Gui:
 				self._known_stat = self._log_stat()
 				return {"error": r["error"]}
 			# newly placed pieces and placed pieces whose pose changed: re-clean and re-register
-			now = board_snapshot(pr.board, pr.pieces)
+			now = board_snapshot(pr.board, pr.pieces, OV.latest_arestas(pr))
 			placed = [p.id for p in pr.pieces.values() if p.estado == "colocada"
 					  and before[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]
 					  != now[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]]
@@ -1848,7 +1860,7 @@ class Gui:
 			except ValueError as e:
 				return {"error": str(e)}
 			pr = self.pr
-			before = board_snapshot(pr.board, pr.pieces)
+			before = board_snapshot(pr.board, pr.pieces, OV.latest_arestas(pr))
 			e0 = self._effective_entry(pid)
 			if "error" in e0:
 				return {"error": e0["error"]}
@@ -1953,14 +1965,17 @@ class Gui:
 		x0, y0, x1, y1, m = OV.crop_window(pr, pid)
 		mmpp = render._scan_mmpp(pr, p.scan_id)
 		ov = OV.latest_overrides(pr).get(pid)
+		last = OV.latest_overrides(pr, incluir_reposicao=True).get(pid)     # an edge-only line (A2) keeps its strokes
 		dense, _ = self._dense(pid)
 		idx = OV.editor_indices(dense, OV.RESAMPLE_MM / mmpp)
 		tracos = []
-		if ov is not None and ov.get("metodo") == "tracos" and ov.get("tracos") and ov.get("origem"):
+		if last is not None and last.get("metodo") == "tracos" and last.get("tracos") and last.get("origem"):
 			# the strokes were drawn on the crop of that save; the bbox (hence the crop) may have changed since
-			tracos = ST.traduzir_tracos(ov["tracos"], ov["origem"][0] - x0, ov["origem"][1] - y0)
+			tracos = ST.traduzir_tracos(last["tracos"], last["origem"][0] - x0, last["origem"][1] - y0)
 		dloc = np.round(dense - np.array([x0, y0], float), 2)
 		loc = dloc[idx]
+		ar = OV.aresta_px(pr, pid)
+		aresta = None if ar is None else np.round(ar - np.array([x0, y0], float), 2).tolist()
 		return {"scan_id": p.scan_id, "piece": pid, "lote": p.lote, "n_no_lote": p.n_no_lote, "estado": p.estado,
 				"celula": list(p.celula) if p.celula else None,
 				"bbox": p.bbox, "margem_px": int(m), "origem": [int(x0), int(y0)],
@@ -1973,7 +1988,8 @@ class Gui:
 				"cls": p.cls, "chords_mm": p.chords_mm, "area_mm2": p.area_mm2,
 				"limites": {"min_pontos": OV.MIN_POINTS, "area_min": OV.AREA_MIN_FRAC, "area_max": OV.AREA_MAX_FRAC},
 				"tracos": tracos, "banda_mm": ST.BANDA_MM, "solver_omissao": ST.SOLVER_OMISSAO,
-				"solvers": list(ST.SOLVERS), "sugestao_gemea": self._sugestao_json(pid, ov, (x0, y0))}
+				"solvers": list(ST.SOLVERS), "aresta_gravada": aresta,
+				"sugestao_gemea": self._sugestao_json(pid, ov if ov is not None else (last if ar is not None else None), (x0, y0))}
 
 	def _sugestao_json(self, pid: str, ov, origem) -> Optional[dict]:
 		"""``sugestao_gemea`` of ``GET /contorno``: the twin's manual contour registered onto this piece
@@ -2063,55 +2079,138 @@ class Gui:
 		return tr, (x0, y0, w, h)
 
 	def contour_solve(self, pid: str, body: dict) -> dict:
-		"""``POST /api/pieces/{pid}/contorno/resolver``: strokes -> trimap -> solver -> polygon on the
-		editor crop (:func:`src.strokes.resolver`), validated as a save would be
-		(:func:`src.overrides.check_override`). Writes nothing; no write lock. ValueError on a bad body."""
-		from src import render
+		"""``POST /api/pieces/{pid}/contorno/resolver``: strokes -> trimap -> solver -> the two silhouettes of
+		A2 on the editor crop (:meth:`_solve_a2`): ``contour`` = the EDGE (what the user paints, orange in the
+		editor, saved as ``aresta_px``), ``indice`` = the index silhouette derived from it (saved as
+		``contour_px``), both validated as a save would be (:func:`src.overrides.check_override`).
+		``mascara_rle`` = the index filled in the crop. Writes nothing; no write lock. ValueError on a bad body."""
 		t0 = time.perf_counter()
 		pr = self.pr
-		p = pr.piece(pid)
-		tr, (x0, y0, w, h) = self._strokes_window(pid, body)
+		tr, win = self._strokes_window(pid, body)
+		x0, y0, w, h = win
 		name, params = self._solver_spec(body)
+		s = self._solve_a2(pid, body, tr, win, name, params)
+		ms = round((time.perf_counter() - t0) * 1000.0, 1)
+		if "error" in s:
+			return {"contour": [], "area_mm2": 0.0, "valido": False, "erro": s["error"], "solver": name,
+					"params": params, "mascara_rle": None, "n_pontos": 0, "origem": [x0, y0], "tamanho": [w, h],
+					"ms": ms, "ms_solver": None, "indice": [], "aresta_sem_tracos": [], "delta_mm": s.get("delta_mm"),
+					"identidade": False, "indice_igual": False, "tracos_ignorados": [], "convencao": OV.CONVENCAO_ARESTA}
+		org = np.array([x0, y0], float)
+		cnt, icnt = s["aresta"], s["indice"]
+		_, err = OV.check_override(pr, pid, cnt + org)
+		if err is None:
+			_, err = OV.check_override(pr, pid, icnt + org)
+			err = None if err is None else f"silhueta do índice: {err}"
+		mm2 = s["mmpp"] ** 2
+		ref = s["aresta_gravada"] if s["aresta_gravada"] is not None else s["aresta0"]
+		d_ar = float((s["mask_aresta"] ^ ref).sum()) * mm2
+		return {"contour": cnt.astype(int).tolist(), "area_mm2": round(float(s["mask_aresta"].sum()) * mm2, 3),
+				"valido": err is None, "erro": err, "solver": name, "params": params,
+				"mascara_rle": ST.rle_encode(s["mask_indice"]), "n_pontos": int(len(cnt)),
+				"origem": [int(x0), int(y0)], "tamanho": [int(w), int(h)], "ms_solver": round(s["ms"], 1), "ms": ms,
+				"indice": icnt.astype(int).tolist(), "area_indice_mm2": round(float(s["mask_indice"].sum()) * mm2, 3),
+				"indice_igual": bool(s["indice_igual"]), "indice_automatico": bool(s["indice_automatico"]),
+				"aresta_sem_tracos": s["aresta0_poly"].astype(int).tolist() if s["aresta0_poly"] is not None else [],
+				"aresta_delta_mm2": round(d_ar, 2), "aresta_ref": "gravada" if s["aresta_gravada"] is not None else "detetada",
+				"delta_mm": round(float(s["delta_mm"]), 3), "identidade": bool(s["identidade"]),
+				"tracos_ignorados": [int(i) for i in s["tracos_ignorados"]], "convencao": OV.CONVENCAO_ARESTA,
+				"base": s["base"]}
+
+	def _solve_a2(self, pid: str, body: dict, tr: list, win: tuple, name: str, params: dict, aresta_cliente=None) -> dict:
+		"""The two silhouettes of a stroke edit (A2, ``src.strokes``), in crop px: ``aresta`` / ``mask_aresta``
+		(the edge: the raw solver with every stroke, or ``aresta_cliente`` when the client retouched it) and
+		``indice`` / ``mask_indice`` (derived from the edge against the piece's CURRENT outline ``auto``: the
+		automatic contour, or its active manual index). With the twin's edge as the starting point (``base``
+		gemea) the strokes act on that edge and the index is derived from the difference to the piece's own
+		edge without strokes (:func:`src.strokes.indice_de_aresta`). Also ``indice_igual`` (index == ``auto``
+		bit for bit), ``indice_automatico`` (that, with ``auto`` the segmentation), ``dense_atual`` (scan px of
+		``auto``), ``aresta0`` / ``aresta0_poly`` (the edge without strokes, the editor's white dashed line),
+		``aresta_gravada`` (the stored edge as a mask, or None), ``delta_mm``, ``identidade``,
+		``tracos_ignorados``, ``base``, ``base_gemea``, ``mmpp``, ``ms``; or ``{error, delta_mm}``."""
+		from src import render
+		pr = self.pr
+		p = pr.piece(pid)
+		x0, y0, w, h = win
+		org = np.array([x0, y0], float)
 		mmpp = render._scan_mmpp(pr, p.scan_id)
 		rgb = self._scan_rgb(p.scan_id)[y0:y0 + h, x0:x0 + w]
-		dense, base_lbl, _ = self._base_mask(pid, body, (x0, y0, w, h))
-		auto = np.zeros((h, w), np.uint8)
-		cv2.fillPoly(auto, [np.round(dense - np.array([x0, y0], float)).astype(np.int32).reshape(-1, 1, 2)], 1)
+		own, own_lbl = self._dense(pid)
+		auto = _fill_mask(own - org, (h, w))
 		bg = self._bg_lab(p.scan_id) if name == "limiar" else None
-		delta = self._delta(pid, (x0, y0, w, h), name, params, rgb, auto > 0, mmpp, bg, base_lbl)
-		r = ST.resolver(rgb, auto > 0, tr, mmpp, solver=name, params=params, bg_lab=bg, normalizar_indice=True, delta=delta)
-		if "error" in r:
-			return {"contour": [], "area_mm2": 0.0, "valido": False, "erro": r["error"], "solver": name,
-					"params": params, "mascara_rle": None, "n_pontos": 0, "origem": [x0, y0], "tamanho": [w, h],
-					"ms": round((time.perf_counter() - t0) * 1000.0, 1), "ms_solver": None,
-					"aresta": [], "delta_mm": delta["delta_mm"], "identidade": False, "tracos_ignorados": []}
-		cnt = r["contour"]
-		_, err = OV.check_override(pr, pid, cnt + np.array([x0, y0], float))
-		return {"contour": cnt.astype(int).tolist(), "area_mm2": round(r["area_mm2"], 3), "valido": err is None,
-				"erro": err, "solver": name, "params": params, "mascara_rle": ST.rle_encode(r["mask"]),
-				"n_pontos": int(len(cnt)), "origem": [int(x0), int(y0)], "tamanho": [int(w), int(h)],
-				"ms_solver": round(r["ms"], 1), "ms": round((time.perf_counter() - t0) * 1000.0, 1),
-				"aresta": np.asarray(r["aresta"]).astype(int).tolist(), "delta_mm": round(float(r["delta_mm"]), 3),
-				"identidade": bool(r["identidade"]), "tracos_ignorados": [int(i) for i in r.get("tracos_ignorados", [])],
-				"convencao": "indice", "base": base_lbl}
+		delta = self._delta(pid, win, name, params, rgb, auto, mmpp, bg, own_lbl)
+		dense, base_lbl, base_gemea = self._base_mask(pid, body, win)
+		cli = None if aresta_cliente is None else _fill_mask(np.asarray(aresta_cliente, float) - org, (h, w))
+		raio = ST.raio_influencia(params, delta["delta_mm"], mmpp)
+		t0 = time.perf_counter()
+		if base_lbl == "gemea":
+			base = _fill_mask(dense - org, (h, w))
+			if tr:
+				r = ST.resolver(rgb, base, tr, mmpp, solver=name, params=params, bg_lab=bg)
+				if "error" in r:
+					return {"error": r["error"], "delta_mm": delta["delta_mm"]}
+				am = r["mask"]
+			else:
+				am = base
+			if cli is not None:
+				am = cli
+			idx = ST.indice_de_aresta(am, delta["aresta0"], auto, delta, mmpp, raio, ruido_mm=ST.GEMEA_RUIDO_MM)
+			out = {"identidade": False, "tracos_ignorados": []}
+		else:
+			r = ST.resolver(rgb, auto, tr, mmpp, solver=name, params=params, bg_lab=bg, normalizar_indice=True, delta=delta)
+			if "error" in r:
+				return {"error": r["error"], "delta_mm": delta["delta_mm"]}
+			am, idx = r["mask_aresta"], r["mask"]
+			if cli is not None and not np.array_equal(cli, am):        # a vertex retouch of the edge
+				idx = ST.indice_de_aresta(cli, am, auto, delta, mmpp, raio, raw=r["mask_bruta"], infl=r["influencia"],
+										  tri=r["trimap_indice"])
+				am = cli
+			out = {"identidade": bool(r["identidade"]) and cli is None, "tracos_ignorados": r["tracos_ignorados"]}
+		apoly = ST.mascara_poligono(am)
+		ipoly = ST.mascara_poligono(idx)
+		if apoly is None or len(apoly) < 3 or ipoly is None or len(ipoly) < 3:
+			return {"error": "não sobrou nenhuma peça (marca alguma zona como peça)", "delta_mm": delta["delta_mm"]}
+		igual = bool(np.array_equal(idx, auto))
+		mi = auto if igual else _fill_mask(ipoly, (h, w))
+		if igual:
+			ipoly = ST.mascara_poligono(auto)
+		ar = OV.aresta_px(pr, pid)
+		out.update(aresta=apoly, mask_aresta=_fill_mask(apoly, (h, w)), indice=ipoly, mask_indice=mi, indice_igual=igual,
+				   indice_automatico=igual and own_lbl == "segmentacao", dense_atual=own, aresta0=delta["aresta0"],
+				   aresta0_poly=ST.mascara_poligono(delta["aresta0"]), delta_mm=delta["delta_mm"],
+				   aresta_gravada=None if ar is None else _fill_mask(ar - org, (h, w)), base=base_lbl,
+				   base_gemea=base_gemea, mmpp=mmpp, ms=(time.perf_counter() - t0) * 1000.0)
+		return out
 
 	def _delta(self, pid: str, win: tuple, name: str, params: dict, rgb, auto, mmpp: float, bg, base: str = "atual") -> dict:
 		"""Cached :func:`src.strokes.delta_peca` of the piece's current outline on this crop / solver (the
-		editor asks several times per session; one GrabCut run per key). Keyed by the log version, so a
-		save (new outline) refreshes it."""
-		key = (pid, tuple(int(v) for v in win), name, json.dumps(params, sort_keys=True), self.version(), base)
+		editor asks several times per session; one GrabCut run per key), plus ``aresta0``: the raw solver
+		without strokes (the edge the editor draws as a white dashed line). Keyed by the log version and the
+		overrides file, so a save (new outline) refreshes it."""
+		fp = OV.overrides_path(self.pr)
+		ov_st = os.path.getsize(fp) if os.path.exists(fp) else 0
+		key = (pid, tuple(int(v) for v in win), name, json.dumps(params, sort_keys=True), self.version(), ov_st, base)
 		c = getattr(self, "_delta_cache", None)
 		if c is None or c[0] != key:
-			d = ST.delta_peca(rgb, auto, mmpp, name, params, bg)
+			d = dict(ST.delta_peca(rgb, auto, mmpp, name, params, bg))
+			r0 = ST.resolver(rgb, auto, [], mmpp, solver=name, params=params, bg_lab=bg)
+			d["aresta0"] = r0["mask"] if "error" not in r0 else np.asarray(auto, bool).copy()
 			self._delta_cache = (key, d)
 			return d
 		return c[1]
 
-	def _save_extra(self, pid: str, body: dict, pts: np.ndarray, win: tuple) -> dict:
-		"""Extra fields of the ``overrides.jsonl`` line of a GUI save (:data:`src.overrides.EXTRA_KEYS`):
-		the outline being replaced (``auto_contour_px``, ``auto_area_mm2``, ``auto_origem``), ``metodo``
-		and, for a stroke save, the strokes (crop px), the crop, the solver and the RLE of the saved
-		polygon filled in the crop (computed here; a client ``mascara_rle`` is only checked for size)."""
+	def _save_extra(self, pid: str, body: dict, pts: np.ndarray, win: tuple) -> tuple:
+		"""``(extra, index_pts)`` of a GUI save: the extra fields of the ``overrides.jsonl`` line
+		(:data:`src.overrides.EXTRA_KEYS`) and the index polygon to store as ``contour_px`` (scan px).
+
+		Always the outline being replaced (``auto_contour_px``, ``auto_area_mm2``, ``auto_origem``) and
+		``metodo``. A save without strokes (``metodo: "vertices"``, the handle editor) stores ``pts`` as the
+		index, ``convencao: "indice"``. A stroke save (A2): ``pts`` is the EDGE the user saw (orange, maybe
+		retouched); the server re-solves (:meth:`_solve_a2`; never trusts a client index) and stores the edge
+		in ``aresta_px``, the derived index as ``contour_px`` (the current outline exactly when it is unchanged;
+		``indice: "automatico"`` when that outline is the segmentation's: a display-only line),
+		``convencao: "aresta+indice"``, the strokes (crop px), the crop, the solver, the server's ``delta_mm``
+		and the RLE of the index filled in the crop (a client ``mascara_rle`` is only checked for size)."""
 		from src import render
 		mmpp = render._scan_mmpp(self.pr, self.pr.piece(pid).scan_id)
 		dense, origem, base_gemea = self._base_mask(pid, body, win)
@@ -2124,19 +2223,27 @@ class Gui:
 		if isinstance(dm, (int, float)) and not isinstance(dm, bool) and np.isfinite(dm):
 			extra["delta_mm"] = round(float(dm), 3)
 		if body.get("tracos") is None:
-			return extra
-		tr, (x0, y0, w, h) = self._strokes_window(pid, body)
+			return extra, pts
+		tr, win2 = self._strokes_window(pid, body)
+		x0, y0, w, h = win2
 		name, params = self._solver_spec(body)
 		cm = body.get("mascara_rle")
 		if cm is not None:
 			got = ST.rle_decode(cm)
 			if got.shape != (h, w):
 				raise ValueError(f"mascara_rle com {got.shape[1]} x {got.shape[0]} px; o recorte tem {w} x {h}")
-		m = np.zeros((h, w), np.uint8)
-		cv2.fillPoly(m, [np.round(np.asarray(pts, float) - np.array([x0, y0], float)).astype(np.int32).reshape(-1, 1, 2)], 1)
+		s = self._solve_a2(pid, body, tr, win2, name, params, aresta_cliente=pts)
+		if "error" in s:
+			raise ValueError(s["error"])
+		org = np.array([x0, y0], float)
+		idx_pts = np.asarray(s["dense_atual"], float) if s["indice_igual"] else s["indice"] + org
 		extra.update(metodo="tracos", tracos=ST.traduzir_tracos(tr, 0.0, 0.0), origem=[int(x0), int(y0)],
-					 tamanho=[int(w), int(h)], solver={"nome": name, "params": params}, mascara_rle=ST.rle_encode(m > 0))
-		return extra
+					 tamanho=[int(w), int(h)], solver={"nome": name, "params": params},
+					 mascara_rle=ST.rle_encode(s["mask_indice"]), convencao=OV.CONVENCAO_ARESTA,
+					 aresta_px=np.asarray(pts, float).reshape(-1, 2).tolist(), delta_mm=round(float(s["delta_mm"]), 3))
+		if s["indice_automatico"]:
+			extra["indice"] = OV.INDICE_AUTOMATICO
+		return extra, idx_pts
 
 	def _window(self, pid: str, origem=None, tamanho=None) -> tuple:
 		"""``(x0, y0, w, h)`` of the editor crop: the client's (validated) or the current one."""
@@ -2211,16 +2318,27 @@ class Gui:
 				return {"error": f"peça desconhecida {pid}"}
 			try:
 				pts, win = self._scan_points(pid, body)
-				extra = self._save_extra(pid, body, pts, win)
+				extra, idx_pts = self._save_extra(pid, body, pts, win)
 			except ValueError as e:
 				return {"error": str(e)}
-			before = board_snapshot(pr.board, pr.pieces)
+			before = board_snapshot(pr.board, pr.pieces, OV.latest_arestas(pr))
 			old = self.piece_summary(pid)
 			t0 = time.time()
-			rec = OV.append_override(pr, pid, pts, nota=(nota or "").strip(), extra=extra)
+			was_manual = bool(pr.piece(pid).flags.get(OV.MANUAL_FLAG))
+			rec = OV.append_override(pr, pid, idx_pts, nota=(nota or "").strip(), extra=extra)
 			if "error" in rec:
 				return {"error": rec["error"]}
-			r = render.rebuild_piece(pr, pid, progress=None)
+			so_aresta = OV.index_inactive(rec)
+			if so_aresta and was_manual:
+				# the derived index is the automatic contour again: a reposição of the index (re-segment the sheet)
+				sid = pr.piece(pid).scan_id
+				r = render.rebuild_assets(pr, progress=None, scans=[sid], force_scans=[sid], motivo="reposicao",
+										  clean=False, register=False)
+				r = dict(r, changed=[c for c in r["changed"] if c["piece"] == pid])
+			elif so_aresta:
+				r = {"changed": [], "errors": []}           # edge-only line: the index (and the log) do not change
+			else:
+				r = render.rebuild_piece(pr, pid, progress=None)
 			self._known_stat = self._log_stat()
 			if r.get("error") or r.get("errors"):
 				msg = r.get("error") or "; ".join(r["errors"])
@@ -2244,7 +2362,7 @@ class Gui:
 					b["snap"] = list(b["snap"])
 					b["snap"][k] = ("__contorno_manual__", None)
 			n_prop = None
-			if not bad:
+			if not bad and (r["changed"] or not so_aresta):
 				if p.estado == "colocada" and p.celula is not None:
 					entries = run_query(pr, only_cells=_around(pr, p.celula), only_pieces=set(), use_image=self.use_image)
 				elif p.estado in LOOSE_STATES or p.estado == "posicao_conhecida":
@@ -2264,7 +2382,10 @@ class Gui:
 			ch = r["changed"][0] if r["changed"] else None
 			msg = (f"{pid}: contorno manual aplicado (classe {old['cls']} → {new['cls']}, cordas "
 				   + "/".join(f"{x:.1f}" for x in (new["chords_mm"] or [])) + " mm)") if ch else f"{pid}: contorno igual ao atual"
-			slim = {k: v for k, v in rec.items() if k not in ("tracos", "mascara_rle", "auto_contour_px")}
+			if so_aresta:
+				msg = (f"{pid}: aresta gravada; a silhueta do índice voltou à automática" if ch else
+					   f"{pid}: aresta gravada (só muda o desenho; a silhueta do índice fica a automática)")
+			slim = {k: v for k, v in rec.items() if k not in ("tracos", "mascara_rle", "auto_contour_px", "aresta_px")}
 			return {"ok": True, "piece": new, "antes": old, "mensagens": [msg], "invariantes": bad, "override": slim,
 					"n_propostas": n_prop, "segundos": round(time.time() - t0, 2), **extra}
 		finally:
