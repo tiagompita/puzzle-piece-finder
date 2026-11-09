@@ -1277,16 +1277,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "manual_override": true
    },
-   "area_mm2": 371.17,
+   "area_mm2": 371.19,
    "cls": "BBBT",
    "n_flat": 0,
    "chords_mm": [
-    18.283,
-    19.442,
-    18.694,
-    20.395
+    18.282,
+    19.447,
+    18.69,
+    20.399
    ],
    "shape_ok": true,
    "bbox": [
