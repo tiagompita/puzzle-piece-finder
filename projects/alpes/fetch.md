@@ -1,4 +1,4 @@
-# Lista «ir buscar» — 2026-11-09T02:32:41
+# Lista «ir buscar» — 2026-11-09T02:49:15
 
 Projeto `alpes`; 1433 peças; por estado {'solta': 541, 'emparelhada': 10, 'posicao_conhecida': 0, 'colocada': 672, 'em_seccao': 205, 'descartada': 5}; tabuleiro 673 ocupadas / 3008.
 p_twin_placed = 0.030 (len(pending_twins) / n_por_colocar = 71 / 2335).

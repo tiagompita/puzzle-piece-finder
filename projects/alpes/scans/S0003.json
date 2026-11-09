@@ -203,31 +203,29 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false,
-    "manual_override": true,
-    "manual_nota": "contorno manual renormalizado para a convenção do índice (2026-11-09); correção real mantida, a confirmar"
+    "objeto_duplo": false
    },
-   "area_mm2": 481.64,
+   "area_mm2": 477.49,
    "cls": "TTTT",
    "n_flat": 0,
    "chords_mm": [
-    18.668,
-    18.214,
-    17.297,
-    17.045
+    18.692,
+    18.173,
+    17.336,
+    17.053
    ],
    "shape_ok": true,
    "bbox": [
     301,
     1063,
-    369,
+    363,
     375
    ],
    "crop_path": "crops/P0045.png",
    "mean_lab": [
-    25.75,
-    -7.86,
-    14.86
+    25.33,
+    -7.59,
+    14.68
    ]
   },
   {
