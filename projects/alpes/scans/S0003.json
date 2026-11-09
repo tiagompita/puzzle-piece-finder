@@ -203,16 +203,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "manual_override": true
    },
-   "area_mm2": 477.49,
+   "area_mm2": 477.48,
    "cls": "TTTT",
    "n_flat": 0,
    "chords_mm": [
-    18.692,
-    18.173,
-    17.336,
-    17.053
+    18.648,
+    18.237,
+    17.242,
+    17.082
    ],
    "shape_ok": true,
    "bbox": [

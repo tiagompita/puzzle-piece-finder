@@ -246,7 +246,8 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "manual_override": true
    },
    "area_mm2": 456.24,
    "cls": "BTTT",
