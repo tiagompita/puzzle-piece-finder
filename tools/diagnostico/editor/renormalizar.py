@@ -51,11 +51,20 @@ def _scan_cache():
 	return get
 
 
-def plan(pr, prof_mm: float) -> list:
-	"""One row per piece to renormalise: the new contour (scan px), its class and the metrics vs the automatic."""
+def plan(pr, prof_mm: float, refazer: bool = False) -> list:
+	"""One row per piece to renormalise: the new contour (scan px), its class and the metrics vs the automatic.
+	``refazer``: also the pieces whose latest line is a renormalisation (``motivo: "renormalizacao"``,
+	``metodo: "tracos"``), recomputed from the strokes of the line it derives from (``derivado_de``)."""
 	scan = _scan_cache()
 	rows = []
-	for pid, rec in OV.latest_overrides(pr, incluir_reposicao=True).items():
+	allrecs = OV.read_overrides(pr)
+	for pid, latest in OV.latest_overrides(pr, incluir_reposicao=True).items():
+		rec = latest
+		if refazer and latest.get("motivo") == MOTIVO and latest.get("metodo") == "tracos" and latest.get("derivado_de"):
+			rec = next((o for o in allrecs if o.get("piece") == pid and o.get("t") == latest["derivado_de"]), None)
+			if rec is None:
+				rows.append({"piece": pid, "erro": f"registo de origem {latest['derivado_de']} não encontrado"})
+				continue
 		if rec.get("metodo") != "tracos" or rec.get("convencao") == "indice" or not rec.get("auto_contour_px") or not rec.get("origem"):
 			continue
 		# the ORIGINAL automatic contour: the first line of the piece with auto_origem segmentacao (else this one)
@@ -82,7 +91,7 @@ def plan(pr, prof_mm: float) -> list:
 		depth = max(m["missing_depth_mm"], m["excess_depth_mm"])
 		cls = "reposicao" if depth <= prof_mm else "renormalizado"
 		p = pr.piece(pid)
-		rows.append({"piece": pid, "scan_id": sid, "celula": list(p.celula) if p.celula else None, "t_anterior": rec["t"],
+		rows.append({"piece": pid, "scan_id": sid, "celula": list(p.celula) if p.celula else None, "t_anterior": latest["t"],
 					 "classe": cls, "identidade": bool(res["identidade"]), "delta_mm": round(res["delta_mm"], 3),
 					 "tracos": len(tr), "tracos_ignorados": len(res.get("tracos_ignorados", [])),
 					 "iou": round(m["iou"], 4), "falta_mm2": round(m["missing_mm2"], 2), "falta_prof_mm": round(m["missing_depth_mm"], 2),
@@ -174,11 +183,12 @@ def main(argv=None) -> int:
 	ap.add_argument("--project", required=True)
 	ap.add_argument("--aplicar", action="store_true")
 	ap.add_argument("--prof-mm", type=float, default=0.5)
+	ap.add_argument("--refazer", action="store_true", help="refaz também as peças já renormalizadas (a partir dos traços originais)")
 	ap.add_argument("--fig", default=None)
 	ap.add_argument("--json", default=None)
 	a = ap.parse_args(argv)
 	pr = Project.open(a.project)
-	rows = plan(pr, a.prof_mm)
+	rows = plan(pr, a.prof_mm, refazer=a.refazer)
 	print("| peça | célula | classe | identidade | δ mm | traços (ignorados) | IoU vs auto | falta mm² (prof) | a mais mm² (prof) | pose manual |")
 	print("|---|---|---|---|---|---|---|---|---|---|")
 	for r in rows:

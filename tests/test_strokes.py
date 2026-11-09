@@ -308,3 +308,26 @@ def test_deep_fundo_cut_survives_normalisation(meadow):
     cut = meadow["auto"] & ~n["mask"]
     assert cut.sum() * MMPP * MMPP > 3.0
     assert np.array_equal(n["mask"][~n["influencia"]], meadow["auto"][~n["influencia"]])
+
+
+def test_normalizar_drops_small_gains_instead_of_growing_them():
+    """A sliver gained beyond the automatic (< GANHO_MIN_MM2) is edge noise: the saved mask keeps the
+    automatic there and does not grow it by δ (P0045, 2026-11-09: 0.75 mm² would have become 4.2 mm² of
+    paper); a large gain (a recovered bite) is kept and grown."""
+    h, w = 200, 200
+    auto = np.zeros((h, w), bool)
+    auto[50:150, 50:150] = True
+    infl = np.zeros((h, w), bool)
+    infl[30:170, 120:170] = True
+    halo = np.zeros((h, w), bool)
+    sliver = auto.copy()
+    sliver[90:94, 150:153] = True                                   # 12 px ≈ 0.09 mm²
+    out = ST.normalizar(sliver, auto, halo, infl, 0.5, MMPP)
+    base = ST.normalizar(auto, auto, halo, infl, 0.5, MMPP)        # the same region without the sliver
+    assert np.array_equal(out, base) and not (out & ~auto).any()
+    bite = auto.copy()
+    bite[70:130, 150:160] = True                                    # 600 px ≈ 4.3 mm²
+    out = ST.normalizar(bite, auto, halo, infl, 0.5, MMPP)
+    gained = (out & ~auto).sum() * MMPP * MMPP
+    assert gained > 4.3                                             # kept and grown by δ
+    assert np.array_equal(out[~infl], auto[~infl])

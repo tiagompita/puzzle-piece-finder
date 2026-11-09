@@ -63,7 +63,7 @@ __all__ = [
 	"parametros", "validar_tracos", "traduzir_tracos", "rasterizar_tracos", "trimap", "dominio",
 	"solve_grabcut", "solve_watershed", "solve_limiar", "limpar", "mascara_poligono", "resolver",
 	"DELTA_MAX_MM", "DELTA_ZONA_MORTA_PX", "SOMBRA_L_MAX", "SOMBRA_CHROMA_MAX", "SOMBRA_BANDA_MM", "SOMBRA_TRACO_FRAC",
-	"SOMBRA_TRACO_MIN_MM2", "S0_INCERTO",
+	"SOMBRA_TRACO_MIN_MM2", "S0_INCERTO", "GANHO_MIN_MM2",
 	"desvio_assinado", "nucleo_sombra", "delta_peca", "tracos_de_sombra", "influencia", "normalizar",
 	"rle_encode", "rle_decode",
 ]
@@ -84,6 +84,9 @@ SOMBRA_CHROMA_MAX = 40.0    # ... with low chroma (core ~7, its blurred rim up t
 SOMBRA_BANDA_MM = 2.0       # ... within this depth of the automatic boundary (the shadow sides measure 1.0-1.5 mm, the core up to 1.9)
 SOMBRA_TRACO_FRAC = 0.6     # a ``fundo`` stroke with this share of its in-piece footprint on the halo is a shadow stroke: ignored
 SOMBRA_TRACO_MIN_MM2 = 1.5  # ... as is one that barely enters the piece (a graze of the brush along the edge)
+GANHO_MIN_MM2 = 2.0         # a component gained beyond the automatic smaller than this is edge noise: dropped, not grown by δ
+							# (set after P0045, 2026-11-09: a 0.75 mm² solver sliver grown by δ 0.59 became 4.2 mm² of paper;
+							# real bites are 30+ mm², COMIDO.md; the synthetic meadow corner ~20 mm²)
 _NAO_MARCADO = -1
 
 # Default parameters of each solver (the caller's ``params`` override them; unknown keys are an error).
@@ -616,7 +619,8 @@ def influencia(tracos, shape: tuple, raio_px: float) -> np.ndarray:
 def normalizar(raw_mask: np.ndarray, auto_mask: np.ndarray, halo: np.ndarray, infl: np.ndarray, delta_mm: float,
 			   mm_per_px: float, tri: Optional[np.ndarray] = None, limpeza_mm: float = LIMPEZA_MM) -> np.ndarray:
 	"""The mask to save, in the convention of the index (module docstring): ``auto`` outside ``infl``;
-	inside, ``raw | halo`` plus the regions gained beyond ``auto`` grown by ``delta_mm``; the result is
+	inside, ``raw | halo`` plus the regions gained beyond ``auto`` grown by ``delta_mm`` (a gained
+	component smaller than :data:`GANHO_MIN_MM2` is edge noise: dropped, the automatic stays there); the result is
 	cleaned (:func:`limpar` without marks) inside ``infl`` only, one component, holes filled, and the
 	certain-piece marks of ``tri`` re-imposed (certain-background marks are NOT: the halo belongs to the
 	silhouette by convention)."""
@@ -625,8 +629,15 @@ def normalizar(raw_mask: np.ndarray, auto_mask: np.ndarray, halo: np.ndarray, in
 	if not infl.any():
 		return auto.copy()
 	raw = np.asarray(raw_mask, bool)
-	inside = raw | np.asarray(halo, bool)
 	gain = raw & ~auto & infl
+	if gain.any():
+		n, cc, st, _ = cv2.connectedComponentsWithStats(gain.astype(np.uint8), connectivity=8)
+		small = np.zeros(n, bool)
+		small[1:] = st[1:, cv2.CC_STAT_AREA] * mm_per_px * mm_per_px < GANHO_MIN_MM2
+		drop = small[cc]
+		raw = raw & ~drop
+		gain = gain & ~drop
+	inside = raw | np.asarray(halo, bool)
 	d = delta_mm / mm_per_px
 	if d > 0 and gain.any():
 		inside |= cv2.distanceTransform((~gain).astype(np.uint8), cv2.DIST_L2, 5) <= d
