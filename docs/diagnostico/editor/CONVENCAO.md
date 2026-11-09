@@ -97,3 +97,112 @@ Figura `RENORM_17.jpg` (magenta = manual antigo, vermelho = automático, verde =
 Por zona (d_mean mediana): céu 0,117, montanha 0,146, relva 0,138, vale 0,144. **Pioram (d_mean > 0,6 mm): 6, todos o corte c32|c33** (P0289–P0294 ↔ P0492–P0498, 0,62–1,06 mm), a exceção à simetria que ORIENTACOES §D tinha medido: confirmação independente. Critério C6 (mediana ≤ 0,4, p95 ≤ 1,0) cumprido. Pares com contorno manual dos dois lados: nenhum. Em P0651/P0657 contra a GT, a sugestão vinda de uma gémea **automática** vale o automático (IoU 0,863/0,828 vs 0,869/0,824; a gémea traz o seu halo): o ganho só existe quando a gémea tem contorno manual. [NT] uso real pelo Tiago.
 
 A primeira versão do registo (correspondência de cantos escolhida pelo RMS dos cantos) falhava em 40/268 e 3/20: numa peça quase quadrada as 4 correspondências ajustam os cantos a 0,03 mm e a errada dá um mínimo local do ICP a 90°; a escolha passou a ser pelo RMS do contorno inteiro.
+
+## 6. Ronda 10: aresta oficial, índice derivado (A2)
+
+O Tiago quer que o contorno gravado seja **só a peça**. Na ronda 9 a linha laranja do editor era a silhueta do índice (com o halo de sombra) e ignorava o «não é peça» posto sobre a sombra.
+
+### 6.1 Medição que motivou a mudança [V]
+
+Tabela por lado do §1 do plano. Desvio assinado mediano em mm, + = fora da referência, lados no referencial do scanner (a sombra cai a W e a S).
+- Laranja = o que o editor da ronda 9 gravava.
+- Aresta = o solver sem traços.
+- «Manual antigo» = o proxy da GT até haver máscaras do Photoshop.
+
+| peça | laranja − aresta (E / S / N / W) | aresta − GT | laranja − GT |
+|---|---|---|---|
+| P1203 (4,57) céu | −0,08 / +0,34 / −0,08 / +0,92 | manual antigo: −0,08 / +0,61 / −0,08 / −0,08 | manual antigo: −0,12 / +1,03 / −0,08 / +1,02 |
+| P0045 (43,5) relva | +0,08 / +0,51 / +0,17 / +0,68 | manual antigo: −0,08 nos 4 | manual antigo: +0,08 / +0,73 / +0,18 / +0,71 |
+| P1245 (3,57) céu | −0,08 / +0,42 / −0,08 / +0,90 | manual antigo: −0,08 / +0,34 / −0,08 / −0,08 | manual antigo: −0,08 / +1,01 / −0,08 / +1,01 |
+| P0198 (28,64) vale | −0,17 / +0,42 / −0,17 / +0,83 | gravado hoje: +0,08 / −0,49 / +0,08 / −0,91 | ≈ 0 (gravou-se a laranja) |
+| P0651 (44,1) **Photoshop** | −0,08 / +0,51 / −0,12 / +1,10 | **−0,08 / +0,08 / −0,08 / −0,25**, IoU 0,941 | −0,08 / +0,74 / −0,17 / +0,93, IoU 0,869 |
+| P0657 (45,1) **Photoshop** | −0,08 / +0,63 / −0,17 / +1,02 | **+0,17 / +0,08 / +0,12 / +0,08**, IoU 0,941 | +0,24 / +0,86 / +0,08 / +1,20, IoU 0,824 |
+
+Nos lados iluminados (E/N) a laranja coincide com a aresta; nos lados da sombra fica 0,3–1,1 mm fora. Contra o Photoshop, a aresta erra ≤ 0,25 mm por lado.
+
+Refeita com `convencao.py --lados`, onde o lado vem da normal da GT e por isso os números diferem um pouco. Em P0651 / P0657:
+- S0 − GT: −0,17 / +0,24 / −0,09 / −0,24 e +0,17 / +0,27 / +0,09 / +0,09 (IoU 0,941);
+- índice − GT: −0,17 / +0,77 / −0,17 / +0,95 e +0,17 / +0,85 / −0,09 / +1,25.
+
+### 6.2 Desenho (A2) [V]
+
+`strokes.resolver(normalizar_indice=True)` devolve duas silhuetas.
+- **A aresta** (`aresta`/`mask_aresta`): o caminho bruto do solver com **todos** os traços.
+- **O índice** (`mask`/`contour`): igual ao da ronda 9 (§3), com os traços de sombra a não contar só para ele.
+
+Duas peças novas:
+- `indice_de_aresta`: leva para o índice um retoque de vértices da aresta, ou a diferença entre a aresta da gémea e a aresta própria sem traços.
+- `GEMEA_RUIDO_MM`: diferenças mais finas do que 0,5 mm são tratadas como ruído do registo [NT].
+
+O registo grava as duas silhuetas:
+- `aresta_px` = a aresta;
+- `contour_px` = o índice;
+- `convencao: "aresta+indice"`.
+
+Se o índice é o automático **bit a bit**, o registo leva `indice: "automatico"`: só muda o desenho, sem `manual_override` e sem evento no log.
+
+A regra é **única** (decisão do Tiago): `strokes.resolver` → `indice_automatico` é a mesma comparação exata que o servidor faz em `Gui._solve_a2` e que o `reaplicar_aresta.py` usa. A tolerância de 0,5 mm herdada de `renormalizar.py` saiu (`03e3af5`).
+
+O desenho (`render.aresta_rgba`) e a sugestão pela gémea (`fonte: "aresta"`) usam a aresta. Tudo o que lê o índice continua a ler só `contour_px`, e nada foi recalibrado.
+
+### 6.3 Os 19 registos (`reaplicar_aresta.py`, regra bit a bit) [V]
+
+São os registos 0–16 e 35–38 de `overrides.jsonl`: 21 registos, mas 19 peças, porque P1203 aparece duas vezes e o registo 37 não tem traços.
+
+| resultado | peças |
+|---|---|
+| índice = automático bit a bit: só visualização | P0098, P0105, P0165, P0186, P0916, P0935, P0999, P1021, P1089, P1102, P1114, P1202, P1203, P1245 (14) |
+| índice derivado ≠ automático: contorno manual do índice | P0045 (prof. 0,08 mm, +0,06 / −0,07 mm²), P0071 (0,08; +0,01 / −0,01), P1064 (0,08; +0,02 / −0,02), P0198 (0,42; +0,57 / −0,02), P0620 (0,08; +0,04 / −0,01) |
+
+- Nas 17 antigas, a aresta reproduz o contorno gravado bit a bit (IoU 1,000, 0 px).
+- P0198 e P0620 mantêm exatamente o índice que o Tiago gravou hoje (IoU 1,000).
+- P1203 deixa o contorno vindo da gémea e volta ao automático.
+- Ao lado, para comparação, a aresta − S0 por lado (E / S / N / W):
+  - E e N: −0,09…−0,17;
+  - S: −0,12…−0,93;
+  - W: −0,09…−0,27.
+- Figuras: `REAPLICAR_19.jpg` (vermelho = automático, laranja = aresta, ciano = índice) e `REAPLICAR_zoom_WS.jpg` (lados W/S ×4: a laranja segue a aresta da peça e deixa a sombra negra de fora; o ciano inclui-a). Dados: `reaplicar_aresta.json`, `lados_r10.json`.
+
+### 6.4 Provas na cópia e no projeto real [V]
+
+Na cópia, a linha de base é o estado `b23d449` com os ativos refeitos.
+
+| prova | cópia (`alpes_r10`) | projeto real (`d865e29`) |
+|---|---|---|
+| `--aplicar` | 19 registos, 4 `piece_resegmented` (P0045, P0071, P1064 `manual`; P1203 `reposicao`), 0 erros | igual |
+| `fetch.json` (tol. 1e-6, suprimidas incluídas) | idêntico, 15/15 | idêntico a `b23d449`, 15/15 |
+| reprodução R7 (`r7_gt.py`) | 43/43 antes e 43/43 depois (33 `aceite`, 10 `ambigua`, top-1 43/43) | — |
+| `check_invariants(disk=True)` | [] | [] |
+| Suspeitas | iguais (0 impossível, 1 melhor rotação, 14 recorte) | iguais |
+
+Efeito nas 5 peças com índice manual:
+- **Gémeas:** as 5 e as 5 gémeas estão colocadas, por isso não há consulta `find_twin` e nunca são candidatas. A distância livre ao par muda ≤ 0,003 mm, exceto P0620↔P1203: 0,068 → 0,140 mm, porque P1203 deixa o contorno da gémea.
+- **Buracos vizinhos:** em 6 buracos a ordem e a confiança ficam iguais; em 3 só muda o custo (≤ 0,028 de J).
+
+### 6.5 O que fica por medir [NT]
+
+- **O que o Tiago vê na GUI.** Ainda não reportou nada. Lista do que deve verificar em `HANDOFF.md`.
+- **Possível sobre-corte no lado S.** Nas 19 arestas o lado S fica 0,5–0,9 mm dentro de S0, enquanto S0 só está ≈ +0,25 mm fora da GT no lado S. Os 17 traços antigos (instrução antiga: «fundo» sobre a linha negra) podem entrar 0,3–0,6 mm na peça. Sem GT destas peças não se sabe.
+- **Custo de P0045 / P0071 / P1064 serem índice manual por 1 píxel.** Saem das métricas de CV (`manual_override`) por diferenças de 0,01–0,07 mm².
+- **Traços humanos novos com a regra A2**, e peças de duas cores ou escuras e neutras na aresta.
+
+### 6.6 Fase 2 (pendente, à espera das máscaras do Photoshop)
+
+É o recorte de todas as peças com a aresta S0, decidido zona a zona.
+
+**Máscaras pedidas:** P1203, P0045, P1245 e P0198. P0229 (41,64, relva, a mais escura: L\* 10,6) é opcional e só entra se a fase 2 avançar.
+- Onde: `docs/diagnostico/editor/gt_photoshop/P####.png`.
+- Formato: PNG com alfa = a peça, na grelha de píxeis do scan inteiro, como R0011/R0012.
+
+**Candidatas:**
+- (a) o solver sem traços puro;
+- (b) S0 com deslocamento direcional nos lados W/S, estimado em leave-one-out.
+
+**Critério, por zona:** desvio mediano por lado ≤ 0,3 mm, p95 ≤ 0,6 mm, IoU ≥ 0,93. **A tolerância foi fixada vendo só P0651/P0657: não está validada.** O n por zona é de 1 a 2 peças.
+
+As ferramentas estão prontas:
+
+	python tools/diagnostico/editor/convencao.py --project <cópia> --lados --gt docs/diagnostico/editor/gt_photoshop --json lados.json
+	python tools/diagnostico/editor/reaplicar_aresta.py --project <cópia> --gt docs/diagnostico/editor/gt_photoshop --fig f.jpg --json f.json   # dry-run
+
+**Ainda não feito:** a candidata (b) (deslocamento direcional, leave-one-out) não tem ferramenta. Tem de ser escrita quando as máscaras chegarem.

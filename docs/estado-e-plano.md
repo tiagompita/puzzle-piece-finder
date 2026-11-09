@@ -163,6 +163,28 @@ Não testado: escala real das peças com abas (≈1,4× a célula, no limite da 
 
 `annotate_results`/`save_annotated_image` e o Export JSON da GUI funcionam (contrato em ARCHITECTURE.md §3). O ponto vermelho é desenhado no centro de `position+size/2` mesmo quando `confidence='ambiguous'`; o JSON guarda a shortlist. Não há exportação de máscaras/contornos das peças (só PNG RGBA via Save Pieces).
 
+### 3.8 Editor de contorno e as duas silhuetas (estado 2026-11-09, ronda 10)
+
+**A2: aresta oficial, índice derivado [V].** O editor por traços grava duas silhuetas por peça editada.
+- **A aresta** (`aresta_px`): o que o Tiago pinta, só a peça, sem a sombra. É usada no desenho (miniaturas e tabuleiro) e na sugestão pela gémea.
+- **A silhueta do índice** (`contour_px`): derivada da aresta com o halo de sombra (+0,2…+1,4 mm nos lados W/S do scanner). Os limiares das gémeas e dos buracos foram calibrados sobre ela, por isso continuam válidos sem recalibração.
+
+Quando o índice derivado é o automático **bit a bit**, a edição só muda o desenho.
+
+Projeto real (`d865e29`):
+- **Contas:** 19 peças com aresta pintada; 5 com índice manual (P0045, P0071, P1064 por 1 píxel, mais P0198 e P0620).
+- **Verificações:** `fetch.json` igual ao de antes, R7 43/43, invariantes OK.
+- **Contra a GT do Photoshop** (P0651/P0657): a aresta sem traços erra ≤ 0,27 mm por lado (IoU 0,941); o índice erra até +1,25 mm nos lados da sombra.
+
+**Por medir [NT]:**
+- o que o Tiago vê na GUI;
+- um possível sobre-corte de 0,3–0,6 mm no lado S nos 17 traços antigos;
+- o custo de pôr 3 peças fora das métricas de CV por 0,08 mm.
+
+**Pendente: fase 2.** Recortar todas as peças pela aresta, zona a zona, à espera das máscaras do Photoshop de P1203, P0045, P1245 e P0198. A tolerância por zona foi fixada só com P0651/P0657 e não está validada.
+
+Detalhe em `docs/diagnostico/editor/CONVENCAO.md` §6 e `docs/decisoes.md` (ronda 10).
+
 ---
 
 ## 4. Causa raiz do abandono

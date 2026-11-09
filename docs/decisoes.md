@@ -148,3 +148,24 @@ Os limiares abaixo estão no código ou nos testes da ronda 10, mas nenhum foi v
    **Origem real:** escolhido por mim nesta ronda, sem medição que o justifique. O «> 3» é só «acima de `GANHO_MIN_MM2` = 2 com folga». O «< 3» da perda foi fixado **depois** de ver o valor do próprio caso: perda 319 px ≈ 2,3 mm² (lascas do registo nos blanks), ganho 640 px ≈ 4,6 mm². A margem da perda é pequena (2,3 contra 3).
 
    O outro «> 3,0 mm²» dos testes (`tests/test_strokes.py::test_deep_fundo_cut_survives_normalisation`, corte de um «fundo» profundo) é anterior a esta ronda e não é o do laço.
+
+## 2026-11-09 — ronda 10: o contorno é só a peça (A2: aresta oficial, índice derivado)
+
+**Decisão: A2.** Cada peça editada passa a ter duas silhuetas.
+- `aresta_px`: o que o Tiago pinta, só a peça, sem a sombra. É o contorno oficial do desenho e da sugestão pela gémea.
+- `contour_px`: a silhueta do índice, derivada da aresta com o halo de sombra da convenção (`strokes.normalizar`/`delta_peca`, ronda 9). Tudo o que lê o índice (npz, shape, twin, fit, border, consistency, registo do render) continua a ler só esta.
+
+**Porquê A2 e não A1.**
+- **A1** era recalibrar tudo para a aresta: re-segmentar ≈ 1300 peças e refazer E-sym, t95/tmax, as tolerâncias de corda, a erosão do buraco (0,60 mm), `t_abs`, `celula_silhueta.offset_mm` (0,48), o registo do render, a borda e a consistência. Seriam dias de trabalho, e «Vai buscar» mudaria por definição, sem forma de garantir que fica igual nas peças sem edição. Além disso, o solver sem traços tem um erro por cor e por zona que não está medido fora do céu.
+- **A2** custa pouco e não exige recalibração. Fica garantido por construção que as peças sem edição não mudam.
+
+**Provado [V]:** `fetch.json` idêntico na cópia e no projeto real, R7 43/43, invariantes [], Suspeitas iguais (`CONVENCAO.md` §6.4).
+
+**Regra única bit a bit [V].** Uma linha só muda o desenho (`indice: "automatico"`, sem `manual_override` nem evento) quando o índice derivado é o automático **bit a bit**. É a mesma regra no servidor e no `reaplicar_aresta.py`; a tolerância de 0,5 mm saiu (decisão do Tiago, `03e3af5`). Consequência [NT]: P0045, P0071 e P1064 ficam índice manual por 1 píxel (0,08 mm; 0,01–0,07 mm²) e por isso fora das métricas de CV.
+
+**Fase 2: condicional e por zona, por correr.**
+- É o recorte de todas as peças pela aresta S0 (A1 parcial), só depois de a provar zona a zona.
+- Candidatas medidas contra as máscaras do Photoshop: (a) o solver sem traços puro; (b) S0 com deslocamento direcional nos lados W/S, estimado em leave-one-out.
+- Critério por zona: desvio mediano por lado ≤ 0,3 mm, p95 ≤ 0,6 mm, IoU ≥ 0,93. A zona que passa ativa; a que falha fica com a regra atual e o [F] é registado.
+- **A tolerância foi fixada vendo só P0651/P0657: não está validada.** O n por zona é de 1 a 2 peças, e o relatório tem de o dizer.
+- À espera das máscaras de P1203, P0045, P1245 e P0198 (P0229 opcional) em `docs/diagnostico/editor/gt_photoshop/`.
