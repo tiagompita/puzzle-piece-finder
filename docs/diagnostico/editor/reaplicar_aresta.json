@@ -10,7 +10,7 @@
    "zona": "relva",
    "t_origem": "2026-11-07T17:44:18",
    "convencao_origem": null,
-   "classe": "automatico",
+   "classe": "derivado",
    "indice_bit_a_bit": false,
    "delta_mm": 0.593,
    "tracos": 20,
@@ -106,7 +106,7 @@
    "zona": "relva",
    "t_origem": "2026-11-08T17:52:39",
    "convencao_origem": null,
-   "classe": "automatico",
+   "classe": "derivado",
    "indice_bit_a_bit": false,
    "delta_mm": 0.423,
    "tracos": 9,
@@ -586,7 +586,7 @@
    "zona": "vale",
    "t_origem": "2026-11-09T14:05:59",
    "convencao_origem": "indice",
-   "classe": "automatico",
+   "classe": "derivado",
    "indice_bit_a_bit": false,
    "delta_mm": 0.364,
    "tracos": 9,
@@ -682,7 +682,7 @@
    "zona": "relva",
    "t_origem": "2026-11-09T14:11:06",
    "convencao_origem": "indice",
-   "classe": "automatico",
+   "classe": "derivado",
    "indice_bit_a_bit": false,
    "delta_mm": 0.423,
    "tracos": 11,
@@ -1162,7 +1162,7 @@
    "zona": "ceu",
    "t_origem": "2026-11-08T17:12:11",
    "convencao_origem": null,
-   "classe": "automatico",
+   "classe": "derivado",
    "indice_bit_a_bit": false,
    "delta_mm": 0.423,
    "tracos": 12,
@@ -1826,5 +1826,5 @@
   }
  ],
  "aplicado": null,
- "prof_mm": 0.5
+ "regra": "bit a bit"
 }

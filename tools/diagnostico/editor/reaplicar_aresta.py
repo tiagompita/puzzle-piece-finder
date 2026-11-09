@@ -8,10 +8,12 @@ contorno automático da segmentação (``auto_contour_px`` do último registo da
 
 * a **aresta** = o caminho bruto com TODOS os traços (o «não é peça» sobre a sombra respeitado); nos registos
   antigos (sem ``convencao``) tem de ser o ``contour_px`` gravado (verificado: IoU e píxeis diferentes);
-* o **índice derivado** (convenção do índice). Classe ``automatico`` quando difere do automático por
-  profundidade máxima <= ``--prof-mm`` (0,5; a mesma regra de ``renormalizar.py``) em falta e a mais: o
-  registo leva ``indice: "automatico"`` e ``contour_px`` = o automático exato (só muda o desenho); senão
-  ``derivado``: ``contour_px`` = o índice derivado (o contorno manual do índice fica ativo).
+* o **índice derivado** (convenção do índice). Classe ``automatico`` só quando é o automático **bit a bit**
+  (``indice_automatico`` de :func:`src.strokes.resolver`, a mesma regra exata do servidor, ``Gui._solve_a2``;
+  decisão do Tiago, 2026-11-09: a tolerância de 0,5 mm de profundidade herdada de ``renormalizar.py`` saiu):
+  o registo leva ``indice: "automatico"`` e ``contour_px`` = o automático exato (só muda o desenho); senão
+  ``derivado``: ``contour_px`` = o índice derivado (o contorno manual do índice fica ativo). A profundidade e
+  as áreas contra o automático continuam na tabela, só como informação.
 
 Registo novo: ``metodo: "tracos"`` (traços, origem, tamanho e solver do registo de origem),
 ``convencao: "aresta+indice"``, ``aresta_px``, ``derivado_de`` (``t`` do registo de origem),
@@ -76,7 +78,7 @@ def _source(recs: list, pid: str):
 	return src, base
 
 
-def plan(pr, prof_mm: float, gts: dict) -> list:
+def plan(pr, gts: dict) -> list:
 	"""Uma linha por peça a reaplicar (máscaras, classe, métricas). Só leitura."""
 	scan = _scan_cache()
 	recs = OV.read_overrides(pr)
@@ -110,7 +112,7 @@ def plan(pr, prof_mm: float, gts: dict) -> list:
 		gravado = MC.fill_contour(np.asarray(src["contour_px"], float) - org, (h, w))
 		m_idx = MC.mask_metrics(auto, idx, mmpp)
 		depth = max(m_idx["missing_depth_mm"], m_idx["excess_depth_mm"])
-		cls = "automatico" if (res["indice_automatico"] or depth <= prof_mm) else "derivado"
+		cls = "automatico" if res["indice_automatico"] else "derivado"      # bit a bit, como o servidor
 		s0 = ST.resolver(rgb, auto, [], mmpp, solver=sv.get("nome", ST.SOLVER_OMISSAO), params=sv.get("params"))["mask"]
 		p = pr.piece(pid)
 		cur = pr.contour_px(pid)
@@ -238,14 +240,13 @@ def main(argv=None) -> int:
 	ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
 	ap.add_argument("--project", required=True)
 	ap.add_argument("--aplicar", action="store_true")
-	ap.add_argument("--prof-mm", type=float, default=0.5)
 	ap.add_argument("--gt", default=None, help="pasta com P####.png (máscaras do Photoshop)")
 	ap.add_argument("--fig", default=None)
 	ap.add_argument("--json", default=None)
 	a = ap.parse_args(argv)
 	pr = Project.open(a.project)
 	gts = CV.gt_files(a.gt)
-	rows = plan(pr, a.prof_mm, gts)
+	rows = plan(pr, gts)
 	print("| peça | célula | zona | origem | classe | bit a bit | δ mm | traços (sombra p/ índice) | aresta vs gravado IoU (px) | "
 		  "índice vs auto: IoU / falta / a mais / prof | aresta − auto E/S/N/W | aresta − GT E/S/N/W (IoU) | manual ativo |")
 	print("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
@@ -274,7 +275,7 @@ def main(argv=None) -> int:
 		os.makedirs(os.path.dirname(os.path.abspath(a.json)), exist_ok=True)
 		with open(a.json, "w", encoding="utf-8") as f:
 			json.dump({"linhas": [{k: v for k, v in r.items() if not k.startswith("_")} for r in rows], "aplicado": result,
-					   "prof_mm": a.prof_mm}, f, ensure_ascii=False, indent=1)
+					   "regra": "bit a bit"}, f, ensure_ascii=False, indent=1)
 		print(f"json: {a.json}")
 	return 1 if (result and result["erros"]) else 0
 
