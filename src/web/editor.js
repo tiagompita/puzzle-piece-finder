@@ -16,7 +16,8 @@ const CED_RGB = { peca: "255,255,255", fundo: "0,0,0", incerto: "150,150,150" };
 const CED_MARCAS = [["peca", "É peça", "1"], ["fundo", "Não é peça", "2"], ["incerto", "Incerto", "3"]];
 const CED_FERRS = [["laco", "Laço", "L"], ["pincel", "Pincel", "P"], ["borracha", "Borracha", "B"]];
 const CED_VISTAS = [["scan", "Scan"], ["atual", "Atual"], ["diff", "Diferença"], ["final", "Final"]];
-const CED_AJUDA = "«Não é peça» com pincel fino sobre a linha negra da sombra colada à peça · «É peça» sobre arte clara cor do papel que o automático cortou · «Incerto» onde quiser que o algoritmo decida. Shift força «é peça», Alt força «não é peça».";
+const CED_AJUDA = "O índice guarda ≈ 0,5 mm de sombra e penumbra à volta da peça (é a convenção com que as gémeas e os buracos foram calibrados); a sombra só sai no desenho do tabuleiro. «Não é peça» serve para papel, outra peça ou sombra ALÉM dessa orla: um pincel só sobre a linha negra da sombra é ignorado (fica a cinzento). «É peça» sobre arte clara cor do papel que o automático cortou. «Incerto» onde quiser que o algoritmo decida. Linha branca tracejada = aresta detetada; laranja = o que se grava. Shift força «é peça», Alt força «não é peça».";
+const CED_LEGENDA = "ciano tracejado: atual · branco tracejado: aresta detetada · laranja: a gravar";
 
 async function openContourEditor(pid, back) {
   let d;
@@ -98,7 +99,8 @@ function cedBuild() {
       h("div", { class: "ced-row" }, b("Afinar vértices", () => cedToggleRetouch(), { id: "ced-vertices", "aria-pressed": "false", title: "retoque opcional: arrastar vértices do contorno resolvido (clique numa aresta: novo vértice · Delete: apaga)" })),
       h("p", { class: "small ced-status", id: "ced-status" }),
       h("p", { class: "small ced-busy", id: "ced-busy", "aria-live": "polite" }),
-      h("p", { class: "small muted ced-help" }, CED_AJUDA),
+      h("p", { class: "small muted ced-help", title: CED_LEGENDA }, CED_AJUDA),
+      h("p", { class: "small muted ced-legend", title: CED_LEGENDA }, CED_LEGENDA),
       h("label", { class: "ced-nota" }, h("span", { class: "small muted" }, "Nota (opcional)"),
         h("input", { id: "ced-nota", type: "text", maxlength: "200", value: d.nota || "", placeholder: "ex.: comido no lado de baixo" })),
       h("div", { class: "ced-row ced-save-row" },
@@ -240,12 +242,15 @@ function cedRenderLayer() {
   const E = S.ced, ctx = E.layer.getContext("2d");
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, E.layer.width, E.layer.height);
-  for (const t of E.tracos.slice(0, E.pos)) {
+  E.tracos.slice(0, E.pos).forEach((t, i) => {
     ctx.globalCompositeOperation = t.ferramenta === "borracha" ? "destination-out" : "source-over";
-    const col = t.marca ? CED_RGB[t.marca] : "0,0,0";
+    const ign = E.ignorados && E.ignorados.has(i) && t.ferramenta !== "borracha";
+    const col = ign ? "150,150,150" : (t.marca ? CED_RGB[t.marca] : "0,0,0");
+    ctx.globalAlpha = ign ? 0.6 : 1;
     ctx.fillStyle = ctx.strokeStyle = `rgb(${col})`;
     cedPaint(ctx, t);
-  }
+  });
+  ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
   E.layerDirty = false;
 }
@@ -267,6 +272,8 @@ function cedDraw() {
   ctx.globalAlpha = 0.5; ctx.drawImage(E.layer, 0, 0); ctx.globalAlpha = 1;
   const A = E.d.denso || [];
   if (A.length) { cedPath(ctx, A); ctx.setLineDash([4 * lw, 4 * lw]); ctx.strokeStyle = "rgba(41, 211, 230, .9)"; ctx.lineWidth = 1.2 * lw; ctx.stroke(); ctx.setLineDash([]); }
+  const AR = E.res && E.res.aresta;
+  if (AR && AR.length >= 3) { cedPath(ctx, AR); ctx.setLineDash([3 * lw, 3 * lw]); ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1 * lw; ctx.stroke(); ctx.setLineDash([]); }
   const poly = cedFinalPoly();
   if (poly.length) { cedPath(ctx, poly); ctx.fillStyle = "rgba(255, 176, 0, .2)"; ctx.fill(); ctx.strokeStyle = "#ffb000"; ctx.lineWidth = 1.2 * lw; ctx.stroke(); }
   const L = E.live;
@@ -388,7 +395,17 @@ function cedValidity() {
 function cedStatus() {
   const E = S.ced, el = $("#ced-status"); if (!E || !el) return;
   const v = cedValidity();
-  el.replaceChildren(v.texto || (E.busy ? "" : "—"), ...(v.aviso ? [h("span", { class: "ced-warn" }, ` · ${v.aviso}`)] : []));
+  let extra = "";
+  const R = E.res;
+  if (R && R.valido) {
+    if (R.identidade) extra = " · igual ao contorno atual";
+    else {
+      if (typeof R.delta_mm === "number") extra += ` · δ ${fmt(R.delta_mm, 2)} mm`;
+      const n = (R.tracos_ignorados || []).length;
+      if (n > 0) extra += ` · ${n} traço${n > 1 ? "s" : ""} de sombra ignorado${n > 1 ? "s" : ""}`;
+    }
+  }
+  el.replaceChildren((v.texto ? v.texto + extra : "") || (E.busy ? "" : "—"), ...(v.aviso ? [h("span", { class: "ced-warn" }, ` · ${v.aviso}`)] : []));
   el.classList.toggle("bad", !!v.aviso);
   const busy = $("#ced-busy");
   if (busy) busy.textContent = E.busy ? "a resolver…" : "";
@@ -451,6 +468,8 @@ async function cedFire() {
   E.busy = false; E.again = false;
   if (err) { E.res = { contour: [], area_mm2: 0, valido: false, erro: err, n_pontos: 0, ms: 0 }; toast(err, true); }
   else E.res = r;
+  E.ignorados = new Set((E.res && E.res.tracos_ignorados) || []);
+  E.layerDirty = true;
   E.vt = null;
   if (E.retouch) cedVInit();
   cedDiffBuild();
@@ -677,7 +696,8 @@ async function cedSave(btn) {
   try {
     const r = await api(`/api/pieces/${E.pid}/contorno`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contour: poly, origem: E.d.origem, tamanho: E.d.tamanho, nota: $("#ced-nota").value,
-        tracos: E.tracos.slice(0, E.pos), solver: (E.res && E.res.solver) || E.d.solver_omissao || "grabcut" }) });
+        tracos: E.tracos.slice(0, E.pos), solver: (E.res && E.res.solver) || E.d.solver_omissao || "grabcut",
+        delta_mm: E.res ? E.res.delta_mm : undefined }) });
     for (const m of r.mensagens || []) toast(m);
     if (r.invariantes && r.invariantes.length) toast("INVARIANTES: " + r.invariantes.join("; "), true);
     E.dirty = false;

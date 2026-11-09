@@ -921,3 +921,30 @@ def test_pose_evaluate_set_and_reset(susp_env):
     rr = cl.post(f"/api/pieces/{a}/pose", json={"theta_deg": 0, "dx_mm": 0, "dy_mm": 0})
     assert rr.status_code == 400 and "não está colocada" in rr.json()["error"]
     assert cl.get(f"/api/pieces/{a}/pose").status_code == 400
+
+
+def test_contorno_resolver_convencao_indice(env):
+    """The editor's solver answers in the convention of the index (src.strokes.normalizar): without strokes
+    the contour to save IS the current outline (``identidade``), the raw edge comes as ``aresta``, and a save
+    records ``convencao: "indice"`` and the client's ``delta_mm``."""
+    from src import overrides as OV
+    from src import strokes as ST
+    gui, cl, placed, tw, dec = env
+    d = cl.get(f"/api/pieces/{tw}/contorno").json()
+    w, h = d["tamanho"]
+    body = {"tracos": [], "origem": d["origem"], "tamanho": d["tamanho"]}
+    s = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=body).json()
+    assert s["valido"] and s["identidade"] is True and s["convencao"] == "indice" and s["tracos_ignorados"] == []
+    assert isinstance(s["delta_mm"], float) and 0.0 <= s["delta_mm"] <= ST.DELTA_MAX_MM
+    assert len(s["aresta"]) >= 20
+    assert np.array_equal(ST.rle_decode(s["mascara_rle"]), _fill_poly(d["denso"], (h, w)))   # bit for bit the current outline
+    # a peca lasso: not the identity, the raw edge differs from the saved contour, the save keeps the fields
+    lasso = _bump_lasso(d)
+    s2 = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=dict(body, tracos=[lasso])).json()
+    assert s2["valido"] and s2["identidade"] is False and s2["area_mm2"] > d["area_mm2"]
+    r = cl.post(f"/api/pieces/{tw}/contorno", json=dict(body, tracos=[lasso], contour=s2["contour"], solver="grabcut",
+                                                        delta_mm=s2["delta_mm"], nota="convenção"))
+    assert r.status_code == 200, r.text
+    line = OV.read_overrides(gui.pr)[-1]
+    assert line["piece"] == tw and line["convencao"] == "indice" and line["delta_mm"] == round(s2["delta_mm"], 3)
+    assert line["metodo"] == "tracos" and "convencao" in OV.EXTRA_KEYS

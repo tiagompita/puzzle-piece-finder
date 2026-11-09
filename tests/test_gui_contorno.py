@@ -206,6 +206,34 @@ def test_contour_strokes_flow(tmp_path):
     assert not errs, errs
 
 
+def test_contour_convention_index(tmp_path):
+    """Convenção do índice (§18): aresta bruta, identidade sem traços, traços «fundo» possivelmente ignorados."""
+    from src.query import run_query
+    pr, placed, tw, dec = _project(tmp_path)
+    run_query(pr, use_image=False)
+    gui, server, th, base = _serve(pr.path, str(tmp_path / "uploads"))
+    try:
+        with sync_api.sync_playwright() as pw:
+            br = _launch(pw)
+            pg = br.new_page(viewport={"width": 1366, "height": 768})
+            pg.on("dialog", lambda d: d.accept())
+            _open_editor(pg, base)
+            _settled(pg)
+            assert pg.evaluate("S.ced.res.identidade === true")
+            assert pg.evaluate("S.ced.res.aresta.length") >= 20
+            assert pg.evaluate("S.ced.res.convencao === 'indice'")
+            assert "igual ao contorno atual" in pg.inner_text("#ced-status")
+            c_in, c_edge, centre = _corner(pg)
+            _set_tool(pg, "pincel", "fundo")
+            _stroke(pg, [c_in, c_edge])
+            _settled(pg)
+            assert pg.evaluate("Array.isArray(S.ced.res.tracos_ignorados)")
+            br.close()
+    finally:
+        server.should_exit = True
+        th.join(10)
+
+
 @pytest.fixture(scope="module")
 def served(tmp_path_factory):
     from src.query import run_query
@@ -278,3 +306,4 @@ def test_contour_overlay_layout(served, browser, w, h):
     finally:
         ctx.close()
     assert not errs, errs
+

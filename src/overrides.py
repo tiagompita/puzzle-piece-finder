@@ -12,7 +12,10 @@ an override reads them)::
 	"metodo": "tracos" | "vertices", "tracos": [...] (crop px, src.strokes), "origem": [x0, y0],
 	"tamanho": [w, h], "solver": {"nome", "params"}, "mascara_rle": {"w", "h", "runs"} (the saved
 	polygon filled in the crop, src.strokes.rle_encode), "auto_contour_px": [[x, y], ...] (int, scan
-	px: the outline the save replaced), "auto_area_mm2", "auto_origem": "segmentacao" | "manual"
+	px: the outline the save replaced), "auto_area_mm2", "auto_origem": "segmentacao" | "manual" | "gemea",
+	"convencao": "indice" (saved through the editor's normalisation, src.strokes: the silhouette keeps the
+	shadow halo of the index; lines without it predate 2026-11-09 and sit on the true edge), "delta_mm",
+	"derivado_de": t of the line a re-edit replaces, "motivo": "renormalizacao" | ..., "base_gemea": {id, t, rms_mm}
 
 :func:`manual_pairs` measures the automatic contour against the manual one per piece
 (``python -m src.overrides --project <p> --pares``). The override is applied by
@@ -41,7 +44,7 @@ __all__ = [
 	"editor_indices", "editor_polygon", "expand_polygon", "rasterize_polygon",
 	"polygon_record",
 	"validate_polygon", "manual_flags", "is_manual",
-	"overrides_path", "read_overrides", "latest_overrides", "has_override", "scan_file", "scan_size",
+	"overrides_path", "read_overrides", "latest_overrides", "REPOSICAO", "has_override", "scan_file", "scan_size",
 	"load_scan_rgb", "reference_area_px", "check_override", "append_override", "crop_window",
 	"EXTRA_KEYS", "pair_metrics", "manual_pairs", "pose_pairs", "pose_summary", "mean_ci", "direction_of", "main",
 ]
@@ -59,7 +62,7 @@ MANUAL_FLAG = "manual_override"
 MANUAL_NOTE_FLAG = "manual_nota"
 _SEG_SILHOUETTE_KEYS = ("is_cluster", "contacto", "recuperado_mm2", "suspeita_recorte")   # facts of the segmented silhouette, dropped
 EXTRA_KEYS = ("metodo", "tracos", "origem", "tamanho", "solver", "mascara_rle", "auto_contour_px", "auto_area_mm2",
-			  "auto_origem")
+			  "auto_origem", "convencao", "delta_mm", "derivado_de", "motivo", "base_gemea")
 
 
 # ---------------------------------------------------------------- pure helpers
@@ -329,9 +332,19 @@ def read_overrides(project) -> list:
 	return out
 
 
-def latest_overrides(project) -> dict:
-	"""``{piece: override}``: the last line of each piece."""
-	return {o["piece"]: o for o in read_overrides(project) if o.get("piece")}
+REPOSICAO = "reposicao"
+
+
+def latest_overrides(project, incluir_reposicao: bool = False) -> dict:
+	"""``{piece: override}``: the last line of each piece. A piece whose last line is a *reposição*
+	(``metodo == "reposicao"``: the user, or the renormalisation of 2026-11-09, put the automatic contour
+	back) is left out, so :func:`has_override` is False, the editor starts from the segmentation and
+	:func:`src.render.rebuild_assets` re-segments it (``force_scans``) without ``manual_override``;
+	``incluir_reposicao=True`` returns those lines too (audit, ``--pares``)."""
+	last = {o["piece"]: o for o in read_overrides(project) if o.get("piece")}
+	if incluir_reposicao:
+		return last
+	return {k: v for k, v in last.items() if v.get("metodo") != REPOSICAO}
 
 
 def has_override(project, piece: str) -> bool:

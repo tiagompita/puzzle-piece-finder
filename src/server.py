@@ -2044,17 +2044,34 @@ class Gui:
 		auto = np.zeros((h, w), np.uint8)
 		cv2.fillPoly(auto, [np.round(dense - np.array([x0, y0], float)).astype(np.int32).reshape(-1, 1, 2)], 1)
 		bg = self._bg_lab(p.scan_id) if name == "limiar" else None
-		r = ST.resolver(rgb, auto > 0, tr, mmpp, solver=name, params=params, bg_lab=bg)
+		delta = self._delta(pid, (x0, y0, w, h), name, params, rgb, auto > 0, mmpp, bg)
+		r = ST.resolver(rgb, auto > 0, tr, mmpp, solver=name, params=params, bg_lab=bg, normalizar_indice=True, delta=delta)
 		if "error" in r:
 			return {"contour": [], "area_mm2": 0.0, "valido": False, "erro": r["error"], "solver": name,
 					"params": params, "mascara_rle": None, "n_pontos": 0, "origem": [x0, y0], "tamanho": [w, h],
-					"ms": round((time.perf_counter() - t0) * 1000.0, 1), "ms_solver": None}
+					"ms": round((time.perf_counter() - t0) * 1000.0, 1), "ms_solver": None,
+					"aresta": [], "delta_mm": delta["delta_mm"], "identidade": False, "tracos_ignorados": []}
 		cnt = r["contour"]
 		_, err = OV.check_override(pr, pid, cnt + np.array([x0, y0], float))
 		return {"contour": cnt.astype(int).tolist(), "area_mm2": round(r["area_mm2"], 3), "valido": err is None,
 				"erro": err, "solver": name, "params": params, "mascara_rle": ST.rle_encode(r["mask"]),
 				"n_pontos": int(len(cnt)), "origem": [int(x0), int(y0)], "tamanho": [int(w), int(h)],
-				"ms_solver": round(r["ms"], 1), "ms": round((time.perf_counter() - t0) * 1000.0, 1)}
+				"ms_solver": round(r["ms"], 1), "ms": round((time.perf_counter() - t0) * 1000.0, 1),
+				"aresta": np.asarray(r["aresta"]).astype(int).tolist(), "delta_mm": round(float(r["delta_mm"]), 3),
+				"identidade": bool(r["identidade"]), "tracos_ignorados": [int(i) for i in r.get("tracos_ignorados", [])],
+				"convencao": "indice"}
+
+	def _delta(self, pid: str, win: tuple, name: str, params: dict, rgb, auto, mmpp: float, bg) -> dict:
+		"""Cached :func:`src.strokes.delta_peca` of the piece's current outline on this crop / solver (the
+		editor asks several times per session; one GrabCut run per key). Keyed by the log version, so a
+		save (new outline) refreshes it."""
+		key = (pid, tuple(int(v) for v in win), name, json.dumps(params, sort_keys=True), self.version())
+		c = getattr(self, "_delta_cache", None)
+		if c is None or c[0] != key:
+			d = ST.delta_peca(rgb, auto, mmpp, name, params, bg)
+			self._delta_cache = (key, d)
+			return d
+		return c[1]
 
 	def _save_extra(self, pid: str, body: dict, pts: np.ndarray, win: tuple) -> dict:
 		"""Extra fields of the ``overrides.jsonl`` line of a GUI save (:data:`src.overrides.EXTRA_KEYS`):
@@ -2066,7 +2083,10 @@ class Gui:
 		dense, origem = self._dense(pid)
 		extra = {"auto_contour_px": np.round(dense).astype(int).tolist(),
 				 "auto_area_mm2": round(OV.polygon_area(dense) * mmpp * mmpp, 3), "auto_origem": origem,
-				 "metodo": "vertices"}
+				 "metodo": "vertices", "convencao": "indice"}
+		dm = body.get("delta_mm")
+		if isinstance(dm, (int, float)) and not isinstance(dm, bool) and np.isfinite(dm):
+			extra["delta_mm"] = round(float(dm), 3)
 		if body.get("tracos") is None:
 			return extra
 		tr, (x0, y0, w, h) = self._strokes_window(pid, body)
