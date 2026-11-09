@@ -140,4 +140,4 @@ Rules:
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 - A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
 
-No início da sessão, ler primeiro docs/STATUS.md. Usar o graphify só para perguntas sobre a estrutura do código.
+No início da sessão, ler primeiro docs/estado-e-plano.md e ARCHITECTURE.md (e docs/HANDOFF.md, ver «Sessões»); este projeto não usa docs/STATUS.md. Usar o graphify só para perguntas sobre a estrutura do código.
