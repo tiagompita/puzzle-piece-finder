@@ -1,0 +1,4417 @@
+{
+ "registos": [
+  {
+   "piece": "P0045",
+   "scan_id": "S0003",
+   "celula": [
+    43,
+    5
+   ],
+   "t": "2026-11-07T17:44:18",
+   "zona": "relva",
+   "marcas": {
+    "pincel/fundo": 11,
+    "pincel/peca": 5,
+    "pincel/incerto": 4
+   },
+   "auto_mm2": 477.5,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.42307084798812866,
+     "media": -0.5082435607910156,
+     "p5": -1.2699999809265137,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.5175339579582214
+    },
+    "iou": 0.89,
+    "missing_mm2": 50.23,
+    "excess_mm2": 0.5,
+    "d_mean": 0.44,
+    "d_p95": 1.19
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.4905417263507843,
+     "media": -0.5963128209114075,
+     "p5": -1.4722156524658203,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.6077441573143005
+    },
+    "iou": 0.87,
+    "missing_mm2": 59.62,
+    "excess_mm2": 0.64,
+    "d_mean": 0.52,
+    "d_p95": 1.3
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.491,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.1057710349559784,
+    "p5": -0.9816739559173584,
+    "p95": 0.5752084255218506,
+    "abs_media": 0.413959264755249
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 12.12,
+     "profundidade_mm": 0.68,
+     "bbox_px": [
+      214,
+      44,
+      389,
+      265
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 8.24,
+     "profundidade_mm": 1.49,
+     "bbox_px": [
+      47,
+      185,
+      125,
+      284
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.2,
+     "profundidade_mm": 1.02,
+     "bbox_px": [
+      320,
+      257,
+      377,
+      273
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 11.24,
+     "profundidade_mm": 1.12,
+     "bbox_px": [
+      112,
+      288,
+      234,
+      397
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P1203",
+   "scan_id": "S0034",
+   "celula": [
+    4,
+    57
+   ],
+   "t": "2026-11-08T17:10:46",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 3
+   },
+   "auto_mm2": 370.6,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.18600419163703918,
+     "media": -0.34229201078414917,
+     "p5": -1.1853333711624146,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.39184659719467163
+    },
+    "iou": 0.89,
+    "missing_mm2": 37.55,
+    "excess_mm2": 2.72,
+    "d_mean": 0.35,
+    "d_p95": 1.17
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.3045375347137451,
+     "media": -0.5295336246490479,
+     "p5": -1.387010931968689,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.5866401195526123
+    },
+    "iou": 0.83,
+    "missing_mm2": 58.94,
+    "excess_mm2": 3.16,
+    "d_mean": 0.54,
+    "d_p95": 1.3
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.305,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.2249961495399475,
+    "p5": -1.0824733972549438,
+    "p95": 0.389204204082489,
+    "abs_media": 0.5452594757080078
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 5.05,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      194,
+      41,
+      297,
+      133
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 5.47,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      58,
+      42,
+      193,
+      105
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 4.83,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      226,
+      139,
+      290,
+      257
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 11.76,
+     "profundidade_mm": 1.29,
+     "bbox_px": [
+      44,
+      50,
+      117,
+      177
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.67,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      238,
+      122,
+      292,
+      139
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 19.28,
+     "profundidade_mm": 1.35,
+     "bbox_px": [
+      45,
+      191,
+      211,
+      325
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.32,
+     "profundidade_mm": 1.12,
+     "bbox_px": [
+      218,
+      249,
+      279,
+      264
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P1114",
+   "scan_id": "S0032",
+   "celula": [
+    4,
+    62
+   ],
+   "t": "2026-11-08T17:11:09",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 3
+   },
+   "auto_mm2": 413.3,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.1693333387374878,
+     "media": -0.45410415530204773,
+     "p5": -1.4893457889556885,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.4705413579940796
+    },
+    "iou": 0.88,
+    "missing_mm2": 48.57,
+    "excess_mm2": 0.93,
+    "d_mean": 0.41,
+    "d_p95": 1.42
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.37200838327407837,
+     "media": -0.6331250071525574,
+     "p5": -1.6086666584014893,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.6437289714813232
+    },
+    "iou": 0.84,
+    "missing_mm2": 67.14,
+    "excess_mm2": 0.62,
+    "d_mean": 0.57,
+    "d_p95": 1.52
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.372,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.2611166536808014,
+    "p5": -1.2366583347320557,
+    "p95": 0.45667505264282227,
+    "abs_media": 0.5451868772506714
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 8.82,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      121,
+      42,
+      291,
+      170
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 7.05,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      208,
+      186,
+      287,
+      334
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 5.37,
+     "profundidade_mm": 1.35,
+     "bbox_px": [
+      107,
+      56,
+      132,
+      108
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.81,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      50,
+      118,
+      64,
+      180
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.67,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      218,
+      158,
+      282,
+      178
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.96,
+     "profundidade_mm": 1.39,
+     "bbox_px": [
+      74,
+      186,
+      120,
+      240
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 19.46,
+     "profundidade_mm": 1.66,
+     "bbox_px": [
+      46,
+      247,
+      214,
+      393
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.47,
+     "profundidade_mm": 1.49,
+     "bbox_px": [
+      217,
+      329,
+      272,
+      346
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P1064",
+   "scan_id": "S0030",
+   "celula": [
+    2,
+    63
+   ],
+   "t": "2026-11-08T17:12:11",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 8,
+    "pincel/peca": 4
+   },
+   "auto_mm2": 399.2,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.3045375347137451,
+     "media": -0.4202970266342163,
+     "p5": -1.1853333711624146,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.44663479924201965
+    },
+    "iou": 0.89,
+    "missing_mm2": 42.92,
+    "excess_mm2": 1.46,
+    "d_mean": 0.39,
+    "d_p95": 1.15
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.45667505264282227,
+     "media": -0.6136864423751831,
+     "p5": -1.5202261209487915,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.629432737827301
+    },
+    "iou": 0.84,
+    "missing_mm2": 62.93,
+    "excess_mm2": 0.89,
+    "d_mean": 0.56,
+    "d_p95": 1.39
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.457,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.15701133012771606,
+    "p5": -1.0635510683059692,
+    "p95": 0.5413417220115662,
+    "abs_media": 0.5161740183830261
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 8.35,
+     "profundidade_mm": 0.68,
+     "bbox_px": [
+      154,
+      41,
+      272,
+      159
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 3.78,
+     "profundidade_mm": 0.68,
+     "bbox_px": [
+      56,
+      97,
+      148,
+      115
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 3.18,
+     "profundidade_mm": 0.54,
+     "bbox_px": [
+      299,
+      157,
+      331,
+      228
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 3.15,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      270,
+      235,
+      276,
+      327
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 9.3,
+     "profundidade_mm": 1.29,
+     "bbox_px": [
+      48,
+      116,
+      131,
+      207
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.16,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      276,
+      219,
+      317,
+      234
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 10.71,
+     "profundidade_mm": 1.02,
+     "bbox_px": [
+      46,
+      232,
+      146,
+      340
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 10.03,
+     "profundidade_mm": 1.22,
+     "bbox_px": [
+      142,
+      265,
+      270,
+      336
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P0916",
+   "scan_id": "S0027",
+   "celula": [
+    6,
+    63
+   ],
+   "t": "2026-11-08T17:12:36",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 4
+   },
+   "auto_mm2": 314.5,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.18600419163703918,
+     "media": -0.3653929829597473,
+     "p5": -1.0493416786193848,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.3850044310092926
+    },
+    "iou": 0.88,
+    "missing_mm2": 35.51,
+    "excess_mm2": 1.03,
+    "d_mean": 0.33,
+    "d_p95": 1.02
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.3386666774749756,
+     "media": -0.5176387429237366,
+     "p5": -1.344067096710205,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.538750410079956
+    },
+    "iou": 0.83,
+    "missing_mm2": 51.53,
+    "excess_mm2": 1.12,
+    "d_mean": 0.47,
+    "d_p95": 1.25
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.339,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.178972065448761,
+    "p5": -1.0054004192352295,
+    "p95": 0.4233333468437195,
+    "abs_media": 0.45255374908447266
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 5.03,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      57,
+      41,
+      176,
+      107
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 4.8,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      179,
+      43,
+      260,
+      140
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 4.65,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      192,
+      149,
+      255,
+      260
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 10.39,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      46,
+      48,
+      120,
+      192
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.05,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      201,
+      132,
+      254,
+      148
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 8.89,
+     "profundidade_mm": 1.29,
+     "bbox_px": [
+      45,
+      207,
+      137,
+      294
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.32,
+     "profundidade_mm": 0.74,
+     "bbox_px": [
+      178,
+      262,
+      240,
+      278
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.69,
+     "profundidade_mm": 1.12,
+     "bbox_px": [
+      121,
+      296,
+      169,
+      331
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P1245",
+   "scan_id": "S0034",
+   "celula": [
+    3,
+    57
+   ],
+   "t": "2026-11-08T17:13:16",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 6
+   },
+   "auto_mm2": 400.7,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.18600419163703918,
+     "media": -0.3856368958950043,
+     "p5": -1.1160250902175903,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.41377490758895874
+    },
+    "iou": 0.9,
+    "missing_mm2": 38.51,
+    "excess_mm2": 1.52,
+    "d_mean": 0.36,
+    "d_p95": 1.1
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.2540000081062317,
+     "media": -0.5318616032600403,
+     "p5": -1.4380995035171509,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.5688169598579407
+    },
+    "iou": 0.86,
+    "missing_mm2": 53.99,
+    "excess_mm2": 2.06,
+    "d_mean": 0.5,
+    "d_p95": 1.3
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.254,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.2778615653514862,
+    "p5": -1.184099555015564,
+    "p95": 0.3386666774749756,
+    "abs_media": 0.5059384107589722
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "em_falta",
+     "area_mm2": 5.11,
+     "profundidade_mm": 1.02,
+     "bbox_px": [
+      105,
+      51,
+      117,
+      132
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 24.23,
+     "profundidade_mm": 1.45,
+     "bbox_px": [
+      45,
+      147,
+      227,
+      338
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.41,
+     "profundidade_mm": 1.22,
+     "bbox_px": [
+      314,
+      165,
+      362,
+      181
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.39,
+     "profundidade_mm": 0.85,
+     "bbox_px": [
+      232,
+      257,
+      303,
+      274
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P1202",
+   "scan_id": "S0034",
+   "celula": [
+    2,
+    62
+   ],
+   "t": "2026-11-08T17:14:30",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 8
+   },
+   "auto_mm2": 386.0,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.1776687651872635,
+     "media": -0.37767067551612854,
+     "p5": -1.3546667098999023,
+     "p95": 0.1693333387374878,
+     "abs_media": 0.4493943452835083
+    },
+    "iou": 0.87,
+    "missing_mm2": 44.64,
+    "excess_mm2": 4.14,
+    "d_mean": 0.41,
+    "d_p95": 1.3
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.3045375347137451,
+     "media": -0.5920823216438293,
+     "p5": -1.5406970977783203,
+     "p95": 0.1693333387374878,
+     "abs_media": 0.6557572484016418
+    },
+    "iou": 0.82,
+    "missing_mm2": 67.04,
+    "excess_mm2": 3.75,
+    "d_mean": 0.6,
+    "d_p95": 1.44
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.305,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.28754478693008423,
+    "p5": -1.2361595630645752,
+    "p95": 0.4738708734512329,
+    "abs_media": 0.6105977296829224
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 5.24,
+     "profundidade_mm": 0.54,
+     "bbox_px": [
+      63,
+      41,
+      183,
+      115
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 4.85,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      189,
+      45,
+      307,
+      127
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 5.81,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      232,
+      136,
+      298,
+      273
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 15.98,
+     "profundidade_mm": 1.42,
+     "bbox_px": [
+      52,
+      54,
+      127,
+      204
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.03,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      179,
+      54,
+      192,
+      101
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.63,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      241,
+      122,
+      290,
+      136
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 21.69,
+     "profundidade_mm": 1.35,
+     "bbox_px": [
+      44,
+      210,
+      217,
+      342
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 5.33,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      225,
+      268,
+      294,
+      282
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P1102",
+   "scan_id": "S0031",
+   "celula": [
+    4,
+    36
+   ],
+   "t": "2026-11-08T17:21:03",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 6
+   },
+   "auto_mm2": 449.6,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.23706667125225067,
+     "media": -0.3584911823272705,
+     "p5": -1.172351360321045,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.37511906027793884
+    },
+    "iou": 0.92,
+    "missing_mm2": 35.58,
+    "excess_mm2": 0.91,
+    "d_mean": 0.31,
+    "d_p95": 1.1
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.3386666774749756,
+     "media": -0.5803653597831726,
+     "p5": -1.439333438873291,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.5943827033042908
+    },
+    "iou": 0.87,
+    "missing_mm2": 58.9,
+    "excess_mm2": 0.78,
+    "d_mean": 0.51,
+    "d_p95": 1.32
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.339,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.24169862270355225,
+    "p5": -1.1006667613983154,
+    "p95": 0.4233333468437195,
+    "abs_media": 0.45364251732826233
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 9.46,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      168,
+      42,
+      341,
+      282
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 9.05,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      65,
+      102,
+      129,
+      204
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 7.21,
+     "profundidade_mm": 1.08,
+     "bbox_px": [
+      46,
+      230,
+      105,
+      333
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.77,
+     "profundidade_mm": 1.35,
+     "bbox_px": [
+      268,
+      272,
+      326,
+      292
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 6.42,
+     "profundidade_mm": 1.08,
+     "bbox_px": [
+      159,
+      322,
+      256,
+      338
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 5.23,
+     "profundidade_mm": 1.22,
+     "bbox_px": [
+      83,
+      344,
+      149,
+      390
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P0999",
+   "scan_id": "S0028",
+   "celula": [
+    4,
+    35
+   ],
+   "t": "2026-11-08T17:21:55",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 4
+   },
+   "auto_mm2": 419.3,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.23706667125225067,
+     "media": -0.40681132674217224,
+     "p5": -1.1006667613983154,
+     "p95": -0.0846666693687439,
+     "abs_media": 0.41455549001693726
+    },
+    "iou": 0.91,
+    "missing_mm2": 36.13,
+    "excess_mm2": 0.41,
+    "d_mean": 0.34,
+    "d_p95": 1.02
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.3045375347137451,
+     "media": -0.5784082412719727,
+     "p5": -1.439333438873291,
+     "p95": -0.0846666693687439,
+     "abs_media": 0.5858511328697205
+    },
+    "iou": 0.87,
+    "missing_mm2": 53.77,
+    "excess_mm2": 0.39,
+    "d_mean": 0.49,
+    "d_p95": 1.27
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.305,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.27387070655822754,
+    "p5": -1.134795904159546,
+    "p95": 0.21987086534500122,
+    "abs_media": 0.4754679203033447
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "em_falta",
+     "area_mm2": 10.34,
+     "profundidade_mm": 1.42,
+     "bbox_px": [
+      45,
+      122,
+      123,
+      219
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 15.38,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      51,
+      232,
+      172,
+      393
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.11,
+     "profundidade_mm": 1.45,
+     "bbox_px": [
+      254,
+      244,
+      297,
+      262
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 5.57,
+     "profundidade_mm": 1.12,
+     "bbox_px": [
+      177,
+      328,
+      256,
+      347
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P0098",
+   "scan_id": "S0005",
+   "celula": [
+    3,
+    36
+   ],
+   "t": "2026-11-08T17:22:45",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 7
+   },
+   "auto_mm2": 364.8,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.18600419163703918,
+     "media": -0.3723466396331787,
+     "p5": -1.1340082883834839,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.38889050483703613
+    },
+    "iou": 0.9,
+    "missing_mm2": 35.64,
+    "excess_mm2": 0.9,
+    "d_mean": 0.32,
+    "d_p95": 1.08
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.3555999994277954,
+     "media": -0.5846173167228699,
+     "p5": -1.5240000486373901,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.6003934144973755
+    },
+    "iou": 0.84,
+    "missing_mm2": 58.67,
+    "excess_mm2": 0.87,
+    "d_mean": 0.52,
+    "d_p95": 1.35
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.356,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.22901733219623566,
+    "p5": -1.1684000492095947,
+    "p95": 0.4402666687965393,
+    "abs_media": 0.47477948665618896
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 4.95,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      115,
+      43,
+      237,
+      114
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 8.63,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      237,
+      42,
+      399,
+      189
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.11,
+     "profundidade_mm": 0.71,
+     "bbox_px": [
+      102,
+      52,
+      114,
+      151
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.29,
+     "profundidade_mm": 0.98,
+     "bbox_px": [
+      230,
+      54,
+      246,
+      107
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 13.32,
+     "profundidade_mm": 1.29,
+     "bbox_px": [
+      46,
+      165,
+      207,
+      255
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 11.66,
+     "profundidade_mm": 1.42,
+     "bbox_px": [
+      206,
+      175,
+      325,
+      256
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.18,
+     "profundidade_mm": 1.25,
+     "bbox_px": [
+      338,
+      183,
+      387,
+      199
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P0105",
+   "scan_id": "S0005",
+   "celula": [
+    4,
+    43
+   ],
+   "t": "2026-11-08T17:24:04",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 7
+   },
+   "auto_mm2": 367.2,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.1693333387374878,
+     "media": -0.33303195238113403,
+     "p5": -1.0660125017166138,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.36299818754196167
+    },
+    "iou": 0.91,
+    "missing_mm2": 32.71,
+    "excess_mm2": 1.61,
+    "d_mean": 0.3,
+    "d_p95": 0.99
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.2540000081062317,
+     "media": -0.5387383103370667,
+     "p5": -1.3546667098999023,
+     "p95": -0.0846666693687439,
+     "abs_media": 0.5438492894172668
+    },
+    "iou": 0.86,
+    "missing_mm2": 52.95,
+    "excess_mm2": 0.27,
+    "d_mean": 0.47,
+    "d_p95": 1.27
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.254,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.28473833203315735,
+    "p5": -1.1006667613983154,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.43116068840026855
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "em_falta",
+     "area_mm2": 9.6,
+     "profundidade_mm": 1.29,
+     "bbox_px": [
+      50,
+      112,
+      121,
+      220
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 12.36,
+     "profundidade_mm": 1.25,
+     "bbox_px": [
+      44,
+      230,
+      153,
+      316
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.39,
+     "profundidade_mm": 1.35,
+     "bbox_px": [
+      265,
+      240,
+      314,
+      258
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.7,
+     "profundidade_mm": 1.02,
+     "bbox_px": [
+      148,
+      244,
+      215,
+      281
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.54,
+     "profundidade_mm": 0.98,
+     "bbox_px": [
+      194,
+      286,
+      256,
+      330
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P0186",
+   "scan_id": "S0008",
+   "celula": [
+    4,
+    45
+   ],
+   "t": "2026-11-08T17:28:00",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 8
+   },
+   "auto_mm2": 418.3,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.3045375347137451,
+     "media": -0.48280414938926697,
+     "p5": -1.4213500022888184,
+     "p95": -0.0846666693687439,
+     "abs_media": 0.48913145065307617
+    },
+    "iou": 0.88,
+    "missing_mm2": 48.28,
+    "excess_mm2": 0.36,
+    "d_mean": 0.42,
+    "d_p95": 1.34
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.42307084798812866,
+     "media": -0.6667653322219849,
+     "p5": -1.6065666675567627,
+     "p95": -0.0846666693687439,
+     "abs_media": 0.6672804355621338
+    },
+    "iou": 0.84,
+    "missing_mm2": 68.49,
+    "excess_mm2": 0.03,
+    "d_mean": 0.58,
+    "d_p95": 1.45
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.423,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.2436944842338562,
+    "p5": -1.1834957599639893,
+    "p95": 0.33840417861938477,
+    "abs_media": 0.5319521427154541
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.46,
+     "profundidade_mm": 1.02,
+     "bbox_px": [
+      193,
+      63,
+      214,
+      114
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 8.09,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      90,
+      121,
+      116,
+      221
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.56,
+     "profundidade_mm": 1.22,
+     "bbox_px": [
+      276,
+      169,
+      324,
+      185
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 15.13,
+     "profundidade_mm": 1.49,
+     "bbox_px": [
+      45,
+      240,
+      194,
+      339
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 12.59,
+     "profundidade_mm": 1.32,
+     "bbox_px": [
+      191,
+      263,
+      339,
+      333
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P1021",
+   "scan_id": "S0029",
+   "celula": [
+    2,
+    54
+   ],
+   "t": "2026-11-08T17:42:39",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 6
+   },
+   "auto_mm2": 378.2,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.2706708610057831,
+     "media": -0.3991582989692688,
+     "p5": -1.0826834440231323,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.4082924723625183
+    },
+    "iou": 0.9,
+    "missing_mm2": 37.92,
+    "excess_mm2": 0.47,
+    "d_mean": 0.35,
+    "d_p95": 1.1
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.4233333468437195,
+     "media": -0.6389477252960205,
+     "p5": -1.4898706674575806,
+     "p95": -0.0846666693687439,
+     "abs_media": 0.6408941149711609
+    },
+    "iou": 0.84,
+    "missing_mm2": 62.16,
+    "excess_mm2": 0.1,
+    "d_mean": 0.57,
+    "d_p95": 1.39
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.423,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.2156144082546234,
+    "p5": -1.0665373802185059,
+    "p95": 0.3386666774749756,
+    "abs_media": 0.45601725578308105
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 5.94,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      243,
+      58,
+      334,
+      169
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 3.79,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      255,
+      174,
+      309,
+      274
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 16.83,
+     "profundidade_mm": 1.22,
+     "bbox_px": [
+      46,
+      126,
+      179,
+      294
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.51,
+     "profundidade_mm": 1.19,
+     "bbox_px": [
+      261,
+      156,
+      310,
+      175
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.51,
+     "profundidade_mm": 0.98,
+     "bbox_px": [
+      223,
+      272,
+      297,
+      284
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 5.08,
+     "profundidade_mm": 1.12,
+     "bbox_px": [
+      158,
+      299,
+      221,
+      340
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P0165",
+   "scan_id": "S0007",
+   "celula": [
+    3,
+    54
+   ],
+   "t": "2026-11-08T17:43:28",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 5
+   },
+   "auto_mm2": 380.4,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.1693333387374878,
+     "media": -0.32634052634239197,
+     "p5": -1.0146876573562622,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.35116511583328247
+    },
+    "iou": 0.91,
+    "missing_mm2": 31.81,
+    "excess_mm2": 1.3,
+    "d_mean": 0.29,
+    "d_p95": 0.93
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.3045375347137451,
+     "media": -0.5590963363647461,
+     "p5": -1.3703532218933105,
+     "p95": -0.0846666693687439,
+     "abs_media": 0.5662751793861389
+    },
+    "iou": 0.85,
+    "missing_mm2": 55.08,
+    "excess_mm2": 0.37,
+    "d_mean": 0.49,
+    "d_p95": 1.27
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.305,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.25455883145332336,
+    "p5": -1.0658156871795654,
+    "p95": 0.21987086534500122,
+    "abs_media": 0.4657265841960907
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "em_falta",
+     "area_mm2": 9.96,
+     "profundidade_mm": 1.22,
+     "bbox_px": [
+      45,
+      117,
+      115,
+      220
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.33,
+     "profundidade_mm": 1.05,
+     "bbox_px": [
+      196,
+      170,
+      250,
+      183
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 18.54,
+     "profundidade_mm": 1.35,
+     "bbox_px": [
+      50,
+      239,
+      212,
+      389
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.05,
+     "profundidade_mm": 0.74,
+     "bbox_px": [
+      206,
+      309,
+      272,
+      326
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P0935",
+   "scan_id": "S0027",
+   "celula": [
+    3,
+    55
+   ],
+   "t": "2026-11-08T17:44:18",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 9
+   },
+   "auto_mm2": 424.9,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.2706708610057831,
+     "media": -0.374372273683548,
+     "p5": -1.0485543012619019,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.39671218395233154
+    },
+    "iou": 0.91,
+    "missing_mm2": 36.87,
+    "excess_mm2": 1.19,
+    "d_mean": 0.34,
+    "d_p95": 1.02
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.42307084798812866,
+     "media": -0.5981060266494751,
+     "p5": -1.420562505722046,
+     "p95": -0.0846666693687439,
+     "abs_media": 0.5996057391166687
+    },
+    "iou": 0.86,
+    "missing_mm2": 57.9,
+    "excess_mm2": 0.08,
+    "d_mean": 0.51,
+    "d_p95": 1.29
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.423,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.17503517866134644,
+    "p5": -0.9974916577339172,
+    "p95": 0.33840417861938477,
+    "abs_media": 0.4565332531929016
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 5.58,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      190,
+      44,
+      314,
+      162
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 6.27,
+     "profundidade_mm": 0.51,
+     "bbox_px": [
+      245,
+      171,
+      327,
+      319
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.11,
+     "profundidade_mm": 1.02,
+     "bbox_px": [
+      258,
+      157,
+      306,
+      169
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 21.46,
+     "profundidade_mm": 1.39,
+     "bbox_px": [
+      47,
+      187,
+      228,
+      409
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 4.35,
+     "profundidade_mm": 0.85,
+     "bbox_px": [
+      239,
+      321,
+      324,
+      340
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P0071",
+   "scan_id": "S0004",
+   "celula": [
+    42,
+    62
+   ],
+   "t": "2026-11-08T17:52:39",
+   "zona": "relva",
+   "marcas": {
+    "pincel/fundo": 7,
+    "pincel/peca": 2
+   },
+   "auto_mm2": 456.2,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.2540000081062317,
+     "media": -0.3618793189525604,
+     "p5": -0.863337516784668,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.3931172490119934
+    },
+    "iou": 0.91,
+    "missing_mm2": 37.88,
+    "excess_mm2": 1.8,
+    "d_mean": 0.33,
+    "d_p95": 0.85
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.5080000162124634,
+     "media": -0.5567435026168823,
+     "p5": -1.320117473602295,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.5831183195114136
+    },
+    "iou": 0.87,
+    "missing_mm2": 59.22,
+    "excess_mm2": 1.51,
+    "d_mean": 0.52,
+    "d_p95": 1.22
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.508,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.048743437975645065,
+    "p5": -0.8121174573898315,
+    "p95": 0.5926666855812073,
+    "abs_media": 0.45297497510910034
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "a_mais",
+     "area_mm2": 10.16,
+     "profundidade_mm": 0.71,
+     "bbox_px": [
+      232,
+      44,
+      338,
+      212
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 4.64,
+     "profundidade_mm": 0.68,
+     "bbox_px": [
+      124,
+      101,
+      230,
+      113
+     ]
+    },
+    {
+     "tipo": "a_mais",
+     "area_mm2": 7.72,
+     "profundidade_mm": 0.68,
+     "bbox_px": [
+      250,
+      222,
+      323,
+      340
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.63,
+     "profundidade_mm": 1.02,
+     "bbox_px": [
+      263,
+      206,
+      323,
+      221
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 9.73,
+     "profundidade_mm": 0.95,
+     "bbox_px": [
+      86,
+      243,
+      207,
+      373
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 3.56,
+     "profundidade_mm": 0.95,
+     "bbox_px": [
+      194,
+      380,
+      248,
+      420
+     ]
+    }
+   ]
+  },
+  {
+   "piece": "P1089",
+   "scan_id": "S0030",
+   "celula": [
+    3,
+    62
+   ],
+   "t": "2026-11-08T17:58:21",
+   "zona": "ceu",
+   "marcas": {
+    "pincel/fundo": 9
+   },
+   "auto_mm2": 388.5,
+   "zero_tracos": {
+    "desvio": {
+     "mediana": -0.18600419163703918,
+     "media": -0.48454320430755615,
+     "p5": -1.4215599298477173,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.5142876505851746
+    },
+    "iou": 0.86,
+    "missing_mm2": 53.23,
+    "excess_mm2": 1.63,
+    "d_mean": 0.46,
+    "d_p95": 1.37
+   },
+   "gravado": {
+    "desvio": {
+     "mediana": -0.23706667125225067,
+     "media": -0.5221090912818909,
+     "p5": -1.489503264427185,
+     "p95": 0.0846666693687439,
+     "abs_media": 0.5583847761154175
+    },
+    "iou": 0.85,
+    "missing_mm2": 57.22,
+    "excess_mm2": 2.08,
+    "d_mean": 0.5,
+    "d_p95": 1.39
+   },
+   "reproducao_iou": 1.0,
+   "uniforme_mm": -0.237,
+   "residuo": {
+    "mediana": 0.0,
+    "media": -0.28504234552383423,
+    "p5": -1.252436637878418,
+    "p95": 0.32173335552215576,
+    "abs_media": 0.4958012104034424
+   },
+   "correcoes_locais": [
+    {
+     "tipo": "em_falta",
+     "area_mm2": 6.28,
+     "profundidade_mm": 1.42,
+     "bbox_px": [
+      65,
+      80,
+      105,
+      143
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 13.01,
+     "profundidade_mm": 1.32,
+     "bbox_px": [
+      44,
+      163,
+      148,
+      255
+     ]
+    },
+    {
+     "tipo": "em_falta",
+     "area_mm2": 21.1,
+     "profundidade_mm": 1.52,
+     "bbox_px": [
+      89,
+      271,
+      266,
+      393
+     ]
+    }
+   ]
+  }
+ ],
+ "amostra": [
+  {
+   "piece": "P0002",
+   "zona": "ceu",
+   "celula": [
+    1,
+    6
+   ],
+   "scan_id": "S0001",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.39114296436309814,
+    "p5": -1.1853333711624146,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.39525869488716125
+   },
+   "missing_mm2": 35.4,
+   "excess_mm2": 0.2
+  },
+  {
+   "piece": "P0004",
+   "zona": "ceu",
+   "celula": [
+    1,
+    8
+   ],
+   "scan_id": "S0001",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.3776548504829407,
+    "p5": -1.2686876058578491,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.38756126165390015
+   },
+   "missing_mm2": 34.2,
+   "excess_mm2": 0.5
+  },
+  {
+   "piece": "P0008",
+   "zona": "ceu",
+   "celula": [
+    1,
+    12
+   ],
+   "scan_id": "S0001",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.3683522641658783,
+    "p5": -1.0160000324249268,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.3745703101158142
+   },
+   "missing_mm2": 32.8,
+   "excess_mm2": 0.3
+  },
+  {
+   "piece": "P0020",
+   "zona": "ceu",
+   "celula": [
+    1,
+    24
+   ],
+   "scan_id": "S0001",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.434779554605484,
+    "p5": -1.2520166635513306,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.43826937675476074
+   },
+   "missing_mm2": 37.0,
+   "excess_mm2": 0.2
+  },
+  {
+   "piece": "P0126",
+   "zona": "ceu",
+   "celula": [
+    4,
+    40
+   ],
+   "scan_id": "S0005",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.2867613136768341,
+    "p5": -0.8966792821884155,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3128315508365631
+   },
+   "missing_mm2": 26.9,
+   "excess_mm2": 1.4
+  },
+  {
+   "piece": "P0157",
+   "zona": "ceu",
+   "celula": [
+    2,
+    47
+   ],
+   "scan_id": "S0007",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.3648849427700043,
+    "p5": -1.0160000324249268,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3765814006328583
+   },
+   "missing_mm2": 34.9,
+   "excess_mm2": 0.6
+  },
+  {
+   "piece": "P0248",
+   "zona": "ceu",
+   "celula": [
+    2,
+    43
+   ],
+   "scan_id": "S0010",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.38569143414497375,
+    "p5": -0.9455035328865051,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.3905335068702698
+   },
+   "missing_mm2": 36.1,
+   "excess_mm2": 0.3
+  },
+  {
+   "piece": "P0257",
+   "zona": "ceu",
+   "celula": [
+    1,
+    60
+   ],
+   "scan_id": "S0010",
+   "desvio": {
+    "mediana": -0.3045375347137451,
+    "media": -0.4569902718067169,
+    "p5": -1.3546667098999023,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.48203033208847046
+   },
+   "missing_mm2": 41.2,
+   "excess_mm2": 1.2
+  },
+  {
+   "piece": "P0262",
+   "zona": "ceu",
+   "celula": [
+    1,
+    59
+   ],
+   "scan_id": "S0010",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.48375681042671204,
+    "p5": -1.2866708040237427,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4927479326725006
+   },
+   "missing_mm2": 42.8,
+   "excess_mm2": 0.4
+  },
+  {
+   "piece": "P0266",
+   "zona": "ceu",
+   "celula": [
+    1,
+    39
+   ],
+   "scan_id": "S0010",
+   "desvio": {
+    "mediana": -0.42307084798812866,
+    "media": -0.5153272151947021,
+    "p5": -1.1006667613983154,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.5168061256408691
+   },
+   "missing_mm2": 46.9,
+   "excess_mm2": 0.1
+  },
+  {
+   "piece": "P0275",
+   "zona": "ceu",
+   "celula": [
+    1,
+    47
+   ],
+   "scan_id": "S0010",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.3926372826099396,
+    "p5": -0.9646750092506409,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.4001796543598175
+   },
+   "missing_mm2": 34.1,
+   "excess_mm2": 0.4
+  },
+  {
+   "piece": "P0284",
+   "zona": "ceu",
+   "celula": [
+    1,
+    35
+   ],
+   "scan_id": "S0011",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.4156602621078491,
+    "p5": -1.0281094312667847,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.41765913367271423
+   },
+   "missing_mm2": 37.6,
+   "excess_mm2": 0.1
+  },
+  {
+   "piece": "P0297",
+   "zona": "ceu",
+   "celula": [
+    3,
+    31
+   ],
+   "scan_id": "S0011",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.4099699854850769,
+    "p5": -1.033786654472351,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.41491952538490295
+   },
+   "missing_mm2": 39.8,
+   "excess_mm2": 0.3
+  },
+  {
+   "piece": "P0312",
+   "zona": "ceu",
+   "celula": [
+    2,
+    25
+   ],
+   "scan_id": "S0012",
+   "desvio": {
+    "mediana": -0.3045375347137451,
+    "media": -0.40889430046081543,
+    "p5": -1.1597037315368652,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.4160531163215637
+   },
+   "missing_mm2": 39.8,
+   "excess_mm2": 0.4
+  },
+  {
+   "piece": "P0332",
+   "zona": "ceu",
+   "celula": [
+    5,
+    22
+   ],
+   "scan_id": "S0012",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.43612465262413025,
+    "p5": -1.200691819190979,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.45122697949409485
+   },
+   "missing_mm2": 43.5,
+   "excess_mm2": 0.8
+  },
+  {
+   "piece": "P0342",
+   "zona": "ceu",
+   "celula": [
+    4,
+    20
+   ],
+   "scan_id": "S0012",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.36277446150779724,
+    "p5": -1.0832083225250244,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.3703462481498718
+   },
+   "missing_mm2": 34.6,
+   "excess_mm2": 0.4
+  },
+  {
+   "piece": "P0660",
+   "zona": "ceu",
+   "celula": [
+    11,
+    2
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.3045375347137451,
+    "media": -0.4707033634185791,
+    "p5": -1.2186750173568726,
+    "p95": -0.06773746758699417,
+    "abs_media": 0.4792843461036682
+   },
+   "missing_mm2": 46.9,
+   "excess_mm2": 0.5
+  },
+  {
+   "piece": "P0721",
+   "zona": "ceu",
+   "celula": [
+    2,
+    19
+   ],
+   "scan_id": "S0022",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.375318318605423,
+    "p5": -1.0660125017166138,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.3812665045261383
+   },
+   "missing_mm2": 38.8,
+   "excess_mm2": 0.3
+  },
+  {
+   "piece": "P0737",
+   "zona": "ceu",
+   "celula": [
+    6,
+    17
+   ],
+   "scan_id": "S0022",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.4032653570175171,
+    "p5": -1.2699999809265137,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.42682546377182007
+   },
+   "missing_mm2": 41.3,
+   "excess_mm2": 1.3
+  },
+  {
+   "piece": "P0740",
+   "zona": "ceu",
+   "celula": [
+    3,
+    16
+   ],
+   "scan_id": "S0022",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.49703049659729004,
+    "p5": -1.200691819190979,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.4974150061607361
+   },
+   "missing_mm2": 52.6,
+   "excess_mm2": 0.0
+  },
+  {
+   "piece": "P0746",
+   "zona": "ceu",
+   "celula": [
+    3,
+    15
+   ],
+   "scan_id": "S0022",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.3836308717727661,
+    "p5": -1.0160000324249268,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.38819995522499084
+   },
+   "missing_mm2": 35.4,
+   "excess_mm2": 0.2
+  },
+  {
+   "piece": "P0758",
+   "zona": "ceu",
+   "celula": [
+    4,
+    13
+   ],
+   "scan_id": "S0022",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.3406352698802948,
+    "p5": -0.8966792821884155,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.34345078468322754
+   },
+   "missing_mm2": 31.4,
+   "excess_mm2": 0.2
+  },
+  {
+   "piece": "P0760",
+   "zona": "ceu",
+   "celula": [
+    6,
+    13
+   ],
+   "scan_id": "S0022",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.3708907961845398,
+    "p5": -1.0993542671203613,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3865385949611664
+   },
+   "missing_mm2": 35.7,
+   "excess_mm2": 0.8
+  },
+  {
+   "piece": "P0774",
+   "zona": "ceu",
+   "celula": [
+    7,
+    11
+   ],
+   "scan_id": "S0022",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.3866982161998749,
+    "p5": -1.217342734336853,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4095236361026764
+   },
+   "missing_mm2": 40.1,
+   "excess_mm2": 1.3
+  },
+  {
+   "piece": "P0776",
+   "zona": "ceu",
+   "celula": [
+    2,
+    10
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.4066794812679291,
+    "p5": -0.9980167746543884,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.4108489155769348
+   },
+   "missing_mm2": 40.5,
+   "excess_mm2": 0.2
+  },
+  {
+   "piece": "P0783",
+   "zona": "ceu",
+   "celula": [
+    2,
+    9
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.37583792209625244,
+    "p5": -0.9921819567680359,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.377841055393219
+   },
+   "missing_mm2": 36.0,
+   "excess_mm2": 0.1
+  },
+  {
+   "piece": "P0792",
+   "zona": "ceu",
+   "celula": [
+    4,
+    8
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.3934796154499054,
+    "p5": -1.063511848449707,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.39755821228027344
+   },
+   "missing_mm2": 38.4,
+   "excess_mm2": 0.2
+  },
+  {
+   "piece": "P0795",
+   "zona": "ceu",
+   "celula": [
+    7,
+    8
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.3646317720413208,
+    "p5": -1.0485543012619019,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3784483075141907
+   },
+   "missing_mm2": 34.6,
+   "excess_mm2": 0.7
+  },
+  {
+   "piece": "P0807",
+   "zona": "ceu",
+   "celula": [
+    7,
+    2
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.3753446936607361,
+    "p5": -1.2345584630966187,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3972198963165283
+   },
+   "missing_mm2": 37.8,
+   "excess_mm2": 1.2
+  },
+  {
+   "piece": "P0809",
+   "zona": "ceu",
+   "celula": [
+    2,
+    5
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.41789892315864563,
+    "p5": -1.1006667613983154,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.42191746830940247
+   },
+   "missing_mm2": 40.3,
+   "excess_mm2": 0.2
+  },
+  {
+   "piece": "P0813",
+   "zona": "ceu",
+   "celula": [
+    6,
+    5
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.3142754137516022,
+    "p5": -0.9980167746543884,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.332019180059433
+   },
+   "missing_mm2": 27.5,
+   "excess_mm2": 0.9
+  },
+  {
+   "piece": "P0815",
+   "zona": "ceu",
+   "celula": [
+    2,
+    4
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.40305134654045105,
+    "p5": -1.0763299465179443,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.40630513429641724
+   },
+   "missing_mm2": 38.9,
+   "excess_mm2": 0.2
+  },
+  {
+   "piece": "P0833",
+   "zona": "ceu",
+   "celula": [
+    8,
+    2
+   ],
+   "scan_id": "S0023",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.38164418935775757,
+    "p5": -1.1340082883834839,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.40378066897392273
+   },
+   "missing_mm2": 37.7,
+   "excess_mm2": 1.2
+  },
+  {
+   "piece": "P0912",
+   "zona": "ceu",
+   "celula": [
+    3,
+    56
+   ],
+   "scan_id": "S0027",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.3439755141735077,
+    "p5": -0.9330004453659058,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.355730265378952
+   },
+   "missing_mm2": 32.9,
+   "excess_mm2": 0.6
+  },
+  {
+   "piece": "P0197",
+   "zona": "montanha",
+   "celula": [
+    21,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.37281233072280884,
+    "p5": -1.0273021459579468,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3910950720310211
+   },
+   "missing_mm2": 33.9,
+   "excess_mm2": 0.9
+  },
+  {
+   "piece": "P0201",
+   "zona": "montanha",
+   "celula": [
+    15,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.42003950476646423,
+    "p5": -1.2345584630966187,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.43112149834632874
+   },
+   "missing_mm2": 37.2,
+   "excess_mm2": 0.5
+  },
+  {
+   "piece": "P0202",
+   "zona": "montanha",
+   "celula": [
+    22,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.34424909949302673,
+    "p5": -1.0160000324249268,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3693180978298187
+   },
+   "missing_mm2": 31.1,
+   "excess_mm2": 1.2
+  },
+  {
+   "piece": "P0206",
+   "zona": "montanha",
+   "celula": [
+    16,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.2623354196548462,
+    "media": -0.4011271893978119,
+    "p5": -1.1853333711624146,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.42141667008399963
+   },
+   "missing_mm2": 36.7,
+   "excess_mm2": 1.0
+  },
+  {
+   "piece": "P0207",
+   "zona": "montanha",
+   "celula": [
+    23,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.3630778193473816,
+    "p5": -1.1670875549316406,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.38959741592407227
+   },
+   "missing_mm2": 33.5,
+   "excess_mm2": 1.3
+  },
+  {
+   "piece": "P0211",
+   "zona": "montanha",
+   "celula": [
+    17,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.38595229387283325,
+    "p5": -1.2699211835861206,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.40014487504959106
+   },
+   "missing_mm2": 34.4,
+   "excess_mm2": 0.7
+  },
+  {
+   "piece": "P0212",
+   "zona": "montanha",
+   "celula": [
+    24,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.35441622138023376,
+    "p5": -1.0160000324249268,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3690580725669861
+   },
+   "missing_mm2": 31.5,
+   "excess_mm2": 0.7
+  },
+  {
+   "piece": "P0216",
+   "zona": "montanha",
+   "celula": [
+    18,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.38852033019065857,
+    "p5": -1.150679111480713,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.41660934686660767
+   },
+   "missing_mm2": 33.7,
+   "excess_mm2": 1.3
+  },
+  {
+   "piece": "P0217",
+   "zona": "montanha",
+   "celula": [
+    25,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.3437725603580475,
+    "p5": -1.0160000324249268,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3667340576648712
+   },
+   "missing_mm2": 30.0,
+   "excess_mm2": 1.1
+  },
+  {
+   "piece": "P0221",
+   "zona": "montanha",
+   "celula": [
+    19,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.3392937481403351,
+    "p5": -1.0146876573562622,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3614453375339508
+   },
+   "missing_mm2": 30.0,
+   "excess_mm2": 1.1
+  },
+  {
+   "piece": "P0222",
+   "zona": "montanha",
+   "celula": [
+    26,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.35354724526405334,
+    "p5": -0.9810833930969238,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3781665563583374
+   },
+   "missing_mm2": 32.2,
+   "excess_mm2": 1.2
+  },
+  {
+   "piece": "P0226",
+   "zona": "montanha",
+   "celula": [
+    20,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.2623354196548462,
+    "media": -0.3842680752277374,
+    "p5": -1.200691819190979,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.40528568625450134
+   },
+   "missing_mm2": 34.1,
+   "excess_mm2": 1.0
+  },
+  {
+   "piece": "P0227",
+   "zona": "montanha",
+   "celula": [
+    27,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.3078443109989166,
+    "p5": -0.8908444046974182,
+    "p95": 0.11853333562612534,
+    "abs_media": 0.3428846001625061
+   },
+   "missing_mm2": 27.5,
+   "excess_mm2": 2.3
+  },
+  {
+   "piece": "P0630",
+   "zona": "montanha",
+   "celula": [
+    20,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.43110916018486023,
+    "p5": -1.3700251579284668,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.46142879128456116
+   },
+   "missing_mm2": 39.6,
+   "excess_mm2": 1.4
+  },
+  {
+   "piece": "P0631",
+   "zona": "montanha",
+   "celula": [
+    27,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.39145058393478394,
+    "p5": -1.0826834440231323,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4154626727104187
+   },
+   "missing_mm2": 36.1,
+   "excess_mm2": 1.2
+  },
+  {
+   "piece": "P0636",
+   "zona": "montanha",
+   "celula": [
+    21,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.4573405385017395,
+    "p5": -1.1853333711624146,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4703044295310974
+   },
+   "missing_mm2": 41.4,
+   "excess_mm2": 0.6
+  },
+  {
+   "piece": "P0641",
+   "zona": "montanha",
+   "celula": [
+    15,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.45847445726394653,
+    "p5": -1.3866959810256958,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.4669041335582733
+   },
+   "missing_mm2": 42.5,
+   "excess_mm2": 0.4
+  },
+  {
+   "piece": "P0642",
+   "zona": "montanha",
+   "celula": [
+    22,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.4398145377635956,
+    "p5": -1.2699999809265137,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4609207212924957
+   },
+   "missing_mm2": 39.5,
+   "excess_mm2": 1.0
+  },
+  {
+   "piece": "P0647",
+   "zona": "montanha",
+   "celula": [
+    16,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.42307084798812866,
+    "media": -0.5528063774108887,
+    "p5": -1.4380208253860474,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5638306140899658
+   },
+   "missing_mm2": 52.1,
+   "excess_mm2": 0.5
+  },
+  {
+   "piece": "P0648",
+   "zona": "montanha",
+   "celula": [
+    23,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.3602847158908844,
+    "p5": -1.0526758432388306,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.4119398891925812
+   },
+   "missing_mm2": 33.8,
+   "excess_mm2": 2.7
+  },
+  {
+   "piece": "P0653",
+   "zona": "montanha",
+   "celula": [
+    17,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.4090237021446228,
+    "p5": -1.1006667613983154,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.43234875798225403
+   },
+   "missing_mm2": 36.1,
+   "excess_mm2": 1.1
+  },
+  {
+   "piece": "P0654",
+   "zona": "montanha",
+   "celula": [
+    24,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.31165921688079834,
+    "p5": -1.218150019645691,
+    "p95": 0.2706708610057831,
+    "abs_media": 0.4675883948802948
+   },
+   "missing_mm2": 36.8,
+   "excess_mm2": 8.2
+  },
+  {
+   "piece": "P0661",
+   "zona": "montanha",
+   "celula": [
+    19,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.355337530374527,
+    "media": -0.4399734437465668,
+    "p5": -1.1670875549316406,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4515255391597748
+   },
+   "missing_mm2": 39.2,
+   "excess_mm2": 0.6
+  },
+  {
+   "piece": "P0662",
+   "zona": "montanha",
+   "celula": [
+    18,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.4106200337409973,
+    "p5": -1.1853333711624146,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4213294982910156
+   },
+   "missing_mm2": 34.4,
+   "excess_mm2": 0.5
+  },
+  {
+   "piece": "P0663",
+   "zona": "montanha",
+   "celula": [
+    25,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.4248071610927582,
+    "p5": -1.3200124502182007,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.477026104927063
+   },
+   "missing_mm2": 42.3,
+   "excess_mm2": 2.7
+  },
+  {
+   "piece": "P0664",
+   "zona": "montanha",
+   "celula": [
+    26,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.3913365602493286,
+    "p5": -1.1006667613983154,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.42854222655296326
+   },
+   "missing_mm2": 36.5,
+   "excess_mm2": 1.9
+  },
+  {
+   "piece": "P0839",
+   "zona": "montanha",
+   "celula": [
+    15,
+    61
+   ],
+   "scan_id": "S0024",
+   "desvio": {
+    "mediana": -0.11853333562612534,
+    "media": -0.2650316655635834,
+    "p5": -0.9313333630561829,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.2937946319580078
+   },
+   "missing_mm2": 24.5,
+   "excess_mm2": 1.5
+  },
+  {
+   "piece": "P0847",
+   "zona": "montanha",
+   "celula": [
+    15,
+    59
+   ],
+   "scan_id": "S0024",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.2855333685874939,
+    "p5": -0.8330479860305786,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.31633299589157104
+   },
+   "missing_mm2": 26.3,
+   "excess_mm2": 1.7
+  },
+  {
+   "piece": "P0848",
+   "zona": "montanha",
+   "celula": [
+    15,
+    60
+   ],
+   "scan_id": "S0024",
+   "desvio": {
+    "mediana": -0.11853333562612534,
+    "media": -0.2713986039161682,
+    "p5": -1.1006667613983154,
+    "p95": 0.2540000081062317,
+    "abs_media": 0.34739944338798523
+   },
+   "missing_mm2": 31.4,
+   "excess_mm2": 4.4
+  },
+  {
+   "piece": "P0024",
+   "zona": "relva",
+   "celula": [
+    47,
+    59
+   ],
+   "scan_id": "S0002",
+   "desvio": {
+    "mediana": -0.42307084798812866,
+    "media": -0.5078985691070557,
+    "p5": -1.5240000486373901,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.5565468072891235
+   },
+   "missing_mm2": 50.5,
+   "excess_mm2": 2.6
+  },
+  {
+   "piece": "P0031",
+   "zona": "relva",
+   "celula": [
+    47,
+    46
+   ],
+   "scan_id": "S0002",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.44763264060020447,
+    "p5": -1.1006667613983154,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.4550682604312897
+   },
+   "missing_mm2": 40.5,
+   "excess_mm2": 0.4
+  },
+  {
+   "piece": "P0033",
+   "zona": "relva",
+   "celula": [
+    47,
+    48
+   ],
+   "scan_id": "S0002",
+   "desvio": {
+    "mediana": -0.47413334250450134,
+    "media": -0.5369412899017334,
+    "p5": -1.4795862436294556,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5627368092536926
+   },
+   "missing_mm2": 50.7,
+   "excess_mm2": 1.3
+  },
+  {
+   "piece": "P0034",
+   "zona": "relva",
+   "celula": [
+    47,
+    49
+   ],
+   "scan_id": "S0002",
+   "desvio": {
+    "mediana": -0.3045375347137451,
+    "media": -0.457476407289505,
+    "p5": -1.3878376483917236,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4897887706756592
+   },
+   "missing_mm2": 42.9,
+   "excess_mm2": 1.6
+  },
+  {
+   "piece": "P0039",
+   "zona": "relva",
+   "celula": [
+    47,
+    44
+   ],
+   "scan_id": "S0002",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.40834465622901917,
+    "p5": -1.3546667098999023,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4355766177177429
+   },
+   "missing_mm2": 39.0,
+   "excess_mm2": 1.4
+  },
+  {
+   "piece": "P0050",
+   "zona": "relva",
+   "celula": [
+    44,
+    4
+   ],
+   "scan_id": "S0003",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.40358516573905945,
+    "p5": -1.3546667098999023,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.45712515711784363
+   },
+   "missing_mm2": 43.6,
+   "excess_mm2": 3.0
+  },
+  {
+   "piece": "P0054",
+   "zona": "relva",
+   "celula": [
+    43,
+    3
+   ],
+   "scan_id": "S0003",
+   "desvio": {
+    "mediana": -0.355337530374527,
+    "media": -0.4592832326889038,
+    "p5": -1.1340739727020264,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.479772686958313
+   },
+   "missing_mm2": 47.5,
+   "excess_mm2": 1.1
+  },
+  {
+   "piece": "P0229",
+   "zona": "relva",
+   "celula": [
+    41,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.39300909638404846,
+    "p5": -1.2353458404541016,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.41017353534698486
+   },
+   "missing_mm2": 32.8,
+   "excess_mm2": 0.8
+  },
+  {
+   "piece": "P0386",
+   "zona": "relva",
+   "celula": [
+    43,
+    57
+   ],
+   "scan_id": "S0013",
+   "desvio": {
+    "mediana": -0.4233333468437195,
+    "media": -0.5640144944190979,
+    "p5": -1.4213500022888184,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5780540108680725
+   },
+   "missing_mm2": 58.6,
+   "excess_mm2": 0.8
+  },
+  {
+   "piece": "P0389",
+   "zona": "relva",
+   "celula": [
+    46,
+    57
+   ],
+   "scan_id": "S0013",
+   "desvio": {
+    "mediana": -0.4233333468437195,
+    "media": -0.5090152025222778,
+    "p5": -1.397695779800415,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5337157249450684
+   },
+   "missing_mm2": 52.8,
+   "excess_mm2": 1.4
+  },
+  {
+   "piece": "P0407",
+   "zona": "relva",
+   "celula": [
+    43,
+    48
+   ],
+   "scan_id": "S0014",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.35594379901885986,
+    "p5": -1.2258225679397583,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.40567678213119507
+   },
+   "missing_mm2": 38.1,
+   "excess_mm2": 2.8
+  },
+  {
+   "piece": "P0408",
+   "zona": "relva",
+   "celula": [
+    46,
+    55
+   ],
+   "scan_id": "S0014",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.37509530782699585,
+    "p5": -1.3539448976516724,
+    "p95": 0.2540000081062317,
+    "abs_media": 0.4960787892341614
+   },
+   "missing_mm2": 45.9,
+   "excess_mm2": 6.9
+  },
+  {
+   "piece": "P0430",
+   "zona": "relva",
+   "celula": [
+    43,
+    52
+   ],
+   "scan_id": "S0014",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.3981863856315613,
+    "p5": -1.2639225721359253,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.46026235818862915
+   },
+   "missing_mm2": 42.5,
+   "excess_mm2": 3.6
+  },
+  {
+   "piece": "P0431",
+   "zona": "relva",
+   "celula": [
+    42,
+    52
+   ],
+   "scan_id": "S0014",
+   "desvio": {
+    "mediana": -0.3045375347137451,
+    "media": -0.4174000024795532,
+    "p5": -1.3713375329971313,
+    "p95": 0.11853333562612534,
+    "abs_media": 0.4686569273471832
+   },
+   "missing_mm2": 45.9,
+   "excess_mm2": 2.7
+  },
+  {
+   "piece": "P0459",
+   "zona": "relva",
+   "celula": [
+    46,
+    42
+   ],
+   "scan_id": "S0015",
+   "desvio": {
+    "mediana": -0.4233333468437195,
+    "media": -0.5721595287322998,
+    "p5": -1.3546667098999023,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5812453031539917
+   },
+   "missing_mm2": 58.7,
+   "excess_mm2": 0.5
+  },
+  {
+   "piece": "P0469",
+   "zona": "relva",
+   "celula": [
+    46,
+    44
+   ],
+   "scan_id": "S0015",
+   "desvio": {
+    "mediana": -0.355337530374527,
+    "media": -0.5282393097877502,
+    "p5": -1.3020292520523071,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.5383778810501099
+   },
+   "missing_mm2": 55.5,
+   "excess_mm2": 0.6
+  },
+  {
+   "piece": "P0470",
+   "zona": "relva",
+   "celula": [
+    45,
+    44
+   ],
+   "scan_id": "S0015",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.4135150611400604,
+    "p5": -1.1853333711624146,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.4576171338558197
+   },
+   "missing_mm2": 44.2,
+   "excess_mm2": 2.5
+  },
+  {
+   "piece": "P0475",
+   "zona": "relva",
+   "celula": [
+    44,
+    45
+   ],
+   "scan_id": "S0015",
+   "desvio": {
+    "mediana": -0.4233333468437195,
+    "media": -0.5031059980392456,
+    "p5": -1.2528040409088135,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5254190564155579
+   },
+   "missing_mm2": 51.7,
+   "excess_mm2": 1.3
+  },
+  {
+   "piece": "P0480",
+   "zona": "relva",
+   "celula": [
+    47,
+    29
+   ],
+   "scan_id": "S0016",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.4381631314754486,
+    "p5": -1.1006667613983154,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.4457739591598511
+   },
+   "missing_mm2": 38.5,
+   "excess_mm2": 0.4
+  },
+  {
+   "piece": "P0481",
+   "zona": "relva",
+   "celula": [
+    46,
+    29
+   ],
+   "scan_id": "S0016",
+   "desvio": {
+    "mediana": -0.2623354196548462,
+    "media": -0.41560882329940796,
+    "p5": -1.2157281637191772,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.46089380979537964
+   },
+   "missing_mm2": 46.0,
+   "excess_mm2": 2.7
+  },
+  {
+   "piece": "P0484",
+   "zona": "relva",
+   "celula": [
+    47,
+    30
+   ],
+   "scan_id": "S0016",
+   "desvio": {
+    "mediana": -0.355337530374527,
+    "media": -0.41884279251098633,
+    "p5": -1.1006667613983154,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.44663774967193604
+   },
+   "missing_mm2": 39.8,
+   "excess_mm2": 1.4
+  },
+  {
+   "piece": "P0492",
+   "zona": "relva",
+   "celula": [
+    47,
+    32
+   ],
+   "scan_id": "S0016",
+   "desvio": {
+    "mediana": -0.4233333468437195,
+    "media": -0.5251522660255432,
+    "p5": -1.1853333711624146,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5436373949050903
+   },
+   "missing_mm2": 49.0,
+   "excess_mm2": 1.0
+  },
+  {
+   "piece": "P0505",
+   "zona": "relva",
+   "celula": [
+    44,
+    34
+   ],
+   "scan_id": "S0016",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.3762303590774536,
+    "p5": -1.2856208086013794,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.43512919545173645
+   },
+   "missing_mm2": 42.9,
+   "excess_mm2": 3.3
+  },
+  {
+   "piece": "P0509",
+   "zona": "relva",
+   "celula": [
+    45,
+    35
+   ],
+   "scan_id": "S0016",
+   "desvio": {
+    "mediana": -0.4233333468437195,
+    "media": -0.5305379629135132,
+    "p5": -1.3600420951843262,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.541144609451294
+   },
+   "missing_mm2": 55.0,
+   "excess_mm2": 0.6
+  },
+  {
+   "piece": "P0510",
+   "zona": "relva",
+   "celula": [
+    44,
+    35
+   ],
+   "scan_id": "S0016",
+   "desvio": {
+    "mediana": -0.14393334090709686,
+    "media": -0.2753176689147949,
+    "p5": -0.9646750092506409,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.360027939081192
+   },
+   "missing_mm2": 31.8,
+   "excess_mm2": 4.9
+  },
+  {
+   "piece": "P0524",
+   "zona": "relva",
+   "celula": [
+    47,
+    22
+   ],
+   "scan_id": "S0017",
+   "desvio": {
+    "mediana": -0.5413417220115662,
+    "media": -0.5135903358459473,
+    "p5": -1.1006667613983154,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5244745016098022
+   },
+   "missing_mm2": 47.2,
+   "excess_mm2": 0.5
+  },
+  {
+   "piece": "P0527",
+   "zona": "relva",
+   "celula": [
+    44,
+    22
+   ],
+   "scan_id": "S0017",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.40232163667678833,
+    "p5": -1.1853333711624146,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4389864206314087
+   },
+   "missing_mm2": 41.2,
+   "excess_mm2": 2.1
+  },
+  {
+   "piece": "P0530",
+   "zona": "relva",
+   "celula": [
+    45,
+    23
+   ],
+   "scan_id": "S0017",
+   "desvio": {
+    "mediana": -0.42307084798812866,
+    "media": -0.4807201623916626,
+    "p5": -1.2853584289550781,
+    "p95": 0.11853333562612534,
+    "abs_media": 0.5216189026832581
+   },
+   "missing_mm2": 50.8,
+   "excess_mm2": 2.3
+  },
+  {
+   "piece": "P0536",
+   "zona": "relva",
+   "celula": [
+    47,
+    25
+   ],
+   "scan_id": "S0017",
+   "desvio": {
+    "mediana": -0.5080000162124634,
+    "media": -0.5086459517478943,
+    "p5": -1.1853333711624146,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5234318375587463
+   },
+   "missing_mm2": 46.3,
+   "excess_mm2": 0.7
+  },
+  {
+   "piece": "P0539",
+   "zona": "relva",
+   "celula": [
+    44,
+    25
+   ],
+   "scan_id": "S0017",
+   "desvio": {
+    "mediana": -0.32160210609436035,
+    "media": -0.43701738119125366,
+    "p5": -1.2520166635513306,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4675377607345581
+   },
+   "missing_mm2": 45.2,
+   "excess_mm2": 1.7
+  },
+  {
+   "piece": "P0548",
+   "zona": "relva",
+   "celula": [
+    46,
+    28
+   ],
+   "scan_id": "S0017",
+   "desvio": {
+    "mediana": -0.4233333468437195,
+    "media": -0.5106974244117737,
+    "p5": -1.2853584289550781,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5243427157402039
+   },
+   "missing_mm2": 50.9,
+   "excess_mm2": 0.7
+  },
+  {
+   "piece": "P0549",
+   "zona": "relva",
+   "celula": [
+    45,
+    28
+   ],
+   "scan_id": "S0017",
+   "desvio": {
+    "mediana": -0.355337530374527,
+    "media": -0.48416849970817566,
+    "p5": -1.2866708040237427,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5185968279838562
+   },
+   "missing_mm2": 51.1,
+   "excess_mm2": 2.0
+  },
+  {
+   "piece": "P0553",
+   "zona": "relva",
+   "celula": [
+    45,
+    11
+   ],
+   "scan_id": "S0018",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.44534534215927124,
+    "p5": -1.2855290174484253,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.48221680521965027
+   },
+   "missing_mm2": 46.3,
+   "excess_mm2": 2.0
+  },
+  {
+   "piece": "P0556",
+   "zona": "relva",
+   "celula": [
+    46,
+    12
+   ],
+   "scan_id": "S0018",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.3106961250305176,
+    "p5": -0.9396687746047974,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.36648619174957275
+   },
+   "missing_mm2": 32.0,
+   "excess_mm2": 3.9
+  },
+  {
+   "piece": "P0561",
+   "zona": "relva",
+   "celula": [
+    45,
+    13
+   ],
+   "scan_id": "S0018",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.26612862944602966,
+    "p5": -0.9810833930969238,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.3460651636123657
+   },
+   "missing_mm2": 28.7,
+   "excess_mm2": 4.4
+  },
+  {
+   "piece": "P0565",
+   "zona": "relva",
+   "celula": [
+    46,
+    14
+   ],
+   "scan_id": "S0018",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.34829047322273254,
+    "p5": -1.0826834440231323,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.4030439555644989
+   },
+   "missing_mm2": 37.4,
+   "excess_mm2": 3.1
+  },
+  {
+   "piece": "P0577",
+   "zona": "relva",
+   "celula": [
+    44,
+    16
+   ],
+   "scan_id": "S0018",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.34873950481414795,
+    "p5": -1.218150019645691,
+    "p95": 0.33442920446395874,
+    "abs_media": 0.4382672905921936
+   },
+   "missing_mm2": 41.8,
+   "excess_mm2": 5.2
+  },
+  {
+   "piece": "P0617",
+   "zona": "relva",
+   "celula": [
+    47,
+    8
+   ],
+   "scan_id": "S0019",
+   "desvio": {
+    "mediana": -0.4400041997432709,
+    "media": -0.45980724692344666,
+    "p5": -1.0160000324249268,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.47867241501808167
+   },
+   "missing_mm2": 42.4,
+   "excess_mm2": 1.0
+  },
+  {
+   "piece": "P0626",
+   "zona": "relva",
+   "celula": [
+    46,
+    10
+   ],
+   "scan_id": "S0019",
+   "desvio": {
+    "mediana": -0.4233333468437195,
+    "media": -0.4878493845462799,
+    "p5": -1.3366832733154297,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5172648429870605
+   },
+   "missing_mm2": 50.8,
+   "excess_mm2": 1.7
+  },
+  {
+   "piece": "P0639",
+   "zona": "relva",
+   "celula": [
+    42,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.41404587030410767,
+    "p5": -1.1161563396453857,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4380509555339813
+   },
+   "missing_mm2": 35.3,
+   "excess_mm2": 1.1
+  },
+  {
+   "piece": "P0198",
+   "zona": "vale",
+   "celula": [
+    28,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.36529508233070374,
+    "p5": -1.1907087564468384,
+    "p95": 0.18600419163703918,
+    "abs_media": 0.4631018340587616
+   },
+   "missing_mm2": 37.2,
+   "excess_mm2": 5.0
+  },
+  {
+   "piece": "P0199",
+   "zona": "vale",
+   "celula": [
+    35,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.37751612067222595,
+    "p5": -1.2686876058578491,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.4686134159564972
+   },
+   "missing_mm2": 38.3,
+   "excess_mm2": 4.8
+  },
+  {
+   "piece": "P0203",
+   "zona": "vale",
+   "celula": [
+    29,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.4191261827945709,
+    "p5": -1.18402099609375,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4403294324874878
+   },
+   "missing_mm2": 38.9,
+   "excess_mm2": 1.0
+  },
+  {
+   "piece": "P0204",
+   "zona": "vale",
+   "celula": [
+    36,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.23706667125225067,
+    "media": -0.417372465133667,
+    "p5": -1.2699999809265137,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.4520454704761505
+   },
+   "missing_mm2": 39.4,
+   "excess_mm2": 1.7
+  },
+  {
+   "piece": "P0208",
+   "zona": "vale",
+   "celula": [
+    30,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.38113075494766235,
+    "p5": -1.218464970588684,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.39627593755722046
+   },
+   "missing_mm2": 32.3,
+   "excess_mm2": 0.7
+  },
+  {
+   "piece": "P0209",
+   "zona": "vale",
+   "celula": [
+    37,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.34226465225219727,
+    "p5": -1.1342707872390747,
+    "p95": 0.11853333562612534,
+    "abs_media": 0.39864593744277954
+   },
+   "missing_mm2": 31.7,
+   "excess_mm2": 2.8
+  },
+  {
+   "piece": "P0213",
+   "zona": "vale",
+   "celula": [
+    31,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.41026028990745544,
+    "p5": -1.2699999809265137,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.44339948892593384
+   },
+   "missing_mm2": 38.1,
+   "excess_mm2": 1.6
+  },
+  {
+   "piece": "P0214",
+   "zona": "vale",
+   "celula": [
+    38,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.3792882263660431,
+    "p5": -1.0501751899719238,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.38870933651924133
+   },
+   "missing_mm2": 32.0,
+   "excess_mm2": 0.4
+  },
+  {
+   "piece": "P0218",
+   "zona": "vale",
+   "celula": [
+    32,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.32423195242881775,
+    "p5": -1.118170976638794,
+    "p95": 0.27236172556877136,
+    "abs_media": 0.42413976788520813
+   },
+   "missing_mm2": 33.9,
+   "excess_mm2": 5.5
+  },
+  {
+   "piece": "P0219",
+   "zona": "vale",
+   "celula": [
+    39,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.3966359496116638,
+    "p5": -1.1006667613983154,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.41098880767822266
+   },
+   "missing_mm2": 34.0,
+   "excess_mm2": 0.7
+  },
+  {
+   "piece": "P0223",
+   "zona": "vale",
+   "celula": [
+    33,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.11853333562612534,
+    "media": -0.2764860987663269,
+    "p5": -1.1853333711624146,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.37603676319122314
+   },
+   "missing_mm2": 31.1,
+   "excess_mm2": 5.4
+  },
+  {
+   "piece": "P0224",
+   "zona": "vale",
+   "celula": [
+    40,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.37852489948272705,
+    "p5": -1.1006667613983154,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.3972730338573456
+   },
+   "missing_mm2": 32.8,
+   "excess_mm2": 0.9
+  },
+  {
+   "piece": "P0228",
+   "zona": "vale",
+   "celula": [
+    34,
+    64
+   ],
+   "scan_id": "S0009",
+   "desvio": {
+    "mediana": -0.0846666693687439,
+    "media": -0.25594645738601685,
+    "p5": -1.3004933595657349,
+    "p95": 0.18600419163703918,
+    "abs_media": 0.3896254599094391
+   },
+   "missing_mm2": 28.9,
+   "excess_mm2": 6.7
+  },
+  {
+   "piece": "P0632",
+   "zona": "vale",
+   "celula": [
+    34,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.0846666693687439,
+    "media": -0.32082757353782654,
+    "p5": -1.200691819190979,
+    "p95": 0.18600419163703918,
+    "abs_media": 0.43404337763786316
+   },
+   "missing_mm2": 35.4,
+   "excess_mm2": 5.8
+  },
+  {
+   "piece": "P0637",
+   "zona": "vale",
+   "celula": [
+    28,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.0846666693687439,
+    "media": -0.33869436383247375,
+    "p5": -1.200691819190979,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.38826891779899597
+   },
+   "missing_mm2": 33.7,
+   "excess_mm2": 2.4
+  },
+  {
+   "piece": "P0638",
+   "zona": "vale",
+   "celula": [
+    35,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.1693333387374878,
+    "media": -0.3851867914199829,
+    "p5": -1.2020041942596436,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.44507941603660583
+   },
+   "missing_mm2": 37.0,
+   "excess_mm2": 3.1
+  },
+  {
+   "piece": "P0643",
+   "zona": "vale",
+   "celula": [
+    29,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.3386666774749756,
+    "media": -0.5370280742645264,
+    "p5": -1.439333438873291,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.5506888628005981
+   },
+   "missing_mm2": 49.1,
+   "excess_mm2": 0.7
+  },
+  {
+   "piece": "P0644",
+   "zona": "vale",
+   "celula": [
+    36,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.24553334712982178,
+    "media": -0.42146390676498413,
+    "p5": -1.3713375329971313,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.4756505787372589
+   },
+   "missing_mm2": 39.0,
+   "excess_mm2": 2.6
+  },
+  {
+   "piece": "P0649",
+   "zona": "vale",
+   "celula": [
+    30,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.4293752908706665,
+    "p5": -1.3366832733154297,
+    "p95": -0.0846666693687439,
+    "abs_media": 0.4351143538951874
+   },
+   "missing_mm2": 37.4,
+   "excess_mm2": 0.3
+  },
+  {
+   "piece": "P0650",
+   "zona": "vale",
+   "celula": [
+    37,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.33558472990989685,
+    "p5": -1.193780541419983,
+    "p95": 0.18600419163703918,
+    "abs_media": 0.4449387192726135
+   },
+   "missing_mm2": 34.8,
+   "excess_mm2": 5.5
+  },
+  {
+   "piece": "P0655",
+   "zona": "vale",
+   "celula": [
+    31,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2540000081062317,
+    "media": -0.41816025972366333,
+    "p5": -1.3546667098999023,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.44135522842407227
+   },
+   "missing_mm2": 40.1,
+   "excess_mm2": 1.2
+  },
+  {
+   "piece": "P0656",
+   "zona": "vale",
+   "celula": [
+    38,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.3045375347137451,
+    "media": -0.39607787132263184,
+    "p5": -1.3116769790649414,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.48222818970680237
+   },
+   "missing_mm2": 41.2,
+   "excess_mm2": 4.5
+  },
+  {
+   "piece": "P0665",
+   "zona": "vale",
+   "celula": [
+    33,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.18600419163703918,
+    "media": -0.3136501908302307,
+    "p5": -1.1006667613983154,
+    "p95": 0.18600419163703918,
+    "abs_media": 0.4077325165271759
+   },
+   "missing_mm2": 33.6,
+   "excess_mm2": 4.8
+  },
+  {
+   "piece": "P0666",
+   "zona": "vale",
+   "celula": [
+    32,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2623354196548462,
+    "media": -0.433854877948761,
+    "p5": -1.2186750173568726,
+    "p95": 0.1693333387374878,
+    "abs_media": 0.47824838757514954
+   },
+   "missing_mm2": 42.7,
+   "excess_mm2": 2.3
+  },
+  {
+   "piece": "P0667",
+   "zona": "vale",
+   "celula": [
+    39,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.2706708610057831,
+    "media": -0.39709827303886414,
+    "p5": -1.2353458404541016,
+    "p95": 0.0846666693687439,
+    "abs_media": 0.43645039200782776
+   },
+   "missing_mm2": 36.9,
+   "excess_mm2": 1.9
+  },
+  {
+   "piece": "P0668",
+   "zona": "vale",
+   "celula": [
+    40,
+    1
+   ],
+   "scan_id": "S0020",
+   "desvio": {
+    "mediana": -0.3045375347137451,
+    "media": -0.43777933716773987,
+    "p5": -1.2866708040237427,
+    "p95": 0.11853333562612534,
+    "abs_media": 0.4741232097148895
+   },
+   "missing_mm2": 40.0,
+   "excess_mm2": 1.9
+  }
+ ],
+ "gt": [
+  {
+   "piece": "P0651",
+   "celula": [
+    44,
+    1
+   ],
+   "indice_vs_gt": {
+    "iou": 0.87,
+    "missing_mm2": 6.82,
+    "excess_mm2": 51.0,
+    "d_mean": 0.56,
+    "d_p95": 1.29,
+    "desvio": {
+     "mediana": 0.355337530374527,
+     "media": 0.36870041489601135,
+     "p5": -0.355337530374527,
+     "p95": 1.2436811923980713,
+     "abs_media": 0.5652679800987244
+    }
+   },
+   "solver0_vs_gt": {
+    "iou": 0.94,
+    "missing_mm2": 11.47,
+    "excess_mm2": 12.4,
+    "d_mean": 0.23,
+    "d_p95": 0.76,
+    "desvio": {
+     "mediana": -0.0846666693687439,
+     "media": -0.050850410014390945,
+     "p5": -0.5080000162124634,
+     "p95": 0.6940041780471802,
+     "abs_media": 0.26775312423706055
+    }
+   },
+   "solver0_vs_indice": {
+    "iou": 0.88,
+    "missing_mm2": 48.05,
+    "excess_mm2": 4.8,
+    "d_mean": 0.51,
+    "d_p95": 1.39,
+    "desvio": {
+     "mediana": -0.4905417263507843,
+     "media": -0.4726680517196655,
+     "p5": -1.439333438873291,
+     "p95": 0.1693333387374878,
+     "abs_media": 0.560092031955719
+    }
+   }
+  },
+  {
+   "piece": "P0657",
+   "celula": [
+    45,
+    1
+   ],
+   "indice_vs_gt": {
+    "iou": 0.82,
+    "missing_mm2": 1.16,
+    "excess_mm2": 59.84,
+    "d_mean": 0.61,
+    "d_p95": 1.42,
+    "desvio": {
+     "mediana": 0.541604220867157,
+     "media": 0.571510374546051,
+     "p5": -0.1693333387374878,
+     "p95": 1.421350121498108,
+     "abs_media": 0.6229971051216125
+    }
+   },
+   "solver0_vs_gt": {
+    "iou": 0.94,
+    "missing_mm2": 2.2,
+    "excess_mm2": 15.48,
+    "d_mean": 0.18,
+    "d_p95": 0.51,
+    "desvio": {
+     "mediana": 0.11853333562612534,
+     "media": 0.11172963678836823,
+     "p5": -0.23706667125225067,
+     "p95": 0.5080000162124634,
+     "abs_media": 0.19927632808685303
+    }
+   },
+   "solver0_vs_indice": {
+    "iou": 0.85,
+    "missing_mm2": 49.71,
+    "excess_mm2": 4.32,
+    "d_mean": 0.54,
+    "d_p95": 1.44,
+    "desvio": {
+     "mediana": -0.5080000162124634,
+     "media": -0.5014398097991943,
+     "p5": -1.5226874351501465,
+     "p95": 0.2540000081062317,
+     "abs_media": 0.5906049609184265
+    }
+   }
+  }
+ ],
+ "parametros": {
+  "prof_mm": 0.5,
+  "area_mm2": 3.0,
+  "amostra": 40,
+  "seed": 9
+ }
+}
