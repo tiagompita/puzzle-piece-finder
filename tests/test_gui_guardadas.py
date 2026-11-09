@@ -10,6 +10,7 @@ import json
 import os
 import shutil
 import socket
+import subprocess
 import threading
 import time
 
@@ -26,6 +27,7 @@ from test_query import _project  # noqa: E402
 
 ALPES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "projects", "alpes")
 LOG_EVENTS = 2045                  # log.jsonl no commit bc6b772 (o mesmo estado de test_fetch_group_real)
+FETCH_COMMIT = "bc6b772"           # fetch.json fixado no mesmo corte do log (o ficheiro vivo avança com o projeto)
 TIAGO_CELLS = {(4, 43), (4, 49), (4, 50), (4, 53), (3, 54), (3, 55), (3, 59)}
 
 
@@ -80,15 +82,22 @@ def test_vai_buscar_empty_and_guardadas_collapsed(synth):
 
 @pytest.fixture(scope="module")
 def real(tmp_path_factory):
-    if not os.path.exists(os.path.join(ALPES, "log.jsonl")) or not os.path.exists(os.path.join(ALPES, "fetch.json")):
+    if not os.path.exists(os.path.join(ALPES, "log.jsonl")):
         pytest.skip("projects/alpes não está presente")
+    try:
+        fetch_fixed = subprocess.run(["git", "show", f"{FETCH_COMMIT}:projects/alpes/fetch.json"],
+                                     cwd=os.path.dirname(os.path.dirname(ALPES)), capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError) as e:
+        pytest.skip(f"fetch.json de {FETCH_COMMIT} indisponível (git): {e}")
     with open(os.path.join(ALPES, "log.jsonl"), encoding="utf-8") as f:
         lines = f.readlines()
     if len(lines) < LOG_EVENTS:
         pytest.skip("log.jsonl mais curto do que o estado fixado")
     d = tmp_path_factory.mktemp("alpes_real")
-    for name in ("project.json", "puzzle.json", "fetch.json"):
+    for name in ("project.json", "puzzle.json"):
         shutil.copy(os.path.join(ALPES, name), d / name)
+    with open(d / "fetch.json", "wb") as f:
+        f.write(fetch_fixed)
     if os.path.isdir(os.path.join(ALPES, "photos")):
         shutil.copytree(os.path.join(ALPES, "photos"), d / "photos")
     with open(d / "log.jsonl", "w", encoding="utf-8") as f:
