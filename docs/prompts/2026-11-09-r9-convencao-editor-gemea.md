@@ -46,4 +46,12 @@ Detalhe em `docs/decisoes.md` (2026-11-09) e `docs/diagnostico/editor/CONVENCAO.
 
 ## Resultado
 
-(a preencher no fecho da ronda)
+Commits: `f0ed181` medição; `0664206` normalização (`src/strokes.py`); `a83f8b4` servidor/GUI; `850d7e5` sugestão pela gémea; `b6d4428` reposição + `renormalizar.py`; `83fdd5c` dados; `587bb77` ganhos pequenos; `d886ac3` P0045; docs.
+
+- **1.1 [V]** O índice inclui a sombra (+0,36/+0,54 mm contra a GT); o editor dava a aresta (−0,17…−0,54 mm, por lado e por cor). A premissa do pedido (contornos 1,3 mm fora) estava invertida: os 17 estavam dentro.
+- **1.2 [V]** O editor grava na convenção do índice; sem traços = identidade; correção de mordida mantida nos testes sintéticos (C4).
+- **1.3 [V]** 17/17 repostos no automático exato (só-acrescentar, reversível); nenhuma correção real a guardar. P0045 passou por um erro da própria normalização (papel de 4,2 mm²), visto pela suspeita nova em P0046 e corrigido.
+- **3.1 [V]** Reprodução das gémeas do R7 na cópia: 34/43 → 43/43 (9/9 recuperadas); `fetch.json` idêntico antes/depois.
+- **3.2 [F]** Suite 451 passed, 1 failed, 1 skipped: o teste data-driven não pode passar por contornos (lê o `fetch.json` vivo contra um log cortado); a correção altera o teste, decisão do Tiago.
+- **Parte 2 [V]** Sugestão pela gémea: 268 pares, mediana 0,13 mm, p95 0,24; só c32|c33 piora. Uso real [NT].
+- **Achado** Lista da ronda 8 calculada aqui sem as formas dos lotes 4–8; refeita (+3 gémeas, +1 par).

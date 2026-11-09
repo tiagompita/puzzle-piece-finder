@@ -59,12 +59,16 @@ Consequências declaradas: um «fundo» a menos de ≈ 0,5 mm da aresta (sombra,
 | resultado | peças |
 |---|---|
 | identidade (todos os traços eram de sombra) | P1203, P1114, P0916, P1245, P1202, P1102, P0999, P0098, P0105, P0186, P1021, P0165, P0935, P1089 (14) |
-| ≈ automático (profundidade ≤ 0,5 mm; traços «peca»/«fundo» restantes sem efeito mensurável) | P1064 (1,9 mm² a mais, prof. 0,37), P0071 (0,0 / 0,0) |
-| correção real mantida, **a confirmar pelo Tiago** | P0045 (43,5): 2,5 mm² a mais, prof. 0,54 mm, das marcas «peca»/«incerto» de 2026-11-07 |
+| ≈ automático (profundidade ≤ 0,5 mm; traços «peca»/«fundo» restantes sem efeito mensurável) | P1064 (2,8 mm² a mais, prof. 0,49), P0071 (0,01 / 0,01 mm²) |
+| ~~correção real mantida~~ → **reposição** (ver §3.2) | P0045 (43,5): na 1.ª aplicação 4,2 mm² a mais, prof. 0,74 mm; era **papel** criado pela própria normalização, não correção do Tiago |
 
-Desvio médio |automático − gravado| nas 16 «reposição»: 0,000–0,016 mm (C2 ✓, critério 0,3). Costura em ∂I: p95 ≤ 0,37 mm (P0045), 0 nas identidades.
+Números da corrida final (cópia e projeto real dão a mesma tabela; a pré-visualização intermédia, antes de `S0_INCERTO = "bgd"`, dava δ e áreas ligeiramente diferentes). δ por peça 0,25–0,59 mm. Nas 16 «reposição» o registo gravado é o contorno automático exato, desvio 0,000 mm (C2 ✓, critério 0,3); P1064 e P0071 só são reposição pela regra da profundidade (≤ 0,5 mm). P0045: d_mean 0,034 mm contra o automático.
 
-### 3.2 O que fica por medir [NT]
+### 3.2 P0045: a normalização fabricava papel (corrigido) [V]
+
+A 1.ª aplicação deixou P0045 «renormalizado» com 4,2 mm² a mais, e o `src.consistency` passou a marcar P0046 (44,5) (`melhor_rotacao`, N com P0045 a 1,61 mm). Medido: os traços «é peça» do Tiago estão todos dentro do automático (o contorno original só tinha 0,64 mm² fora dele); o solver ganhava uma lasca de 0,75 mm² na aresta de um tab e a dilatação dos ganhos por δ (0,59 mm) transformava-a em 4,2 mm² de **papel** (Lab mediano 194/84/167, papel 195/77/172, interior da peça 31/126/135). Com P0045 no automático, numa cópia, a suspeita de P0046 desaparece. Correção: componentes ganhos com menos de `GANHO_MIN_MM2` = 2 mm² são ruído da aresta (descartados, não dilatados). **Limiar fixado depois de ver P0045** (não antes); mordidas reais têm 30+ mm² (COMIDO.md), o canto sintético ≈ 20 mm². Refeito (`renormalizar.py --refazer`): P0045 → reposição (0,07 / 0,06 mm², prof. 0,08). **17/17 no automático exato**; Suspeitas iguais às de antes da ronda (P0343 e as 14 «recorte» pré-existentes).
+
+### 3.3 O que fica por medir [NT]
 
 - Traços humanos novos com a convenção nova (o Tiago só desenhou sob a instrução antiga).
 - Peças de duas cores (céu/relva na mesma peça): o `núcleo` e o `S0_bgd` são por píxel, mas o δ escalar das zonas ganhas é a mediana.
@@ -78,7 +82,7 @@ Nesta máquina `projects/alpes` não tinha `pieces/*.npz` das folhas S0028–S00
 |---|---|---|
 | **C3** reprodução R7 (`r7_gt.py`, 43 colocações por gémea com entrada): decisão e top-1 iguais aos da data | 34/43 (as 9 divergências = peças com contorno manual: 7 `aceite → sem`, 2 `ambigua → sem`) | **43/43** (33 `aceite`, 10 `ambigua`) |
 | **C5** `fetch.json` (`r7_tempo.diff`, tolerância 1e-6): 17 entradas com peça + 1 suprimida | — | **idêntico** (0 só-antes, 0 só-depois, 0 diferentes, suprimidas iguais); nenhuma das 17 é `query` de uma entrada (as gémeas pendentes delas não estão no pool das soltas) |
-| **C2** desvio médio \|automático − gravado\| nas 16 reposições | 0,24–0,51 mm (mediana do desvio assinado) | 0,000 (contorno automático exato); P0045 0,024 mm (d_mean), prof. 0,54 |
+| **C2** desvio médio \|automático − gravado\| nas 17 | 0,24–0,51 mm (mediana do desvio assinado) | 0,000 (contorno automático exato, 17/17 depois de §3.2) |
 | `check_invariants(disk=True)` | OK | OK |
 
 Figura `RENORM_17.jpg` (magenta = manual antigo, vermelho = automático, verde = novo), `renormalizar.json`.
