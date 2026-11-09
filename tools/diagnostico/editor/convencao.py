@@ -11,7 +11,12 @@ automático do índice (positivo = fora do automático, negativo = dentro), em m
 * numa amostra ao acaso de peças sem contorno manual, por zona do perfil: ``δ0`` apenas (o δ depende da
   cor da peça?);
 * em P0651/P0657 (S0020) contra as máscaras do Photoshop (``R0011_R0012_manual``): índice vs GT,
-  solver vs GT, solver vs índice.
+  solver vs GT, solver vs índice;
+* ``--lados`` (ronda 10): por lado no referencial do scanner (E / S / N / W pela normal exterior; a sombra
+  cai a W e a S), o desvio assinado mediano de S0 (solver sem traços) contra o índice, da aresta pintada
+  (A2, ``aresta_px``) contra S0 e, com GT, de índice / S0 / aresta contra a GT (+ IoU), para as peças com
+  aresta pintada e as que têm GT; ``--gt DIR`` junta as máscaras ``DIR/P####.png`` (PNG com alfa na grelha
+  do scan inteiro, como R0011/R0012) às duas de origem; ``--pecas`` restringe a lista.
 
 Nada é escrito no projeto. Uso::
 
@@ -23,6 +28,7 @@ import argparse
 import json
 import os
 import sys
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -198,6 +204,99 @@ def measure_gt(ctx: Ctx) -> list:
 	return out
 
 
+# ---------------------------------------------------------------- por lado (referencial do scanner)
+LADOS = ("E", "S", "N", "W")
+
+
+def normal_sides(mask: np.ndarray, sigma_px: float = 3.0) -> np.ndarray:
+	"""Lado (0..3 = E, S, N, W; ``LADOS``) de cada píxel pela direção da normal exterior de ``mask`` suavizada,
+	no referencial do scanner (x para a direita, y para baixo: a sombra cai a W e a S)."""
+	g = cv2.GaussianBlur(mask.astype(np.float32), (0, 0), sigma_px)
+	gy, gx = np.gradient(g)
+	ang = np.degrees(np.arctan2(-gy, -gx))                  # normal exterior = -gradiente; y para baixo
+	side = np.full(mask.shape, 3, np.int8)                  # W (|ang| >= 135)
+	side[(ang >= -45) & (ang < 45)] = 0                     # E
+	side[(ang >= 45) & (ang < 135)] = 1                     # S
+	side[(ang >= -135) & (ang < -45)] = 2                   # N
+	return side
+
+
+def side_offsets(ref: np.ndarray, cand: np.ndarray, mm_per_px: float) -> dict:
+	"""``{lado: {mediana, p95_abs, n}}`` do desvio assinado (mm; + = ``cand`` fora de ``ref``) da fronteira de ``cand``,
+	com o lado dado pela normal de ``ref`` (:func:`normal_sides`)."""
+	b = MC.boundary(cand)
+	dout = cv2.distanceTransform((~ref).astype(np.uint8), cv2.DIST_L2, 5)
+	din = cv2.distanceTransform(ref.astype(np.uint8), cv2.DIST_L2, 5)
+	s = np.where(ref, -din, dout)[b] * mm_per_px
+	sd = normal_sides(ref)[b]
+	out = {}
+	for k, nome in enumerate(LADOS):
+		v = s[sd == k]
+		out[nome] = {"mediana": round(float(np.median(v)), 3) if len(v) else None,
+					 "p95_abs": round(float(np.percentile(np.abs(v), 95)), 3) if len(v) else None, "n": int(len(v))}
+	return out
+
+
+def fmt_lados(d: dict) -> str:
+	return " / ".join("—" if d[k]["mediana"] is None else f"{d[k]['mediana']:+.2f}" for k in LADOS)
+
+
+def load_gt_mask(fp: str) -> np.ndarray:
+	"""Máscara GT (PNG com alfa, na grelha de píxeis do scan inteiro): a maior componente de alfa > 127."""
+	a = cv2.imread(fp, cv2.IMREAD_UNCHANGED)
+	if a is None or a.ndim != 3 or a.shape[2] != 4:
+		raise ValueError(f"{fp}: esperava um PNG RGBA (alfa = peça)")
+	m = a[..., 3] > 127
+	n, cc, st, _ = cv2.connectedComponentsWithStats(m.astype(np.uint8), connectivity=8)
+	if n <= 1:
+		raise ValueError(f"{fp}: alfa vazio")
+	return cc == 1 + int(np.argmax(st[1:, cv2.CC_STAT_AREA]))
+
+
+def gt_files(gt_dir: Optional[str]) -> dict:
+	"""``{peça: ficheiro}``: P0651/P0657 (R0011/R0012) e, com ``gt_dir``, cada ``P####.png`` dessa pasta."""
+	out = {pid: os.path.join(GT_DIR, fn) for pid, fn in GT if os.path.exists(os.path.join(GT_DIR, fn))}
+	if gt_dir and os.path.isdir(gt_dir):
+		for fn in sorted(os.listdir(gt_dir)):
+			stem, ext = os.path.splitext(fn)
+			if ext.lower() == ".png" and len(stem) == 5 and stem[0] == "P" and stem[1:].isdigit():
+				out[stem] = os.path.join(gt_dir, fn)
+	return out
+
+
+def measure_sides(ctx: "Ctx", pid: str, gt_fp: Optional[str] = None) -> dict:
+	"""Por lado (E/S/N/W, scanner), na janela do editor da peça: S0 (solver sem traços) contra o índice; e, quando
+	a peça tem aresta pintada (A2), a aresta contra S0 e o índice gravado contra o automático; com GT, cada um
+	contra a GT (+ IoU)."""
+	pr = ctx.pr
+	p = pr.piece(pid)
+	x0, y0, x1, y1, _ = OV.crop_window(pr, pid)
+	w, h = x1 - x0, y1 - y0
+	mmpp = ctx.mmpp(p.scan_id)
+	rgb = ctx.scan(p.scan_id)[y0:y1, x0:x1]
+	org = np.array([x0, y0], float)
+	idx = MC.fill_contour(np.asarray(pr.contour_px(pid), float) - org, (h, w))
+	s0 = ST.resolver(rgb, idx, [], mmpp)["mask"]
+	ar = OV.aresta_px(pr, pid)
+	aresta = None if ar is None else MC.fill_contour(ar - org, (h, w))
+	out = {"piece": pid, "celula": list(p.celula) if p.celula else None,
+		   "zona": pr.profile.zone_of(*p.celula) if p.celula and hasattr(pr.profile, "zone_of") else None,
+		   "s0_menos_indice": side_offsets(idx, s0, mmpp)}
+	if aresta is not None:
+		out["aresta_menos_s0"] = side_offsets(s0, aresta, mmpp)
+	if gt_fp:
+		gt = load_gt_mask(gt_fp)[y0:y1, x0:x1]
+		out["gt"] = os.path.relpath(gt_fp, REPO)
+		for nome, m in (("indice", idx), ("s0", s0), ("aresta", aresta)):
+			if m is None:
+				continue
+			out[f"{nome}_menos_gt"] = side_offsets(gt, m, mmpp)
+			out[f"{nome}_iou_gt"] = round(float(MC.mask_metrics(gt, m, mmpp)["iou"]), 4)
+	out["_masks"] = {"rgb": rgb, "indice": idx, "s0": s0, "aresta": aresta,
+					 "gt": None if not gt_fp else load_gt_mask(gt_fp)[y0:y1, x0:x1]}
+	return out
+
+
 # ---------------------------------------------------------------- figura
 def figure(rows: list, path: str, cols: int = 3) -> None:
 	tiles = []
@@ -239,9 +338,14 @@ def main(argv=None) -> int:
 	ap.add_argument("--seed", type=int, default=9)
 	ap.add_argument("--prof-mm", type=float, default=0.5)
 	ap.add_argument("--area-mm2", type=float, default=3.0)
+	ap.add_argument("--lados", action="store_true", help="só a medição por lado (peças com aresta pintada e com GT)")
+	ap.add_argument("--gt", default=None, help="pasta com P####.png (máscaras GT do Photoshop, scan inteiro)")
+	ap.add_argument("--pecas", default=None, help="lista de peças separadas por vírgulas (com --lados)")
 	a = ap.parse_args(argv)
 	pr = Project.open(a.project)
 	ctx = Ctx(pr)
+	if a.lados:
+		return main_lados(ctx, a)
 	recs = OV.read_overrides(pr)
 	rows = [measure_override(ctx, r, a.prof_mm, a.area_mm2) for r in recs if r.get("auto_contour_px") and r.get("origem")]
 	print(f"## Registos manuais ({len(rows)}): desvio assinado da fronteira ao automático, mm (mediana (p5, p95)); + = fora")
@@ -284,6 +388,37 @@ def main(argv=None) -> int:
 		os.makedirs(os.path.dirname(os.path.abspath(a.json)), exist_ok=True)
 		with open(a.json, "w", encoding="utf-8") as f:
 			json.dump(out, f, ensure_ascii=False, indent=1)
+		print(f"json: {a.json}")
+	return 0
+
+
+def main_lados(ctx: "Ctx", a) -> int:
+	pr = ctx.pr
+	gts = gt_files(a.gt)
+	pids = sorted(set(OV.latest_arestas(pr)) | {g for g in gts if g in pr.pieces})
+	if a.pecas:
+		want = [x.strip() for x in a.pecas.split(",") if x.strip()]
+		pids = [x for x in want if x in pr.pieces]
+	rows = []
+	for pid in pids:
+		try:
+			rows.append(measure_sides(ctx, pid, gts.get(pid)))
+		except (FileNotFoundError, ValueError) as e:
+			print(f"{pid}: {e}")
+	print("## Por lado (E / S / N / W, scanner; desvio assinado mediano, mm, + = fora da referência)")
+	print("| peça | célula | zona | S0 − índice | aresta − S0 | índice − GT | S0 − GT (IoU) | aresta − GT (IoU) | GT |")
+	print("|---|---|---|---|---|---|---|---|---|")
+	for r in rows:
+		f = lambda k: fmt_lados(r[k]) if k in r else "—"
+		iou = lambda k: f" ({r[k]:.3f})" if k in r else ""
+		print(f"| {r['piece']} | {r['celula']} | {r['zona']} | {f('s0_menos_indice')} | {f('aresta_menos_s0')} | "
+			  f"{f('indice_menos_gt')} | {f('s0_menos_gt')}{iou('s0_iou_gt')} | {f('aresta_menos_gt')}{iou('aresta_iou_gt')} | "
+			  f"{r.get('gt', '—')} |")
+	if a.json:
+		os.makedirs(os.path.dirname(os.path.abspath(a.json)), exist_ok=True)
+		with open(a.json, "w", encoding="utf-8") as fh:
+			json.dump({"lados": [{k: v for k, v in r.items() if k != "_masks"} for r in rows], "gt": {k: os.path.relpath(v, REPO) for k, v in gts.items()}},
+					  fh, ensure_ascii=False, indent=1)
 		print(f"json: {a.json}")
 	return 0
 
