@@ -47,6 +47,7 @@ __all__ = [
 	"overrides_path", "read_overrides", "latest_overrides", "REPOSICAO", "has_override", "scan_file", "scan_size",
 	"load_scan_rgb", "reference_area_px", "check_override", "append_override", "crop_window",
 	"EXTRA_KEYS", "pair_metrics", "manual_pairs", "pose_pairs", "pose_summary", "mean_ci", "direction_of", "main",
+	"SUGESTAO_RMS_MAX", "twin_of", "twin_suggestion",
 ]
 
 OVERRIDES_FILE = "overrides.jsonl"
@@ -453,6 +454,64 @@ def crop_window(project, piece: str, margin_mm: float = MARGIN_MM) -> tuple:
 		w, h = int(c[:, 0].max()) - x + 1, int(c[:, 1].max()) - y + 1
 	m = int(round(margin_mm / _mmpp(project, p.scan_id)))
 	return max(0, x - m), max(0, y - m), min(W, x + w + m), min(H, y + h + m), m
+
+
+# ---------------------------------------------------------------- the twin's manual contour as a starting point
+SUGESTAO_RMS_MAX = 1.0     # registration RMS (mm) above which the twin's contour is not offered
+
+
+def twin_of(project, piece: str) -> Optional[tuple]:
+	"""``(twin_id, relation)`` of a piece: a ``colocada`` piece -> the ``colocada`` piece on its twin cell
+	(``profile.twin``; relation ``"celula"``), a loose piece -> the other piece of its active ``Pair``
+	(``"par"``); None when there is none."""
+	p = project.piece(piece)
+	if p.estado == "colocada" and p.celula is not None:
+		tw = project.profile.twin(*p.celula)
+		if tw is not None:
+			occ = project.board[tw]
+			if occ.get("estado") == "colocada" and occ.get("peca_id") and occ["peca_id"] != piece:
+				return occ["peca_id"], "celula"
+		return None
+	for t in project.pairs.values():
+		if t.estado != "rejeitado" and piece in (t.a, t.b):
+			other = t.b if t.a == piece else t.a
+			if other in project.pieces:
+				return other, "par"
+	return None
+
+
+def twin_suggestion(project, piece: str) -> Optional[dict]:
+	"""The twin's saved manual contour, rotated by ``profile.twin_rotation_deg()`` and registered onto this
+	piece's automatic (segmented) contour (:func:`src.shape.register_rigid`), as a starting point for the
+	editor. Only from a twin whose last active override is a stroke save in the index convention
+	(``convencao: "indice"``). Returns None when there is no such twin / contour, else::
+
+		{"gemea", "relacao", "t_gemea", "contour_px" (this piece's scan px, (n, 2) float),
+		 "rms_mm", "rms_cantos_mm", "theta_deg", "utilizavel" (rms <= SUGESTAO_RMS_MAX), "motivo"}
+	"""
+	from src.shape import register_rigid
+	tw = twin_of(project, piece)
+	if tw is None:
+		return None
+	tid, rel = tw
+	ov = latest_overrides(project).get(tid)
+	if ov is None or ov.get("metodo") != "tracos" or ov.get("convencao") != "indice":
+		return None
+	own = project.contour_px(piece)
+	if own is None:
+		return None
+	p = project.piece(piece)
+	tp = project.piece(tid)
+	mm_t, mm_o = _mmpp(project, tp.scan_id), _mmpp(project, p.scan_id)
+	src_mm = np.asarray(ov["contour_px"], float).reshape(-1, 2) * mm_t
+	dst_mm = np.asarray(own, float).reshape(-1, 2) * mm_o
+	r = register_rigid(src_mm, dst_mm, rotation_deg=project.profile.twin_rotation_deg())
+	pts = r["points_mm"] / mm_o
+	ok = r["rms_mm"] is not None and r["rms_mm"] <= SUGESTAO_RMS_MAX
+	return {"gemea": tid, "relacao": rel, "t_gemea": ov["t"], "contour_px": pts, "rms_mm": round(float(r["rms_mm"]), 3),
+			"rms_cantos_mm": None if r["rms_cantos_mm"] is None else round(float(r["rms_cantos_mm"]), 3),
+			"theta_deg": round(float(r["theta_deg"]), 2), "utilizavel": bool(ok),
+			"motivo": None if ok else f"registo da gémea com RMS {r['rms_mm']:.2f} mm (> {SUGESTAO_RMS_MAX})"}
 
 
 # ---------------------------------------------------------------- automatic vs manual (plan 2.4)

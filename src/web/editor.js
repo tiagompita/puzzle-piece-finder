@@ -17,6 +17,7 @@ const CED_MARCAS = [["peca", "É peça", "1"], ["fundo", "Não é peça", "2"], 
 const CED_FERRS = [["laco", "Laço", "L"], ["pincel", "Pincel", "P"], ["borracha", "Borracha", "B"]];
 const CED_VISTAS = [["scan", "Scan"], ["atual", "Atual"], ["diff", "Diferença"], ["final", "Final"]];
 const CED_AJUDA = "O índice guarda ≈ 0,5 mm de sombra e penumbra à volta da peça (é a convenção com que as gémeas e os buracos foram calibrados); a sombra só sai no desenho do tabuleiro. «Não é peça» serve para papel, outra peça ou sombra ALÉM dessa orla: um pincel só sobre a linha negra da sombra é ignorado (fica a cinzento). «É peça» sobre arte clara cor do papel que o automático cortou. «Incerto» onde quiser que o algoritmo decida. Linha branca tracejada = aresta detetada; laranja = o que se grava. Shift força «é peça», Alt força «não é peça».";
+const CED_SUG_TITLE = "a sugestão vem do contorno manual da gémea, rodado 180° e ajustado a esta peça; o que se grava segue a mesma convenção";
 const CED_LEGENDA = "ciano tracejado: atual · branco tracejado: aresta detetada · laranja: a gravar";
 
 async function openContourEditor(pid, back) {
@@ -32,7 +33,8 @@ async function openContourEditor(pid, back) {
     tracos, pos: tracos.length, tool: "pincel", marca: "fundo", raio: 8,
     view: { z: 1, cx: d.tamanho[0] / 2, cy: d.tamanho[1] / 2 }, ptrs: new Map(), drag: null, pinch: null, live: null, cur: null,
     space: false, dirty: false, seq: 0, timer: null, inflight: false, again: false, busy: false, res: null,
-    vt: null, retouch: false, diff: null, maskA: null, modeUser: null, vista: "scan", raf: 0 };
+    vt: null, retouch: false, diff: null, maskA: null, modeUser: null, vista: "scan", raf: 0,
+    base: null, sug: d.sugestao_gemea || null, sugIgnorada: false, densoAuto: (d.denso || []).map((p) => [p[0], p[1]]) };
   S.ced = E;
   cedBuild();
   const el = $("#ced");
@@ -74,6 +76,7 @@ function cedBuild() {
     h("div", { class: "ced-thead" }, h("h2", {}, `Contorno · ${who}`),
       b("▾", () => { $("#ced-tools").classList.toggle("min"); requestAnimationFrame(cedOnResize); }, { id: "ced-collapse", "aria-label": "Recolher a barra de ferramentas", title: "recolher / abrir a barra" }),
       b("Fechar", () => cedClose(), { id: "ced-close", title: "fechar (Esc)" })),
+    h("div", { class: "ced-sug", id: "ced-sug", title: CED_SUG_TITLE, hidden: true }),
     h("div", { class: "ced-body" },
       h("p", { class: "small muted ced-who" }, `${d.piece} · ${d.scan_id}` + (d.celula ? ` · ${cellTxt(d.celula)}` : "") + ` · classe ${d.cls || "?"} · `,
         d.manual_override ? h("span", { class: "chip manual" }, "contorno manual") : "contorno da segmentação",
@@ -108,7 +111,46 @@ function cedBuild() {
         b("Cancelar", () => cedClose(), { id: "ced-cancel" }))));
   root.replaceChildren(views, tools);
   cedBind($("#ced-canvas"));
+  cedSugRender();
   cedSyncUI();
+}
+
+/** banner about the twin's suggested outline (state: suggestion offered / adopted as the starting point). */
+function cedSugRender() {
+  const E = S.ced, el = $("#ced-sug"); if (!E || !el) return;
+  const s = E.sug, b = (txt, fn, id) => h("button", { class: "ced-b", type: "button", id, onclick: fn }, txt);
+  if (E.base && E.base.tipo === "gemea") {
+    el.hidden = false;
+    el.replaceChildren(h("span", {}, `Ponto de partida: contorno da gémea ${E.base.id} · `), b("Voltar ao automático", () => cedSugVoltar(), "ced-voltar-auto"));
+  } else if (!s || E.sugIgnorada) {
+    el.hidden = true; el.replaceChildren();
+  } else if (s.utilizavel) {
+    el.hidden = false;
+    el.replaceChildren(h("span", {}, `Contorno sugerido pela gémea ${s.gemea} (RMS ${fmt(s.rms_mm, 2)} mm)`),
+      h("div", { class: "ced-row" }, b("Usar como ponto de partida", () => cedSugUsar(), "ced-usar-gemea"), b("Ignorar", () => cedSugIgnorar(), "ced-ignorar-gemea")));
+  } else {
+    el.hidden = false;
+    el.replaceChildren(h("span", {}, `Sugestão da gémea ${s.gemea} não utilizável: ${s.motivo || "sem motivo"}`));
+  }
+}
+function cedSugUsar() {
+  const E = S.ced; if (!E || !E.sug || !E.sug.utilizavel) return;
+  E.d.denso = E.sug.contour.map((p) => [p[0], p[1]]);
+  E.maskA = null;
+  E.base = { tipo: "gemea", id: E.sug.gemea, t: E.sug.t_gemea };
+  E.dirty = true;
+  cedSugRender(); cedDraw(); cedSchedule(0);
+}
+function cedSugIgnorar() {
+  const E = S.ced; if (!E) return;
+  E.sugIgnorada = true;
+  cedSugRender(); cedDraw();
+}
+function cedSugVoltar() {
+  const E = S.ced; if (!E) return;
+  E.d.denso = E.densoAuto.map((p) => [p[0], p[1]]);
+  E.maskA = null; E.base = null;
+  cedSugRender(); cedDraw(); cedSchedule(0);
 }
 
 function cedLayout() {
@@ -271,7 +313,9 @@ function cedDraw() {
   if (E.layerDirty) cedRenderLayer();
   ctx.globalAlpha = 0.5; ctx.drawImage(E.layer, 0, 0); ctx.globalAlpha = 1;
   const A = E.d.denso || [];
+  const SG = E.sug && E.sug.utilizavel && !E.sugIgnorada && !E.base ? E.sug.contour : null;
   if (A.length) { cedPath(ctx, A); ctx.setLineDash([4 * lw, 4 * lw]); ctx.strokeStyle = "rgba(41, 211, 230, .9)"; ctx.lineWidth = 1.2 * lw; ctx.stroke(); ctx.setLineDash([]); }
+  if (SG && SG.length) { cedPath(ctx, SG); ctx.setLineDash([6 * lw, 4 * lw]); ctx.strokeStyle = "rgba(60,220,120,.9)"; ctx.lineWidth = 1.2 * lw; ctx.stroke(); ctx.setLineDash([]); }
   const AR = E.res && E.res.aresta;
   if (AR && AR.length >= 3) { cedPath(ctx, AR); ctx.setLineDash([3 * lw, 3 * lw]); ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1 * lw; ctx.stroke(); ctx.setLineDash([]); }
   const poly = cedFinalPoly();
@@ -457,7 +501,7 @@ async function cedFire() {
   let r = null, err = null;
   try {
     r = await api(`/api/pieces/${E.pid}/contorno/resolver`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tracos: E.tracos.slice(0, E.pos), origem: E.d.origem, tamanho: E.d.tamanho }) });
+      body: JSON.stringify({ tracos: E.tracos.slice(0, E.pos), origem: E.d.origem, tamanho: E.d.tamanho, base: E.base || undefined }) });
   } catch (e) { err = e.message; }
   E.inflight = false;
   if (S.ced !== E) return;
@@ -697,7 +741,7 @@ async function cedSave(btn) {
     const r = await api(`/api/pieces/${E.pid}/contorno`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contour: poly, origem: E.d.origem, tamanho: E.d.tamanho, nota: $("#ced-nota").value,
         tracos: E.tracos.slice(0, E.pos), solver: (E.res && E.res.solver) || E.d.solver_omissao || "grabcut",
-        delta_mm: E.res ? E.res.delta_mm : undefined }) });
+        delta_mm: E.res ? E.res.delta_mm : undefined, base: E.base || undefined }) });
     for (const m of r.mensagens || []) toast(m);
     if (r.invariantes && r.invariantes.length) toast("INVARIANTES: " + r.invariantes.join("; "), true);
     E.dirty = false;

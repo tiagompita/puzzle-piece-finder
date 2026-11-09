@@ -948,3 +948,49 @@ def test_contorno_resolver_convencao_indice(env):
     line = OV.read_overrides(gui.pr)[-1]
     assert line["piece"] == tw and line["convencao"] == "indice" and line["delta_mm"] == round(s2["delta_mm"], 3)
     assert line["metodo"] == "tracos" and "convencao" in OV.EXTRA_KEYS
+
+
+def test_contorno_sugestao_gemea(env):
+    """A piece without manual contour whose placed twin has a stroke save in the index convention gets
+    ``sugestao_gemea`` (the twin's contour registered onto it, crop px); ``/resolver`` and the save accept
+    ``base: {tipo: gemea, id, t}`` and record ``auto_origem: "gemea"`` + ``base_gemea``; a piece with its own
+    override, or whose twin has none, gets None."""
+    from src import overrides as OV
+    gui, cl, placed, tw, dec = env
+    gui.pr.place(tw, (3, 4), theta_deg=61.0)                 # the twin cell of (2, 3) in the 4 x 6 synthetic board
+    gui.pr.save()
+    assert cl.get(f"/api/pieces/{tw}/contorno").json()["sugestao_gemea"] is None      # the twin has no override yet
+    d = cl.get(f"/api/pieces/{placed}/contorno").json()
+    body = {"tracos": [_bump_lasso(d)], "origem": d["origem"], "tamanho": d["tamanho"]}
+    s = cl.post(f"/api/pieces/{placed}/contorno/resolver", json=body).json()
+    r = cl.post(f"/api/pieces/{placed}/contorno", json=dict(body, contour=s["contour"], solver="grabcut", delta_mm=s["delta_mm"]))
+    assert r.status_code == 200, r.text
+    assert cl.get(f"/api/pieces/{placed}/contorno").json()["sugestao_gemea"] is None  # has its own override
+    d2 = cl.get(f"/api/pieces/{tw}/contorno").json()
+    sg = d2["sugestao_gemea"]
+    assert sg and sg["gemea"] == placed and sg["relacao"] == "celula" and sg["utilizavel"] is True and sg["motivo"] is None
+    assert sg["rms_mm"] < 0.5 and len(sg["contour"]) >= 20
+    w, h = d2["tamanho"]
+    sug = _fill_poly(sg["contour"], (h, w))
+    auto = _fill_poly(d2["denso"], (h, w))
+    assert (sug & auto).sum() / (sug | auto).sum() > 0.9                              # the twin is this piece (synthetic exact twin)
+    assert sug.sum() > auto.sum()                                                      # ... with the lasso bump carried over
+    base = {"tipo": "gemea", "id": sg["gemea"], "t": sg["t_gemea"]}
+    body2 = {"tracos": [], "origem": d2["origem"], "tamanho": d2["tamanho"], "base": base}
+    s2 = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=body2).json()
+    assert s2["valido"] and s2["base"] == "gemea" and s2["identidade"] is True
+    m2 = ST_rle(s2["mascara_rle"])                                                     # no stroke: the suggestion itself
+    assert (m2 & sug).sum() / (m2 | sug).sum() > 0.995                                # (2-decimal client rounding vs the server's)
+    bad = cl.post(f"/api/pieces/{tw}/contorno/resolver", json=dict(body2, base={"tipo": "gemea", "id": placed, "t": "1999"}))
+    assert bad.status_code == 400 and "sugestão" in bad.json()["error"]
+    r2 = cl.post(f"/api/pieces/{tw}/contorno", json=dict(body2, contour=s2["contour"], solver="grabcut", delta_mm=s2["delta_mm"]))
+    assert r2.status_code == 200, r2.text
+    line = OV.read_overrides(gui.pr)[-1]
+    assert line["piece"] == tw and line["auto_origem"] == "gemea" and line["base_gemea"] == {"id": placed, "t": sg["t_gemea"], "rms_mm": sg["rms_mm"]}
+    assert line["convencao"] == "indice"
+    assert cl.get(f"/api/pieces/{tw}/contorno").json()["sugestao_gemea"] is None      # now it has its own
+
+
+def ST_rle(rle):
+    from src import strokes as ST
+    return ST.rle_decode(rle)

@@ -1973,7 +1973,41 @@ class Gui:
 				"cls": p.cls, "chords_mm": p.chords_mm, "area_mm2": p.area_mm2,
 				"limites": {"min_pontos": OV.MIN_POINTS, "area_min": OV.AREA_MIN_FRAC, "area_max": OV.AREA_MAX_FRAC},
 				"tracos": tracos, "banda_mm": ST.BANDA_MM, "solver_omissao": ST.SOLVER_OMISSAO,
-				"solvers": list(ST.SOLVERS)}
+				"solvers": list(ST.SOLVERS), "sugestao_gemea": self._sugestao_json(pid, ov, (x0, y0))}
+
+	def _sugestao_json(self, pid: str, ov, origem) -> Optional[dict]:
+		"""``sugestao_gemea`` of ``GET /contorno``: the twin's manual contour registered onto this piece
+		(:func:`src.overrides.twin_suggestion`), in crop px, only for a piece without an active override; None
+		otherwise or when the twin has no usable contour."""
+		if ov is not None:
+			return None
+		sg = OV.twin_suggestion(self.pr, pid)
+		if sg is None:
+			return None
+		out = dict(sg)
+		out["contour"] = np.round(np.asarray(sg["contour_px"], float) - np.array(origem, float), 2).tolist()
+		del out["contour_px"]
+		return out
+
+	def _base_mask(self, pid: str, body: dict, win: tuple):
+		"""``(dense polygon in scan px, origem_label, base_gemea | None)`` of the outline the editor starts from:
+		the current one (:meth:`_dense`), or, with ``body["base"] == {"tipo": "gemea", "id", "t"}``, the twin's
+		contour registered onto this piece (recomputed here, never trusted from the client; ValueError if the
+		twin / record do not match the current suggestion)."""
+		base = body.get("base")
+		if not base or not isinstance(base, dict) or base.get("tipo") in (None, "automatico"):
+			dense, origem = self._dense(pid)
+			return dense, origem, None
+		if base.get("tipo") != "gemea":
+			raise ValueError(f"base desconhecida {base.get('tipo')!r} (automatico, gemea)")
+		if OV.has_override(self.pr, pid):
+			raise ValueError("a peça já tem contorno manual: a base só pode ser o atual")
+		sg = OV.twin_suggestion(self.pr, pid)
+		if sg is None or sg["gemea"] != base.get("id") or sg["t_gemea"] != base.get("t"):
+			raise ValueError("a sugestão da gémea mudou ou não existe; reabre o editor")
+		if not sg["utilizavel"]:
+			raise ValueError(sg["motivo"] or "sugestão da gémea não utilizável")
+		return OV.clean_polygon(sg["contour_px"]), "gemea", {"id": sg["gemea"], "t": sg["t_gemea"], "rms_mm": sg["rms_mm"]}
 
 	def _dense(self, pid: str) -> tuple:
 		"""``(polygon in scan px, origem)`` of the piece's current outline: the latest manual override
@@ -2040,11 +2074,11 @@ class Gui:
 		name, params = self._solver_spec(body)
 		mmpp = render._scan_mmpp(pr, p.scan_id)
 		rgb = self._scan_rgb(p.scan_id)[y0:y0 + h, x0:x0 + w]
-		dense, _ = self._dense(pid)
+		dense, base_lbl, _ = self._base_mask(pid, body, (x0, y0, w, h))
 		auto = np.zeros((h, w), np.uint8)
 		cv2.fillPoly(auto, [np.round(dense - np.array([x0, y0], float)).astype(np.int32).reshape(-1, 1, 2)], 1)
 		bg = self._bg_lab(p.scan_id) if name == "limiar" else None
-		delta = self._delta(pid, (x0, y0, w, h), name, params, rgb, auto > 0, mmpp, bg)
+		delta = self._delta(pid, (x0, y0, w, h), name, params, rgb, auto > 0, mmpp, bg, base_lbl)
 		r = ST.resolver(rgb, auto > 0, tr, mmpp, solver=name, params=params, bg_lab=bg, normalizar_indice=True, delta=delta)
 		if "error" in r:
 			return {"contour": [], "area_mm2": 0.0, "valido": False, "erro": r["error"], "solver": name,
@@ -2059,13 +2093,13 @@ class Gui:
 				"ms_solver": round(r["ms"], 1), "ms": round((time.perf_counter() - t0) * 1000.0, 1),
 				"aresta": np.asarray(r["aresta"]).astype(int).tolist(), "delta_mm": round(float(r["delta_mm"]), 3),
 				"identidade": bool(r["identidade"]), "tracos_ignorados": [int(i) for i in r.get("tracos_ignorados", [])],
-				"convencao": "indice"}
+				"convencao": "indice", "base": base_lbl}
 
-	def _delta(self, pid: str, win: tuple, name: str, params: dict, rgb, auto, mmpp: float, bg) -> dict:
+	def _delta(self, pid: str, win: tuple, name: str, params: dict, rgb, auto, mmpp: float, bg, base: str = "atual") -> dict:
 		"""Cached :func:`src.strokes.delta_peca` of the piece's current outline on this crop / solver (the
 		editor asks several times per session; one GrabCut run per key). Keyed by the log version, so a
 		save (new outline) refreshes it."""
-		key = (pid, tuple(int(v) for v in win), name, json.dumps(params, sort_keys=True), self.version())
+		key = (pid, tuple(int(v) for v in win), name, json.dumps(params, sort_keys=True), self.version(), base)
 		c = getattr(self, "_delta_cache", None)
 		if c is None or c[0] != key:
 			d = ST.delta_peca(rgb, auto, mmpp, name, params, bg)
@@ -2080,10 +2114,12 @@ class Gui:
 		polygon filled in the crop (computed here; a client ``mascara_rle`` is only checked for size)."""
 		from src import render
 		mmpp = render._scan_mmpp(self.pr, self.pr.piece(pid).scan_id)
-		dense, origem = self._dense(pid)
+		dense, origem, base_gemea = self._base_mask(pid, body, win)
 		extra = {"auto_contour_px": np.round(dense).astype(int).tolist(),
 				 "auto_area_mm2": round(OV.polygon_area(dense) * mmpp * mmpp, 3), "auto_origem": origem,
 				 "metodo": "vertices", "convencao": "indice"}
+		if base_gemea is not None:
+			extra["base_gemea"] = base_gemea
 		dm = body.get("delta_mm")
 		if isinstance(dm, (int, float)) and not isinstance(dm, bool) and np.isfinite(dm):
 			extra["delta_mm"] = round(float(dm), 3)

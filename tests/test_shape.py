@@ -171,3 +171,24 @@ def test_shape_round_trip():
             assert x.kind == y.kind
             assert np.allclose([x.chord_mm, x.direction_deg], [y.chord_mm, y.direction_deg])
             assert np.allclose(x.profile, y.profile) and np.allclose(x.p0_mm, y.p0_mm) and np.allclose(x.p1_mm, y.p1_mm)
+
+
+# ---------------------------------------------------------------- rigid registration (twin contour as a starting point)
+def test_register_rigid_twin_onto_piece():
+    """The twin's contour (the piece rotated 180°, re-sampled, jittered 0.05 mm and moved) registered onto the
+    piece: corner fit found, ICP RMS below 0.1 mm, every registered point within 0.2 mm of the piece."""
+    from synth import body_mm
+    from src.shape import register_rigid, transform_contour
+    rng = np.random.default_rng(3)
+    own = body_mm("TBFT", deltas=(0.3, -0.2, 0.0, 0.4))
+    twin = transform_contour(own, 180.0) + np.array([7.5, -3.2])
+    twin = np.roll(twin, 137, axis=0) + rng.normal(0, 0.05, twin.shape)
+    r = register_rigid(twin, own, rotation_deg=180.0)
+    assert r["ok"] and r["k"] is not None and r["rms_cantos_mm"] < 0.3
+    assert r["rms_mm"] < 0.1, r["rms_mm"]
+    d = np.sqrt(((r["points_mm"][:, None, :] - own[None, :, :]) ** 2).sum(-1)).min(1)
+    assert np.percentile(d, 95) < 0.2 and d.max() < 0.4
+    assert abs(((r["theta_deg"] - 180.0 + 180) % 360) - 180) < 1.0
+    # the same without the a-priori rotation still converges (free_dist / corner search handle the 180°)
+    r2 = register_rigid(twin, own)
+    assert r2["rms_mm"] < 0.1

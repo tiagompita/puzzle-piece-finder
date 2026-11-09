@@ -30,6 +30,7 @@ __all__ = [
 	"Side", "Shape", "mm_per_px", "analyse", "free_dist", "corner_dist", "homologous_k", "chord_pass",
 	"side_complement", "transform_contour", "canon", "f_adjacent",
 	"N_CONTOUR", "N_SIDE", "N_FREE", "TAB_T", "FREE_SMOOTH_SIGMA",
+	"register_rigid",
 ]
 
 # ---------------------------------------------------------------- tuned constants (E-sym, shapelib v2)
@@ -496,3 +497,82 @@ def transform_contour(points_mm, rotation_deg: float, mirror: bool = False, cent
 	t = np.radians(rotation_deg)
 	ct, st = np.cos(t), np.sin(t)
 	return np.c_[q[:, 0] * ct - q[:, 1] * st, q[:, 0] * st + q[:, 1] * ct] + ctr
+
+
+# ---------------------------------------------------------------- rigid registration of one contour onto another
+def _nearest(src: np.ndarray, dst: np.ndarray) -> np.ndarray:
+	"""Index into ``dst`` of the nearest point of each ``src`` point (brute force, blocks)."""
+	out = np.empty(len(src), np.int64)
+	block = max(1, 4_000_000 // max(1, len(dst)))
+	for i in range(0, len(src), block):
+		d = src[i:i + block, None, :] - dst[None, :, :]
+		out[i:i + block] = np.argmin(np.einsum("ijk,ijk->ij", d, d), axis=1)
+	return out
+
+
+def register_rigid(src_mm, dst_mm, *, rotation_deg: float = 0.0, iters: int = 5, step_mm: float = 0.5) -> dict:
+	"""Rigid fit (rotation + translation, no scale) of the closed contour ``src_mm`` onto ``dst_mm``, both
+	``(n, 2)`` in mm: the twin's silhouette onto this piece's (``rotation_deg`` = ``profile.twin_rotation_deg()``
+	applied first, about the centroid of ``src``). Initial pose from the 4 corners (:func:`analyse` on both;
+	the best of the 4 cyclic corner correspondences by :func:`src.render.kabsch_2d`), else from :func:`free_dist`
+	when a shape has no corners; then ``iters`` ICP iterations on points resampled every ``step_mm`` with
+	brute-force nearest neighbours.
+
+	Returns ``{points_mm (src transformed), theta_deg (total rotation, complex convention), t_mm, rms_mm
+	(nearest-neighbour RMS of the transformed src to dst resampled at 0.1 mm), rms_cantos_mm (corner fit RMS or None),
+	k (corner correspondence or None), ok}``.
+	"""
+	from src.render import kabsch_2d
+	src = np.asarray(src_mm, float).reshape(-1, 2)
+	dst = np.asarray(dst_mm, float).reshape(-1, 2)
+	ctr = src.mean(0)
+	src0 = transform_contour(src, rotation_deg, center=ctr)
+	a = analyse(src0, 1.0)
+	b = analyse(dst, 1.0)
+	from src.overrides import resample_closed
+	from src.render import _R
+	P = resample_closed(src0, step_mm)
+	Q = resample_closed(dst, step_mm)
+	ctr0 = src0.mean(0)
+
+	def _apply(pts, th, tt):
+		return transform_contour(pts, th, center=ctr0) + tt
+
+	def _about_ctr(th, tt):
+		# kabsch gives dst ~ R src + t about the origin; express it as (theta about ctr0, translation)
+		return float(th), np.asarray(tt, float) + _R(th) @ ctr0 - ctr0
+
+	def _nn_rms(th, tt):
+		cur = _apply(P, th, tt)
+		j = _nearest(cur, Q)
+		return float(np.sqrt(np.mean(np.sum((cur - Q[j]) ** 2, axis=1))))
+
+	theta, t, rms_c, k = 0.0, np.zeros(2), None, None
+	if a.ok and b.ok:
+		# the 4 cyclic corner correspondences: on a near-square piece they all fit the corners (RMS ~0.03 mm),
+		# so the choice is made on the whole contour, not on the corners
+		ca, cb = a.c[a.corners], b.c[b.corners]
+		best = None
+		for kk in range(4):
+			th, tt, r = kabsch_2d(np.roll(ca, -kk, axis=0), cb)
+			th, tt = _about_ctr(th, tt)
+			score = _nn_rms(th, tt)
+			if best is None or score < best[0]:
+				best = (score, th, tt, float(r), kk)
+		_, theta, t, rms_c, k = best
+	else:
+		_, _, phi = free_dist(b, a)                      # rotation that aligns a.z onto b.z
+		theta = float(phi)
+		t = dst.mean(0) - transform_contour(src0, theta, center=ctr0).mean(0)
+	cur = _apply(P, theta, t)
+	rms = None
+	for _ in range(max(0, int(iters))):
+		j = _nearest(cur, Q)
+		th, tt, _ = kabsch_2d(P, Q[j])
+		theta, t = _about_ctr(th, tt)
+		cur = _apply(P, theta, t)
+	Qd = resample_closed(dst, min(step_mm, 0.1))          # the final RMS against a dense target: not the resampling floor
+	j = _nearest(cur, Qd)
+	rms = float(np.sqrt(np.mean(np.sum((cur - Qd[j]) ** 2, axis=1))))
+	return {"points_mm": _apply(src0, theta, t), "theta_deg": float(theta + rotation_deg), "t_mm": np.asarray(t, float),
+			"rms_mm": rms, "rms_cantos_mm": rms_c, "k": k, "ok": bool(a.ok and b.ok)}

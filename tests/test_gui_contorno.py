@@ -234,6 +234,68 @@ def test_contour_convention_index(tmp_path):
         th.join(10)
 
 
+
+def _bump_lasso(d, w=14):
+    """A ``peca`` lasso (crop px) sticking ``w`` px out of the right side of the current outline."""
+    import numpy as np
+    c = np.asarray(d["denso"], float)
+    x1 = c[:, 0].max()
+    yc = float(np.median(c[:, 1]))
+    return {"ferramenta": "laco", "marca": "peca",
+            "pontos": [[x1 - 10, yc - 12], [x1 + w, yc - 12], [x1 + w, yc + 12], [x1 - 10, yc + 12]]}
+
+
+def test_contour_twin_suggestion(tmp_path):
+    """Contorno sugerido pela gémea (§18.6c): faixa, Ignorar, Usar como ponto de partida, gravar com
+    ``auto_origem: "gemea"``, reabrir já sem sugestão."""
+    from fastapi.testclient import TestClient
+
+    from src import server as S
+    from src.query import run_query
+    pr, placed, tw, dec = _project(tmp_path)
+    pr.place(tw, (3, 4), theta_deg=61.0)                 # twin cell of (2, 3) in the synthetic 4 x 6 board
+    pr.save()
+    run_query(pr, use_image=False)
+    gui0 = S.Gui(pr.path, prepare=False, use_image=False, uploads=str(tmp_path / "up0"), log=None)
+    cl = TestClient(S.create_app(gui0))
+    d = cl.get(f"/api/pieces/{placed}/contorno").json()
+    body = {"tracos": [_bump_lasso(d)], "origem": d["origem"], "tamanho": d["tamanho"]}
+    s = cl.post(f"/api/pieces/{placed}/contorno/resolver", json=body).json()
+    r = cl.post(f"/api/pieces/{placed}/contorno", json=dict(body, contour=s["contour"], solver="grabcut", delta_mm=s["delta_mm"]))
+    assert r.status_code == 200, r.text
+    gui, server, th, base = _serve(pr.path, str(tmp_path / "uploads"))
+    try:
+        with sync_api.sync_playwright() as pw:
+            br = _launch(pw)
+            pg = br.new_page(viewport={"width": 1366, "height": 768})
+            pg.on("dialog", lambda dlg: dlg.accept())
+            _open_editor(pg, base, cell=(3, 4))
+            pg.wait_for_selector("#ced-usar-gemea", state="visible")
+            assert pg.evaluate("S.ced.sug.gemea") == placed
+            assert pg.evaluate("S.ced.base") is None
+            pg.click("#ced-ignorar-gemea")
+            assert not pg.is_visible("#ced-sug")
+            assert pg.evaluate("S.ced.base") is None
+            pg.click("#ced-cancel")
+            _open_editor(pg, base, cell=(3, 4))
+            pg.click("#ced-usar-gemea")
+            _settled(pg)
+            assert pg.evaluate("S.ced.base.tipo") == "gemea"
+            assert pg.evaluate("S.ced.res.base") == "gemea"
+            assert pg.evaluate("S.ced.res.identidade") is True
+            pg.wait_for_selector("#ced-voltar-auto", state="visible")
+            pg.click("#ced-save")
+            pg.wait_for_function("S.ced === null", timeout=60_000)
+            line = OV.read_overrides(gui.pr)[-1]
+            assert line["piece"] == tw and line["auto_origem"] == "gemea" and line["base_gemea"]["id"] == placed
+            _open_editor(pg, base, cell=(3, 4))
+            assert pg.evaluate("S.ced.sug") is None
+            br.close()
+    finally:
+        server.should_exit = True
+        th.join(10)
+
+
 @pytest.fixture(scope="module")
 def served(tmp_path_factory):
     from src.query import run_query

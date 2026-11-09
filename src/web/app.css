@@ -501,6 +501,9 @@ body.ced-open { overflow: hidden; }
 #ced-tools { flex: 0 0 300px; width: 300px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--bg2); border-left: 1px solid var(--line); min-height: 0; }
 .ced-thead { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
 .ced-thead h2 { flex: 1 1 auto; margin: 0; font-size: 14px; font-weight: 650; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ced-sug { flex: 0 0 auto; padding: 6px 10px; font-size: 12px; background: rgba(20, 60, 36, .55); border-bottom: 1px solid rgba(60, 220, 120, .5); }
+.ced-sug[hidden] { display: none; }
+.ced-sug .ced-row { margin: 6px 0 0; }
 .ced-body { flex: 1 1 auto; overflow-y: auto; padding: 8px 10px 14px; min-height: 0; }
 .ced-who { margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
 .ced-sec { display: flex; flex-direction: column; gap: 4px; margin: 0 0 8px; }
