@@ -1835,6 +1835,8 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 				flags = OV.manual_flags(q.flags, seg_r, area, med, ov.get("nota") or "")
 				if _jsonable(flags) != _jsonable(q.flags or {}) or (not same_cnt and not diff):
 					diff.append("flags" if _jsonable(flags) != _jsonable(q.flags or {}) else "contorno")
+			elif (q.flags or {}).get(OV.MANUAL_FLAG) and "flags" not in diff:
+				diff.append("flags")                          # reposição (src.overrides): the manual mark goes
 			if not same_cnt:
 				for k in [k for k in arrs if k.startswith(pre)]:
 					del arrs[k]
@@ -1848,7 +1850,9 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 				crops[q.id] = rgba
 			if diff:
 				if ov is None:
-					flags = {k: v for k, v in (q.flags or {}).items() if k not in SEG_FLAG_KEYS}
+					# back to the segmentation: its flags, and no manual-override marks (a reposição)
+					flags = {k: v for k, v in (q.flags or {}).items()
+							 if k not in SEG_FLAG_KEYS and k not in (OV.MANUAL_FLAG, OV.MANUAL_NOTE_FLAG)}
 					flags.update(seg_flags(r, area, med))
 				static["flags"] = flags
 				if rgba is not None:

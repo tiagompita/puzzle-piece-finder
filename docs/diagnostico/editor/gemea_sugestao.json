@@ -1,0 +1,4823 @@
+{
+ "pares_colocados": [
+  {
+   "rms_mm": 0.151,
+   "rms_cantos_mm": 0.077,
+   "d_mean": 0.119,
+   "d_p95": 0.291,
+   "d_max": 0.569,
+   "ok": true,
+   "piece": "P0001",
+   "gemea": "P0025",
+   "celula": [
+    1,
+    5
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.129,
+   "rms_cantos_mm": 0.304,
+   "d_mean": 0.1,
+   "d_p95": 0.238,
+   "d_max": 0.481,
+   "ok": true,
+   "piece": "P0002",
+   "gemea": "P0024",
+   "celula": [
+    1,
+    6
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.131,
+   "rms_cantos_mm": 0.364,
+   "d_mean": 0.105,
+   "d_p95": 0.26,
+   "d_max": 0.372,
+   "ok": true,
+   "piece": "P0003",
+   "gemea": "P0023",
+   "celula": [
+    1,
+    7
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.174,
+   "rms_cantos_mm": 0.404,
+   "d_mean": 0.136,
+   "d_p95": 0.332,
+   "d_max": 0.59,
+   "ok": true,
+   "piece": "P0004",
+   "gemea": "P0022",
+   "celula": [
+    1,
+    8
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.229,
+   "rms_cantos_mm": 0.203,
+   "d_mean": 0.201,
+   "d_p95": 0.39,
+   "d_max": 0.542,
+   "ok": true,
+   "piece": "P0005",
+   "gemea": "P0021",
+   "celula": [
+    1,
+    9
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.168,
+   "rms_cantos_mm": 0.181,
+   "d_mean": 0.137,
+   "d_p95": 0.314,
+   "d_max": 0.51,
+   "ok": true,
+   "piece": "P0006",
+   "gemea": "P0030",
+   "celula": [
+    1,
+    10
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.144,
+   "rms_cantos_mm": 0.449,
+   "d_mean": 0.115,
+   "d_p95": 0.289,
+   "d_max": 0.502,
+   "ok": true,
+   "piece": "P0007",
+   "gemea": "P0029",
+   "celula": [
+    1,
+    11
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.146,
+   "rms_cantos_mm": 0.144,
+   "d_mean": 0.116,
+   "d_p95": 0.272,
+   "d_max": 0.477,
+   "ok": true,
+   "piece": "P0008",
+   "gemea": "P0028",
+   "celula": [
+    1,
+    12
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.163,
+   "rms_cantos_mm": 0.71,
+   "d_mean": 0.125,
+   "d_p95": 0.326,
+   "d_max": 0.617,
+   "ok": true,
+   "piece": "P0009",
+   "gemea": "P0027",
+   "celula": [
+    1,
+    13
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.217,
+   "rms_cantos_mm": 0.284,
+   "d_mean": 0.178,
+   "d_p95": 0.398,
+   "d_max": 0.574,
+   "ok": true,
+   "piece": "P0010",
+   "gemea": "P0026",
+   "celula": [
+    1,
+    14
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.13,
+   "rms_cantos_mm": 0.192,
+   "d_mean": 0.102,
+   "d_p95": 0.252,
+   "d_max": 0.407,
+   "ok": true,
+   "piece": "P0011",
+   "gemea": "P0035",
+   "celula": [
+    1,
+    15
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.125,
+   "rms_cantos_mm": 0.064,
+   "d_mean": 0.09,
+   "d_p95": 0.245,
+   "d_max": 0.647,
+   "ok": true,
+   "piece": "P0012",
+   "gemea": "P0034",
+   "celula": [
+    1,
+    16
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.172,
+   "rms_cantos_mm": 0.183,
+   "d_mean": 0.137,
+   "d_p95": 0.355,
+   "d_max": 0.571,
+   "ok": true,
+   "piece": "P0013",
+   "gemea": "P0033",
+   "celula": [
+    1,
+    17
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.227,
+   "rms_cantos_mm": 0.752,
+   "d_mean": 0.192,
+   "d_p95": 0.393,
+   "d_max": 0.757,
+   "ok": true,
+   "piece": "P0014",
+   "gemea": "P0032",
+   "celula": [
+    1,
+    18
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.22,
+   "rms_cantos_mm": 0.366,
+   "d_mean": 0.182,
+   "d_p95": 0.378,
+   "d_max": 0.904,
+   "ok": true,
+   "piece": "P0015",
+   "gemea": "P0031",
+   "celula": [
+    1,
+    19
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.132,
+   "rms_cantos_mm": 0.085,
+   "d_mean": 0.107,
+   "d_p95": 0.249,
+   "d_max": 0.438,
+   "ok": true,
+   "piece": "P0016",
+   "gemea": "P0040",
+   "celula": [
+    1,
+    20
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.124,
+   "rms_cantos_mm": 0.337,
+   "d_mean": 0.099,
+   "d_p95": 0.224,
+   "d_max": 0.476,
+   "ok": true,
+   "piece": "P0017",
+   "gemea": "P0039",
+   "celula": [
+    1,
+    21
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.161,
+   "rms_cantos_mm": 0.236,
+   "d_mean": 0.132,
+   "d_p95": 0.295,
+   "d_max": 0.466,
+   "ok": true,
+   "piece": "P0018",
+   "gemea": "P0038",
+   "celula": [
+    1,
+    22
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.213,
+   "rms_cantos_mm": 0.223,
+   "d_mean": 0.166,
+   "d_p95": 0.336,
+   "d_max": 1.11,
+   "ok": true,
+   "piece": "P0019",
+   "gemea": "P0037",
+   "celula": [
+    1,
+    23
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.202,
+   "rms_cantos_mm": 0.516,
+   "d_mean": 0.16,
+   "d_p95": 0.354,
+   "d_max": 0.826,
+   "ok": true,
+   "piece": "P0020",
+   "gemea": "P0036",
+   "celula": [
+    1,
+    24
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.19,
+   "rms_cantos_mm": 0.358,
+   "d_mean": 0.155,
+   "d_p95": 0.336,
+   "d_max": 0.738,
+   "ok": true,
+   "piece": "P0043",
+   "gemea": "P0909",
+   "celula": [
+    45,
+    6
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.343,
+   "rms_cantos_mm": 0.54,
+   "d_mean": 0.284,
+   "d_p95": 0.604,
+   "d_max": 0.904,
+   "ok": true,
+   "piece": "P0048",
+   "gemea": "P0933",
+   "celula": [
+    46,
+    5
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.275,
+   "rms_cantos_mm": 0.414,
+   "d_mean": 0.236,
+   "d_p95": 0.489,
+   "d_max": 0.722,
+   "ok": true,
+   "piece": "P0052",
+   "gemea": "P0147",
+   "celula": [
+    46,
+    4
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.198,
+   "rms_cantos_mm": 0.262,
+   "d_mean": 0.153,
+   "d_p95": 0.356,
+   "d_max": 0.802,
+   "ok": true,
+   "piece": "P0060",
+   "gemea": "P0923",
+   "celula": [
+    43,
+    2
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.362,
+   "rms_cantos_mm": 0.41,
+   "d_mean": 0.273,
+   "d_p95": 0.767,
+   "d_max": 1.313,
+   "ok": true,
+   "piece": "P0066",
+   "gemea": "P0832",
+   "celula": [
+    42,
+    63
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.21,
+   "rms_cantos_mm": 0.435,
+   "d_mean": 0.174,
+   "d_p95": 0.378,
+   "d_max": 0.559,
+   "ok": true,
+   "piece": "P0067",
+   "gemea": "P0831",
+   "celula": [
+    43,
+    63
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.232,
+   "rms_cantos_mm": 0.47,
+   "d_mean": 0.195,
+   "d_p95": 0.399,
+   "d_max": 0.647,
+   "ok": true,
+   "piece": "P0068",
+   "gemea": "P0830",
+   "celula": [
+    44,
+    63
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.182,
+   "rms_cantos_mm": 0.349,
+   "d_mean": 0.139,
+   "d_p95": 0.329,
+   "d_max": 0.696,
+   "ok": true,
+   "piece": "P0069",
+   "gemea": "P0829",
+   "celula": [
+    45,
+    63
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.219,
+   "rms_cantos_mm": 0.434,
+   "d_mean": 0.181,
+   "d_p95": 0.423,
+   "d_max": 0.664,
+   "ok": true,
+   "piece": "P0070",
+   "gemea": "P0828",
+   "celula": [
+    46,
+    63
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.21,
+   "rms_cantos_mm": 0.483,
+   "d_mean": 0.175,
+   "d_p95": 0.381,
+   "d_max": 0.532,
+   "ok": true,
+   "piece": "P0072",
+   "gemea": "P0824",
+   "celula": [
+    43,
+    62
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.222,
+   "rms_cantos_mm": 0.498,
+   "d_mean": 0.182,
+   "d_p95": 0.419,
+   "d_max": 0.517,
+   "ok": true,
+   "piece": "P0073",
+   "gemea": "P0823",
+   "celula": [
+    44,
+    62
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.202,
+   "rms_cantos_mm": 0.433,
+   "d_mean": 0.166,
+   "d_p95": 0.374,
+   "d_max": 0.547,
+   "ok": true,
+   "piece": "P0074",
+   "gemea": "P0822",
+   "celula": [
+    45,
+    62
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.18,
+   "rms_cantos_mm": 0.391,
+   "d_mean": 0.145,
+   "d_p95": 0.35,
+   "d_max": 0.52,
+   "ok": true,
+   "piece": "P0075",
+   "gemea": "P0821",
+   "celula": [
+    46,
+    62
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.19,
+   "rms_cantos_mm": 0.236,
+   "d_mean": 0.151,
+   "d_p95": 0.365,
+   "d_max": 0.576,
+   "ok": true,
+   "piece": "P0076",
+   "gemea": "P0819",
+   "celula": [
+    42,
+    61
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.221,
+   "rms_cantos_mm": 0.532,
+   "d_mean": 0.17,
+   "d_p95": 0.454,
+   "d_max": 0.899,
+   "ok": true,
+   "piece": "P0077",
+   "gemea": "P0818",
+   "celula": [
+    43,
+    61
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.222,
+   "rms_cantos_mm": 0.441,
+   "d_mean": 0.182,
+   "d_p95": 0.479,
+   "d_max": 0.669,
+   "ok": true,
+   "piece": "P0078",
+   "gemea": "P0817",
+   "celula": [
+    44,
+    61
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.2,
+   "rms_cantos_mm": 0.403,
+   "d_mean": 0.163,
+   "d_p95": 0.391,
+   "d_max": 0.526,
+   "ok": true,
+   "piece": "P0079",
+   "gemea": "P0816",
+   "celula": [
+    45,
+    61
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.194,
+   "rms_cantos_mm": 0.393,
+   "d_mean": 0.16,
+   "d_p95": 0.382,
+   "d_max": 0.488,
+   "ok": true,
+   "piece": "P0080",
+   "gemea": "P0815",
+   "celula": [
+    46,
+    61
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.191,
+   "rms_cantos_mm": 0.276,
+   "d_mean": 0.15,
+   "d_p95": 0.375,
+   "d_max": 0.483,
+   "ok": true,
+   "piece": "P0081",
+   "gemea": "P0813",
+   "celula": [
+    42,
+    60
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.223,
+   "rms_cantos_mm": 0.527,
+   "d_mean": 0.181,
+   "d_p95": 0.446,
+   "d_max": 0.61,
+   "ok": true,
+   "piece": "P0082",
+   "gemea": "P0812",
+   "celula": [
+    43,
+    60
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.279,
+   "rms_cantos_mm": 0.672,
+   "d_mean": 0.228,
+   "d_p95": 0.494,
+   "d_max": 0.718,
+   "ok": true,
+   "piece": "P0083",
+   "gemea": "P0811",
+   "celula": [
+    44,
+    60
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.162,
+   "rms_cantos_mm": 0.398,
+   "d_mean": 0.124,
+   "d_p95": 0.339,
+   "d_max": 0.498,
+   "ok": true,
+   "piece": "P0084",
+   "gemea": "P0810",
+   "celula": [
+    45,
+    60
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.259,
+   "rms_cantos_mm": 0.443,
+   "d_mean": 0.221,
+   "d_p95": 0.456,
+   "d_max": 0.629,
+   "ok": true,
+   "piece": "P0085",
+   "gemea": "P0809",
+   "celula": [
+    46,
+    60
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.182,
+   "rms_cantos_mm": 0.442,
+   "d_mean": 0.149,
+   "d_p95": 0.336,
+   "d_max": 0.55,
+   "ok": true,
+   "piece": "P0086",
+   "gemea": "P0806",
+   "celula": [
+    43,
+    59
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.2,
+   "rms_cantos_mm": 0.381,
+   "d_mean": 0.167,
+   "d_p95": 0.348,
+   "d_max": 0.605,
+   "ok": true,
+   "piece": "P0087",
+   "gemea": "P0805",
+   "celula": [
+    44,
+    59
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.172,
+   "rms_cantos_mm": 0.216,
+   "d_mean": 0.138,
+   "d_p95": 0.328,
+   "d_max": 0.609,
+   "ok": true,
+   "piece": "P0088",
+   "gemea": "P0804",
+   "celula": [
+    45,
+    59
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.254,
+   "rms_cantos_mm": 0.637,
+   "d_mean": 0.213,
+   "d_p95": 0.471,
+   "d_max": 0.653,
+   "ok": true,
+   "piece": "P0089",
+   "gemea": "P0803",
+   "celula": [
+    46,
+    59
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.181,
+   "rms_cantos_mm": 0.385,
+   "d_mean": 0.149,
+   "d_p95": 0.329,
+   "d_max": 0.507,
+   "ok": true,
+   "piece": "P0090",
+   "gemea": "P0800",
+   "celula": [
+    43,
+    58
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.195,
+   "rms_cantos_mm": 0.49,
+   "d_mean": 0.154,
+   "d_p95": 0.376,
+   "d_max": 0.53,
+   "ok": true,
+   "piece": "P0091",
+   "gemea": "P0799",
+   "celula": [
+    44,
+    58
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.158,
+   "rms_cantos_mm": 0.258,
+   "d_mean": 0.125,
+   "d_p95": 0.326,
+   "d_max": 0.471,
+   "ok": true,
+   "piece": "P0092",
+   "gemea": "P0798",
+   "celula": [
+    45,
+    58
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.237,
+   "rms_cantos_mm": 0.426,
+   "d_mean": 0.194,
+   "d_p95": 0.428,
+   "d_max": 0.603,
+   "ok": true,
+   "piece": "P0093",
+   "gemea": "P0797",
+   "celula": [
+    46,
+    58
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.269,
+   "rms_cantos_mm": 0.33,
+   "d_mean": 0.212,
+   "d_p95": 0.539,
+   "d_max": 0.815,
+   "ok": true,
+   "piece": "P0094",
+   "gemea": "P0514",
+   "celula": [
+    3,
+    29
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.236,
+   "rms_cantos_mm": 0.498,
+   "d_mean": 0.18,
+   "d_p95": 0.422,
+   "d_max": 1.234,
+   "ok": true,
+   "piece": "P0095",
+   "gemea": "P0546",
+   "celula": [
+    4,
+    38
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.109,
+   "rms_cantos_mm": 0.067,
+   "d_mean": 0.081,
+   "d_p95": 0.223,
+   "d_max": 0.469,
+   "ok": true,
+   "piece": "P0100",
+   "gemea": "P0549",
+   "celula": [
+    3,
+    37
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.119,
+   "rms_cantos_mm": 0.157,
+   "d_mean": 0.091,
+   "d_p95": 0.243,
+   "d_max": 0.423,
+   "ok": true,
+   "piece": "P0104",
+   "gemea": "P0550",
+   "celula": [
+    4,
+    37
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.254,
+   "rms_cantos_mm": 0.502,
+   "d_mean": 0.202,
+   "d_p95": 0.466,
+   "d_max": 0.79,
+   "ok": true,
+   "piece": "P0106",
+   "gemea": "P0519",
+   "celula": [
+    3,
+    45
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.09,
+   "rms_cantos_mm": 0.166,
+   "d_mean": 0.07,
+   "d_p95": 0.178,
+   "d_max": 0.284,
+   "ok": true,
+   "piece": "P0119",
+   "gemea": "P0579",
+   "celula": [
+    2,
+    48
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.264,
+   "rms_cantos_mm": 0.449,
+   "d_mean": 0.196,
+   "d_p95": 0.527,
+   "d_max": 0.83,
+   "ok": true,
+   "piece": "P0120",
+   "gemea": "P0511",
+   "celula": [
+    2,
+    28
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.191,
+   "rms_cantos_mm": 0.422,
+   "d_mean": 0.151,
+   "d_p95": 0.349,
+   "d_max": 0.648,
+   "ok": true,
+   "piece": "P0126",
+   "gemea": "P0539",
+   "celula": [
+    4,
+    40
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.223,
+   "rms_cantos_mm": 0.46,
+   "d_mean": 0.178,
+   "d_p95": 0.413,
+   "d_max": 0.736,
+   "ok": true,
+   "piece": "P0129",
+   "gemea": "P0575",
+   "celula": [
+    2,
+    49
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.12,
+   "rms_cantos_mm": 0.254,
+   "d_mean": 0.093,
+   "d_p95": 0.226,
+   "d_max": 0.455,
+   "ok": true,
+   "piece": "P0131",
+   "gemea": "P0580",
+   "celula": [
+    3,
+    48
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.168,
+   "rms_cantos_mm": 0.279,
+   "d_mean": 0.13,
+   "d_p95": 0.313,
+   "d_max": 0.701,
+   "ok": true,
+   "piece": "P0133",
+   "gemea": "P0506",
+   "celula": [
+    3,
+    28
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.3,
+   "rms_cantos_mm": 0.844,
+   "d_mean": 0.26,
+   "d_p95": 0.52,
+   "d_max": 0.728,
+   "ok": true,
+   "piece": "P0135",
+   "gemea": "P0583",
+   "celula": [
+    3,
+    46
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.309,
+   "rms_cantos_mm": 0.537,
+   "d_mean": 0.254,
+   "d_p95": 0.558,
+   "d_max": 0.847,
+   "ok": true,
+   "piece": "P0137",
+   "gemea": "P0515",
+   "celula": [
+    4,
+    29
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.924,
+   "rms_cantos_mm": 0.385,
+   "d_mean": 0.519,
+   "d_p95": 2.094,
+   "d_max": 4.3,
+   "ok": true,
+   "piece": "P0140",
+   "gemea": "P0499",
+   "celula": [
+    4,
+    32
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.241,
+   "rms_cantos_mm": 0.602,
+   "d_mean": 0.18,
+   "d_p95": 0.468,
+   "d_max": 0.765,
+   "ok": true,
+   "piece": "P0142",
+   "gemea": "P0523",
+   "celula": [
+    4,
+    44
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.217,
+   "rms_cantos_mm": 0.33,
+   "d_mean": 0.178,
+   "d_p95": 0.399,
+   "d_max": 0.736,
+   "ok": true,
+   "piece": "P0143",
+   "gemea": "P0486",
+   "celula": [
+    3,
+    35
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.267,
+   "rms_cantos_mm": 0.275,
+   "d_mean": 0.215,
+   "d_p95": 0.517,
+   "d_max": 0.808,
+   "ok": true,
+   "piece": "P0144",
+   "gemea": "P0623",
+   "celula": [
+    2,
+    56
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.253,
+   "rms_cantos_mm": 0.331,
+   "d_mean": 0.199,
+   "d_p95": 0.499,
+   "d_max": 0.829,
+   "ok": true,
+   "piece": "P0157",
+   "gemea": "P0585",
+   "celula": [
+    2,
+    47
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.271,
+   "rms_cantos_mm": 0.341,
+   "d_mean": 0.219,
+   "d_p95": 0.498,
+   "d_max": 0.787,
+   "ok": true,
+   "piece": "P0162",
+   "gemea": "P0561",
+   "celula": [
+    3,
+    52
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.276,
+   "rms_cantos_mm": 0.435,
+   "d_mean": 0.217,
+   "d_p95": 0.528,
+   "d_max": 0.829,
+   "ok": true,
+   "piece": "P0163",
+   "gemea": "P0501",
+   "celula": [
+    4,
+    28
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.108,
+   "rms_cantos_mm": 0.298,
+   "d_mean": 0.089,
+   "d_p95": 0.196,
+   "d_max": 0.259,
+   "ok": true,
+   "piece": "P0169",
+   "gemea": "P0569",
+   "celula": [
+    2,
+    50
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.277,
+   "rms_cantos_mm": 0.284,
+   "d_mean": 0.223,
+   "d_p95": 0.524,
+   "d_max": 0.835,
+   "ok": true,
+   "piece": "P0176",
+   "gemea": "P0558",
+   "celula": [
+    4,
+    53
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.235,
+   "rms_cantos_mm": 0.56,
+   "d_mean": 0.179,
+   "d_p95": 0.45,
+   "d_max": 0.627,
+   "ok": true,
+   "piece": "P0177",
+   "gemea": "P0548",
+   "celula": [
+    2,
+    37
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.136,
+   "rms_cantos_mm": 0.258,
+   "d_mean": 0.107,
+   "d_p95": 0.282,
+   "d_max": 0.411,
+   "ok": true,
+   "piece": "P0189",
+   "gemea": "P0616",
+   "celula": [
+    4,
+    55
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.23,
+   "rms_cantos_mm": 0.541,
+   "d_mean": 0.176,
+   "d_p95": 0.444,
+   "d_max": 0.799,
+   "ok": true,
+   "piece": "P0196",
+   "gemea": "P0632",
+   "celula": [
+    14,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.174,
+   "rms_cantos_mm": 0.226,
+   "d_mean": 0.133,
+   "d_p95": 0.333,
+   "d_max": 0.607,
+   "ok": true,
+   "piece": "P0197",
+   "gemea": "P0631",
+   "celula": [
+    21,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.176,
+   "rms_cantos_mm": 0.304,
+   "d_mean": 0.142,
+   "d_p95": 0.332,
+   "d_max": 0.507,
+   "ok": true,
+   "piece": "P0198",
+   "gemea": "P0630",
+   "celula": [
+    28,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.21,
+   "rms_cantos_mm": 0.591,
+   "d_mean": 0.162,
+   "d_p95": 0.395,
+   "d_max": 0.782,
+   "ok": true,
+   "piece": "P0199",
+   "gemea": "P0629",
+   "celula": [
+    35,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.204,
+   "rms_cantos_mm": 0.688,
+   "d_mean": 0.165,
+   "d_p95": 0.39,
+   "d_max": 0.645,
+   "ok": true,
+   "piece": "P0200",
+   "gemea": "P0633",
+   "celula": [
+    7,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.21,
+   "rms_cantos_mm": 0.292,
+   "d_mean": 0.161,
+   "d_p95": 0.422,
+   "d_max": 0.693,
+   "ok": true,
+   "piece": "P0201",
+   "gemea": "P0665",
+   "celula": [
+    15,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.193,
+   "rms_cantos_mm": 0.334,
+   "d_mean": 0.142,
+   "d_p95": 0.417,
+   "d_max": 0.738,
+   "ok": true,
+   "piece": "P0202",
+   "gemea": "P0664",
+   "celula": [
+    22,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.164,
+   "rms_cantos_mm": 0.351,
+   "d_mean": 0.134,
+   "d_p95": 0.301,
+   "d_max": 0.51,
+   "ok": true,
+   "piece": "P0203",
+   "gemea": "P0661",
+   "celula": [
+    29,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.21,
+   "rms_cantos_mm": 0.334,
+   "d_mean": 0.172,
+   "d_p95": 0.377,
+   "d_max": 0.648,
+   "ok": true,
+   "piece": "P0204",
+   "gemea": "P0659",
+   "celula": [
+    36,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.185,
+   "rms_cantos_mm": 0.523,
+   "d_mean": 0.147,
+   "d_p95": 0.354,
+   "d_max": 0.48,
+   "ok": true,
+   "piece": "P0205",
+   "gemea": "P0668",
+   "celula": [
+    8,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.165,
+   "rms_cantos_mm": 0.14,
+   "d_mean": 0.125,
+   "d_p95": 0.332,
+   "d_max": 0.678,
+   "ok": true,
+   "piece": "P0206",
+   "gemea": "P0666",
+   "celula": [
+    16,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.209,
+   "rms_cantos_mm": 0.281,
+   "d_mean": 0.159,
+   "d_p95": 0.418,
+   "d_max": 0.711,
+   "ok": true,
+   "piece": "P0207",
+   "gemea": "P0663",
+   "celula": [
+    23,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.142,
+   "rms_cantos_mm": 0.335,
+   "d_mean": 0.111,
+   "d_p95": 0.255,
+   "d_max": 0.585,
+   "ok": true,
+   "piece": "P0208",
+   "gemea": "P0662",
+   "celula": [
+    30,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.185,
+   "rms_cantos_mm": 0.317,
+   "d_mean": 0.148,
+   "d_p95": 0.325,
+   "d_max": 0.598,
+   "ok": true,
+   "piece": "P0209",
+   "gemea": "P0658",
+   "celula": [
+    37,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.18,
+   "rms_cantos_mm": 0.477,
+   "d_mean": 0.143,
+   "d_p95": 0.351,
+   "d_max": 0.557,
+   "ok": true,
+   "piece": "P0210",
+   "gemea": "P0667",
+   "celula": [
+    9,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.319,
+   "rms_cantos_mm": 0.347,
+   "d_mean": 0.211,
+   "d_p95": 0.985,
+   "d_max": 1.104,
+   "ok": true,
+   "piece": "P0211",
+   "gemea": "P0655",
+   "celula": [
+    17,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.178,
+   "rms_cantos_mm": 0.247,
+   "d_mean": 0.146,
+   "d_p95": 0.347,
+   "d_max": 0.576,
+   "ok": true,
+   "piece": "P0212",
+   "gemea": "P0654",
+   "celula": [
+    24,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.164,
+   "rms_cantos_mm": 0.499,
+   "d_mean": 0.13,
+   "d_p95": 0.297,
+   "d_max": 0.461,
+   "ok": true,
+   "piece": "P0213",
+   "gemea": "P0653",
+   "celula": [
+    31,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.203,
+   "rms_cantos_mm": 0.265,
+   "d_mean": 0.166,
+   "d_p95": 0.376,
+   "d_max": 0.527,
+   "ok": true,
+   "piece": "P0214",
+   "gemea": "P0652",
+   "celula": [
+    38,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.19,
+   "rms_cantos_mm": 0.376,
+   "d_mean": 0.159,
+   "d_p95": 0.325,
+   "d_max": 0.456,
+   "ok": true,
+   "piece": "P0215",
+   "gemea": "P0656",
+   "celula": [
+    10,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.318,
+   "rms_cantos_mm": 0.591,
+   "d_mean": 0.231,
+   "d_p95": 0.831,
+   "d_max": 1.005,
+   "ok": true,
+   "piece": "P0216",
+   "gemea": "P0649",
+   "celula": [
+    18,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.231,
+   "rms_cantos_mm": 0.56,
+   "d_mean": 0.152,
+   "d_p95": 0.352,
+   "d_max": 1.458,
+   "ok": true,
+   "piece": "P0217",
+   "gemea": "P0648",
+   "celula": [
+    25,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.172,
+   "rms_cantos_mm": 0.228,
+   "d_mean": 0.129,
+   "d_p95": 0.343,
+   "d_max": 0.624,
+   "ok": true,
+   "piece": "P0218",
+   "gemea": "P0647",
+   "celula": [
+    32,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.18,
+   "rms_cantos_mm": 0.376,
+   "d_mean": 0.144,
+   "d_p95": 0.346,
+   "d_max": 0.49,
+   "ok": true,
+   "piece": "P0219",
+   "gemea": "P0646",
+   "celula": [
+    39,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.169,
+   "rms_cantos_mm": 0.315,
+   "d_mean": 0.137,
+   "d_p95": 0.307,
+   "d_max": 0.486,
+   "ok": true,
+   "piece": "P0220",
+   "gemea": "P0650",
+   "celula": [
+    11,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.21,
+   "rms_cantos_mm": 0.912,
+   "d_mean": 0.126,
+   "d_p95": 0.417,
+   "d_max": 1.351,
+   "ok": true,
+   "piece": "P0221",
+   "gemea": "P0643",
+   "celula": [
+    19,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.173,
+   "rms_cantos_mm": 0.408,
+   "d_mean": 0.139,
+   "d_p95": 0.309,
+   "d_max": 0.57,
+   "ok": true,
+   "piece": "P0222",
+   "gemea": "P0642",
+   "celula": [
+    26,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.295,
+   "rms_cantos_mm": 0.439,
+   "d_mean": 0.206,
+   "d_p95": 0.664,
+   "d_max": 1.113,
+   "ok": true,
+   "piece": "P0223",
+   "gemea": "P0641",
+   "celula": [
+    33,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.17,
+   "rms_cantos_mm": 0.244,
+   "d_mean": 0.13,
+   "d_p95": 0.339,
+   "d_max": 0.495,
+   "ok": true,
+   "piece": "P0224",
+   "gemea": "P0640",
+   "celula": [
+    40,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.18,
+   "rms_cantos_mm": 0.542,
+   "d_mean": 0.146,
+   "d_p95": 0.328,
+   "d_max": 0.493,
+   "ok": true,
+   "piece": "P0225",
+   "gemea": "P0644",
+   "celula": [
+    12,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.283,
+   "rms_cantos_mm": 0.6,
+   "d_mean": 0.202,
+   "d_p95": 0.457,
+   "d_max": 1.328,
+   "ok": true,
+   "piece": "P0226",
+   "gemea": "P0637",
+   "celula": [
+    20,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.164,
+   "rms_cantos_mm": 0.319,
+   "d_mean": 0.133,
+   "d_p95": 0.291,
+   "d_max": 0.57,
+   "ok": true,
+   "piece": "P0227",
+   "gemea": "P0636",
+   "celula": [
+    27,
+    64
+   ],
+   "zona": "montanha",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.296,
+   "rms_cantos_mm": 0.295,
+   "d_mean": 0.199,
+   "d_p95": 0.691,
+   "d_max": 1.238,
+   "ok": true,
+   "piece": "P0228",
+   "gemea": "P0635",
+   "celula": [
+    34,
+    64
+   ],
+   "zona": "vale",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.143,
+   "rms_cantos_mm": 0.289,
+   "d_mean": 0.117,
+   "d_p95": 0.26,
+   "d_max": 0.377,
+   "ok": true,
+   "piece": "P0229",
+   "gemea": "P0634",
+   "celula": [
+    41,
+    64
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.213,
+   "rms_cantos_mm": 0.472,
+   "d_mean": 0.179,
+   "d_p95": 0.377,
+   "d_max": 0.604,
+   "ok": true,
+   "piece": "P0230",
+   "gemea": "P0638",
+   "celula": [
+    13,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.232,
+   "rms_cantos_mm": 0.527,
+   "d_mean": 0.169,
+   "d_p95": 0.498,
+   "d_max": 0.672,
+   "ok": true,
+   "piece": "P0231",
+   "gemea": "P0639",
+   "celula": [
+    6,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.253,
+   "rms_cantos_mm": 0.502,
+   "d_mean": 0.191,
+   "d_p95": 0.505,
+   "d_max": 0.782,
+   "ok": true,
+   "piece": "P0232",
+   "gemea": "P0645",
+   "celula": [
+    5,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.297,
+   "rms_cantos_mm": 0.382,
+   "d_mean": 0.208,
+   "d_p95": 0.59,
+   "d_max": 1.465,
+   "ok": true,
+   "piece": "P0233",
+   "gemea": "P0651",
+   "celula": [
+    4,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.242,
+   "rms_cantos_mm": 0.405,
+   "d_mean": 0.184,
+   "d_p95": 0.485,
+   "d_max": 0.726,
+   "ok": true,
+   "piece": "P0234",
+   "gemea": "P0657",
+   "celula": [
+    3,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.294,
+   "rms_cantos_mm": 0.53,
+   "d_mean": 0.225,
+   "d_p95": 0.579,
+   "d_max": 0.997,
+   "ok": true,
+   "piece": "P0235",
+   "gemea": "P0669",
+   "celula": [
+    2,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.268,
+   "rms_cantos_mm": 0.537,
+   "d_mean": 0.196,
+   "d_p95": 0.515,
+   "d_max": 1.06,
+   "ok": true,
+   "piece": "P0236",
+   "gemea": "P0670",
+   "celula": [
+    1,
+    64
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.138,
+   "rms_cantos_mm": 0.094,
+   "d_mean": 0.097,
+   "d_p95": 0.235,
+   "d_max": 0.74,
+   "ok": true,
+   "piece": "P0237",
+   "gemea": "P0517",
+   "celula": [
+    1,
+    45
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.1,
+   "rms_cantos_mm": 0.115,
+   "d_mean": 0.076,
+   "d_p95": 0.173,
+   "d_max": 0.372,
+   "ok": true,
+   "piece": "P0238",
+   "gemea": "P0518",
+   "celula": [
+    2,
+    45
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.13,
+   "rms_cantos_mm": 0.214,
+   "d_mean": 0.1,
+   "d_p95": 0.276,
+   "d_max": 0.409,
+   "ok": true,
+   "piece": "P0239",
+   "gemea": "P0551",
+   "celula": [
+    1,
+    54
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.224,
+   "rms_cantos_mm": 0.365,
+   "d_mean": 0.184,
+   "d_p95": 0.385,
+   "d_max": 0.584,
+   "ok": true,
+   "piece": "P0240",
+   "gemea": "P0590",
+   "celula": [
+    1,
+    63
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.109,
+   "rms_cantos_mm": 0.084,
+   "d_mean": 0.086,
+   "d_p95": 0.204,
+   "d_max": 0.315,
+   "ok": true,
+   "piece": "P0241",
+   "gemea": "P0520",
+   "celula": [
+    1,
+    44
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.113,
+   "rms_cantos_mm": 0.212,
+   "d_mean": 0.081,
+   "d_p95": 0.201,
+   "d_max": 0.729,
+   "ok": true,
+   "piece": "P0242",
+   "gemea": "P0521",
+   "celula": [
+    2,
+    44
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.111,
+   "rms_cantos_mm": 0.181,
+   "d_mean": 0.087,
+   "d_p95": 0.223,
+   "d_max": 0.403,
+   "ok": true,
+   "piece": "P0243",
+   "gemea": "P0555",
+   "celula": [
+    1,
+    53
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.181,
+   "rms_cantos_mm": 0.149,
+   "d_mean": 0.112,
+   "d_p95": 0.285,
+   "d_max": 1.24,
+   "ok": true,
+   "piece": "P0244",
+   "gemea": "P0556",
+   "celula": [
+    2,
+    53
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.151,
+   "rms_cantos_mm": 0.186,
+   "d_mean": 0.124,
+   "d_p95": 0.29,
+   "d_max": 0.473,
+   "ok": true,
+   "piece": "P0245",
+   "gemea": "P0595",
+   "celula": [
+    1,
+    62
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.118,
+   "rms_cantos_mm": 0.577,
+   "d_mean": 0.096,
+   "d_p95": 0.243,
+   "d_max": 0.424,
+   "ok": true,
+   "piece": "P0247",
+   "gemea": "P0524",
+   "celula": [
+    1,
+    43
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.105,
+   "rms_cantos_mm": 0.205,
+   "d_mean": 0.086,
+   "d_p95": 0.188,
+   "d_max": 0.351,
+   "ok": true,
+   "piece": "P0248",
+   "gemea": "P0525",
+   "celula": [
+    2,
+    43
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.117,
+   "rms_cantos_mm": 0.264,
+   "d_mean": 0.092,
+   "d_p95": 0.223,
+   "d_max": 0.389,
+   "ok": true,
+   "piece": "P0249",
+   "gemea": "P0559",
+   "celula": [
+    1,
+    52
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.139,
+   "rms_cantos_mm": 0.15,
+   "d_mean": 0.112,
+   "d_p95": 0.275,
+   "d_max": 0.399,
+   "ok": true,
+   "piece": "P0250",
+   "gemea": "P0560",
+   "celula": [
+    2,
+    52
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.231,
+   "rms_cantos_mm": 0.593,
+   "d_mean": 0.187,
+   "d_p95": 0.45,
+   "d_max": 0.531,
+   "ok": true,
+   "piece": "P0251",
+   "gemea": "P0600",
+   "celula": [
+    1,
+    61
+   ],
+   "zona": "ceu",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.149,
+   "rms_cantos_mm": 0.228,
+   "d_mean": 0.113,
+   "d_p95": 0.272,
+   "d_max": 0.63,
+   "ok": true,
+   "piece": "P0252",
+   "gemea": "P0528",
+   "celula": [
+    1,
+    42
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.116,
+   "rms_cantos_mm": 0.123,
+   "d_mean": 0.089,
+   "d_p95": 0.233,
+   "d_max": 0.396,
+   "ok": true,
+   "piece": "P0253",
+   "gemea": "P0529",
+   "celula": [
+    2,
+    42
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.132,
+   "rms_cantos_mm": 0.289,
+   "d_mean": 0.108,
+   "d_p95": 0.258,
+   "d_max": 0.371,
+   "ok": true,
+   "piece": "P0254",
+   "gemea": "P0530",
+   "celula": [
+    3,
+    42
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.122,
+   "rms_cantos_mm": 0.148,
+   "d_mean": 0.097,
+   "d_p95": 0.223,
+   "d_max": 0.509,
+   "ok": true,
+   "piece": "P0255",
+   "gemea": "P0564",
+   "celula": [
+    1,
+    51
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.125,
+   "rms_cantos_mm": 0.097,
+   "d_mean": 0.1,
+   "d_p95": 0.249,
+   "d_max": 0.382,
+   "ok": true,
+   "piece": "P0256",
+   "gemea": "P0565",
+   "celula": [
+    2,
+    51
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.197,
+   "rms_cantos_mm": 0.504,
+   "d_mean": 0.158,
+   "d_p95": 0.399,
+   "d_max": 0.54,
+   "ok": true,
+   "piece": "P0257",
+   "gemea": "P0605",
+   "celula": [
+    1,
+    60
+   ],
+   "zona": "ceu",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.146,
+   "rms_cantos_mm": 0.092,
+   "d_mean": 0.115,
+   "d_p95": 0.31,
+   "d_max": 0.453,
+   "ok": true,
+   "piece": "P0258",
+   "gemea": "P0532",
+   "celula": [
+    1,
+    41
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.108,
+   "rms_cantos_mm": 0.404,
+   "d_mean": 0.085,
+   "d_p95": 0.202,
+   "d_max": 0.345,
+   "ok": true,
+   "piece": "P0259",
+   "gemea": "P0533",
+   "celula": [
+    2,
+    41
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.104,
+   "rms_cantos_mm": 0.127,
+   "d_mean": 0.081,
+   "d_p95": 0.207,
+   "d_max": 0.332,
+   "ok": true,
+   "piece": "P0260",
+   "gemea": "P0534",
+   "celula": [
+    3,
+    41
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.126,
+   "rms_cantos_mm": 0.125,
+   "d_mean": 0.105,
+   "d_p95": 0.245,
+   "d_max": 0.324,
+   "ok": true,
+   "piece": "P0261",
+   "gemea": "P0568",
+   "celula": [
+    1,
+    50
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.139,
+   "rms_cantos_mm": 0.295,
+   "d_mean": 0.112,
+   "d_p95": 0.257,
+   "d_max": 0.466,
+   "ok": true,
+   "piece": "P0262",
+   "gemea": "P0610",
+   "celula": [
+    1,
+    59
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.123,
+   "rms_cantos_mm": 0.598,
+   "d_mean": 0.094,
+   "d_p95": 0.242,
+   "d_max": 0.58,
+   "ok": true,
+   "piece": "P0263",
+   "gemea": "P0536",
+   "celula": [
+    1,
+    40
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.122,
+   "rms_cantos_mm": 0.213,
+   "d_mean": 0.093,
+   "d_p95": 0.246,
+   "d_max": 0.435,
+   "ok": true,
+   "piece": "P0264",
+   "gemea": "P0574",
+   "celula": [
+    1,
+    49
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.13,
+   "rms_cantos_mm": 0.53,
+   "d_mean": 0.105,
+   "d_p95": 0.235,
+   "d_max": 0.387,
+   "ok": true,
+   "piece": "P0265",
+   "gemea": "P0613",
+   "celula": [
+    1,
+    58
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.148,
+   "rms_cantos_mm": 0.412,
+   "d_mean": 0.12,
+   "d_p95": 0.262,
+   "d_max": 0.355,
+   "ok": true,
+   "piece": "P0266",
+   "gemea": "P0540",
+   "celula": [
+    1,
+    39
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.105,
+   "rms_cantos_mm": 0.231,
+   "d_mean": 0.083,
+   "d_p95": 0.194,
+   "d_max": 0.453,
+   "ok": true,
+   "piece": "P0267",
+   "gemea": "P0537",
+   "celula": [
+    2,
+    40
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.127,
+   "rms_cantos_mm": 0.108,
+   "d_mean": 0.1,
+   "d_p95": 0.257,
+   "d_max": 0.445,
+   "ok": true,
+   "piece": "P0268",
+   "gemea": "P0538",
+   "celula": [
+    3,
+    40
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.139,
+   "rms_cantos_mm": 0.444,
+   "d_mean": 0.112,
+   "d_p95": 0.261,
+   "d_max": 0.4,
+   "ok": true,
+   "piece": "P0269",
+   "gemea": "P0578",
+   "celula": [
+    1,
+    48
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.23,
+   "rms_cantos_mm": 0.714,
+   "d_mean": 0.186,
+   "d_p95": 0.423,
+   "d_max": 0.647,
+   "ok": true,
+   "piece": "P0270",
+   "gemea": "P0617",
+   "celula": [
+    1,
+    57
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.129,
+   "rms_cantos_mm": 0.417,
+   "d_mean": 0.097,
+   "d_p95": 0.257,
+   "d_max": 0.408,
+   "ok": true,
+   "piece": "P0271",
+   "gemea": "P0618",
+   "celula": [
+    2,
+    57
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.139,
+   "rms_cantos_mm": 0.147,
+   "d_mean": 0.107,
+   "d_p95": 0.281,
+   "d_max": 0.504,
+   "ok": true,
+   "piece": "P0272",
+   "gemea": "P0543",
+   "celula": [
+    1,
+    38
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.122,
+   "rms_cantos_mm": 0.167,
+   "d_mean": 0.097,
+   "d_p95": 0.249,
+   "d_max": 0.363,
+   "ok": true,
+   "piece": "P0273",
+   "gemea": "P0541",
+   "celula": [
+    2,
+    39
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.13,
+   "rms_cantos_mm": 0.247,
+   "d_mean": 0.106,
+   "d_p95": 0.241,
+   "d_max": 0.475,
+   "ok": true,
+   "piece": "P0274",
+   "gemea": "P0542",
+   "celula": [
+    3,
+    39
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.123,
+   "rms_cantos_mm": 0.243,
+   "d_mean": 0.096,
+   "d_p95": 0.234,
+   "d_max": 0.407,
+   "ok": true,
+   "piece": "P0275",
+   "gemea": "P0584",
+   "celula": [
+    1,
+    47
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.222,
+   "rms_cantos_mm": 0.632,
+   "d_mean": 0.182,
+   "d_p95": 0.417,
+   "d_max": 0.662,
+   "ok": true,
+   "piece": "P0276",
+   "gemea": "P0622",
+   "celula": [
+    1,
+    56
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.121,
+   "rms_cantos_mm": 0.326,
+   "d_mean": 0.096,
+   "d_p95": 0.227,
+   "d_max": 0.411,
+   "ok": true,
+   "piece": "P0277",
+   "gemea": "P0547",
+   "celula": [
+    1,
+    37
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.136,
+   "rms_cantos_mm": 0.224,
+   "d_mean": 0.108,
+   "d_p95": 0.276,
+   "d_max": 0.411,
+   "ok": true,
+   "piece": "P0278",
+   "gemea": "P0544",
+   "celula": [
+    2,
+    38
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.147,
+   "rms_cantos_mm": 0.041,
+   "d_mean": 0.123,
+   "d_p95": 0.274,
+   "d_max": 0.404,
+   "ok": true,
+   "piece": "P0279",
+   "gemea": "P0545",
+   "celula": [
+    3,
+    38
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.233,
+   "rms_cantos_mm": 0.647,
+   "d_mean": 0.168,
+   "d_p95": 0.486,
+   "d_max": 0.666,
+   "ok": true,
+   "piece": "P0280",
+   "gemea": "P0589",
+   "celula": [
+    1,
+    46
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.302,
+   "rms_cantos_mm": 0.649,
+   "d_mean": 0.236,
+   "d_p95": 0.581,
+   "d_max": 0.869,
+   "ok": true,
+   "piece": "P0281",
+   "gemea": "P0588",
+   "celula": [
+    2,
+    46
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.25,
+   "rms_cantos_mm": 0.495,
+   "d_mean": 0.197,
+   "d_p95": 0.483,
+   "d_max": 0.713,
+   "ok": true,
+   "piece": "P0282",
+   "gemea": "P0627",
+   "celula": [
+    1,
+    55
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.153,
+   "rms_cantos_mm": 0.173,
+   "d_mean": 0.126,
+   "d_p95": 0.276,
+   "d_max": 0.365,
+   "ok": true,
+   "piece": "P0283",
+   "gemea": "P0480",
+   "celula": [
+    1,
+    36
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.183,
+   "rms_cantos_mm": 0.677,
+   "d_mean": 0.138,
+   "d_p95": 0.357,
+   "d_max": 0.73,
+   "ok": true,
+   "piece": "P0284",
+   "gemea": "P0484",
+   "celula": [
+    1,
+    35
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.131,
+   "rms_cantos_mm": 0.297,
+   "d_mean": 0.101,
+   "d_p95": 0.253,
+   "d_max": 0.477,
+   "ok": true,
+   "piece": "P0285",
+   "gemea": "P0485",
+   "celula": [
+    2,
+    35
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.134,
+   "rms_cantos_mm": 0.461,
+   "d_mean": 0.107,
+   "d_p95": 0.261,
+   "d_max": 0.496,
+   "ok": true,
+   "piece": "P0286",
+   "gemea": "P0488",
+   "celula": [
+    1,
+    34
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.22,
+   "rms_cantos_mm": 0.428,
+   "d_mean": 0.178,
+   "d_p95": 0.427,
+   "d_max": 0.656,
+   "ok": true,
+   "piece": "P0287",
+   "gemea": "P0489",
+   "celula": [
+    2,
+    34
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.143,
+   "rms_cantos_mm": 0.062,
+   "d_mean": 0.107,
+   "d_p95": 0.27,
+   "d_max": 0.665,
+   "ok": true,
+   "piece": "P0288",
+   "gemea": "P0490",
+   "celula": [
+    3,
+    34
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 1.227,
+   "rms_cantos_mm": 0.622,
+   "d_mean": 0.938,
+   "d_p95": 2.465,
+   "d_max": 3.832,
+   "ok": true,
+   "piece": "P0289",
+   "gemea": "P0492",
+   "celula": [
+    1,
+    33
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 1.109,
+   "rms_cantos_mm": 0.288,
+   "d_mean": 0.635,
+   "d_p95": 2.778,
+   "d_max": 4.924,
+   "ok": true,
+   "piece": "P0290",
+   "gemea": "P0493",
+   "celula": [
+    2,
+    33
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 1.226,
+   "rms_cantos_mm": 1.135,
+   "d_mean": 0.809,
+   "d_p95": 3.128,
+   "d_max": 4.577,
+   "ok": true,
+   "piece": "P0291",
+   "gemea": "P0494",
+   "celula": [
+    3,
+    33
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 1.68,
+   "rms_cantos_mm": 0.398,
+   "d_mean": 1.064,
+   "d_p95": 4.457,
+   "d_max": 5.981,
+   "ok": true,
+   "piece": "P0292",
+   "gemea": "P0496",
+   "celula": [
+    1,
+    32
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 1.106,
+   "rms_cantos_mm": 0.383,
+   "d_mean": 0.624,
+   "d_p95": 2.759,
+   "d_max": 4.779,
+   "ok": true,
+   "piece": "P0293",
+   "gemea": "P0497",
+   "celula": [
+    2,
+    32
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 1.465,
+   "rms_cantos_mm": 0.49,
+   "d_mean": 0.88,
+   "d_p95": 3.803,
+   "d_max": 5.943,
+   "ok": true,
+   "piece": "P0294",
+   "gemea": "P0498",
+   "celula": [
+    3,
+    32
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.123,
+   "rms_cantos_mm": 0.167,
+   "d_mean": 0.1,
+   "d_p95": 0.221,
+   "d_max": 0.388,
+   "ok": true,
+   "piece": "P0295",
+   "gemea": "P0502",
+   "celula": [
+    1,
+    31
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.125,
+   "rms_cantos_mm": 0.453,
+   "d_mean": 0.101,
+   "d_p95": 0.241,
+   "d_max": 0.353,
+   "ok": true,
+   "piece": "P0296",
+   "gemea": "P0503",
+   "celula": [
+    2,
+    31
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.107,
+   "rms_cantos_mm": 0.427,
+   "d_mean": 0.083,
+   "d_p95": 0.214,
+   "d_max": 0.33,
+   "ok": true,
+   "piece": "P0297",
+   "gemea": "P0504",
+   "celula": [
+    3,
+    31
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.122,
+   "rms_cantos_mm": 0.292,
+   "d_mean": 0.095,
+   "d_p95": 0.252,
+   "d_max": 0.406,
+   "ok": true,
+   "piece": "P0298",
+   "gemea": "P0507",
+   "celula": [
+    1,
+    30
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.127,
+   "rms_cantos_mm": 0.16,
+   "d_mean": 0.099,
+   "d_p95": 0.265,
+   "d_max": 0.471,
+   "ok": true,
+   "piece": "P0299",
+   "gemea": "P0508",
+   "celula": [
+    2,
+    30
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.118,
+   "rms_cantos_mm": 0.324,
+   "d_mean": 0.092,
+   "d_p95": 0.223,
+   "d_max": 0.412,
+   "ok": true,
+   "piece": "P0300",
+   "gemea": "P0509",
+   "celula": [
+    3,
+    30
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.244,
+   "rms_cantos_mm": 0.66,
+   "d_mean": 0.193,
+   "d_p95": 0.454,
+   "d_max": 0.674,
+   "ok": true,
+   "piece": "P0301",
+   "gemea": "P0516",
+   "celula": [
+    1,
+    28
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.104,
+   "rms_cantos_mm": 0.377,
+   "d_mean": 0.082,
+   "d_p95": 0.201,
+   "d_max": 0.348,
+   "ok": true,
+   "piece": "P0302",
+   "gemea": "P0444",
+   "celula": [
+    1,
+    27
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.289,
+   "rms_cantos_mm": 0.308,
+   "d_mean": 0.183,
+   "d_p95": 0.708,
+   "d_max": 1.333,
+   "ok": true,
+   "piece": "P0303",
+   "gemea": "P0445",
+   "celula": [
+    2,
+    27
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.126,
+   "rms_cantos_mm": 0.1,
+   "d_mean": 0.104,
+   "d_p95": 0.224,
+   "d_max": 0.324,
+   "ok": true,
+   "piece": "P0304",
+   "gemea": "P0446",
+   "celula": [
+    3,
+    27
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.176,
+   "rms_cantos_mm": 0.12,
+   "d_mean": 0.134,
+   "d_p95": 0.313,
+   "d_max": 0.727,
+   "ok": true,
+   "piece": "P0305",
+   "gemea": "P0447",
+   "celula": [
+    4,
+    27
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.139,
+   "rms_cantos_mm": 0.24,
+   "d_mean": 0.108,
+   "d_p95": 0.247,
+   "d_max": 0.514,
+   "ok": true,
+   "piece": "P0307",
+   "gemea": "P0448",
+   "celula": [
+    1,
+    26
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.16,
+   "rms_cantos_mm": 0.142,
+   "d_mean": 0.11,
+   "d_p95": 0.287,
+   "d_max": 0.847,
+   "ok": true,
+   "piece": "P0308",
+   "gemea": "P0449",
+   "celula": [
+    2,
+    26
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.116,
+   "rms_cantos_mm": 0.206,
+   "d_mean": 0.091,
+   "d_p95": 0.22,
+   "d_max": 0.57,
+   "ok": true,
+   "piece": "P0309",
+   "gemea": "P0450",
+   "celula": [
+    3,
+    26
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.241,
+   "rms_cantos_mm": 0.458,
+   "d_mean": 0.16,
+   "d_p95": 0.472,
+   "d_max": 1.239,
+   "ok": true,
+   "piece": "P0310",
+   "gemea": "P0451",
+   "celula": [
+    4,
+    26
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.1,
+   "rms_cantos_mm": 0.16,
+   "d_mean": 0.076,
+   "d_p95": 0.193,
+   "d_max": 0.403,
+   "ok": true,
+   "piece": "P0311",
+   "gemea": "P0452",
+   "celula": [
+    1,
+    25
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.116,
+   "rms_cantos_mm": 0.115,
+   "d_mean": 0.09,
+   "d_p95": 0.227,
+   "d_max": 0.447,
+   "ok": true,
+   "piece": "P0312",
+   "gemea": "P0453",
+   "celula": [
+    2,
+    25
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.131,
+   "rms_cantos_mm": 0.121,
+   "d_mean": 0.092,
+   "d_p95": 0.237,
+   "d_max": 0.647,
+   "ok": true,
+   "piece": "P0317",
+   "gemea": "P0455",
+   "celula": [
+    2,
+    24
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.119,
+   "rms_cantos_mm": 0.156,
+   "d_mean": 0.093,
+   "d_p95": 0.225,
+   "d_max": 0.365,
+   "ok": true,
+   "piece": "P0318",
+   "gemea": "P0456",
+   "celula": [
+    3,
+    24
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.129,
+   "rms_cantos_mm": 0.285,
+   "d_mean": 0.099,
+   "d_p95": 0.229,
+   "d_max": 0.409,
+   "ok": true,
+   "piece": "P0319",
+   "gemea": "P0457",
+   "celula": [
+    4,
+    24
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.134,
+   "rms_cantos_mm": 0.42,
+   "d_mean": 0.099,
+   "d_p95": 0.236,
+   "d_max": 0.642,
+   "ok": true,
+   "piece": "P0323",
+   "gemea": "P0459",
+   "celula": [
+    2,
+    23
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.168,
+   "rms_cantos_mm": 0.555,
+   "d_mean": 0.117,
+   "d_p95": 0.275,
+   "d_max": 0.896,
+   "ok": true,
+   "piece": "P0324",
+   "gemea": "P0460",
+   "celula": [
+    3,
+    23
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.132,
+   "rms_cantos_mm": 0.289,
+   "d_mean": 0.102,
+   "d_p95": 0.271,
+   "d_max": 0.446,
+   "ok": true,
+   "piece": "P0325",
+   "gemea": "P0461",
+   "celula": [
+    4,
+    23
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.206,
+   "rms_cantos_mm": 0.814,
+   "d_mean": 0.146,
+   "d_p95": 0.35,
+   "d_max": 1.211,
+   "ok": true,
+   "piece": "P0326",
+   "gemea": "P0462",
+   "celula": [
+    5,
+    23
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.121,
+   "rms_cantos_mm": 0.049,
+   "d_mean": 0.097,
+   "d_p95": 0.233,
+   "d_max": 0.342,
+   "ok": true,
+   "piece": "P0329",
+   "gemea": "P0464",
+   "celula": [
+    2,
+    22
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.217,
+   "rms_cantos_mm": 0.395,
+   "d_mean": 0.165,
+   "d_p95": 0.453,
+   "d_max": 0.683,
+   "ok": true,
+   "piece": "P0330",
+   "gemea": "P0465",
+   "celula": [
+    3,
+    22
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.154,
+   "rms_cantos_mm": 0.131,
+   "d_mean": 0.122,
+   "d_p95": 0.304,
+   "d_max": 0.507,
+   "ok": true,
+   "piece": "P0331",
+   "gemea": "P0466",
+   "celula": [
+    4,
+    22
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.134,
+   "rms_cantos_mm": 0.244,
+   "d_mean": 0.112,
+   "d_p95": 0.238,
+   "d_max": 0.369,
+   "ok": true,
+   "piece": "P0332",
+   "gemea": "P0467",
+   "celula": [
+    5,
+    22
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.123,
+   "rms_cantos_mm": 0.108,
+   "d_mean": 0.096,
+   "d_p95": 0.239,
+   "d_max": 0.376,
+   "ok": true,
+   "piece": "P0335",
+   "gemea": "P0469",
+   "celula": [
+    2,
+    21
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.193,
+   "rms_cantos_mm": 0.668,
+   "d_mean": 0.154,
+   "d_p95": 0.361,
+   "d_max": 0.875,
+   "ok": true,
+   "piece": "P0336",
+   "gemea": "P0470",
+   "celula": [
+    3,
+    21
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.164,
+   "rms_cantos_mm": 0.114,
+   "d_mean": 0.131,
+   "d_p95": 0.304,
+   "d_max": 0.46,
+   "ok": true,
+   "piece": "P0337",
+   "gemea": "P0471",
+   "celula": [
+    4,
+    21
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.121,
+   "rms_cantos_mm": 0.424,
+   "d_mean": 0.094,
+   "d_p95": 0.227,
+   "d_max": 0.457,
+   "ok": true,
+   "piece": "P0340",
+   "gemea": "P0473",
+   "celula": [
+    2,
+    20
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.137,
+   "rms_cantos_mm": 0.53,
+   "d_mean": 0.109,
+   "d_p95": 0.269,
+   "d_max": 0.414,
+   "ok": true,
+   "piece": "P0341",
+   "gemea": "P0474",
+   "celula": [
+    3,
+    20
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.149,
+   "rms_cantos_mm": 0.079,
+   "d_mean": 0.12,
+   "d_p95": 0.288,
+   "d_max": 0.52,
+   "ok": true,
+   "piece": "P0342",
+   "gemea": "P0475",
+   "celula": [
+    4,
+    20
+   ],
+   "zona": "ceu",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.268,
+   "rms_cantos_mm": 0.433,
+   "d_mean": 0.225,
+   "d_p95": 0.506,
+   "d_max": 0.741,
+   "ok": true,
+   "piece": "P0345",
+   "gemea": "P0628",
+   "celula": [
+    42,
+    64
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.187,
+   "rms_cantos_mm": 0.325,
+   "d_mean": 0.138,
+   "d_p95": 0.392,
+   "d_max": 0.735,
+   "ok": true,
+   "piece": "P0346",
+   "gemea": "P0675",
+   "celula": [
+    43,
+    64
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.204,
+   "rms_cantos_mm": 0.668,
+   "d_mean": 0.148,
+   "d_p95": 0.396,
+   "d_max": 0.824,
+   "ok": true,
+   "piece": "P0347",
+   "gemea": "P0674",
+   "celula": [
+    44,
+    64
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.223,
+   "rms_cantos_mm": 0.401,
+   "d_mean": 0.181,
+   "d_p95": 0.439,
+   "d_max": 0.659,
+   "ok": true,
+   "piece": "P0348",
+   "gemea": "P0673",
+   "celula": [
+    45,
+    64
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.179,
+   "rms_cantos_mm": 0.523,
+   "d_mean": 0.142,
+   "d_p95": 0.368,
+   "d_max": 0.56,
+   "ok": true,
+   "piece": "P0349",
+   "gemea": "P0672",
+   "celula": [
+    46,
+    64
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.208,
+   "rms_cantos_mm": 0.631,
+   "d_mean": 0.162,
+   "d_p95": 0.391,
+   "d_max": 0.716,
+   "ok": true,
+   "piece": "P0350",
+   "gemea": "P0671",
+   "celula": [
+    47,
+    64
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.191,
+   "rms_cantos_mm": 0.577,
+   "d_mean": 0.159,
+   "d_p95": 0.354,
+   "d_max": 0.493,
+   "ok": true,
+   "piece": "P0356",
+   "gemea": "P0827",
+   "celula": [
+    47,
+    63
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.188,
+   "rms_cantos_mm": 0.238,
+   "d_mean": 0.149,
+   "d_p95": 0.355,
+   "d_max": 0.564,
+   "ok": true,
+   "piece": "P0362",
+   "gemea": "P0820",
+   "celula": [
+    47,
+    62
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.206,
+   "rms_cantos_mm": 0.259,
+   "d_mean": 0.154,
+   "d_p95": 0.417,
+   "d_max": 0.739,
+   "ok": true,
+   "piece": "P0368",
+   "gemea": "P0814",
+   "celula": [
+    47,
+    61
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.206,
+   "rms_cantos_mm": 0.339,
+   "d_mean": 0.168,
+   "d_p95": 0.363,
+   "d_max": 0.61,
+   "ok": true,
+   "piece": "P0385",
+   "gemea": "P0794",
+   "celula": [
+    42,
+    57
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.18,
+   "rms_cantos_mm": 0.297,
+   "d_mean": 0.138,
+   "d_p95": 0.366,
+   "d_max": 0.565,
+   "ok": true,
+   "piece": "P0386",
+   "gemea": "P0793",
+   "celula": [
+    43,
+    57
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.151,
+   "rms_cantos_mm": 0.198,
+   "d_mean": 0.115,
+   "d_p95": 0.302,
+   "d_max": 0.584,
+   "ok": true,
+   "piece": "P0387",
+   "gemea": "P0792",
+   "celula": [
+    44,
+    57
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.197,
+   "rms_cantos_mm": 0.307,
+   "d_mean": 0.16,
+   "d_p95": 0.357,
+   "d_max": 0.58,
+   "ok": true,
+   "piece": "P0388",
+   "gemea": "P0791",
+   "celula": [
+    45,
+    57
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.153,
+   "rms_cantos_mm": 0.41,
+   "d_mean": 0.114,
+   "d_p95": 0.273,
+   "d_max": 0.672,
+   "ok": true,
+   "piece": "P0389",
+   "gemea": "P0790",
+   "celula": [
+    46,
+    57
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.244,
+   "rms_cantos_mm": 0.347,
+   "d_mean": 0.192,
+   "d_p95": 0.449,
+   "d_max": 0.695,
+   "ok": true,
+   "piece": "P0391",
+   "gemea": "P0787",
+   "celula": [
+    42,
+    56
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.156,
+   "rms_cantos_mm": 0.287,
+   "d_mean": 0.127,
+   "d_p95": 0.29,
+   "d_max": 0.439,
+   "ok": true,
+   "piece": "P0392",
+   "gemea": "P0785",
+   "celula": [
+    44,
+    56
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.215,
+   "rms_cantos_mm": 0.394,
+   "d_mean": 0.172,
+   "d_p95": 0.397,
+   "d_max": 0.644,
+   "ok": true,
+   "piece": "P0393",
+   "gemea": "P0784",
+   "celula": [
+    45,
+    56
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.139,
+   "rms_cantos_mm": 0.392,
+   "d_mean": 0.107,
+   "d_p95": 0.29,
+   "d_max": 0.413,
+   "ok": true,
+   "piece": "P0394",
+   "gemea": "P0783",
+   "celula": [
+    46,
+    56
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.123,
+   "rms_cantos_mm": 0.225,
+   "d_mean": 0.102,
+   "d_p95": 0.23,
+   "d_max": 0.374,
+   "ok": true,
+   "piece": "P0397",
+   "gemea": "P0727",
+   "celula": [
+    46,
+    47
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.105,
+   "rms_cantos_mm": 0.178,
+   "d_mean": 0.083,
+   "d_p95": 0.191,
+   "d_max": 0.35,
+   "ok": true,
+   "piece": "P0398",
+   "gemea": "P0728",
+   "celula": [
+    45,
+    47
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.093,
+   "rms_cantos_mm": 0.178,
+   "d_mean": 0.071,
+   "d_p95": 0.175,
+   "d_max": 0.33,
+   "ok": true,
+   "piece": "P0399",
+   "gemea": "P0729",
+   "celula": [
+    44,
+    47
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.136,
+   "rms_cantos_mm": 0.323,
+   "d_mean": 0.111,
+   "d_p95": 0.25,
+   "d_max": 0.329,
+   "ok": true,
+   "piece": "P0400",
+   "gemea": "P0730",
+   "celula": [
+    43,
+    47
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.319,
+   "rms_cantos_mm": 0.473,
+   "d_mean": 0.271,
+   "d_p95": 0.545,
+   "d_max": 0.86,
+   "ok": true,
+   "piece": "P0401",
+   "gemea": "P0779",
+   "celula": [
+    43,
+    55
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.098,
+   "rms_cantos_mm": 0.205,
+   "d_mean": 0.075,
+   "d_p95": 0.19,
+   "d_max": 0.382,
+   "ok": true,
+   "piece": "P0404",
+   "gemea": "P0733",
+   "celula": [
+    46,
+    48
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.096,
+   "rms_cantos_mm": 0.417,
+   "d_mean": 0.076,
+   "d_p95": 0.191,
+   "d_max": 0.388,
+   "ok": true,
+   "piece": "P0405",
+   "gemea": "P0734",
+   "celula": [
+    45,
+    48
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.131,
+   "rms_cantos_mm": 0.085,
+   "d_mean": 0.11,
+   "d_p95": 0.229,
+   "d_max": 0.331,
+   "ok": true,
+   "piece": "P0406",
+   "gemea": "P0735",
+   "celula": [
+    44,
+    48
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.097,
+   "rms_cantos_mm": 0.159,
+   "d_mean": 0.077,
+   "d_p95": 0.184,
+   "d_max": 0.268,
+   "ok": true,
+   "piece": "P0407",
+   "gemea": "P0736",
+   "celula": [
+    43,
+    48
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.256,
+   "rms_cantos_mm": 0.429,
+   "d_mean": 0.198,
+   "d_p95": 0.495,
+   "d_max": 0.665,
+   "ok": true,
+   "piece": "P0408",
+   "gemea": "P0776",
+   "celula": [
+    46,
+    55
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.104,
+   "rms_cantos_mm": 0.137,
+   "d_mean": 0.077,
+   "d_p95": 0.193,
+   "d_max": 0.46,
+   "ok": true,
+   "piece": "P0410",
+   "gemea": "P0739",
+   "celula": [
+    46,
+    49
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.099,
+   "rms_cantos_mm": 0.142,
+   "d_mean": 0.076,
+   "d_p95": 0.17,
+   "d_max": 0.463,
+   "ok": true,
+   "piece": "P0411",
+   "gemea": "P0740",
+   "celula": [
+    45,
+    49
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.107,
+   "rms_cantos_mm": 0.103,
+   "d_mean": 0.082,
+   "d_p95": 0.202,
+   "d_max": 0.473,
+   "ok": true,
+   "piece": "P0412",
+   "gemea": "P0741",
+   "celula": [
+    44,
+    49
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.123,
+   "rms_cantos_mm": 0.096,
+   "d_mean": 0.096,
+   "d_p95": 0.23,
+   "d_max": 0.462,
+   "ok": true,
+   "piece": "P0413",
+   "gemea": "P0742",
+   "celula": [
+    43,
+    49
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.13,
+   "rms_cantos_mm": 0.399,
+   "d_mean": 0.101,
+   "d_p95": 0.248,
+   "d_max": 0.463,
+   "ok": true,
+   "piece": "P0414",
+   "gemea": "P0743",
+   "celula": [
+    42,
+    49
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.119,
+   "rms_cantos_mm": 0.266,
+   "d_mean": 0.094,
+   "d_p95": 0.208,
+   "d_max": 0.552,
+   "ok": true,
+   "piece": "P0416",
+   "gemea": "P0745",
+   "celula": [
+    46,
+    50
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.148,
+   "rms_cantos_mm": 0.122,
+   "d_mean": 0.119,
+   "d_p95": 0.28,
+   "d_max": 0.431,
+   "ok": true,
+   "piece": "P0417",
+   "gemea": "P0746",
+   "celula": [
+    45,
+    50
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.152,
+   "rms_cantos_mm": 0.111,
+   "d_mean": 0.122,
+   "d_p95": 0.298,
+   "d_max": 0.464,
+   "ok": true,
+   "piece": "P0418",
+   "gemea": "P0747",
+   "celula": [
+    44,
+    50
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.093,
+   "rms_cantos_mm": 0.12,
+   "d_mean": 0.074,
+   "d_p95": 0.171,
+   "d_max": 0.332,
+   "ok": true,
+   "piece": "P0419",
+   "gemea": "P0748",
+   "celula": [
+    43,
+    50
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.308,
+   "rms_cantos_mm": 0.511,
+   "d_mean": 0.243,
+   "d_p95": 0.577,
+   "d_max": 0.83,
+   "ok": true,
+   "piece": "P0420",
+   "gemea": "P0777",
+   "celula": [
+    45,
+    55
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.112,
+   "rms_cantos_mm": 0.333,
+   "d_mean": 0.086,
+   "d_p95": 0.217,
+   "d_max": 0.46,
+   "ok": true,
+   "piece": "P0422",
+   "gemea": "P0750",
+   "celula": [
+    46,
+    51
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.119,
+   "rms_cantos_mm": 0.098,
+   "d_mean": 0.092,
+   "d_p95": 0.215,
+   "d_max": 0.547,
+   "ok": true,
+   "piece": "P0423",
+   "gemea": "P0751",
+   "celula": [
+    45,
+    51
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.102,
+   "rms_cantos_mm": 0.092,
+   "d_mean": 0.08,
+   "d_p95": 0.19,
+   "d_max": 0.352,
+   "ok": true,
+   "piece": "P0424",
+   "gemea": "P0752",
+   "celula": [
+    44,
+    51
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.248,
+   "rms_cantos_mm": 0.445,
+   "d_mean": 0.197,
+   "d_p95": 0.447,
+   "d_max": 0.711,
+   "ok": true,
+   "piece": "P0425",
+   "gemea": "P0778",
+   "celula": [
+    44,
+    55
+   ],
+   "zona": "relva",
+   "contacto": true,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.117,
+   "rms_cantos_mm": 0.178,
+   "d_mean": 0.092,
+   "d_p95": 0.226,
+   "d_max": 0.364,
+   "ok": true,
+   "piece": "P0427",
+   "gemea": "P0756",
+   "celula": [
+    46,
+    52
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.113,
+   "rms_cantos_mm": 0.15,
+   "d_mean": 0.084,
+   "d_p95": 0.207,
+   "d_max": 0.552,
+   "ok": true,
+   "piece": "P0428",
+   "gemea": "P0757",
+   "celula": [
+    45,
+    52
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.124,
+   "rms_cantos_mm": 0.436,
+   "d_mean": 0.099,
+   "d_p95": 0.227,
+   "d_max": 0.483,
+   "ok": true,
+   "piece": "P0429",
+   "gemea": "P0758",
+   "celula": [
+    44,
+    52
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.107,
+   "rms_cantos_mm": 0.174,
+   "d_mean": 0.085,
+   "d_p95": 0.204,
+   "d_max": 0.388,
+   "ok": true,
+   "piece": "P0430",
+   "gemea": "P0759",
+   "celula": [
+    43,
+    52
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.129,
+   "rms_cantos_mm": 0.229,
+   "d_mean": 0.106,
+   "d_p95": 0.235,
+   "d_max": 0.36,
+   "ok": true,
+   "piece": "P0431",
+   "gemea": "P0760",
+   "celula": [
+    42,
+    52
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.103,
+   "rms_cantos_mm": 0.103,
+   "d_mean": 0.081,
+   "d_p95": 0.199,
+   "d_max": 0.392,
+   "ok": true,
+   "piece": "P0433",
+   "gemea": "P0762",
+   "celula": [
+    46,
+    53
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.107,
+   "rms_cantos_mm": 0.194,
+   "d_mean": 0.082,
+   "d_p95": 0.224,
+   "d_max": 0.345,
+   "ok": true,
+   "piece": "P0434",
+   "gemea": "P0763",
+   "celula": [
+    45,
+    53
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.1,
+   "rms_cantos_mm": 0.075,
+   "d_mean": 0.074,
+   "d_p95": 0.174,
+   "d_max": 0.423,
+   "ok": true,
+   "piece": "P0435",
+   "gemea": "P0764",
+   "celula": [
+    44,
+    53
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.091,
+   "rms_cantos_mm": 0.542,
+   "d_mean": 0.073,
+   "d_p95": 0.163,
+   "d_max": 0.308,
+   "ok": true,
+   "piece": "P0436",
+   "gemea": "P0765",
+   "celula": [
+    43,
+    53
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.093,
+   "rms_cantos_mm": 0.178,
+   "d_mean": 0.075,
+   "d_p95": 0.177,
+   "d_max": 0.314,
+   "ok": true,
+   "piece": "P0437",
+   "gemea": "P0766",
+   "celula": [
+    42,
+    53
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.137,
+   "rms_cantos_mm": 0.197,
+   "d_mean": 0.11,
+   "d_p95": 0.266,
+   "d_max": 0.406,
+   "ok": true,
+   "piece": "P0439",
+   "gemea": "P0769",
+   "celula": [
+    46,
+    54
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.128,
+   "rms_cantos_mm": 0.173,
+   "d_mean": 0.107,
+   "d_p95": 0.241,
+   "d_max": 0.395,
+   "ok": true,
+   "piece": "P0440",
+   "gemea": "P0770",
+   "celula": [
+    45,
+    54
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.126,
+   "rms_cantos_mm": 0.152,
+   "d_mean": 0.1,
+   "d_p95": 0.225,
+   "d_max": 0.428,
+   "ok": true,
+   "piece": "P0441",
+   "gemea": "P0771",
+   "celula": [
+    44,
+    54
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.29,
+   "rms_cantos_mm": 0.465,
+   "d_mean": 0.224,
+   "d_p95": 0.574,
+   "d_max": 0.783,
+   "ok": true,
+   "piece": "P0442",
+   "gemea": "P0780",
+   "celula": [
+    42,
+    55
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.108,
+   "rms_cantos_mm": 0.384,
+   "d_mean": 0.086,
+   "d_p95": 0.201,
+   "d_max": 0.377,
+   "ok": true,
+   "piece": "P0443",
+   "gemea": "P0773",
+   "celula": [
+    42,
+    54
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.176,
+   "rms_cantos_mm": 0.496,
+   "d_mean": 0.12,
+   "d_p95": 0.344,
+   "d_max": 0.981,
+   "ok": true,
+   "piece": "P0477",
+   "gemea": "P0721",
+   "celula": [
+    46,
+    46
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.117,
+   "rms_cantos_mm": 0.073,
+   "d_mean": 0.088,
+   "d_p95": 0.22,
+   "d_max": 0.516,
+   "ok": true,
+   "piece": "P0478",
+   "gemea": "P0722",
+   "celula": [
+    45,
+    46
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.113,
+   "rms_cantos_mm": 0.1,
+   "d_mean": 0.091,
+   "d_p95": 0.212,
+   "d_max": 0.308,
+   "ok": true,
+   "piece": "P0479",
+   "gemea": "P0723",
+   "celula": [
+    44,
+    46
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  },
+  {
+   "rms_mm": 0.297,
+   "rms_cantos_mm": 0.598,
+   "d_mean": 0.227,
+   "d_p95": 0.531,
+   "d_max": 1.05,
+   "ok": true,
+   "piece": "P0624",
+   "gemea": "P0912",
+   "celula": [
+    45,
+    9
+   ],
+   "zona": "relva",
+   "contacto": false,
+   "suspeita": false
+  }
+ ],
+ "gt": [
+  {
+   "piece": "P0651",
+   "gemea": "P0233",
+   "rms_mm": 0.277,
+   "sugestao_vs_gt": {
+    "d_mean": 0.568,
+    "d_p95": 1.132,
+    "iou": 0.863,
+    "falta_mm2": 6.8,
+    "a_mais_mm2": 53.7
+   },
+   "auto_vs_gt": {
+    "d_mean": 0.53,
+    "d_p95": 1.26,
+    "iou": 0.869,
+    "falta_mm2": 6.8,
+    "a_mais_mm2": 51.0
+   }
+  },
+  {
+   "piece": "P0657",
+   "gemea": "P0234",
+   "rms_mm": 0.234,
+   "sugestao_vs_gt": {
+    "d_mean": 0.588,
+    "d_p95": 1.303,
+    "iou": 0.828,
+    "falta_mm2": 3.9,
+    "a_mais_mm2": 54.8
+   },
+   "auto_vs_gt": {
+    "d_mean": 0.605,
+    "d_p95": 1.436,
+    "iou": 0.824,
+    "falta_mm2": 1.2,
+    "a_mais_mm2": 59.8
+   }
+  }
+ ],
+ "esym": [
+  {
+   "rms_mm": 0.132,
+   "rms_cantos_mm": 0.085,
+   "d_mean": 0.107,
+   "d_p95": 0.249,
+   "d_max": 0.438,
+   "ok": true,
+   "piece": "A1#0",
+   "gemea": "B2#17",
+   "free_mm": 0.26
+  },
+  {
+   "rms_mm": 0.168,
+   "rms_cantos_mm": 0.181,
+   "d_mean": 0.137,
+   "d_p95": 0.314,
+   "d_max": 0.51,
+   "ok": true,
+   "piece": "A1#1",
+   "gemea": "B2#16",
+   "free_mm": 0.423
+  },
+  {
+   "rms_mm": 0.13,
+   "rms_cantos_mm": 0.192,
+   "d_mean": 0.102,
+   "d_p95": 0.252,
+   "d_max": 0.407,
+   "ok": true,
+   "piece": "A1#2",
+   "gemea": "B2#19",
+   "free_mm": 0.242
+  },
+  {
+   "rms_mm": 0.151,
+   "rms_cantos_mm": 0.077,
+   "d_mean": 0.119,
+   "d_p95": 0.291,
+   "d_max": 0.569,
+   "ok": true,
+   "piece": "A1#3",
+   "gemea": "B2#18",
+   "free_mm": 0.329
+  },
+  {
+   "rms_mm": 0.125,
+   "rms_cantos_mm": 0.064,
+   "d_mean": 0.09,
+   "d_p95": 0.245,
+   "d_max": 0.647,
+   "ok": true,
+   "piece": "A1#4",
+   "gemea": "B2#12",
+   "free_mm": 0.371
+  },
+  {
+   "rms_mm": 0.129,
+   "rms_cantos_mm": 0.304,
+   "d_mean": 0.1,
+   "d_p95": 0.238,
+   "d_max": 0.481,
+   "ok": true,
+   "piece": "A1#5",
+   "gemea": "B2#13",
+   "free_mm": 0.252
+  },
+  {
+   "rms_mm": 0.144,
+   "rms_cantos_mm": 0.449,
+   "d_mean": 0.115,
+   "d_p95": 0.289,
+   "d_max": 0.502,
+   "ok": true,
+   "piece": "A1#6",
+   "gemea": "B2#15",
+   "free_mm": 0.321
+  },
+  {
+   "rms_mm": 0.124,
+   "rms_cantos_mm": 0.337,
+   "d_mean": 0.099,
+   "d_p95": 0.224,
+   "d_max": 0.476,
+   "ok": true,
+   "piece": "A1#7",
+   "gemea": "B2#14",
+   "free_mm": 0.309
+  },
+  {
+   "rms_mm": 0.172,
+   "rms_cantos_mm": 0.183,
+   "d_mean": 0.137,
+   "d_p95": 0.355,
+   "d_max": 0.571,
+   "ok": true,
+   "piece": "A1#8",
+   "gemea": "B2#10",
+   "free_mm": 0.465
+  },
+  {
+   "rms_mm": 0.146,
+   "rms_cantos_mm": 0.144,
+   "d_mean": 0.116,
+   "d_p95": 0.272,
+   "d_max": 0.477,
+   "ok": true,
+   "piece": "A1#9",
+   "gemea": "B2#9",
+   "free_mm": 0.348
+  },
+  {
+   "rms_mm": 0.161,
+   "rms_cantos_mm": 0.236,
+   "d_mean": 0.132,
+   "d_p95": 0.295,
+   "d_max": 0.466,
+   "ok": true,
+   "piece": "A1#10",
+   "gemea": "B2#8",
+   "free_mm": 0.263
+  },
+  {
+   "rms_mm": 0.131,
+   "rms_cantos_mm": 0.364,
+   "d_mean": 0.105,
+   "d_p95": 0.26,
+   "d_max": 0.372,
+   "ok": true,
+   "piece": "A1#11",
+   "gemea": "B2#11",
+   "free_mm": 0.158
+  },
+  {
+   "rms_mm": 0.174,
+   "rms_cantos_mm": 0.404,
+   "d_mean": 0.136,
+   "d_p95": 0.332,
+   "d_max": 0.59,
+   "ok": true,
+   "piece": "A1#12",
+   "gemea": "B2#7",
+   "free_mm": 0.266
+  },
+  {
+   "rms_mm": 0.227,
+   "rms_cantos_mm": 0.752,
+   "d_mean": 0.192,
+   "d_p95": 0.393,
+   "d_max": 0.757,
+   "ok": true,
+   "piece": "A1#13",
+   "gemea": "B2#5",
+   "free_mm": 0.377
+  },
+  {
+   "rms_mm": 0.163,
+   "rms_cantos_mm": 0.71,
+   "d_mean": 0.125,
+   "d_p95": 0.326,
+   "d_max": 0.617,
+   "ok": true,
+   "piece": "A1#14",
+   "gemea": "B2#6",
+   "free_mm": 0.235
+  },
+  {
+   "rms_mm": 0.213,
+   "rms_cantos_mm": 0.223,
+   "d_mean": 0.166,
+   "d_p95": 0.336,
+   "d_max": 1.11,
+   "ok": true,
+   "piece": "A1#15",
+   "gemea": "B2#4",
+   "free_mm": 0.298
+  },
+  {
+   "rms_mm": 0.217,
+   "rms_cantos_mm": 0.284,
+   "d_mean": 0.178,
+   "d_p95": 0.398,
+   "d_max": 0.574,
+   "ok": true,
+   "piece": "A1#16",
+   "gemea": "B2#1",
+   "free_mm": 0.401
+  },
+  {
+   "rms_mm": 0.202,
+   "rms_cantos_mm": 0.516,
+   "d_mean": 0.16,
+   "d_p95": 0.354,
+   "d_max": 0.826,
+   "ok": true,
+   "piece": "A1#17",
+   "gemea": "B2#0",
+   "free_mm": 0.223
+  },
+  {
+   "rms_mm": 0.22,
+   "rms_cantos_mm": 0.366,
+   "d_mean": 0.182,
+   "d_p95": 0.378,
+   "d_max": 0.904,
+   "ok": true,
+   "piece": "A1#18",
+   "gemea": "B2#3",
+   "free_mm": 0.369
+  },
+  {
+   "rms_mm": 0.229,
+   "rms_cantos_mm": 0.203,
+   "d_mean": 0.201,
+   "d_p95": 0.39,
+   "d_max": 0.542,
+   "ok": true,
+   "piece": "A1#19",
+   "gemea": "B2#2",
+   "free_mm": 0.279
+  }
+ ],
+ "pior_mm": 0.6
+}

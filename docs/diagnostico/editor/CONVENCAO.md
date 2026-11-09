@@ -69,3 +69,27 @@ Desvio médio |automático − gravado| nas 16 «reposição»: 0,000–0,016 mm
 - Traços humanos novos com a convenção nova (o Tiago só desenhou sob a instrução antiga).
 - Peças de duas cores (céu/relva na mesma peça): o `núcleo` e o `S0_bgd` são por píxel, mas o δ escalar das zonas ganhas é a mediana.
 - Peças escuras e neutras reais na aresta (montanha): a regra do núcleo pode ignorar um «fundo» legítimo; nenhum caso nos dados.
+
+## 4. Verificação na cópia (`alpes_r9`, ativos refeitos antes das linhas de base) [V]
+
+Nesta máquina `projects/alpes` não tinha `pieces/*.npz` das folhas S0028–S0037 (375 peças, lotes 4–8): sem `tools/rebuild_scans.py --stale --also-missing` antes, a consulta e a reprodução do R7 corriam sem a forma dessas peças (reprodução 22/43 em vez de 34/43). Cadeia: cópia → ativos refeitos (16 folhas, 383 peças, 136 s; 17 eventos `piece_resegmented` = a aplicação local dos 17 contornos manuais que só tinham sido aplicados no portátil) → consulta completa → reprodução R7 → `renormalizar.py --aplicar` (17 registos, 17 eventos, 0 erros; cada folha de reposição passa um dry-run que só pode mudar as peças repostas) → consulta completa → reprodução R7.
+
+| critério | antes | depois |
+|---|---|---|
+| **C3** reprodução R7 (`r7_gt.py`, 43 colocações por gémea com entrada): decisão e top-1 iguais aos da data | 34/43 (as 9 divergências = peças com contorno manual: 7 `aceite → sem`, 2 `ambigua → sem`) | **43/43** (33 `aceite`, 10 `ambigua`) |
+| **C5** `fetch.json` (`r7_tempo.diff`, tolerância 1e-6): 17 entradas com peça + 1 suprimida | — | **idêntico** (0 só-antes, 0 só-depois, 0 diferentes, suprimidas iguais); nenhuma das 17 é `query` de uma entrada (as gémeas pendentes delas não estão no pool das soltas) |
+| **C2** desvio médio \|automático − gravado\| nas 16 reposições | 0,24–0,51 mm (mediana do desvio assinado) | 0,000 (contorno automático exato); P0045 0,024 mm (d_mean), prof. 0,54 |
+| `check_invariants(disk=True)` | OK | OK |
+
+Figura `RENORM_17.jpg` (magenta = manual antigo, vermelho = automático, verde = novo), `renormalizar.json`.
+
+## 5. Sugestão pela gémea (`gemea_sugestao.py`, `gemea_sugestao.json`) [V]
+
+| conjunto | n | d_mean mediana | p95 das d_mean | p95 das d_p95 | RMS mediano |
+|---|---|---|---|---|---|
+| pares gémeos colocados, silhueta automática dos dois lados | 268 | 0,131 mm | 0,236 | 0,599 | 0,169 |
+| E-sym A1↔B2 (20 pares, emparelhados por vizinho mútuo em `free_dist`) | 20 | 0,129 | 0,192 | 0,393 | 0,162 |
+
+Por zona (d_mean mediana): céu 0,117, montanha 0,146, relva 0,138, vale 0,144. **Pioram (d_mean > 0,6 mm): 6, todos o corte c32|c33** (P0289–P0294 ↔ P0492–P0498, 0,62–1,06 mm), a exceção à simetria que ORIENTACOES §D tinha medido: confirmação independente. Critério C6 (mediana ≤ 0,4, p95 ≤ 1,0) cumprido. Pares com contorno manual dos dois lados: nenhum. Em P0651/P0657 contra a GT, a sugestão vinda de uma gémea **automática** vale o automático (IoU 0,863/0,828 vs 0,869/0,824; a gémea traz o seu halo): o ganho só existe quando a gémea tem contorno manual. [NT] uso real pelo Tiago.
+
+A primeira versão do registo (correspondência de cantos escolhida pelo RMS dos cantos) falhava em 40/268 e 3/20: numa peça quase quadrada as 4 correspondências ajustam os cantos a 0,03 mm e a errada dá um mínimo local do ICP a 90°; a escolha passou a ser pelo RMS do contorno inteiro.

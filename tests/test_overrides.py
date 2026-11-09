@@ -239,3 +239,43 @@ def test_manual_pairs_and_cli(tmp_path, capsys):
     assert OV.main(["--project", pr.path, "--pares", "--json"]) == 0
     js = json.loads(capsys.readouterr().out)
     assert [x["piece"] for x in js] == sorted([tw, dec])
+
+
+# ---------------------------------------------------------------- reposição (2026-11-09, CONVENCAO.md §3)
+def test_reposicao_record_returns_piece_to_segmentation(tmp_path):
+    """A last line ``metodo: "reposicao"`` (the automatic contour put back) is invisible to
+    ``latest_overrides`` / ``has_override``; the forced rebuild of the sheet re-segments the piece with the
+    caller's motivo, drops ``manual_override`` / ``manual_nota`` and restores the segmentation contour."""
+    from test_render import _ingested
+    pr, sid = _ingested(tmp_path)
+    pid = sorted(pr.pieces)[1]
+    seg_cnt = np.asarray(pr.contour_px(pid)).copy()
+    seg_flags = dict(pr.piece(pid).flags or {})
+    c = _moved_contour(pr, pid, 10.0)
+    assert "error" not in OV.append_override(pr, pid, c, nota="à mão")
+    assert R.rebuild_piece(pr, pid)["errors"] == []
+    assert pr.piece(pid).flags["manual_override"] is True and OV.has_override(pr, pid)
+    rec = OV.append_override(pr, pid, seg_cnt, nota="reposição", extra={"metodo": OV.REPOSICAO, "derivado_de": "t0",
+                                                                         "motivo": "renormalizacao", "convencao": "indice"})
+    assert "error" not in rec and rec["metodo"] == "reposicao"
+    assert pid not in OV.latest_overrides(pr) and not OV.has_override(pr, pid)
+    assert OV.latest_overrides(pr, incluir_reposicao=True)[pid]["metodo"] == "reposicao"
+    # rebuild_piece has nothing to apply (no active override); the forced rebuild does the reposição
+    assert "error" in R.rebuild_piece(pr, pid)
+    q = Project.open(pr.path)
+    dry = R.rebuild_assets(q, force_scans=[sid], motivo="reposicao", clean=False, register=False, progress=None, dry_run=True)
+    assert dry["errors"] == [] and [x["piece"] for x in dry["changed"]] == [pid]
+    out = R.rebuild_assets(q, force_scans=[sid], motivo="reposicao", clean=False, register=False, progress=None)
+    assert out["errors"] == [] and [x["piece"] for x in out["changed"]] == [pid]
+    ev = q.events()[-1]
+    assert ev["action"] == "piece_resegmented" and ev["motivo"] == "reposicao" and ev["piece"] == pid
+    fl = q.piece(pid).flags or {}
+    assert "manual_override" not in fl and "manual_nota" not in fl
+    assert {k: fl.get(k) for k in ("touches_frame", "touches_strip", "is_cluster", "objeto_duplo")} == \
+        {k: seg_flags.get(k) for k in ("touches_frame", "touches_strip", "is_cluster", "objeto_duplo")}
+    with np.load(q.p("pieces", f"{sid}.npz")) as z:
+        assert np.array_equal(z[f"{pid}__contour_px"], seg_cnt)
+    assert Project.open(q.path).check_invariants(disk=True) == []
+    # idempotent: a second forced rebuild changes nothing
+    out2 = R.rebuild_assets(Project.open(q.path), force_scans=[sid], motivo="reposicao", clean=False, register=False, progress=None)
+    assert out2["errors"] == [] and out2["changed"] == []

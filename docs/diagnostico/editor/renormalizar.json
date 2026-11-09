@@ -1,0 +1,454 @@
+{
+ "linhas": [
+  {
+   "piece": "P0045",
+   "scan_id": "S0003",
+   "celula": [
+    43,
+    5
+   ],
+   "t_anterior": "2026-11-07T17:44:18",
+   "classe": "renormalizado",
+   "identidade": false,
+   "delta_mm": 0.593,
+   "tracos": 20,
+   "tracos_ignorados": 11,
+   "iou": 0.9912,
+   "falta_mm2": 0.05,
+   "falta_prof_mm": 0.08,
+   "a_mais_mm2": 4.2,
+   "a_mais_prof_mm": 0.74,
+   "pose_manual": false
+  },
+  {
+   "piece": "P1203",
+   "scan_id": "S0034",
+   "celula": [
+    4,
+    57
+   ],
+   "t_anterior": "2026-11-08T17:10:46",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.355,
+   "tracos": 3,
+   "tracos_ignorados": 3,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P1114",
+   "scan_id": "S0032",
+   "celula": [
+    4,
+    62
+   ],
+   "t_anterior": "2026-11-08T17:11:09",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.423,
+   "tracos": 3,
+   "tracos_ignorados": 3,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P1064",
+   "scan_id": "S0030",
+   "celula": [
+    2,
+    63
+   ],
+   "t_anterior": "2026-11-08T17:12:11",
+   "classe": "reposicao",
+   "identidade": false,
+   "delta_mm": 0.423,
+   "tracos": 12,
+   "tracos_ignorados": 8,
+   "iou": 0.993,
+   "falta_mm2": 0.01,
+   "falta_prof_mm": 0.08,
+   "a_mais_mm2": 2.8,
+   "a_mais_prof_mm": 0.49,
+   "pose_manual": false
+  },
+  {
+   "piece": "P0916",
+   "scan_id": "S0027",
+   "celula": [
+    6,
+    63
+   ],
+   "t_anterior": "2026-11-08T17:12:36",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.355,
+   "tracos": 4,
+   "tracos_ignorados": 4,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P1245",
+   "scan_id": "S0034",
+   "celula": [
+    3,
+    57
+   ],
+   "t_anterior": "2026-11-08T17:13:16",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.254,
+   "tracos": 6,
+   "tracos_ignorados": 6,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P1202",
+   "scan_id": "S0034",
+   "celula": [
+    2,
+    62
+   ],
+   "t_anterior": "2026-11-08T17:14:30",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.254,
+   "tracos": 8,
+   "tracos_ignorados": 8,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P1102",
+   "scan_id": "S0031",
+   "celula": [
+    4,
+    36
+   ],
+   "t_anterior": "2026-11-08T17:21:03",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.372,
+   "tracos": 6,
+   "tracos_ignorados": 6,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P0999",
+   "scan_id": "S0028",
+   "celula": [
+    4,
+    35
+   ],
+   "t_anterior": "2026-11-08T17:21:55",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.372,
+   "tracos": 4,
+   "tracos_ignorados": 4,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P0098",
+   "scan_id": "S0005",
+   "celula": [
+    3,
+    36
+   ],
+   "t_anterior": "2026-11-08T17:22:45",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.423,
+   "tracos": 7,
+   "tracos_ignorados": 7,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P0105",
+   "scan_id": "S0005",
+   "celula": [
+    4,
+    43
+   ],
+   "t_anterior": "2026-11-08T17:24:04",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.423,
+   "tracos": 7,
+   "tracos_ignorados": 7,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P0186",
+   "scan_id": "S0008",
+   "celula": [
+    4,
+    45
+   ],
+   "t_anterior": "2026-11-08T17:28:00",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.44,
+   "tracos": 8,
+   "tracos_ignorados": 8,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P1021",
+   "scan_id": "S0029",
+   "celula": [
+    2,
+    54
+   ],
+   "t_anterior": "2026-11-08T17:42:39",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.474,
+   "tracos": 6,
+   "tracos_ignorados": 6,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P0165",
+   "scan_id": "S0007",
+   "celula": [
+    3,
+    54
+   ],
+   "t_anterior": "2026-11-08T17:43:28",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.355,
+   "tracos": 5,
+   "tracos_ignorados": 5,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P0935",
+   "scan_id": "S0027",
+   "celula": [
+    3,
+    55
+   ],
+   "t_anterior": "2026-11-08T17:44:18",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.423,
+   "tracos": 9,
+   "tracos_ignorados": 9,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  },
+  {
+   "piece": "P0071",
+   "scan_id": "S0004",
+   "celula": [
+    42,
+    62
+   ],
+   "t_anterior": "2026-11-08T17:52:39",
+   "classe": "reposicao",
+   "identidade": false,
+   "delta_mm": 0.423,
+   "tracos": 9,
+   "tracos_ignorados": 7,
+   "iou": 1.0,
+   "falta_mm2": 0.01,
+   "falta_prof_mm": 0.08,
+   "a_mais_mm2": 0.01,
+   "a_mais_prof_mm": 0.08,
+   "pose_manual": false
+  },
+  {
+   "piece": "P1089",
+   "scan_id": "S0030",
+   "celula": [
+    3,
+    62
+   ],
+   "t_anterior": "2026-11-08T17:58:21",
+   "classe": "reposicao",
+   "identidade": true,
+   "delta_mm": 0.271,
+   "tracos": 9,
+   "tracos_ignorados": 9,
+   "iou": 1.0,
+   "falta_mm2": 0.0,
+   "falta_prof_mm": 0.0,
+   "a_mais_mm2": 0.0,
+   "a_mais_prof_mm": 0.0,
+   "pose_manual": false
+  }
+ ],
+ "aplicado": {
+  "registos": [
+   {
+    "piece": "P0045",
+    "metodo": "tracos",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P1203",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P1114",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P1064",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P0916",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P1245",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P1202",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P1102",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P0999",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P0098",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P0105",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P0186",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P1021",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P0165",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P0935",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P0071",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   },
+   {
+    "piece": "P1089",
+    "metodo": "reposicao",
+    "t": "2026-11-09T02:13:02"
+   }
+  ],
+  "eventos": [
+   "P0045",
+   "P0071",
+   "P0098",
+   "P0105",
+   "P0165",
+   "P0186",
+   "P0916",
+   "P0935",
+   "P0999",
+   "P1021",
+   "P1064",
+   "P1089",
+   "P1102",
+   "P1114",
+   "P1202",
+   "P1203",
+   "P1245"
+  ],
+  "erros": []
+ },
+ "prof_mm": 0.5
+}
