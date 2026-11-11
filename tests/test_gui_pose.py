@@ -226,3 +226,28 @@ def test_pose_layout(env, browser, w, h):
         pg.click("#pose-cancel", timeout=5000) if not pg.evaluate("poseIsDirty(S.pose)") else pg.evaluate("poseClose()")
     finally:
         ctx.close()
+
+
+def test_alt_wheel_rotates_through_board_interface(env, browser):
+    """F1b: board.js chama S.onPoseWheel (interface declarada) em vez do poseWheel global; Alt+roda continua a rodar."""
+    base, pr, pid = env
+    errs = []
+    pg = browser.new_page(viewport={"width": 1366, "height": 768})
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        _open_mode(pg, base, pid)
+        assert pg.evaluate("typeof S.onPoseWheel") == "function"
+        t0 = _cand(pg)["theta"]
+        vb0 = pg.evaluate("({...S.vb})")
+        box = pg.locator("#board").bounding_box()
+        pg.mouse.move(box["x"] + box["width"] * 0.2, box["y"] + box["height"] * 0.2)
+        pg.keyboard.down("Alt")
+        pg.mouse.wheel(0, -120)
+        pg.keyboard.up("Alt")
+        pg.wait_for_timeout(200)
+        assert _cand(pg)["theta"] != t0
+        assert pg.evaluate("({...S.vb})") == vb0
+        pg.evaluate("poseClose()")
+        assert not errs, errs
+    finally:
+        pg.close()

@@ -1,8 +1,22 @@
 /* Tabuleiro comum às interfaces web: raster do servidor (/api/board.jpg: arte + recortes reais) + sobreposição SVG no
  * mesmo viewBox (unidades de célula: x = coluna, y = linha * hr). Aqui: classes da legenda do servidor, geometria,
- * vista (zoom / deslocar), raster de detalhe com zoom, ponteiro (roda, pinça, arrastar) e grelha. O toque numa célula
- * vai para o gancho ``S.onBoardTap(l, c, ev)``, que a casca define (app.js: sugestões / gaveta da célula).
- * Lê o estado ``S`` da casca (declarado em app.js, carregado depois: só é usado em tempo de execução).
+ * vista (zoom / deslocar), raster de detalhe com zoom, ponteiro (roda, pinça, arrastar) e grelha.
+ *
+ * INTERFACE COM A CASCA (declarada na F1b, 2026-11-11; tests/test_board_interface.py carrega este ficheiro só com ela).
+ * A casca (app.js = GUI antiga em /, novo.js = GUI nova em /novo/) declara o objeto global ``S`` e define nele:
+ *   dados    S.board        resposta de /api/board (rows, cols, hr, board_ppc, versao, rotacao_gemea_deg, legend);
+ *                           lido por drawRaster e pelas classes da legenda (cls).
+ *   estado 1 S.showGrid     bool: a camada #lyr-grelha aparece (com zoom suficiente).
+ *   estado 2 S.showGhost    bool: a camada #lyr-fantasma aparece (com zoom suficiente).
+ *   estado 3 S.pose         null, ou um objeto enquanto um editor de pose está aberto: o toque não abre células e
+ *                           Alt+roda vai para S.onPoseWheel em vez de fazer zoom.
+ *   função   S.onPoseWheel(ev)       Alt+roda com S.pose ativo (app.js: poseWheel de pose.js). Opcional.
+ *   gancho   S.onBoardTap(l, c, ev)  toque/clique sem arrastar numa célula (app.js: sugestões / gaveta). Opcional.
+ * Campos de S que este ficheiro escreve e lê (a casca só lhes dá o valor inicial, se quiser): rows, cols, hr, ppc,
+ * ver, rotGemea (drawRaster), vb (setView; {x, y, w, h} antes do primeiro fitBoard), detailKey.
+ * Precisa de core.js ($, s) e destes elementos: svg#board com #board-bg, #raster, #detail, #lyr-grelha e
+ * #lyr-fantasma; botões #z-in, #z-out, #z-fit. Escreve body.dataset.raster / .detail (os testes esperam por eles).
+ * Nada fora disto: nenhuma função ou variável global da GUI antiga.
  */
 "use strict";
 
@@ -109,7 +123,7 @@ function initPointer() {
   let start = null, pinch = null, moved = false;
   el.addEventListener("wheel", (e) => {
     if (e.ctrlKey || e.metaKey) return;   // Ctrl+wheel / trackpad pinch = browser page zoom
-    if (S.pose && e.altKey) { e.preventDefault(); poseWheel(e); return; }   // Alt+wheel = rotate the piece (pose.js)
+    if (S.pose && e.altKey) { e.preventDefault(); if (typeof S.onPoseWheel === "function") S.onPoseWheel(e); return; }   // Alt+wheel = rotate the piece (app.js: pose.js)
     e.preventDefault();
     const f = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0018));
     zoomAt(f, e.clientX, e.clientY);

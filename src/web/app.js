@@ -19,7 +19,8 @@ const S = {
 
 const cellTxt = (c) => c ? `(${c[0]}, ${c[1]})` : "—";
 
-// ------------------------------------------------------------ toque no tabuleiro (gancho de board.js)
+// ------------------------------------------------------------ interface de board.js (ver o cabeçalho de board.js)
+S.onPoseWheel = (e) => poseWheel(e);   // Alt+roda com o editor de pose aberto (pose.js)
 S.onBoardTap = (l, c, e) => {
   hideSugPicker();
   if (l >= 1 && l <= S.rows && c >= 1 && c <= S.cols) {
