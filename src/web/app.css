@@ -49,43 +49,6 @@ b, .num { font-variant-numeric: tabular-nums; }
 .job { background: var(--amber); color: var(--amber-ink); border-radius: 999px; padding: 4px 10px; font-size: 13px;
   font-weight: 600; }
 
-/* ------------------------------------------------------------ board */
-#board-wrap { grid-area: board; position: relative; overflow: hidden; background: #101215; touch-action: none; }
-#board { width: 100%; height: 100%; display: block; cursor: grab; user-select: none; -webkit-user-select: none; }
-#board.dragging { cursor: grabbing; }
-#board-bg { fill: #282828; }
-#raster, #detail { image-rendering: auto; }
-.zoom-ui { position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 6px; }
-.zoom-ui button { width: var(--tap); height: var(--tap); border-radius: 10px; border: 1px solid var(--line);
-  background: rgba(27, 30, 35, .92); font-size: 22px; cursor: pointer; }
-.zoom-ui button:hover { border-color: var(--muted); }
-.board-hint { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--muted);
-  background: rgba(16, 18, 21, .8); padding: 4px 8px; border-radius: 6px; pointer-events: none; }
-
-/* SVG overlay: every b-* class has a row in the legend (LEGEND in src/server.py; tests/test_server.py) */
-.b-legado { fill: url(#hatch); stroke: rgba(170, 190, 215, .55); stroke-width: 1px; vector-effect: non-scaling-stroke; }
-.hatch-bg { fill: rgba(20, 24, 30, .35); }
-.hatch-line { stroke: rgba(176, 196, 222, .85); stroke-width: 1.4px; vector-effect: non-scaling-stroke; }
-.b-borda-falta { fill: rgba(255, 90, 82, .14); stroke: var(--red); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
-.b-buscar { fill: rgba(255, 176, 0, .20); stroke: var(--amber); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
-.b-buscar-ambigua { fill: rgba(255, 176, 0, .10); stroke: var(--amber); stroke-width: 2.5px; stroke-dasharray: 6 4;
-  vector-effect: non-scaling-stroke; }
-.b-buscar-par { fill: none; stroke: var(--amber); stroke-width: 2.5px; stroke-dasharray: 1 5; stroke-linecap: round;
-  vector-effect: non-scaling-stroke; }
-.b-conhecida { fill: rgba(41, 211, 230, .18); stroke: var(--cyan); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
-.b-fantasma { fill: rgba(255, 255, 255, .07); stroke: rgba(240, 244, 255, .92); stroke-width: 1.4px;
-  stroke-dasharray: 4 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.b-mesa { fill: rgba(180, 140, 255, .28); stroke: var(--violet); stroke-width: 2px; stroke-dasharray: 5 3;
-  vector-effect: non-scaling-stroke; }
-.b-sug { fill: rgba(180, 140, 255, .42); stroke: var(--violet); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
-.b-sug-fraca { fill: rgba(180, 140, 255, .10); stroke: rgba(180, 140, 255, .55); stroke-width: 1.2px; stroke-dasharray: 3 3;
-  vector-effect: non-scaling-stroke; }
-.b-grelha { fill: none; stroke: rgba(255, 255, 255, .16); stroke-width: 1px; vector-effect: non-scaling-stroke; }
-.b-selecionada { fill: none; stroke: #ffffff; stroke-width: 3px; vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, .9)); }
-#lyr-buscar rect, #lyr-conhecida rect, #lyr-sug rect { pointer-events: none; }
-#lyr-fantasma.off, #lyr-grelha.off { display: none; }
-
 /* ------------------------------------------------------------ panel */
 #panel { grid-area: panel; background: var(--bg2); border-left: 1px solid var(--line); display: flex;
   flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }

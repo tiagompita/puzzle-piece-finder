@@ -5,15 +5,9 @@
  * element uses a "b-*" class that has a row in the legend (the legend comes from /api/board,
  * the same LEGEND table the server defines; tests/test_server.py checks the coverage).
  * No puzzle rule lives here: twin cells, ghosts, poses and proposals come from the server.
+ * Shared code: core.js (utilities) and board.js (geometry, view, pointer, raster, grid), loaded before this file.
  */
 "use strict";
-
-const SVGNS = "http://www.w3.org/2000/svg";
-const $ = (s, el = document) => el.querySelector(s);
-const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
-
-function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* the page works without storage */ } }
 
 const S = {
   board: null, fetch: null, ghosts: [], lots: null, sections: null, status: null,
@@ -23,247 +17,23 @@ const S = {
   mesa: null, mesaOpen: null, mesaQuery: "", mesaFilter: null, detailKey: null, jobLog: [], lastLote: null,
 };
 
-// ------------------------------------------------------------ utilities
-function h(tag, attrs = {}, ...kids) {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs || {})) {
-    if (v === null || v === undefined || v === false) continue;
-    if (k === "class") el.className = v;
-    else if (k === "html") el.innerHTML = v;
-    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
-    else el.setAttribute(k, v === true ? "" : v);
-  }
-  for (const kid of kids.flat()) {
-    if (kid === null || kid === undefined || kid === false) continue;
-    el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
-  }
-  return el;
-}
-function s(tag, attrs = {}, ...kids) {
-  const el = document.createElementNS(SVGNS, tag);
-  for (const [k, v] of Object.entries(attrs || {})) {
-    if (v === null || v === undefined) continue;
-    el.setAttribute(k, v);
-  }
-  for (const kid of kids.flat()) if (kid) el.append(kid);
-  return el;
-}
-const fmt = (v, nd = 1) => (v === null || v === undefined) ? "—" : Number(v).toFixed(nd).replace(".", ",");
 const cellTxt = (c) => c ? `(${c[0]}, ${c[1]})` : "—";
 
-async function api(path, opts = {}) {
-  const r = await fetch(path, opts);
-  let body = null;
-  try { body = await r.json(); } catch (e) { body = null; }
-  if (!r.ok) {
-    const d = body && (body.detail || body.error);
-    const msg = typeof d === "string" ? d : (d && d.a_preparar ? "a preparar o projeto…" : `erro ${r.status}`);
-    const err = new Error(msg); err.status = r.status; err.body = body; throw err;
+// ------------------------------------------------------------ toque no tabuleiro (gancho de board.js)
+S.onBoardTap = (l, c, e) => {
+  hideSugPicker();
+  if (l >= 1 && l <= S.rows && c >= 1 && c <= S.cols) {
+    const hits = suggestionsAt(l, c);
+    if (hits.length === 1) openMesaGroup(hits[0].g.id, 1);
+    else if (hits.length > 1) showSugPicker(hits, l, c, e.clientX, e.clientY);
+    else openCell(l, c, { zoom: false });
   }
-  return body;
-}
-
-function toast(msg, err = false) {
-  const el = h("div", { class: err ? "err" : "" }, msg);
-  $("#toast").append(el);
-  setTimeout(() => el.remove(), err ? 7000 : 4500);
-}
-
-function lightbox(src, cap) {
-  $("#lb-img").src = src;
-  $("#lb-cap").textContent = cap || "";
-  $("#lightbox").hidden = false;
-}
-
-const legendRow = (id) => (S.board ? S.board.legend : []).find((r) => r.id === id) || {};
-const cls = (id) => legendRow(id).classe;
-
-// ------------------------------------------------------------ board geometry
-const cellRect = (l, c, inset = 0) => ({ x: c - 1 + inset, y: (l - 1) * S.hr + inset * S.hr, w: 1 - 2 * inset,
-  h: S.hr * (1 - 2 * inset) });
-function rectEl(l, c, klass, inset = 0.04, extra = {}) {
-  const r = cellRect(l, c, inset);
-  return s("rect", { x: r.x.toFixed(4), y: r.y.toFixed(4), width: r.w.toFixed(4), height: r.h.toFixed(4), class: klass, ...extra });
-}
-function ghostPath(path, cx, cy) {
-  if (!path || !path.length) return "";
-  return "M" + path.map(([x, y]) => `${(cx + x).toFixed(3)} ${(cy + y * S.hr).toFixed(3)}`).join("L") + "Z";
-}
-const boardW = () => S.cols;
-const boardH = () => S.rows * S.hr;
-
-// ------------------------------------------------------------ view (zoom / pan)
-const svg = () => $("#board");
-function svgRect() { return svg().getBoundingClientRect(); }
-function pxPerCell() { const r = svgRect(); return r.width / S.vb.w; }
-
-function setView(vb) {
-  const r = svgRect();
-  const asp = r.height / Math.max(1, r.width);
-  let { x, y, w } = vb;
-  w = Math.min(Math.max(w, 1.2), boardW() * 3);
-  const hh = w * asp;
-  // keep some of the board on screen
-  x = Math.min(Math.max(x, -w * 0.8), boardW() - w * 0.2);
-  y = Math.min(Math.max(y, -hh * 0.8), boardH() - hh * 0.2);
-  S.vb = { x, y, w, h: hh };
-  svg().setAttribute("viewBox", `${x} ${y} ${w} ${hh}`);
-  const ppc = pxPerCell();
-  $("#lyr-grelha").classList.toggle("off", !(S.showGrid && ppc >= 22));
-  $("#lyr-fantasma").classList.toggle("off", !(S.showGhost && ppc >= 7));
-  scheduleDetail();
-}
-function fitRect(x0, y0, x1, y1, pad = 0.04) {
-  const r = svgRect();
-  const asp = r.height / Math.max(1, r.width);
-  const bw = x1 - x0, bh = y1 - y0;
-  let w = Math.max(bw, bh / asp) * (1 + 2 * pad);
-  const hh = w * asp;
-  // keep the view inside the board when the board is larger than the view (no empty band)
-  const clamp = (v, size, total) => (size >= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size));
-  setView({ x: clamp(x0 + bw / 2 - w / 2, w, boardW()), y: clamp(y0 + bh / 2 - hh / 2, hh, boardH()), w });
-}
-function fitBoard() { fitRect(0, 0, boardW(), boardH(), 0.015); }
-function zoomCells(l0, c0, l1, c1, pad = 0.08) { fitRect(c0 - 1, (l0 - 1) * S.hr, c1, l1 * S.hr, pad); }
-function zoomAt(factor, cx, cy) {
-  const r = svgRect();
-  const px = cx === undefined ? 0.5 : (cx - r.left) / r.width;
-  const py = cy === undefined ? 0.5 : (cy - r.top) / r.height;
-  const mx = S.vb.x + px * S.vb.w, my = S.vb.y + py * S.vb.h;
-  const w = S.vb.w / factor;
-  const asp = r.height / Math.max(1, r.width);
-  setView({ x: mx - px * w, y: my - py * w * asp, w });
-}
-function clientToBoard(cx, cy) {
-  const r = svgRect();
-  return { x: S.vb.x + (cx - r.left) / r.width * S.vb.w, y: S.vb.y + (cy - r.top) / r.height * S.vb.h };
-}
-
-// detail raster: the visible cells composed at a higher ppc when zoomed in
-let detailTimer = null;
-function scheduleDetail() {
-  clearTimeout(detailTimer);
-  detailTimer = setTimeout(loadDetail, 280);
-}
-function loadDetail() {
-  const det = $("#detail");
-  const need = pxPerCell() * (window.devicePixelRatio || 1);
-  if (!S.board || need <= S.ppc * 1.1) { det.setAttribute("visibility", "hidden"); S.detailKey = null; return; }
-  const c0 = Math.max(1, Math.floor(S.vb.x) + 1 - 1), c1 = Math.min(S.cols, Math.ceil(S.vb.x + S.vb.w) + 1);
-  const l0 = Math.max(1, Math.floor(S.vb.y / S.hr) + 1 - 1), l1 = Math.min(S.rows, Math.ceil((S.vb.y + S.vb.h) / S.hr) + 1);
-  if (c1 < c0 || l1 < l0) return;
-  const n = (c1 - c0 + 1) * (l1 - l0 + 1);
-  let ppc = Math.min(240, Math.ceil(need / 20) * 20);
-  ppc = Math.min(ppc, Math.floor(Math.sqrt(11e6 / n)));
-  if (ppc <= S.ppc * 1.1) { det.setAttribute("visibility", "hidden"); S.detailKey = null; return; }
-  const key = `${l0},${c0},${l1},${c1}@${ppc}#${S.ver}`;
-  if (key === S.detailKey) return;
-  S.detailKey = key;
-  const url = `/api/board.jpg?ppc=${ppc}&region=${l0},${c0},${l1},${c1}&v=${S.ver}`;
-  const img = new Image();
-  img.onload = () => {
-    if (S.detailKey !== key) return;
-    det.setAttribute("href", url);
-    det.setAttribute("x", c0 - 1); det.setAttribute("y", (l0 - 1) * S.hr);
-    det.setAttribute("width", c1 - c0 + 1); det.setAttribute("height", (l1 - l0 + 1) * S.hr);
-    det.setAttribute("visibility", "visible");
-    document.body.dataset.detail = key;
-  };
-  img.src = url;
-}
-
-function initPointer() {
-  const el = svg();
-  const ptrs = new Map();
-  let start = null, pinch = null, moved = false;
-  el.addEventListener("wheel", (e) => {
-    if (e.ctrlKey || e.metaKey) return;   // Ctrl+wheel / trackpad pinch = browser page zoom
-    if (S.pose && e.altKey) { e.preventDefault(); poseWheel(e); return; }   // Alt+wheel = rotate the piece (pose.js)
-    e.preventDefault();
-    const f = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0018));
-    zoomAt(f, e.clientX, e.clientY);
-  }, { passive: false });
-  el.addEventListener("pointerdown", (e) => {
-    el.setPointerCapture(e.pointerId);
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (ptrs.size === 1) { start = { x: e.clientX, y: e.clientY, vb: { ...S.vb } }; moved = false; }
-    if (ptrs.size === 2) {
-      const [a, b] = [...ptrs.values()];
-      pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), vb: { ...S.vb }, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
-      moved = true;
-    }
-  });
-  el.addEventListener("pointermove", (e) => {
-    if (!ptrs.has(e.pointerId)) return;
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    const r = svgRect();
-    if (ptrs.size >= 2 && pinch) {
-      const [a, b] = [...ptrs.values()];
-      const d = Math.hypot(a.x - b.x, a.y - b.y);
-      const f = d / Math.max(1, pinch.d);
-      const px = (pinch.mx - r.left) / r.width, py = (pinch.my - r.top) / r.height;
-      const mx = pinch.vb.x + px * pinch.vb.w, my = pinch.vb.y + py * pinch.vb.h;
-      const w = pinch.vb.w / f, asp = r.height / r.width;
-      const nmx = (a.x + b.x) / 2, nmy = (a.y + b.y) / 2;
-      const qx = (nmx - r.left) / r.width, qy = (nmy - r.top) / r.height;
-      setView({ x: mx - qx * w, y: my - qy * w * asp, w });
-      return;
-    }
-    if (start && ptrs.size === 1) {
-      const dx = e.clientX - start.x, dy = e.clientY - start.y;
-      if (Math.hypot(dx, dy) > 6) moved = true;
-      if (moved) {
-        el.classList.add("dragging");
-        setView({ x: start.vb.x - dx / r.width * start.vb.w, y: start.vb.y - dy / r.height * start.vb.h, w: start.vb.w });
-      }
-    }
-  });
-  const up = (e) => {
-    if (!ptrs.has(e.pointerId)) return;
-    ptrs.delete(e.pointerId);
-    el.classList.remove("dragging");
-    if (ptrs.size < 2) pinch = null;
-    if (ptrs.size === 0) {
-      if (!moved && start && e.type === "pointerup" && !S.pose) {
-        const p = clientToBoard(e.clientX, e.clientY);
-        const c = Math.floor(p.x) + 1, l = Math.floor(p.y / S.hr) + 1;
-        hideSugPicker();
-        if (l >= 1 && l <= S.rows && c >= 1 && c <= S.cols) {
-          const hits = suggestionsAt(l, c);
-          if (hits.length === 1) openMesaGroup(hits[0].g.id, 1);
-          else if (hits.length > 1) showSugPicker(hits, l, c, e.clientX, e.clientY);
-          else openCell(l, c, { zoom: false });
-        }
-      }
-      start = null;
-    } else if (ptrs.size === 1) {
-      const [a] = [...ptrs.values()];
-      start = { x: a.x, y: a.y, vb: { ...S.vb } };
-    }
-  };
-  el.addEventListener("pointerup", up);
-  el.addEventListener("pointercancel", up);
-  el.addEventListener("dblclick", (e) => zoomAt(2, e.clientX, e.clientY));
-  $("#z-in").onclick = () => zoomAt(1.6);
-  $("#z-out").onclick = () => zoomAt(1 / 1.6);
-  $("#z-fit").onclick = fitBoard;
-  window.addEventListener("resize", () => setView(S.vb));
-}
+};
 
 // ------------------------------------------------------------ board layers
 function drawBoard() {
   const b = S.board;
-  S.rows = b.rows; S.cols = b.cols; S.hr = b.hr; S.rotGemea = b.rotacao_gemea_deg; S.ppc = b.board_ppc; S.ver = b.versao;
-  $("#board-bg").setAttribute("width", boardW()); $("#board-bg").setAttribute("height", boardH());
-  const r = $("#raster");
-  r.setAttribute("width", boardW()); r.setAttribute("height", boardH());
-  const url = `/api/board.jpg?ppc=${S.ppc}&v=${S.ver}`;
-  if (r.getAttribute("href") !== url) {
-    const img = new Image();
-    img.onload = () => { r.setAttribute("href", url); document.body.dataset.raster = String(S.ver); };
-    img.src = url;
-  }
-  S.detailKey = null;
+  drawRaster();
   // legacy (occupied without a silhouette)
   const leg = $("#lyr-legado"); leg.replaceChildren();
   const bor = $("#lyr-borda"); bor.replaceChildren();
@@ -273,11 +43,7 @@ function drawBoard() {
   for (const [l, c] of b.borda_em_falta) bor.append(rectEl(l, c, cls("borda"), 0.05));
   const kn = $("#lyr-conhecida"); kn.replaceChildren();
   for (const k of b.posicoes_conhecidas) kn.append(rectEl(k.cell[0], k.cell[1], cls("conhecida"), 0.07));
-  // grid
-  let d = "";
-  for (let c = 0; c <= S.cols; c++) d += `M${c} 0V${boardH().toFixed(4)}`;
-  for (let l = 0; l <= S.rows; l++) d += `M0 ${(l * S.hr).toFixed(4)}H${S.cols}`;
-  $("#lyr-grelha").replaceChildren(s("path", { d, class: cls("grelha") }));
+  drawGrid();
   drawProgress();
   drawSel();
   drawLegend();

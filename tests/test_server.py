@@ -308,9 +308,12 @@ def test_prepare_runs_rebuild_when_assets_missing(env, monkeypatch):
 
 # ---------------------------------------------------------------- legend coverage
 def test_legend_covers_every_board_class():
-    css = open(os.path.join(WEB, "app.css"), encoding="utf-8").read()
-    js = open(os.path.join(WEB, "app.js"), encoding="utf-8").read()
-    html = open(os.path.join(WEB, "index.html"), encoding="utf-8").read()
+    # F1a (2026-11-11): the board's JS / CSS moved to board.js / board.css (utilities to core.js); same assertions
+    def rd(*names):
+        return "\n".join(open(os.path.join(WEB, n), encoding="utf-8").read() for n in names)
+    css = rd("board.css", "app.css")
+    js = rd("core.js", "board.js", "app.js")
+    html = rd("index.html")
     pat = re.compile(r"(?<![\w-])b-[a-z][a-z-]*[a-z]")
     used = set(pat.findall(css)) | set(pat.findall(js)) | set(pat.findall(html))
     legend = {row["classe"] for row in S.LEGEND if row["classe"]}

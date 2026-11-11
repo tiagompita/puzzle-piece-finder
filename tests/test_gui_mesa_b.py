@@ -164,7 +164,7 @@ def test_no_ancorar_visible_anywhere(base, browser):  # noqa: F811
 def test_no_ancorar_in_web_sources_or_server_texts():
     from src import confirm, server
     allowed = re.compile(r"por_ancorar")                                  # identificador de código (estado/CSS), nunca mostrado
-    for name in ("app.js", "index.html", "app.css"):
+    for name in ("app.js", "index.html", "app.css", "core.js", "board.js", "board.css"):   # + ficheiros da F1a (2026-11-11)
         src = allowed.sub("", open(os.path.join(WEB, name), encoding="utf-8").read())
         assert not re.search(r"ancor", src, re.I), name
     texts = [str(v) for row in server.LEGEND for v in row.values()] + list(server.ESTADO_TXT.values()) + list(server.ORIGIN_TXT.values())
