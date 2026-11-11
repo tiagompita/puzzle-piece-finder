@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Corrigir recorte</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131519}
+a{color:#f2b43c}a:hover{color:#ffd27a}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #131519; color: #ecebe7; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #323742; background: #1c1f25">
+    <a href="Celula.dc.html" aria-label="Cancelar e voltar" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <div style="flex: 1 1 auto">
+      <div style="font-size: 18px; font-weight: 700">Corrigir recorte</div>
+      <div style="font-size: 14px; color: #a9adb6">Saco 7 · peça nº 20</div>
+    </div>
+  </header>
+
+  <main style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; flex: 1 1 auto; align-items: flex-start">
+
+    <section aria-label="A peça na folha" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <div style="position: relative; background: #74d06f; border-radius: 14px; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; overflow: hidden">
+        <svg role="img" aria-label="A peça com a sombra e a linha laranja do recorte" width="72%" height="92%" viewBox="0 0 110 110">
+          <path d="M16 24 L36 24 C36 24 32 12 46 12 C60 12 56 24 56 24 L76 24 L76 44 C76 44 64 40 64 54 C64 68 76 64 76 64 L76 84 L56 84 C56 84 60 96 46 96 C32 96 36 84 36 84 L16 84 L16 64 C16 64 28 68 28 54 C28 40 16 44 16 44 Z" fill="#1f3a1f"></path>
+          <path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="#ead9a4"></path>
+          <path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="none" stroke="#ff8a1f" stroke-width="1.4"></path>
+          <path d="M14 46 C13 56 13 66 15 82" fill="none" stroke="rgba(19,21,25,0.55)" stroke-width="7" stroke-linecap="round"></path>
+        </svg>
+        <div style="position: absolute; left: 14px; bottom: 14px; display: flex; gap: 8px">
+          <button type="button" aria-label="Aproximar" style="width: 44px; height: 44px; border-radius: 10px; border: 0; background: #1c1f25; color: #ecebe7; font-size: 22px">+</button>
+          <button type="button" aria-label="Afastar" style="width: 44px; height: 44px; border-radius: 10px; border: 0; background: #1c1f25; color: #ecebe7; font-size: 22px">−</button>
+        </div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 18px; font-size: 13px; color: #a9adb6">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="width: 18px; height: 3px; background: #ff8a1f"></span>O recorte que fica guardado</div>
+        <div style="display: flex; align-items: center; gap: 8px"><span style="width: 18px; height: 7px; border-radius: 4px; background: rgba(19,21,25,0.75); border: 1px solid #5a6170; box-sizing: border-box"></span>O que pintaste para tirar</div>
+      </div>
+    </section>
+
+    <aside aria-label="Ferramentas" style="flex: 1 1 340px; max-width: 420px; display: flex; flex-direction: column; gap: 16px">
+      <div style="background: #1c1f25; border: 1px solid #323742; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <div style="font-size: 16px; font-weight: 600">Pinta por cima do que está errado</div>
+        <div style="display: flex; gap: 10px">
+          <button type="button" aria-pressed="true" style="flex: 1 1 0; min-height: 72px; border-radius: 12px; border: 2px solid #f2b43c; background: #252931; color: #ecebe7; font-size: 16px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px">Tirar<span style="font-size: 13px; font-weight: 400; color: #a9adb6">sombra, fundo</span></button>
+          <button type="button" aria-pressed="false" style="flex: 1 1 0; min-height: 72px; border-radius: 12px; border: 1px solid #323742; background: #1c1f25; color: #ecebe7; font-size: 16px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px">Acrescentar<span style="font-size: 13px; font-weight: 400; color: #a9adb6">peça que ficou cortada</span></button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <label for="ed-raio" style="font-size: 14px; color: #a9adb6">Tamanho do pincel</label>
+          <input id="ed-raio" type="range" min="2" max="30" value="8" style="width: 100%; accent-color: #f2b43c">
+        </div>
+        <div style="display: flex; gap: 10px">
+          <button type="button" style="flex: 1 1 0; min-height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; font-size: 15px; font-weight: 500">Desfazer</button>
+          <button type="button" style="flex: 1 1 0; min-height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; font-size: 15px; font-weight: 500">Recomeçar</button>
+        </div>
+      </div>
+
+      <div style="background: #1c1f25; border: 1px solid #323742; border-radius: 14px; padding: 20px; display: flex; align-items: center; gap: 18px">
+        <div style="width: 110px; height: 110px; border-radius: 10px; background: #0d0f12; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">
+          <svg role="img" aria-label="Como fica a peça recortada" width="92" height="92" viewBox="0 0 100 100"><path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="#ead9a4"></path></svg>
+        </div>
+        <div>
+          <div style="font-size: 16px; font-weight: 600">Como fica</div>
+          <div style="font-size: 14px; color: #a9adb6; line-height: 1.4; margin-top: 4px">Só a peça, sem sombra.</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px">
+        <button type="button" style="flex: 2 1 0; min-height: 56px; border-radius: 12px; border: 0; background: #f2b43c; color: #1a1405; font-size: 17px; font-weight: 700">Guardar</button>
+        <a href="Celula.dc.html" style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; min-height: 56px; border-radius: 12px; border: 1px solid #5a6170; background: #252931; color: #ecebe7; font-size: 16px; font-weight: 600; text-decoration: none">Cancelar</a>
+      </div>
+      <div style="display: flex; justify-content: space-between">
+        <button type="button" style="min-height: 44px; padding: 0 4px; border: 0; background: transparent; color: #a9adb6; font-size: 14px; text-decoration: underline">Usar o recorte da peça gémea</button>
+        <button type="button" style="min-height: 44px; padding: 0 4px; border: 0; background: transparent; color: #a9adb6; font-size: 14px; text-decoration: underline">Mais opções</button>
+      </div>
+    </aside>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

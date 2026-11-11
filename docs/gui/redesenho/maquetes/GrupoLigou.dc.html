@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>O grupo já tem lugar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131519}
+a{color:#f2b43c}a:hover{color:#ffd27a}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 460px; height: 640px; box-sizing: border-box; padding: 20px; background: #131519; color: #ecebe7; font-family: Inter, system-ui, sans-serif">
+  <div style="background: #1c1f25; border: 2px solid #b9a3ff; border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+    <div style="font-size: 14px; color: #a9adb6">Novidade do último scan</div>
+    <div style="font-size: 24px; font-weight: 700; line-height: 1.2">Um grupo solto já liga ao puzzle</div>
+
+    <div style="display: flex; align-items: center; gap: 16px; padding: 14px; border-radius: 12px; background: #252931">
+      <div role="img" aria-label="Zona no tabuleiro: em cima, ao centro" style="position: relative; width: 150px; height: 110px; border-radius: 8px; background: linear-gradient(180deg, #8fb6dc 0%, #f0d8a2 36%, #6f8f5a 64%, #48693f 100%); flex: 0 0 auto">
+        <span style="position: absolute; left: 0; right: 0; top: 0; height: 22%; background: rgba(255,255,255,0.18)"></span>
+        <span style="position: absolute; left: 42%; top: 22%; width: 24%; height: 26%; box-sizing: border-box; border: 2px solid #1b1238; background: #b9a3ff; border-radius: 3px"></span>
+        <span style="position: absolute; left: 48%; top: 12%; width: 8%; height: 10%; box-sizing: border-box; border: 2px solid #1a1405; background: #f2b43c; border-radius: 2px"></span>
+      </div>
+      <div style="font-size: 15px; line-height: 1.45">
+        <div style="font-weight: 600">Grupo de 6 peças</div>
+        <div style="color: #a9adb6">A peça do saco 10, nº 7 faz a ligação.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 15px">
+      <div style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 14px; background: #f2b43c; color: #1a1405; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">1</span>Põe a peça do saco 10, nº 7 no puzzle</div>
+      <div style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 14px; background: #b9a3ff; color: #1b1238; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">2</span>Encosta-lhe o grupo por baixo</div>
+    </div>
+
+    <div style="display: flex; gap: 12px">
+      <button type="button" style="flex: 1 1 0; min-height: 56px; border-radius: 12px; border: 0; background: #f2b43c; color: #1a1405; font-size: 17px; font-weight: 700">Encaixa tudo</button>
+      <button type="button" style="flex: 1 1 0; min-height: 56px; border-radius: 12px; border: 1px solid #5a6170; background: #252931; color: #ecebe7; font-size: 17px; font-weight: 600">Não encaixa</button>
+    </div>
+    <div style="display: flex; justify-content: center">
+      <button type="button" style="min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: #a9adb6; font-size: 14px; text-decoration: underline">Só a peça encaixa, o grupo não</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":460,"height":640}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

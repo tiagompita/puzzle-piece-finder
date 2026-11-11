@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Importar scan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131519}
+a{color:#f2b43c}a:hover{color:#ffd27a}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #131519; color: #ecebe7; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px; padding: 12px 24px; border-bottom: 1px solid #323742; background: #1c1f25">
+    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 220px">
+      <div style="font-size: 16px; font-weight: 600">Os Alpes</div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 140px; height: 6px; border-radius: 3px; background: #323742; overflow: hidden"><div style="width: 22%; height: 6px; background: #6fc3c9"></div></div>
+        <div style="font-size: 13px; color: #a9adb6">672 de 3008 peças</div>
+      </div>
+    </div>
+    <nav aria-label="Secções" style="display: flex; gap: 4px; flex: 1 1 auto">
+      <a href="Main.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; color: #ecebe7; font-size: 15px; font-weight: 500; text-decoration: none">Montar</a>
+      <a href="Pecas.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; color: #ecebe7; font-size: 15px; font-weight: 500; text-decoration: none">Peças</a>
+      <a href="Importar.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; background: #f2b43c; color: #1a1405; font-size: 15px; font-weight: 600; text-decoration: none">Importar scan</a>
+    </nav>
+    <div style="display: flex; gap: 8px">
+      <button type="button" aria-label="Mais: diagnóstico e definições" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>
+      </button>
+    </div>
+  </header>
+
+  <main style="display: flex; flex-wrap: wrap; gap: 24px; padding: 28px 24px; max-width: 1180px; width: 100%; box-sizing: border-box; margin: 0 auto; align-items: flex-start">
+
+    <section aria-label="Importar" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+      <div style="font-size: 26px; font-weight: 700">Junta um saco novo</div>
+
+      <div style="display: flex; gap: 16px; align-items: flex-start">
+        <div style="width: 36px; height: 36px; border-radius: 18px; background: #f2b43c; color: #1a1405; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">1</div>
+        <div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 17px; font-weight: 600">A folha digitalizada</div>
+          <button type="button" style="min-height: 180px; border-radius: 14px; border: 2px dashed #5a6170; background: #1c1f25; color: #ecebe7; font-size: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px">
+            <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5"></path><path d="M7 10l5-5 5 5"></path><path d="M4 19h16"></path></svg>
+            <span style="font-weight: 600">Larga aqui o ficheiro ou clica para escolher</span>
+            <span style="font-size: 14px; color: #a9adb6">imagem ou PDF do scanner</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 16px; align-items: flex-start">
+        <div style="width: 36px; height: 36px; border-radius: 18px; border: 2px solid #5a6170; box-sizing: border-box; color: #ecebe7; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">2</div>
+        <div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 10px">
+          <label for="saco" style="font-size: 17px; font-weight: 600">Número do saco onde as guardas</label>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button type="button" aria-label="Menos um" style="width: 48px; height: 48px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; font-size: 22px">−</button>
+            <input id="saco" type="text" inputmode="numeric" value="10" style="width: 84px; height: 48px; box-sizing: border-box; border-radius: 10px; border: 1px solid #5a6170; background: #1c1f25; color: #ecebe7; font-family: inherit; font-size: 22px; font-weight: 700; text-align: center">
+            <button type="button" aria-label="Mais um" style="width: 48px; height: 48px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; font-size: 22px">+</button>
+            <div style="font-size: 14px; color: #a9adb6">o seguinte ao último</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 16px; align-items: flex-start">
+        <div style="width: 36px; height: 36px; border-radius: 18px; border: 2px solid #5a6170; box-sizing: border-box; color: #ecebe7; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">3</div>
+        <div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 10px">
+          <button type="button" style="min-height: 56px; border-radius: 12px; border: 0; background: #f2b43c; color: #1a1405; font-size: 17px; font-weight: 700">Importar</button>
+          <div style="font-size: 14px; color: #a9adb6">No fim digo-te quantas peças encontrei e quais podes ir já buscar.</div>
+        </div>
+      </div>
+    </section>
+
+    <aside aria-label="Como digitalizar" style="flex: 1 1 320px; max-width: 420px; background: #1c1f25; border: 1px solid #323742; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+      <div style="font-size: 17px; font-weight: 600">Para o scan sair bem</div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <div aria-hidden="true" style="width: 64px; height: 48px; border-radius: 8px; background: #74d06f; flex: 0 0 auto"></div>
+        <div style="font-size: 15px; line-height: 1.4">Fundo verde por trás das peças</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <div aria-hidden="true" style="width: 64px; height: 48px; border-radius: 8px; background: #74d06f; display: flex; align-items: center; justify-content: center; gap: 10px; flex: 0 0 auto"><span style="width: 16px; height: 16px; border-radius: 3px; background: #ead9a4"></span><span style="width: 16px; height: 16px; border-radius: 3px; background: #a9c6e3"></span></div>
+        <div style="font-size: 15px; line-height: 1.4">Peças afastadas, sem se tocarem</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <div aria-hidden="true" style="width: 64px; height: 48px; border-radius: 8px; background: #252931; border: 1px solid #5a6170; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; flex: 0 0 auto">300</div>
+        <div style="font-size: 15px; line-height: 1.4">Scanner a 300 dpi, imagem para cima</div>
+      </div>
+    </aside>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

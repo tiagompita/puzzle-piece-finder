@@ -185,6 +185,17 @@ Projeto real (`d865e29`):
 
 Detalhe em `docs/diagnostico/editor/CONVENCAO.md` §6 e `docs/decisoes.md` (ronda 10).
 
+### 3.9 Grupos entre peças soltas e redesenho da GUI (estado 2026-11-11)
+
+**Grupos propostos entre soltas.**
+- Medição de 2026-11-10: ligações melhor-mútuas entre lados T/B das 525 soltas com custo de lado do molde do buraco, e quadrados 2×2 com as 4 ligações coerentes. Deu 17 quadrados, 7 com margem ≥ 1,05, todos com zona provável céu.
+- **[V, Tiago, 2026-11-11]** Os 10 primeiros encaixam fisicamente os 10, incluindo os 3 abaixo de 1,05.
+- **São 10 casos** (Wilson 95 % de 10/10: 0,72–1,00, verificado com `src.fit.wilson`), só no céu: abre a fase F4b da GUI e não calibra nada.
+- Os quadrados 11–17 estão listados em `docs/diagnostico/grupos_soltos/QUADRADOS.md` para o próximo teste físico.
+- Os 10 grupos montados (40 peças fora dos sacos) ainda não estão registados no projeto [NT]: ver o mesmo ficheiro.
+
+**Redesenho da GUI.** Especificação e decisões em `docs/gui/redesenho/ESPEC.md` (§8: respostas do Tiago de 2026-11-11). Inventário da F0 e plano por fases em `docs/gui/redesenho/F0_INVENTARIO.md`. Fases: F1a (extrair o tabuleiro) → F1b (Montar em `/novo/`) → F2 → F3 → F4 → F4b (grupos propostos) → F5 → F6. «Quase certo» só com n ≥ 10 e Wilson inferior ≥ 0,80 por origem × zona; uma ação desfeita não conta.
+
 ---
 
 ## 4. Causa raiz do abandono

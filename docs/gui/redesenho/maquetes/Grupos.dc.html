@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Grupos soltos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131519}
+a{color:#f2b43c}a:hover{color:#ffd27a}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #131519; color: #ecebe7; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px; padding: 12px 24px; border-bottom: 1px solid #323742; background: #1c1f25">
+    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 220px">
+      <div style="font-size: 16px; font-weight: 600">Os Alpes</div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 140px; height: 6px; border-radius: 3px; background: #323742; overflow: hidden"><div style="width: 22%; height: 6px; background: #6fc3c9"></div></div>
+        <div style="font-size: 13px; color: #a9adb6">672 de 3008 peças</div>
+      </div>
+    </div>
+    <nav aria-label="Secções" style="display: flex; gap: 4px; flex: 1 1 auto">
+      <a href="Main.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; background: #f2b43c; color: #1a1405; font-size: 15px; font-weight: 600; text-decoration: none">Montar</a>
+      <a href="Pecas.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; color: #ecebe7; font-size: 15px; font-weight: 500; text-decoration: none">Peças</a>
+      <a href="Importar.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; color: #ecebe7; font-size: 15px; font-weight: 500; text-decoration: none">Importar scan</a>
+    </nav>
+    <button type="button" aria-label="Mais: diagnóstico e definições" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>
+    </button>
+  </header>
+
+  <main style="padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; max-width: 1280px; width: 100%; box-sizing: border-box; margin: 0 auto">
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #1c1f25; border: 1px solid #323742">
+        <a href="Main.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 8px; color: #ecebe7; font-size: 15px; font-weight: 500; text-decoration: none">Peça a peça · 10</a>
+        <a href="Grupos.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 8px; background: #b9a3ff; color: #1b1238; font-size: 15px; font-weight: 600; text-decoration: none">Grupos soltos · 12</a>
+      </div>
+      <div style="font-size: 14px; color: #a9adb6">Peças soltas que encaixam umas nas outras, mesmo sem tocarem no que já montaste.</div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+      <section aria-label="Lista de grupos" style="flex: 1 1 320px; max-width: 420px; display: flex; flex-direction: column; gap: 10px">
+        <button type="button" aria-current="true" style="display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 10px 14px; border-radius: 12px; border: 2px solid #b9a3ff; background: #252931; color: #ecebe7; text-align: left">
+          <span aria-hidden="true" style="display: grid; grid-template-columns: repeat(2, 26px); gap: 2px; flex: 0 0 auto"><span style="height: 26px; border-radius: 4px; background: #a9c6e3"></span><span style="height: 26px; border-radius: 4px; background: #8fb0d2"></span><span style="height: 26px; border-radius: 4px; background: #c2d6e6"></span><span style="height: 26px; border-radius: 4px; background: #ead9a4"></span></span>
+          <span style="flex: 1 1 auto"><span style="display: block; font-size: 17px; font-weight: 700">4 peças</span><span style="display: block; font-size: 14px; color: #a9adb6">sacos 3, 7 e 9</span></span>
+          <span style="font-size: 13px; color: #a9adb6">quase certo</span>
+        </button>
+        <button type="button" style="display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 10px 14px; border-radius: 12px; border: 1px solid #323742; background: #1c1f25; color: #ecebe7; text-align: left">
+          <span aria-hidden="true" style="display: grid; grid-template-columns: repeat(2, 26px); gap: 2px; flex: 0 0 auto"><span style="height: 26px; border-radius: 4px; background: #8fb0d2"></span><span style="height: 26px; border-radius: 4px; background: #a9c6e3"></span><span style="height: 26px; border-radius: 4px; background: #a9c6e3"></span><span style="height: 26px; border-radius: 4px; background: #c2d6e6"></span></span>
+          <span style="flex: 1 1 auto"><span style="display: block; font-size: 17px; font-weight: 700">8 peças</span><span style="display: block; font-size: 14px; color: #a9adb6">sacos 2, 4 e 7</span></span>
+          <span style="font-size: 13px; color: #a9adb6">quase certo</span>
+        </button>
+        <button type="button" style="display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 10px 14px; border-radius: 12px; border: 1px solid #323742; background: #1c1f25; color: #ecebe7; text-align: left">
+          <span aria-hidden="true" style="display: grid; grid-template-columns: repeat(2, 26px); gap: 2px; flex: 0 0 auto"><span style="height: 26px; border-radius: 4px; background: #ead9a4"></span><span style="height: 26px; border-radius: 4px; background: #d9c08a"></span><span style="height: 26px; border-radius: 4px; background: #a9c6e3"></span><span style="height: 26px; border-radius: 4px; background: #ead9a4"></span></span>
+          <span style="flex: 1 1 auto"><span style="display: block; font-size: 17px; font-weight: 700">4 peças</span><span style="display: block; font-size: 14px; color: #a9adb6">sacos 1 e 5</span></span>
+          <span style="font-size: 13px; color: #a9adb6">a confirmar por ti</span>
+        </button>
+      </section>
+
+      <section aria-label="Grupo escolhido" style="flex: 999 1 480px; min-width: 0; background: #1c1f25; border: 1px solid #323742; border-radius: 14px; padding: 22px; display: flex; flex-wrap: wrap; gap: 24px">
+        <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 14px; color: #a9adb6">Como se juntam</div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; max-width: 300px">
+            <div style="position: relative; aspect-ratio: 1 / 1; border-radius: 8px; background: #a9c6e3"><span style="position: absolute; left: 8px; top: 8px; width: 30px; height: 30px; border-radius: 15px; background: #1b1238; color: #ecebe7; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">1</span></div>
+            <div style="position: relative; aspect-ratio: 1 / 1; border-radius: 8px; background: #8fb0d2"><span style="position: absolute; left: 8px; top: 8px; width: 30px; height: 30px; border-radius: 15px; background: #1b1238; color: #ecebe7; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span></div>
+            <div style="position: relative; aspect-ratio: 1 / 1; border-radius: 8px; background: #c2d6e6"><span style="position: absolute; left: 8px; top: 8px; width: 30px; height: 30px; border-radius: 15px; background: #1b1238; color: #ecebe7; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</span></div>
+            <div style="position: relative; aspect-ratio: 1 / 1; border-radius: 8px; background: #ead9a4"><span style="position: absolute; left: 8px; top: 8px; width: 30px; height: 30px; border-radius: 15px; background: #1b1238; color: #ecebe7; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">4</span></div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px">
+            <div role="img" aria-label="Zona provável no tabuleiro: em cima, ao centro" style="position: relative; width: 96px; height: 70px; border-radius: 6px; background: linear-gradient(180deg, #8fb6dc 0%, #f0d8a2 36%, #6f8f5a 64%, #48693f 100%); flex: 0 0 auto"><span style="position: absolute; left: 40%; top: 10%; width: 22%; height: 26%; border: 2px dashed #1b1238; background: rgba(185,163,255,0.6); box-sizing: border-box; border-radius: 3px"></span></div>
+            <div style="font-size: 14px; color: #a9adb6; line-height: 1.4">Lugar provável no puzzle.<br>Só fica certo quando ligar ao resto.</div>
+          </div>
+        </div>
+
+        <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 14px; color: #a9adb6">Vai buscar</div>
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 10px; background: #252931"><span style="width: 28px; height: 28px; border-radius: 14px; background: #1b1238; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">1</span><span style="font-size: 16px; font-weight: 600">Saco 3 · nº 8</span></div>
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 10px; background: #252931"><span style="width: 28px; height: 28px; border-radius: 14px; background: #1b1238; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span><span style="font-size: 16px; font-weight: 600">Saco 7 · nº 12</span></div>
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 10px; background: #252931"><span style="width: 28px; height: 28px; border-radius: 14px; background: #1b1238; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</span><span style="font-size: 16px; font-weight: 600">Saco 7 · nº 13</span></div>
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 10px; background: #252931"><span style="width: 28px; height: 28px; border-radius: 14px; background: #1b1238; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">4</span><span style="font-size: 16px; font-weight: 600">Saco 9 · nº 27</span></div>
+          <div style="display: flex; gap: 10px; margin-top: 8px">
+            <button type="button" style="flex: 1 1 0; min-height: 56px; border-radius: 12px; border: 0; background: #f2b43c; color: #1a1405; font-size: 16px; font-weight: 700">Juntei, encaixam</button>
+            <button type="button" style="flex: 1 1 0; min-height: 56px; border-radius: 12px; border: 1px solid #5a6170; background: #252931; color: #ecebe7; font-size: 16px; font-weight: 600">Não encaixam</button>
+          </div>
+          <button type="button" style="min-height: 44px; border: 0; background: transparent; color: #a9adb6; font-size: 14px; text-decoration: underline">Só algumas encaixam</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

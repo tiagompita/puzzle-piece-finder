@@ -169,3 +169,33 @@ Os limiares abaixo estão no código ou nos testes da ronda 10, mas nenhum foi v
 - Critério por zona: desvio mediano por lado ≤ 0,3 mm, p95 ≤ 0,6 mm, IoU ≥ 0,93. A zona que passa ativa; a que falha fica com a regra atual e o [F] é registado.
 - **A tolerância foi fixada vendo só P0651/P0657: não está validada.** O n por zona é de 1 a 2 peças, e o relatório tem de o dizer.
 - À espera das máscaras de P1203, P0045, P1245 e P0198 (P0229 opcional) em `docs/diagnostico/editor/gt_photoshop/`.
+
+## 2026-11-11 — grupos propostos entre peças soltas: os 10 quadrados de 2026-11-10 encaixam
+
+**Evidência [V, Tiago, 2026-11-11]:** Tiago testou fisicamente os 10 quadrados 2×2 propostos em 2026-11-10 (ligações melhor-mútuas entre os lados T/B das soltas, custo de lado do molde do buraco, 4 ligações coerentes por quadrado; todos com zona provável céu). **Encaixam os 10**, incluindo os 3 com margem abaixo de 1,05 (#8 1,044, #9 1,030, #10 1,021).
+
+**Atenção: são 10 casos.** Chegam para abrir a fase F4b do redesenho da GUI (grupos propostos pelo programa), não para calibrar uma precisão.
+- O limite inferior de Wilson de 10/10 é 0,72, abaixo do 0,80 da regra do «quase certo».
+- Os 10 são os 10 melhores da lista e são todos do céu.
+
+**Seguinte:** os quadrados 11–17 (margens 1,021–1,008, também céu; três partilham peças com os 10) estão listados em `docs/diagnostico/grupos_soltos/QUADRADOS.md`, para o Tiago testar onde o método começa a falhar.
+
+## 2026-11-11 — redesenho da GUI: plano aprovado (fases, interruptor, «quase certo»)
+
+**Decisão do Tiago:** aprovado o plano da F0 (`docs/gui/redesenho/F0_INVENTARIO.md`); as respostas às perguntas estão em `docs/gui/redesenho/ESPEC.md` §8.
+
+**Fases.**
+- F1 parte-se em F1a (extrair o tabuleiro para `core.js`/`board.js`/`board.css` sem mudar comportamento) e F1b (casca nova e Montar).
+- Desfazer a rejeição e o motivo vêm para a F1b.
+- F2: a verificação de uma peça posta à mão não bloqueia.
+- F4b nova: grupos propostos pelo programa, cada um confirmado fisicamente antes de passar a grupo, com contador de acertos e falhas.
+- F5: o Diagnóstico lista as rejeições, cada uma com «anular».
+- Cada fase fecha com a suite verde, capturas a 1366 e a 390 px e o OK do Tiago.
+
+**Interruptor.** A GUI nova vive em `/novo/` (atalhos `/?ui=novo` e `python -m src.server --ui novo`); a antiga fica em `/` até à F6.
+
+**Regra do «quase certo».**
+- Só por origem × zona com n ≥ 10 decisões físicas e limite inferior de Wilson (95 %) ≥ 0,80; tudo o resto diz «a confirmar por ti».
+- **Uma ação desfeita não conta**, nem como acerto nem como falha.
+- «Tirar do lugar» é neutro; passa a falha da sugestão se outra peça acabar nesse lugar.
+- No «Porquê», «não testado» tem aspeto próprio (traços vazios, «não verificado»), distinto de «falha».

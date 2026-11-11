@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Peça que se junta a um grupo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131519}
+a{color:#f2b43c}a:hover{color:#ffd27a}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 460px; height: 640px; box-sizing: border-box; padding: 20px; background: #131519; color: #ecebe7; font-family: Inter, system-ui, sans-serif">
+  <div style="background: #1c1f25; border: 1px solid #323742; border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <div style="font-size: 14px; color: #a9adb6">Próxima peça</div>
+      <div style="font-size: 14px; color: #a9adb6">2 de 3 neste saco · 10 no total</div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 20px">
+      <div style="width: 130px; height: 130px; border-radius: 12px; background: #252931; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">
+        <svg role="img" aria-label="A peça, rodada como fica" width="108" height="108" viewBox="0 0 100 100"><path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="#b7d0e8" stroke="#e3f0fb" stroke-width="1.5"></path></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 28px; font-weight: 700; line-height: 1.1">Saco 9</div>
+        <div style="font-size: 28px; font-weight: 700; line-height: 1.1; color: #f2b43c">peça nº 31</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 16px; padding: 14px; border-radius: 12px; background: #252931">
+      <div role="img" aria-label="O grupo de 6 peças, com o sítio da nova peça à direita" style="display: grid; grid-template-columns: repeat(4, 28px); grid-auto-rows: 28px; gap: 2px; flex: 0 0 auto">
+        <span style="border-radius: 3px; background: #a9c6e3"></span><span style="border-radius: 3px; background: #8fb0d2"></span><span style="border-radius: 3px; background: #b7d0e8"></span><span style="border-radius: 3px; border: 2px solid #f2b43c; box-sizing: border-box; background: rgba(242,180,60,0.25)"></span>
+        <span style="border-radius: 3px; background: #c2d6e6"></span><span style="border-radius: 3px; background: #ead9a4"></span><span style="border-radius: 3px; background: #e6d9b4"></span><span></span>
+      </div>
+      <div style="font-size: 15px; line-height: 1.4"><span style="font-weight: 600">Junta-se a um grupo solto.</span><br><span style="color: #a9adb6">À direita, em cima. O grupo ainda não tem lugar no puzzle.</span></div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px">
+      <div aria-hidden="true" style="display: flex; gap: 4px"><span style="width: 22px; height: 6px; border-radius: 3px; background: #6fc3c9"></span><span style="width: 22px; height: 6px; border-radius: 3px; background: #6fc3c9"></span><span style="width: 22px; height: 6px; border-radius: 3px; background: #4a505c"></span></div>
+      <div>Parece certo, confirma tu</div>
+    </div>
+
+    <div style="display: flex; gap: 12px">
+      <button type="button" style="flex: 1 1 0; min-height: 56px; border-radius: 12px; border: 0; background: #f2b43c; color: #1a1405; font-size: 17px; font-weight: 700">Encaixa</button>
+      <button type="button" style="flex: 1 1 0; min-height: 56px; border-radius: 12px; border: 1px solid #5a6170; background: #252931; color: #ecebe7; font-size: 17px; font-weight: 600">Não encaixa</button>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center">
+      <button type="button" style="min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: #a9adb6; font-size: 14px; text-decoration: underline">Saltar por agora</button>
+      <button type="button" style="min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: #a9adb6; font-size: 14px; text-decoration: underline">Ver o grupo no tabuleiro</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":460,"height":640}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

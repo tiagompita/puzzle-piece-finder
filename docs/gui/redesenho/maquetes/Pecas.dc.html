@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Peças</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131519}
+a{color:#f2b43c}a:hover{color:#ffd27a}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #131519; color: #ecebe7; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px; padding: 12px 24px; border-bottom: 1px solid #323742; background: #1c1f25">
+    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 220px">
+      <div style="font-size: 16px; font-weight: 600">Os Alpes</div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 140px; height: 6px; border-radius: 3px; background: #323742; overflow: hidden"><div style="width: 22%; height: 6px; background: #6fc3c9"></div></div>
+        <div style="font-size: 13px; color: #a9adb6">672 de 3008 peças</div>
+      </div>
+    </div>
+    <nav aria-label="Secções" style="display: flex; gap: 4px; flex: 1 1 auto">
+      <a href="Main.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; color: #ecebe7; font-size: 15px; font-weight: 500; text-decoration: none">Montar</a>
+      <a href="Pecas.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; background: #f2b43c; color: #1a1405; font-size: 15px; font-weight: 600; text-decoration: none">Peças</a>
+      <a href="Importar.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; color: #ecebe7; font-size: 15px; font-weight: 500; text-decoration: none">Importar scan</a>
+    </nav>
+    <div style="display: flex; gap: 8px">
+      <button type="button" aria-label="Procurar peça ou célula" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      </button>
+      <button type="button" aria-label="Mais: diagnóstico e definições" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>
+      </button>
+    </div>
+  </header>
+
+  <main style="padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; max-width: 1280px; width: 100%; box-sizing: border-box; margin: 0 auto">
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+      <button type="button" aria-pressed="true" style="min-height: 44px; padding: 0 16px; border-radius: 22px; border: 0; background: #ecebe7; color: #131519; font-size: 15px; font-weight: 600">Todas · 1204</button>
+      <button type="button" aria-pressed="false" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #323742; background: #1c1f25; color: #ecebe7; font-size: 15px; font-weight: 500"><span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 6px; background: #f2b43c"></span>Para ir buscar · 10</button>
+      <button type="button" aria-pressed="false" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #323742; background: #1c1f25; color: #ecebe7; font-size: 15px; font-weight: 500"><span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 6px; border: 2px solid #b9a3ff; box-sizing: border-box"></span>Em grupos soltos · 76</button>
+      <button type="button" aria-pressed="false" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #323742; background: #1c1f25; color: #ecebe7; font-size: 15px; font-weight: 500"><span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 6px; background: #6fc3c9"></span>Já no tabuleiro · 672</button>
+      <button type="button" aria-pressed="false" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #323742; background: #1c1f25; color: #ecebe7; font-size: 15px; font-weight: 500"><span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 6px; background: #4a505c"></span>À espera · 446</button>
+    </div>
+
+    <section aria-label="Saco 7" style="background: #1c1f25; border: 1px solid #323742; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px">
+        <div style="font-size: 20px; font-weight: 700">Saco 7</div>
+        <div style="font-size: 14px; color: #a9adb6">32 peças · 3 para ir buscar</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px">
+        <sc-for list="{{saco7}}" as="p" hint-placeholder-count="16">
+          <button type="button" style="{{p.style}}">
+            <svg aria-hidden="true" width="48" height="48" viewBox="0 0 100 100"><path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="{{p.fill}}"></path></svg>
+            <span style="font-size: 14px; font-weight: 600">{{p.n}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-label="Saco 4" style="background: #1c1f25; border: 1px solid #323742; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px">
+        <div style="font-size: 20px; font-weight: 700">Saco 4</div>
+        <div style="font-size: 14px; color: #a9adb6">28 peças · 2 para ir buscar</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px">
+        <sc-for list="{{saco4}}" as="p" hint-placeholder-count="14">
+          <button type="button" style="{{p.style}}">
+            <svg aria-hidden="true" width="48" height="48" viewBox="0 0 100 100"><path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="{{p.fill}}"></path></svg>
+            <span style="font-size: 14px; font-weight: 600">{{p.n}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+var fills = ['#ead9a4', '#a9c6e3', '#7c9a63', '#d9c08a', '#8fb0d2', '#5f7f4c'];
+var base = 'display:flex;flex-direction:column;align-items:center;gap:4px;min-height:92px;padding:8px 4px;border-radius:10px;background:#252931;color:#ecebe7;font-family:inherit;cursor:pointer;';
+var borders = {
+buscar: 'border:3px solid #f2b43c;',
+grupo: 'border:2px dashed #b9a3ff;',
+posta: 'border:2px solid #6fc3c9;opacity:0.55;',
+espera: 'border:1px solid #323742;'
+};
+function make(count, marks) {
+var out = [];
+for (var i = 1; i <= count; i++) {
+var st = marks[i] || 'espera';
+out.push({ n: 'nº ' + i, fill: fills[(i * 5 + (i % 4)) % fills.length], style: base + borders[st] });
+}
+return out;
+}
+return {
+saco7: make(32, { 20: 'buscar', 31: 'buscar', 44: 'buscar', 3: 'posta', 4: 'posta', 9: 'posta', 15: 'posta', 22: 'posta', 12: 'grupo', 13: 'grupo', 27: 'grupo', 28: 'buscar' }),
+saco4: make(28, { 12: 'buscar', 19: 'buscar', 1: 'posta', 2: 'posta', 7: 'posta', 8: 'grupo', 23: 'grupo', 24: 'grupo', 25: 'grupo' })
+};
+}
+}
+</script>
+</body>
+</html>

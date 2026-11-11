@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Próximo passo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131519}
+a{color:#f2b43c}a:hover{color:#ffd27a}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #131519; color: #ecebe7; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px; padding: 12px 24px; border-bottom: 1px solid #323742; background: #1c1f25">
+    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 220px">
+      <div style="font-size: 16px; font-weight: 600">Os Alpes</div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 140px; height: 6px; border-radius: 3px; background: #323742; overflow: hidden"><div style="width: 22%; height: 6px; background: #6fc3c9"></div></div>
+        <div style="font-size: 13px; color: #a9adb6">672 de 3008 peças</div>
+      </div>
+    </div>
+    <nav aria-label="Secções" style="display: flex; gap: 4px; flex: 1 1 auto">
+      <button type="button" aria-current="page" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #f2b43c; color: #1a1405; font-size: 15px; font-weight: 600">Montar</button>
+      <button type="button" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: transparent; color: #ecebe7; font-size: 15px; font-weight: 500">Peças</button>
+      <button type="button" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: transparent; color: #ecebe7; font-size: 15px; font-weight: 500">Importar scan</button>
+    </nav>
+    <div style="display: flex; gap: 8px">
+      <button type="button" aria-label="Procurar peça ou célula" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      </button>
+      <button type="button" aria-label="Mais: diagnóstico e definições" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #323742; background: #252931; color: #ecebe7; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>
+      </button>
+    </div>
+  </header>
+
+  <main style="display: flex; flex-wrap: wrap; gap: 20px; padding: 20px 24px; flex: 1 1 auto">
+
+    <section aria-label="Tabuleiro" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <div style="position: relative; width: 100%; aspect-ratio: 64 / 47; border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #8fb6dc 0%, #c9d7e2 22%, #f0d8a2 34%, #b9a27c 46%, #6f8f5a 62%, #48693f 100%)">
+        <div style="position: absolute; left: 0; right: 0; top: 30%; bottom: 14%; background: rgba(19,21,25,0.72)"></div>
+        <div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: linear-gradient(rgba(255,255,255,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.10) 1px, transparent 1px); background-size: 6.25% 8.51%"></div>
+        <div style="position: absolute; left: 62.5%; top: 34%; width: 6.25%; height: 8.51%; box-sizing: border-box; border: 3px solid #f2b43c; border-radius: 4px; box-shadow: 0 0 0 6px rgba(242,180,60,0.28)"></div>
+        <div style="position: absolute; left: 64.5%; top: 26%; padding: 4px 10px; border-radius: 8px; background: #f2b43c; color: #1a1405; font-size: 13px; font-weight: 600">vai aqui</div>
+        <div style="position: absolute; left: 25%; top: 51%; width: 18.75%; height: 17%; box-sizing: border-box; border: 2px dashed #b9a3ff; border-radius: 6px; background: rgba(185,163,255,0.16)"></div>
+        <div style="position: absolute; left: 25%; top: 45.5%; padding: 4px 10px; border-radius: 8px; background: #252931; border: 1px solid #b9a3ff; color: #ecebe7; font-size: 13px">Grupo solto · 8 peças</div>
+        <div style="position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 8px">
+          <button type="button" aria-label="Aproximar" style="width: 44px; height: 44px; border-radius: 10px; border: 0; background: #1c1f25; color: #ecebe7; font-size: 22px">+</button>
+          <button type="button" aria-label="Afastar" style="width: 44px; height: 44px; border-radius: 10px; border: 0; background: #1c1f25; color: #ecebe7; font-size: 22px">−</button>
+        </div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 18px; font-size: 13px; color: #a9adb6">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border: 3px solid #f2b43c; border-radius: 3px; box-sizing: border-box"></span>Onde vai a peça</div>
+        <div style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border: 2px dashed #b9a3ff; border-radius: 3px; box-sizing: border-box"></span>Grupo ainda sem ligação</div>
+        <div style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; background: rgba(19,21,25,0.72); border: 1px solid #323742; border-radius: 3px; box-sizing: border-box"></span>Por montar</div>
+      </div>
+    </section>
+
+    <aside aria-label="Próxima peça" style="flex: 1 1 380px; max-width: 460px; display: flex; flex-direction: column; gap: 16px">
+      <div style="background: #1c1f25; border: 1px solid #323742; border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <div style="font-size: 14px; color: #a9adb6">Próxima peça</div>
+          <div style="font-size: 14px; color: #a9adb6">1 de 3 neste saco · 10 no total</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 20px">
+          <div style="width: 150px; height: 150px; border-radius: 12px; background: #252931; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">
+            <svg role="img" aria-label="A peça, rodada como fica no tabuleiro" width="124" height="124" viewBox="0 0 100 100"><path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="#ead9a4" stroke="#fff4cf" stroke-width="1.5"></path></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="font-size: 30px; font-weight: 700; line-height: 1.1">Saco 7</div>
+            <div style="font-size: 30px; font-weight: 700; line-height: 1.1; color: #f2b43c">peça nº 20</div>
+            <div style="font-size: 14px; color: #a9adb6; margin-top: 4px">Linha 4 · coluna 57</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 14px">
+          <div aria-hidden="true" style="display: flex; gap: 4px"><span style="width: 22px; height: 6px; border-radius: 3px; background: #6fc3c9"></span><span style="width: 22px; height: 6px; border-radius: 3px; background: #6fc3c9"></span><span style="width: 22px; height: 6px; border-radius: 3px; background: #6fc3c9"></span></div>
+          <div>O programa tem quase a certeza</div>
+        </div>
+        <div style="display: flex; gap: 12px">
+          <button type="button" style="flex: 1 1 0; min-height: 56px; border-radius: 12px; border: 0; background: #f2b43c; color: #1a1405; font-size: 17px; font-weight: 700">Encaixa</button>
+          <button type="button" style="flex: 1 1 0; min-height: 56px; border-radius: 12px; border: 1px solid #5a6170; background: #252931; color: #ecebe7; font-size: 17px; font-weight: 600">Não encaixa</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <button type="button" style="min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: #a9adb6; font-size: 14px; text-decoration: underline">Saltar por agora</button>
+          <button type="button" style="min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: #a9adb6; font-size: 14px; text-decoration: underline">Porquê esta peça?</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14px; color: #a9adb6; padding: 0 4px">A seguir, primeiro as do mesmo saco</div>
+        <div style="display: flex; align-items: center; gap: 12px; background: #1c1f25; border: 1px solid #323742; border-radius: 12px; padding: 10px 14px">
+          <svg aria-hidden="true" width="36" height="36" viewBox="0 0 100 100"><path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="#a9c6e3"></path></svg>
+          <div style="flex: 1 1 auto; font-size: 15px; font-weight: 600">Saco 7 · nº 31</div>
+          <div style="font-size: 13px; color: #a9adb6">quase certo</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; background: #1c1f25; border: 1px solid #323742; border-radius: 12px; padding: 10px 14px">
+          <svg aria-hidden="true" width="36" height="36" viewBox="0 0 100 100"><path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="#7c9a63"></path></svg>
+          <div style="flex: 1 1 auto; font-size: 15px; font-weight: 600">Saco 7 · nº 44</div>
+          <div style="font-size: 13px; color: #a9adb6">a confirmar</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; background: #1c1f25; border: 1px solid #323742; border-radius: 12px; padding: 10px 14px">
+          <svg aria-hidden="true" width="36" height="36" viewBox="0 0 100 100"><path d="M20 20 L40 20 C40 20 36 8 50 8 C64 8 60 20 60 20 L80 20 L80 40 C80 40 68 36 68 50 C68 64 80 60 80 60 L80 80 L60 80 C60 80 64 92 50 92 C36 92 40 80 40 80 L20 80 L20 60 C20 60 32 64 32 50 C32 36 20 40 20 40 Z" fill="#ead9a4"></path></svg>
+          <div style="flex: 1 1 auto; font-size: 15px; font-weight: 600">Saco 4 · nº 12</div>
+          <div style="font-size: 13px; color: #a9adb6">a confirmar</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
