@@ -36,3 +36,8 @@
   filter: drop-shadow(0 0 2px rgba(0, 0, 0, .9)); }
 #lyr-buscar rect, #lyr-conhecida rect, #lyr-sug rect { pointer-events: none; }
 #lyr-fantasma.off, #lyr-grelha.off { display: none; }
+/* GUI nova (/novo/, ESPEC §4.1): o lugar da peça atual e os das seguintes (linhas «alvo» / «seguinte» de LEGEND) */
+.b-alvo { fill: rgba(242, 180, 60, .22); stroke: #f2b43c; stroke-width: 3px; vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, .85)); }
+.b-seguinte { fill: none; stroke: rgba(242, 180, 60, .55); stroke-width: 1.5px; stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke; }

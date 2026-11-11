@@ -161,13 +161,23 @@ LEGEND = [
 	 "detalhe": "linhas das células; aparecem quando há zoom suficiente"},
 	{"id": "selecao", "tipo": "svg", "classe": "b-selecionada", "rotulo": "Selecionada", "texto": "célula aberta no painel",
 	 "detalhe": "a célula aberta no painel da direita"},
+	# GUI nova (/novo/, redesenho F1b): só em /api/board?ui=novo; ``curta`` = entra na legenda curta do Montar
+	{"id": "alvo", "tipo": "svg", "classe": "b-alvo", "rotulo": "Onde vai a peça", "texto": "o lugar da peça atual",
+	 "detalhe": "o lugar da peça do cartão «Próxima peça», a âmbar, com a etiqueta «vai aqui»", "gui": "novo", "curta": True},
+	{"id": "seguinte", "tipo": "svg", "classe": "b-seguinte", "rotulo": "A seguir", "texto": "lugares das peças seguintes",
+	 "detalhe": "os lugares das 3 peças seguintes da fila, com contorno ténue", "gui": "novo"},
+	{"id": "por_montar", "tipo": "raster", "classe": None, "rotulo": "Por montar", "texto": "só a arte da caixa",
+	 "detalhe": "lugar sem peça: vê-se a arte da caixa, esbatida", "gui": "novo", "curta": True},
 ]
+NOVO_UI = "novo"               # interruptor da GUI nova (/novo/, /?ui=novo, --ui novo; ESPEC §8.7 P14)
 
 
-def legend_for(profile):
-	"""The legend table with the profile's symmetry rotation filled in (never a fixed 180°)."""
+def legend_for(profile, ui: Optional[str] = None):
+	"""The legend table with the profile's symmetry rotation filled in (never a fixed 180°). Rows of the new GUI
+	(``gui: 'novo'``) only with ``ui='novo'``; the old GUI gets exactly the rows it had."""
 	rot = f"{profile.twin_rotation_deg():g}"
-	return [{k: (v.replace("{rot}", rot) if isinstance(v, str) else v) for k, v in row.items()} for row in LEGEND]
+	return [{k: (v.replace("{rot}", rot) if isinstance(v, str) else v) for k, v in row.items()} for row in LEGEND
+			if row.get("gui") in (None, ui)]
 
 ESTADO_TXT = {"solta": "solta", "emparelhada": "emparelhada (par de gémeas soltas)",
 			  "posicao_conhecida": "posição conhecida (guardada à parte)", "colocada": "colocada",
@@ -975,6 +985,7 @@ class Gui:
 			before = board_snapshot(pr.board, pr.pieces, OV.latest_arestas(pr))
 			t0 = time.time()
 			kw = {"use_image": self.use_image}
+			off = self._log_size()
 			r = confirm(pr, pid, hole=((l, c), meta) if confirm_it else None, hole_reject=None if confirm_it else ((l, c), meta),
 						gemea=gemea, **kw)
 			if "error" in r:
@@ -994,7 +1005,7 @@ class Gui:
 			if not confirm_it:
 				self.emit("board_changed", {"versao": self.version(), "celulas": [[l, c]]})
 			return {"ok": True, "mensagens": r.get("messages", []), "invariantes": r.get("invariants", []),
-					"segundos": round(time.time() - t0, 2), "meta": meta, **extra}
+					"segundos": round(time.time() - t0, 2), "meta": meta, "escritos": self._written_since(off), **extra}
 		finally:
 			self.wlock.release()
 
@@ -1277,7 +1288,7 @@ class Gui:
 				"pose_manual": None if p.pose_manual is None else {k: p.pose_manual.get(k) for k in
 																	("theta_deg", "dx_mm", "dy_mm", "t", "nota")}}
 
-	def board_json(self) -> dict:
+	def board_json(self, ui: Optional[str] = None) -> dict:
 		pr = self.pr
 		prof = pr.profile
 		rows = [[{"estado": cell["estado"], "peca_id": cell["peca_id"], "fonte": cell["fonte"]}
@@ -1294,7 +1305,7 @@ class Gui:
 			"cells": rows, "posicoes_conhecidas": known, "borda_em_falta": [list(x) for x in pr.missing_border_cells()],
 			"progresso": {"colocadas": n_placed, "ocupadas": n_occ, "total": prof.cell_count(),
 						  "sem_silhueta": n_occ - n_placed},
-			"stats": st, "legend": legend_for(prof), "rotacao_gemea_deg": prof.twin_rotation_deg(),
+			"stats": st, "legend": legend_for(prof, ui), "rotacao_gemea_deg": prof.twin_rotation_deg(),
 			"calibracao": {"t95": ((prof.calibration or {}).get("silhueta_silhueta") or {}).get("t95"),
 						   "margin_min": (prof.calibration or {}).get("margin_min")},
 		}
@@ -1321,6 +1332,25 @@ class Gui:
 			alta = {"a_calcular": False, "em_pausa": False, "contador": None, "entries": [], "conflitos": [], "erro": str(e)}
 		return {"t": f.get("t"), "entries": entries, "suprimidas": f.get("suprimidas", []),
 				"notes": f.get("notes", []), "rest": len(f.get("rest", []) or []), "buracos_alta": alta}
+
+	def montar_json(self, saco_atual: Optional[int] = None) -> dict:
+		"""``GET /api/montar`` (GUI nova, ESPEC §4.1): a fila da «Próxima peça» por saco (:func:`src.montar.fila`), o
+		progresso do topo (P12) e o estado das sugestões pelo encaixe (a calcular / em pausa)."""
+		from src import montar as MT
+		f = self.fetch_json()
+		pr = self.pr
+		evs = pr.events()
+		last_scan = next((e["scan"]["id"] for e in reversed(evs) if e.get("action") == "scan_added"), None)
+		ultimo_saco = (pr.model.scans.get(last_scan) or {}).get("lote") if last_scan else None
+		rec = MT.track_record(evs, pr.profile)
+		q = MT.fila(f["entries"], f.get("buracos_alta"), rec, pr.profile, saco_atual=saco_atual, ultimo_saco=ultimo_saco)
+		alta = f.get("buracos_alta") or {}
+		return {"versao": self.version(), "puzzle": pr.profile.name or pr.profile.id, "total_celulas": pr.profile.cell_count(),
+				"progresso": MT.progress(pr.board), "ultimo_scan": last_scan, "ultimo_saco": ultimo_saco, **q,
+				"a_preparar": {"buracos": bool(alta.get("a_calcular")), "progresso": alta.get("progresso")},
+				"historico": [{"origem": k[0], "zona": k[1], **v}
+							  for k, v in sorted(rec.items(), key=lambda kv: (str(kv[0][0]), str(kv[0][1])))],
+				"regra": {"n_min": MT.QUASE_CERTO_N, "wilson_min": MT.QUASE_CERTO_WILSON}}
 
 	def cell_json(self, l: int, c: int) -> dict:
 		pr = self.pr
@@ -1477,12 +1507,64 @@ class Gui:
 		d["log_len"] = render._log_len(self.pr)
 		render.save_placements(self.pr, d)
 
+	def _log_size(self) -> int:
+		try:
+			return os.path.getsize(self.pr.log_path)
+		except OSError:
+			return 0
+
+	def _written_since(self, offset: int) -> list:
+		"""Summary of the events appended to the log after byte ``offset`` (``escritos`` of a write: the GUI builds
+		its «desfazer» from them): ``[{action, t, piece, cell, origin, pair}]``."""
+		out = []
+		try:
+			with open(self.pr.log_path, "rb") as f:
+				f.seek(offset)
+				for line in f.read().decode("utf-8").splitlines():
+					if line.strip():
+						ev = json.loads(line)
+						out.append({k: ev.get(k) for k in ("action", "t", "piece", "cell", "origin", "pair")})
+		except (OSError, ValueError):
+			pass
+		return out
+
+	def note_rejection(self, body: dict) -> dict:
+		"""``POST /api/confirm`` ``acao: reject_reason`` ``{rejeicoes: [{piece, cell, origin, pair, t}], motivo}``: one
+		informative ``rejection_noted`` per rejection (ESPEC §4.2). No re-query, no board change."""
+		from src.state import REJECTION_MOTIVES
+		motivo = str(body.get("motivo") or "")
+		rs = body.get("rejeicoes") or []
+		if motivo not in REJECTION_MOTIVES:
+			return {"error": f"motivo inválido {motivo!r}"}
+		if not isinstance(rs, list) or not rs:
+			return {"error": "falta a rejeição"}
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
+			raise Busy(self.job or "ocupado")
+		try:
+			if self._exclusive():
+				raise Busy(self.job)
+			self.sync_locked()
+			off = self._log_size()
+			for r in rs:
+				pid = r.get("piece")
+				if not pid and r.get("pair") in self.pr.pairs:
+					pid = self.pr.pairs[r["pair"]].a
+				self.pr.note_rejection(pid, motivo, cell=r.get("cell"), origin=r.get("origin"), pair=r.get("pair"),
+									   ref_t=r.get("t"))
+			self.pr.save()
+			self._known_stat = self._log_stat()
+			return {"ok": True, "escritos": self._written_since(off)}
+		finally:
+			self.wlock.release()
+
 	def confirm(self, body: dict) -> dict:
 		"""Apply one action of the GUI (see ``POST /api/confirm``)."""
 		from src.confirm import _around, confirm
 		acao = str(body.get("acao") or "")
 		pid = body.get("piece")
 		cell = body.get("cell")
+		if acao == "reject_reason":
+			return self.note_rejection(body)
 		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
 			raise Busy(self.job or "ocupado")
 		try:
@@ -1495,6 +1577,7 @@ class Gui:
 				return {"error": f"peça desconhecida {pid}"}
 			kw = {"use_image": self.use_image}
 			t0 = time.time()
+			off = self._log_size()
 			if acao == "place":
 				if not cell:
 					return {"error": "falta a célula"}
@@ -1517,8 +1600,15 @@ class Gui:
 				r = confirm(pr, unanchor=body["section"], **kw)
 			elif acao == "discard":
 				r = confirm(pr, pid, discard=True, reason=str(body.get("reason") or "gui"), **kw)
+			elif acao == "unplace" and body.get("desfaz"):
+				r = confirm(pr, pid, unplace=True, desfaz=True, **kw)     # «desfazer» de «Encaixa» (GUI nova)
 			elif acao == "unplace":
 				r = self._unplace(pid, _around)
+			elif acao == "undo_reject":
+				rs = body.get("rejeicoes")
+				if not isinstance(rs, list) or not rs:
+					return {"error": "falta a lista de rejeições a desfazer"}
+				r = confirm(pr, undo_reject=rs, **kw)
 			elif acao in HINT_ACTIONS:
 				try:
 					hc = (int(cell[0]), int(cell[1]))
@@ -1547,7 +1637,7 @@ class Gui:
 				extra["vizinhas"] = extra["celula"]["vizinhas"]
 			return {"ok": True, "mensagens": r.get("messages", []), "invariantes": r.get("invariants", []),
 					"n_propostas": len([e for e in r.get("entries", []) if e.get("piece")]),
-					"segundos": round(time.time() - t0, 2), **extra}
+					"segundos": round(time.time() - t0, 2), "escritos": self._written_since(off), **extra}
 		finally:
 			self.wlock.release()
 
@@ -2703,13 +2793,26 @@ def create_app(gui: Gui):
 		return JSON(gui.status_json())
 
 	@app.get("/api/board")
-	def board():
+	def board(ui: Optional[str] = None):
 		ready()
-		return JSON(gui.read(gui.board_json))
+		return JSON(gui.read(lambda: gui.board_json(ui if ui == NOVO_UI else None)))
 
 	@app.get("/api/legend")
-	def legend():
-		return JSON(legend_for(gui.pr.profile))
+	def legend(ui: Optional[str] = None):
+		return JSON(legend_for(gui.pr.profile, ui if ui == NOVO_UI else None))
+
+	@app.get("/api/montar")
+	def montar(saco: Optional[int] = None):
+		ready()
+		return JSON(gui.read(lambda: gui.montar_json(saco)))
+
+	@app.get("/", include_in_schema=False)
+	def root(ui: Optional[str] = None):
+		"""A GUI antiga em ``/``; ``/?ui=novo`` leva à nova (``/novo/``)."""
+		from fastapi.responses import FileResponse, RedirectResponse
+		if ui == NOVO_UI:
+			return RedirectResponse("/novo/", status_code=307)
+		return FileResponse(os.path.join(WEB_DIR, "index.html"), media_type="text/html")
 
 	@app.get("/api/board.jpg")
 	def board_jpg(ppc: float = BOARD_PPC, region: Optional[str] = None, v: Optional[str] = None):
@@ -3189,6 +3292,7 @@ def main(argv=None) -> int:
 	ap.add_argument("--no-image", action="store_true", help="reconsultas sem desempate pela imagem (mais rápidas)")
 	ap.add_argument("--no-prepare", action="store_true", help="não regenera recursos em falta no arranque")
 	ap.add_argument("--uploads", default=None, help="pasta onde os scans importados são gravados")
+	ap.add_argument("--ui", choices=("antiga", NOVO_UI), default="antiga", help="interface a anunciar: antiga (/) ou novo (/novo/)")
 	args = ap.parse_args(argv)
 	try:
 		import uvicorn
@@ -3206,7 +3310,8 @@ def main(argv=None) -> int:
 	app = create_app(gui)
 	host = "0.0.0.0" if args.lan else "127.0.0.1"
 	log.info(f"mesa de montagem: projeto {gui.path} ({len(gui.pr.pieces)} peças, versão do log {gui.version()})")
-	log.info(f"abre http://127.0.0.1:{args.port}; registo em {gui._activity_file()}")
+	page = "/novo/" if args.ui == NOVO_UI else ""
+	log.info(f"abre http://127.0.0.1:{args.port}{page}; registo em {gui._activity_file()}")
 	if args.lan:
 		for ip in _lan_ips():
 			log.info(f"na rede local: http://{ip}:{args.port}")

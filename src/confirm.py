@@ -125,7 +125,8 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			position_known=None, anchor=None, rot: int = 0, mirror: bool = False, unanchor: Optional[str] = None,
 			discard: bool = False, reason: str = "", cell_full=None, cell_empty=None, requery: bool = True,
 			use_image: bool = True, unplace: bool = False, theta_deg: Optional[float] = None, pose=None,
-			pose_repor: bool = False, nota: str = "", hole=None, hole_reject=None, gemea: bool = False) -> dict:
+			pose_repor: bool = False, nota: str = "", hole=None, hole_reject=None, gemea: bool = False,
+			desfaz: bool = False, undo_reject=None) -> dict:
 	"""Apply one confirmation; returns ``{messages, affected_cells, affected_pieces, entries, invariants}``
 	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error).
 
@@ -133,7 +134,11 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 	(:meth:`src.state.Project.mark_cell_full` / ``mark_cell_empty``).
 
 	``theta_deg`` (with ``cell``): board pose when the fetch entry of that cell has none (refused
-	otherwise). ``unplace``: undo the placement of a loose piece (not of a section piece).
+	otherwise). ``unplace``: undo the placement of a loose piece (not of a section piece); with ``desfaz`` it is the
+	user's «desfazer» right after «Encaixa» (the confirmation stops counting, ESPEC §8.1).
+
+	``undo_reject``: list of rejections to undo (ESPEC §5.1), each ``{piece, cell, origin}`` (``twin_rejected`` /
+	``hole_rejected``) or ``{pair}`` (``pair_rejected``); the proposals come back with the re-query.
 
 	``pose`` = ``(theta_deg, dx_mm, dy_mm)``: manual board pose of a placed piece (``nota`` stored with it);
 	``pose_repor``: drop it (see the module docstring).
@@ -218,10 +223,26 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			if p.estado != "colocada" or p.celula is None:
 				return {"error": f"{piece_id} está '{p.estado}': não está colocada"}
 			c0 = tuple(p.celula)
-			ev = pr.unplace(piece_id)
+			ev = pr.unplace(piece_id, desfaz=desfaz)
 			msgs.append(f"{piece_id} retirada de {c0} (volta a '{ev['to']}'; a célula volta a '{ev['restore']['estado']}')")
 			cells |= _around(pr, c0)
 			pieces.add(piece_id)
+		elif undo_reject is not None:
+			if not undo_reject:
+				return {"error": "nada a desfazer"}
+			for r in undo_reject:
+				if r.get("pair"):
+					t = pr.pairs.get(r["pair"])
+					ev = pr.unreject_pair(r["pair"], ref_t=r.get("t"))
+					pieces.update((t.a, t.b))
+					msgs.append(f"par {t.id}: rejeição desfeita")
+				else:
+					rc = None if r.get("cell") is None else (int(r["cell"][0]), int(r["cell"][1]))
+					pr.undo_rejection(r["piece"], rc, r.get("origin"), ref_t=r.get("t"))
+					pieces.add(r["piece"])
+					if rc is not None:
+						cells.add(rc)
+					msgs.append(f"{r['piece']}: rejeição para {rc if rc else '-'} ({r.get('origin')}) desfeita")
 		elif pose is not None or pose_repor:
 			from src import render
 			p = pr.piece(piece_id)

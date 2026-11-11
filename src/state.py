@@ -58,7 +58,7 @@ __all__ = [
 	"SCHEMA_VERSION", "PIECE_STATES", "PAIR_STATES", "SECTION_KINDS", "CELL_STATES", "CELL_SOURCES", "ACTIONS",
 	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS", "SUSPECT_GRAUS", "POSE_MAX_FRAC",
 	"StateError", "Piece", "Pair", "Section", "Photo", "Board", "Model", "apply", "replay", "read_log",
-	"Project", "file_sha256", "section_cell",
+	"Project", "file_sha256", "section_cell", "undone_decisions", "REJECTION_MOTIVES",
 ]
 
 SCHEMA_VERSION = 1
@@ -79,7 +79,9 @@ ACTIONS = (
 	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
 	"report", "report_closed", "report_edited", "report_reopened", "report_deleted", "report_restored",
 	"piece_resegmented", "suspect_dismissed", "suspect_restored", "pose_set", "pose_cleared", "holes_alta_resumed",
+	"rejection_undone", "pair_unrejected", "rejection_noted",
 )
+REJECTION_MOTIVES = ("forma", "imagem", "nao_sei")   # rejection_noted: «Porquê?» after «Não encaixa» (ESPEC §4.2)
 RESEGMENT_FIELDS = ("bbox", "cls", "n_flat", "chords_mm", "area_mm2", "shape_ok", "flags", "mean_lab")  # piece_resegmented
 SUSPECT_GRAUS = ("impossivel", "melhor_rotacao", "recorte")   # grades of src.consistency (suspect_dismissed)
 POSE_MAX_FRAC = 0.5           # pose_set: |dx| <= POSE_MAX_FRAC * cell width, |dy| <= POSE_MAX_FRAC * cell height
@@ -459,6 +461,14 @@ def apply(m: Model, ev: dict) -> None:
 				m.pieces[pid].estado = "solta"
 	elif a in ("twin_rejected", "hole_rejected"):
 		m.rejections.add((ev["piece"], _cell(ev.get("cell")), ev.get("origin")))
+	elif a == "rejection_undone":
+		m.rejections.discard((ev["piece"], _cell(ev.get("cell")), ev.get("origin")))
+	elif a == "pair_unrejected":
+		pr = m.pairs[ev["pair"]]
+		pr.estado = "proposto"
+		for pid in (pr.a, pr.b):
+			if m.pieces[pid].estado == "solta":
+				m.pieces[pid].estado = "emparelhada"
 	elif a == "section_registered":
 		s = Section.from_dict(ev["section"])
 		m.sections[s.id] = s
@@ -540,10 +550,48 @@ def apply(m: Model, ev: dict) -> None:
 				if p.id in nums:
 					p.n_no_lote = None if nums[p.id] is None else int(nums[p.id])
 	elif a in ("twin_confirmed", "hole_confirmed", "fetch_listed", "position_placeable", "report", "report_closed",
-			"report_edited", "report_reopened", "report_deleted", "report_restored", "holes_alta_resumed"):
+			"report_edited", "report_reopened", "report_deleted", "report_restored", "holes_alta_resumed",
+			"rejection_noted"):
 		pass  # informative events (metrics / notifications); no state change
 	else:
 		raise StateError(f"ação desconhecida no log: {a!r}")
+
+
+_CONFIRM_DECISIONS = ("twin_confirmed", "hole_confirmed")
+_REJECT_DECISIONS = ("twin_rejected", "hole_rejected")
+
+
+def undone_decisions(events: list) -> set:
+	"""Indices (in ``events``) of the physical decisions that were undone afterwards: they count neither as a hit
+	nor as a miss (ESPEC §8.1). A ``twin_confirmed`` / ``hole_confirmed`` of (piece, cell) is undone by a later
+	``unplaced`` with ``desfaz: true`` of that piece and cell (the user's «desfazer» of «Encaixa»; a plain
+	``unplaced`` is neutral and closes the placement); a ``twin_rejected`` / ``hole_rejected`` by a later
+	``rejection_undone`` with the same (piece, cell, origin); a ``pair_rejected`` by a later ``pair_unrejected``."""
+	out = set()
+	conf: dict = {}     # (piece, cell) -> [index] of the confirmations of the current placement
+	rej: dict = {}      # (piece, cell, origin) -> [index] still standing
+	prej: dict = {}     # pair -> [index]
+	for i, ev in enumerate(events):
+		a = ev.get("action")
+		if a in _CONFIRM_DECISIONS:
+			conf.setdefault((ev.get("piece"), _cell(ev.get("cell"))), []).append(i)
+		elif a == "unplaced":
+			ks = conf.pop((ev.get("piece"), _cell(ev.get("cell"))), [])
+			if ev.get("desfaz"):
+				out.update(ks)
+		elif a in _REJECT_DECISIONS:
+			rej.setdefault((ev.get("piece"), _cell(ev.get("cell")), ev.get("origin")), []).append(i)
+		elif a == "rejection_undone":
+			ks = rej.get((ev.get("piece"), _cell(ev.get("cell")), ev.get("origin")))
+			if ks:
+				out.add(ks.pop())
+		elif a == "pair_rejected":
+			prej.setdefault(ev.get("pair"), []).append(i)
+		elif a == "pair_unrejected":
+			ks = prej.get(ev.get("pair"))
+			if ks:
+				out.add(ks.pop())
+	return out
 
 
 def read_log(log_path: str) -> list:
@@ -916,10 +964,11 @@ class Project:
 		self._emit_placeable(before)
 		return ev
 
-	def unplace(self, piece_id: str) -> dict:
+	def unplace(self, piece_id: str, *, desfaz: bool = False) -> dict:
 		"""Undo a placement: the piece goes back to the loose pool (``emparelhada`` if it has an
 		active pair, else ``solta``) and the cell gets back its previous state (e.g.
-		``ocupada_legado``)."""
+		``ocupada_legado``). ``desfaz``: the user's «desfazer» right after «Encaixa» (the event carries
+		``desfaz: true`` and the confirmation of that placement stops counting, :func:`undone_decisions`)."""
 		p = self.piece(piece_id)
 		if p.estado != "colocada":
 			raise StateError(f"{piece_id} não está colocada")
@@ -929,7 +978,8 @@ class Project:
 			if ev["action"] == "placed" and ev["piece"] == piece_id:
 				prev = ev.get("prev") or prev
 				break
-		return self._emit("unplaced", piece=piece_id, cell=p.celula, restore=prev, to=to)
+		extra = {"desfaz": True} if desfaz else {}
+		return self._emit("unplaced", piece=piece_id, cell=p.celula, restore=prev, to=to, **extra)
 
 	def set_position_known(self, piece_id: str, cell, origin: str = "manual", theta_deg: Optional[float] = None) -> dict:
 		"""The piece's cell is known but it is kept aside until a neighbour is assembled."""
@@ -976,6 +1026,39 @@ class Project:
 		if p.estado not in _PLACEABLE_FROM:
 			raise StateError(f"{piece_id} está '{p.estado}': não é candidata")
 		return self._emit("hole_rejected", piece=piece_id, cell=cell, origin="buraco", **_hole_meta(dict(meta or {})))
+
+	def undo_rejection(self, piece_id: str, cell, origin: str, *, ref_t: Optional[str] = None) -> dict:
+		"""Undo a ``twin_rejected`` / ``hole_rejected`` (ESPEC §5.1): log ``rejection_undone`` (state event: the
+		triple leaves ``rejections``, the proposal can come back; the decision stops counting,
+		:func:`undone_decisions`). Same log-compatibility note as :meth:`set_pose`."""
+		self.piece(piece_id)
+		key = (piece_id, None if cell is None else self._check_cell(cell), origin)
+		if key not in self.model.rejections:
+			raise StateError(f"{piece_id} não tem rejeição ativa para {key[1]} ({origin})")
+		return self._emit("rejection_undone", piece=piece_id, cell=key[1], origin=origin, ref_t=ref_t)
+
+	def unreject_pair(self, pair_id: str, *, ref_t: Optional[str] = None) -> dict:
+		"""Undo a ``pair_rejected``: the pair is ``proposto`` again (loose pieces back to ``emparelhada``)."""
+		if pair_id not in self.pairs:
+			raise StateError(f"par desconhecido {pair_id}")
+		pr = self.pairs[pair_id]
+		if pr.estado != "rejeitado":
+			raise StateError(f"par {pair_id} não está rejeitado ({pr.estado})")
+		for pid in (pr.a, pr.b):
+			if self.piece(pid).estado not in LOOSE_STATES:
+				raise StateError(f"{pid} já não está solta ({self.piece(pid).estado}): o par não volta")
+		return self._emit("pair_unrejected", pair=pair_id, ref_t=ref_t)
+
+	def note_rejection(self, piece_id: str, motivo: str, *, cell=None, origin: Optional[str] = None,
+					   pair: Optional[str] = None, ref_t: Optional[str] = None) -> dict:
+		"""The answer to «Porquê?» after «Não encaixa» (ESPEC §4.2, §8.1): informative ``rejection_noted`` linked to
+		the rejection (``piece`` + ``cell`` + ``origin``, or ``pair``; ``ref_t`` = its time). It never blocks and
+		changes no state."""
+		self.piece(piece_id)
+		if motivo not in REJECTION_MOTIVES:
+			raise StateError(f"motivo inválido {motivo!r} (um de {', '.join(REJECTION_MOTIVES)})")
+		c = None if cell is None else self._check_cell(cell)
+		return self._emit("rejection_noted", piece=piece_id, cell=c, origin=origin, pair=pair, motivo=motivo, ref_t=ref_t)
 
 	def register_pair(self, a: str, b: str, d1=None, margin=None, image=None, cells=None) -> str:
 		"""Register a proposed twin pair between two loose pieces; returns the pair id."""

@@ -848,10 +848,15 @@ def alta_counter(project, events: Optional[list] = None) -> dict:
 	window is the last :data:`ALTA_JANELA` decisions after the last ``holes_alta_resumed``; the suggestions are
 	paused while the window holds >= :data:`ALTA_MAX_FALHAS` rejections. Returns ``{acertos, falhas, total,
 	precisao, ic95, janela: {n, falhas, acertos, tamanho, max_falhas, em_pausa}, em_pausa, reativado_em,
-	ultima_decisao}``; everything is derived from the log."""
+	ultima_decisao}``; everything is derived from the log. A decision undone afterwards
+	(:func:`src.state.undone_decisions`: «desfazer» of «Encaixa» / of «Não encaixa») does not count (ESPEC §8.1)."""
+	from src.state import undone_decisions
 	evs = project.events() if events is None else events
+	gone = undone_decisions(evs)
 	dec, start, resumed = [], 0, None
-	for e in evs:
+	for i, e in enumerate(evs):
+		if i in gone:
+			continue
 		if e.get("action") == "holes_alta_resumed":
 			start, resumed = len(dec), e.get("t")
 		elif _alta_decision(e):
@@ -880,7 +885,12 @@ def format_counter(c: dict) -> str:
 
 # ---------------------------------------------------------------- report over the confirmations (GT)
 def _hole_events(project) -> list:
-	return [e for e in project.events() if e["action"] in ("hole_confirmed", "hole_rejected") and e.get("origin") == "buraco"]
+	"""``hole_confirmed`` / ``hole_rejected`` with origin ``buraco``, without the decisions undone afterwards (ESPEC §8.1)."""
+	from src.state import undone_decisions
+	evs = project.events()
+	gone = undone_decisions(evs)
+	return [e for i, e in enumerate(evs) if i not in gone and e["action"] in ("hole_confirmed", "hole_rejected")
+			and e.get("origin") == "buraco"]
 
 
 def report(project) -> dict:
@@ -907,11 +917,23 @@ def report(project) -> dict:
 	n_fora_ceu = sum(1 for e in conf if zone_of(e.get("cell"), prof) != "céu")
 	return {"n": len(conf), "n_m2": n_m2, "n_fora_ceu": n_fora_ceu, "total": agg(conf),
 			"por": {k: {kk: agg(v) for kk, v in sorted(d.items())} for k, d in by.items()},
-			"rejeicoes": {"n": len(rej), "por_confianca": dict(collections.Counter(str(e.get("confianca")) for e in rej))},
+			"rejeicoes": {"n": len(rej), "por_confianca": dict(collections.Counter(str(e.get("confianca")) for e in rej)),
+						  "por_motivo": _motives(project, rej)},
 			"limiar_15_6": {"n_ge_60": len(conf) >= 60, "n_m2_ge_40": n_m2 >= 40, "fora_do_ceu": n_fora_ceu > 0,
 							"atingido": len(conf) >= 60 and n_m2 >= 40 and n_fora_ceu > 0},
 			"versoes": sorted({str(e.get("fit_version")) for e in evs}),
 			"alta": alta_counter(project)}
+
+
+def _motives(project, rej: list) -> dict:
+	"""``{motivo: n}`` of the «Porquê?» answers (``rejection_noted``, ESPEC §4.2) of the rejections in ``rej``
+	(matched by piece, cell and ``ref_t``; the last answer wins); rejections without an answer are ``sem_resposta``."""
+	notes = {}
+	for e in project.events():
+		if e.get("action") == "rejection_noted" and e.get("origin") == "buraco":
+			notes[(e.get("piece"), tuple(e.get("cell") or ()), e.get("ref_t"))] = e.get("motivo")
+	out = collections.Counter(notes.get((e.get("piece"), tuple(e.get("cell") or ()), e.get("t")), "sem_resposta") for e in rej)
+	return dict(out)
 
 
 def _pct(lo, hi):
@@ -920,7 +942,8 @@ def _pct(lo, hi):
 
 def format_report(r: dict) -> str:
 	t = r["total"]
-	lines = [f"confirmações físicas de candidatas de buraco: n = {r['n']} ({r['n_m2']} com ≥ 2 vizinhas, {r['n_fora_ceu']} fora do céu); rejeições: {r['rejeicoes']['n']} {r['rejeicoes']['por_confianca']}"]
+	lines = [f"confirmações físicas de candidatas de buraco: n = {r['n']} ({r['n_m2']} com ≥ 2 vizinhas, {r['n_fora_ceu']} fora do céu); rejeições: {r['rejeicoes']['n']} {r['rejeicoes']['por_confianca']}"
+			 + (f", por motivo {r['rejeicoes']['por_motivo']}" if r["rejeicoes"].get("por_motivo") else "")]
 	if r["n"]:
 		lines.append(f"  top-1 {t['top1']}/{t['n']} (Wilson {_pct(*t['wilson1'])}), top-3 {t['top3']}/{t['n']} ({_pct(*t['wilson3'])})")
 		for k, d in r["por"].items():
