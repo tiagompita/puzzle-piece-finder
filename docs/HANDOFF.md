@@ -6,7 +6,9 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 - **Prompt da sessão:** `docs/prompts/2026-11-11-f1b-casca-nova-montar.md` (fechado).
 - **Commits** (em `main`, sem `projects/alpes`):
   - `c241ca0`: interface do `board.js` + prova estrutural da F1a;
-  - F1b: código, testes, capturas e docs (ver `git log`).
+  - `7524053`: F1b (código e testes);
+  - `3578ad4`: docs e capturas;
+  - `graphify update .` corrido no fim (`graphify-out/` está fora do git).
 - **Suite [V]:** corre-se com `.venv/Scripts/python.exe -m pytest tests/`, não com o `python` do PATH.
   - O Python do sistema (3.12.6) tem PyMuPDF 1.28 e faz falhar `test_sheets::test_pdf_page_without_image_or_with_flate_is_an_error`. Não é de nenhum commit (`docs/decisoes.md`, 2026-11-11).
   - Em `8fedf87`: 460 passed, 1 skipped, 0 failed.
