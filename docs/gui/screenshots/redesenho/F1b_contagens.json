@@ -1,0 +1,20 @@
+{
+ "antes_1366": {
+  "palavras": 951,
+  "botoes": 13
+ },
+ "depois_1366": {
+  "palavras": 72,
+  "botoes": 15,
+  "fila": 10
+ },
+ "antes_390": {
+  "palavras": 949,
+  "botoes": 15
+ },
+ "depois_390": {
+  "palavras": 72,
+  "botoes": 14,
+  "fila": 10
+ }
+}

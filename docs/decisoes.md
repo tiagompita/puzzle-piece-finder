@@ -199,3 +199,22 @@ Os limiares abaixo estão no código ou nos testes da ronda 10, mas nenhum foi v
 - **Uma ação desfeita não conta**, nem como acerto nem como falha.
 - «Tirar do lugar» é neutro; passa a falha da sugestão se outra peça acabar nesse lugar.
 - No «Porquê», «não testado» tem aspeto próprio (traços vazios, «não verificado»), distinto de «falha».
+
+## 2026-11-11 — test_sheets a falhar: é o interpretador, não um commit
+
+**Diagnóstico [V].** `test_sheets::test_pdf_page_without_image_or_with_flate_is_an_error` não falha por nenhum commit: `src/sheets.py` e `tests/test_sheets.py` não mudam desde `32fc4dc`. Falha quando a suite corre com o Python do sistema (`C:\Users\tiago\AppData\Local\Programs\Python\Python312`, 3.12.6), que tem o **PyMuPDF 1.28.0** instalado desde 2026-06-29. Com o PyMuPDF presente, `sheets._rasterise` rasteriza as páginas sem JPEG único em vez de as dar como erro, que é o que o teste espera. O `.venv` do projeto (3.12.6, sem PyMuPDF) dá `8 passed` em `test_sheets.py` e a suite completa dá **460 passed, 1 skipped, 0 failed** em `8fedf87`. A F1a correu a suite com `python` do PATH (o do sistema).
+
+**Correção:** correr a suite com `.venv/Scripts/python.exe -m pytest tests/` (como a 2026-11-09). Não se mudou código nem o teste.
+
+**Por decidir pelo Tiago:** o teste depende de o PyMuPDF não estar instalado. Torná-lo independente do ambiente exige mudar o teste (por exemplo, substituir `_rasterise` por um que devolve `None` dentro do teste, e um teste à parte para o caminho com PyMuPDF). Não foi feito sem OK.
+
+## 2026-11-11 — F1b do redesenho: regras do ecrã «Montar» que não estavam no ESPEC
+
+Decididas pelo implementer ao fazer a F1b; todas mudáveis sem mexer no motor.
+
+- **Traços do «Porquê» (§8.4).** «Passa com folga» = metade do limite (forma: `d1 ≤ t95/2` ou custo do encaixe `≤ t_abs/2`; imagem: `ΔE ≤ p90/2`) ou margem `≥ 2 × margin_min`. Os fatores ½ e 2× não estão calibrados: só mudam 2 ↔ 3 traços. A imagem de uma sugestão pelo encaixe aparece como «não verificado» (o custo do encaixe já mistura forma e imagem, sem teste de imagem à parte). Numa zona sem `dE_p90` (hoje montanha, vale, relva) a imagem também é «não verificado».
+- **«quase certo» (§8.3)** exige também **nenhum traço a falhar** e encaixe não incompatível, além de decisão do motor `aceite`/`colocavel`/`alta` e do histórico origem × zona (n ≥ 10, Wilson ≥ 0,80). Um cartão fundido (gémea + buraco) é «quase certo» se uma das duas origens o for. O histórico do buraco conta só as decisões `alta` de rank 1 (as mesmas do contador `alta`); o da gémea conta `twin_confirmed`/`twin_rejected` por `origin`; o dos pares não tem zona.
+- **Fila por saco (§8.2).** «Importação recente» = o saco do último `scan_added` ainda tem peças na fila. O saco que o browser está a esgotar vai no pedido (`/api/montar?saco=N`) e fica primeiro enquanto tiver peças; se entrar um scan novo, a fila passa para o saco dele. «Saltar» guarda-se em `sessionStorage` (sobrevive a recarregar a página, não a fechar o browser).
+- **Desfazer.** «Encaixa» desfaz-se com `unplaced` + `desfaz: true`; «Não encaixa» com `rejection_undone` (gémea/borda/buraco) ou `pair_unrejected` (par). O motivo é `rejection_noted` (informativo, `ref_t` = o `t` da rejeição). `state.undone_decisions` diz que decisões foram desfeitas; `fit.alta_counter`, `fit.report` e o histórico do Montar ignoram-nas. Três ações novas no log: checkouts anteriores a este deixam de o ler (o custo já previsto no inventário da F0).
+- **Limite conhecido [NT]:** desfazer «Encaixa» de um par não desfaz o `pair_confirmed` nem a posição conhecida dada à outra peça do par.
+- **Provisórios até às fases seguintes:** «Peças» mostra uma ligação para a interface completa (F3); «⋯ › Atividade do programa» abre a interface antiga noutro separador com a gaveta aberta (F5); «Ver números» do «Porquê» abre as razões técnicas no próprio painel (F5 leva-as para o Diagnóstico); tocar num lugar do tabuleiro só escolhe a peça da fila desse lugar (F2: painel da célula e do lugar vazio).

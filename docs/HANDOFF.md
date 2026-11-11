@@ -1,94 +1,70 @@
-# HANDOFF — 2026-11-09 (ronda 10: contorno = só a peça — aresta oficial, índice derivado (A2); fechada)
+# HANDOFF — 2026-11-11 (redesenho da GUI: F1b feita, à espera do OK do Tiago)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
 ## Estado
-- **Commits desta ronda** (em `main`):
-  - `91ef246`: fixture de `test_gui_guardadas` (o `fetch.json` fica fixo em `bc6b772`; teste alterado, asserções iguais);
-  - `ac6e495`: CLAUDE.md (início de sessão: `estado-e-plano.md` + `ARCHITECTURE.md` + este ficheiro);
-  - `85b5b8d`: código A2;
-  - `2cd321e`: ferramentas `reaplicar_aresta.py` e `convencao.py --lados/--gt`;
-  - `b23d449`: estado de hoje do Tiago (OK 1);
-  - `bb281d9` e `0ede00c`: limiares [NT] em `decisoes.md`;
-  - `03e3af5` e `d583411`: regra única bit a bit;
-  - `d865e29`: **dados do projeto real** (OK 2);
-  - docs de fecho.
+- **Prompt da sessão:** `docs/prompts/2026-11-11-f1b-casca-nova-montar.md` (fechado).
+- **Commits** (em `main`, sem `projects/alpes`):
+  - `c241ca0`: interface do `board.js` + prova estrutural da F1a;
+  - F1b: código, testes, capturas e docs (ver `git log`).
+- **Suite [V]:** corre-se com `.venv/Scripts/python.exe -m pytest tests/`, não com o `python` do PATH.
+  - O Python do sistema (3.12.6) tem PyMuPDF 1.28 e faz falhar `test_sheets::test_pdf_page_without_image_or_with_flate_is_an_error`. Não é de nenhum commit (`docs/decisoes.md`, 2026-11-11).
+  - Em `8fedf87`: 460 passed, 1 skipped, 0 failed.
+  - Depois da F1b: 477 passed, 1 skipped, 0 failed (293 s, com os `slow`; +17 testes novos).
+- **Prova estrutural da F1a [V]** (`tools/gui/f1_estrutura.py`): SVG das camadas e caixas de 184–261 elementos do tabuleiro iguais antes/depois, nos 4 estados × 1366/390. A GUI antiga depois da F1b também é igual a `8fedf87`, na página inteira.
+- **Interface do `board.js` [V]:** `S.board`, estados `S.showGrid` / `S.showGhost` / `S.pose`, função `S.onPoseWheel` (era o `poseWheel` global de `pose.js`), gancho `S.onBoardTap`. Está documentada no cabeçalho e testada por `tests/test_board_interface.py`.
+- **F1b [V em testes; NT com o Tiago]:** GUI nova em `/novo/` (também `/?ui=novo` e `python -m src.server --ui novo`); a antiga continua em `/`.
+  - Topo: «N de 3008 peças» (colocadas + marcadas por ti), abas Montar · Peças · Importar scan, lupa, «⋯».
+  - Montar: cartão «Próxima peça» (saco e nº em grande, linha · coluna, confiança em palavras com 3 traços), **Encaixa** / **Não encaixa**, «Saltar por agora», «Porquê esta peça?», «A seguir» (3).
+  - Tabuleiro: alvo âmbar «vai aqui», 3 seguintes ténues, legenda curta (2 entradas: «Onde vai a peça», «Por montar»).
+  - Fila por saco (§8.2). «quase certo» só por origem × zona com n ≥ 10 e Wilson ≥ 0,80 (§8.3).
+  - Desfazer «Encaixa» e «Não encaixa» (toast, «Enganei-me, desfazer», Ctrl+Z); motivo opcional «Porquê?».
+  - Teclas: Enter, N, S, Ctrl+Z.
+  - Servidor: `src/montar.py`, `GET /api/montar`; eventos `rejection_undone`, `pair_unrejected`, `rejection_noted`, `unplaced desfaz`. As decisões desfeitas não contam (`state.undone_decisions`, também em `fit.alta_counter` / `--relatorio`).
+  - Regras que o ESPEC não fixava: `docs/decisoes.md` (2026-11-11, F1b).
+- **Capturas [V]:** `docs/gui/screenshots/redesenho/F1b_{antes,montar,porque,nao,vazio}_{1366,390}.png` e `F1b_contagens.json`. No ecrã principal, palavras 951 → 72 e botões visíveis 13 → 15 a 1366 px.
+- **No projeto real hoje a fila está vazia [V]:** as 3 gémeas não têm vizinha montada e as 2 `alta` estão em conflito. As capturas com cartões são do estado de `8fedf87`.
+- **Reports:** não foram consultados nem tocados nesta sessão.
 
-  Prompt: `docs/prompts/2026-11-09-r10-aresta-oficial-indice-derivado.md` (fechado). Relatório: `docs/diagnostico/editor/CONVENCAO.md` §6.
-- **A2 [V]: o contorno que o Tiago pinta é só a peça.**
-  - Cada linha `convencao: "aresta+indice"` de `overrides.jsonl` grava duas silhuetas:
-    - `aresta_px`: a aresta pintada, com todos os traços. Um «não é peça» sobre a sombra tira-a. É usada pelo desenho (miniaturas, tabuleiro, `render.aresta_rgba`) e pela sugestão pela gémea.
-    - `contour_px`: a silhueta do índice, derivada com o halo de sombra da convenção. É usada pela forma, gémeas, buracos, borda e consistência; nada disto foi recalibrado.
-  - Quando o índice derivado é o automático **bit a bit**, a linha diz `indice: "automatico"` e só muda o desenho: não leva `manual_override`, não gera evento e não escreve nada no log.
-  - É a mesma regra exata no servidor e no `reaplicar_aresta.py` (decisão do Tiago; a tolerância de 0,5 mm saiu).
-- **Projeto real (`d865e29`) [V]:** os 19 contornos por traços foram reaplicados (19 registos, 4 `piece_resegmented`, 0 erros).
-  - 14 peças ficaram só com visualização.
-  - P0045, P0071 e P1064 passaram a índice manual, cada uma por 1 píxel (0,08 mm).
-  - P0198 e P0620 mantêm o índice que o Tiago gravou hoje (IoU 1,000).
-  - P1203 foi reposto no automático.
-  - `fetch.json` idêntico a `b23d449` (15/15 entradas, suprimidas iguais, tolerância 1e-6); invariantes []; Suspeitas iguais (0 / 1 / 14).
-  - Na cópia: reprodução R7 43/43, medida de novo depois de aplicar.
-  - Cópia de segurança antes de aplicar: `C:\Users\tiago\AppData\Local\Temp\claude\011f846714d7d8db\00645572-7017-4a80-b59a-3d5f3d9e890a\scratchpad\backup_alpes_20261109_174520` (sha256 verificados; é temporária, a reposição normal é `git revert d865e29` e refazer os ativos).
-- **Testes [V]:** suite completa 460 passed, 1 skipped, 0 failed (288 s), com o código A2 antes dos dados reais. O `test_gui_guardadas` volta a passar.
-- **Reports:** 0 abertos; nenhum tocado.
-
-## O que o Tiago tem de ver na GUI (pendente [NT]: ainda não reportou nada)
-1. Arrancar o servidor depois do `git pull`. Se houver reconstrução de ativos no arranque, ≈ 80 s é normal.
-2. As 19 peças editadas aparecem recortadas pela aresta, sem a orla de sombra, nas miniaturas e no tabuleiro:
-   - P0045, P0071, P0098, P0105, P0165, P0186, P0198, P0620, P0916;
-   - P0935, P0999, P1021, P1064, P1089, P1102, P1114, P1202, P1203, P1245.
-3. No editor de uma delas:
-   - os traços voltam;
-   - laranja = a aresta (o que se grava);
-   - linha fina ciano-claro = a silhueta do índice;
-   - branco tracejado = a aresta detetada sem traços;
-   - gravar sem mexer diz «igual ao contorno atual».
-4. O selo «contorno manual» aparece só em P0045, P0071, P0198, P0620 e P1064.
-5. «Vai buscar» mostra as mesmas 15 propostas.
-6. Se alguma miniatura ainda estiver antiga, recarregar a página uma vez.
+## O que o Tiago tem de ver (pendente [NT])
+1. Arrancar `python -m src.server --ui novo` e abrir `/novo/`. Num telemóvel, abrir `http://<ip>:8765/novo/` com `--lan`.
+2. Montar: o cartão, «Encaixa» num clique, o toast «Desfazer», «Não encaixa» → «Porquê?» → «Próxima peça» / «Enganei-me, desfazer», Ctrl+Z.
+3. As palavras: «quase certo» só aparece no céu (gémea 46/46 e buraco 57/57 no log de hoje). Fora do céu diz sempre «a confirmar por ti».
+4. OK para a F2 (célula, lugar vazio, pôr e tirar à mão, desfazer global).
 
 ## Espera pelo Tiago
-1. **Máscaras do Photoshop para a fase 2:** P1203, P0045, P1245 e P0198 (P0229 opcional, só se a fase 2 avançar).
-   - Onde: `docs/diagnostico/editor/gt_photoshop/P####.png`.
-   - Formato: PNG com alfa = a peça, na grelha de píxeis do scan inteiro, como R0011/R0012.
-   - As ferramentas estão prontas (comandos em CONVENCAO §6.6).
-2. As verificações da secção anterior.
-3. Anteriores (rondas 7–8):
-   - PDF vetorial (PyMuPDF), lock entre processos;
-   - pares T0001/T0002/T0005, T0003/T0004;
-   - `ambigua` em «Vai buscar», p90 por zona;
-   - `docs/README_proposta.md`, P0343/P0833, corte c32|c33.
+1. **`test_sheets` e o PyMuPDF:** tornar o teste independente do ambiente exige mudar o teste. Não foi feito sem OK.
+2. **Máscaras do Photoshop para a fase 2 do editor** (ronda 10): P1203, P0045, P1245, P0198 em `docs/diagnostico/editor/gt_photoshop/P####.png` (alfa = a peça, grelha do scan inteiro).
+3. **Quadrados 11–17** entre soltas (`docs/diagnostico/grupos_soltos/QUADRADOS.md`).
+4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
-1. **Fase 2 (§5.4 do plano), condicional, por zona.** Medir contra as máscaras do Photoshop duas candidatas:
-   - (a) o solver sem traços puro;
-   - (b) S0 com deslocamento direcional nos lados W/S, estimado em leave-one-out.
-
-   Critério por zona: desvio mediano por lado ≤ 0,3 mm, p95 ≤ 0,6 mm, IoU ≥ 0,93. **A tolerância foi fixada vendo só P0651/P0657: não está validada.** O n por zona é de 1 a 2 peças.
-2. **Possível sobre-corte no lado S [NT].** Nas 19 arestas, o lado S fica 0,5–0,9 mm dentro de S0. Contra a GT de P0651/P0657, S0 só está ≈ +0,25 mm fora no lado S. Os 17 traços antigos (feitos com a instrução antiga) podem entrar 0,3–0,6 mm na peça. As máscaras do Photoshop decidem.
-3. **[NT]** P0045, P0071 e P1064 ficam índice manual por 1 píxel (0,08 mm; diferenças de 0,01–0,07 mm²) e por isso saem das métricas de CV (`manual_override`). O custo não foi medido.
-4. **Limiares [NT]** (`decisoes.md`, ronda 10): `GANHO_MIN_MM2` 2 mm², `GEMEA_RUIDO_MM` 0,25 mm, os 3 mm² do teste do laço.
-5. Miniaturas pedidas com `?v=versão` podem ficar em cache no browser depois de uma gravação só de visualização, porque o log não muda.
-6. Anteriores:
-   - verificar ativos no arranque das CLI (`src.query`/`src.ingest`);
-   - `append_override` escreve CRLF;
-   - passo «pares» N²; arranque a frio;
-   - GT fora do céu; pose manual 4–9 s; falso alarme; PNG;
-   - detetor de peça comida; (26,1)/(25,1).
+1. **F2** (ESPEC §7): painel da célula (C) e do lugar vazio (V), pôr à mão com verificações (§5.4), «Tirar do lugar», desfazer global.
+   - Na F1b, tocar num lugar só escolhe a peça da fila desse lugar.
+2. **Limites da F1b [NT]:**
+   - desfazer «Encaixa» de um par não desfaz o `pair_confirmed` nem a posição conhecida da outra peça;
+   - «Peças» é só uma ligação para a interface completa (F3);
+   - «⋯ › Atividade» abre a interface antiga noutro separador (F5);
+   - «Ver números» mostra as razões técnicas no painel (F5: Diagnóstico).
+3. **Traços [NT]:** os fatores de folga (½ do limite, 2× a margem mínima) não estão calibrados.
+4. **Ações novas no log** (`rejection_undone`, `pair_unrejected`, `rejection_noted`): checkouts anteriores à F1b deixam de ler um log que as tenha.
+5. Da ronda 10: fase 2 do editor (condicional, por zona), possível sobre-corte no lado S, P0045/P0071/P1064 índice manual por 1 píxel, limiares `GANHO_MIN_MM2` / `GEMEA_RUIDO_MM`, cache das miniaturas `?v=`.
+6. Anteriores: verificar ativos no arranque das CLI; `append_override` escreve CRLF; passo «pares» N²; arranque a frio; GT fora do céu; pose manual 4–9 s; detetor de peça comida; (26,1)/(25,1).
 
 ## Convenções que mordem
-- Nunca `taskkill //IM python.exe`: só por PID, listado e justificado. Não usar `python -` com heredoc no Git Bash (fica à espera do stdin): escrever scripts `.py` no scratchpad.
-- Nunca correr servidor/render/ingest sobre `projects/alpes` para medir: usar cópias, com `tools/rebuild_scans.py --stale --also-missing` antes das linhas de base. Escritas reais só com o servidor parado (verificar `netstat -ano | grep LISTEN | grep :8765` vazio e nenhum `python.exe` com `src.server`), cópia de segurança e commit a seguir.
-- `rebuild_assets(force_scans=[sid])` sem `scans=[sid]` percorre todas as folhas: passar os dois.
-- **Duas silhuetas:** quem lê o índice lê `contour_px` / npz, nunca `aresta_px`; `aresta_px` é só desenho e sugestão pela gémea.
-- `tools/diagnostico/**` precisam de `PPF_SCRATCH`. Commits em português, sem co-author. A suite completa demora > 300 s: correr em segundo plano.
+- **Testes com o `.venv`** (`.venv/Scripts/python.exe -m pytest tests/`); a suite completa demora ≈ 300 s: correr em segundo plano.
+- Nunca `taskkill //IM python.exe`: só por PID, listado e justificado. No Git Bash, preferir scripts `.py` no scratchpad a `python -` com heredoc.
+- Nunca correr servidor/render/ingest sobre `projects/alpes` para medir: usar cópias (`tools/rebuild_scans.py --stale --also-missing` antes das linhas de base). Escritas reais só com o servidor parado, cópia de segurança e commit a seguir.
+- `projects/alpes` tem alterações locais do Tiago no working tree (board, log, scans, fetch, overrides, pairs, `log.jsonl.bak-20261109`): não as tocar nem incluir em commits; `git add` só com caminhos explícitos.
+- **Duas silhuetas:** quem lê o índice lê `contour_px` / npz, nunca `aresta_px`.
+- `tools/diagnostico/**` precisam de `PPF_SCRATCH`. Commits em português, sem co-author.
+- GUI nova: os textos do Montar não podem ter (l, c), P#### (só no `.pid` pequeno), mm, margem, ΔE, aceite/alta/ambígua (`tests/test_gui_novo.py::FORBIDDEN`).
 
 ## Links
-- Ronda 10:
-  - relatório: `docs/diagnostico/editor/CONVENCAO.md` §6;
-  - figuras e dados: `REAPLICAR_19.jpg`, `REAPLICAR_zoom_WS.jpg`, `reaplicar_aresta.json`, `lados_r10.json`;
-  - decisões: `docs/decisoes.md` (2026-11-09, ronda 10);
-  - GUI: `docs/gui-design.md` §18.6d;
-  - ferramentas: `tools/diagnostico/editor/{reaplicar_aresta,convencao}.py`.
-- Ronda 9: `CONVENCAO.md` §0–§5. Ronda 7: `docs/diagnostico/gemeos/R7_RESULTADOS.md`.
+- Redesenho:
+  - `docs/gui/redesenho/ESPEC.md` (§7 fases, §8 decisões);
+  - `F0_INVENTARIO.md`;
+  - capturas e prova estrutural: `docs/gui/screenshots/redesenho/README.md`;
+  - ferramentas: `tools/gui/f1a_capturas.py`, `tools/gui/f1_estrutura.py`, `tools/gui/f1b_capturas.py`.
+- Ronda 10: `docs/diagnostico/editor/CONVENCAO.md` §6; decisões em `docs/decisoes.md`.
 - Comandos de início de sessão: `python -m src.reports --project projects/alpes --list`; `python -m src.consistency --project projects/alpes`.
