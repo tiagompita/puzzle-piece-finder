@@ -27,6 +27,6 @@ O Tiago testou os quadrados 11 a 17 e encaixam todos (17/17 com os 10 anteriores
 
 ## Resultado
 
-- Commits: `7cfe199` (critérios), `8710af3` (medição e relatório), e o das edições de texto e do HANDOFF (ver `git log`).
+- Commits: `7cfe199` (critérios), `8710af3` (medição e relatório), `133dfa3` (decisões, estado, QUADRADOS, ESPEC) e `9b27ab6` (HANDOFF e este ficheiro).
 - Relatório: `docs/diagnostico/fit/GRUPOS_JUNCOES.md`; scripts `tools/diagnostico/fit/grupos_juncoes.py` e `grupos_juncoes_tabelas.py`; saídas `grupos_juncoes.json` e `grupos_juncoes_tabelas.txt`.
 - Por fazer: o Tiago aceitar o mínimo de junções; blocos da montanha e do vale (não há dados); GT físico fora do céu; registar os 17 grupos montados no projeto.
