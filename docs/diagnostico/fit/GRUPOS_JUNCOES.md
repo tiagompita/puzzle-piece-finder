@@ -84,6 +84,37 @@ Por zona do bloco (a das peças do grupo). Montanha e vale: **n = 0, sem dados**
 | 3 | 28 | 0 — [0,0–12,1] | 0 — [0,0–12,1] |
 | ≥ 4 | 307 | 2 — 0,7 % [0,2–2,3] | 0 — [0,0–1,2] |
 
+**Negativos difíceis por zona, com 2 e 3 junções (acrescentado 2026-11-12, a pedido do Tiago) [V na amostra].** São os mesmos dados (`gj_raw.json` da medição de hoje; as tabelas anteriores reproduzem-se byte a byte). O que mudou foi só o script dos agregados (`grupos_juncoes_tabelas.py`, secção «NEGATIVOS DIFÍCEIS»), sem critérios novos. Formato: falsos «encaixa» / n — taxa [Wilson 95 %] (blocos com ≥ 1 falso / blocos). As linhas «todas» repetem a tabela de cima.
+
+*Sobre o lugar original* (deslocado ou rodado no sítio, a mesma definição da tabela de cima):
+
+| zona do bloco | n_j | A: falsos «encaixa» | B: falsos «encaixa» |
+|---|---|---|---|
+| céu | 2 | 2 / 42 — 4,8 % [1,3–15,8] (1/13) | 1 / 42 — 2,4 % [0,4–12,3] (1/13) |
+| céu | 3 | 0 / 20 — [0,0–16,1] (0/6) | 0 / 20 — [0,0–16,1] (0/6) |
+| montanha | 2, 3 | n = 0, sem dados | n = 0, sem dados |
+| vale | 2, 3 | n = 0, sem dados | n = 0, sem dados |
+| relva | 2 | 0 / 16 — [0,0–19,4] (0/5) | 0 / 16 — [0,0–19,4] (0/5) |
+| relva | 3 | 0 / 8 — [0,0–32,4] (0/3) | 0 / 8 — [0,0–32,4] (0/3) |
+| todas | 2 | 2 / 58 — 3,4 % [1,0–11,7] (1/18) | 1 / 58 — 1,7 % [0,3–9,1] (1/18) |
+| todas | 3 | 0 / 28 — [0,0–12,1] (0/9) | 0 / 28 — [0,0–12,1] (0/9) |
+
+*Deslocado exatamente uma célula, sem rodar* (r = 0, canto a distância 1 do original). Quase todas estas posições caem em células ocupadas e ficam fora das erradas (§1), por isso sobram **23 posições** em todo o n_j:
+
+| zona do bloco | n_j | A | B |
+|---|---|---|---|
+| céu | 2 | 0 / 5 — [0,0–43,4] | 0 / 5 — [0,0–43,4] |
+| céu | 3 | 0 / 3 — [0,0–56,2] | 0 / 3 — [0,0–56,2] |
+| relva | 2 | 0 / 2 — [0,0–65,8] | 0 / 2 — [0,0–65,8] |
+| relva | 3 | 0 / 0 | 0 / 0 |
+| montanha, vale | 2, 3 | n = 0 | n = 0 |
+
+**Leitura.**
+- Com 2 e 3 junções, os poucos falsos «encaixa» difíceis estão todos no **céu**: 2 posições de 1 bloco, com 2 junções.
+- Na relva há 0 falsos, mas com n = 8–16 o limite superior de Wilson fica em 19–32 %.
+- Montanha e vale não têm dados.
+- Nenhuma destas linhas chega para afirmar «encaixa» com 2 ou 3 junções: os limites superiores ficam entre 9 % e 66 %. Isto é coerente com o mínimo de ≥ 4 do §3.
+
 Sem rodar (r = 0, o que o Tiago faria se arrastasse o grupo sem o rodar): A 0,3 / 0,2 / 0,1 / 0,0 % (n_j = 1 / 2 / 3 / ≥ 4; n = 4 186 / 10 460 / 5 876 / 1 123), sem diferença relevante.
 
 **Porque é que as erradas falham [V].** A junção é «impossível» (T-T, B-B, F, corda acima do corte) em 64 % das posições com n_j = 1, 81 % com 2, 90 % com 3 e 97 % com ≥ 4; com a regra F do grupo, 76 / 87 / 94 / 98 %. O resto é custo acima de `t_abs`. Só 12,8 % das erradas passam sem junção impossível nem F violada.

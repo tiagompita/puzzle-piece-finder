@@ -117,7 +117,6 @@ print("   p50 %.2f p90 %.2f p95 %.2f max %.2f (t_abs %.3f); blocos com junção 
     np.percentile(mx, 50), np.percentile(mx, 90), np.percentile(mx, 95), max(mx), raw["t_abs"],
     sum(1 for t in T if "imp" in t["states"]), sum(1 for t in T if "nt" in t["states"])))
 print("   blocos certos com F violada:", sum(1 for t in T if t["fviol"]))
-json.dump(out, open(sys.argv[2], "w"), ensure_ascii=False, indent=1)
 
 
 # ---------------------------------------------------------------- extras (tabelas do relatório)
@@ -202,3 +201,30 @@ for z in ("céu", "relva", "todas"):
         kX = sum(t["subsets"]["4"].get(f"{crit}_X", 0) / t["subsets"]["4"]["total"] for t in s)
         kn = sum(t["subsets"]["4"].get(f"{crit}_ns", 0) / t["subsets"]["4"]["total"] for t in s)
         print(f"  {z:6s} {crit}: k=4 X {fmtf(kX, len(s))}  ns {100 * kn / max(1, len(s)):.1f}%")
+
+
+# ---------------------------------------------------------------- 2026-11-12: negativos difíceis por zona (só agregados)
+def shifted_one(w):
+    """Deslocado exatamente uma célula, sem rodar: r = 0 e o canto de cima à esquerda a distância de Manhattan 1."""
+    _, _, l0, c0 = orig_of(w["block"])
+    return w["r"] == 0 and abs(w["tl"][0] - l0) + abs(w["tl"][1] - c0) == 1
+
+
+print("\n== NEGATIVOS DIFÍCEIS por zona do bloco x n_j, critérios A e B (falso 'encaixa', blocos com >=1 falso / blocos)")
+HARD = {"sobre_lugar": ("sobre o lugar original (deslocado ou rodado no sítio)", overlaps_orig),
+        "desloc1": ("deslocado exatamente 1 célula, sem rodar", shifted_one)}
+for key, (nm, pred) in HARD.items():
+    S = [w for w in W if pred(w)]
+    print(f"-- {nm}: n = {len(S)}")
+    for z in ZONES + ["todas"]:
+        for crit in ("A", "B"):
+            row = []
+            for b in BANDS:
+                s = [w for w in S if band(w["nj"]) == b and (z == "todas" or w["zone"] == z)]
+                k = sum(1 for w in s if w[crit] == "E")
+                nb = len({w["block"] for w in s if w[crit] == "E"}); nbt = len({w["block"] for w in s})
+                row.append(f"{b}: {k}/{len(s)} {fmt(k, len(s))} blocos {nb}/{nbt}")
+                lo, hi = wilson(k, len(s)) if s else (None, None)
+                out[f"dificeis_{key}_{crit}_{z}_nj{b}"] = dict(n=len(s), E=k, wilson=[lo, hi], blocos_E=nb, blocos=nbt)
+            print(f"  {z:18s} {crit}  " + " | ".join(row))
+json.dump(out, open(sys.argv[2], "w"), ensure_ascii=False, indent=1)

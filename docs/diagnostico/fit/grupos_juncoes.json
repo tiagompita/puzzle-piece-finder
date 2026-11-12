@@ -324,5 +324,805 @@
     5.598
    ]
   }
- ]
+ ],
+ "dificeis_sobre_lugar_A_céu_nj1": {
+  "n": 16,
+  "E": 4,
+  "wilson": [
+   0.10181901984237346,
+   0.49498768929398645
+  ],
+  "blocos_E": 2,
+  "blocos": 2
+ },
+ "dificeis_sobre_lugar_A_céu_nj2": {
+  "n": 42,
+  "E": 2,
+  "wilson": [
+   0.013157248639206365,
+   0.1579013531547973
+  ],
+  "blocos_E": 1,
+  "blocos": 13
+ },
+ "dificeis_sobre_lugar_A_céu_nj3": {
+  "n": 20,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.16113012549493322
+  ],
+  "blocos_E": 0,
+  "blocos": 6
+ },
+ "dificeis_sobre_lugar_A_céu_nj>=4": {
+  "n": 181,
+  "E": 2,
+  "wilson": [
+   0.003035418046948204,
+   0.03938793254079827
+  ],
+  "blocos_E": 2,
+  "blocos": 63
+ },
+ "dificeis_sobre_lugar_B_céu_nj1": {
+  "n": 16,
+  "E": 4,
+  "wilson": [
+   0.10181901984237346,
+   0.49498768929398645
+  ],
+  "blocos_E": 2,
+  "blocos": 2
+ },
+ "dificeis_sobre_lugar_B_céu_nj2": {
+  "n": 42,
+  "E": 1,
+  "wilson": [
+   0.00421529549910029,
+   0.12321481165248252
+  ],
+  "blocos_E": 1,
+  "blocos": 13
+ },
+ "dificeis_sobre_lugar_B_céu_nj3": {
+  "n": 20,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.16113012549493322
+  ],
+  "blocos_E": 0,
+  "blocos": 6
+ },
+ "dificeis_sobre_lugar_B_céu_nj>=4": {
+  "n": 181,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.02078320031854301
+  ],
+  "blocos_E": 0,
+  "blocos": 63
+ },
+ "dificeis_sobre_lugar_A_montanha/floresta_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_A_montanha/floresta_nj2": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_A_montanha/floresta_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_A_montanha/floresta_nj>=4": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_B_montanha/floresta_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_B_montanha/floresta_nj2": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_B_montanha/floresta_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_B_montanha/floresta_nj>=4": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_A_vale/aldeia_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_A_vale/aldeia_nj2": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_A_vale/aldeia_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_A_vale/aldeia_nj>=4": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_B_vale/aldeia_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_B_vale/aldeia_nj2": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_B_vale/aldeia_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_B_vale/aldeia_nj>=4": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_sobre_lugar_A_relva_nj1": {
+  "n": 12,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.2425007574992425
+  ],
+  "blocos_E": 0,
+  "blocos": 2
+ },
+ "dificeis_sobre_lugar_A_relva_nj2": {
+  "n": 16,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.19361341827271994
+  ],
+  "blocos_E": 0,
+  "blocos": 5
+ },
+ "dificeis_sobre_lugar_A_relva_nj3": {
+  "n": 8,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.3244156195108769
+  ],
+  "blocos_E": 0,
+  "blocos": 3
+ },
+ "dificeis_sobre_lugar_A_relva_nj>=4": {
+  "n": 126,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.029586819632536877
+  ],
+  "blocos_E": 0,
+  "blocos": 52
+ },
+ "dificeis_sobre_lugar_B_relva_nj1": {
+  "n": 12,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.2425007574992425
+  ],
+  "blocos_E": 0,
+  "blocos": 2
+ },
+ "dificeis_sobre_lugar_B_relva_nj2": {
+  "n": 16,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.19361341827271994
+  ],
+  "blocos_E": 0,
+  "blocos": 5
+ },
+ "dificeis_sobre_lugar_B_relva_nj3": {
+  "n": 8,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.3244156195108769
+  ],
+  "blocos_E": 0,
+  "blocos": 3
+ },
+ "dificeis_sobre_lugar_B_relva_nj>=4": {
+  "n": 126,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.029586819632536877
+  ],
+  "blocos_E": 0,
+  "blocos": 52
+ },
+ "dificeis_sobre_lugar_A_todas_nj1": {
+  "n": 28,
+  "E": 4,
+  "wilson": [
+   0.056989129307017855,
+   0.31490173044877334
+  ],
+  "blocos_E": 2,
+  "blocos": 4
+ },
+ "dificeis_sobre_lugar_A_todas_nj2": {
+  "n": 58,
+  "E": 2,
+  "wilson": [
+   0.009507728866485675,
+   0.11729364755327057
+  ],
+  "blocos_E": 1,
+  "blocos": 18
+ },
+ "dificeis_sobre_lugar_A_todas_nj3": {
+  "n": 28,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.12064720365810762
+  ],
+  "blocos_E": 0,
+  "blocos": 9
+ },
+ "dificeis_sobre_lugar_A_todas_nj>=4": {
+  "n": 307,
+  "E": 2,
+  "wilson": [
+   0.0017883385400153298,
+   0.023438658103934515
+  ],
+  "blocos_E": 2,
+  "blocos": 115
+ },
+ "dificeis_sobre_lugar_B_todas_nj1": {
+  "n": 28,
+  "E": 4,
+  "wilson": [
+   0.056989129307017855,
+   0.31490173044877334
+  ],
+  "blocos_E": 2,
+  "blocos": 4
+ },
+ "dificeis_sobre_lugar_B_todas_nj2": {
+  "n": 58,
+  "E": 1,
+  "wilson": [
+   0.003049959884541764,
+   0.09141072677298324
+  ],
+  "blocos_E": 1,
+  "blocos": 18
+ },
+ "dificeis_sobre_lugar_B_todas_nj3": {
+  "n": 28,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.12064720365810762
+  ],
+  "blocos_E": 0,
+  "blocos": 9
+ },
+ "dificeis_sobre_lugar_B_todas_nj>=4": {
+  "n": 307,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.012358706170602647
+  ],
+  "blocos_E": 0,
+  "blocos": 115
+ },
+ "dificeis_desloc1_A_céu_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_céu_nj2": {
+  "n": 5,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.43449149475208104
+  ],
+  "blocos_E": 0,
+  "blocos": 5
+ },
+ "dificeis_desloc1_A_céu_nj3": {
+  "n": 3,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.5615060804490177
+  ],
+  "blocos_E": 0,
+  "blocos": 3
+ },
+ "dificeis_desloc1_A_céu_nj>=4": {
+  "n": 9,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.2991527535509594
+  ],
+  "blocos_E": 0,
+  "blocos": 9
+ },
+ "dificeis_desloc1_B_céu_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_céu_nj2": {
+  "n": 5,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.43449149475208104
+  ],
+  "blocos_E": 0,
+  "blocos": 5
+ },
+ "dificeis_desloc1_B_céu_nj3": {
+  "n": 3,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.5615060804490177
+  ],
+  "blocos_E": 0,
+  "blocos": 3
+ },
+ "dificeis_desloc1_B_céu_nj>=4": {
+  "n": 9,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.2991527535509594
+  ],
+  "blocos_E": 0,
+  "blocos": 9
+ },
+ "dificeis_desloc1_A_montanha/floresta_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_montanha/floresta_nj2": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_montanha/floresta_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_montanha/floresta_nj>=4": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_montanha/floresta_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_montanha/floresta_nj2": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_montanha/floresta_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_montanha/floresta_nj>=4": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_vale/aldeia_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_vale/aldeia_nj2": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_vale/aldeia_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_vale/aldeia_nj>=4": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_vale/aldeia_nj1": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_vale/aldeia_nj2": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_vale/aldeia_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_vale/aldeia_nj>=4": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_relva_nj1": {
+  "n": 1,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.7934567085261071
+  ],
+  "blocos_E": 0,
+  "blocos": 1
+ },
+ "dificeis_desloc1_A_relva_nj2": {
+  "n": 2,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.6576280471103807
+  ],
+  "blocos_E": 0,
+  "blocos": 2
+ },
+ "dificeis_desloc1_A_relva_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_A_relva_nj>=4": {
+  "n": 3,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.5615060804490177
+  ],
+  "blocos_E": 0,
+  "blocos": 3
+ },
+ "dificeis_desloc1_B_relva_nj1": {
+  "n": 1,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.7934567085261071
+  ],
+  "blocos_E": 0,
+  "blocos": 1
+ },
+ "dificeis_desloc1_B_relva_nj2": {
+  "n": 2,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.6576280471103807
+  ],
+  "blocos_E": 0,
+  "blocos": 2
+ },
+ "dificeis_desloc1_B_relva_nj3": {
+  "n": 0,
+  "E": 0,
+  "wilson": [
+   null,
+   null
+  ],
+  "blocos_E": 0,
+  "blocos": 0
+ },
+ "dificeis_desloc1_B_relva_nj>=4": {
+  "n": 3,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.5615060804490177
+  ],
+  "blocos_E": 0,
+  "blocos": 3
+ },
+ "dificeis_desloc1_A_todas_nj1": {
+  "n": 1,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.7934567085261071
+  ],
+  "blocos_E": 0,
+  "blocos": 1
+ },
+ "dificeis_desloc1_A_todas_nj2": {
+  "n": 7,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.35433884297520657
+  ],
+  "blocos_E": 0,
+  "blocos": 7
+ },
+ "dificeis_desloc1_A_todas_nj3": {
+  "n": 3,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.5615060804490177
+  ],
+  "blocos_E": 0,
+  "blocos": 3
+ },
+ "dificeis_desloc1_A_todas_nj>=4": {
+  "n": 12,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.2425007574992425
+  ],
+  "blocos_E": 0,
+  "blocos": 12
+ },
+ "dificeis_desloc1_B_todas_nj1": {
+  "n": 1,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.7934567085261071
+  ],
+  "blocos_E": 0,
+  "blocos": 1
+ },
+ "dificeis_desloc1_B_todas_nj2": {
+  "n": 7,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.35433884297520657
+  ],
+  "blocos_E": 0,
+  "blocos": 7
+ },
+ "dificeis_desloc1_B_todas_nj3": {
+  "n": 3,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.5615060804490177
+  ],
+  "blocos_E": 0,
+  "blocos": 3
+ },
+ "dificeis_desloc1_B_todas_nj>=4": {
+  "n": 12,
+  "E": 0,
+  "wilson": [
+   0.0,
+   0.2425007574992425
+  ],
+  "blocos_E": 0,
+  "blocos": 12
+ }
 }
