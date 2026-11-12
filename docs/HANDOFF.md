@@ -1,8 +1,14 @@
-# HANDOFF — 2026-11-12 (redesenho da GUI: F1b feita, à espera do OK do Tiago; quadrados 17/17; junções de grupos medidas)
+# HANDOFF — 2026-11-12 (F1b à espera do OK; F2 não arrancou; quadrados em JSON; decisões da F4c e das fases no ESPEC)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Estado
+## Última sessão (2026-11-12, tarde): `docs/prompts/2026-11-12-test-sheets-montar-quadrados-json.md` (fechado)
+- **`test_sheets` [V]:** força os dois caminhos do PyMuPDF (`d24cb57`). `.venv`: 9 passed, 1 skipped (PyMuPDF real); `python` do PATH: 10 passed. A regra da suite está no `CLAUDE.md`, onde há também a linha de `src/montar.py`.
+- **Quadrados [V]:** `docs/diagnostico/grupos_soltos/quadrados_17.json` (`8f820a0`) tem peças, posição, rotação, ligações e ligações entre grupos (1↔12, 7↔16, 8↔16, 8↔17, 16↔17). Gerado do `loose_res.pkl` por `tools/diagnostico/grupos_soltos/quadrados_json.py`; validado por `tests/test_quadrados_json.py`. **Não registados no projeto.**
+- **Junções:** tabela dos negativos difíceis por zona com 2 e 3 junções (`6b47a3a`, `GRUPOS_JUNCOES.md` §2.1). Céu com 2 junções: A 2/42, B 1/42; relva 0/16 e 0/8; montanha e vale n = 0. Deslocado exatamente 1 célula: só 23 posições.
+- **ESPEC (`8201154`):** F4c só no céu com ≥ 4 junções (fora: «não sei»); fases F2, F4, F4b, F3, F5, F6 (F4c depois da F4b); na F2, desfazer «Encaixa» de um par desfaz o par e a posição da outra.
+
+## Estado (F1b, sessão anterior)
 - **Prompt da sessão:** `docs/prompts/2026-11-11-f1b-casca-nova-montar.md` (fechado).
 - **Commits** (em `main`, sem `projects/alpes`):
   - `c241ca0`: interface do `board.js` + prova estrutural da F1a;
@@ -10,7 +16,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
   - `3578ad4`: docs e capturas;
   - `graphify update .` corrido no fim (`graphify-out/` está fora do git).
 - **Suite [V]:** corre-se com `.venv/Scripts/python.exe -m pytest tests/`, não com o `python` do PATH.
-  - O Python do sistema (3.12.6) tem PyMuPDF 1.28 e faz falhar `test_sheets::test_pdf_page_without_image_or_with_flate_is_an_error`. Não é de nenhum commit (`docs/decisoes.md`, 2026-11-11).
+  - O Python do sistema (3.12.6) tem PyMuPDF 1.28; desde `d24cb57` o `test_sheets` passa nos dois.
   - Em `8fedf87`: 460 passed, 1 skipped, 0 failed.
   - Depois da F1b: 477 passed, 1 skipped, 0 failed (293 s, com os `slow`; +17 testes novos).
 - **Prova estrutural da F1a [V]** (`tools/gui/f1_estrutura.py`): SVG das camadas e caixas de 184–261 elementos do tabuleiro iguais antes/depois, nos 4 estados × 1366/390. A GUI antiga depois da F1b também é igual a `8fedf87`, na página inteira.
@@ -43,16 +49,30 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 4. OK para a F2 (célula, lugar vazio, pôr e tirar à mão, desfazer global).
 
 ## Espera pelo Tiago
-1. **`test_sheets` e o PyMuPDF:** tornar o teste independente do ambiente exige mudar o teste. Não foi feito sem OK.
+1. **Gémeas sem vizinha montada na GUI nova (proposta, não implementada).** Hoje as 3 gémeas `ambigua` (P0980 → (38,3), P1279 → (36,3), P1200 → (5,48)) e os 32 grupos `por_ancorar` não aparecem em lado nenhum de `/novo/` [V numa cópia]:
+   - `src/montar.py:246` exige `grupo == 'coloca_agora'` e peça;
+   - `novo.js:94` só desenha `posicoes_conhecidas`;
+   - a lupa responde «ainda não tem lugar» / «ainda vazio» (`novo.js:394`, `:402`);
+   - o vazio diz «Nada para ir buscar» (`novo.js:168`).
+
+   Só estão na GUI antiga («Guardadas», `app.js:302`, `:371`; «Mesa»). Com a nova ordem (F3 depois de F4/F4b), ficariam invisíveis ainda mais tempo. Proposta:
+   - (a) cartão «Guardar à parte» no Montar, depois dos `coloca_agora`:
+     - sempre «a confirmar por ti»;
+     - sem «Encaixa», porque não há vizinha para verificar;
+     - botões «Guardei à parte» (`position_known`, como o «Guardei num saquinho») e «Não é esta» (`reject`);
+     - alvo tracejado em vez de «vai aqui»;
+   - (b) o vazio diz quantas há para guardar à parte e «N grupos sem lugar → interface completa» até à F4;
+   - (c) a lupa mostra a proposta da peça e a do lugar (já vem em `/api/cell` `propostas`).
+2. **`test_sheets`:** feito (OK dado).
 2. **Máscaras do Photoshop para a fase 2 do editor** (ronda 10): P1203, P0045, P1245, P0198 em `docs/diagnostico/editor/gt_photoshop/P####.png` (alfa = a peça, grelha do scan inteiro).
-3. ~~Quadrados 11–17~~ feito 2026-11-11 (17/17); falta registar os 17 grupos montados no projeto (`QUADRADOS.md`, «Como registar»).
+3. Registar os 17 grupos montados no projeto (dados em `quadrados_17.json`; porta de escrita na F4b; `QUADRADOS.md`, «Como registar»). Não fazer sem ordem.
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
-1. **F2** (ESPEC §7): painel da célula (C) e do lugar vazio (V), pôr à mão com verificações (§5.4), «Tirar do lugar», desfazer global.
+1. **F2** (ESPEC §7; ordem F2, F4, F4b, F3, F5, F6): painel da célula (C) e do lugar vazio (V), pôr à mão com verificações (§5.4), «Tirar do lugar», desfazer global. Desfazer «Encaixa» de um par desfaz o par e a posição da outra (decidido 2026-11-12). Só com o OK do Tiago.
    - Na F1b, tocar num lugar só escolhe a peça da fila desse lugar.
 2. **Limites da F1b [NT]:**
-   - desfazer «Encaixa» de um par não desfaz o `pair_confirmed` nem a posição conhecida da outra peça;
+   - desfazer «Encaixa» de um par não desfaz o `pair_confirmed` nem a posição conhecida da outra peça (corrige-se na F2);
    - «Peças» é só uma ligação para a interface completa (F3);
    - «⋯ › Atividade» abre a interface antiga noutro separador (F5);
    - «Ver números» mostra as razões técnicas no painel (F5: Diagnóstico).
