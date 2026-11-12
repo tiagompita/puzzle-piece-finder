@@ -233,3 +233,11 @@ Decididas pelo implementer ao fazer a F1b; todas mudáveis sem mexer no motor.
 - na **relva** as junções custam o dobro das do céu (`t_abs` foi afinado no céu): falso «não encaixa» 9–20 % com 1 a 4 junções;
 - a **posição gémea** encaixa por forma (custo de forma 0,54, igual ao das junções certas 0,53) e só a imagem a separa; nas zonas do meio (montanha, vale) a imagem não a separa em 15 % dos casos.
 Nenhum limiar novo no código; a proposta de mínimo de junções está no relatório (§3) e é uma proposta para o Tiago aceitar ou mudar.
+
+## 2026-11-12 — test_sheets: os dois caminhos do PyMuPDF forçados no teste (OK do Tiago)
+
+- **OK do Tiago** para alterar o teste existente `test_pdf_page_without_image_or_with_flate_is_an_error`. Agora força o caminho «PyMuPDF ausente» (`sys.modules['fitz'] = None`, o `import fitz` dá `ImportError`) e mantém as asserções de antes, literalmente.
+- Teste novo para o caminho «presente»: um substituto do `fitz` com as 3 chamadas que `sheets._rasterise` faz (`open`, `get_pixmap(dpi=)`, `save`). Grava um PNG verdadeiro, e o teste verifica nome, 300 dpi, aviso, sha256, página k → índice k − 1 e documentos fechados.
+- Teste com o PyMuPDF real (página vazia → 2550 × 3300): só corre onde está instalado (`importorskip`); no `.venv` fica `skipped`.
+- **[V]** `.venv`: 9 passed, 1 skipped; `python` do PATH (3.12.6 com PyMuPDF 1.28): 10 passed.
+- A suite corre sempre com `.venv/Scripts/python.exe -m pytest tests/` (registado no `CLAUDE.md`).
