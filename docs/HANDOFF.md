@@ -1,4 +1,4 @@
-# HANDOFF — 2026-11-11 (redesenho da GUI: F1b feita, à espera do OK do Tiago)
+# HANDOFF — 2026-11-12 (redesenho da GUI: F1b feita, à espera do OK do Tiago; quadrados 17/17; junções de grupos medidas)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
@@ -28,6 +28,14 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 - **No projeto real hoje a fila está vazia [V]:** as 3 gémeas não têm vizinha montada e as 2 `alta` estão em conflito. As capturas com cartões são do estado de `8fedf87`.
 - **Reports:** não foram consultados nem tocados nesta sessão.
 
+## Grupos soltos (sessão de 2026-11-12, só docs e ferramentas, sem `src/` nem `projects/`)
+- **Prompt:** `docs/prompts/2026-11-12-quadrados-17-e-juncoes-de-grupos.md` (fechado).
+- **Quadrados 17/17 [V, Tiago, 2026-11-11]:** o Tiago testou os 11–17 e encaixam todos; 10/10 + 7/7 = 17/17, todos no céu, Wilson inferior 0,82. A margem não discriminou (encaixou até 1,008); o método dos quadrados está esgotado nas soltas atuais. Registado em `docs/decisoes.md`, `docs/estado-e-plano.md` §3.9, `QUADRADOS.md` e ESPEC §8.6.
+- **ESPEC:** «já no grupo N» nas figuras, listas e cartões de grupo; F4c (verificar as junções ao largar um grupo: encaixa com «Fixar», não encaixa com X, não sei sem marca; «Onde encaixa este grupo?»), pendente de medição (§4.9 e §7).
+- **Medição das junções [V na amostra, ver limites]** (`docs/diagnostico/fit/GRUPOS_JUNCOES.md`, `tools/diagnostico/fit/grupos_juncoes*.py`): 115 blocos colocados (63 céu, 52 relva; montanha e vale sem dados) como grupos soltos, 86 840 posições erradas. Com 1 junção não se afirma nada (deslocados: falso «encaixa» 14 %, falso «não encaixa» 10 %, relva 20 %); com ≥ 4 junções o «encaixa» (critério B) teve 0 falsos em 4 733 posições e 0 em 115 blocos; na relva as junções custam o dobro do céu e `t_abs` falha mais; a posição gémea encaixa por forma (custo 0,54 contra 0,53) e só a imagem a separa (15 % de falhas na montanha e no vale).
+- **O que falta para propor peças que façam crescer um grupo solto:** lista de 9 pontos no §4 do mesmo relatório (layout e rotação por peça guardados, regra F sem posição, pool sem peças de grupos, células virtuais, calibração por zona, eventos, pose no referencial do grupo, zona do grupo). Não implementado.
+- **Decisão do Tiago por tomar:** aceitar (ou mudar) o mínimo de junções do relatório §3 (≥ 4 para afirmar «encaixa»; 1 não afirma; fora do céu só ≥ 5 para «não encaixa»). Os cortes de 5 % e 10 % foram escolhas minhas.
+
 ## O que o Tiago tem de ver (pendente [NT])
 1. Arrancar `python -m src.server --ui novo` e abrir `/novo/`. Num telemóvel, abrir `http://<ip>:8765/novo/` com `--lan`.
 2. Montar: o cartão, «Encaixa» num clique, o toast «Desfazer», «Não encaixa» → «Porquê?» → «Próxima peça» / «Enganei-me, desfazer», Ctrl+Z.
@@ -37,7 +45,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 ## Espera pelo Tiago
 1. **`test_sheets` e o PyMuPDF:** tornar o teste independente do ambiente exige mudar o teste. Não foi feito sem OK.
 2. **Máscaras do Photoshop para a fase 2 do editor** (ronda 10): P1203, P0045, P1245, P0198 em `docs/diagnostico/editor/gt_photoshop/P####.png` (alfa = a peça, grelha do scan inteiro).
-3. **Quadrados 11–17** entre soltas (`docs/diagnostico/grupos_soltos/QUADRADOS.md`).
+3. ~~Quadrados 11–17~~ feito 2026-11-11 (17/17); falta registar os 17 grupos montados no projeto (`QUADRADOS.md`, «Como registar»).
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
