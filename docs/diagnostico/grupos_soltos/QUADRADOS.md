@@ -1,4 +1,4 @@
-# Quadrados 2×2 entre peças soltas: os 10 testados e os 11–17 por testar
+# Quadrados 2×2 entre peças soltas: os 17 testados (17/17 encaixam)
 
 _2026-11-11. Só leitura do programa: nada foi escrito em `projects/alpes`._
 
@@ -28,9 +28,9 @@ São os 10 melhores, incluindo os 3 abaixo de 1,05: #8 (1,044), #9 (1,030) e #10
 | 9 | 1,030 | Saco 8 · nº 22 (P1280), Saco 6 · nº 59 (P1167), Saco 7 · nº 36 (P1219), Saco 4 · nº 27 (P0985) |
 | 10 | 1,021 | Saco 9 · nº 32 (P1365), Saco 7 · nº 72 (P1255), Saco 9 · nº 97 (P1430), Saco 5 · nº 24 (P1057) |
 
-## Quadrados 11–17: por testar
+## Quadrados 11–17: [V, Tiago, 2026-11-11] encaixam os 7 (17/17 com os anteriores; Wilson inferior 0,82)
 
-Todos abaixo de 1,05 e todos com zona provável céu. Resumo: [quadrados_11_17_resumo.png](quadrados_11_17_resumo.png). Em cada figura, as 4 peças como foram digitalizadas e, à direita, a montagem 2×2 aproximada.
+Todos abaixo de 1,05 e todos com zona provável céu. **Testados pelo Tiago: encaixam os 7 [V, Tiago, 2026-11-11]; a margem não discriminou (encaixou até 1,008) e a lista dos quadrados fica esgotada nas soltas atuais.** Resumo: [quadrados_11_17_resumo.png](quadrados_11_17_resumo.png). Em cada figura, as 4 peças como foram digitalizadas e, à direita, a montagem 2×2 aproximada.
 
 | # | margem | peças | figura | nota |
 |---|---|---|---|---|
@@ -42,7 +42,7 @@ Todos abaixo de 1,05 e todos com zona provável céu. Resumo: [quadrados_11_17_r
 | 16 | 1,008 (< 1,05) | **Saco 2 · nº 18 (P0161)**, Saco 6 · nº 63 (P1171), Saco 8 · nº 12 (P1270), **Saco 9 · nº 44 (P1377)** | [quadrado_16.png](quadrado_16.png) | P0161 está no **grupo 8** (aqui usa os lados 1 e 2; no #8 usa 3 e 0) e P1377 no **grupo 7** (aqui 2 e 3; no #7 0 e 1). Se encaixar, **liga os grupos 7 e 8** através de P1171 e P1270 |
 | 17 | 1,008 (< 1,05) | Saco 7 · nº 10 (P1193), Saco 2 · nº 18 (P0161), Saco 9 · nº 17 (P1350), Saco 8 · nº 12 (P1270) | [quadrado_17.png](quadrado_17.png) | Partilha com o **grupo 8** a ligação P0161–P1193 (é o 8 a crescer 1 fila: + P1270 e P1350). P1270 junta-se a P0161 pelo mesmo lado que no #16, por isso #16 e #17 são coerentes entre si |
 
-Sugestão de teste: 11, 13, 14 e 15 são independentes. 12, 16 e 17 testam-se encostando peças aos grupos 1, 7 e 8 já montados; se 16 e 17 encaixarem, os grupos 7 e 8 passam a um grupo só, de 11 peças.
+Sugestão de teste (já feito): 11, 13, 14 e 15 são independentes. 12, 16 e 17 testam-se encostando peças aos grupos 1, 7 e 8 já montados; se 16 e 17 encaixarem, os grupos 7 e 8 passam a um grupo só, de 11 peças.
 
 **Não verificado:** a montagem 2×2 das figuras é aproximada (peças rodadas e postas à distância nominal da célula), não é uma simulação do encaixe.
 

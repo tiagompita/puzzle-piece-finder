@@ -72,6 +72,14 @@ Barra de topo: nome do puzzle e progresso («672 de 3008 peças», mais «N em g
 - **Lista** (`Grupos.dc.html`), **peça que se junta a um grupo** (`JuntarGrupo.dc.html`) e **o grupo já tem lugar** (`GrupoLigou.dc.html`).
 - **Âmbito:** primeiro os grupos que já existem (secções e blocos sem lugar, a aba Mesa de hoje). Os grupos propostos pelo programa entre peças soltas ficam **fora** até o Tiago fazer o teste físico dos 10 quadrados (medição de 2026-11-10: 7 quadrados com margem ≥ 1,05 em 525 soltas, todos céu, precisão real por medir).
 - **Atualização 2026-11-11:** o teste físico deu 10/10 (§8.6), por isso os grupos propostos entram na F4b (§7), sempre com confirmação física antes de passarem a grupo.
+- **Peças que já estão num grupo (2026-11-12).** Em qualquer figura, lista ou cartão de grupo (quadrados propostos, ligações, «Vai buscar», Peças), as peças que **já estão num grupo** aparecem marcadas «já no grupo N»; só as peças **novas** levam o saco e o nº em destaque. Evita que o Tiago vá buscar ao saco uma peça que já tem na mão (caso dos quadrados 12, 16 e 17, que partilham peças com os grupos 1, 7 e 8).
+- **Verificar as junções ao largar um grupo (F4c, ideia do Tiago, 2026-11-12; pendente de medição, medida em `docs/diagnostico/fit/GRUPOS_JUNCOES.md`).** Ao largar um grupo solto encostado a peças colocadas, o programa verifica as junções (lados do grupo que ficam a tocar peças colocadas). Três resultados:
+  - **encaixa:** o grupo dá um pequeno salto para o lugar e aparece o botão **«Fixar»**; o programa **não fixa sozinho**;
+  - **não encaixa:** um **X** em cada junção que falha;
+  - **não sei:** sem marca.
+  A verificação só corre **ao largar** (não enquanto se arrasta). Complemento: botão **«Onde encaixa este grupo?»**, que procura posições e rotações ao longo da fronteira do montado.
+  - **Limites medidos (2026-11-12, n pequeno, só céu e relva):** com 1 junção não se afirma nada; com ≥ 4 junções «encaixa» foi fiável (0 falsos em 115 blocos); na relva as junções custam o dobro das do céu e o «não encaixa» falha mais; a posição gémea (180°) encaixa por forma e só a imagem a separa, por isso o estado «não sei» deve cobrir «encaixa por forma, a imagem não separa». O botão «Onde encaixa este grupo?» devolve vários falsos «encaixa» com poucas junções (28 em 115 blocos têm algum com 1 junção): só deve propor posições com ≥ 4 junções.
+  - Não está implementado nem decidido; a F4c depende de o Tiago aceitar o mínimo de junções do relatório.
 
 ### 4.10 Corrigir recorte (`Editor.dc.html`)
 - Dois pincéis: «Tirar» (sombra, fundo) e «Acrescentar» (peça que ficou cortada); tamanho; Desfazer; Recomeçar; «Como fica»; Guardar / Cancelar. «Usar o recorte da peça gémea» e «Mais opções» (vértices, vistas, incerto) recolhidos. O motor (A2, ronda 10) não muda.
@@ -106,6 +114,7 @@ _(Revisto 2026-11-11 depois do inventário da F0: F1 partida em F1a/F1b; desfaze
 - **F3 — Peças e Importar.**
 - **F4 — Grupos soltos no tabuleiro**, só para os grupos que já existem.
 - **F4b — Grupos propostos pelo programa entre peças soltas (nova, 2026-11-11).** O teste físico dos 10 quadrados de 2026-11-10 deu 10/10 (§8.6). Cada grupo proposto só passa a grupo depois de o Tiago o confirmar fisicamente; a confiança segue a regra do §8.3; há contador de acertos e falhas.
+- **F4c — Verificar as junções de um grupo largado junto ao montado (nova, 2026-11-12, pendente de medição).** Ver §4.9 («Verificar as junções ao largar um grupo»). Só depois da F4b e de o Tiago aceitar o mínimo de junções.
 - **F5 — Corrigir recorte e Diagnóstico.** O Diagnóstico lista as rejeições, cada uma com «anular», para desfazer rejeições de sessões anteriores (2026-11-11).
 - **F6 — A GUI nova passa a ser a de omissão;** remove-se a antiga e o interruptor; atualiza-se `docs/gui-design.md`.
 
@@ -139,6 +148,7 @@ Respostas às perguntas P1–P14 do plano da F0, tal como o Tiago as deu.
 
 ### 8.6 Grupos propostos entre soltas: teste físico (alteração 4)
 - **[V, Tiago, 2026-11-11]** Os 10 quadrados 2×2 propostos em 2026-11-10 (ligações melhor-mútuas entre soltas, todas do céu) **encaixam os 10**, incluindo os 3 com margem abaixo de 1,05 (1,044, 1,030 e 1,021). **São 10 casos**: chegam para abrir a F4b, não para calibrar uma precisão. Os quadrados 11–17 ficam para o Tiago testar onde o método começa a falhar (`docs/diagnostico/grupos_soltos/QUADRADOS.md`).
+- **[V, Tiago, 2026-11-11]** Os quadrados 11–17 também encaixam, os 7: **17/17**, todos no céu, limite inferior de Wilson 95 % **0,82**. A margem não discriminou (encaixou até 1,008) e o método dos quadrados está esgotado nas soltas atuais.
 
 ### 8.7 Cartão, painéis e peças (P7–P13)
 - **P7:** o cartão do Montar não tem ligação «ver na folha». Tocar na imagem da peça amplia-a e mostra a folha.

@@ -218,3 +218,18 @@ Decididas pelo implementer ao fazer a F1b; todas mudáveis sem mexer no motor.
 - **Desfazer.** «Encaixa» desfaz-se com `unplaced` + `desfaz: true`; «Não encaixa» com `rejection_undone` (gémea/borda/buraco) ou `pair_unrejected` (par). O motivo é `rejection_noted` (informativo, `ref_t` = o `t` da rejeição). `state.undone_decisions` diz que decisões foram desfeitas; `fit.alta_counter`, `fit.report` e o histórico do Montar ignoram-nas. Três ações novas no log: checkouts anteriores a este deixam de o ler (o custo já previsto no inventário da F0).
 - **Limite conhecido [NT]:** desfazer «Encaixa» de um par não desfaz o `pair_confirmed` nem a posição conhecida dada à outra peça do par.
 - **Provisórios até às fases seguintes:** «Peças» mostra uma ligação para a interface completa (F3); «⋯ › Atividade do programa» abre a interface antiga noutro separador com a gaveta aberta (F5); «Ver números» do «Porquê» abre as razões técnicas no próprio painel (F5 leva-as para o Diagnóstico); tocar num lugar do tabuleiro só escolhe a peça da fila desse lugar (F2: painel da célula e do lugar vazio).
+
+## 2026-11-12 — grupos propostos entre soltas: os quadrados 11 a 17 também encaixam (17/17)
+
+**Evidência [V, Tiago, 2026-11-11]:** o Tiago testou fisicamente os quadrados 11 a 17 (margens 1,021 a 1,008, todos céu) e **encaixam os 7**. Somados aos 10 de 2026-11-11: **17/17**, todos no céu; limite inferior de Wilson 95 % **0,82** (calculado com `src.fit.wilson`: 17/17 → 0,816–1,000, que fica acima do 0,80 da regra do «quase certo» do ESPEC §8.3 só por 0,016, e só para a origem «quadrado entre soltas» no céu).
+
+- **A margem não discriminou:** encaixou até 1,008, o último quadrado da lista (o corte de 1,05 do teste anterior não separava nada).
+- **O método dos quadrados está esgotado nas soltas atuais:** a lista tinha 17 quadrados e os 17 já foram testados. Para saber onde o método falha é preciso mais soltas (mais scans), margens que baixem de 1,0 ou outra forma de grupo (6 e 9 peças, ver abaixo).
+- Continuam só do céu: a precisão fora do céu **não está medida** (nenhum quadrado dessas zonas).
+
+**Verificação das junções de um grupo largado junto ao montado (F4c, medição de 2026-11-12, `docs/diagnostico/fit/GRUPOS_JUNCOES.md`).** Medido sobre blocos de peças colocadas (115 blocos de 4, 6 e 9 peças, 63 do céu e 52 da relva; montanha e vale sem dados) tratados como grupos soltos, em 86 840 posições erradas ao longo da fronteira do montado e nas 4 rotações:
+- com **1 junção** não se afirma nada (falso «encaixa» 14 % nas posições deslocadas, falso «não encaixa» 10 %, 20 % na relva);
+- com **≥ 4 junções** o «encaixa» (todas as junções testadas, máximo do custo ≤ `t_abs`) teve 0 falsos em 4 733 posições, 0 em 115 blocos;
+- na **relva** as junções custam o dobro das do céu (`t_abs` foi afinado no céu): falso «não encaixa» 9–20 % com 1 a 4 junções;
+- a **posição gémea** encaixa por forma (custo de forma 0,54, igual ao das junções certas 0,53) e só a imagem a separa; nas zonas do meio (montanha, vale) a imagem não a separa em 15 % dos casos.
+Nenhum limiar novo no código; a proposta de mínimo de junções está no relatório (§3) e é uma proposta para o Tiago aceitar ou mudar.
