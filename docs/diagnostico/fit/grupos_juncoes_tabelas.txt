@@ -1,0 +1,109 @@
+== ERRADAS (posições): n = 86840 ; blocos 115
+-- critério A: falso 'encaixa' / 'não sei' / 'não encaixa' por n_j
+  nj   1: n= 16768  E 0.4% [0.3-0.5] n=16768  ns 0.0%  X 99.6%  blocos com >=1 E: 28
+  nj   2: n= 41809  E 0.2% [0.2-0.3] n=41809  ns 0.0%  X 99.8%  blocos com >=1 E: 24
+  nj   3: n= 23530  E 0.1% [0.0-0.1] n=23530  ns 0.0%  X 99.9%  blocos com >=1 E: 10
+  nj >=4: n=  4733  E 0.1% [0.0-0.2] n=4733  ns 0.0%  X 99.9%  blocos com >=1 E: 3
+-- critério A: por zona do bloco x n_j (falso 'encaixa')
+  céu                1: 54/9266 | 2: 73/23565 | 3: 14/12248 | >=4: 3/2543
+  montanha/floresta  1: 0/0 | 2: 0/0 | 3: 0/0 | >=4: 0/0
+  vale/aldeia        1: 0/0 | 2: 0/0 | 3: 0/0 | >=4: 0/0
+  relva              1: 14/7502 | 2: 14/18244 | 3: 0/11282 | >=4: 0/2190
+-- critério B: falso 'encaixa' / 'não sei' / 'não encaixa' por n_j
+  nj   1: n= 16768  E 0.4% [0.3-0.5] n=16768  ns 0.0%  X 99.6%  blocos com >=1 E: 28
+  nj   2: n= 41809  E 0.1% [0.1-0.1] n=41809  ns 0.1%  X 99.8%  blocos com >=1 E: 15
+  nj   3: n= 23530  E 0.0% [0.0-0.0] n=23530  ns 0.0%  X 99.9%  blocos com >=1 E: 3
+  nj >=4: n=  4733  E 0.0% [0.0-0.1] n=4733  ns 0.1%  X 99.9%  blocos com >=1 E: 0
+-- critério B: por zona do bloco x n_j (falso 'encaixa')
+  céu                1: 54/9266 | 2: 28/23565 | 3: 5/12248 | >=4: 0/2543
+  montanha/floresta  1: 0/0 | 2: 0/0 | 3: 0/0 | >=4: 0/0
+  vale/aldeia        1: 0/0 | 2: 0/0 | 3: 0/0 | >=4: 0/0
+  relva              1: 14/7502 | 2: 5/18244 | 3: 0/11282 | >=4: 0/2190
+-- por zona do lugar testado (A), n e E
+  céu                n=33243 E=127
+  montanha/floresta  n=13240 E=1
+  vale/aldeia        n=18397 E=23
+  relva              n=21960 E=21
+-- o que mata as erradas (A): impossível / regra F / só custo
+  nj   1: impossível 64.4%  F 38.6%  imp ou F 76.0%
+  nj   2: impossível 80.8%  F 38.7%  imp ou F 87.0%
+  nj   3: impossível 90.2%  F 39.9%  imp ou F 93.5%
+  nj >=4: impossível 96.8%  F 39.4%  imp ou F 97.6%
+
+== CERTAS (blocos): n = 115
+distribuição de n_j naturais: [(5, 3), (6, 28), (7, 14), (8, 37), (9, 16), (10, 11), (11, 3), (12, 3)]
+-- critério A
+  nj   1: blocos=115  X(falso não encaixa) 10.1% [5.8-17.0] n=115  ns 0.0% [0.0-3.2] n=115  E 89.9% [83.0-94.2] n=115
+  nj   2: blocos=115  X(falso não encaixa) 7.3% [3.8-13.6] n=115  ns 0.0% [0.0-3.2] n=115  E 92.7% [86.4-96.2] n=115
+  nj   3: blocos=115  X(falso não encaixa) 6.3% [3.1-12.3] n=115  ns 0.0% [0.0-3.2] n=115  E 93.7% [87.7-96.9] n=115
+  nj >=4: blocos=115  X(falso não encaixa) 1.7% [0.5-6.1] n=115  ns 0.0% [0.0-3.2] n=115  E 98.3% [93.9-99.5] n=115
+-- critério A: por zona (>=4 natural, subconjuntos k=2)
+  céu                blocos=63 | >=4: n=63 X=1 ns=0 | k=2: n=63 X=1.07
+  montanha/floresta  blocos=0 | >=4: n=0 X=0 ns=0 | k=2: n=0 X=0.00
+  vale/aldeia        blocos=0 | >=4: n=0 X=0 ns=0 | k=2: n=0 X=0.00
+  relva              blocos=52 | >=4: n=52 X=1 ns=0 | k=2: n=52 X=7.37
+-- critério B
+  nj   1: blocos=115  X(falso não encaixa) 10.1% [5.8-17.0] n=115  ns 0.0% [0.0-3.2] n=115  E 89.9% [83.0-94.2] n=115
+  nj   2: blocos=115  X(falso não encaixa) 7.3% [3.8-13.6] n=115  ns 10.3% [5.9-17.1] n=115  E 82.4% [74.4-88.3] n=115
+  nj   3: blocos=115  X(falso não encaixa) 6.3% [3.1-12.3] n=115  ns 17.3% [11.4-25.2] n=115  E 76.4% [67.9-83.3] n=115
+  nj >=4: blocos=115  X(falso não encaixa) 1.7% [0.5-6.1] n=115  ns 35.7% [27.5-44.7] n=115  E 62.6% [53.5-70.9] n=115
+-- critério B: por zona (>=4 natural, subconjuntos k=2)
+  céu                blocos=63 | >=4: n=63 X=1 ns=1 | k=2: n=63 X=1.07
+  montanha/floresta  blocos=0 | >=4: n=0 X=0 ns=0 | k=2: n=0 X=0.00
+  vale/aldeia        blocos=0 | >=4: n=0 X=0 ns=0 | k=2: n=0 X=0.00
+  relva              blocos=52 | >=4: n=52 X=1 ns=40 | k=2: n=52 X=7.37
+
+== GÉMEAS (180°, posição da gémea admissível com >=1 junção): 1
+   {'shape_costs': [0.435, 0.53], 'dE': [67.97, 50.69], 'Jshape': 0.48250000000000004, 'block': 'B032_2x2_12_62', 'r': 2, 'tl': [35, 2], 'nj': 2, 'zone': 'céu', 'tzone': 'vale/aldeia', 'fviol': False, 'imp': False, 'A': 'X', 'B': 'X', 'costs': [7.232, 5.598]}
+
+== maiores custos por junção das certas (máx por bloco), percentis:
+   p50 1.85 p90 3.82 p95 4.03 max 4.67 (t_abs 2.666); blocos com junção impossível: 2; nt: 0
+   blocos certos com F violada: 1
+
+== EXTRAS: erradas por estrato (critério A e B), falso 'encaixa'
+  todas                                  A  1: 0.4% [0.3-0.5] n=16768 | 2: 0.2% [0.2-0.3] n=41809 | 3: 0.1% [0.0-0.1] n=23530 | >=4: 0.1% [0.0-0.2] n=4733
+  todas                                  B  1: 0.4% [0.3-0.5] n=16768 | 2: 0.1% [0.1-0.1] n=41809 | 3: 0.0% [0.0-0.0] n=23530 | >=4: 0.0% [0.0-0.1] n=4733
+  r=0 (sem rodar)                        A  1: 0.3% [0.2-0.5] n=4186 | 2: 0.2% [0.1-0.3] n=10460 | 3: 0.1% [0.0-0.2] n=5876 | >=4: 0.0% [0.0-0.3] n=1123
+  r=0 (sem rodar)                        B  1: 0.3% [0.2-0.5] n=4186 | 2: 0.0% [0.0-0.1] n=10460 | 3: 0.0% [0.0-0.1] n=5876 | >=4: 0.0% [0.0-0.3] n=1123
+  sobre o lugar original (deslocadas)    A  1: 14.3% [5.7-31.5] n=28 | 2: 3.4% [1.0-11.7] n=58 | 3: 0.0% [0.0-12.1] n=28 | >=4: 0.7% [0.2-2.3] n=307
+  sobre o lugar original (deslocadas)    B  1: 14.3% [5.7-31.5] n=28 | 2: 1.7% [0.3-9.1] n=58 | 3: 0.0% [0.0-12.1] n=28 | >=4: 0.0% [0.0-1.2] n=307
+
+== por zona do bloco x n_j com Wilson (A)
+  céu    A  1: 0.6% [0.4-0.8] n=9266 blocos 18/63 | 2: 0.3% [0.2-0.4] n=23565 blocos 15/63 | 3: 0.1% [0.1-0.2] n=12248 blocos 10/63 | >=4: 0.1% [0.0-0.3] n=2543 blocos 3/63
+  céu    B  1: 0.6% [0.4-0.8] n=9266 blocos 18/63 | 2: 0.1% [0.1-0.2] n=23565 blocos 10/63 | 3: 0.0% [0.0-0.1] n=12248 blocos 3/63 | >=4: 0.0% [0.0-0.2] n=2543 blocos 0/63
+  relva  A  1: 0.2% [0.1-0.3] n=7502 blocos 10/52 | 2: 0.1% [0.0-0.1] n=18244 blocos 9/52 | 3: 0.0% [0.0-0.0] n=11282 blocos 0/52 | >=4: 0.0% [0.0-0.2] n=2190 blocos 0/52
+  relva  B  1: 0.2% [0.1-0.3] n=7502 blocos 10/52 | 2: 0.0% [0.0-0.1] n=18244 blocos 5/52 | 3: 0.0% [0.0-0.0] n=11282 blocos 0/52 | >=4: 0.0% [0.0-0.2] n=2190 blocos 0/52
+
+== certas por zona x k (A e B), X e ns
+  céu    A  1: X 1.7% [0.3-8.7] n=63 ns 0% | 2: X 1.7% [0.3-8.6] n=63 ns 0% | 3: X 1.6% [0.3-8.5] n=63 ns 0% | >=4: X 1.6% [0.3-8.5] n=63 ns 0%
+  céu    B  1: X 1.7% [0.3-8.7] n=63 ns 0% | 2: X 1.7% [0.3-8.6] n=63 ns 0% | 3: X 1.6% [0.3-8.5] n=63 ns 0% | >=4: X 1.6% [0.3-8.5] n=63 ns 2%
+  relva  A  1: X 20.2% [11.5-33.0] n=52 ns 0% | 2: X 14.2% [7.2-26.1] n=52 ns 0% | 3: X 12.0% [5.7-23.5] n=52 ns 0% | >=4: X 1.9% [0.3-10.1] n=52 ns 0%
+  relva  B  1: X 20.2% [11.5-33.0] n=52 ns 0% | 2: X 14.2% [7.2-26.1] n=52 ns 22% | 3: X 12.0% [5.7-23.5] n=52 ns 38% | >=4: X 1.9% [0.3-10.1] n=52 ns 77%
+
+== certas: tamanho do bloco (n_j natural, X no lugar certo inteiro)
+  4 peças: blocos 50, n_j min/mediana/max 5/6/8, X(A) 1, X(B) 1, ns(B) 15
+  6 peças: blocos 40, n_j min/mediana/max 5/8/10, X(A) 0, X(B) 0, ns(B) 16
+  9 peças: blocos 25, n_j min/mediana/max 6/9/12, X(A) 1, X(B) 1, ns(B) 10
+
+== certas: blocos 'X' no lugar certo inteiro:
+   B004_2x2_1_31 céu nj 6 estados Counter({'ok': 5, 'imp': 1}) F True custos [0.639, None, 1.178, 1.173, 1.37, 1.743]
+   B095_3x3_44_45 relva nj 10 estados Counter({'ok': 9, 'imp': 1}) F False custos [1.524, 1.321, 1.479, 2.172, 1.325, 2.928, 1.991, None, 1.839, 2.966]
+
+== blocos certos: de onde vem o X nos subconjuntos k=1: junções com custo > t_abs (fração das junções)
+  junções certas com custo finito: 898  > t_abs: 83  impossíveis: 2
+  céu: n=489 p50 0.94 p90 1.24 fração>t_abs 0.002
+  relva: n=409 p50 2.03 p90 3.01 fração>t_abs 0.200
+
+== VALIDAÇÃO DA ROTAÇÃO A 180° / GÉMEAS (peça X no lugar da sua gémea Y colocada, Y retirada): 1922 casos
+  custo só de forma (rms/1,1 + pen) por junção: certas p50 0.53 p90 0.73 | gémeas p50 0.54 p90 0.76 (n 900 / 9138)
+  dE por junção: certas p50 6.4 p90 20.1 | gémeas p50 53.8 p90 63.3
+  forma média por posição errada sem junção impossível: p50 1.49 p90 2.38 (n 50690 de 86840)
+  gémeas: % com forma+imagem 'encaixa' (A): 0.009365244536940686  J forma média <= 1,5: 0.9739854318418314
+
+== certas: subconjuntos de exatamente 4 junções (e natural >=5), por zona, A e B
+  céu    A: k=4 X 1.6% [0.3-8.5] n=63  ns 0.0%
+  céu    B: k=4 X 1.6% [0.3-8.5] n=63  ns 0.6%
+  relva  A: k=4 X 9.2% [4.0-20.2] n=52  ns 0.0%
+  relva  B: k=4 X 9.2% [4.0-20.2] n=52  ns 51.0%
+  todas  A: k=4 X 5.1% [2.3-10.7] n=115  ns 0.0%
+  todas  B: k=4 X 5.1% [2.3-10.7] n=115  ns 23.4%

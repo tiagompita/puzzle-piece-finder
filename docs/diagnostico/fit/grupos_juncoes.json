@@ -1,0 +1,328 @@
+{
+ "wrong_A_nj1": {
+  "n": 16768,
+  "E": 68,
+  "ns": 0,
+  "X": 16700,
+  "blocos_E": 28
+ },
+ "wrong_A_nj2": {
+  "n": 41809,
+  "E": 87,
+  "ns": 0,
+  "X": 41722,
+  "blocos_E": 24
+ },
+ "wrong_A_nj3": {
+  "n": 23530,
+  "E": 14,
+  "ns": 0,
+  "X": 23516,
+  "blocos_E": 10
+ },
+ "wrong_A_nj>=4": {
+  "n": 4733,
+  "E": 3,
+  "ns": 0,
+  "X": 4730,
+  "blocos_E": 3
+ },
+ "wrong_A_céu_nj1": {
+  "n": 9266,
+  "E": 54
+ },
+ "wrong_A_céu_nj2": {
+  "n": 23565,
+  "E": 73
+ },
+ "wrong_A_céu_nj3": {
+  "n": 12248,
+  "E": 14
+ },
+ "wrong_A_céu_nj>=4": {
+  "n": 2543,
+  "E": 3
+ },
+ "wrong_A_montanha/floresta_nj1": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_A_montanha/floresta_nj2": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_A_montanha/floresta_nj3": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_A_montanha/floresta_nj>=4": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_A_vale/aldeia_nj1": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_A_vale/aldeia_nj2": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_A_vale/aldeia_nj3": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_A_vale/aldeia_nj>=4": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_A_relva_nj1": {
+  "n": 7502,
+  "E": 14
+ },
+ "wrong_A_relva_nj2": {
+  "n": 18244,
+  "E": 14
+ },
+ "wrong_A_relva_nj3": {
+  "n": 11282,
+  "E": 0
+ },
+ "wrong_A_relva_nj>=4": {
+  "n": 2190,
+  "E": 0
+ },
+ "wrong_B_nj1": {
+  "n": 16768,
+  "E": 68,
+  "ns": 0,
+  "X": 16700,
+  "blocos_E": 28
+ },
+ "wrong_B_nj2": {
+  "n": 41809,
+  "E": 33,
+  "ns": 54,
+  "X": 41722,
+  "blocos_E": 15
+ },
+ "wrong_B_nj3": {
+  "n": 23530,
+  "E": 5,
+  "ns": 9,
+  "X": 23516,
+  "blocos_E": 3
+ },
+ "wrong_B_nj>=4": {
+  "n": 4733,
+  "E": 0,
+  "ns": 3,
+  "X": 4730,
+  "blocos_E": 0
+ },
+ "wrong_B_céu_nj1": {
+  "n": 9266,
+  "E": 54
+ },
+ "wrong_B_céu_nj2": {
+  "n": 23565,
+  "E": 28
+ },
+ "wrong_B_céu_nj3": {
+  "n": 12248,
+  "E": 5
+ },
+ "wrong_B_céu_nj>=4": {
+  "n": 2543,
+  "E": 0
+ },
+ "wrong_B_montanha/floresta_nj1": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_B_montanha/floresta_nj2": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_B_montanha/floresta_nj3": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_B_montanha/floresta_nj>=4": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_B_vale/aldeia_nj1": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_B_vale/aldeia_nj2": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_B_vale/aldeia_nj3": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_B_vale/aldeia_nj>=4": {
+  "n": 0,
+  "E": 0
+ },
+ "wrong_B_relva_nj1": {
+  "n": 7502,
+  "E": 14
+ },
+ "wrong_B_relva_nj2": {
+  "n": 18244,
+  "E": 5
+ },
+ "wrong_B_relva_nj3": {
+  "n": 11282,
+  "E": 0
+ },
+ "wrong_B_relva_nj>=4": {
+  "n": 2190,
+  "E": 0
+ },
+ "true_A_nj1": {
+  "n": 115,
+  "X": 11.618831168831168,
+  "ns": 0.0,
+  "E": 103.38116883116884
+ },
+ "true_A_nj2": {
+  "n": 115,
+  "X": 8.432900432900432,
+  "ns": 0.0,
+  "E": 106.56709956709956
+ },
+ "true_A_nj3": {
+  "n": 115,
+  "X": 7.247619047619048,
+  "ns": 0.0,
+  "E": 107.75238095238095
+ },
+ "true_A_nj>=4": {
+  "n": 115,
+  "X": 2,
+  "ns": 0,
+  "E": 113
+ },
+ "true_A_céu": {
+  "blocos": 63,
+  "n4": 63,
+  "X4": 1,
+  "ns4": 0,
+  "n2": 63,
+  "X2": 1.0666666666666667
+ },
+ "true_A_montanha/floresta": {
+  "blocos": 0,
+  "n4": 0,
+  "X4": 0,
+  "ns4": 0,
+  "n2": 0,
+  "X2": 0
+ },
+ "true_A_vale/aldeia": {
+  "blocos": 0,
+  "n4": 0,
+  "X4": 0,
+  "ns4": 0,
+  "n2": 0,
+  "X2": 0
+ },
+ "true_A_relva": {
+  "blocos": 52,
+  "n4": 52,
+  "X4": 1,
+  "ns4": 0,
+  "n2": 52,
+  "X2": 7.3662337662337665
+ },
+ "true_B_nj1": {
+  "n": 115,
+  "X": 11.618831168831168,
+  "ns": 0.0,
+  "E": 103.38116883116884
+ },
+ "true_B_nj2": {
+  "n": 115,
+  "X": 8.432900432900432,
+  "ns": 11.78997113997114,
+  "E": 94.77712842712843
+ },
+ "true_B_nj3": {
+  "n": 115,
+  "X": 7.247619047619048,
+  "ns": 19.85238095238095,
+  "E": 87.9
+ },
+ "true_B_nj>=4": {
+  "n": 115,
+  "X": 2,
+  "ns": 41,
+  "E": 72
+ },
+ "true_B_céu": {
+  "blocos": 63,
+  "n4": 63,
+  "X4": 1,
+  "ns4": 1,
+  "n2": 63,
+  "X2": 1.0666666666666667
+ },
+ "true_B_montanha/floresta": {
+  "blocos": 0,
+  "n4": 0,
+  "X4": 0,
+  "ns4": 0,
+  "n2": 0,
+  "X2": 0
+ },
+ "true_B_vale/aldeia": {
+  "blocos": 0,
+  "n4": 0,
+  "X4": 0,
+  "ns4": 0,
+  "n2": 0,
+  "X2": 0
+ },
+ "true_B_relva": {
+  "blocos": 52,
+  "n4": 52,
+  "X4": 1,
+  "ns4": 40,
+  "n2": 52,
+  "X2": 7.3662337662337665
+ },
+ "twin": [
+  {
+   "shape_costs": [
+    0.435,
+    0.53
+   ],
+   "dE": [
+    67.97,
+    50.69
+   ],
+   "Jshape": 0.48250000000000004,
+   "block": "B032_2x2_12_62",
+   "r": 2,
+   "tl": [
+    35,
+    2
+   ],
+   "nj": 2,
+   "zone": "céu",
+   "tzone": "vale/aldeia",
+   "fviol": false,
+   "imp": false,
+   "A": "X",
+   "B": "X",
+   "costs": [
+    7.232,
+    5.598
+   ]
+  }
+ ]
+}
