@@ -179,9 +179,12 @@
    "index_in_scan": 4,
    "lote": 6,
    "n_no_lote": 5,
-   "estado": "emparelhada",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    10,
+    62
+   ],
+   "theta_deg": 86.79075430632372,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -2090,9 +2093,12 @@
    "index_in_scan": 55,
    "lote": 6,
    "n_no_lote": 50,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    5,
+    31
+   ],
+   "theta_deg": -3.5645355050837395,
    "seccao_id": null,
    "same_as": null,
    "flags": {

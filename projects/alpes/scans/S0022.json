@@ -1475,16 +1475,17 @@
     "touches_frame": false,
     "touches_strip": false,
     "is_cluster": false,
-    "objeto_duplo": false
+    "objeto_duplo": false,
+    "manual_override": true
    },
-   "area_mm2": 373.96,
+   "area_mm2": 374.01,
    "cls": "BBBT",
    "n_flat": 0,
    "chords_mm": [
-    18.216,
-    19.138,
-    18.631,
-    18.112
+    18.212,
+    19.161,
+    18.66,
+    18.077
    ],
    "shape_ok": true,
    "bbox": [
@@ -1496,8 +1497,8 @@
    "crop_path": "crops/P0754.png",
    "mean_lab": [
     50.07,
-    -8.25,
-    7.07
+    -8.26,
+    7.08
    ]
   },
   {

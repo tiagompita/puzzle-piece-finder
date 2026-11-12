@@ -558,9 +558,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1336",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -714,9 +714,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1343",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -738,9 +738,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1407",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1136,9 +1136,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1368",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1354,15 +1354,15 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0938",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1420",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1480,9 +1480,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1424",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1510,9 +1510,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1409",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -1716,27 +1716,27 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0116",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0932",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1158",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1178",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -2078,27 +2078,27 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1423",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0109",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1421",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1020",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -2692,9 +2692,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1349",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -3078,9 +3078,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0926",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -3464,9 +3464,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1275",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -3844,15 +3844,15 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1113",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1267",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -4230,15 +4230,15 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0993",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0941",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -4616,15 +4616,15 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1361",
+    "fonte": "log",
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P0181",
+    "fonte": "log",
     "foto_id": null
    },
    {
@@ -5002,9 +5002,9 @@
     "foto_id": null
    },
    {
-    "estado": "vazia",
-    "peca_id": null,
-    "fonte": null,
+    "estado": "colocada",
+    "peca_id": "P1425",
+    "fonte": "log",
     "foto_id": null
    },
    {

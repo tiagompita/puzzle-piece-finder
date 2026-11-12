@@ -387,9 +387,12 @@
    "index_in_scan": 7,
    "lote": 9,
    "n_no_lote": 74,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    2,
+    59
+   ],
+   "theta_deg": 51.818366856766346,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -476,9 +479,12 @@
    "index_in_scan": 8,
    "lote": 9,
    "n_no_lote": 76,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    59
+   ],
+   "theta_deg": -162.94634087733925,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -950,9 +956,12 @@
    "index_in_scan": 22,
    "lote": 9,
    "n_no_lote": 87,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    34
+   ],
+   "theta_deg": -141.67028674528635,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -998,9 +1007,12 @@
    "index_in_scan": 17,
    "lote": 9,
    "n_no_lote": 88,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    6,
+    27
+   ],
+   "theta_deg": -179.50855389693265,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1086,9 +1098,12 @@
    "index_in_scan": 24,
    "lote": 9,
    "n_no_lote": 90,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    6,
+    25
+   ],
+   "theta_deg": -10.466506730748392,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1126,9 +1141,12 @@
    "index_in_scan": 19,
    "lote": 9,
    "n_no_lote": 91,
-   "estado": "solta",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    4,
+    54
+   ],
+   "theta_deg": -108.4048394456744,
    "seccao_id": null,
    "same_as": null,
    "flags": {
@@ -1166,9 +1184,12 @@
    "index_in_scan": 26,
    "lote": 9,
    "n_no_lote": 92,
-   "estado": "emparelhada",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    13,
+    62
+   ],
+   "theta_deg": -25.01246799651463,
    "seccao_id": null,
    "same_as": null,
    "flags": {

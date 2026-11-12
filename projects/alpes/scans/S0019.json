@@ -1280,13 +1280,13 @@
     "objeto_duplo": false,
     "manual_override": true
    },
-   "area_mm2": 371.19,
+   "area_mm2": 371.2,
    "cls": "BBBT",
    "n_flat": 0,
    "chords_mm": [
     18.282,
-    19.447,
-    18.69,
+    19.442,
+    18.68,
     20.399
    ],
    "shape_ok": true,

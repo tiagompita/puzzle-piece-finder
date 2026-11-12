@@ -206,7 +206,7 @@
     "objeto_duplo": false,
     "manual_override": true
    },
-   "area_mm2": 423.58,
+   "area_mm2": 423.59,
    "cls": "FTTT",
    "n_flat": 1,
    "chords_mm": [
@@ -226,7 +226,7 @@
    "mean_lab": [
     35.48,
     -9.03,
-    13.45
+    13.46
    ]
   },
   {

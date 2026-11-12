@@ -201,7 +201,7 @@
    "index_in_scan": 4,
    "lote": 2,
    "n_no_lote": 5,
-   "estado": "emparelhada",
+   "estado": "solta",
    "celula": null,
    "theta_deg": null,
    "seccao_id": null,
@@ -1564,9 +1564,12 @@
    "index_in_scan": 37,
    "lote": 2,
    "n_no_lote": 38,
-   "estado": "emparelhada",
-   "celula": null,
-   "theta_deg": null,
+   "estado": "colocada",
+   "celula": [
+    12,
+    63
+   ],
+   "theta_deg": -92.07205937015272,
    "seccao_id": null,
    "same_as": null,
    "flags": {
