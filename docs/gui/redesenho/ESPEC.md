@@ -79,7 +79,8 @@ Barra de topo: nome do puzzle e progresso («672 de 3008 peças», mais «N em g
   - **não sei:** sem marca.
   A verificação só corre **ao largar** (não enquanto se arrasta). Complemento: botão **«Onde encaixa este grupo?»**, que procura posições e rotações ao longo da fronteira do montado.
   - **Limites medidos (2026-11-12, n pequeno, só céu e relva):** com 1 junção não se afirma nada; com ≥ 4 junções «encaixa» foi fiável (0 falsos em 115 blocos); na relva as junções custam o dobro das do céu e o «não encaixa» falha mais; a posição gémea (180°) encaixa por forma e só a imagem a separa, por isso o estado «não sei» deve cobrir «encaixa por forma, a imagem não separa». O botão «Onde encaixa este grupo?» devolve vários falsos «encaixa» com poucas junções (28 em 115 blocos têm algum com 1 junção): só deve propor posições com ≥ 4 junções.
-  - Não está implementado nem decidido; a F4c depende de o Tiago aceitar o mínimo de junções do relatório.
+  - **Decidido pelo Tiago (2026-11-12):** a F4c só afirma no **céu** e com **4 ou mais junções**. Fora do céu responde sempre **«não sei»**, até haver calibração por zona. Isto vale para «encaixa» e para «não encaixa», e também para o «Onde encaixa este grupo?». Com menos de 4 junções responde «não sei» em qualquer zona. Base: na medição, o céu com ≥ 4 junções deu 0 falsos «encaixa» (critério B) e 1,6 % de falsos «não encaixa». Na relva as junções custam o dobro, e montanha e vale não têm dados. Com 2 e 3 junções, os negativos difíceis por zona estão no relatório (§2.1).
+  - Não está implementado.
 
 ### 4.10 Corrigir recorte (`Editor.dc.html`)
 - Dois pincéis: «Tirar» (sombra, fundo) e «Acrescentar» (peça que ficou cortada); tamanho; Desfazer; Recomeçar; «Como fica»; Guardar / Cancelar. «Usar o recorte da peça gémea» e «Mais opções» (vértices, vistas, incerto) recolhidos. O motor (A2, ronda 10) não muda.
@@ -110,11 +111,14 @@ _(Revisto 2026-11-11 depois do inventário da F0: F1 partida em F1a/F1b; desfaze
 - **F0 — Inventário, sem código.** Tabela com cada elemento e texto da GUI atual → destino. Lista dos testes `tests/test_gui_*` e `test_server` que dependem de textos ou estrutura que vão mudar. Confirmação dos 5 pontos do §5. **Feito 2026-11-11:** [`F0_INVENTARIO.md`](F0_INVENTARIO.md).
 - **F1a — Extrair o tabuleiro (2026-11-11).** O código do tabuleiro sai de `app.js`/`app.css` para `src/web/core.js`, `src/web/board.js` e `src/web/board.css`, sem mudar comportamento; o toque no tabuleiro passa por um gancho `S.onBoardTap` que a GUI atual define com o código de hoje. Suite antiga verde com as mesmas asserções, capturas antes e depois iguais, commit próprio. OK do Tiago antes da F1b.
 - **F1b — Casca nova e Montar**, atrás de um interruptor (`/novo/`, com `/?ui=novo` e `python -m src.server --ui novo` como atalhos), com a GUI atual intacta por omissão. Inclui §4.1 a §4.3, a ordenação por saco (§8.2), **desfazer a rejeição e o motivo** (§5.1, §5.2; antes estavam na F2) e o desfazer de «Encaixa». **Feito 2026-11-11** (à espera do OK do Tiago): `src/montar.py`, `GET /api/montar`, `src/web/novo/`; regras que faltavam no ESPEC em `docs/decisoes.md` (2026-11-11, F1b); capturas em `docs/gui/screenshots/redesenho/F1b_*`.
+**Ordem das fases (decidida pelo Tiago em 2026-11-12):** F2, F4, F4b, F3, F5, F6. A F3 (Peças e Importar) passa para depois dos grupos. A F4c não entrou na lista; fica a seguir à F4b, de que depende.
+
 - **F2 — Célula, lugar vazio, pôr e tirar à mão, desfazer global.** A verificação de uma peça posta à mão **não bloqueia** (2026-11-11): enquanto calcula, mostra «a verificar…» e deixa «Pôr na mesma».
-- **F3 — Peças e Importar.**
+  - **Desfazer «Encaixa» numa peça de um par (Tiago, 2026-11-12):** desfaz também a confirmação do par e a posição da outra peça. Na F1b só se tirava a própria peça do lugar; o `pair_confirmed` e a posição conhecida da outra ficavam.
 - **F4 — Grupos soltos no tabuleiro**, só para os grupos que já existem.
 - **F4b — Grupos propostos pelo programa entre peças soltas (nova, 2026-11-11).** O teste físico dos 10 quadrados de 2026-11-10 deu 10/10 (§8.6). Cada grupo proposto só passa a grupo depois de o Tiago o confirmar fisicamente; a confiança segue a regra do §8.3; há contador de acertos e falhas.
-- **F4c — Verificar as junções de um grupo largado junto ao montado (nova, 2026-11-12, pendente de medição).** Ver §4.9 («Verificar as junções ao largar um grupo»). Só depois da F4b e de o Tiago aceitar o mínimo de junções.
+- **F4c — Verificar as junções de um grupo largado junto ao montado (nova, 2026-11-12).** Ver §4.9 («Verificar as junções ao largar um grupo»). Vem depois da F4b. Só afirma no céu e com ≥ 4 junções; fora do céu responde «não sei» até haver calibração por zona (Tiago, 2026-11-12).
+- **F3 — Peças e Importar.**
 - **F5 — Corrigir recorte e Diagnóstico.** O Diagnóstico lista as rejeições, cada uma com «anular», para desfazer rejeições de sessões anteriores (2026-11-11).
 - **F6 — A GUI nova passa a ser a de omissão;** remove-se a antiga e o interruptor; atualiza-se `docs/gui-design.md`.
 

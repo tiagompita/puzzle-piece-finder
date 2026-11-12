@@ -241,3 +241,10 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
 - Teste com o PyMuPDF real (página vazia → 2550 × 3300): só corre onde está instalado (`importorskip`); no `.venv` fica `skipped`.
 - **[V]** `.venv`: 9 passed, 1 skipped; `python` do PATH (3.12.6 com PyMuPDF 1.28): 10 passed.
 - A suite corre sempre com `.venv/Scripts/python.exe -m pytest tests/` (registado no `CLAUDE.md`).
+
+## 2026-11-12 — F4c só no céu, ordem das fases, desfazer «Encaixa» de um par (Tiago)
+
+- **F4c:** só afirma («encaixa» ou «não encaixa») no **céu** e com **≥ 4 junções**. Fora do céu, e com menos de 4 junções, responde «não sei» até haver calibração por zona. Base: `docs/diagnostico/fit/GRUPOS_JUNCOES.md` §2–§3. No céu, com ≥ 4 junções, o critério B deu 0 falsos «encaixa» e 1,6 % de falsos «não encaixa».
+- **Ordem das fases do redesenho:** F2, F4, F4b, F3, F5, F6. A F4c fica a seguir à F4b.
+- **F2:** desfazer «Encaixa» numa peça de um par desfaz também a confirmação do par e a posição da outra peça.
+- Registado no ESPEC (§4.9 e §7). Nada implementado; a F2 não arrancou.
