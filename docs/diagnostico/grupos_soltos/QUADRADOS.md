@@ -11,6 +11,8 @@ A medição é de 2026-11-10, numa sessão anterior, com o script `tools/diagnos
 
 As figuras 11–17 foram feitas em 2026-11-11 por `tools/diagnostico/grupos_soltos/quadrados_11_17.py`. O script lê o mesmo `loose_res.pkl`, por isso a lista e a ordem são as de 2026-11-10, e usa a função de figura de `loose.py` copiada sem mudanças. Correu sobre uma **cópia** do projeto (a árvore de trabalho de hoje).
 
+**Dados no repositório (2026-11-12):** [`quadrados_17.json`](quadrados_17.json) tem os 17 quadrados: peças com saco e nº, posição local (linha, coluna) e rotação de cada uma no grupo (também como «direção → lado»), as 4 ligações com margem e as ligações entre grupos (peças e ligações em comum: 1↔12, 7↔16, 8↔16, 8↔17, 16↔17). Foi gerado por `tools/diagnostico/grupos_soltos/quadrados_json.py` a partir do `loose_res.pkl` de 2026-11-10, que ainda estava no scratchpad dessa sessão. O script confere tudo com as tabelas abaixo e com uma cópia do projeto: nenhuma das 62 peças foi re-segmentada desde 2026-11-10. A validação está em `tests/test_quadrados_json.py`. **Não estão registados no projeto.**
+
 ## Quadrados 1–10: [V, Tiago, 2026-11-11] encaixam os 10
 
 São os 10 melhores, incluindo os 3 abaixo de 1,05: #8 (1,044), #9 (1,030) e #10 (1,021). **São 10 casos**; o Wilson 95 % de 10/10 é 0,72–1,00. Resumo: [quadrados_01_10_resumo.png](quadrados_01_10_resumo.png).

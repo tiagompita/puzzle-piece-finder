@@ -1,0 +1,2038 @@
+{
+ "pecas_resegmentadas_desde_2026_11_10": [],
+ "descricao": "Os 17 quadrados 2×2 propostos entre peças soltas (ligações melhor-mútuas, 2026-11-10), todos testados fisicamente pelo Tiago (17/17 encaixam, 2026-11-11). NÃO estão registados no projeto.",
+ "proveniencia": {
+  "medicao": "tools/diagnostico/grupos_soltos/loose.py, 2026-11-10, sobre uma cópia de projects/alpes",
+  "ficheiro_original": "loose_res.pkl (scratchpad da sessão de 2026-11-10, fora do git)",
+  "gerado_por": "tools/diagnostico/grupos_soltos/quadrados_json.py",
+  "gerado_em": "2026-11-12",
+  "conferido_com": [
+   "docs/diagnostico/grupos_soltos/QUADRADOS.md (peças, saco, nº, margem)",
+   "uma cópia de projects/alpes (ids, 4 lados, saco e nº)"
+  ],
+  "teste_fisico": "docs/decisoes.md 2026-11-11 e 2026-11-12; ESPEC §8.6"
+ },
+ "convencoes": {
+  "linha_coluna": "posição local no grupo, (0, 0) = canto de cima à esquerda, linha cresce para baixo",
+  "rot": "o lado k da peça olha a direção DIRS[(k - rot) % 4], DIRS = N, E, S, W (loose.py)",
+  "lado": "índice do lado em Project.shape(pid).sides no índice de 2026-11-10; uma re-segmentação posterior pode renumerar os lados [NT]",
+  "lado_por_direcao": "o mesmo que rot, explícito: direção no grupo -> índice do lado da peça",
+  "margem": "custo da 2.ª / custo da 1.ª (fit.side_costs); a do grupo é a mais fraca das 4 ligações"
+ },
+ "grupos": [
+  {
+   "n": 1,
+   "margem": 1.145,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1128",
+     "saco": 6,
+     "n_no_saco": 20,
+     "scan_id": "S0032",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1348",
+     "saco": 9,
+     "n_no_saco": 15,
+     "scan_id": "S0038",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1133",
+     "saco": 6,
+     "n_no_saco": 25,
+     "scan_id": "S0032",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1308",
+     "saco": 8,
+     "n_no_saco": 50,
+     "scan_id": "S0036",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P1128",
+     "lado_a": 1,
+     "direcao_a": "E",
+     "b": "P1348",
+     "lado_b": 1,
+     "direcao_b": "W",
+     "margem": 1.3116
+    },
+    {
+     "a": "P1128",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P1133",
+     "lado_b": 2,
+     "direcao_b": "N",
+     "margem": 1.1517
+    },
+    {
+     "a": "P1348",
+     "lado_a": 0,
+     "direcao_a": "S",
+     "b": "P1308",
+     "lado_b": 3,
+     "direcao_b": "N",
+     "margem": 1.1998
+    },
+    {
+     "a": "P1133",
+     "lado_a": 3,
+     "direcao_a": "E",
+     "b": "P1308",
+     "lado_b": 2,
+     "direcao_b": "W",
+     "margem": 1.145
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 2,
+   "margem": 1.1428,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P0170",
+     "saco": 2,
+     "n_no_saco": 27,
+     "scan_id": "S0007",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1063",
+     "saco": 5,
+     "n_no_saco": 30,
+     "scan_id": "S0030",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1129",
+     "saco": 6,
+     "n_no_saco": 21,
+     "scan_id": "S0032",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P0927",
+     "saco": 3,
+     "n_no_saco": 19,
+     "scan_id": "S0027",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0170",
+     "lado_a": 1,
+     "direcao_a": "E",
+     "b": "P1063",
+     "lado_b": 1,
+     "direcao_b": "W",
+     "margem": 1.3344
+    },
+    {
+     "a": "P0170",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P1129",
+     "lado_b": 3,
+     "direcao_b": "N",
+     "margem": 1.2365
+    },
+    {
+     "a": "P1063",
+     "lado_a": 0,
+     "direcao_a": "S",
+     "b": "P0927",
+     "lado_b": 0,
+     "direcao_b": "N",
+     "margem": 1.1428
+    },
+    {
+     "a": "P1129",
+     "lado_a": 0,
+     "direcao_a": "E",
+     "b": "P0927",
+     "lado_b": 3,
+     "direcao_b": "W",
+     "margem": 1.4072
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 3,
+   "margem": 1.1287,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1024",
+     "saco": 4,
+     "n_no_saco": 66,
+     "scan_id": "S0029",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1210",
+     "saco": 7,
+     "n_no_saco": 27,
+     "scan_id": "S0034",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P0182",
+     "saco": 2,
+     "n_no_saco": 39,
+     "scan_id": "S0007",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P0982",
+     "saco": 4,
+     "n_no_saco": 24,
+     "scan_id": "S0028",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0182",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1024",
+     "lado_b": 0,
+     "direcao_b": "S",
+     "margem": 1.8724
+    },
+    {
+     "a": "P0182",
+     "lado_a": 1,
+     "direcao_a": "E",
+     "b": "P0982",
+     "lado_b": 0,
+     "direcao_b": "W",
+     "margem": 1.2419
+    },
+    {
+     "a": "P1024",
+     "lado_a": 3,
+     "direcao_a": "E",
+     "b": "P1210",
+     "lado_b": 3,
+     "direcao_b": "W",
+     "margem": 1.1804
+    },
+    {
+     "a": "P0982",
+     "lado_a": 1,
+     "direcao_a": "N",
+     "b": "P1210",
+     "lado_b": 2,
+     "direcao_b": "S",
+     "margem": 1.1287
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 4,
+   "margem": 1.1246,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1216",
+     "saco": 7,
+     "n_no_saco": 33,
+     "scan_id": "S0034",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P0970",
+     "saco": 4,
+     "n_no_saco": 12,
+     "scan_id": "S0028",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P0174",
+     "saco": 2,
+     "n_no_saco": 31,
+     "scan_id": "S0007",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1136",
+     "saco": 6,
+     "n_no_saco": 28,
+     "scan_id": "S0032",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0174",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1216",
+     "lado_b": 1,
+     "direcao_b": "S",
+     "margem": 1.1246
+    },
+    {
+     "a": "P0174",
+     "lado_a": 1,
+     "direcao_a": "E",
+     "b": "P1136",
+     "lado_b": 2,
+     "direcao_b": "W",
+     "margem": 1.2193
+    },
+    {
+     "a": "P1216",
+     "lado_a": 0,
+     "direcao_a": "E",
+     "b": "P0970",
+     "lado_b": 0,
+     "direcao_b": "W",
+     "margem": 1.5264
+    },
+    {
+     "a": "P1136",
+     "lado_a": 3,
+     "direcao_a": "N",
+     "b": "P0970",
+     "lado_b": 3,
+     "direcao_b": "S",
+     "margem": 1.3803
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 5,
+   "margem": 1.0817,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P0997",
+     "saco": 4,
+     "n_no_saco": 39,
+     "scan_id": "S0028",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P0160",
+     "saco": 2,
+     "n_no_saco": 17,
+     "scan_id": "S0007",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1418",
+     "saco": 9,
+     "n_no_saco": 85,
+     "scan_id": "S0039",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1306",
+     "saco": 8,
+     "n_no_saco": 48,
+     "scan_id": "S0036",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0160",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P1306",
+     "lado_b": 3,
+     "direcao_b": "N",
+     "margem": 1.2619
+    },
+    {
+     "a": "P0160",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P0997",
+     "lado_b": 1,
+     "direcao_b": "E",
+     "margem": 1.0817
+    },
+    {
+     "a": "P1306",
+     "lado_a": 2,
+     "direcao_a": "W",
+     "b": "P1418",
+     "lado_b": 1,
+     "direcao_b": "E",
+     "margem": 1.4104
+    },
+    {
+     "a": "P0997",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P1418",
+     "lado_b": 0,
+     "direcao_b": "N",
+     "margem": 1.3918
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 6,
+   "margem": 1.0775,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1156",
+     "saco": 6,
+     "n_no_saco": 48,
+     "scan_id": "S0032",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P1278",
+     "saco": 8,
+     "n_no_saco": 20,
+     "scan_id": "S0036",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P1262",
+     "saco": 8,
+     "n_no_saco": 4,
+     "scan_id": "S0036",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1005",
+     "saco": 4,
+     "n_no_saco": 47,
+     "scan_id": "S0028",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P1005",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1262",
+     "lado_b": 2,
+     "direcao_b": "E",
+     "margem": 1.0775
+    },
+    {
+     "a": "P1005",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1278",
+     "lado_b": 1,
+     "direcao_b": "S",
+     "margem": 1.6424
+    },
+    {
+     "a": "P1262",
+     "lado_a": 1,
+     "direcao_a": "N",
+     "b": "P1156",
+     "lado_b": 1,
+     "direcao_b": "S",
+     "margem": 1.2
+    },
+    {
+     "a": "P1278",
+     "lado_a": 2,
+     "direcao_a": "W",
+     "b": "P1156",
+     "lado_b": 0,
+     "direcao_b": "E",
+     "margem": 1.1056
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 7,
+   "margem": 1.0643,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P0114",
+     "saco": 1,
+     "n_no_saco": 21,
+     "scan_id": "S0005",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1377",
+     "saco": 9,
+     "n_no_saco": 44,
+     "scan_id": "S0038",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P0981",
+     "saco": 4,
+     "n_no_saco": 23,
+     "scan_id": "S0028",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1172",
+     "saco": 6,
+     "n_no_saco": 64,
+     "scan_id": "S0032",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0114",
+     "lado_a": 1,
+     "direcao_a": "E",
+     "b": "P1377",
+     "lado_b": 1,
+     "direcao_b": "W",
+     "margem": 1.4518
+    },
+    {
+     "a": "P0114",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P0981",
+     "lado_b": 2,
+     "direcao_b": "N",
+     "margem": 1.0643
+    },
+    {
+     "a": "P1377",
+     "lado_a": 0,
+     "direcao_a": "S",
+     "b": "P1172",
+     "lado_b": 3,
+     "direcao_b": "N",
+     "margem": 1.3663
+    },
+    {
+     "a": "P0981",
+     "lado_a": 3,
+     "direcao_a": "E",
+     "b": "P1172",
+     "lado_b": 2,
+     "direcao_b": "W",
+     "margem": 1.0733
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 8,
+   "margem": 1.044,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1295",
+     "saco": 8,
+     "n_no_saco": 37,
+     "scan_id": "S0036",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P1360",
+     "saco": 9,
+     "n_no_saco": 27,
+     "scan_id": "S0038",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1193",
+     "saco": 7,
+     "n_no_saco": 10,
+     "scan_id": "S0034",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P0161",
+     "saco": 2,
+     "n_no_saco": 18,
+     "scan_id": "S0007",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0161",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1193",
+     "lado_b": 3,
+     "direcao_b": "E",
+     "margem": 1.9847
+    },
+    {
+     "a": "P0161",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1360",
+     "lado_b": 0,
+     "direcao_b": "S",
+     "margem": 1.1534
+    },
+    {
+     "a": "P1193",
+     "lado_a": 2,
+     "direcao_a": "N",
+     "b": "P1295",
+     "lado_b": 1,
+     "direcao_b": "S",
+     "margem": 1.044
+    },
+    {
+     "a": "P1360",
+     "lado_a": 1,
+     "direcao_a": "W",
+     "b": "P1295",
+     "lado_b": 0,
+     "direcao_b": "E",
+     "margem": 1.1334
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 9,
+   "margem": 1.03,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1280",
+     "saco": 8,
+     "n_no_saco": 22,
+     "scan_id": "S0036",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1167",
+     "saco": 6,
+     "n_no_saco": 59,
+     "scan_id": "S0032",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P1219",
+     "saco": 7,
+     "n_no_saco": 36,
+     "scan_id": "S0034",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P0985",
+     "saco": 4,
+     "n_no_saco": 27,
+     "scan_id": "S0028",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0985",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1219",
+     "lado_b": 2,
+     "direcao_b": "E",
+     "margem": 1.1628
+    },
+    {
+     "a": "P0985",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1167",
+     "lado_b": 1,
+     "direcao_b": "S",
+     "margem": 1.063
+    },
+    {
+     "a": "P1219",
+     "lado_a": 1,
+     "direcao_a": "N",
+     "b": "P1280",
+     "lado_b": 3,
+     "direcao_b": "S",
+     "margem": 1.03
+    },
+    {
+     "a": "P1167",
+     "lado_a": 2,
+     "direcao_a": "W",
+     "b": "P1280",
+     "lado_b": 2,
+     "direcao_b": "E",
+     "margem": 1.205
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 10,
+   "margem": 1.0213,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1365",
+     "saco": 9,
+     "n_no_saco": 32,
+     "scan_id": "S0038",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1255",
+     "saco": 7,
+     "n_no_saco": 72,
+     "scan_id": "S0035",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1430",
+     "saco": 9,
+     "n_no_saco": 97,
+     "scan_id": "S0039",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1057",
+     "saco": 5,
+     "n_no_saco": 24,
+     "scan_id": "S0030",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P1057",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1430",
+     "lado_b": 3,
+     "direcao_b": "E",
+     "margem": 1.2673
+    },
+    {
+     "a": "P1057",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1255",
+     "lado_b": 2,
+     "direcao_b": "S",
+     "margem": 1.4075
+    },
+    {
+     "a": "P1430",
+     "lado_a": 2,
+     "direcao_a": "N",
+     "b": "P1365",
+     "lado_b": 0,
+     "direcao_b": "S",
+     "margem": 1.0213
+    },
+    {
+     "a": "P1255",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1365",
+     "lado_b": 3,
+     "direcao_b": "E",
+     "margem": 1.1999
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 11,
+   "margem": 1.0209,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1123",
+     "saco": 6,
+     "n_no_saco": 15,
+     "scan_id": "S0032",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1332",
+     "saco": 8,
+     "n_no_saco": 74,
+     "scan_id": "S0037",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1284",
+     "saco": 8,
+     "n_no_saco": 26,
+     "scan_id": "S0036",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1059",
+     "saco": 5,
+     "n_no_saco": 26,
+     "scan_id": "S0030",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P1059",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1284",
+     "lado_b": 2,
+     "direcao_b": "E",
+     "margem": 1.7144
+    },
+    {
+     "a": "P1059",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1332",
+     "lado_b": 0,
+     "direcao_b": "S",
+     "margem": 1.1052
+    },
+    {
+     "a": "P1284",
+     "lado_a": 1,
+     "direcao_a": "N",
+     "b": "P1123",
+     "lado_b": 0,
+     "direcao_b": "S",
+     "margem": 1.0209
+    },
+    {
+     "a": "P1332",
+     "lado_a": 1,
+     "direcao_a": "W",
+     "b": "P1123",
+     "lado_b": 3,
+     "direcao_b": "E",
+     "margem": 1.3473
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 12,
+   "margem": 1.0169,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1314",
+     "saco": 8,
+     "n_no_saco": 56,
+     "scan_id": "S0036",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P1374",
+     "saco": 9,
+     "n_no_saco": 41,
+     "scan_id": "S0038",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1229",
+     "saco": 7,
+     "n_no_saco": 46,
+     "scan_id": "S0034",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1128",
+     "saco": 6,
+     "n_no_saco": 20,
+     "scan_id": "S0032",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P1128",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1229",
+     "lado_b": 2,
+     "direcao_b": "E",
+     "margem": 1.0169
+    },
+    {
+     "a": "P1128",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1374",
+     "lado_b": 2,
+     "direcao_b": "S",
+     "margem": 1.1631
+    },
+    {
+     "a": "P1229",
+     "lado_a": 1,
+     "direcao_a": "N",
+     "b": "P1314",
+     "lado_b": 1,
+     "direcao_b": "S",
+     "margem": 1.6527
+    },
+    {
+     "a": "P1374",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1314",
+     "lado_b": 0,
+     "direcao_b": "E",
+     "margem": 1.3741
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 13,
+   "margem": 1.015,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1189",
+     "saco": 7,
+     "n_no_saco": 6,
+     "scan_id": "S0034",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1213",
+     "saco": 7,
+     "n_no_saco": 30,
+     "scan_id": "S0034",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1327",
+     "saco": 8,
+     "n_no_saco": 69,
+     "scan_id": "S0037",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1159",
+     "saco": 6,
+     "n_no_saco": 51,
+     "scan_id": "S0032",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P1159",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1327",
+     "lado_b": 3,
+     "direcao_b": "E",
+     "margem": 1.3474
+    },
+    {
+     "a": "P1159",
+     "lado_a": 0,
+     "direcao_a": "N",
+     "b": "P1213",
+     "lado_b": 3,
+     "direcao_b": "S",
+     "margem": 1.206
+    },
+    {
+     "a": "P1327",
+     "lado_a": 2,
+     "direcao_a": "N",
+     "b": "P1189",
+     "lado_b": 3,
+     "direcao_b": "S",
+     "margem": 1.015
+    },
+    {
+     "a": "P1213",
+     "lado_a": 0,
+     "direcao_a": "W",
+     "b": "P1189",
+     "lado_b": 2,
+     "direcao_b": "E",
+     "margem": 1.1175
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 14,
+   "margem": 1.0124,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1370",
+     "saco": 9,
+     "n_no_saco": 37,
+     "scan_id": "S0038",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P0172",
+     "saco": 2,
+     "n_no_saco": 29,
+     "scan_id": "S0007",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1152",
+     "saco": 6,
+     "n_no_saco": 44,
+     "scan_id": "S0032",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P0944",
+     "saco": 3,
+     "n_no_saco": 36,
+     "scan_id": "S0027",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0172",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P0944",
+     "lado_b": 0,
+     "direcao_b": "N",
+     "margem": 1.7001
+    },
+    {
+     "a": "P0172",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1370",
+     "lado_b": 1,
+     "direcao_b": "E",
+     "margem": 1.4033
+    },
+    {
+     "a": "P0944",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1152",
+     "lado_b": 0,
+     "direcao_b": "E",
+     "margem": 1.0124
+    },
+    {
+     "a": "P1370",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P1152",
+     "lado_b": 3,
+     "direcao_b": "N",
+     "margem": 1.0349
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 15,
+   "margem": 1.0111,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1033",
+     "saco": 4,
+     "n_no_saco": 75,
+     "scan_id": "S0029",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1309",
+     "saco": 8,
+     "n_no_saco": 51,
+     "scan_id": "S0036",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1256",
+     "saco": 7,
+     "n_no_saco": 73,
+     "scan_id": "S0035",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1386",
+     "saco": 9,
+     "n_no_saco": 53,
+     "scan_id": "S0038",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P1033",
+     "lado_a": 1,
+     "direcao_a": "E",
+     "b": "P1309",
+     "lado_b": 0,
+     "direcao_b": "W",
+     "margem": 1.0327
+    },
+    {
+     "a": "P1033",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P1256",
+     "lado_b": 1,
+     "direcao_b": "N",
+     "margem": 1.2057
+    },
+    {
+     "a": "P1309",
+     "lado_a": 3,
+     "direcao_a": "S",
+     "b": "P1386",
+     "lado_b": 3,
+     "direcao_b": "N",
+     "margem": 1.3365
+    },
+    {
+     "a": "P1256",
+     "lado_a": 2,
+     "direcao_a": "E",
+     "b": "P1386",
+     "lado_b": 2,
+     "direcao_b": "W",
+     "margem": 1.0111
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 16,
+   "margem": 1.0081,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P0161",
+     "saco": 2,
+     "n_no_saco": 18,
+     "scan_id": "S0007",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1171",
+     "saco": 6,
+     "n_no_saco": 63,
+     "scan_id": "S0032",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P1270",
+     "saco": 8,
+     "n_no_saco": 12,
+     "scan_id": "S0036",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    },
+    {
+     "peca": "P1377",
+     "saco": 9,
+     "n_no_saco": 44,
+     "scan_id": "S0038",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0161",
+     "lado_a": 1,
+     "direcao_a": "E",
+     "b": "P1171",
+     "lado_b": 1,
+     "direcao_b": "W",
+     "margem": 1.4222
+    },
+    {
+     "a": "P0161",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P1270",
+     "lado_b": 1,
+     "direcao_b": "N",
+     "margem": 1.0081
+    },
+    {
+     "a": "P1171",
+     "lado_a": 0,
+     "direcao_a": "S",
+     "b": "P1377",
+     "lado_b": 3,
+     "direcao_b": "N",
+     "margem": 1.208
+    },
+    {
+     "a": "P1270",
+     "lado_a": 2,
+     "direcao_a": "E",
+     "b": "P1377",
+     "lado_b": 2,
+     "direcao_b": "W",
+     "margem": 3.4422
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  },
+  {
+   "n": 17,
+   "margem": 1.0081,
+   "zona_provavel": "céu",
+   "pecas": [
+    {
+     "peca": "P1193",
+     "saco": 7,
+     "n_no_saco": 10,
+     "scan_id": "S0034",
+     "linha": 0,
+     "coluna": 0,
+     "rot": 2,
+     "lado_por_direcao": {
+      "S": 0,
+      "W": 1,
+      "N": 2,
+      "E": 3
+     }
+    },
+    {
+     "peca": "P0161",
+     "saco": 2,
+     "n_no_saco": 18,
+     "scan_id": "S0007",
+     "linha": 0,
+     "coluna": 1,
+     "rot": 0,
+     "lado_por_direcao": {
+      "N": 0,
+      "E": 1,
+      "S": 2,
+      "W": 3
+     }
+    },
+    {
+     "peca": "P1350",
+     "saco": 9,
+     "n_no_saco": 17,
+     "scan_id": "S0038",
+     "linha": 1,
+     "coluna": 0,
+     "rot": 3,
+     "lado_por_direcao": {
+      "E": 0,
+      "S": 1,
+      "W": 2,
+      "N": 3
+     }
+    },
+    {
+     "peca": "P1270",
+     "saco": 8,
+     "n_no_saco": 12,
+     "scan_id": "S0036",
+     "linha": 1,
+     "coluna": 1,
+     "rot": 1,
+     "lado_por_direcao": {
+      "W": 0,
+      "N": 1,
+      "E": 2,
+      "S": 3
+     }
+    }
+   ],
+   "ligacoes": [
+    {
+     "a": "P0161",
+     "lado_a": 2,
+     "direcao_a": "S",
+     "b": "P1270",
+     "lado_b": 1,
+     "direcao_b": "N",
+     "margem": 1.0081
+    },
+    {
+     "a": "P0161",
+     "lado_a": 3,
+     "direcao_a": "W",
+     "b": "P1193",
+     "lado_b": 3,
+     "direcao_b": "E",
+     "margem": 1.9847
+    },
+    {
+     "a": "P1270",
+     "lado_a": 0,
+     "direcao_a": "W",
+     "b": "P1350",
+     "lado_b": 0,
+     "direcao_b": "E",
+     "margem": 1.5724
+    },
+    {
+     "a": "P1193",
+     "lado_a": 0,
+     "direcao_a": "S",
+     "b": "P1350",
+     "lado_b": 3,
+     "direcao_b": "N",
+     "margem": 1.13
+    }
+   ],
+   "teste_fisico": {
+    "resultado": "encaixa",
+    "data": "2026-11-11",
+    "fonte": "Tiago"
+   }
+  }
+ ],
+ "ligacoes_entre_grupos": [
+  {
+   "grupos": [
+    1,
+    12
+   ],
+   "pecas_comuns": [
+    "P1128"
+   ],
+   "ligacoes_comuns": [],
+   "lados_usados": {
+    "P1128": {
+     "grupo_1": [
+      1,
+      2
+     ],
+     "grupo_12": [
+      0,
+      3
+     ]
+    }
+   }
+  },
+  {
+   "grupos": [
+    7,
+    16
+   ],
+   "pecas_comuns": [
+    "P1377"
+   ],
+   "ligacoes_comuns": [],
+   "lados_usados": {
+    "P1377": {
+     "grupo_7": [
+      0,
+      1
+     ],
+     "grupo_16": [
+      2,
+      3
+     ]
+    }
+   }
+  },
+  {
+   "grupos": [
+    8,
+    16
+   ],
+   "pecas_comuns": [
+    "P0161"
+   ],
+   "ligacoes_comuns": [],
+   "lados_usados": {
+    "P0161": {
+     "grupo_8": [
+      0,
+      3
+     ],
+     "grupo_16": [
+      1,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "grupos": [
+    8,
+    17
+   ],
+   "pecas_comuns": [
+    "P0161",
+    "P1193"
+   ],
+   "ligacoes_comuns": [
+    [
+     "P0161:3",
+     "P1193:3"
+    ]
+   ],
+   "lados_usados": {
+    "P0161": {
+     "grupo_8": [
+      0,
+      3
+     ],
+     "grupo_17": [
+      2,
+      3
+     ]
+    },
+    "P1193": {
+     "grupo_8": [
+      2,
+      3
+     ],
+     "grupo_17": [
+      0,
+      3
+     ]
+    }
+   }
+  },
+  {
+   "grupos": [
+    16,
+    17
+   ],
+   "pecas_comuns": [
+    "P0161",
+    "P1270"
+   ],
+   "ligacoes_comuns": [
+    [
+     "P0161:2",
+     "P1270:1"
+    ]
+   ],
+   "lados_usados": {
+    "P0161": {
+     "grupo_16": [
+      1,
+      2
+     ],
+     "grupo_17": [
+      2,
+      3
+     ]
+    },
+    "P1270": {
+     "grupo_16": [
+      1,
+      2
+     ],
+     "grupo_17": [
+      0,
+      1
+     ]
+    }
+   }
+  }
+ ]
+}
