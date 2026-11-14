@@ -98,10 +98,12 @@ def test_fila_by_bag_rules():
 	es = [_it("A", 3, True, 1), _it("B", 5, True, 2), _it("C", 5, True, 3), _it("D", 3, False, 4),
 		  _it("E", 7, True, 5, grupo="guarda_posicao"), _it("F", 7, True, 6, estado="colocada")]
 	q = MT.fila(es, None, rec)
-	assert [it["piece"] for it in q["itens"]] == ["B", "C", "A", "D"]          # saco com mais «quase certo» primeiro
+	# saco com mais «quase certo» primeiro; E (sem vizinha montada) só no fim, como «Guardar à parte» (F1c); F já colocada
+	assert [it["piece"] for it in q["itens"]] == ["B", "C", "A", "D", "E"]
+	assert q["n_coloca"] == 4 and q["n_guardar"] == 1 and q["itens"][-1]["tipo"] == "guardar"
 	assert q["saco"] == 5 and q["ordem_sacos"] == [5, 3]
 	q = MT.fila(es, None, rec, ultimo_saco=3)
-	assert q["saco"] == 3 and [it["piece"] for it in q["itens"]] == ["A", "D", "B", "C"]
+	assert q["saco"] == 3 and [it["piece"] for it in q["itens"]] == ["A", "D", "B", "C", "E"]
 	q = MT.fila(es, None, rec, saco_atual=5, ultimo_saco=3)                     # o saco a esgotar fica fixo
 	assert q["saco"] == 5
 	q = MT.fila(es, None, rec, saco_atual=9, ultimo_saco=3)                     # saco esgotado: regra seguinte
@@ -153,9 +155,9 @@ def test_board_legend_rows_only_for_the_new_gui(env):
 	gui, client, *_ = env
 	old = {r["id"] for r in client.get("/api/board").json()["legend"]}
 	new = client.get("/api/board?ui=novo").json()["legend"]
-	assert not ({"alvo", "seguinte", "por_montar"} & old)
+	assert not ({"alvo", "alvo_guardar", "seguinte", "por_montar"} & old)
 	assert {"alvo", "seguinte", "por_montar"} <= {r["id"] for r in new}
-	assert {r["id"] for r in new if r.get("curta")} == {"alvo", "por_montar"}
+	assert {r["id"] for r in new if r.get("curta")} == {"alvo", "alvo_guardar", "por_montar"}   # 3 entradas (ESPEC §4.1; F1c)
 	assert old == {r["id"] for r in SV.LEGEND if not r.get("gui")}
 	assert {r["id"] for r in client.get("/api/legend").json()} == old
 
@@ -250,3 +252,160 @@ def test_pair_unreject_state(tmp_path):
 	pr.save()
 	assert pr.check_invariants(disk=True) == []
 	assert os.path.exists(pr.log_path)
+
+
+# ---------------------------------------------------------------- F1c: «Guardar à parte», ecrã vazio, lupa
+def test_fila_guardar_after_coloca_never_quase_certo():
+	rec = {("gemeo", None): {"n": 30, "acertos": 30, "falhas": 0, "wilson_lo": 0.9}}
+	es = [_it("G1", 3, True, 1, grupo="guarda_posicao"), _it("A", 5, True, 2), _it("G2", 5, True, 3, grupo="guarda_posicao"),
+		  _it("A", 5, True, 4, grupo="guarda_posicao"),                              # já na fila como «coloca agora»
+		  _it("K", 5, True, 5, grupo="guarda_posicao", estado="posicao_conhecida"),  # já guardada: não volta
+		  _it("Q", 5, True, 6, origin="posicao_conhecida", grupo="guarda_posicao"),
+		  dict(_it("S", 5, True, 7, grupo="guarda_posicao"), piece=None, origin="seccao")]
+	q = MT.fila(es, None, rec)
+	assert [(it["piece"], it["tipo"]) for it in q["itens"]] == [("A", "gemea"), ("G2", "guardar"), ("G1", "guardar")]
+	assert q["n_coloca"] == 1 and q["n_guardar"] == 2 and q["total"] == 3
+	g = q["itens"][1]
+	assert g["confianca"] == "a_confirmar" and q["itens"][0]["confianca"] == "quase_certo"   # mesma origem e histórico
+	assert g["encaixa"] is None                                                               # sem «Encaixa»
+	assert g["guardar"]["body"] == {"acao": "position_known", "piece": "G2", "cell": g["cell"], "origin": "gemeo", "nota": "saquinho"}
+	assert g["nao_encaixa"]["body"] == {"acao": "reject", "piece": "G2"}
+	assert [t["chave"] for t in g["tracos"]] == ["forma", "imagem", "distancia"] and g["tipo_base"] == "gemea"
+	assert q["itens"][0]["guardar"] is None
+	# só «guardar»: a fila não fica vazia
+	q = MT.fila([e for e in es if e["piece"] != "A"], None, rec)
+	assert q["n_coloca"] == 0 and [it["piece"] for it in q["itens"]] == ["G1", "G2"] and q["saco"] is None
+
+
+def test_resumo_counts_what_is_outside_the_queue():
+	es = [_it("G1", 3, True, 1, grupo="guarda_posicao"),
+		  dict(_it("S", 3, True, 2), piece=None, origin="seccao", decision="por_ancorar"),
+		  dict(_it("S2", 3, True, 3), piece=None, origin="seccao", decision="por_ancorar", cell=None)]
+	q = MT.fila(es, None, {})
+	r = MT.resumo(es, q["itens"], guardadas=4)
+	assert r == {"guardar": 1, "guardadas": 4, "grupos_sem_lugar": 2, "propostas": 3}
+
+
+@pytest.fixture
+def env_guarda(tmp_path):
+	"""O projeto sintético sem vizinha montada: a proposta de gémea é ``guarda_posicao`` (0 «coloca agora»)."""
+	from src.query import run_query
+	pr, placed, tw, dec = _project(tmp_path)
+	run_query(pr, use_image=False)
+	gui = SV.Gui(pr.path, prepare=False, use_image=False, uploads=str(tmp_path / "uploads"), log=None)
+	return gui, TestClient(SV.create_app(gui)), tw
+
+
+def test_montar_guardar_card_position_known_and_undo(env_guarda):
+	gui, client, tw = env_guarda
+	f = client.get("/api/fetch").json()
+	assert [e["grupo"] for e in f["entries"] if e.get("piece")] == ["guarda_posicao"]
+	m = client.get("/api/montar").json()
+	assert m["total"] == 1 and m["n_coloca"] == 0 and m["n_guardar"] == 1
+	it = m["itens"][0]
+	assert it["piece"] == tw and it["tipo"] == "guardar" and it["encaixa"] is None and it["confianca"] == "a_confirmar"
+	assert m["fora_da_fila"]["guardar"] == 1
+	r = client.post(it["guardar"]["url"], json=it["guardar"]["body"]).json()
+	assert r["ok"] and [e["action"] for e in r["escritos"]][0] == "position_known"
+	assert gui.pr.piece(tw).estado == "posicao_conhecida"
+	m = client.get("/api/montar").json()
+	assert m["total"] == 0 and m["fora_da_fila"]["guardadas"] == 1 and m["fora_da_fila"]["guardar"] == 0
+	# desfazer «Guardei à parte» (F1c): position_cleared com desfaz, a proposta volta
+	u = client.post("/api/confirm", json={"acao": "position_clear", "piece": tw, "desfaz": True}).json()
+	assert u["ok"] and u["escritos"][0]["action"] == "position_cleared"
+	ev = [e for e in gui.pr.events() if e["action"] == "position_cleared"][-1]
+	assert ev["desfaz"] is True and ev["to"] == "solta" and ev["piece"] == tw
+	assert gui.pr.piece(tw).estado == "solta" and gui.pr.piece(tw).celula is None
+	assert client.get("/api/montar").json()["itens"][0]["tipo"] == "guardar"
+	assert client.post("/api/confirm", json={"acao": "position_clear", "piece": tw, "desfaz": True}).status_code == 400
+	_ok(gui.path)
+
+
+def test_montar_nao_e_esta_and_undo(env_guarda):
+	gui, client, tw = env_guarda
+	it = client.get("/api/montar").json()["itens"][0]
+	r = client.post(it["nao_encaixa"]["url"], json=it["nao_encaixa"]["body"]).json()
+	rej = [e for e in r["escritos"] if e["action"] == "twin_rejected"]
+	assert len(rej) == 1 and rej[0]["piece"] == tw
+	assert client.get("/api/montar").json()["total"] == 0
+	u = client.post("/api/confirm", json={"acao": "undo_reject", "rejeicoes": [rej[0]]}).json()
+	assert u["ok"] and u["escritos"][0]["action"] == "rejection_undone"
+	assert client.get("/api/montar").json()["itens"][0]["tipo"] == "guardar"
+	_ok(gui.path)
+
+
+def test_montar_only_groups_counts_them(env_guarda):
+	"""Um fetch.json só com grupos por ancorar (0 «coloca agora», 0 peças): a fila fica vazia mas o resumo conta-os."""
+	import json
+	gui, client, tw = env_guarda
+	fp = gui.pr.p("fetch.json")
+	with open(fp, encoding="utf-8") as fh:
+		f = json.load(fh)
+	f["entries"] = [{"origin": "seccao", "decision": "por_ancorar", "piece": None, "cell": [2, 2], "section": "G0001",
+					 "candidates": [], "ordem": 1}]
+	with open(fp, "w", encoding="utf-8") as fh:
+		json.dump(f, fh)
+	gui._fetch = None
+	m = client.get("/api/montar").json()
+	assert m["total"] == 0 and m["fora_da_fila"]["grupos_sem_lugar"] == 1 and m["fora_da_fila"]["propostas"] == 1
+
+
+def test_lupa_proposals_carry_group(env_guarda):
+	gui, client, tw = env_guarda
+	p = client.get(f"/api/pieces/{tw}").json()
+	assert [e["grupo"] for e in p["propostas"]] == ["guarda_posicao"]
+	l, c = p["propostas"][0]["cell"]
+	d = client.get(f"/api/cell/{l}/{c}").json()
+	assert [(e["piece"], e["grupo"]) for e in d["propostas"]] == [(tw, "guarda_posicao")]
+
+
+def test_position_cleared_state_and_replay(tmp_path):
+	from src.state import StateError
+	pr, placed, tw, dec = _project(tmp_path)
+	with pytest.raises(StateError):
+		pr.clear_position_known(tw)
+	tid = pr.register_pair(dec, tw, d1=0.2, margin=3.0)      # par ativo: volta a «emparelhada»
+	pr.set_position_known(tw, (3, 4), origin="gemeo", theta_deg=12.0)
+	ev = pr.clear_position_known(tw, desfaz=True)
+	assert ev["to"] == "emparelhada" and ev["desfaz"] is True and list(ev["cell"]) == [3, 4]
+	p = pr.piece(tw)
+	assert p.estado == "emparelhada" and p.celula is None and p.theta_deg is None
+	assert tid in pr.pairs
+	pr.save()
+	_ok(pr.path)
+
+
+ALPES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "projects", "alpes")
+
+
+def test_real_fetch_proposals_never_vanish_from_montar(tmp_path):
+	"""Com o fetch.json real (lido numa cópia de projects/alpes): cada proposta com peça pendente está na fila do
+	Montar ou contada como guardada à parte, e cada grupo por ancorar está contado. Se houver propostas, o ecrã
+	nunca pode cair no «Nada para ir buscar» (o vazio só sem nada em ``fora_da_fila``)."""
+	import json
+	import shutil
+	from src.query import fetch_group
+	if not os.path.exists(os.path.join(ALPES, "fetch.json")):
+		pytest.skip("projects/alpes não está presente")
+	for name in ("project.json", "puzzle.json", "log.jsonl", "fetch.json"):
+		shutil.copy(os.path.join(ALPES, name), tmp_path / name)
+	if os.path.isdir(os.path.join(ALPES, "photos")):
+		shutil.copytree(os.path.join(ALPES, "photos"), tmp_path / "photos")
+	pr = Project.open(str(tmp_path))
+	with open(tmp_path / "fetch.json", encoding="utf-8") as fh:
+		entries = [dict(e) for e in json.load(fh).get("entries", []) if isinstance(e, dict)]
+	for e in entries:
+		if e.get("cell"):
+			e["grupo"] = fetch_group(pr, e)
+		if e.get("piece") in pr.pieces:
+			e["estado_atual"] = pr.piece(e["piece"]).estado
+	q = MT.fila(entries, None, MT.track_record(pr.events(), pr.profile), pr.profile)
+	in_q = {it["piece"] for it in q["itens"]}
+	guardadas = {p.id for p in pr.pieces.values() if p.estado == "posicao_conhecida"} - in_q
+	r = MT.resumo(entries, q["itens"], len(guardadas))
+	lost = [e["piece"] for e in entries if e.get("piece") and e.get("cell") and e.get("estado_atual") in MT.PENDING_STATES
+			and e["piece"] not in in_q and e["piece"] not in guardadas]
+	assert not lost, f"propostas com peça que não aparecem no Montar: {lost}"
+	assert r["grupos_sem_lugar"] == sum(1 for e in entries if e.get("origin") == "seccao")
+	if r["propostas"]:
+		assert q["total"] or r["guardar"] or r["guardadas"] or r["grupos_sem_lugar"], "o Montar diria «Nada para ir buscar»"

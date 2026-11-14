@@ -34,10 +34,13 @@ function queue() {
   if (!m) return [];
   const order = (m.ordem_sacos || []).map(String);
   const bagIx = (it) => { const i = order.indexOf(String(it.lote)); return i < 0 ? order.length : i; };
+  // «Guardar à parte» (F1c) só depois de esgotadas as «coloca agora»; saltada 2 vezes vai para o fim de tudo
+  const g = (it) => (it.tipo === "guardar" ? 1 : 0);
   return m.itens.map((it, i) => ({ it, i, n: sess.saltos[it.piece] || 0 }))
-    .sort((a, b) => ((a.n >= 2) - (b.n >= 2)) || (bagIx(a.it) - bagIx(b.it)) || ((a.n >= 1) - (b.n >= 1)) || (a.i - b.i))
+    .sort((a, b) => ((a.n >= 2) - (b.n >= 2)) || (g(a.it) - g(b.it)) || (bagIx(a.it) - bagIx(b.it)) || ((a.n >= 1) - (b.n >= 1)) || (a.i - b.i))
     .map((x) => x.it);
 }
+const isGuardar = (it) => !!it && it.tipo === "guardar";
 function current() {
   const q = queue();
   if (S.pick) { const p = q.find((it) => it.piece === S.pick); if (p) return p; S.pick = null; }
@@ -104,10 +107,13 @@ function drawTarget(move = true) {
   if (!cur || !cur.cell) return;
   for (const it of q.filter((x) => x !== cur).slice(0, 3)) if (it.cell) nx.append(rectEl(it.cell[0], it.cell[1], cls("seguinte"), 0.06));
   const [l, c] = cur.cell;
-  a.append(rectEl(l, c, cls("alvo"), 0.02));
-  const x = c - 0.5, y = (l - 1) * S.hr - 0.12;
-  const lab = s("g", { class: "alvo-tag", transform: `translate(${x} ${y})` });
-  lab.append(s("rect", { x: -0.62, y: -0.42, width: 1.24, height: 0.36, rx: 0.08 }), s("text", { x: 0, y: -0.17 }, document.createTextNode("vai aqui")));
+  // «Guardar à parte»: alvo tracejado (lugar provável, sem vizinha para verificar), nunca o «vai aqui» cheio
+  const g = isGuardar(cur);
+  a.append(rectEl(l, c, cls(g ? "alvo_guardar" : "alvo"), 0.02));
+  const x = c - 0.5, y = (l - 1) * S.hr - 0.12, w = g ? 1.9 : 1.24;
+  const lab = s("g", { class: "alvo-tag" + (g ? " tracejado" : ""), transform: `translate(${x} ${y})` });
+  lab.append(s("rect", { x: -w / 2, y: -0.42, width: w, height: 0.36, rx: 0.08 }),
+    s("text", { x: 0, y: -0.17 }, document.createTextNode(g ? "lugar provável" : "vai aqui")));
   a.append(lab);
   if (move) showCell(l, c);
 }
@@ -165,30 +171,38 @@ function renderMontar() {
   const q = queue(), cur = current();
   if (S.modo === "nao" && S.undo && S.undo.tipo === "nao") { renderNao(T); drawTarget(false); return; }
   if (!cur) {
-    T.append(h("div", { class: "empty", "data-estado": "vazio" }, h("strong", {}, "Nada para ir buscar."), h("p", {}, "Digitaliza mais um saco."),
-      h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, "Importar scan")));
+    T.append(emptyScreen(m));
     if (m.a_preparar && m.a_preparar.buracos) T.append(prepLine(m));
     if (m.em_pausa) T.append(pauseLine());
     drawTarget(false);
     return;
   }
   if (S.modo === "porque") { renderPorque(T, cur); drawTarget(); return; }
-  const inBag = q.filter((it) => String(it.lote) === String(cur.lote));
+  const g = isGuardar(cur);
+  const inBag = g ? q.filter(isGuardar) : q.filter((it) => !isGuardar(it) && String(it.lote) === String(cur.lote));
   const k = inBag.indexOf(cur) + 1;
-  const card = h("div", { class: "card", "data-piece": cur.piece, "data-tipo": cur.tipo, "data-confianca": cur.confianca });
-  card.append(h("div", { class: "card-head" }, h("span", { class: "kicker" }, "Próxima peça"),
-    h("span", { class: "count", id: "m-count" }, `${k} de ${inBag.length} neste saco · ${q.length} no total`)));
+  const card = h("div", { class: "card" + (g ? " guardar" : ""), "data-piece": cur.piece, "data-tipo": cur.tipo, "data-confianca": cur.confianca });
+  card.append(h("div", { class: "card-head" }, h("span", { class: "kicker" }, g ? "Guardar à parte" : "Próxima peça"),
+    h("span", { class: "count", id: "m-count" }, g ? `${k} de ${inBag.length} para guardar à parte` : `${k} de ${inBag.length} neste saco · ${q.length} no total`)));
   const who = h("div", { class: "who" },
     h("div", { class: "bag" }, cur.lote !== null && cur.lote !== undefined ? `Saco ${cur.lote}` : "Peça sem saco"),
     h("div", { class: "num" }, `peça nº ${cur.n_no_lote ?? "?"}`),
-    h("div", { class: "where" }, lugarTxt(cur.cell)),
+    h("div", { class: "where" }, g ? `Lugar provável: ${lugarTxt(cur.cell).toLowerCase()}` : lugarTxt(cur.cell)),
     cur.pose_known ? null : h("div", { class: "small muted" }, "rotação por confirmar"),
     h("div", { class: "pid" }, cur.piece));
   card.append(h("div", { class: "card-top" }, pieceImg(cur), who));
   card.append(h("div", { class: "conf", "data-conf": cur.confianca }, bars(passes(cur)), h("span", {}, CONF_LONG[cur.confianca])));
+  if (g) card.append(h("p", { class: "small muted guardar-txt", id: "m-guardar-txt" },
+    "Ainda não há nenhuma peça montada ao lado deste lugar, por isso o encaixe não se pode verificar. ",
+    "Guarda-a num saquinho com o lugar escrito; volta à fila quando uma vizinha for montada."));
   const acts = h("div", { class: "actions" });
-  acts.append(h("button", { class: "btn primary big", type: "button", id: "b-encaixa", onclick: () => doEncaixa(cur) }, "Encaixa"));
-  if (cur.nao_encaixa) acts.append(h("button", { class: "btn big", type: "button", id: "b-nao", onclick: () => doNao(cur) }, "Não encaixa"));
+  if (g) {
+    acts.append(h("button", { class: "btn primary big", type: "button", id: "b-guardar", onclick: () => doGuardar(cur) }, "Guardei à parte"));
+    acts.append(h("button", { class: "btn big", type: "button", id: "b-nao", onclick: () => doNao(cur) }, "Não é esta"));
+  } else {
+    acts.append(h("button", { class: "btn primary big", type: "button", id: "b-encaixa", onclick: () => doEncaixa(cur) }, "Encaixa"));
+    if (cur.nao_encaixa) acts.append(h("button", { class: "btn big", type: "button", id: "b-nao", onclick: () => doNao(cur) }, "Não encaixa"));
+  }
   card.append(acts);
   card.append(h("div", { class: "links" },
     h("button", { class: "linkish", type: "button", id: "b-saltar", onclick: () => doSaltar(cur) }, "Saltar por agora"),
@@ -197,15 +211,44 @@ function renderMontar() {
   const nxt = q.filter((x) => x !== cur).slice(0, 3);
   if (nxt.length) {
     const same = nxt.every((x) => String(x.lote) === String(cur.lote));
-    T.append(h("h2", {}, same ? "A seguir, do mesmo saco" : "A seguir, primeiro as do mesmo saco"));
+    const allG = nxt.every(isGuardar);
+    T.append(h("h2", {}, allG ? "A seguir, para guardar à parte" : (same ? "A seguir, do mesmo saco" : "A seguir, primeiro as do mesmo saco")));
     const ul = h("ul", { class: "next", id: "m-seguir" });
-    for (const it of nxt) ul.append(h("li", {}, h("button", { type: "button", class: "next-row", onclick: () => { S.pick = it.piece; renderMontar(); } },
-      h("span", {}, quem(it)), h("span", { class: "w " + it.confianca }, CONF_TXT[it.confianca]))));
+    for (const it of nxt) ul.append(h("li", {}, h("button", { type: "button", class: "next-row", "data-tipo": it.tipo, onclick: () => { S.pick = it.piece; renderMontar(); } },
+      h("span", {}, quem(it)), h("span", { class: "w " + it.confianca }, isGuardar(it) ? "guardar à parte" : CONF_TXT[it.confianca]))));
     T.append(ul);
   }
+  const fora = groupsLine(m);
+  if (fora) T.append(fora);
   if (m.a_preparar && m.a_preparar.buracos) T.append(prepLine(m));
   if (m.em_pausa) T.append(pauseLine());
   drawTarget();
+}
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+/** Ecrã vazio (F1c): diz a verdade sobre o que ficou de fora da fila; «Nada para ir buscar» só sem propostas nenhumas. */
+function emptyScreen(m) {
+  const f = m.fora_da_fila || {};
+  const n = (f.guardar || 0) + (f.guardadas || 0) + (f.grupos_sem_lugar || 0);
+  if (!n) {
+    return h("div", { class: "empty", "data-estado": "vazio" }, h("strong", {}, "Nada para ir buscar."), h("p", {}, "Digitaliza mais um saco."),
+      h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, "Importar scan"));
+  }
+  const ul = h("ul", { class: "resumo", id: "m-resumo" });
+  if (f.guardar) ul.append(h("li", { "data-k": "guardar" }, `${plural(f.guardar, "peça", "peças")} para guardar à parte.`));
+  if (f.guardadas) ul.append(h("li", { "data-k": "guardadas" }, `${plural(f.guardadas, "peça guardada", "peças guardadas")} à parte, à espera de uma vizinha montada.`));
+  if (f.grupos_sem_lugar) ul.append(h("li", { "data-k": "grupos" }, `${plural(f.grupos_sem_lugar, "grupo", "grupos")} sem lugar: por agora só na interface completa.`));
+  return h("div", { class: "empty", "data-estado": "vazio_com_propostas" },
+    h("strong", {}, "Nenhuma peça para pôr agora."),
+    h("p", {}, "Nenhuma sugestão tem ainda uma peça montada ao lado para confirmar o encaixe."),
+    ul,
+    h("div", { class: "actions center" },
+      h("a", { class: "btn", href: "/", id: "m-completa" }, "Abrir a interface completa"),
+      h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, "Importar scan")));
+}
+function groupsLine(m) {
+  const n = (m.fora_da_fila || {}).grupos_sem_lugar || 0;
+  if (!n) return null;
+  return h("p", { class: "small muted", id: "m-grupos" }, `${plural(n, "grupo", "grupos")} sem lugar: `, h("a", { href: "/" }, "ver na interface completa"));
 }
 function prepLine(m) {
   const p = S.holesProgress || (m.a_preparar && m.a_preparar.progresso);
@@ -229,7 +272,7 @@ function renderPorque(T, it) {
 function renderNao(T) {
   const u = S.undo, it = u.item;
   const box = h("div", { class: "card nao", "data-piece": it.piece },
-    h("h3", {}, "Não encaixou"),
+    h("h3", {}, isGuardar(it) ? "Não é esta" : "Não encaixou"),
     h("div", { class: "small muted" }, `Saco ${it.lote ?? "—"} · peça nº ${it.n_no_lote ?? "?"} · linha ${it.cell[0]}, coluna ${it.cell[1]}`),
     h("p", {}, "Porquê? ", h("span", { class: "muted" }, "Podes saltar")));
   const opts = h("div", { class: "motivos", id: "m-motivos" });
@@ -260,6 +303,18 @@ async function doEncaixa(it) {
     S.undo = { tipo: "encaixa", item: it };
     S.pick = null; S.modo = "cartao";
     toastUndo(`${quem(it)} no lugar.`);
+    await afterWrite();
+  } catch (e) { toast(e.message, true); } finally { lockButtons(false); }
+}
+async function doGuardar(it) {
+  if (S.busy || !it || !it.guardar) return;
+  lockButtons(true);
+  try {
+    const r = await post(it.guardar.url, it.guardar.body);
+    writeFailed(r);
+    S.undo = { tipo: "guardar", item: it };
+    S.pick = null; S.modo = "cartao";
+    toastUndo(`${quem(it)} guardada à parte.`);
     await afterWrite();
   } catch (e) { toast(e.message, true); } finally { lockButtons(false); }
 }
@@ -299,6 +354,7 @@ async function doUndo() {
   lockButtons(true);
   try {
     if (u.tipo === "encaixa") await post("/api/confirm", { acao: "unplace", piece: u.item.piece, desfaz: true });
+    else if (u.tipo === "guardar") await post("/api/confirm", { acao: "position_clear", piece: u.item.piece, desfaz: true });
     else if (u.tipo === "nao" && u.rejeicoes.length) await post("/api/confirm", { acao: "undo_reject", rejeicoes: u.rejeicoes });
     S.undo = null; S.modo = "cartao"; S.pick = u.item.piece;
     toast(`Desfeito: ${quem(u.item)}.`);
@@ -383,24 +439,54 @@ async function findBagNumber(lote, n) {
   if (!p) { toast(`Não encontrei o nº ${n} no saco ${lote}.`); return; }
   return findPiece(p.id);
 }
+// A lupa mostra as propostas da peça e do lugar (F1c) numa caixa no topo do painel (#lupa-res), não só num aviso.
+const nomePeca = (pc) => (pc && pc.lote !== null && pc.lote !== undefined ? `Saco ${pc.lote} · nº ${pc.n_no_lote ?? "?"}` : "Peça sem saco");
+const GRUPO_TXT = { coloca_agora: "pôr agora: tem uma peça montada ao lado", guarda_posicao: "guardar à parte: ainda sem peça montada ao lado" };
+function propLine(e, quemTxt) {
+  const inQ = queue().find((it) => it.piece === e.piece && it.cell && e.cell && it.cell[0] === e.cell[0] && it.cell[1] === e.cell[1]);
+  const conf = inQ ? (isGuardar(inQ) ? "a confirmar por ti" : CONF_TXT[inQ.confianca]) : "a confirmar por ti";
+  const li = h("li", { "data-piece": e.piece, "data-grupo": e.grupo || "" },
+    h("span", {}, `${quemTxt}: ${GRUPO_TXT[e.grupo] || "proposta do programa"} (${conf}).`));
+  if (inQ) li.append(h("button", { type: "button", class: "linkish", onclick: () => { closeLupa(); S.pick = inQ.piece; S.modo = "cartao"; showTab("montar"); renderMontar(); } }, "Ver o cartão"));
+  return li;
+}
+function showLupa(titulo, linhas, props, kind) {
+  const box = $("#lupa-res");
+  box.replaceChildren(
+    h("div", { class: "lupa-head" }, h("strong", {}, titulo), h("button", { type: "button", class: "btn", id: "lupa-fechar", onclick: closeLupa }, "Fechar")),
+    ...linhas.map((t) => h("p", { class: "small" }, t)),
+    props.length ? h("ul", { class: "lupa-props", id: "lupa-props" }, ...props) : h("p", { class: "small muted", id: "lupa-sem" }, "Sem propostas do programa."));
+  box.dataset.kind = kind;
+  box.hidden = false;
+}
+function closeLupa() { const b = $("#lupa-res"); b.hidden = true; b.replaceChildren(); }
 async function findPiece(pid) {
-  const inQ = queue().find((it) => it.piece === pid);
-  if (inQ) { S.pick = pid; S.modo = "cartao"; showTab("montar"); renderMontar(); toast(`${quem(inQ)} está na fila.`); return; }
   let p;
   try { p = await api(`/api/pieces/${pid}`); } catch (e) { toast(`Não encontrei «${pid}».`); return; }
-  const pc = p.peca || p;
-  const nome = pc.lote !== null && pc.lote !== undefined ? `Saco ${pc.lote} · nº ${pc.n_no_lote ?? "?"}` : "Esta peça";
-  if (pc.celula) { showCell(pc.celula[0], pc.celula[1]); toast(`${nome} está no lugar: ${lugarTxt(pc.celula).toLowerCase()}.`); }
-  else toast(`${nome} ainda não tem lugar.`);
+  const pc = p.peca || p, nome = nomePeca(pc);
+  const linhas = [];
+  if (pc.estado === "colocada" && pc.celula) { showCell(pc.celula[0], pc.celula[1]); linhas.push(`Está no lugar: ${lugarTxt(pc.celula).toLowerCase()}.`); }
+  else if (pc.estado === "posicao_conhecida" && pc.celula) { showCell(pc.celula[0], pc.celula[1]); linhas.push(`Guardada à parte para a ${lugarTxt(pc.celula).toLowerCase()}, à espera de uma vizinha montada.`); }
+  else if (pc.estado === "em_seccao") linhas.push("Está num grupo sem lugar (por agora só na interface completa).");
+  else if (pc.estado === "descartada") linhas.push("Foi posta de lado.");
+  else linhas.push("Ainda não tem lugar.");
+  const withCell = (p.propostas || []).filter((e) => e.cell);
+  const props = withCell.map((e) => propLine(e, lugarTxt(e.cell)));
+  if (!pc.celula && withCell.length) showCell(withCell[0].cell[0], withCell[0].cell[1]);
+  const inQ = queue().find((it) => it.piece === pid);
+  if (inQ) { S.pick = pid; S.modo = "cartao"; showTab("montar"); renderMontar(); }
+  showLupa(nome, linhas, props, "peca");
 }
 async function findPlace(l, c) {
   if (!S.board || l < 1 || c < 1 || l > S.rows || c > S.cols) { toast(`Linha ${l} · coluna ${c} fica fora do tabuleiro.`); return; }
   showCell(l, c);
-  try {
-    const d = await api(`/api/cell/${l}/${c}`);
-    const pc = d.peca;
-    toast(pc ? `${lugarTxt([l, c])}: tem a peça do saco ${pc.lote ?? "—"} · nº ${pc.n_no_lote ?? "?"}.` : `${lugarTxt([l, c])}: ainda vazio.`);
-  } catch (e) { toast(e.message, true); }
+  let d;
+  try { d = await api(`/api/cell/${l}/${c}`); } catch (e) { toast(e.message, true); return; }
+  const pc = d.peca;
+  const linhas = [pc ? `Tem a peça do saco ${pc.lote ?? "—"} · nº ${pc.n_no_lote ?? "?"}.` : (d.estado === "vazia" ? "Ainda vazio." : "Marcado como montado.")];
+  for (const k of d.conhecidas || []) linhas.push(`Guardada à parte para aqui: ${nomePeca(k)}.`);
+  const props = (d.propostas || []).map((e) => propLine(e, nomePeca(e)));
+  showLupa(lugarTxt([l, c]), linhas, props, "lugar");
 }
 
 // ------------------------------------------------------------ eventos do servidor
@@ -455,7 +541,8 @@ function onKey(e) {
   if (S.tab !== "montar" || e.ctrlKey || e.metaKey || e.altKey) return;
   const cur = current();
   if (S.modo === "cartao") {
-    if (e.key === "Enter" && tag !== "BUTTON" && tag !== "A") { e.preventDefault(); doEncaixa(cur); }
+    // «Guardar à parte» não tem «Encaixa»: Enter não faz nada nesse cartão (o «Guardei à parte» é só por clique)
+    if (e.key === "Enter" && tag !== "BUTTON" && tag !== "A") { e.preventDefault(); if (!isGuardar(cur)) doEncaixa(cur); }
     else if (e.key === "n" || e.key === "N") { e.preventDefault(); doNao(cur); }
     else if (e.key === "s" || e.key === "S") { e.preventDefault(); doSaltar(cur); }
   } else if (S.modo === "nao" && e.key === "Enter" && tag !== "BUTTON") { S.modo = "cartao"; renderMontar(); }

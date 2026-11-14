@@ -79,7 +79,7 @@ ACTIONS = (
 	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
 	"report", "report_closed", "report_edited", "report_reopened", "report_deleted", "report_restored",
 	"piece_resegmented", "suspect_dismissed", "suspect_restored", "pose_set", "pose_cleared", "holes_alta_resumed",
-	"rejection_undone", "pair_unrejected", "rejection_noted",
+	"rejection_undone", "pair_unrejected", "rejection_noted", "position_cleared",
 )
 REJECTION_MOTIVES = ("forma", "imagem", "nao_sei")   # rejection_noted: «Porquê?» after «Não encaixa» (ESPEC §4.2)
 RESEGMENT_FIELDS = ("bbox", "cls", "n_flat", "chords_mm", "area_mm2", "shape_ok", "flags", "mean_lab")  # piece_resegmented
@@ -444,6 +444,10 @@ def apply(m: Model, ev: dict) -> None:
 		p.estado, p.celula = "posicao_conhecida", _cell(ev["cell"])
 		if ev.get("theta_deg") is not None:
 			p.theta_deg = float(ev["theta_deg"])
+	elif a == "position_cleared":
+		p = _piece(m, ev["piece"])
+		p.estado, p.celula = ev.get("to", "solta"), None
+		p.theta_deg = None      # the pose belonged to that kept-aside position
 	elif a == "pair_registered":
 		pr = Pair.from_dict(ev["pair"])
 		m.pairs[pr.id] = pr
@@ -993,6 +997,17 @@ class Project:
 		if other:
 			raise StateError(f"célula {cell} já é a posição conhecida de {other[0]}")
 		return self._emit("position_known", piece=piece_id, cell=cell, origin=origin, theta_deg=theta_deg)
+
+	def clear_position_known(self, piece_id: str, *, desfaz: bool = False) -> dict:
+		"""Undo :meth:`set_position_known`: the piece goes back to the loose pool (``emparelhada`` if it has an active
+		pair, else ``solta``) and loses its cell. ``desfaz``: the user's «desfazer» right after «Guardei à parte» (GUI
+		nova, F1c). Same log-compatibility note as :meth:`set_pose` (a new action)."""
+		p = self.piece(piece_id)
+		if p.estado != "posicao_conhecida" or p.celula is None:
+			raise StateError(f"{piece_id} está '{p.estado}': não está guardada à parte")
+		to = "emparelhada" if _active_pair(self.model, piece_id) else "solta"
+		extra = {"desfaz": True} if desfaz else {}
+		return self._emit("position_cleared", piece=piece_id, cell=p.celula, to=to, **extra)
 
 	# ------------------------------------------------------------ hole mould (M11): ranking confirmed / refused physically
 	def hole_confirm(self, piece_id: str, cell, *, meta: Optional[dict] = None, theta_deg: Optional[float] = None,

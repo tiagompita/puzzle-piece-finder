@@ -119,6 +119,18 @@ h3 { margin: 0 0 4px; font-size: 18px; }
 .motivos { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; }
 .motivos .btn { justify-content: flex-start; }
 .prep-line { margin-top: 14px; }
+/* F1c: «Guardar à parte», ecrã vazio com contagens, resultado da lupa */
+.card.guardar { border: 1px dashed var(--amber); }
+.guardar-txt { margin: 0 0 8px; }
+.alvo-tag.tracejado rect { fill: var(--bg2); stroke: var(--amber); stroke-width: 1.5px; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.alvo-tag.tracejado text { fill: var(--amber); }
+.resumo { list-style: none; padding: 0; margin: 12px 0; display: flex; flex-direction: column; gap: 6px; color: var(--text); }
+.actions.center { justify-content: center; }
+.lupa-res { background: var(--bg3); border-bottom: 1px solid var(--line); padding: 10px 16px; max-height: 45%; overflow-y: auto; flex: 0 0 auto; }
+.lupa-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.lupa-res p { margin: 6px 0; }
+.lupa-props { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.lupa-props li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 
 /* importar */
 .steps { padding-left: 22px; display: flex; flex-direction: column; gap: 14px; }

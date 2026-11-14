@@ -4,11 +4,16 @@ conhecidas) e as sugestões ``alta`` do molde do buraco (``Gui.alta_json``), o l
 
 Regras (decididas pelo Tiago em 2026-11-11, ESPEC §8):
 
-* **Fila (§8.2).** Só peças com vizinha montada (``grupo == 'coloca_agora'``) e ainda soltas. Começa pelo saco
+* **Fila (§8.2).** Primeiro as peças com vizinha montada (``grupo == 'coloca_agora'``) e ainda soltas. Começa pelo saco
   ``saco_atual`` (o que o browser está a esgotar) enquanto tiver peças; senão pelo saco do último scan importado;
   senão pelo saco com mais «quase certo». Os outros sacos seguem por nº de «quase certo», depois nº de peças, depois
   número do saco. Dentro do saco: «quase certo» primeiro, depois gémea/borda/fundida, par, posição guardada e molde
   do buraco, e por fim a ``ordem`` da consulta. «Saltar» é do browser (só na sessão).
+* **«Guardar à parte» (F1c, Tiago 2026-11-14).** Depois de esgotadas as «coloca agora», as propostas com peça sem
+  vizinha montada (``grupo == 'guarda_posicao'``: gémea, borda ou par) entram na fila como cartões ``tipo ==
+  'guardar'``: sempre «a confirmar por ti», sem «Encaixa» (não há vizinha para verificar), com «Guardei à parte»
+  (``position_known``) e «Não é esta» (``reject``). Uma peça que já está na fila como «coloca agora» não volta como
+  «guardar». O ecrã vazio diz o que ficou de fora (:func:`resumo`).
 * **«quase certo» (§8.3).** Só com a decisão do motor ``aceite`` / ``colocavel`` / ``alta``, sem encaixe
   incompatível nem traço a falhar, e com o histórico físico da origem × zona com n >= :data:`QUASE_CERTO_N` decisões e limite inferior
   de Wilson 95 % >= :data:`QUASE_CERTO_WILSON`. Decisões desfeitas não contam (:func:`src.state.undone_decisions`).
@@ -24,16 +29,18 @@ from __future__ import annotations
 import math
 from typing import Optional
 
-__all__ = ["QUASE_CERTO_N", "QUASE_CERTO_WILSON", "PENDING_STATES", "track_record", "confidence", "tracos", "fila",
-		   "progress"]
+__all__ = ["QUASE_CERTO_N", "QUASE_CERTO_WILSON", "PENDING_STATES", "GUARDAR_STATES", "track_record", "confidence",
+		   "tracos", "fila", "resumo", "progress"]
 
 QUASE_CERTO_N = 10                  # §8.3: decisões físicas mínimas por origem × zona
 QUASE_CERTO_WILSON = 0.80           # §8.3: limite inferior de Wilson 95 % mínimo
 FOLGA_LIMITE = 0.5                  # «passa com folga»: valor <= FOLGA_LIMITE × limite (forma, encaixe, imagem)
 FOLGA_MARGEM = 2.0                  # «passa com folga»: margem >= FOLGA_MARGEM × margin_min
 PENDING_STATES = ("solta", "emparelhada", "posicao_conhecida")
+GUARDAR_STATES = ("solta", "emparelhada")    # «Guardar à parte»: uma peça já guardada (posicao_conhecida) não volta
 _GOOD = ("aceite", "colocavel", "alta")
 _KIND_ORDER = {"gemea": 0, "fundida": 0, "borda": 0, "par": 1, "guardada": 2, "buraco": 3}
+_GUARDAR_ORIGINS = ("gemeo", "borda", "par")
 
 
 def _wilson_lo(k: int, n: int, z: float = 1.96) -> float:
@@ -94,6 +101,8 @@ def _record_ok(record: dict, origin: str, zone) -> bool:
 def confidence(item: dict, record: dict, profile=None) -> str:
 	"""``'quase_certo'`` ou ``'a_confirmar'`` (§8.3) para um item da fila (ver :func:`fila`). Um item com um traço
 	que falha (``item['tracos']``, ver :func:`tracos`) nunca é «quase certo»."""
+	if item["tipo"] == "guardar":
+		return "a_confirmar"          # sem vizinha montada o encaixe não se verifica: nunca «quase certo» (F1c)
 	zone = _zone(profile, item.get("cell"))
 	enc = (item.get("encaixe") or {}).get("estado")
 	if enc == "incompativel" or any(t.get("estado") == "falha" for t in item.get("tracos") or []):
@@ -144,6 +153,8 @@ def _margin_level(m, mmin) -> int:
 
 def tracos(item: dict, profile=None) -> list:
 	"""Os 3 traços do «Porquê esta peça?» (§4.3, §8.4): forma, imagem, distância para a 2.ª candidata."""
+	if item["tipo"] == "guardar":
+		return tracos(dict(item, tipo=item.get("tipo_base") or "gemea"), profile)
 	cal = (getattr(profile, "calibration", None) or {}) if profile is not None else {}
 	t95 = (cal.get("silhueta_silhueta") or {}).get("t95")
 	t_abs = (cal.get("buraco") or {}).get("t_abs")
@@ -208,6 +219,8 @@ def _actions(item: dict) -> tuple:
 	"""(encaixa, nao_encaixa): ``{url, body}`` dos pedidos que o botão faz (o servidor diz qual)."""
 	pid, cell = item["piece"], item["cell"]
 	l, c = int(cell[0]), int(cell[1])
+	if item["tipo"] == "guardar":
+		return None, {"url": "/api/confirm", "body": {"acao": "reject", "piece": pid}}
 	if item["tipo"] == "fundida":
 		return ({"url": f"/api/holes/{l}/{c}/confirmar", "body": {"piece": pid, "gemea": True}},
 				{"url": f"/api/holes/{l}/{c}/rejeitar", "body": {"piece": pid, "gemea": True}})
@@ -228,12 +241,19 @@ def _item(e: dict, tipo: str) -> dict:
 	return it
 
 
+def _guardar_action(item: dict) -> dict:
+	"""«Guardei à parte»: a posição fica conhecida (como o «Guardei num saquinho» da interface completa)."""
+	return {"url": "/api/confirm", "body": {"acao": "position_known", "piece": item["piece"], "cell": list(item["cell"]),
+											"origin": item.get("origin"), "nota": "saquinho"}}
+
+
 def fila(entries: list, alta: Optional[dict], record: dict, profile=None, *, saco_atual=None,
 		 ultimo_saco=None) -> dict:
 	"""A fila do Montar. ``entries``: entradas de ``/api/fetch`` (com ``grupo`` e ``estado_atual``); ``alta``: o
 	``buracos_alta`` de ``/api/fetch`` (``em_pausa``, ``entries``). Devolve ``{itens, saco, ordem_sacos, total,
-	em_pausa}``; cada item tem ``tipo`` (gemea | borda | fundida | par | guardada | buraco), ``confianca``,
-	``tracos``, ``encaixa`` / ``nao_encaixa`` (pedidos) e os campos da entrada de que o ecrã precisa."""
+	em_pausa, n_coloca, n_guardar}``; cada item tem ``tipo`` (gemea | borda | fundida | par | guardada | buraco |
+	guardar), ``confianca``, ``tracos``, ``encaixa`` / ``nao_encaixa`` / ``guardar`` (pedidos) e os campos da entrada
+	de que o ecrã precisa. Os cartões ``guardar`` vêm sempre depois de todos os outros (F1c)."""
 	alta = alta or {}
 	paused = bool(alta.get("em_pausa"))
 	fused = {}
@@ -268,10 +288,24 @@ def fila(entries: list, alta: Optional[dict], record: dict, profile=None, *, sac
 				continue
 			seen.add(key)
 			items.append(_item(a, "buraco"))
-	for it in items:
+	in_queue = {it["piece"] for it in items}
+	keep = []
+	for e in entries:
+		if not e.get("piece") or not e.get("cell") or e.get("grupo") != "guarda_posicao":
+			continue
+		if e.get("origin") not in _GUARDAR_ORIGINS or e["piece"] in in_queue:
+			continue
+		if e.get("estado_atual") and e["estado_atual"] not in GUARDAR_STATES:
+			continue
+		in_queue.add(e["piece"])
+		it = _item(e, "guardar")
+		it["tipo_base"] = _kind(e)
+		keep.append(it)
+	for it in items + keep:
 		it["tracos"] = tracos(it, profile)
 		it["confianca"] = confidence(it, record, profile)
 		it["encaixa"], it["nao_encaixa"] = _actions(it)
+		it["guardar"] = _guardar_action(it) if it["tipo"] == "guardar" else None
 	by: dict = {}
 	for it in items:
 		by.setdefault(it.get("lote"), []).append(it)
@@ -288,10 +322,27 @@ def fila(entries: list, alta: Optional[dict], record: dict, profile=None, *, sac
 		start = next((k for k in (saco_atual, ultimo_saco) if k is not None and k in by), rest[0])
 		order = [start] + [k for k in rest if k != start]
 	out = [it for k in order for it in by.get(k, [])]
+	n_coloca = len(out)
+	rank = {k: i for i, k in enumerate(order)}
+	keep.sort(key=lambda it: (rank.get(it.get("lote"), len(order)), it.get("lote") is None, it.get("lote") or 0,
+							  it.get("ordem") if it.get("ordem") is not None else 10 ** 6, it["piece"]))
+	out += keep
 	for i, it in enumerate(out):
 		it["posicao"] = i
 	return {"itens": out, "saco": (order[0] if order else None), "ordem_sacos": order, "total": len(out),
-			"em_pausa": paused, "n_por_saco": {str(k): len(by[k]) for k in order}}
+			"n_coloca": n_coloca, "n_guardar": len(keep), "em_pausa": paused,
+			"n_por_saco": {str(k): len(by[k]) for k in order}}
+
+
+def resumo(entries: list, itens: list, guardadas: int = 0) -> dict:
+	"""O que fica fora da fila, para o ecrã vazio dizer a verdade (F1c, Tiago 2026-11-14): ``guardar`` (cartões
+	«Guardar à parte» na fila), ``guardadas`` (peças já guardadas à parte à espera de uma vizinha montada, contadas
+	pelo chamador), ``grupos_sem_lugar`` (grupos por ancorar na consulta, ``origin == 'seccao'``) e ``propostas``
+	(entradas da consulta com peça ou grupo). Até à F4, os grupos só se veem na interface completa."""
+	n_sec = sum(1 for e in entries if e.get("origin") == "seccao")
+	n_prop = sum(1 for e in entries if e.get("piece") or e.get("origin") == "seccao")
+	return {"guardar": sum(1 for it in itens if it.get("tipo") == "guardar"), "guardadas": int(guardadas),
+			"grupos_sem_lugar": n_sec, "propostas": n_prop}
 
 
 def progress(board, user_source: str = "tiago") -> dict:

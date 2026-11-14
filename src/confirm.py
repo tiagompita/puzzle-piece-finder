@@ -126,7 +126,7 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			discard: bool = False, reason: str = "", cell_full=None, cell_empty=None, requery: bool = True,
 			use_image: bool = True, unplace: bool = False, theta_deg: Optional[float] = None, pose=None,
 			pose_repor: bool = False, nota: str = "", hole=None, hole_reject=None, gemea: bool = False,
-			desfaz: bool = False, undo_reject=None) -> dict:
+			desfaz: bool = False, undo_reject=None, clear_position: bool = False) -> dict:
 	"""Apply one confirmation; returns ``{messages, affected_cells, affected_pieces, entries, invariants}``
 	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error).
 
@@ -136,6 +136,9 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 	``theta_deg`` (with ``cell``): board pose when the fetch entry of that cell has none (refused
 	otherwise). ``unplace``: undo the placement of a loose piece (not of a section piece); with ``desfaz`` it is the
 	user's «desfazer» right after «Encaixa» (the confirmation stops counting, ESPEC §8.1).
+
+	``clear_position``: undo a ``position_known`` (the piece is loose again; with ``desfaz`` it is the user's «desfazer»
+	right after «Guardei à parte», GUI nova F1c).
 
 	``undo_reject``: list of rejections to undo (ESPEC §5.1), each ``{piece, cell, origin}`` (``twin_rejected`` /
 	``hole_rejected``) or ``{pair}`` (``pair_rejected``); the proposals come back with the re-query.
@@ -225,6 +228,15 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			c0 = tuple(p.celula)
 			ev = pr.unplace(piece_id, desfaz=desfaz)
 			msgs.append(f"{piece_id} retirada de {c0} (volta a '{ev['to']}'; a célula volta a '{ev['restore']['estado']}')")
+			cells |= _around(pr, c0)
+			pieces.add(piece_id)
+		elif clear_position:
+			p = pr.piece(piece_id)
+			if p.estado != "posicao_conhecida" or p.celula is None:
+				return {"error": f"{piece_id} está '{p.estado}': não está guardada à parte"}
+			c0 = tuple(p.celula)
+			ev = pr.clear_position_known(piece_id, desfaz=desfaz)
+			msgs.append(f"{piece_id} deixa de estar guardada à parte para {c0} (volta a '{ev['to']}')")
 			cells |= _around(pr, c0)
 			pieces.add(piece_id)
 		elif undo_reject is not None:

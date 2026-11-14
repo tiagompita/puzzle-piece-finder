@@ -164,6 +164,9 @@ LEGEND = [
 	# GUI nova (/novo/, redesenho F1b): só em /api/board?ui=novo; ``curta`` = entra na legenda curta do Montar
 	{"id": "alvo", "tipo": "svg", "classe": "b-alvo", "rotulo": "Onde vai a peça", "texto": "o lugar da peça atual",
 	 "detalhe": "o lugar da peça do cartão «Próxima peça», a âmbar, com a etiqueta «vai aqui»", "gui": "novo", "curta": True},
+	{"id": "alvo_guardar", "tipo": "svg", "classe": "b-alvo-tracejado", "rotulo": "Lugar provável", "texto": "guardar à parte",
+	 "detalhe": "o lugar provável de uma peça do cartão «Guardar à parte» (ainda sem peça montada ao lado), a tracejado",
+	 "gui": "novo", "curta": True},
 	{"id": "seguinte", "tipo": "svg", "classe": "b-seguinte", "rotulo": "A seguir", "texto": "lugares das peças seguintes",
 	 "detalhe": "os lugares das 3 peças seguintes da fila, com contorno ténue", "gui": "novo"},
 	{"id": "por_montar", "tipo": "raster", "classe": None, "rotulo": "Por montar", "texto": "só a arte da caixa",
@@ -1345,8 +1348,11 @@ class Gui:
 		rec = MT.track_record(evs, pr.profile)
 		q = MT.fila(f["entries"], f.get("buracos_alta"), rec, pr.profile, saco_atual=saco_atual, ultimo_saco=ultimo_saco)
 		alta = f.get("buracos_alta") or {}
+		in_q = {it["piece"] for it in q["itens"]}
+		guardadas = sum(1 for p in pr.pieces.values() if p.estado == "posicao_conhecida" and p.id not in in_q)
 		return {"versao": self.version(), "puzzle": pr.profile.name or pr.profile.id, "total_celulas": pr.profile.cell_count(),
 				"progresso": MT.progress(pr.board), "ultimo_scan": last_scan, "ultimo_saco": ultimo_saco, **q,
+				"fora_da_fila": MT.resumo(f["entries"], q["itens"], guardadas),
 				"a_preparar": {"buracos": bool(alta.get("a_calcular")), "progresso": alta.get("progresso")},
 				"historico": [{"origem": k[0], "zona": k[1], **v}
 							  for k, v in sorted(rec.items(), key=lambda kv: (str(kv[0][0]), str(kv[0][1])))],
@@ -1360,7 +1366,8 @@ class Gui:
 		tw = prof.twin(l, c)
 		tcell = pr.board[tw] if tw else None
 		tpid = tcell["peca_id"] if tcell and tcell["estado"] == "colocada" else None
-		props = [dict(e, razoes_txt=plain_reasons(e, prof), origem_txt=ORIGIN_TXT.get(e.get("origin"), e.get("origin")))
+		props = [dict(e, razoes_txt=plain_reasons(e, prof), origem_txt=ORIGIN_TXT.get(e.get("origin"), e.get("origin")),
+					  grupo=fetch_group(pr, e))
 				 for e in self.fetch_entries()
 				 if e.get("cell") and tuple(e["cell"]) == (l, c) and e.get("piece")]
 		known = [self.piece_summary(p.id) for p in pr.pieces.values() if p.estado == "posicao_conhecida" and p.celula == (l, c)]
@@ -1604,6 +1611,8 @@ class Gui:
 				r = confirm(pr, pid, unplace=True, desfaz=True, **kw)     # «desfazer» de «Encaixa» (GUI nova)
 			elif acao == "unplace":
 				r = self._unplace(pid, _around)
+			elif acao == "position_clear":
+				r = confirm(pr, pid, clear_position=True, desfaz=bool(body.get("desfaz")), **kw)   # «desfazer» de «Guardei à parte»
 			elif acao == "undo_reject":
 				rs = body.get("rejeicoes")
 				if not isinstance(rs, list) or not rs:
@@ -2858,7 +2867,8 @@ def create_app(gui: Gui):
 			th, why = gui.board_pose(pid)
 			d.update(pose_tabuleiro=th, pose_origem=why,
 					 propostas=[dict(e, razoes_txt=plain_reasons(e, gui.pr.profile),
-									 origem_txt=ORIGIN_TXT.get(e.get("origin"), e.get("origin"))) for e in gui.fetch_entries()
+									 origem_txt=ORIGIN_TXT.get(e.get("origin"), e.get("origin")),
+									 grupo=fetch_group(gui.pr, e)) for e in gui.fetch_entries()
 								if e.get("piece") == pid],
 					 img=f"/api/pieces/{pid}.png?pose=board", img_scan=f"/api/pieces/{pid}.png?pose=scan",
 					 folha=f"/api/sheets/{gui.pr.piece(pid).scan_id}.jpg?highlight={pid}")
