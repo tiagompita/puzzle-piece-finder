@@ -462,13 +462,14 @@ def _body_center(sh):
 	return np.asarray(sh.c, float).mean(0)
 
 
-def ghost_contour(shape, pose: dict, profile, max_pts: int = GHOST_MAX_PTS) -> Optional[list]:
+def ghost_contour(shape, pose: dict, profile, max_pts: int = GHOST_MAX_PTS, rot_deg: Optional[float] = None) -> Optional[list]:
 	"""Contour of a placed piece moved to its twin cell, in cell units about that cell's centre.
 
 	Board pose of the placed piece: ``R(theta) (c - pivot) + d`` about its own cell centre;
 	the twin cell sees it turned by ``profile.twin_rotation_deg()`` about the centre, so the
 	ghost is ``R(rot) (R(theta) (c - pivot) + d)``, divided by ``cell_mm`` (x by w, y by h).
-	Returns ``[[x, y], ...]`` (<= ``max_pts`` points, 4 decimals) or None.
+	Returns ``[[x, y], ...]`` (<= ``max_pts`` points, 4 decimals) or None. ``rot_deg`` replaces the twin rotation
+	(``0``: the piece's own outline in its own cell, the «por confirmar» drawing of the new GUI, F1d).
 	"""
 	from src.shape import transform_contour
 	if shape is None or pose is None:
@@ -477,7 +478,7 @@ def ghost_contour(shape, pose: dict, profile, max_pts: int = GHOST_MAX_PTS) -> O
 	if len(c) < 3:
 		return None
 	piv = np.asarray(pose["pivot_mm"], float) if pose.get("pivot_mm") is not None else _body_center(shape)
-	rot = float(profile.twin_rotation_deg())
+	rot = float(profile.twin_rotation_deg()) if rot_deg is None else float(rot_deg)
 	g = transform_contour(c - piv, float(pose["theta_deg"]) + rot, center=(0.0, 0.0))
 	d = transform_contour(np.array([[pose.get("dx_mm") or 0.0, pose.get("dy_mm") or 0.0]]), rot, center=(0.0, 0.0))
 	g = g + d

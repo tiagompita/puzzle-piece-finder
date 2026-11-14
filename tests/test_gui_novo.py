@@ -229,10 +229,10 @@ def test_guardar_card_not_nada_no_encaixa_dashed(guarda, browser):
 		txt = _montar_text(pg)
 		assert NADA not in txt
 		assert pg.locator("#tab-montar .card").get_attribute("data-piece") == tw
-		assert "Guardar à parte" in txt and "A confirmar por ti" in txt and "Lugar provável: linha" in txt
+		assert "Sem vizinha montada" in txt and "A confirmar por ti" in txt and "Lugar provável: linha" in txt
 		assert pg.locator("#b-encaixa").count() == 0                                   # sem «Encaixa»
-		assert pg.locator("#b-guardar").inner_text() == "Guardei à parte"
-		assert pg.locator("#b-nao").inner_text() == "Não é esta"
+		assert pg.locator("#b-guardar").inner_text() == "Colocar aqui"                 # F1d (era «Guardei à parte»)
+		assert pg.locator("#b-nao").inner_text() == "Não pertence aqui"                # F1d (era «Não é esta»)
 		assert "quase certo" not in txt
 		_no_forbidden(txt)
 		# alvo tracejado com «lugar provável», não o «vai aqui» cheio
@@ -266,7 +266,7 @@ def test_guardar_then_undo_toast_and_ctrl_z(guarda, browser):
 		assert pg.locator("#m-completa").get_attribute("href") == "/"
 		_no_forbidden(txt)
 		toast = pg.locator("#toast .undo-toast")
-		assert "guardada à parte" in toast.inner_text() and not re.search(r"\bP\d{4}\b", toast.inner_text())
+		assert "por confirmar" in toast.inner_text() and not re.search(r"\bP\d{4}\b", toast.inner_text())
 		toast.locator("button").click()
 		pg.wait_for_selector(f"#tab-montar .card[data-piece='{tw}'][data-tipo='guardar']", timeout=60_000)
 		assert gui.pr.piece(tw).estado == "solta"
@@ -282,20 +282,26 @@ def test_guardar_then_undo_toast_and_ctrl_z(guarda, browser):
 		pg.close()
 
 
-def test_nao_e_esta_undo(guarda, browser):
+def test_nao_pertence_aqui_no_porque_and_undo(guarda, browser):
+	"""F1d ponto 3: «Não pertence aqui» (era «Não é esta») não pergunta «Porquê?»; desfaz-se pela faixa da última ação e
+	por Ctrl+Z."""
 	url, gui, tw, dec = guarda
 	pg, errs = _open_any(browser, url)
 	try:
 		pg.wait_for_selector("#b-nao", timeout=30_000)
 		pg.click("#b-nao")
-		pg.wait_for_selector("#m-motivos", timeout=60_000)
-		assert "Não é esta" in pg.locator("#tab-montar h3").inner_text()
+		pg.wait_for_selector("#tab-montar [data-estado=vazio]", timeout=60_000)
+		pg.wait_for_function("!S.busy", timeout=60_000)
+		assert pg.locator("#m-motivos").count() == 0 and "Porquê?" not in pg.locator("#tab-montar").inner_text()
 		assert [e for e in gui.pr.events() if e["action"] == "twin_rejected"]
-		pg.click("#b-desfazer")                                                       # «Enganei-me, desfazer»
+		assert "não pertence" in pg.locator("#m-ultimo").inner_text()
+		pg.click("#b-desfazer-ultimo")
 		pg.wait_for_selector(f"#tab-montar .card[data-tipo][data-piece='{tw}']", timeout=60_000)
 		assert not gui.pr.model.rejections
 		pg.click("#b-nao")
-		pg.wait_for_selector("#m-motivos", timeout=60_000)
+		pg.wait_for_selector("#tab-montar [data-estado=vazio]", timeout=60_000)
+		pg.wait_for_function("!S.busy", timeout=60_000)
+		assert pg.locator("#m-motivos").count() == 0
 		pg.keyboard.press("Control+z")
 		pg.wait_for_selector(f"#tab-montar .card[data-tipo][data-piece='{tw}']", timeout=60_000)
 		assert not gui.pr.model.rejections
@@ -326,7 +332,7 @@ def test_order_coloca_first_then_guardar(guarda, browser):
 		assert pg.locator("#tab-montar .card").get_attribute("data-piece") == dec
 		assert pg.locator("#b-encaixa").count() == 1
 		assert pg.locator("#m-seguir [data-tipo=guardar]").count() == 1
-		assert "guardar à parte" in pg.locator("#m-seguir").inner_text()
+		assert "sem vizinha montada" in pg.locator("#m-seguir").inner_text()
 		pg.click("#b-saltar")
 		assert pg.locator("#tab-montar .card").get_attribute("data-piece") == dec        # 1.º salto: ainda antes
 		pg.click("#b-saltar")
@@ -376,7 +382,7 @@ def test_lupa_shows_piece_and_place_proposals(guarda, browser):
 		li = pg.locator("#lupa-props li")
 		assert li.count() == 1 and li.get_attribute("data-grupo") == "guarda_posicao"
 		t = pg.locator("#lupa-res").inner_text()
-		assert f"Saco {p.lote} · nº {p.n_no_lote}" in t and f"Linha {cell[0]} · coluna {cell[1]}" in t and "guardar à parte" in t
+		assert f"Saco {p.lote} · nº {p.n_no_lote}" in t and f"Linha {cell[0]} · coluna {cell[1]}" in t and "sem vizinha montada" in t
 		_no_forbidden(t)
 		pg.click("#lupa-fechar")
 		assert pg.locator("#lupa-res").is_hidden()
@@ -384,7 +390,7 @@ def test_lupa_shows_piece_and_place_proposals(guarda, browser):
 		pg.press("#q", "Enter")
 		pg.wait_for_selector("#lupa-res[data-kind=lugar]:not([hidden]) #lupa-props li", timeout=30_000)
 		t = pg.locator("#lupa-res").inner_text()
-		assert "Ainda vazio." in t and f"Saco {p.lote} · nº {p.n_no_lote}" in t and "guardar à parte" in t
+		assert "Ainda vazio." in t and f"Saco {p.lote} · nº {p.n_no_lote}" in t and "sem vizinha montada" in t
 		assert pg.locator("#lupa-props li").get_attribute("data-piece") == tw
 		_no_forbidden(t.replace(f"Linha {cell[0]} · coluna {cell[1]}", ""))
 		# um lugar sem propostas diz-o
@@ -416,6 +422,155 @@ def test_guardar_phone_layout(guarda, browser):
 		pg.wait_for_selector("#m-completa", timeout=60_000)
 		assert pg.locator("#m-completa").bounding_box()["height"] >= 44 - 0.5
 		assert not pg.evaluate("document.documentElement.scrollWidth > window.innerWidth")
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+# ---------------------------------------------------------------- F1d: o desfazer fica visível depois da ação
+def _undo_button_ok(pg):
+	"""O botão «Desfazer» visível no ecrã, dentro do viewport e por cima de tudo (clicável), ou None."""
+	return pg.evaluate("""(() => {
+		const b = [...document.querySelectorAll('button')].find((x) => /Desfazer/.test(x.innerText) && x.offsetParent !== null);
+		if (!b) return null;
+		const r = b.getBoundingClientRect();
+		const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+		return { id: b.id, inView: r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth,
+				 onTop: !!top && (top === b || b.contains(top)), h: r.height };
+	})()""")
+
+
+@pytest.mark.parametrize("vp", [(1366, 768), (390, 844)])
+def test_undo_visible_after_colocar_aqui(guarda, browser, vp):
+	"""F1d ponto 1: depois de «Colocar aqui» (o antigo «Guardei à parte») o desfazer tem de estar visível e clicável,
+	também depois de o aviso temporário desaparecer (o Tiago não o viu: só havia um aviso de 9 s)."""
+	url, gui, tw, dec = guarda
+	pg, errs = _open_any(browser, url, *vp)
+	try:
+		pg.wait_for_selector("#b-guardar", timeout=30_000)
+		pg.click("#b-guardar")
+		pg.wait_for_selector("#tab-montar [data-estado=vazio_com_propostas]", timeout=60_000)
+		pg.wait_for_function("!S.busy", timeout=60_000)
+		assert gui.pr.piece(tw).estado == "posicao_conhecida"
+		pg.wait_for_timeout(9_600)                    # o aviso temporário dura 9 s
+		u = _undo_button_ok(pg)
+		assert u and u["inView"] and u["onTop"] and u["h"] >= 44 - 0.5, u
+		pg.click(f"#{u['id']}")
+		pg.wait_for_selector(f"#tab-montar .card[data-piece='{tw}'][data-tipo='guardar']", timeout=60_000)
+		assert gui.pr.piece(tw).estado == "solta"
+		assert [e for e in gui.pr.events() if e["action"] == "position_cleared"][-1].get("desfaz") is True
+		assert _undo_button_ok(pg) is None             # desfeito: o botão sai
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_colocar_aqui_draws_por_confirmar_not_in_progress(guarda, browser):
+	"""F1d ponto 2: depois de «Colocar aqui» a peça aparece no lugar, ténue e a tracejado («por confirmar»), com entrada na
+	legenda curta; o progresso do topo não muda (o lugar continua vazio para o programa)."""
+	url, gui, tw, dec = guarda
+	pg, errs = _open_any(browser, url)
+	try:
+		pg.wait_for_selector("#b-guardar", timeout=30_000)
+		before = pg.locator("#progress-txt").inner_text()
+		assert pg.locator("#lyr-conhecida .por-confirmar").count() == 0
+		assert pg.locator("#legend [data-legend=por_confirmar]").count() == 0
+		pg.click("#b-guardar")
+		pg.wait_for_selector(f"#lyr-conhecida .por-confirmar[data-piece='{tw}']", timeout=60_000)
+		pg.wait_for_function("!S.busy", timeout=60_000)
+		cell = gui.pr.piece(tw).celula
+		g = pg.locator(f"#lyr-conhecida .por-confirmar[data-piece='{tw}']")
+		assert g.get_attribute("data-cell") == f"{cell[0]},{cell[1]}"
+		dash = pg.evaluate("getComputedStyle(document.querySelector('#lyr-conhecida .b-por-confirmar')).strokeDasharray")
+		assert dash and dash != "none", dash
+		if gui.pr.piece(tw).theta_deg is not None:                       # imagem rodada como fica, ténue
+			op = float(pg.evaluate("getComputedStyle(document.querySelector('#lyr-conhecida .por-confirmar-img')).opacity"))
+			assert 0 < op < 1, op
+		assert pg.locator("#legend [data-legend=por_confirmar]").count() == 1
+		assert pg.locator("#progress-txt").inner_text() == before
+		# o menu esconde-as (e a legenda deixa de as mostrar)
+		pg.click("#menu-btn")
+		pg.click("#m-guardadas")
+		assert pg.locator("#lyr-conhecida .por-confirmar").count() == 0
+		assert pg.locator("#legend [data-legend=por_confirmar]").count() == 0
+		pg.click("#m-guardadas")
+		assert pg.locator("#lyr-conhecida .por-confirmar").count() == 1
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_localizar_recentres_without_changing_piece(guarda, browser):
+	"""F1d ponto 4: «localizar» (só ícone, aria-label e dica) volta a centrar o tabuleiro no alvo, sem mudar de peça."""
+	url, gui, tw, dec = guarda
+	pg, errs = _open_any(browser, url)
+	try:
+		pg.wait_for_selector("#b-localizar", timeout=30_000)
+		b = pg.locator("#b-localizar")
+		assert b.inner_text().strip() == "" and b.get_attribute("aria-label") and b.get_attribute("title")
+		bb = b.bounding_box()
+		assert bb["height"] >= 44 - 0.5 and bb["width"] >= 44 - 0.5
+		cell = [e for e in gui.fetch_entries() if e.get("piece") == tw][0]["cell"]
+		x, y = cell[1] - 0.5, (cell[0] - 0.5) * pg.evaluate("S.hr")
+		pg.evaluate("setView({ x: S.cols + 5, y: 0, w: 2, h: 1.5 })")   # o Tiago deslocou o tabuleiro para longe do alvo
+		vb = pg.evaluate("S.vb")
+		assert not (vb["x"] < x < vb["x"] + vb["w"]), vb
+		b.click()
+		vb = pg.evaluate("S.vb")
+		assert vb["x"] < x < vb["x"] + vb["w"] and vb["y"] < y < vb["y"] + vb["h"], (vb, cell)
+		# alvo já à vista mas encostado à margem: «localizar» volta a enquadrá-lo na mesma (força o deslocamento)
+		pg.evaluate(f"setView({{ x: {x} - 1.6, y: {y} - 1.6, w: 10, h: 7 }})")
+		v0 = pg.evaluate("S.vb")
+		b.click()
+		vb = pg.evaluate("S.vb")
+		assert vb != v0 and vb["x"] < x < vb["x"] + vb["w"] and vb["y"] < y < vb["y"] + vb["h"], (v0, vb, cell)
+		assert pg.locator("#tab-montar .card").get_attribute("data-piece") == tw   # a mesma peça
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+@pytest.mark.parametrize("vp", [(1366, 768), (390, 844)])
+def test_icons_local_aria_and_layout(guarda, browser, vp):
+	"""F1d ponto 5: ícones Lucide servidos daqui (nenhum pedido fora do servidor), desenhados (máscara carregada), ícone com
+	texto nas abas, nos botões principais e no menu; sem texto só «localizar» e os botões de ícone, sempre com aria-label;
+	a 390 px sem scroll horizontal e alvos ≥ 44 px."""
+	url, gui, tw, dec = guarda
+	pg = browser.new_page(viewport={"width": vp[0], "height": vp[1]})
+	errs, reqs = [], []
+	pg.on("pageerror", lambda e: errs.append(str(e)))
+	pg.on("request", lambda r: reqs.append(r.url))
+	try:
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		pg.wait_for_selector("#b-guardar", timeout=30_000)
+		pg.click("#menu-btn")
+		pg.wait_for_timeout(300)
+		ext = [u for u in reqs if not u.startswith(url) and not u.startswith("data:")]
+		assert not ext, ext
+		icons = [u for u in reqs if "/novo/icons/" in u]
+		assert icons, "nenhum ícone pedido"
+		for sel in ("#tabs button", "#b-guardar", "#b-nao", "#b-saltar", "#b-porque", "#m-diag", "#m-atividade",
+					"label:has(#m-fantasmas)", "label:has(#m-borda)", "label:has(#m-guardadas)"):
+			loc = pg.locator(sel)
+			for i in range(loc.count()):
+				el = loc.nth(i)
+				assert el.locator(".ico").count() == 1, sel
+				assert el.inner_text().strip(), sel                                    # ícone COM texto
+		bad = pg.evaluate("""[...document.querySelectorAll('.ico')].filter((e) => e.offsetParent !== null)
+			.filter((e) => { const m = getComputedStyle(e).maskImage || getComputedStyle(e).webkitMaskImage;
+							 return !m || m === 'none' || !/icons\//.test(m); }).map((e) => e.className)""")
+		assert not bad, bad
+		# todo o botão visível sem texto tem aria-label
+		noname = pg.evaluate("""[...document.querySelectorAll('button, a')].filter((b) => b.offsetParent !== null)
+			.filter((b) => !b.innerText.trim() && !b.getAttribute('aria-label')).map((b) => b.id || b.className)""")
+		assert not noname, noname
+		assert not pg.evaluate("document.documentElement.scrollWidth > window.innerWidth")
+		for sel in ("#tabs button", "#b-guardar", "#b-nao", "#b-saltar", "#b-porque", "#b-localizar", "#menu-btn",
+					"#m-diag", "#m-atividade"):
+			for i in range(pg.locator(sel).count()):
+				bb = pg.locator(sel).nth(i).bounding_box()
+				assert bb and bb["height"] >= 44 - 0.5 and bb["x"] >= 0 and bb["x"] + bb["width"] <= vp[0] + 0.5, (sel, bb)
 		assert not errs, errs
 	finally:
 		pg.close()

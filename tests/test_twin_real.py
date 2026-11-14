@@ -5,8 +5,10 @@
     ``modality='silhueta_silhueta'``: 20/20 ``aceite`` for A1 -> B2 and A2 -> B2, median twin
     distance <= 0.5 mm.
 (b) E-real-2 (docs/diagnostico/gemeos/EREAL2.md §8): the 188 loose pieces of the E-real-2
-    memory (contours from ``segment_scan``, cached in ``$PPF_SCRATCH/ereal2/memoria.pkl`` by
-    ``tools/diagnostico/gemeos/ereal2.py``; the decisions here are all ``src.twin``'s):
+    memory (contours from ``segment_scan``, kept in the repository as ``tests/data/ereal2_memoria.npz``, 53 KB,
+    made by ``python tools/diagnostico/gemeos/ereal2_fixture.py`` (≈ 45 s, no ``PPF_SCRATCH`` needed; until
+    2026-11-14 the test read ``$PPF_SCRATCH/ereal2/memoria.pkl`` and was skipped without it); the scans are in
+    ``images/pieces/``; the decisions here are all ``src.twin``'s):
     BE(2,4) -> f2p1 #4 ``aceite`` (d1 ~0.41, margin ~2.4) and BE(5,5) -> f1p1 #6 (d1 ~0.54,
     single candidate: ``ambigua`` until 2026-11-01, now ``sem`` with ``decision_shape``
     ``ambigua`` and ``single_candidate`` set, product decision 2026-11-01), both consistent
@@ -15,13 +17,12 @@
     other 18 BE ``sem``, and 0 ``aceite`` among the known-negative pairs. The orientation chain
     is checked on the 20 E-sym pairs (A1 with its F side up -> predicted B2 pose has its F side down).
 
-Numbers are printed (run with ``-s``) and written to ``$PPF_SCRATCH/twin/twin_real.json``.
-Skips if the scans, ``PPF_SCRATCH`` or the memory are missing.
+Numbers are printed (run with ``-s``) and, with ``PPF_SCRATCH`` set, written to ``$PPF_SCRATCH/twin/twin_real.json``.
+Skips only if the scans or the memory file are missing.
 """
 
 import json
 import os
-import pickle
 import time
 
 import cv2
@@ -44,7 +45,8 @@ _SCANS = {
 }
 _PROFILE = os.path.join(REPO_ROOT, "projects", "alpes", "puzzle.json")
 _SCRATCH = os.environ.get("PPF_SCRATCH")
-_MEMORY = os.path.join(_SCRATCH, "ereal2", "memoria.pkl") if _SCRATCH else None
+_MEMORY = os.path.join(REPO_ROOT, "tests", "data", "ereal2_memoria.npz")
+_FIXTURE_TOOL = os.path.join(REPO_ROOT, "tools", "diagnostico", "gemeos", "ereal2_fixture.py")
 REPORT = {}
 
 
@@ -172,11 +174,16 @@ def test_esym_find_twin(profile):
 # ---------------------------------------------------------------- (b) E-real-2
 @pytest.fixture(scope="module")
 def memory(profile):
-    if not _MEMORY or not os.path.exists(_MEMORY):
-        pytest.skip("PPF_SCRATCH/ereal2/memoria.pkl missing (run tools/diagnostico/gemeos/ereal2.py)")
-    with open(_MEMORY, "rb") as f:
-        D = pickle.load(f)
+    if not os.path.exists(_MEMORY):
+        pytest.skip("tests/data/ereal2_memoria.npz missing (python tools/diagnostico/gemeos/ereal2_fixture.py)")
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("ereal2_fixture", _FIXTURE_TOOL)
+    fx = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fx)
+    D = fx.load(_MEMORY)
     M = D["BE"] + [p for p in D["CEU"] if p.get("ok")] + D["BD"] + D["ES"]
+    for p in M:
+        p["img"] = os.path.join(REPO_ROOT, p["img"])
     paths = sorted({p["img"] for p in M})
     missing = [p for p in paths if not os.path.exists(p)]
     if missing:

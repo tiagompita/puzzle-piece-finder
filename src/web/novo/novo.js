@@ -13,8 +13,14 @@ const S = {
   rows: 47, cols: 64, hr: 1, ppc: 60, ver: 0, vb: { x: 0, y: 0, w: 64, h: 47 }, detailKey: null,
   // casca nova
   ghosts: [], montar: null, erro: null, tab: "montar", modo: "cartao", pick: null, ultimo: null, undo: null, busy: false,
-  showBorda: lsGet("novo-borda") === "1", showGuardadas: lsGet("novo-guardadas") === "1", lots: null, importando: null,
+  pendente: null,
+  // F1d: as peças «por confirmar» (posição conhecida) desenham-se no lugar por omissão; o menu esconde-as
+  showBorda: lsGet("novo-borda") === "1", showGuardadas: lsGet("novo-por-confirmar") !== "0", lots: null, importando: null,
 };
+
+// ------------------------------------------------------------ ícones (Lucide, ISC; SVG locais em icons/, ver icons/LICENSE-lucide.txt)
+// Desenhados por máscara CSS (cor = currentColor); decorativos (aria-hidden): o texto ou o aria-label do botão diz o nome.
+const ico = (n) => h("span", { class: `ico i-${n}`, "aria-hidden": "true" });
 
 // ------------------------------------------------------------ sessão: saco atual e «Saltar» (§8.2: só nesta sessão)
 function ssGet(k, d) { try { const v = sessionStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
@@ -34,7 +40,7 @@ function queue() {
   if (!m) return [];
   const order = (m.ordem_sacos || []).map(String);
   const bagIx = (it) => { const i = order.indexOf(String(it.lote)); return i < 0 ? order.length : i; };
-  // «Guardar à parte» (F1c) só depois de esgotadas as «coloca agora»; saltada 2 vezes vai para o fim de tudo
+  // cartões sem vizinha montada («Colocar aqui», F1c/F1d) só depois de esgotadas as «coloca agora»; saltada 2 vezes vai para o fim de tudo
   const g = (it) => (it.tipo === "guardar" ? 1 : 0);
   return m.itens.map((it, i) => ({ it, i, n: sess.saltos[it.piece] || 0 }))
     .sort((a, b) => ((a.n >= 2) - (b.n >= 2)) || (g(a.it) - g(b.it)) || (bagIx(a.it) - bagIx(b.it)) || ((a.n >= 1) - (b.n >= 1)) || (a.i - b.i))
@@ -93,11 +99,26 @@ function drawLayers() {
   }));
   const bor = $("#lyr-borda"); bor.replaceChildren();
   if (S.showBorda) for (const [l, c] of b.borda_em_falta) bor.append(rectEl(l, c, cls("borda"), 0.05));
+  // F1d: peça «por confirmar» (posicao_conhecida: posta no lugar sem vizinha montada) no lugar, ténue e a tracejado;
+  // a célula continua vazia para o motor (não é molde nem vizinha, não conta no progresso)
   const kn = $("#lyr-conhecida"); kn.replaceChildren();
-  if (S.showGuardadas) for (const k of b.posicoes_conhecidas) kn.append(rectEl(k.cell[0], k.cell[1], cls("conhecida"), 0.07));
+  if (S.showGuardadas) for (const k of b.posicoes_conhecidas) kn.append(porConfirmarEl(k));
   const g = $("#lyr-fantasma"); g.replaceChildren();
   for (const gh of S.ghosts) g.append(s("path", { d: ghostPath(gh.path, gh.cell[1] - 0.5, (gh.cell[0] - 0.5) * S.hr), class: cls("fantasma") }));
   drawTarget(false);
+}
+/** Peça «por confirmar»: a imagem rodada como fica (se a rotação é conhecida), ténue, e o contorno tracejado da célula. */
+function porConfirmarEl(k) {
+  const [l, c] = k.cell, span = S.board.span_cells || 1.8;
+  const g = s("g", { class: "por-confirmar", "data-piece": k.piece, "data-cell": `${l},${c}` });
+  if (k.theta_deg !== null && k.theta_deg !== undefined) {
+    g.append(s("image", { href: `/api/pieces/${k.piece}.png?pose=board&size=240&v=${S.ver}`, class: "por-confirmar-img",
+      x: c - 0.5 - span / 2, y: (l - 0.5) * S.hr - span / 2, width: span, height: span, preserveAspectRatio: "xMidYMid meet" }));
+  }
+  // contorno tracejado da própria peça (o mesmo pivô e rotação da imagem); sem rotação, o da célula
+  if (k.path && k.path.length) g.append(s("path", { d: ghostPath(k.path, c - 0.5, (l - 0.5) * S.hr), class: cls("por_confirmar") }));
+  else g.append(rectEl(l, c, cls("por_confirmar"), 0.06));
+  return g;
 }
 function drawTarget(move = true) {
   const a = $("#lyr-alvo"), nx = $("#lyr-seguinte");
@@ -107,7 +128,7 @@ function drawTarget(move = true) {
   if (!cur || !cur.cell) return;
   for (const it of q.filter((x) => x !== cur).slice(0, 3)) if (it.cell) nx.append(rectEl(it.cell[0], it.cell[1], cls("seguinte"), 0.06));
   const [l, c] = cur.cell;
-  // «Guardar à parte»: alvo tracejado (lugar provável, sem vizinha para verificar), nunca o «vai aqui» cheio
+  // sem vizinha montada: alvo tracejado (lugar provável, sem vizinha para verificar), nunca o «vai aqui» cheio
   const g = isGuardar(cur);
   a.append(rectEl(l, c, cls(g ? "alvo_guardar" : "alvo"), 0.02));
   const x = c - 0.5, y = (l - 1) * S.hr - 0.12, w = g ? 1.9 : 1.24;
@@ -117,17 +138,20 @@ function drawTarget(move = true) {
   a.append(lab);
   if (move) showCell(l, c);
 }
-/** Desloca o tabuleiro até ao lugar, com contexto à volta (só se não estiver já bem à vista). */
-function showCell(l, c) {
+/** Desloca o tabuleiro até ao lugar, com contexto à volta (só se não estiver já bem à vista; ``force``: sempre,
+ * centrado, o botão «localizar» do cartão). */
+function showCell(l, c, force = false) {
   const x = c - 0.5, y = (l - 0.5) * S.hr;
   const v = S.vb, mx = v.w * 0.12, my = v.h * 0.12;
   const inside = x > v.x + mx && x < v.x + v.w - mx && y > v.y + my && y < v.y + v.h - my;
-  if (inside && v.w <= 30) return;
+  if (!force && inside && v.w <= 30) return;
   zoomCells(Math.max(1, l - 5), Math.max(1, c - 8), Math.min(S.rows, l + 5), Math.min(S.cols, c + 8), 0.04);
 }
 function drawLegend() {
   const L = $("#legend"); L.replaceChildren();
-  for (const row of (S.board ? S.board.legend : []).filter((r) => r.curta)) {
+  // «Por confirmar» (F1d) só entra na legenda curta quando há peças assim desenhadas
+  const extra = (r) => r.id === "por_confirmar" && S.showGuardadas && S.board && S.board.posicoes_conhecidas.length > 0;
+  for (const row of (S.board ? S.board.legend : []).filter((r) => r.curta || extra(r))) {
     const sw = s("svg", { class: "lg-sw", viewBox: "0 0 1 1", "aria-hidden": "true" });
     if (row.classe) sw.append(s("rect", { x: 0.1, y: 0.1, width: 0.8, height: 0.8, class: row.classe }));
     else sw.append(s("rect", { x: 0.1, y: 0.1, width: 0.8, height: 0.8, class: "lg-raster" }));
@@ -170,6 +194,8 @@ function renderMontar() {
   if (!m) { T.append(h("div", { class: "empty", "data-estado": "a_carregar" }, h("strong", {}, "A carregar…"))); return; }
   const q = queue(), cur = current();
   if (S.modo === "nao" && S.undo && S.undo.tipo === "nao") { renderNao(T); drawTarget(false); return; }
+  const ult = undoStrip();
+  if (ult) T.append(ult);
   if (!cur) {
     T.append(emptyScreen(m));
     if (m.a_preparar && m.a_preparar.buracos) T.append(prepLine(m));
@@ -182,40 +208,43 @@ function renderMontar() {
   const inBag = g ? q.filter(isGuardar) : q.filter((it) => !isGuardar(it) && String(it.lote) === String(cur.lote));
   const k = inBag.indexOf(cur) + 1;
   const card = h("div", { class: "card" + (g ? " guardar" : ""), "data-piece": cur.piece, "data-tipo": cur.tipo, "data-confianca": cur.confianca });
-  card.append(h("div", { class: "card-head" }, h("span", { class: "kicker" }, g ? "Guardar à parte" : "Próxima peça"),
-    h("span", { class: "count", id: "m-count" }, g ? `${k} de ${inBag.length} para guardar à parte` : `${k} de ${inBag.length} neste saco · ${q.length} no total`)));
+  card.append(h("div", { class: "card-head" }, h("span", { class: "kicker" }, g ? "Sem vizinha montada" : "Próxima peça"),
+    h("span", { class: "count", id: "m-count" }, g ? `${k} de ${inBag.length} sem vizinha montada` : `${k} de ${inBag.length} neste saco · ${q.length} no total`)));
+  // «localizar» (F1d): só ícone, com aria-label e dica; volta a centrar o tabuleiro no alvo sem mudar de peça
+  const loc = cur.cell ? h("button", { type: "button", class: "icon-btn loc", id: "b-localizar", title: "Mostrar o lugar no tabuleiro",
+    "aria-label": "Mostrar o lugar no tabuleiro", onclick: () => showCell(cur.cell[0], cur.cell[1], true) }, ico("locate-fixed")) : null;
   const who = h("div", { class: "who" },
     h("div", { class: "bag" }, cur.lote !== null && cur.lote !== undefined ? `Saco ${cur.lote}` : "Peça sem saco"),
     h("div", { class: "num" }, `peça nº ${cur.n_no_lote ?? "?"}`),
-    h("div", { class: "where" }, g ? `Lugar provável: ${lugarTxt(cur.cell).toLowerCase()}` : lugarTxt(cur.cell)),
+    h("div", { class: "where-row" }, h("span", { class: "where" }, g ? `Lugar provável: ${lugarTxt(cur.cell).toLowerCase()}` : lugarTxt(cur.cell)), loc),
     cur.pose_known ? null : h("div", { class: "small muted" }, "rotação por confirmar"),
     h("div", { class: "pid" }, cur.piece));
   card.append(h("div", { class: "card-top" }, pieceImg(cur), who));
   card.append(h("div", { class: "conf", "data-conf": cur.confianca }, bars(passes(cur)), h("span", {}, CONF_LONG[cur.confianca])));
   if (g) card.append(h("p", { class: "small muted guardar-txt", id: "m-guardar-txt" },
     "Ainda não há nenhuma peça montada ao lado deste lugar, por isso o encaixe não se pode verificar. ",
-    "Guarda-a num saquinho com o lugar escrito; volta à fila quando uma vizinha for montada."));
+    "Põe-na no lugar: fica no tabuleiro «por confirmar» até uma vizinha encaixar."));
   const acts = h("div", { class: "actions" });
   if (g) {
-    acts.append(h("button", { class: "btn primary big", type: "button", id: "b-guardar", onclick: () => doGuardar(cur) }, "Guardei à parte"));
-    acts.append(h("button", { class: "btn big", type: "button", id: "b-nao", onclick: () => doNao(cur) }, "Não é esta"));
+    acts.append(h("button", { class: "btn primary big", type: "button", id: "b-guardar", onclick: () => doGuardar(cur) }, ico("map-pin"), "Colocar aqui"));
+    acts.append(h("button", { class: "btn big", type: "button", id: "b-nao", onclick: () => doNao(cur) }, ico("x"), "Não pertence aqui"));
   } else {
-    acts.append(h("button", { class: "btn primary big", type: "button", id: "b-encaixa", onclick: () => doEncaixa(cur) }, "Encaixa"));
-    if (cur.nao_encaixa) acts.append(h("button", { class: "btn big", type: "button", id: "b-nao", onclick: () => doNao(cur) }, "Não encaixa"));
+    acts.append(h("button", { class: "btn primary big", type: "button", id: "b-encaixa", onclick: () => doEncaixa(cur) }, ico("check"), "Encaixa"));
+    if (cur.nao_encaixa) acts.append(h("button", { class: "btn big", type: "button", id: "b-nao", onclick: () => doNao(cur) }, ico("x"), "Não encaixa"));
   }
   card.append(acts);
   card.append(h("div", { class: "links" },
-    h("button", { class: "linkish", type: "button", id: "b-saltar", onclick: () => doSaltar(cur) }, "Saltar por agora"),
-    h("button", { class: "linkish", type: "button", id: "b-porque", onclick: () => { S.modo = "porque"; renderMontar(); } }, "Porquê esta peça?")));
+    h("button", { class: "linkish", type: "button", id: "b-saltar", onclick: () => doSaltar(cur) }, ico("skip-forward"), "Saltar por agora"),
+    h("button", { class: "linkish", type: "button", id: "b-porque", onclick: () => { S.modo = "porque"; renderMontar(); } }, ico("circle-question-mark"), "Porquê esta peça?")));
   T.append(card);
   const nxt = q.filter((x) => x !== cur).slice(0, 3);
   if (nxt.length) {
     const same = nxt.every((x) => String(x.lote) === String(cur.lote));
     const allG = nxt.every(isGuardar);
-    T.append(h("h2", {}, allG ? "A seguir, para guardar à parte" : (same ? "A seguir, do mesmo saco" : "A seguir, primeiro as do mesmo saco")));
+    T.append(h("h2", {}, allG ? "A seguir, sem vizinha montada" : (same ? "A seguir, do mesmo saco" : "A seguir, primeiro as do mesmo saco")));
     const ul = h("ul", { class: "next", id: "m-seguir" });
     for (const it of nxt) ul.append(h("li", {}, h("button", { type: "button", class: "next-row", "data-tipo": it.tipo, onclick: () => { S.pick = it.piece; renderMontar(); } },
-      h("span", {}, quem(it)), h("span", { class: "w " + it.confianca }, isGuardar(it) ? "guardar à parte" : CONF_TXT[it.confianca]))));
+      h("span", {}, quem(it)), h("span", { class: "w " + it.confianca }, isGuardar(it) ? "sem vizinha montada" : CONF_TXT[it.confianca]))));
     T.append(ul);
   }
   const fora = groupsLine(m);
@@ -228,22 +257,23 @@ const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 /** Ecrã vazio (F1c): diz a verdade sobre o que ficou de fora da fila; «Nada para ir buscar» só sem propostas nenhumas. */
 function emptyScreen(m) {
   const f = m.fora_da_fila || {};
-  const n = (f.guardar || 0) + (f.guardadas || 0) + (f.grupos_sem_lugar || 0);
+  // F1d: conta as peças já guardadas à parte (posicao_conhecida, no tabuleiro «por confirmar»), não os cartões
+  // «para guardar» da fila (com a fila vazia são sempre 0)
+  const n = (f.guardadas || 0) + (f.grupos_sem_lugar || 0);
   if (!n) {
     return h("div", { class: "empty", "data-estado": "vazio" }, h("strong", {}, "Nada para ir buscar."), h("p", {}, "Digitaliza mais um saco."),
-      h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, "Importar scan"));
+      h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, ico("scan-line"), "Importar scan"));
   }
   const ul = h("ul", { class: "resumo", id: "m-resumo" });
-  if (f.guardar) ul.append(h("li", { "data-k": "guardar" }, `${plural(f.guardar, "peça", "peças")} para guardar à parte.`));
-  if (f.guardadas) ul.append(h("li", { "data-k": "guardadas" }, `${plural(f.guardadas, "peça guardada", "peças guardadas")} à parte, à espera de uma vizinha montada.`));
+  if (f.guardadas) ul.append(h("li", { "data-k": "guardadas" }, `${plural(f.guardadas, "peça guardada", "peças guardadas")} à parte, no tabuleiro «por confirmar» até uma vizinha encaixar.`));
   if (f.grupos_sem_lugar) ul.append(h("li", { "data-k": "grupos" }, `${plural(f.grupos_sem_lugar, "grupo", "grupos")} sem lugar: por agora só na interface completa.`));
   return h("div", { class: "empty", "data-estado": "vazio_com_propostas" },
     h("strong", {}, "Nenhuma peça para pôr agora."),
     h("p", {}, "Nenhuma sugestão tem ainda uma peça montada ao lado para confirmar o encaixe."),
     ul,
     h("div", { class: "actions center" },
-      h("a", { class: "btn", href: "/", id: "m-completa" }, "Abrir a interface completa"),
-      h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, "Importar scan")));
+      h("a", { class: "btn", href: "/", id: "m-completa" }, ico("layout-dashboard"), "Abrir a interface completa"),
+      h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, ico("scan-line"), "Importar scan")));
 }
 function groupsLine(m) {
   const n = (m.fora_da_fila || {}).grupos_sem_lugar || 0;
@@ -267,12 +297,12 @@ function renderPorque(T, it) {
     h("details", { class: "numeros" }, h("summary", {}, "Ver números"),
       h("p", { class: "small muted" }, "Os números ficam no diagnóstico."),
       h("ul", { class: "small" }, (it.reasons || []).map((r) => h("li", {}, r)))),
-    h("div", { class: "actions" }, h("button", { class: "btn", type: "button", onclick: () => { S.modo = "cartao"; renderMontar(); } }, "Voltar"))));
+    h("div", { class: "actions" }, h("button", { class: "btn", type: "button", onclick: () => { S.modo = "cartao"; renderMontar(); } }, ico("arrow-left"), "Voltar"))));
 }
 function renderNao(T) {
   const u = S.undo, it = u.item;
   const box = h("div", { class: "card nao", "data-piece": it.piece },
-    h("h3", {}, isGuardar(it) ? "Não é esta" : "Não encaixou"),
+    h("h3", {}, "Não encaixou"),
     h("div", { class: "small muted" }, `Saco ${it.lote ?? "—"} · peça nº ${it.n_no_lote ?? "?"} · linha ${it.cell[0]}, coluna ${it.cell[1]}`),
     h("p", {}, "Porquê? ", h("span", { class: "muted" }, "Podes saltar")));
   const opts = h("div", { class: "motivos", id: "m-motivos" });
@@ -280,9 +310,18 @@ function renderNao(T) {
     opts.append(h("button", { class: "btn" + (u.motivo === k ? " on" : ""), type: "button", "data-motivo": k, onclick: () => doMotivo(k) }, t));
   }
   box.append(opts);
-  box.append(h("div", { class: "actions" }, h("button", { class: "btn primary big", type: "button", id: "b-proxima", onclick: () => { S.modo = "cartao"; renderMontar(); } }, "Próxima peça")));
-  box.append(h("div", { class: "links" }, h("button", { class: "linkish", type: "button", id: "b-desfazer", onclick: () => doUndo() }, "Enganei-me, desfazer")));
+  box.append(h("div", { class: "actions" }, h("button", { class: "btn primary big", type: "button", id: "b-proxima", onclick: () => { S.modo = "cartao"; renderMontar(); } }, ico("arrow-right"), "Próxima peça")));
+  box.append(h("div", { class: "links" }, h("button", { class: "linkish", type: "button", id: "b-desfazer", onclick: () => doUndo() }, ico("undo-2"), "Enganei-me, desfazer")));
   T.append(box);
+}
+/** F1d (ponto 1): a última ação fica à vista no topo do painel, com «Desfazer», até à ação seguinte ou ao desfazer
+ * (o aviso temporário de 9 s não chegava: o Tiago não o viu). Enquanto grava: «A gravar…», sem botão. */
+function undoStrip() {
+  if (S.pendente) return h("div", { class: "ultimo", id: "m-ultimo", "data-estado": "a_gravar" }, h("span", {}, S.pendente));
+  const u = S.undo;
+  if (!u || !u.msg || (u.tipo === "nao" && S.modo === "nao")) return null;
+  return h("div", { class: "ultimo", id: "m-ultimo", "data-tipo": u.tipo }, h("span", { class: "ultimo-txt" }, u.msg),
+    h("button", { class: "btn", type: "button", id: "b-desfazer-ultimo", onclick: () => doUndo() }, ico("undo-2"), "Desfazer"));
 }
 
 // ------------------------------------------------------------ ações
@@ -294,42 +333,41 @@ async function afterWrite() { await Promise.all([loadBoard(), loadMontar()]); }
 function writeFailed(r) {
   if (r && r.invariantes && r.invariantes.length) toast("Algo correu mal ao gravar (ver Diagnóstico).", true);
 }
+/** Uma ação desfazível: «A gravar…» no painel enquanto o servidor escreve (a recarga por SSE pode mostrar o cartão
+ * seguinte antes da resposta), depois a faixa «última ação» com «Desfazer» (fica até à ação seguinte) e o aviso. */
+async function act(it, req, pend, undo, after) {
+  lockButtons(true);
+  S.pendente = pend; renderMontar();
+  try {
+    const r = await post(req.url, req.body);
+    writeFailed(r);
+    S.undo = { item: it, ...undo(r) };
+    S.pick = null; S.modo = after || "cartao";
+    S.pendente = null;
+    renderMontar();
+    $("#tab-montar").scrollTop = 0;              // a faixa «Desfazer» fica no topo do painel: mostra-a
+    if (S.modo === "cartao") toastUndo(S.undo.msg);
+    await afterWrite();
+  } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); }
+}
 async function doEncaixa(it) {
   if (S.busy || !it || !it.encaixa) return;
-  lockButtons(true);
-  try {
-    const r = await post(it.encaixa.url, it.encaixa.body);
-    writeFailed(r);
-    S.undo = { tipo: "encaixa", item: it };
-    S.pick = null; S.modo = "cartao";
-    toastUndo(`${quem(it)} no lugar.`);
-    await afterWrite();
-  } catch (e) { toast(e.message, true); } finally { lockButtons(false); }
+  await act(it, it.encaixa, `A pôr ${quem(it).toLowerCase()} no lugar…`, () => ({ tipo: "encaixa", msg: `${quem(it)} no lugar.` }));
 }
 async function doGuardar(it) {
+  // «Colocar aqui» (F1d; antes «Guardei à parte»): por dentro continua a ser position_known (posição conhecida)
   if (S.busy || !it || !it.guardar) return;
-  lockButtons(true);
-  try {
-    const r = await post(it.guardar.url, it.guardar.body);
-    writeFailed(r);
-    S.undo = { tipo: "guardar", item: it };
-    S.pick = null; S.modo = "cartao";
-    toastUndo(`${quem(it)} guardada à parte.`);
-    await afterWrite();
-  } catch (e) { toast(e.message, true); } finally { lockButtons(false); }
+  await act(it, it.guardar, `A pôr ${quem(it).toLowerCase()} no lugar…`,
+    () => ({ tipo: "guardar", msg: `${quem(it)} no lugar, por confirmar.` }));
 }
+const rejeicoes = (r) => (r.escritos || []).filter((e) => ["twin_rejected", "hole_rejected", "pair_rejected"].includes(e.action))
+  .map((e) => (e.action === "pair_rejected" ? { pair: e.pair, t: e.t } : { piece: e.piece, cell: e.cell, origin: e.origin, t: e.t }));
 async function doNao(it) {
   if (S.busy || !it || !it.nao_encaixa) return;
-  lockButtons(true);
-  try {
-    const r = await post(it.nao_encaixa.url, it.nao_encaixa.body);
-    writeFailed(r);
-    const rej = (r.escritos || []).filter((e) => ["twin_rejected", "hole_rejected", "pair_rejected"].includes(e.action))
-      .map((e) => (e.action === "pair_rejected" ? { pair: e.pair, t: e.t } : { piece: e.piece, cell: e.cell, origin: e.origin, t: e.t }));
-    S.undo = { tipo: "nao", item: it, rejeicoes: rej, motivo: null };
-    S.pick = null; S.modo = "nao";
-    await afterWrite();
-  } catch (e) { toast(e.message, true); } finally { lockButtons(false); }
+  // «Não pertence aqui» (cartão sem vizinha montada, F1d) não pergunta «Porquê?»: segue para o cartão seguinte
+  const g = isGuardar(it);
+  await act(it, it.nao_encaixa, "A gravar…", (r) => ({ tipo: "nao", rejeicoes: rejeicoes(r), motivo: null,
+    msg: g ? `${quem(it)}: não pertence à ${lugarTxt(it.cell).toLowerCase()}.` : `${quem(it)}: não encaixa.` }), g ? "cartao" : "nao");
 }
 async function doMotivo(k) {
   const u = S.undo;
@@ -352,18 +390,21 @@ async function doUndo() {
   const u = S.undo;
   if (!u || S.busy) return;
   lockButtons(true);
+  S.pendente = "A desfazer…"; renderMontar();
   try {
     if (u.tipo === "encaixa") await post("/api/confirm", { acao: "unplace", piece: u.item.piece, desfaz: true });
     else if (u.tipo === "guardar") await post("/api/confirm", { acao: "position_clear", piece: u.item.piece, desfaz: true });
     else if (u.tipo === "nao" && u.rejeicoes.length) await post("/api/confirm", { acao: "undo_reject", rejeicoes: u.rejeicoes });
-    S.undo = null; S.modo = "cartao"; S.pick = u.item.piece;
+    S.undo = null; S.modo = "cartao"; S.pick = u.item.piece; S.pendente = null;
+    $$("#toast .undo-toast").forEach((x) => x.remove());
+    renderMontar();
     toast(`Desfeito: ${quem(u.item)}.`);
     await afterWrite();
-  } catch (e) { toast(e.message, true); } finally { lockButtons(false); }
+  } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); }
 }
 function toastUndo(msg) {
   const el = h("div", { class: "undo-toast" }, h("span", {}, msg),
-    h("button", { type: "button", class: "linkish", onclick: () => { el.remove(); doUndo(); } }, "Desfazer"));
+    h("button", { type: "button", class: "linkish", onclick: () => { el.remove(); doUndo(); } }, ico("undo-2"), "Desfazer"));
   $("#toast").append(el);
   setTimeout(() => el.remove(), 9000);
 }
@@ -381,7 +422,7 @@ function renderPecas() {
   const T = $("#tab-pecas"); T.replaceChildren(
     h("div", { class: "empty" }, h("strong", {}, "Peças chega na próxima fase."),
       h("p", {}, "Por agora, os sacos e as peças estão na interface completa."),
-      h("a", { class: "btn", href: "/" }, "Abrir a interface completa")));
+      h("a", { class: "btn", href: "/" }, ico("layout-dashboard"), "Abrir a interface completa")));
 }
 async function renderImportar() {
   const T = $("#tab-importar");
@@ -394,7 +435,7 @@ async function renderImportar() {
       h("li", {}, h("label", {}, "Escolhe o scan do saco (imagem ou PDF; várias folhas podem ir juntas)",
         h("input", { type: "file", name: "files", accept: ".pdf,application/pdf,image/*", multiple: true, required: true }))),
       h("li", {}, h("label", {}, "Número do saco", h("input", { type: "number", name: "lote", min: 1, step: 1, value: next, required: true }))),
-      h("li", {}, h("button", { class: "btn primary big", type: "submit", id: "import-btn" }, "Importar"))));
+      h("li", {}, h("button", { class: "btn primary big", type: "submit", id: "import-btn" }, ico("scan-line"), "Importar"))));
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const fd = new FormData(form);
@@ -441,7 +482,7 @@ async function findBagNumber(lote, n) {
 }
 // A lupa mostra as propostas da peça e do lugar (F1c) numa caixa no topo do painel (#lupa-res), não só num aviso.
 const nomePeca = (pc) => (pc && pc.lote !== null && pc.lote !== undefined ? `Saco ${pc.lote} · nº ${pc.n_no_lote ?? "?"}` : "Peça sem saco");
-const GRUPO_TXT = { coloca_agora: "pôr agora: tem uma peça montada ao lado", guarda_posicao: "guardar à parte: ainda sem peça montada ao lado" };
+const GRUPO_TXT = { coloca_agora: "pôr agora: tem uma peça montada ao lado", guarda_posicao: "sem vizinha montada: pôr no lugar, por confirmar" };
 function propLine(e, quemTxt) {
   const inQ = queue().find((it) => it.piece === e.piece && it.cell && e.cell && it.cell[0] === e.cell[0] && it.cell[1] === e.cell[1]);
   const conf = inQ ? (isGuardar(inQ) ? "a confirmar por ti" : CONF_TXT[inQ.confianca]) : "a confirmar por ti";
@@ -453,7 +494,7 @@ function propLine(e, quemTxt) {
 function showLupa(titulo, linhas, props, kind) {
   const box = $("#lupa-res");
   box.replaceChildren(
-    h("div", { class: "lupa-head" }, h("strong", {}, titulo), h("button", { type: "button", class: "btn", id: "lupa-fechar", onclick: closeLupa }, "Fechar")),
+    h("div", { class: "lupa-head" }, h("strong", {}, titulo), h("button", { type: "button", class: "btn", id: "lupa-fechar", onclick: closeLupa }, ico("x"), "Fechar")),
     ...linhas.map((t) => h("p", { class: "small" }, t)),
     props.length ? h("ul", { class: "lupa-props", id: "lupa-props" }, ...props) : h("p", { class: "small muted", id: "lupa-sem" }, "Sem propostas do programa."));
   box.dataset.kind = kind;
@@ -466,7 +507,7 @@ async function findPiece(pid) {
   const pc = p.peca || p, nome = nomePeca(pc);
   const linhas = [];
   if (pc.estado === "colocada" && pc.celula) { showCell(pc.celula[0], pc.celula[1]); linhas.push(`Está no lugar: ${lugarTxt(pc.celula).toLowerCase()}.`); }
-  else if (pc.estado === "posicao_conhecida" && pc.celula) { showCell(pc.celula[0], pc.celula[1]); linhas.push(`Guardada à parte para a ${lugarTxt(pc.celula).toLowerCase()}, à espera de uma vizinha montada.`); }
+  else if (pc.estado === "posicao_conhecida" && pc.celula) { showCell(pc.celula[0], pc.celula[1]); linhas.push(`No lugar por confirmar: ${lugarTxt(pc.celula).toLowerCase()}, à espera de uma vizinha montada.`); }
   else if (pc.estado === "em_seccao") linhas.push("Está num grupo sem lugar (por agora só na interface completa).");
   else if (pc.estado === "descartada") linhas.push("Foi posta de lado.");
   else linhas.push("Ainda não tem lugar.");
@@ -484,7 +525,7 @@ async function findPlace(l, c) {
   try { d = await api(`/api/cell/${l}/${c}`); } catch (e) { toast(e.message, true); return; }
   const pc = d.peca;
   const linhas = [pc ? `Tem a peça do saco ${pc.lote ?? "—"} · nº ${pc.n_no_lote ?? "?"}.` : (d.estado === "vazia" ? "Ainda vazio." : "Marcado como montado.")];
-  for (const k of d.conhecidas || []) linhas.push(`Guardada à parte para aqui: ${nomePeca(k)}.`);
+  for (const k of d.conhecidas || []) linhas.push(`Por confirmar aqui: ${nomePeca(k)}.`);
   const props = (d.propostas || []).map((e) => propLine(e, nomePeca(e)));
   showLupa(lugarTxt([l, c]), linhas, props, "lugar");
 }
@@ -531,7 +572,7 @@ function initMenu() {
   };
   bind("#m-fantasmas", "novo-fantasmas", "showGhost", () => setView(S.vb));
   bind("#m-borda", "novo-borda", "showBorda", drawLayers);
-  bind("#m-guardadas", "novo-guardadas", "showGuardadas", drawLayers);
+  bind("#m-guardadas", "novo-por-confirmar", "showGuardadas", () => { drawLayers(); drawLegend(); });
 }
 function onKey(e) {
   if (e.key === "Escape") { if (!$("#lightbox").hidden) { $("#lightbox").hidden = true; return; } if (S.modo !== "cartao") { S.modo = "cartao"; renderMontar(); } return; }
@@ -541,7 +582,7 @@ function onKey(e) {
   if (S.tab !== "montar" || e.ctrlKey || e.metaKey || e.altKey) return;
   const cur = current();
   if (S.modo === "cartao") {
-    // «Guardar à parte» não tem «Encaixa»: Enter não faz nada nesse cartão (o «Guardei à parte» é só por clique)
+    // o cartão sem vizinha montada não tem «Encaixa»: Enter não faz nada nesse cartão («Colocar aqui» é só por clique)
     if (e.key === "Enter" && tag !== "BUTTON" && tag !== "A") { e.preventDefault(); if (!isGuardar(cur)) doEncaixa(cur); }
     else if (e.key === "n" || e.key === "N") { e.preventDefault(); doNao(cur); }
     else if (e.key === "s" || e.key === "S") { e.preventDefault(); doSaltar(cur); }

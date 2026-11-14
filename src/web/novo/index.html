@@ -17,22 +17,22 @@
     </div>
     <div class="progress" aria-hidden="true"><div class="progress-bar"><span id="pb-n"></span></div></div>
     <nav id="tabs" role="tablist" aria-label="Separadores">
-      <button type="button" role="tab" data-tab="montar" class="on" aria-selected="true">Montar <b id="n-montar"></b></button>
-      <button type="button" role="tab" data-tab="pecas" aria-selected="false">Peças</button>
-      <button type="button" role="tab" data-tab="importar" aria-selected="false">Importar scan</button>
+      <button type="button" role="tab" data-tab="montar" class="on" aria-selected="true"><span class="ico i-puzzle" aria-hidden="true"></span>Montar <b id="n-montar"></b></button>
+      <button type="button" role="tab" data-tab="pecas" aria-selected="false"><span class="ico i-layout-grid" aria-hidden="true"></span>Peças</button>
+      <button type="button" role="tab" data-tab="importar" aria-selected="false"><span class="ico i-scan-line" aria-hidden="true"></span>Importar scan</button>
     </nav>
     <form id="search" role="search" autocomplete="off">
       <input id="q" class="search" type="search" placeholder="procurar peça ou lugar" aria-label="Procurar peça ou lugar" enterkeyhint="search">
     </form>
     <div class="menu-wrap">
-      <button type="button" id="menu-btn" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="Mais">⋯</button>
+      <button type="button" id="menu-btn" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="Mais opções" title="Mais opções"><span class="ico i-ellipsis" aria-hidden="true"></span></button>
       <div id="menu" class="menu" hidden role="menu">
-        <a role="menuitem" href="/" id="m-diag">Diagnóstico (interface completa)</a>
-        <button type="button" role="menuitem" id="m-atividade">Atividade do programa</button>
-        <label class="menu-check"><input type="checkbox" id="m-fantasmas"> Mostrar a forma esperada</label>
-        <label class="menu-check"><input type="checkbox" id="m-borda"> Mostrar a borda em falta</label>
-        <label class="menu-check"><input type="checkbox" id="m-guardadas"> Mostrar peças guardadas à parte</label>
-        <div class="menu-keys" id="m-teclas">Teclas: Enter = Encaixa · N = Não encaixa · S = Saltar · Ctrl+Z = desfazer</div>
+        <a role="menuitem" href="/" id="m-diag"><span class="ico i-stethoscope" aria-hidden="true"></span>Diagnóstico (interface completa)</a>
+        <button type="button" role="menuitem" id="m-atividade"><span class="ico i-activity" aria-hidden="true"></span>Atividade do programa</button>
+        <label class="menu-check"><input type="checkbox" id="m-fantasmas"><span class="ico i-ghost" aria-hidden="true"></span>Mostrar a forma esperada</label>
+        <label class="menu-check"><input type="checkbox" id="m-borda"><span class="ico i-frame" aria-hidden="true"></span>Mostrar a borda em falta</label>
+        <label class="menu-check"><input type="checkbox" id="m-guardadas"><span class="ico i-square-dashed" aria-hidden="true"></span>Mostrar as peças por confirmar</label>
+        <div class="menu-keys" id="m-teclas"><span class="ico i-keyboard" aria-hidden="true"></span>Teclas: Enter = Encaixa · N = Não encaixa · S = Saltar · Ctrl+Z = desfazer</div>
       </div>
     </div>
   </header>
@@ -73,7 +73,7 @@
 </div>
 
 <div id="lightbox" hidden>
-  <button type="button" class="lb-close" id="lb-close">Fechar</button>
+  <button type="button" class="lb-close" id="lb-close"><span class="ico i-x" aria-hidden="true"></span>Fechar</button>
   <div class="lb-body"><img id="lb-img" alt=""></div>
   <div class="lb-cap" id="lb-cap"></div>
 </div>

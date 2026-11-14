@@ -41,5 +41,8 @@
   filter: drop-shadow(0 0 3px rgba(0, 0, 0, .85)); }
 .b-alvo-tracejado { fill: rgba(242, 180, 60, .10); stroke: #f2b43c; stroke-width: 2.5px; stroke-dasharray: 6 4;
   vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px rgba(0, 0, 0, .85)); }
+/* F1d: peça posta sem vizinha montada («por confirmar»): contorno tracejado da própria peça */
+.b-por-confirmar { fill: none; stroke: #6fc3c9; stroke-width: 2px; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, .9)); }
 .b-seguinte { fill: none; stroke: rgba(242, 180, 60, .55); stroke-width: 1.5px; stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke; }

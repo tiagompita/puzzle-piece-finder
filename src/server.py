@@ -164,9 +164,15 @@ LEGEND = [
 	# GUI nova (/novo/, redesenho F1b): só em /api/board?ui=novo; ``curta`` = entra na legenda curta do Montar
 	{"id": "alvo", "tipo": "svg", "classe": "b-alvo", "rotulo": "Onde vai a peça", "texto": "o lugar da peça atual",
 	 "detalhe": "o lugar da peça do cartão «Próxima peça», a âmbar, com a etiqueta «vai aqui»", "gui": "novo", "curta": True},
-	{"id": "alvo_guardar", "tipo": "svg", "classe": "b-alvo-tracejado", "rotulo": "Lugar provável", "texto": "guardar à parte",
-	 "detalhe": "o lugar provável de uma peça do cartão «Guardar à parte» (ainda sem peça montada ao lado), a tracejado",
+	{"id": "alvo_guardar", "tipo": "svg", "classe": "b-alvo-tracejado", "rotulo": "Lugar provável", "texto": "sem vizinha montada",
+	 "detalhe": "o lugar provável de uma peça de um cartão sem vizinha montada («Colocar aqui»), a tracejado",
 	 "gui": "novo", "curta": True},
+	# F1d: peça posta no lugar sem vizinha montada (posicao_conhecida); só entra na legenda curta quando há alguma
+	{"id": "por_confirmar", "tipo": "svg", "classe": "b-por-confirmar", "rotulo": "Por confirmar",
+	 "texto": "no lugar, à espera de uma vizinha",
+	 "detalhe": "peça posta no lugar sem vizinha montada («Colocar aqui»): ténue e a tracejado até uma vizinha encaixar; "
+				"para o programa o lugar continua vazio (não serve de molde nem de vizinha e não conta no progresso)",
+	 "gui": "novo"},
 	{"id": "seguinte", "tipo": "svg", "classe": "b-seguinte", "rotulo": "A seguir", "texto": "lugares das peças seguintes",
 	 "detalhe": "os lugares das 3 peças seguintes da fila, com contorno ténue", "gui": "novo"},
 	{"id": "por_montar", "tipo": "raster", "classe": None, "rotulo": "Por montar", "texto": "só a arte da caixa",
@@ -1291,12 +1297,25 @@ class Gui:
 				"pose_manual": None if p.pose_manual is None else {k: p.pose_manual.get(k) for k in
 																	("theta_deg", "dx_mm", "dy_mm", "t", "nota")}}
 
+	def _own_outline(self, p) -> Optional[list]:
+		"""Contorno da própria peça na sua célula (unidades de célula, à volta do centro), rodado por ``theta_deg`` à volta
+		do centro do corpo, o mesmo pivô da imagem ``/api/pieces/{id}.png?pose=board``: o tracejado «por confirmar» da
+		GUI nova (F1d). None sem rotação ou sem forma."""
+		from src.query import ghost_contour
+		if p.theta_deg is None:
+			return None
+		try:
+			return ghost_contour(self.pr.shape(p.id), {"theta_deg": float(p.theta_deg)}, self.pr.profile, rot_deg=0.0)
+		except Exception:  # noqa: BLE001 - o desenho cai para o retângulo da célula
+			return None
+
 	def board_json(self, ui: Optional[str] = None) -> dict:
 		pr = self.pr
 		prof = pr.profile
 		rows = [[{"estado": cell["estado"], "peca_id": cell["peca_id"], "fonte": cell["fonte"]}
 				 for cell in row] for row in pr.board.cells]
-		known = [{"piece": p.id, "cell": list(p.celula), "lote": p.lote, "n_no_lote": p.n_no_lote}
+		known = [{"piece": p.id, "cell": list(p.celula), "lote": p.lote, "n_no_lote": p.n_no_lote, "theta_deg": p.theta_deg,
+				  "path": self._own_outline(p)}
 				 for p in sorted(pr.pieces.values(), key=lambda q: q.id) if p.estado == "posicao_conhecida" and p.celula]
 		st = pr.stats()
 		n_occ = st["celulas_ocupadas"]

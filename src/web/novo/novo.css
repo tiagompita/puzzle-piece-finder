@@ -41,21 +41,24 @@ a:hover { color: #ffd27a; }
 #pb-n { display: block; height: 100%; background: var(--amber); }
 #tabs { display: flex; gap: 2px; align-self: stretch; margin-left: auto; }
 #tabs button { min-height: var(--tap); border: 0; background: transparent; color: var(--muted); cursor: pointer; font-weight: 600;
-  padding: 0 12px; white-space: nowrap; border-radius: 8px 8px 0 0; }
+  padding: 0 12px; white-space: nowrap; border-radius: 8px 8px 0 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 #tabs button.on { color: var(--text); box-shadow: inset 0 -3px 0 var(--amber); }
 #tabs button b { color: var(--amber); margin-left: 3px; }
 #search { flex: 0 1 220px; min-width: 0; }
 .search { width: 100%; min-height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); padding: 0 12px; }
 .menu-wrap { position: relative; order: 4; }
 .icon-btn { width: var(--tap); height: var(--tap); border-radius: 10px; border: 1px solid var(--line); background: var(--bg3);
-  cursor: pointer; font-size: 20px; line-height: 1; }
+  cursor: pointer; font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; padding: 0; color: var(--text); }
+.icon-btn .ico { width: 20px; height: 20px; }
 .menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; background: var(--bg2); border: 1px solid var(--line);
   border-radius: 12px; padding: 6px; min-width: 260px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); display: flex; flex-direction: column; }
 .menu > a, .menu > button, .menu-check { display: flex; align-items: center; gap: 10px; min-height: var(--tap); padding: 0 12px;
   border-radius: 8px; background: none; border: 0; color: var(--text); text-decoration: none; cursor: pointer; text-align: left; }
 .menu > a:hover, .menu > button:hover, .menu-check:hover { background: var(--bg3); }
 .menu-check input { width: 18px; height: 18px; accent-color: var(--amber); }
-.menu-keys { color: var(--muted); font-size: 12px; padding: 8px 12px 4px; border-top: 1px solid var(--line); margin-top: 4px; }
+.menu-keys { color: var(--muted); font-size: 12px; padding: 8px 12px 4px; border-top: 1px solid var(--line); margin-top: 4px;
+  display: flex; gap: 8px; align-items: flex-start; }
+.menu-keys .ico { width: 16px; height: 16px; margin-top: 1px; }
 
 /* ------------------------------------------------------------ tabuleiro (o resto em board.css) */
 #lyr-legado .b-legado { opacity: .35; }
@@ -79,13 +82,14 @@ h3 { margin: 0 0 4px; font-size: 18px; }
 .empty { text-align: center; padding: 40px 12px; color: var(--muted); }
 .empty strong { display: block; color: var(--text); font-size: 18px; margin-bottom: 6px; }
 .btn { min-height: var(--tap); padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg3);
-  cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: var(--text); }
+  cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--text); }
 .btn:hover { border-color: var(--muted); }
 .btn.primary { background: var(--amber); color: var(--amber-ink); border-color: var(--amber); }
-.btn.big { min-height: 52px; font-size: 17px; flex: 1; }
+.btn.big { min-height: 52px; font-size: 17px; flex: 1 1 auto; white-space: nowrap; }
 .btn:disabled { opacity: .55; cursor: wait; }
 .btn.on { border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
-.linkish { background: none; border: 0; color: var(--amber); cursor: pointer; padding: 0 4px; min-height: var(--tap); text-decoration: underline; }
+.linkish { background: none; border: 0; color: var(--amber); cursor: pointer; padding: 0 4px; min-height: var(--tap); text-decoration: underline;
+  display: inline-flex; align-items: center; gap: 6px; }
 .card { background: var(--bg3); border-radius: 14px; padding: 14px; }
 .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 650; }
@@ -131,6 +135,42 @@ h3 { margin: 0 0 4px; font-size: 18px; }
 .lupa-res p { margin: 6px 0; }
 .lupa-props { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .lupa-props li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+
+/* F1d: ícones Lucide (icons/, ISC; ver icons/LEIAME.md) por máscara, com a cor do texto */
+.ico { display: inline-block; width: 18px; height: 18px; flex: 0 0 auto; background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-size: contain; mask-size: contain; }
+.btn.big .ico { width: 20px; height: 20px; }
+.i-activity { -webkit-mask-image: url("icons/activity.svg"); mask-image: url("icons/activity.svg"); }
+.i-arrow-left { -webkit-mask-image: url("icons/arrow-left.svg"); mask-image: url("icons/arrow-left.svg"); }
+.i-arrow-right { -webkit-mask-image: url("icons/arrow-right.svg"); mask-image: url("icons/arrow-right.svg"); }
+.i-check { -webkit-mask-image: url("icons/check.svg"); mask-image: url("icons/check.svg"); }
+.i-circle-question-mark { -webkit-mask-image: url("icons/circle-question-mark.svg"); mask-image: url("icons/circle-question-mark.svg"); }
+.i-ellipsis { -webkit-mask-image: url("icons/ellipsis.svg"); mask-image: url("icons/ellipsis.svg"); }
+.i-frame { -webkit-mask-image: url("icons/frame.svg"); mask-image: url("icons/frame.svg"); }
+.i-ghost { -webkit-mask-image: url("icons/ghost.svg"); mask-image: url("icons/ghost.svg"); }
+.i-keyboard { -webkit-mask-image: url("icons/keyboard.svg"); mask-image: url("icons/keyboard.svg"); }
+.i-layout-dashboard { -webkit-mask-image: url("icons/layout-dashboard.svg"); mask-image: url("icons/layout-dashboard.svg"); }
+.i-layout-grid { -webkit-mask-image: url("icons/layout-grid.svg"); mask-image: url("icons/layout-grid.svg"); }
+.i-locate-fixed { -webkit-mask-image: url("icons/locate-fixed.svg"); mask-image: url("icons/locate-fixed.svg"); }
+.i-map-pin { -webkit-mask-image: url("icons/map-pin.svg"); mask-image: url("icons/map-pin.svg"); }
+.i-puzzle { -webkit-mask-image: url("icons/puzzle.svg"); mask-image: url("icons/puzzle.svg"); }
+.i-scan-line { -webkit-mask-image: url("icons/scan-line.svg"); mask-image: url("icons/scan-line.svg"); }
+.i-skip-forward { -webkit-mask-image: url("icons/skip-forward.svg"); mask-image: url("icons/skip-forward.svg"); }
+.i-square-dashed { -webkit-mask-image: url("icons/square-dashed.svg"); mask-image: url("icons/square-dashed.svg"); }
+.i-stethoscope { -webkit-mask-image: url("icons/stethoscope.svg"); mask-image: url("icons/stethoscope.svg"); }
+.i-undo-2 { -webkit-mask-image: url("icons/undo-2.svg"); mask-image: url("icons/undo-2.svg"); }
+.i-x { -webkit-mask-image: url("icons/x.svg"); mask-image: url("icons/x.svg"); }
+/* F1d: «localizar» ao lado do lugar; a última ação com «Desfazer» no topo do painel; peças «por confirmar» */
+.where-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.where-row .where { margin-top: 0; flex: 1 1 auto; min-width: 0; }
+.icon-btn.loc { flex: 0 0 auto; }
+.ultimo { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: #2b3038;
+  border: 1px solid var(--line); border-left: 4px solid var(--ok); border-radius: 10px; padding: 6px 6px 6px 12px; margin: 0 0 12px; }
+.ultimo[data-estado="a_gravar"] { border-left-color: var(--muted); color: var(--muted); padding: 12px; }
+.ultimo-txt { flex: 1 1 160px; min-width: 0; }
+#lyr-conhecida { pointer-events: none; }
+.por-confirmar-img { opacity: .5; }
 
 /* importar */
 .steps { padding-left: 22px; display: flex; flex-direction: column; gap: 14px; }
@@ -178,4 +218,10 @@ h3 { margin: 0 0 4px; font-size: 18px; }
   .who .num { font-size: 20px; }
   .legend-short { font-size: 12px; gap: 4px 10px; }
   .zoom-ui button { width: 44px; height: 44px; }
+  /* F1d: o menu «⋯» abre a toda a largura (ancorado ao botão saía pela esquerda a 390 px) */
+  #top { position: relative; }
+  .menu-wrap { position: static; }
+  .menu { top: 100%; left: 8px; right: 8px; min-width: 0; }
+  /* F1d: a faixa da última ação no topo do painel já tem «Desfazer»; o aviso em baixo tapava «Colocar aqui» */
+  #toast > .undo-toast { display: none; }
 }

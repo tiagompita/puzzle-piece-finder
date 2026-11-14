@@ -409,3 +409,67 @@ def test_real_fetch_proposals_never_vanish_from_montar(tmp_path):
 	assert r["grupos_sem_lugar"] == sum(1 for e in entries if e.get("origin") == "seccao")
 	if r["propostas"]:
 		assert q["total"] or r["guardar"] or r["guardadas"] or r["grupos_sem_lugar"], "o Montar diria «Nada para ir buscar»"
+
+
+def test_por_confirmar_is_not_a_mould_nor_neighbour_nor_progress(env_guarda):
+	"""F1d ponto 2 (verificado no código antes de mudar a GUI): «Colocar aqui» continua a ser ``position_known``; a célula
+	fica vazia no tabuleiro, a peça não é vizinha (``mounted_neighbours``), não é molde de nenhum buraco
+	(``fit.hole_queries``: só ``colocada``), não conta no progresso do topo (P12), e ``/api/board`` dá-a em
+	``posicoes_conhecidas`` com a rotação para o desenho «por confirmar»."""
+	from src import fit
+	from src.query import mounted_neighbours
+	gui, client, tw = env_guarda
+	pr = gui.pr
+	it = client.get("/api/montar").json()["itens"][0]
+	cell = tuple(it["cell"])
+	nbs = pr.board.neighbours(cell)
+	def snap():
+		holes = fit.hole_queries(pr, cells=nbs + [cell], min_neighbours=1)
+		return (client.get("/api/montar").json()["progresso"], [mounted_neighbours(pr, nb) for nb in nbs],
+				sorted((h.cell, tuple(sorted(s.piece_id for s in h.sides))) for h in holes))
+	before = snap()
+	r = client.post(it["guardar"]["url"], json=it["guardar"]["body"]).json()
+	assert r["ok"] and r["escritos"][0]["action"] == "position_known"
+	assert pr.piece(tw).estado == "posicao_conhecida" and pr.piece(tw).celula == cell
+	assert pr.board[cell]["estado"] == "vazia" and not pr.board.occupied(cell)
+	after = snap()
+	assert after == before
+	assert all(tw not in pieces for _, pieces in after[2])
+	b = client.get("/api/board?ui=novo").json()
+	k = [x for x in b["posicoes_conhecidas"] if x["piece"] == tw]
+	assert len(k) == 1 and tuple(k[0]["cell"]) == cell and "theta_deg" in k[0]
+	assert b["progresso"]["colocadas"] == sum(1 for _, c in pr.board.iter_cells() if c["estado"] == "colocada")
+	row = [r for r in b["legend"] if r["id"] == "por_confirmar"]
+	assert len(row) == 1 and not row[0].get("curta") and row[0]["classe"] == "b-por-confirmar"
+	assert "por_confirmar" not in {r["id"] for r in client.get("/api/board").json()["legend"]}   # só a GUI nova
+	_ok(gui.path)
+
+
+WEB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "web")
+
+
+def test_novo_icons_local_and_licensed():
+	"""F1d ponto 5: os ícones da GUI nova são SVG do Lucide guardados no repositório, com a licença ao lado, todos
+	referidos por uma classe CSS e sem conteúdo ativo; HTML, CSS e JS de /novo/ (e o core/board que carrega) não
+	referem nenhum URL externo (só o espaço de nomes do SVG)."""
+	import re
+	icons = os.path.join(WEB, "novo", "icons")
+	lic = open(os.path.join(icons, "LICENSE-lucide.txt"), encoding="utf-8").read()
+	assert "ISC License" in lic and "Lucide Icons and Contributors" in lic and "Cole Bemis" in lic
+	svgs = sorted(f[:-4] for f in os.listdir(icons) if f.endswith(".svg"))
+	css = open(os.path.join(WEB, "novo", "novo.css"), encoding="utf-8").read()
+	js = open(os.path.join(WEB, "novo", "novo.js"), encoding="utf-8").read()
+	html = open(os.path.join(WEB, "novo", "index.html"), encoding="utf-8").read()
+	used = set(re.findall(r'ico\("([a-z0-9-]+)"\)', js)) | set(re.findall(r'class="ico i-([a-z0-9-]+)"', html))
+	assert used and used <= set(svgs), used - set(svgs)
+	for n in svgs:
+		assert f'url("icons/{n}.svg")' in css, n
+		t = open(os.path.join(icons, f"{n}.svg"), encoding="utf-8").read()
+		assert set(re.findall(r"<([a-zA-Z]+)", t)) <= {"svg", "path", "circle", "line", "rect", "polyline", "polygon", "ellipse"}, n
+		assert not re.search(r"\bon[a-z]+\s*=|href|<script", t, re.I), n
+	ns = "http://www.w3.org/2000/svg"
+	for name in ("novo/index.html", "novo/novo.css", "novo/novo.js", "core.js", "board.js", "board.css"):
+		t = open(os.path.join(WEB, name), encoding="utf-8").read().replace(ns, "")
+		assert not re.search(r"(https?:)?//[a-z0-9.-]+\.[a-z]{2,}", t, re.I), (name, re.findall(r"(?:https?:)?//[^\s\"')]+", t)[:5])
+	for n in svgs:
+		assert not re.search(r"https?://", open(os.path.join(icons, f"{n}.svg"), encoding="utf-8").read().replace(ns, "")), n
