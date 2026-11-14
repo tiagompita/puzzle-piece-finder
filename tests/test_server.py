@@ -1058,3 +1058,108 @@ def ST_rle(rle):
     from src import strokes as ST
     return ST.rle_decode(rle)
 
+
+
+# ---------------------------------------------------------------- detail raster (DETALHE.md, A + B)
+def test_region_pixels_identical_to_compose_board(env, monkeypatch):
+    """The region path (composed outside the lock) hands _jpeg exactly ``compose_board(region)``: max diff 0."""
+    from src import render
+    gui, cl, placed, tw, dec = env
+    seen = []
+    real = S._jpeg
+    monkeypatch.setattr(S, "_jpeg", lambda img, q=S.JPEG_Q: (seen.append(img.copy()), real(img, q))[1])
+    for ppc in (120, 240):
+        for reg in ((1, 1, 4, 6), (2, 2, 3, 4), (1, 1, 1, 1), (4, 6, 4, 6), (2, 3, 2, 3)):
+            seen.clear()
+            data = gui.board_jpg(ppc, reg, client="t", seq=ppc)
+            assert len(seen) == 1
+            ref = render.compose_board(gui.pr, ppc, region=reg, layers=("art", "pieces"), placements=gui.placements())
+            assert seen[0].shape == ref.shape and int(np.abs(seen[0].astype(int) - ref.astype(int)).max()) == 0
+            assert data == real(ref)
+            assert gui.board_jpg(ppc, reg) == data and len(seen) == 1                  # second call: LRU hit
+
+
+def _slow_compose(gui, monkeypatch, delay):
+    """``gui._compose`` that sleeps ``delay`` s; returns the per-call log and the peak of concurrent compositions."""
+    import threading
+    real = gui._compose
+    st = {"calls": [], "now": 0, "peak": 0}
+    lk = threading.Lock()
+
+    def slow(ppc, region=None):
+        with lk:
+            st["now"] += 1
+            st["peak"] = max(st["peak"], st["now"])
+            st["calls"].append(region)
+        try:
+            time.sleep(delay)
+            return real(ppc, region)
+        finally:
+            with lk:
+                st["now"] -= 1
+    monkeypatch.setattr(gui, "_compose", slow)
+    return st
+
+
+def test_region_composition_does_not_block_other_routes(env, monkeypatch):
+    """While a region composes (2 s), /api/status and a cached board.jpg answer in < 200 ms (no lock held)."""
+    import threading
+    gui, cl, placed, tw, dec = env
+    cached = "/api/board.jpg?ppc=120&region=1,1,2,2&v=1"
+    assert cl.get(cached).status_code == 200
+    _slow_compose(gui, monkeypatch, 2.0)
+    out = {}
+    th = threading.Thread(target=lambda: out.setdefault("r", TestClient(S.create_app(gui)).get("/api/board.jpg?ppc=120&region=2,2,4,5")))
+    th.start()
+    time.sleep(0.3)
+    lat = {}
+    for name, url in (("status", "/api/status"), ("cache", cached), ("cell", "/api/cell/2/3")):
+        t0 = time.perf_counter()
+        r = cl.get(url)
+        lat[name] = time.perf_counter() - t0
+        assert r.status_code == 200, (name, r.text)
+    th.join(10)
+    assert out["r"].status_code == 200
+    assert max(lat.values()) < 0.2, lat
+
+
+def test_equal_region_requests_share_one_composition(env, monkeypatch):
+    import threading
+    gui, cl, placed, tw, dec = env
+    st = _slow_compose(gui, monkeypatch, 0.6)
+    res = []
+    ths = [threading.Thread(target=lambda: res.append(gui.board_jpg(120, (1, 2, 3, 4)))) for _ in range(3)]
+    for t in ths:
+        t.start()
+    for t in ths:
+        t.join(10)
+    assert len(res) == 3 and len(set(res)) == 1 and st["calls"] == [(1, 2, 3, 4)]
+
+
+def test_superseded_detail_request_is_dropped_before_composing(env, monkeypatch):
+    """One client: seq 1 composes; seq 2 (queued behind it) is dropped once seq 3 arrived; seq 3 composes; never
+    two compositions of the same client at once. Another client is not affected by this client's seq."""
+    import threading
+    gui, cl, placed, tw, dec = env
+    st = _slow_compose(gui, monkeypatch, 0.5)
+    out = {}
+
+    def get(seq, reg, client="a"):
+        c = TestClient(S.create_app(gui))
+        out[(client, seq)] = c.get(f"/api/board.jpg?ppc=120&region={reg}&v=1",
+                                   headers={"X-Detail-Client": client, "X-Detail-Seq": str(seq)})
+    ths = []
+    for seq, reg in ((1, "1,1,2,2"), (2, "2,2,3,3"), (3, "3,3,4,4")):
+        ths.append(threading.Thread(target=get, args=(seq, reg)))
+        ths[-1].start()
+        time.sleep(0.1)
+    ths.append(threading.Thread(target=get, args=(1, "1,4,2,6", "b")))
+    ths[-1].start()
+    for t in ths:
+        t.join(10)
+    assert out[("a", 1)].status_code == 200 and out[("a", 3)].status_code == 200
+    assert out[("a", 2)].status_code == 409 and "ultrapassado" in out[("a", 2)].json()["detail"]
+    assert out[("b", 1)].status_code == 200
+    assert (2, 2, 3, 3) not in st["calls"] and len(st["calls"]) == 3
+    # without the headers (old clients, other callers) nothing is dropped
+    assert cl.get("/api/board.jpg?ppc=120&region=1,1,1,2").status_code == 200

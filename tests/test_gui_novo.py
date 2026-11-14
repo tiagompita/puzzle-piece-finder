@@ -546,7 +546,8 @@ def test_icons_local_aria_and_layout(guarda, browser, vp):
 		pg.wait_for_selector("#b-guardar", timeout=30_000)
 		pg.click("#menu-btn")
 		pg.wait_for_timeout(300)
-		ext = [u for u in reqs if not u.startswith(url) and not u.startswith("data:")]
+		# blob: da mesma origem = o raster de detalhe já descarregado (objectURL de loadDetail, DETALHE.md), não um pedido de fora
+		ext = [u for u in reqs if not u.startswith(url) and not u.startswith("data:") and not u.startswith("blob:" + url)]
 		assert not ext, ext
 		icons = [u for u in reqs if "/novo/icons/" in u]
 		assert icons, "nenhum ícone pedido"
@@ -574,3 +575,66 @@ def test_icons_local_aria_and_layout(guarda, browser, vp):
 		assert not errs, errs
 	finally:
 		pg.close()
+
+
+# ---------------------------------------------------------------- detalhe: um só pedido em voo (DETALHE.md, B)
+DETAIL_PROBE = """(() => {
+  window.__det = { now: 0, peak: 0, sent: 0 };
+  const f = window.fetch;
+  window.fetch = function (u, o) {
+    const isDet = String(u).includes('/api/board.jpg') && String(u).includes('region=');
+    if (!isDet) return f.apply(this, arguments);
+    window.__det.now++; window.__det.sent++; window.__det.peak = Math.max(window.__det.peak, window.__det.now);
+    const p = f.apply(this, arguments);
+    let over = false;
+    const done = () => { if (!over) { over = true; window.__det.now--; } };
+    // abort() cancels the request at once (the promise only rejects a microtask later)
+    if (o && o.signal) o.signal.addEventListener('abort', done);
+    p.then(done, done);
+    return p;
+  };
+})();"""
+
+
+def test_five_jumps_leave_one_detail_in_flight(base, browser, monkeypatch):
+	"""5 saltos seguidos (lupa → lupa …, 400 ms): no máximo 1 pedido de detalhe em voo no browser, nunca 2
+	composições ao mesmo tempo no servidor para este cliente, e o detalhe mostrado é o da última vista."""
+	url, gui, tw = base
+	real = gui._compose
+	st = {"now": 0, "peak": 0, "n": 0}
+	lk = threading.Lock()
+
+	def slow(ppc, region=None):
+		if region is not None:
+			with lk:
+				st["now"] += 1; st["n"] += 1; st["peak"] = max(st["peak"], st["now"])
+		try:
+			if region is not None:
+				time.sleep(0.7)
+			return real(ppc, region)
+		finally:
+			if region is not None:
+				with lk:
+					st["now"] -= 1
+	monkeypatch.setattr(gui, "_compose", slow)
+	pg = browser.new_page(viewport={"width": 1366, "height": 768})
+	pg.add_init_script(DETAIL_PROBE)
+	errs = []
+	pg.on("pageerror", lambda e: errs.append(str(e)))
+	pg.goto(url + "/novo/")
+	pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+	pg.wait_for_function("!!document.body.dataset.raster", timeout=30_000)
+	pg.wait_for_timeout(1500)                         # the detail of the opening view, if any
+	pg.evaluate("window.__det.peak = window.__det.now; window.__det.sent = 0")
+	for l, c in ((1, 1), (4, 6), (2, 3), (3, 5), (1, 4)):
+		pg.evaluate(f"zoomCells({l}, {c}, {l}, {c}, 0.02)")
+		pg.wait_for_timeout(400)
+	pg.wait_for_function("S.detailKey && document.body.dataset.detail === S.detailKey", timeout=30_000)
+	d = pg.evaluate("window.__det")
+	assert d["sent"] >= 4 and d["peak"] <= 1, d
+	assert st["peak"] <= 1, st
+	l0, c0, l1, c1 = (int(x) for x in pg.evaluate("document.body.dataset.detail").split("@")[0].split(","))
+	assert l0 <= 1 <= l1 and c0 <= 4 <= c1                       # a chave mostrada é a da última vista (1,4)
+	assert pg.evaluate("document.querySelector('#detail').getAttribute('href')").startswith("blob:")
+	assert errs == []
+	pg.close()

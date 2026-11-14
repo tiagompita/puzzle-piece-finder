@@ -84,37 +84,56 @@ function clientToBoard(cx, cy) {
   return { x: S.vb.x + (cx - r.left) / r.width * S.vb.w, y: S.vb.y + (cy - r.top) / r.height * S.vb.h };
 }
 
-// detail raster: the visible cells composed at a higher ppc when zoomed in
+// detail raster: the visible cells composed at a higher ppc when zoomed in.
+// One request in flight, the last one wins (2026-11-14, docs/diagnostico/gui/DETALHE.md): a new view aborts the
+// previous fetch (no stale request holds one of the browser's 6 connections), the server drops a superseded one
+// before composing (X-Detail-Client / X-Detail-Seq, Gui._region_jpg), and the JPEG is decoded off the paint path
+// (img.decode) before the <image> gets its object URL; the previous object URL is revoked.
 let detailTimer = null;
+let detailCtl = null, detailObj = null, detailSeq = 0;
+const detailClient = Math.random().toString(36).slice(2, 12);
 function scheduleDetail() {
   clearTimeout(detailTimer);
   detailTimer = setTimeout(loadDetail, 280);
 }
+function abortDetail() { if (detailCtl) { detailCtl.abort(); detailCtl = null; } }
 function loadDetail() {
   const det = $("#detail");
   const need = pxPerCell() * (window.devicePixelRatio || 1);
-  if (!S.board || need <= S.ppc * 1.1) { det.setAttribute("visibility", "hidden"); S.detailKey = null; return; }
+  if (!S.board || need <= S.ppc * 1.1) { abortDetail(); det.setAttribute("visibility", "hidden"); S.detailKey = null; return; }
   const c0 = Math.max(1, Math.floor(S.vb.x) + 1 - 1), c1 = Math.min(S.cols, Math.ceil(S.vb.x + S.vb.w) + 1);
   const l0 = Math.max(1, Math.floor(S.vb.y / S.hr) + 1 - 1), l1 = Math.min(S.rows, Math.ceil((S.vb.y + S.vb.h) / S.hr) + 1);
   if (c1 < c0 || l1 < l0) return;
   const n = (c1 - c0 + 1) * (l1 - l0 + 1);
   let ppc = Math.min(240, Math.ceil(need / 20) * 20);
   ppc = Math.min(ppc, Math.floor(Math.sqrt(11e6 / n)));
-  if (ppc <= S.ppc * 1.1) { det.setAttribute("visibility", "hidden"); S.detailKey = null; return; }
+  if (ppc <= S.ppc * 1.1) { abortDetail(); det.setAttribute("visibility", "hidden"); S.detailKey = null; return; }
   const key = `${l0},${c0},${l1},${c1}@${ppc}#${S.ver}`;
   if (key === S.detailKey) return;
   S.detailKey = key;
+  abortDetail();
+  const ctl = new AbortController();
+  detailCtl = ctl;
   const url = `/api/board.jpg?ppc=${ppc}&region=${l0},${c0},${l1},${c1}&v=${S.ver}`;
-  const img = new Image();
-  img.onload = () => {
-    if (S.detailKey !== key) return;
-    det.setAttribute("href", url);
-    det.setAttribute("x", c0 - 1); det.setAttribute("y", (l0 - 1) * S.hr);
-    det.setAttribute("width", c1 - c0 + 1); det.setAttribute("height", (l1 - l0 + 1) * S.hr);
-    det.setAttribute("visibility", "visible");
-    document.body.dataset.detail = key;
-  };
-  img.src = url;
+  const headers = { "X-Detail-Client": detailClient, "X-Detail-Seq": String(++detailSeq) };
+  fetch(url, { signal: ctl.signal, headers })
+    .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.blob(); })
+    .then(async (blob) => {
+      const obj = URL.createObjectURL(blob);
+      const img = new Image();
+      img.src = obj;
+      try { await img.decode(); } catch (e) { /* decoded by the <image> instead */ }
+      if (ctl.signal.aborted || S.detailKey !== key) { URL.revokeObjectURL(obj); return; }
+      det.setAttribute("href", obj);
+      det.setAttribute("x", c0 - 1); det.setAttribute("y", (l0 - 1) * S.hr);
+      det.setAttribute("width", c1 - c0 + 1); det.setAttribute("height", (l1 - l0 + 1) * S.hr);
+      det.setAttribute("visibility", "visible");
+      if (detailObj) URL.revokeObjectURL(detailObj);
+      detailObj = obj;
+      document.body.dataset.detail = key;
+    })
+    .catch(() => { if (!ctl.signal.aborted && S.detailKey === key) S.detailKey = null; })   // failed: the next view retries
+    .finally(() => { if (detailCtl === ctl) detailCtl = null; });
 }
 
 function initPointer() {

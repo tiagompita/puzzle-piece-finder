@@ -1,0 +1,272 @@
+{
+ "ui": "novo",
+ "vw": 1920,
+ "vh": 1080,
+ "dpr": 1.0,
+ "rows": [
+  {
+   "cenario": "escrita ceu longe (20,60) aba pecas",
+   "ui": "novo",
+   "detalhe_s": 7.68,
+   "chave": "1,20,14,40@100#2521657",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 39,
+   "sondas_max_ms": 234,
+   "sondas_med_ms": 14,
+   "detalhe_enviados": 1,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 1,
+   "sobreposicao_ms": 0.0,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=1,20,14,40&v=2521657",
+     "t_ms": 0,
+     "fim_ms": 3524,
+     "fila_ms": 0,
+     "ttfb_ms": 3523,
+     "dur_ms": 3524,
+     "kb": 346,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 3,
+   "n_fila_mais_100ms": 0,
+   "post_s": 5.4,
+   "erro": null,
+   "vb_igual": true,
+   "detalhe_depois_post_s": 2.28
+  },
+  {
+   "cenario": "escrita ceu perto (6,30) aba pecas",
+   "ui": "novo",
+   "detalhe_s": 7.48,
+   "chave": "1,20,14,40@100#2529733",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 38,
+   "sondas_max_ms": 173,
+   "sondas_med_ms": 30,
+   "detalhe_enviados": 1,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 1,
+   "sobreposicao_ms": 0.0,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=1,20,14,40&v=2529733",
+     "t_ms": 0,
+     "fim_ms": 3474,
+     "fila_ms": 0,
+     "ttfb_ms": 3473,
+     "dur_ms": 3474,
+     "kb": 349,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 1,
+   "n_fila_mais_100ms": 0,
+   "post_s": 5.02,
+   "erro": null,
+   "vb_igual": true,
+   "detalhe_depois_post_s": 2.46
+  },
+  {
+   "cenario": "escrita relva longe (20,60) aba pecas",
+   "ui": "novo",
+   "detalhe_s": 7.21,
+   "chave": "34,30,47,50@100#2537809",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 37,
+   "sondas_max_ms": 179,
+   "sondas_med_ms": 24,
+   "detalhe_enviados": 1,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 1,
+   "sobreposicao_ms": 0.0,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=34,30,47,50&v=2537809",
+     "t_ms": 0,
+     "fim_ms": 3228,
+     "fila_ms": 0,
+     "ttfb_ms": 3227,
+     "dur_ms": 3228,
+     "kb": 570,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 1,
+   "n_fila_mais_100ms": 0,
+   "post_s": 5.0,
+   "erro": null,
+   "vb_igual": true,
+   "detalhe_depois_post_s": 2.21
+  },
+  {
+   "cenario": "escrita relva perto (41,40) aba pecas",
+   "ui": "novo",
+   "detalhe_s": 7.22,
+   "chave": "34,30,47,50@100#2545886",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 37,
+   "sondas_max_ms": 189,
+   "sondas_med_ms": 45,
+   "detalhe_enviados": 1,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 1,
+   "sobreposicao_ms": 0.0,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=34,30,47,50&v=2545886",
+     "t_ms": 0,
+     "fim_ms": 3223,
+     "fila_ms": 0,
+     "ttfb_ms": 3222,
+     "dur_ms": 3223,
+     "kb": 573,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 1,
+   "n_fila_mais_100ms": 0,
+   "post_s": 5.04,
+   "erro": null,
+   "vb_igual": true,
+   "detalhe_depois_post_s": 2.18
+  },
+  {
+   "cenario": "escrita vazia longe (20,60) aba pecas",
+   "ui": "novo",
+   "detalhe_s": 4.88,
+   "chave": "26,20,40,40@100#2553963",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1451
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 26,
+   "sondas_max_ms": 179,
+   "sondas_med_ms": 46,
+   "detalhe_enviados": 1,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 1,
+   "sobreposicao_ms": 0.0,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=26,20,40,40&v=2553963",
+     "t_ms": 0,
+     "fim_ms": 97,
+     "fila_ms": 0,
+     "ttfb_ms": 96,
+     "dur_ms": 97,
+     "kb": 208,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 1,
+   "n_fila_mais_100ms": 0,
+   "post_s": 4.88,
+   "erro": null,
+   "vb_igual": true,
+   "detalhe_depois_post_s": 0.0
+  },
+  {
+   "cenario": "escrita vazia perto (33,30) aba pecas",
+   "ui": "novo",
+   "detalhe_s": 4.86,
+   "chave": "26,20,40,40@100#2562040",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1451
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 25,
+   "sondas_max_ms": 245,
+   "sondas_med_ms": 48,
+   "detalhe_enviados": 1,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 1,
+   "sobreposicao_ms": 0.0,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=26,20,40,40&v=2562040",
+     "t_ms": 0,
+     "fim_ms": 172,
+     "fila_ms": 0,
+     "ttfb_ms": 171,
+     "dur_ms": 172,
+     "kb": 211,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 0,
+   "n_fila_mais_100ms": 0,
+   "post_s": 4.86,
+   "erro": null,
+   "vb_igual": true,
+   "detalhe_depois_post_s": 0.0
+  }
+ ]
+}

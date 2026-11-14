@@ -1,0 +1,418 @@
+{
+ "fases": [
+  {
+   "zona": "ceu",
+   "zoom": "lupa",
+   "estado": "frio",
+   "regiao": [
+    1,
+    21,
+    11,
+    39
+   ],
+   "ppc": 120,
+   "celulas": 209,
+   "mp": 2.91,
+   "kb": 432,
+   "s": 2.607,
+   "fases": {
+    "arte": 0.033,
+    "registar": 0.376,
+    "ler recorte": 0.384,
+    "profundidade": 0.15,
+    "sombra": 0.745,
+    "bleed": 0.327,
+    "warp": 0.16,
+    "jpeg": 0.005,
+    "resto": 0.426
+   }
+  },
+  {
+   "zona": "ceu",
+   "zoom": "lupa",
+   "estado": "quente",
+   "regiao": [
+    1,
+    21,
+    11,
+    39
+   ],
+   "ppc": 120,
+   "celulas": 209,
+   "mp": 2.91,
+   "kb": 432,
+   "s": 0.0,
+   "fases": {
+    "resto": 0.0
+   }
+  },
+  {
+   "zona": "ceu",
+   "zoom": "lupa",
+   "estado": "morno",
+   "regiao": [
+    1,
+    22,
+    11,
+    40
+   ],
+   "ppc": 120,
+   "celulas": 209,
+   "mp": 2.91,
+   "kb": 422,
+   "s": 2.055,
+   "fases": {
+    "arte": 0.027,
+    "registar": 0.041,
+    "ler recorte": 0.275,
+    "profundidade": 0.145,
+    "sombra": 0.649,
+    "bleed": 0.324,
+    "warp": 0.161,
+    "jpeg": 0.005,
+    "resto": 0.428
+   }
+  },
+  {
+   "zona": "ceu",
+   "zoom": "perto",
+   "estado": "frio",
+   "regiao": [
+    2,
+    26,
+    8,
+    34
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 686,
+   "s": 1.387,
+   "fases": {
+    "arte": 0.027,
+    "registar": 0.018,
+    "ler recorte": 0.155,
+    "profundidade": 0.08,
+    "sombra": 0.346,
+    "bleed": 0.176,
+    "warp": 0.084,
+    "jpeg": 0.007,
+    "resto": 0.494
+   }
+  },
+  {
+   "zona": "ceu",
+   "zoom": "perto",
+   "estado": "quente",
+   "regiao": [
+    2,
+    26,
+    8,
+    34
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 686,
+   "s": 0.0,
+   "fases": {
+    "resto": 0.0
+   }
+  },
+  {
+   "zona": "ceu",
+   "zoom": "perto",
+   "estado": "morno",
+   "regiao": [
+    2,
+    27,
+    8,
+    35
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 646,
+   "s": 1.348,
+   "fases": {
+    "arte": 0.027,
+    "registar": 0.016,
+    "ler recorte": 0.154,
+    "profundidade": 0.077,
+    "sombra": 0.332,
+    "bleed": 0.174,
+    "warp": 0.079,
+    "jpeg": 0.007,
+    "resto": 0.483
+   }
+  },
+  {
+   "zona": "relva",
+   "zoom": "lupa",
+   "estado": "frio",
+   "regiao": [
+    38,
+    31,
+    47,
+    49
+   ],
+   "ppc": 120,
+   "celulas": 190,
+   "mp": 2.65,
+   "kb": 622,
+   "s": 2.303,
+   "fases": {
+    "arte": 0.028,
+    "profundidade": 0.14,
+    "sombra": 0.714,
+    "ler recorte": 0.189,
+    "registar": 0.437,
+    "bleed": 0.284,
+    "warp": 0.137,
+    "jpeg": 0.005,
+    "resto": 0.37
+   }
+  },
+  {
+   "zona": "relva",
+   "zoom": "lupa",
+   "estado": "quente",
+   "regiao": [
+    38,
+    31,
+    47,
+    49
+   ],
+   "ppc": 120,
+   "celulas": 190,
+   "mp": 2.65,
+   "kb": 622,
+   "s": 0.0,
+   "fases": {
+    "resto": 0.0
+   }
+  },
+  {
+   "zona": "relva",
+   "zoom": "lupa",
+   "estado": "morno",
+   "regiao": [
+    38,
+    32,
+    47,
+    50
+   ],
+   "ppc": 120,
+   "celulas": 190,
+   "mp": 2.65,
+   "kb": 624,
+   "s": 1.913,
+   "fases": {
+    "arte": 0.028,
+    "profundidade": 0.139,
+    "sombra": 0.691,
+    "ler recorte": 0.187,
+    "registar": 0.059,
+    "bleed": 0.286,
+    "warp": 0.14,
+    "jpeg": 0.005,
+    "resto": 0.379
+   }
+  },
+  {
+   "zona": "relva",
+   "zoom": "perto",
+   "estado": "frio",
+   "regiao": [
+    41,
+    36,
+    47,
+    44
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 997,
+   "s": 1.22,
+   "fases": {
+    "arte": 0.029,
+    "registar": 0.028,
+    "ler recorte": 0.096,
+    "profundidade": 0.071,
+    "sombra": 0.349,
+    "bleed": 0.138,
+    "warp": 0.078,
+    "jpeg": 0.008,
+    "resto": 0.425
+   }
+  },
+  {
+   "zona": "relva",
+   "zoom": "perto",
+   "estado": "quente",
+   "regiao": [
+    41,
+    36,
+    47,
+    44
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 997,
+   "s": 0.0,
+   "fases": {
+    "resto": 0.0
+   }
+  },
+  {
+   "zona": "relva",
+   "zoom": "perto",
+   "estado": "morno",
+   "regiao": [
+    41,
+    37,
+    47,
+    45
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 1009,
+   "s": 1.197,
+   "fases": {
+    "arte": 0.027,
+    "registar": 0.028,
+    "ler recorte": 0.096,
+    "profundidade": 0.07,
+    "sombra": 0.347,
+    "bleed": 0.137,
+    "warp": 0.077,
+    "jpeg": 0.008,
+    "resto": 0.408
+   }
+  },
+  {
+   "zona": "vazia",
+   "zoom": "lupa",
+   "estado": "frio",
+   "regiao": [
+    27,
+    21,
+    39,
+    39
+   ],
+   "ppc": 120,
+   "celulas": 247,
+   "mp": 3.44,
+   "kb": 197,
+   "s": 0.085,
+   "fases": {
+    "arte": 0.027,
+    "jpeg": 0.005,
+    "resto": 0.052
+   }
+  },
+  {
+   "zona": "vazia",
+   "zoom": "lupa",
+   "estado": "quente",
+   "regiao": [
+    27,
+    21,
+    39,
+    39
+   ],
+   "ppc": 120,
+   "celulas": 247,
+   "mp": 3.44,
+   "kb": 197,
+   "s": 0.0,
+   "fases": {
+    "resto": 0.0
+   }
+  },
+  {
+   "zona": "vazia",
+   "zoom": "lupa",
+   "estado": "morno",
+   "regiao": [
+    27,
+    22,
+    39,
+    40
+   ],
+   "ppc": 120,
+   "celulas": 247,
+   "mp": 3.44,
+   "kb": 200,
+   "s": 0.084,
+   "fases": {
+    "arte": 0.027,
+    "jpeg": 0.005,
+    "resto": 0.052
+   }
+  },
+  {
+   "zona": "vazia",
+   "zoom": "perto",
+   "estado": "frio",
+   "regiao": [
+    30,
+    26,
+    36,
+    34
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 106,
+   "s": 0.085,
+   "fases": {
+    "arte": 0.027,
+    "jpeg": 0.005,
+    "resto": 0.054
+   }
+  },
+  {
+   "zona": "vazia",
+   "zoom": "perto",
+   "estado": "quente",
+   "regiao": [
+    30,
+    26,
+    36,
+    34
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 106,
+   "s": 0.0,
+   "fases": {
+    "resto": 0.0
+   }
+  },
+  {
+   "zona": "vazia",
+   "zoom": "perto",
+   "estado": "morno",
+   "regiao": [
+    30,
+    27,
+    36,
+    35
+   ],
+   "ppc": 240,
+   "celulas": 63,
+   "mp": 3.51,
+   "kb": 109,
+   "s": 0.09,
+   "fases": {
+    "arte": 0.027,
+    "jpeg": 0.005,
+    "resto": 0.059
+   }
+  }
+ ]
+}

@@ -353,6 +353,10 @@ class Busy(RuntimeError):
 	"""A write was attempted while a background job holds the project."""
 
 
+class Superseded(RuntimeError):
+	"""A detail-raster request older than the newest one of the same client (dropped before composing)."""
+
+
 class Gui:
 	"""Project + locks + caches + event queue shared by the routes.
 
@@ -392,6 +396,10 @@ class Gui:
 		self._board = None            # {ver, img, snap}
 		self._small = {}              # ppc -> (ver, bytes)
 		self._regions = collections.OrderedDict()
+		self.region_lock = threading.Lock()   # only _regions / _region_jobs / _detail_seq (never held while composing)
+		self._region_jobs = {}        # (key, ver) -> {"ev", "data", "err"}: one composition per region in flight
+		self._detail_seq = {}         # detail client id -> highest seq seen (X-Detail-Client / X-Detail-Seq)
+		self._detail_locks = {}       # detail client id -> Lock: one composition per client at a time
 		self._pieces = collections.OrderedDict()
 		self._sections = collections.OrderedDict()
 		self._ghosts = None           # (ver, list)
@@ -1089,12 +1097,17 @@ class Gui:
 									   + (", a partir da cache do disco render/gui" if from_disk else "") + ")")
 		return b
 
-	def board_jpg(self, ppc: float = BOARD_PPC, region: Optional[tuple] = None) -> bytes:
-		"""JPEG of the board (``region`` = (l0, c0, l1, c1) inclusive) at ``ppc`` px per cell."""
+	def board_jpg(self, ppc: float = BOARD_PPC, region: Optional[tuple] = None, *, client: Optional[str] = None,
+				  seq: Optional[int] = None) -> bytes:
+		"""JPEG of the board (``region`` = (l0, c0, l1, c1) inclusive) at ``ppc`` px per cell.
+
+		The full board (``region=None``) is composed / patched under ``rlock``. A region is composed OUTSIDE any
+		lock (:meth:`_region_jpg`): ``region_lock`` only guards the LRU and the table of compositions in flight, so a
+		cached region (or a zoom) never waits for another composition, and two equal requests share one."""
 		ppc = float(ppc)
 		prof = self.pr.profile
-		with self.rlock:
-			if region is None:
+		if region is None:
+			with self.rlock:
 				if ppc > MAX_FULL_PPC:
 					raise ValueError(f"tabuleiro inteiro só até ppc {MAX_FULL_PPC}; usa region=")
 				b = self._base()
@@ -1111,21 +1124,84 @@ class Gui:
 				data = _jpeg(cv2.resize(b["img"], (W, H), interpolation=interp))
 				self._small[key] = (b["ver"], data)
 				return data
-			n_cells = (region[2] - region[0] + 1) * (region[3] - region[1] + 1)
-			ppc = min(ppc, MAX_REGION_PPC)
-			if n_cells * ppc * ppc > MAX_REGION_PX:
-				raise ValueError(f"região grande demais para ppc {ppc:.0f} ({n_cells} células)")
-			ver = self.version()
-			key = (round(ppc, 1), region)
-			c = self._regions.get(key)
-			if c is not None and c[0] == ver:
-				self._regions.move_to_end(key)
-				return c[1]
-			data = _jpeg(self._compose(ppc, region))
-			self._regions[key] = (ver, data)
-			while len(self._regions) > REGION_LRU:
-				self._regions.popitem(last=False)
+		n_cells = (region[2] - region[0] + 1) * (region[3] - region[1] + 1)
+		ppc = min(ppc, MAX_REGION_PPC)
+		if n_cells * ppc * ppc > MAX_REGION_PX:
+			raise ValueError(f"região grande demais para ppc {ppc:.0f} ({n_cells} células)")
+		return self._region_jpg(ppc, region, client=client, seq=seq)
+
+	def _region_cached(self, key, ver):
+		"""Cached JPEG of ``key`` at log version ``ver`` (moved to the LRU end), else None. Caller holds ``region_lock``."""
+		c = self._regions.get(key)
+		if c is not None and c[0] == ver:
+			self._regions.move_to_end(key)
+			return c[1]
+		return None
+
+	def _region_store(self, key, ver, data) -> None:
+		"""Insert into the region LRU. Caller holds ``region_lock``."""
+		self._regions[key] = (ver, data)
+		self._regions.move_to_end(key)
+		while len(self._regions) > REGION_LRU:
+			self._regions.popitem(last=False)
+
+	def _region_jpg(self, ppc: float, region: tuple, *, client: Optional[str] = None, seq: Optional[int] = None) -> bytes:
+		"""One region JPEG: LRU hit, or join an equal composition in flight, or compose it (outside every lock).
+
+		``client``/``seq`` (the detail raster of a browser tab, :func:`loadDetail`): compositions of one client run one
+		at a time, and a request whose ``seq`` is older than the newest seen for that client is dropped
+		(:class:`Superseded`, HTTP 409) before it starts composing, so a burst of jumps leaves one composition."""
+		ver = self.version()
+		key = (round(ppc, 1), region)
+		jk = (key, ver)
+		with self.region_lock:
+			data = self._region_cached(key, ver)
+			if data is not None:
+				return data
+			if client is not None and seq is not None:
+				self._detail_seq[client] = max(int(seq), self._detail_seq.get(client, -1))
+				clock = self._detail_locks.setdefault(client, threading.Lock())
+			else:
+				clock = None
+			job = self._region_jobs.get(jk)
+			owner = job is None
+			if owner:
+				job = {"ev": threading.Event(), "data": None, "err": None}
+				self._region_jobs[jk] = job
+		if not owner:
+			job["ev"].wait()
+			if isinstance(job["err"], Superseded):      # the owner's client moved on, not ours: try again
+				return self._region_jpg(ppc, region, client=client, seq=seq)
+			if job["err"] is not None:
+				raise job["err"]
+			return job["data"]
+		try:
+			if clock is not None:
+				clock.acquire()
+			try:
+				if clock is not None:
+					with self.region_lock:
+						if int(seq) < self._detail_seq.get(client, -1):
+							raise Superseded(f"pedido de detalhe {seq} ultrapassado")
+						data = self._region_cached(key, ver)      # composed meanwhile by another client
+				else:
+					data = None
+				if data is None:
+					data = _jpeg(self._compose(ppc, region))
+					with self.region_lock:
+						self._region_store(key, ver, data)
+			finally:
+				if clock is not None:
+					clock.release()
+			job["data"] = data
 			return data
+		except BaseException as e:
+			job["err"] = e
+			raise
+		finally:
+			with self.region_lock:
+				self._region_jobs.pop(jk, None)
+			job["ev"].set()
 
 	def zoom_jpg(self, l: int, c: int, side: str = "both", dpi: float = 300) -> bytes:
 		"""3 x 3 cells around ``(l, c)`` at ``dpi``: the render, the art, or both side by side."""
@@ -1135,10 +1211,10 @@ class Gui:
 		dpi = float(min(max(dpi, 50), 300))
 		key = ("zoom", side, round(dpi), reg)
 		ver = self.version()
-		with self.rlock:
-			cc = self._regions.get(key)
-			if cc is not None and cc[0] == ver:
-				return cc[1]
+		with self.region_lock:
+			cc = self._region_cached(key, ver)
+			if cc is not None:
+				return cc
 		ppc = float(prof.cell_mm["w"]) / (25.4 / dpi)
 		if side == "render":
 			img = self._compose(ppc, reg)
@@ -1147,10 +1223,8 @@ class Gui:
 		else:
 			img = self.read(lambda: render.compose_zone_vs_art(self.pr, reg, dpi, placements=self.placements()))
 		data = _jpeg(img, 88)
-		with self.rlock:
-			self._regions[key] = (ver, data)
-			while len(self._regions) > REGION_LRU:
-				self._regions.popitem(last=False)
+		with self.region_lock:
+			self._region_store(key, ver, data)
 		return data
 
 	# ------------------------------------------------------------ ghosts
@@ -2771,7 +2845,7 @@ class Gui:
 # ---------------------------------------------------------------- routes
 def create_app(gui: Gui):
 	"""FastAPI app over ``gui`` (API under ``/api``, the static frontend ``src/web`` at ``/``)."""
-	from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+	from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 	from fastapi.middleware.gzip import GZipMiddleware
 	from fastapi.responses import JSONResponse, Response, StreamingResponse
 	from fastapi.staticfiles import StaticFiles
@@ -2808,6 +2882,8 @@ def create_app(gui: Gui):
 	def guard(fn):
 		try:
 			return fn()
+		except Superseded as e:
+			raise HTTPException(409, detail=str(e))
 		except Busy as e:
 			raise HTTPException(409, detail=f"ocupado: {e}")
 		except FileNotFoundError as e:
@@ -2843,10 +2919,13 @@ def create_app(gui: Gui):
 		return FileResponse(os.path.join(WEB_DIR, "index.html"), media_type="text/html")
 
 	@app.get("/api/board.jpg")
-	def board_jpg(ppc: float = BOARD_PPC, region: Optional[str] = None, v: Optional[str] = None):
+	def board_jpg(ppc: float = BOARD_PPC, region: Optional[str] = None, v: Optional[str] = None,
+				  x_detail_client: Optional[str] = Header(None), x_detail_seq: Optional[int] = Header(None)):
 		ready()
 		prof = gui.pr.profile
-		data = guard(lambda: gui.board_jpg(ppc, _region_param(region, prof.rows, prof.cols)))
+		reg = _region_param(region, prof.rows, prof.cols)
+		cid = x_detail_client[:64] if x_detail_client and reg is not None and x_detail_seq is not None else None
+		data = guard(lambda: gui.board_jpg(ppc, reg, client=cid, seq=x_detail_seq if cid else None))
 		return img(data, "image/jpeg", cache=v is not None)
 
 	@app.get("/api/cell/{l}/{c}")

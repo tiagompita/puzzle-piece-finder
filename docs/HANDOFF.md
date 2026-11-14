@@ -1,8 +1,30 @@
-# HANDOFF — 2026-11-14 (F1d feita, à espera do OK; F2 não arrancou)
+# HANDOFF — 2026-11-14 (detalhe do tabuleiro: A + B feitos; F1d à espera do OK; F2 não arrancou)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-14): `docs/prompts/2026-11-14-f1d-correcoes-gui-nova.md` (fechado)
+## Última sessão (2026-11-14): `docs/prompts/2026-11-14-detalhe-tabuleiro.md` (fechado)
+- **Problema:** depois de um salto da lupa o detalhe do tabuleiro demorava e a GUI «deixava de responder». Medições em `docs/diagnostico/gui/DETALHE.md`, todas feitas numa cópia de `projects/alpes`. Guiões em `tools/diagnostico/gui/` (`salto_detalhe.py`, `tempo_regiao.py`, `gil_buracos.py`, `tabela.py`).
+- **Anterior à F1 [V]:** em `8fedf87^` o salto frio demora o mesmo (céu 2,11 s, contra 2,14 s em HEAD na GUI antiga).
+- **Causas [V]:**
+  - (a) composição de regiões dentro do `rlock`: um `board.jpg` já em cache esperava 1,8 s;
+  - (b) sem cancelamento: 5 saltos seguidos davam 5 composições em série, com o detalhe final aos 7,6–8,2 s;
+  - **novo:** o ranking dos buracos a frio (1.º `/api/montar` depois de abrir, ≈ 30–40 s) rouba o GIL, e um detalhe de 2,5 s passa a 26–34 s.
+  - O fio do browser nunca bloqueou: 0 long tasks, rAF ≤ 17 ms.
+- **Feito: só A + B.**
+  - `Gui._region_jpg` compõe fora de qualquer lock, com `region_lock` só para a LRU e deduplicação dos pedidos em voo.
+  - `loadDetail` usa `fetch` + `AbortController` + `img.decode()` + objectURL. Os cabeçalhos `X-Detail-Client` / `X-Detail-Seq` fazem o servidor descartar, antes de compor, um pedido ultrapassado (HTTP 409), com uma composição por cliente de cada vez.
+  - Depois: `board.jpg` em cache 1 ms durante uma composição; 5 saltos → 1 composição útil, final em 3,3–3,9 s.
+- **Critério [F] em 1a/1b:** frio 2,2–2,8 s (critério 1,5 s); quente 0,29–0,31 s (critério 0,3 s; o debounce de 280 ms sozinho gasta 0,28 s). 2b falha no arranque (sondas até 376 ms). 2a, 2c e 3 [V].
+- **Recomendação** (DETALHE.md §5, nada disto implementado):
+  - H: `sys.setswitchinterval(0.0005)` no servidor; em processo, a composição com o ranking a correr passou de 26 s para 4 s;
+  - E: cache por peça do recorte pronto, estimativa frio ≈ 1 s;
+  - C: mosaicos (longe e perto de uma escrita custam hoje o mesmo, 2,2–2,5 s);
+  - D, G: não; F: só se H não chegar.
+- **Testes:** 4 novos em `tests/test_server.py` e 1 Playwright em `tests/test_gui_novo.py`; um teste existente alterado: `tests/test_gui_novo.py::test_icons_local_aria_and_layout` passa a aceitar o `blob:` da mesma origem (o objectURL do detalhe) na verificação de «nenhum pedido fora do servidor».
+- **Suite [V]:** 513 passed, 1 skipped, 0 failed (362 s, com os slow; +5 testes).
+- **Scratchpad:** a cópia `alpes_det`, `alpes_pref1` e os worktrees `wt_head`/`wt_pref1` ficam lá para repetir as medições. Os worktrees aparecem em `git worktree list` e removem-se com `git worktree remove --force <caminho>`.
+
+## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-f1d-correcoes-gui-nova.md` (fechado)
 - **F1d [V em testes; NT com o Tiago]** (regras em `docs/decisoes.md` 2026-11-14 F1d, ESPEC §2 e §7):
   - desfazer: causa = só havia um aviso de 9 s que aparecia ≈ 3 s depois do clique (o `POST` demora 3,4 s no real); agora faixa «última ação» com «Desfazer» no topo do painel até à ação seguinte;
   - cartões sem vizinha montada: «Colocar aqui» / «Não pertence aqui» (por dentro `position_known` / `reject`, sem «Porquê?»); a peça fica no tabuleiro «por confirmar» (imagem ténue + contorno tracejado da própria peça); verificado no código que a célula continua vazia para o motor (não é molde, nem vizinha, nem conta no progresso);
@@ -76,7 +98,8 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 4. **Ações novas no log** (`rejection_undone`, `pair_unrejected`, `rejection_noted`; F1c: `position_cleared`): checkouts anteriores deixam de ler um log que as tenha.
 5. **Limites da F1d [NT]:** a faixa «Desfazer» só existe nesta sessão do browser (recarregar perde-a; Ctrl+Z também); não testado em Firefox/Safari nem no telemóvel real; a imagem «por confirmar» só aparece com rotação conhecida (sem ela, só o tracejado da célula).
 6. Da ronda 10: fase 2 do editor (condicional, por zona), possível sobre-corte no lado S, P0045/P0071/P1064 índice manual por 1 píxel, limiares `GANHO_MIN_MM2` / `GEMEA_RUIDO_MM`, cache das miniaturas `?v=`.
-7. Anteriores: verificar ativos no arranque das CLI; `append_override` escreve CRLF; passo «pares» N²; arranque a frio; GT fora do céu; pose manual 4–9 s; detetor de peça comida; (26,1)/(25,1).
+7. **Detalhe do tabuleiro** (DETALHE.md §5, sem ordem do Tiago): H (intervalo do GIL, medir o ranking/reconsulta com e sem) → E (cache por peça) → C (mosaicos); decidir com o Tiago se um salto pede o detalhe sem o debounce de 280 ms.
+8. Anteriores: verificar ativos no arranque das CLI; `append_override` escreve CRLF; passo «pares» N²; arranque a frio; GT fora do céu; pose manual 4–9 s; detetor de peça comida; (26,1)/(25,1).
 
 ## Convenções que mordem
 - **Testes com o `.venv`** (`.venv/Scripts/python.exe -m pytest tests/`); a suite completa demora ≈ 300 s: correr em segundo plano.

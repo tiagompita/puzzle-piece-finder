@@ -1,0 +1,35 @@
+{
+ "bloqueio": {
+  "composicao_s": [
+   2.059,
+   2.046,
+   2.064,
+   2.042,
+   2.019
+  ],
+  "status": {
+   "sem_med_ms": 1,
+   "sem_max_ms": 20,
+   "com_med_ms": 19,
+   "com_max_ms": 25
+  },
+  "montar": {
+   "sem_med_ms": 39,
+   "sem_max_ms": 46,
+   "com_med_ms": 61,
+   "com_max_ms": 64
+  },
+  "cell": {
+   "sem_med_ms": 36,
+   "sem_max_ms": 56,
+   "com_med_ms": 55,
+   "com_max_ms": 77
+  },
+  "board_cache": {
+   "sem_med_ms": 1,
+   "sem_max_ms": 22,
+   "com_med_ms": 1,
+   "com_max_ms": 21
+  }
+ }
+}

@@ -1,0 +1,102 @@
+{
+ "ui": "novo",
+ "vw": 1920,
+ "vh": 1080,
+ "dpr": 1.0,
+ "rows": [
+  {
+   "cenario": "arranque: salto ceu",
+   "ui": "novo",
+   "detalhe_s": 29.96,
+   "chave": "1,20,14,40@100#2465136",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 151,
+   "sondas_max_ms": 224,
+   "sondas_med_ms": 27,
+   "detalhe_enviados": 2,
+   "detalhe_terminados": 2,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 2,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=1,38,14,58&v=2465136",
+     "fila_ms": 0,
+     "ttfb_ms": 9613,
+     "dur_ms": 9614,
+     "kb": 252,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    },
+    {
+     "url": "?ppc=100&region=1,20,14,40&v=2465136",
+     "fila_ms": 0,
+     "ttfb_ms": 29654,
+     "dur_ms": 29656,
+     "kb": 346,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 1,
+   "n_fila_mais_100ms": 0
+  },
+  {
+   "cenario": "arranque: salto relva",
+   "ui": "novo",
+   "detalhe_s": 3.72,
+   "chave": "1,38,14,58@100#2465136",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 20,
+   "sondas_max_ms": 184,
+   "sondas_med_ms": 28,
+   "detalhe_enviados": 2,
+   "detalhe_terminados": 2,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 2,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=34,30,47,50&v=2465136",
+     "fila_ms": 0,
+     "ttfb_ms": 3869,
+     "dur_ms": 3871,
+     "kb": 570,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    },
+    {
+     "url": "?ppc=100&region=1,38,14,58&v=2465136",
+     "fila_ms": 0,
+     "ttfb_ms": 0,
+     "dur_ms": 0,
+     "kb": 0,
+     "cache": true,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 1,
+   "n_fila_mais_100ms": 0
+  }
+ ]
+}
