@@ -17,6 +17,8 @@ _2026-11-11. Decidido pelo Tiago a partir de maquetes feitas no Project. Este fi
 | aceite / alta | quase certo |
 | ambígua / média | a confirmar por ti |
 | Coloquei | Encaixa |
+| Guardei à parte (sem vizinha montada) | Colocar aqui (fica «por confirmar») |
+| Não é esta | Não pertence aqui |
 | Não encaixa | Não encaixa (mantém) |
 | Vai buscar | Montar (aba) / Próxima peça (cartão) |
 | Lotes + Guardadas | Peças |
@@ -112,6 +114,7 @@ _(Revisto 2026-11-11 depois do inventário da F0: F1 partida em F1a/F1b; desfaze
 - **F1a — Extrair o tabuleiro (2026-11-11).** O código do tabuleiro sai de `app.js`/`app.css` para `src/web/core.js`, `src/web/board.js` e `src/web/board.css`, sem mudar comportamento; o toque no tabuleiro passa por um gancho `S.onBoardTap` que a GUI atual define com o código de hoje. Suite antiga verde com as mesmas asserções, capturas antes e depois iguais, commit próprio. OK do Tiago antes da F1b.
 - **F1b — Casca nova e Montar**, atrás de um interruptor (`/novo/`, com `/?ui=novo` e `python -m src.server --ui novo` como atalhos), com a GUI atual intacta por omissão. Inclui §4.1 a §4.3, a ordenação por saco (§8.2), **desfazer a rejeição e o motivo** (§5.1, §5.2; antes estavam na F2) e o desfazer de «Encaixa». **Feito 2026-11-11** (à espera do OK do Tiago): `src/montar.py`, `GET /api/montar`, `src/web/novo/`; regras que faltavam no ESPEC em `docs/decisoes.md` (2026-11-11, F1b); capturas em `docs/gui/screenshots/redesenho/F1b_*`.
 - **F1c — Gémeas sem vizinha montada no Montar (Tiago, 2026-11-14), antes da F2.** (a) Cartões «Guardar à parte» para as propostas com peça sem vizinha montada (`guarda_posicao`), só depois de esgotadas as «coloca agora»: sempre «a confirmar por ti», sem «Encaixa», alvo tracejado («lugar provável»), botões «Guardei à parte» (`position_known`) e «Não é esta» (`reject`), ambos desfazíveis com o aviso e Ctrl+Z. (b) O ecrã vazio diz a verdade: peças para guardar / guardadas à parte e grupos sem lugar, com ligação à interface completa até à F4; «Nada para ir buscar» só sem propostas nenhumas. (c) A lupa mostra as propostas da peça e do lugar. **Feito 2026-11-14** (à espera do OK do Tiago); regras em `docs/decisoes.md` (2026-11-14, F1c); capturas `docs/gui/screenshots/redesenho/F1c_*`.
+- **F1d — Correções depois do teste do Tiago no PC (2026-11-14), antes da F2.** O desfazer da última ação fica à vista numa faixa no topo do painel até à ação seguinte (o aviso de 9 s não chegava). Os cartões sem vizinha montada passam a «Colocar aqui» / «Não pertence aqui» (por dentro `position_known` / `reject`); a peça posta aparece no lugar, ténue e com o contorno tracejado («por confirmar»), e não serve de molde nem conta no progresso até uma vizinha encaixar (verificado no código: a célula fica vazia para o motor). «Não pertence aqui» não pergunta «Porquê?». Botão «localizar» (só ícone) no cartão. Ícones Lucide locais com texto (licença em `src/web/novo/icons/`). O ecrã vazio conta as peças já guardadas à parte. **Feito 2026-11-14** (à espera do OK do Tiago); regras em `docs/decisoes.md` (2026-11-14, F1d); capturas `docs/gui/screenshots/redesenho/F1d_*`.
 
 **Ordem das fases (decidida pelo Tiago em 2026-11-12, revista em 2026-11-14):** F2, F4, F4b, F4c, F3, F5, F6. A F3 (Peças e Importar) passa para depois dos grupos; a F4c vem logo a seguir à F4b, de que depende.
 

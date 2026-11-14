@@ -1,0 +1,69 @@
+{
+ "fonte": "overrides.crop_window + overrides.load_scan_rgb (o recorte do editor de contornos)",
+ "pecas": {
+  "P1203": {
+   "scan_id": "S0034",
+   "lote": 7,
+   "n_no_lote": 20,
+   "origem_px": [
+    1869,
+    773
+   ],
+   "tamanho_px": [
+    339,
+    370
+   ],
+   "margem_px": 35,
+   "margem_mm": 3.0,
+   "mm_por_px": 0.08466666666666667
+  },
+  "P0045": {
+   "scan_id": "S0003",
+   "lote": null,
+   "n_no_lote": 5,
+   "origem_px": [
+    266,
+    1028
+   ],
+   "tamanho_px": [
+    433,
+    445
+   ],
+   "margem_px": 35,
+   "margem_mm": 3.0,
+   "mm_por_px": 0.08466666666666667
+  },
+  "P1245": {
+   "scan_id": "S0034",
+   "lote": 7,
+   "n_no_lote": 62,
+   "origem_px": [
+    1827,
+    2229
+   ],
+   "tamanho_px": [
+    419,
+    384
+   ],
+   "margem_px": 35,
+   "margem_mm": 3.0,
+   "mm_por_px": 0.08466666666666667
+  },
+  "P0198": {
+   "scan_id": "S0009",
+   "lote": null,
+   "n_no_lote": 5,
+   "origem_px": [
+    1622,
+    27
+   ],
+   "tamanho_px": [
+    377,
+    430
+   ],
+   "margem_px": 35,
+   "margem_mm": 3.0,
+   "mm_por_px": 0.08466666666666667
+  }
+ }
+}

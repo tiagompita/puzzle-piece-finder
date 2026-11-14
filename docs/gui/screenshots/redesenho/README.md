@@ -77,3 +77,21 @@ As palavras contam o texto do painel inteiro (também o que está abaixo da dobr
 | cartão «Guardar à parte», 1366 | 113 | 14 |
 | cartão «Guardar à parte», 390 | 113 | 12 |
 | vazio com contagens, 1366 / 390 | 58 | 9 |
+
+## F1d (2026-11-14): correções do teste do Tiago
+
+`python tools/gui/f1d_capturas.py --project <cópia> --out <dir>`, PNG a 1366×768 e a 390×844 (`device_scale_factor` 1), sobre uma **cópia** do estado atual de `projects/alpes` (log de 3092 eventos, com as alterações locais do Tiago: P0980, saco 4 nº 22, guardada à parte em 38 · 3). A fila tem 2 cartões sem vizinha montada (saco 7 nº 17 → 5 · 48; saco 8 nº 21 → 36 · 3), 0 «coloca agora»; 32 grupos sem lugar.
+
+- `F1d_montar_*`: o cartão «Sem vizinha montada» com «Colocar aqui» / «Não pertence aqui», o «localizar» (só ícone) ao lado do lugar, e os ícones Lucide nas abas, botões e ligações.
+- `F1d_menu_*`: o menu «⋯» aberto, com ícone e texto em cada entrada (a 390 abre a toda a largura).
+- `F1d_colocar_*`: logo depois de «Colocar aqui»: a faixa «Saco 7 · nº 17 no lugar, por confirmar.» com «Desfazer» no topo do painel (fica até à ação seguinte) e, a 1366, também o aviso em baixo (a 390 o aviso não aparece: tapava «Colocar aqui»).
+- `F1d_porconfirmar_*`: o tabuleiro aproximado a 5 · 48: a peça posta, ténue e com o contorno tracejado da própria peça.
+- `F1d_vazio_*`: depois de «Colocar aqui» nas 2: «3 peças guardadas à parte, no tabuleiro «por confirmar» até uma vizinha encaixar.» e «32 grupos sem lugar»; no tabuleiro as 2 peças por confirmar da coluna 3 (36 e 38). O progresso continua «699 de 3008 peças». As 2 posições foram desfeitas a seguir pela API, na cópia.
+- `F1d_contagens.json`: a fila, `fora_da_fila`, as peças por confirmar (com o contorno), e palavras e botões visíveis.
+
+| | palavras (topo + painel) | botões visíveis |
+|---|---|---|
+| cartão sem vizinha montada, 1366 | 100 | 14 |
+| cartão sem vizinha montada, 390 | 100 | 11 |
+| menu «⋯» aberto (só o menu), 1366 / 390 | 30 | 15 / 12 |
+| vazio com contagens, 1366 / 390 | 69 | 10 |

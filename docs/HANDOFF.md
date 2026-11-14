@@ -1,18 +1,18 @@
-# HANDOFF — 2026-11-14 (F1c feita, à espera do OK com a F1b; F2 não arrancou)
+# HANDOFF — 2026-11-14 (F1d feita, à espera do OK; F2 não arrancou)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-14): `docs/prompts/2026-11-14-f1c-gemeas-sem-vizinha.md` (fechado)
-- **F1c [V em testes; NT com o Tiago]** (regras em `docs/decisoes.md` 2026-11-14, ESPEC §7):
-  - as propostas com peça e sem vizinha montada (`guarda_posicao`) entram no fim da fila do Montar como cartões «Guardar à parte»: «a confirmar por ti», sem «Encaixa», alvo tracejado «lugar provável», «Guardei à parte» (`position_known`) e «Não é esta» (`reject`), ambos desfazíveis (aviso e Ctrl+Z);
-  - ação nova `position_cleared` (desfazer «Guardei à parte»); Enter não faz nada nesses cartões;
-  - o ecrã vazio conta as guardadas à parte e os grupos sem lugar, com «Abrir a interface completa»; «Nada para ir buscar» só sem nenhuma;
-  - a lupa abre uma caixa com as propostas da peça e do lugar («Ver o cartão» quando está na fila).
-- **No projeto real [V numa cópia]:** fila = 3 cartões «Guardar à parte» (saco 4 nº 22 → 38 · 3, saco 7 nº 17 → 5 · 48, saco 8 nº 21 → 36 · 3), 0 «coloca agora», 32 grupos sem lugar contados. Capturas `docs/gui/screenshots/redesenho/F1c_*`.
-- **Quadrados:** `marca_indice` em `quadrados_17.json` (assinatura de forma do log + nº de re-segmentações por peça, log de 3086 eventos; 0 das 62 re-segmentadas); `tests/test_quadrados_json.py` avisa com `UserWarning` se mudar (`tools/diagnostico/grupos_soltos/quadrados_marca.py` refaz a marca).
-- **ESPEC:** fases F2, F4, F4b, F4c, F3, F5, F6.
-- **Suite [V]:** 499 passed, 2 skipped, 0 failed (325 s, com os slow; +22 testes desde a F1b); skips: o PyMuPDF real no `test_sheets` e `test_twin_real` sem `PPF_SCRATCH/ereal2/memoria.pkl`.
-- **Scratchpad:** `alpes_copia` e a cópia das capturas apagadas depois de verificadas; ficam `alpes_base` e `proj` (394 MB cada, sessões anteriores).
+## Última sessão (2026-11-14): `docs/prompts/2026-11-14-f1d-correcoes-gui-nova.md` (fechado)
+- **F1d [V em testes; NT com o Tiago]** (regras em `docs/decisoes.md` 2026-11-14 F1d, ESPEC §2 e §7):
+  - desfazer: causa = só havia um aviso de 9 s que aparecia ≈ 3 s depois do clique (o `POST` demora 3,4 s no real); agora faixa «última ação» com «Desfazer» no topo do painel até à ação seguinte;
+  - cartões sem vizinha montada: «Colocar aqui» / «Não pertence aqui» (por dentro `position_known` / `reject`, sem «Porquê?»); a peça fica no tabuleiro «por confirmar» (imagem ténue + contorno tracejado da própria peça); verificado no código que a célula continua vazia para o motor (não é molde, nem vizinha, nem conta no progresso);
+  - «localizar» (só ícone) no cartão; ícones Lucide locais em `src/web/novo/icons/` (ISC + MIT); menu «⋯» a toda a largura a 390 px;
+  - ecrã vazio: «N peças guardadas à parte, no tabuleiro «por confirmar»…» (a linha «para guardar» saiu).
+- **`test_twin_real` corre:** memória em `tests/data/ereal2_memoria.npz` (53 KB), refaz-se com `tools/diagnostico/gemeos/ereal2_fixture.py`.
+- **Máscaras do Photoshop:** recortes do editor (caixa + 3 mm) de P1203, P0045, P1245, P0198 em `docs/diagnostico/editor/gt_photoshop/` com `LEIAME.md` e `recortes.json` (origem na folha); falta o Tiago fazer as máscaras.
+- **Capturas:** `docs/gui/screenshots/redesenho/F1d_*` (cópia do estado atual: P0980 por confirmar em 38 · 3, 2 cartões sem vizinha).
+- **Suite [V]:** 508 passed, 1 skipped, 0 failed (430 s, com os slow; +9 testes desde a F1c); o único skip é o PyMuPDF real no `test_sheets` (o `test_twin_real` já corre).
+- **Scratchpad:** `alpes_base` e `proj` apagadas (nenhum teste/ferramenta as referia; caminhos verificados); cópias desta sessão também apagadas.
 - Sessão anterior (2026-11-12): `test_sheets` nos dois caminhos, quadrados em JSON, negativos difíceis por zona (`docs/prompts/2026-11-12-test-sheets-montar-quadrados-json.md`).
 
 ## Estado (F1b, sessão anterior)
@@ -55,11 +55,12 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 3. As palavras: «quase certo» só aparece no céu (gémea 46/46 e buraco 57/57 no log de hoje). Fora do céu diz sempre «a confirmar por ti».
 4. F1c: o cartão «Guardar à parte» das 3 gémeas (alvo tracejado, «Guardei à parte» / «Não é esta» e o desfazer), o ecrã vazio com as contagens, a lupa («saco 4 nº 22», «38,3»).
    - Atenção [NT]: a peça do saco 4 nº 22 é clara (céu?) e o lugar 38 · 3 é verde (vale): a imagem pode estar a dizer «Não é esta».
-5. OK para a F2 (célula, lugar vazio, pôr e tirar à mão, desfazer global).
+5. F1d: depois de «Colocar aqui», a faixa «Desfazer» no topo do painel; a peça «por confirmar» no tabuleiro; o «localizar»; os ícones; a 390 px o menu «⋯».
+6. OK para a F2 (célula, lugar vazio, pôr e tirar à mão, desfazer global).
 
 ## Espera pelo Tiago
 1. **Gémeas sem vizinha montada na GUI nova:** feito na F1c (ver acima); falta o OK.
-2. **Máscaras do Photoshop para a fase 2 do editor** (ronda 10): P1203, P0045, P1245, P0198 em `docs/diagnostico/editor/gt_photoshop/P####.png` (alfa = a peça, grelha do scan inteiro).
+2. **Máscaras do Photoshop para a fase 2 do editor** (ronda 10): os recortes estão em `docs/diagnostico/editor/gt_photoshop/` (ver `LEIAME.md`); o Tiago grava por cima `P####.png` com transparência, mesmo tamanho; `recortes.json` dá a origem na folha.
 3. Registar os 17 grupos montados no projeto (dados em `quadrados_17.json`; porta de escrita na F4b; `QUADRADOS.md`, «Como registar»). Não fazer sem ordem.
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
@@ -73,7 +74,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
    - «Ver números» mostra as razões técnicas no painel (F5: Diagnóstico).
 3. **Traços [NT]:** os fatores de folga (½ do limite, 2× a margem mínima) não estão calibrados.
 4. **Ações novas no log** (`rejection_undone`, `pair_unrejected`, `rejection_noted`; F1c: `position_cleared`): checkouts anteriores deixam de ler um log que as tenha.
-5. **Limites da F1c [NT]:** a contagem «para guardar à parte» do ecrã vazio é sempre 0 (esses cartões estão na fila); os grupos só se veem na interface completa até à F4; «Não é esta» pergunta o mesmo «Porquê?» do «Não encaixa».
+5. **Limites da F1d [NT]:** a faixa «Desfazer» só existe nesta sessão do browser (recarregar perde-a; Ctrl+Z também); não testado em Firefox/Safari nem no telemóvel real; a imagem «por confirmar» só aparece com rotação conhecida (sem ela, só o tracejado da célula).
 6. Da ronda 10: fase 2 do editor (condicional, por zona), possível sobre-corte no lado S, P0045/P0071/P1064 índice manual por 1 píxel, limiares `GANHO_MIN_MM2` / `GEMEA_RUIDO_MM`, cache das miniaturas `?v=`.
 7. Anteriores: verificar ativos no arranque das CLI; `append_override` escreve CRLF; passo «pares» N²; arranque a frio; GT fora do céu; pose manual 4–9 s; detetor de peça comida; (26,1)/(25,1).
 
