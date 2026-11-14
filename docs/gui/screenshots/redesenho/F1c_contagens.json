@@ -1,0 +1,116 @@
+{
+ "fila_1366": {
+  "total": 3,
+  "n_coloca": 0,
+  "n_guardar": 3,
+  "fora_da_fila": {
+   "guardar": 3,
+   "guardadas": 0,
+   "grupos_sem_lugar": 32,
+   "propostas": 35
+  },
+  "itens": [
+   [
+    "P0980",
+    "guardar",
+    4,
+    22,
+    [
+     38,
+     3
+    ]
+   ],
+   [
+    "P1200",
+    "guardar",
+    7,
+    17,
+    [
+     5,
+     48
+    ]
+   ],
+   [
+    "P1279",
+    "guardar",
+    8,
+    21,
+    [
+     36,
+     3
+    ]
+   ]
+  ]
+ },
+ "guardar_1366": {
+  "palavras": 113,
+  "botoes": 14
+ },
+ "vazio_1366": {
+  "palavras": 58,
+  "botoes": 9,
+  "fora_da_fila": {
+   "guardar": 0,
+   "guardadas": 3,
+   "grupos_sem_lugar": 32,
+   "propostas": 32
+  }
+ },
+ "fila_390": {
+  "total": 3,
+  "n_coloca": 0,
+  "n_guardar": 3,
+  "fora_da_fila": {
+   "guardar": 3,
+   "guardadas": 0,
+   "grupos_sem_lugar": 32,
+   "propostas": 35
+  },
+  "itens": [
+   [
+    "P0980",
+    "guardar",
+    4,
+    22,
+    [
+     38,
+     3
+    ]
+   ],
+   [
+    "P1200",
+    "guardar",
+    7,
+    17,
+    [
+     5,
+     48
+    ]
+   ],
+   [
+    "P1279",
+    "guardar",
+    8,
+    21,
+    [
+     36,
+     3
+    ]
+   ]
+  ]
+ },
+ "guardar_390": {
+  "palavras": 113,
+  "botoes": 12
+ },
+ "vazio_390": {
+  "palavras": 58,
+  "botoes": 9,
+  "fora_da_fila": {
+   "guardar": 0,
+   "guardadas": 3,
+   "grupos_sem_lugar": 32,
+   "propostas": 32
+  }
+ }
+}

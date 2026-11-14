@@ -1,12 +1,19 @@
-# HANDOFF — 2026-11-12 (F1b à espera do OK; F2 não arrancou; quadrados em JSON; decisões da F4c e das fases no ESPEC)
+# HANDOFF — 2026-11-14 (F1c feita, à espera do OK com a F1b; F2 não arrancou)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-12, tarde): `docs/prompts/2026-11-12-test-sheets-montar-quadrados-json.md` (fechado)
-- **`test_sheets` [V]:** força os dois caminhos do PyMuPDF (`d24cb57`). `.venv`: 9 passed, 1 skipped (PyMuPDF real); `python` do PATH: 10 passed. A regra da suite está no `CLAUDE.md`, onde há também a linha de `src/montar.py`.
-- **Quadrados [V]:** `docs/diagnostico/grupos_soltos/quadrados_17.json` (`8f820a0`) tem peças, posição, rotação, ligações e ligações entre grupos (1↔12, 7↔16, 8↔16, 8↔17, 16↔17). Gerado do `loose_res.pkl` por `tools/diagnostico/grupos_soltos/quadrados_json.py`; validado por `tests/test_quadrados_json.py`. **Não registados no projeto.**
-- **Junções:** tabela dos negativos difíceis por zona com 2 e 3 junções (`6b47a3a`, `GRUPOS_JUNCOES.md` §2.1). Céu com 2 junções: A 2/42, B 1/42; relva 0/16 e 0/8; montanha e vale n = 0. Deslocado exatamente 1 célula: só 23 posições.
-- **ESPEC (`8201154`):** F4c só no céu com ≥ 4 junções (fora: «não sei»); fases F2, F4, F4b, F3, F5, F6 (F4c depois da F4b); na F2, desfazer «Encaixa» de um par desfaz o par e a posição da outra.
+## Última sessão (2026-11-14): `docs/prompts/2026-11-14-f1c-gemeas-sem-vizinha.md` (fechado)
+- **F1c [V em testes; NT com o Tiago]** (regras em `docs/decisoes.md` 2026-11-14, ESPEC §7):
+  - as propostas com peça e sem vizinha montada (`guarda_posicao`) entram no fim da fila do Montar como cartões «Guardar à parte»: «a confirmar por ti», sem «Encaixa», alvo tracejado «lugar provável», «Guardei à parte» (`position_known`) e «Não é esta» (`reject`), ambos desfazíveis (aviso e Ctrl+Z);
+  - ação nova `position_cleared` (desfazer «Guardei à parte»); Enter não faz nada nesses cartões;
+  - o ecrã vazio conta as guardadas à parte e os grupos sem lugar, com «Abrir a interface completa»; «Nada para ir buscar» só sem nenhuma;
+  - a lupa abre uma caixa com as propostas da peça e do lugar («Ver o cartão» quando está na fila).
+- **No projeto real [V numa cópia]:** fila = 3 cartões «Guardar à parte» (saco 4 nº 22 → 38 · 3, saco 7 nº 17 → 5 · 48, saco 8 nº 21 → 36 · 3), 0 «coloca agora», 32 grupos sem lugar contados. Capturas `docs/gui/screenshots/redesenho/F1c_*`.
+- **Quadrados:** `marca_indice` em `quadrados_17.json` (assinatura de forma do log + nº de re-segmentações por peça, log de 3086 eventos; 0 das 62 re-segmentadas); `tests/test_quadrados_json.py` avisa com `UserWarning` se mudar (`tools/diagnostico/grupos_soltos/quadrados_marca.py` refaz a marca).
+- **ESPEC:** fases F2, F4, F4b, F4c, F3, F5, F6.
+- **Suite [V]:** 499 passed, 2 skipped, 0 failed (325 s, com os slow; +22 testes desde a F1b); skips: o PyMuPDF real no `test_sheets` e `test_twin_real` sem `PPF_SCRATCH/ereal2/memoria.pkl`.
+- **Scratchpad:** `alpes_copia` e a cópia das capturas apagadas depois de verificadas; ficam `alpes_base` e `proj` (394 MB cada, sessões anteriores).
+- Sessão anterior (2026-11-12): `test_sheets` nos dois caminhos, quadrados em JSON, negativos difíceis por zona (`docs/prompts/2026-11-12-test-sheets-montar-quadrados-json.md`).
 
 ## Estado (F1b, sessão anterior)
 - **Prompt da sessão:** `docs/prompts/2026-11-11-f1b-casca-nova-montar.md` (fechado).
@@ -46,30 +53,18 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 1. Arrancar `python -m src.server --ui novo` e abrir `/novo/`. Num telemóvel, abrir `http://<ip>:8765/novo/` com `--lan`.
 2. Montar: o cartão, «Encaixa» num clique, o toast «Desfazer», «Não encaixa» → «Porquê?» → «Próxima peça» / «Enganei-me, desfazer», Ctrl+Z.
 3. As palavras: «quase certo» só aparece no céu (gémea 46/46 e buraco 57/57 no log de hoje). Fora do céu diz sempre «a confirmar por ti».
-4. OK para a F2 (célula, lugar vazio, pôr e tirar à mão, desfazer global).
+4. F1c: o cartão «Guardar à parte» das 3 gémeas (alvo tracejado, «Guardei à parte» / «Não é esta» e o desfazer), o ecrã vazio com as contagens, a lupa («saco 4 nº 22», «38,3»).
+   - Atenção [NT]: a peça do saco 4 nº 22 é clara (céu?) e o lugar 38 · 3 é verde (vale): a imagem pode estar a dizer «Não é esta».
+5. OK para a F2 (célula, lugar vazio, pôr e tirar à mão, desfazer global).
 
 ## Espera pelo Tiago
-1. **Gémeas sem vizinha montada na GUI nova (proposta, não implementada).** Hoje as 3 gémeas `ambigua` (P0980 → (38,3), P1279 → (36,3), P1200 → (5,48)) e os 32 grupos `por_ancorar` não aparecem em lado nenhum de `/novo/` [V numa cópia]:
-   - `src/montar.py:246` exige `grupo == 'coloca_agora'` e peça;
-   - `novo.js:94` só desenha `posicoes_conhecidas`;
-   - a lupa responde «ainda não tem lugar» / «ainda vazio» (`novo.js:394`, `:402`);
-   - o vazio diz «Nada para ir buscar» (`novo.js:168`).
-
-   Só estão na GUI antiga («Guardadas», `app.js:302`, `:371`; «Mesa»). Com a nova ordem (F3 depois de F4/F4b), ficariam invisíveis ainda mais tempo. Proposta:
-   - (a) cartão «Guardar à parte» no Montar, depois dos `coloca_agora`:
-     - sempre «a confirmar por ti»;
-     - sem «Encaixa», porque não há vizinha para verificar;
-     - botões «Guardei à parte» (`position_known`, como o «Guardei num saquinho») e «Não é esta» (`reject`);
-     - alvo tracejado em vez de «vai aqui»;
-   - (b) o vazio diz quantas há para guardar à parte e «N grupos sem lugar → interface completa» até à F4;
-   - (c) a lupa mostra a proposta da peça e a do lugar (já vem em `/api/cell` `propostas`).
-2. **`test_sheets`:** feito (OK dado).
+1. **Gémeas sem vizinha montada na GUI nova:** feito na F1c (ver acima); falta o OK.
 2. **Máscaras do Photoshop para a fase 2 do editor** (ronda 10): P1203, P0045, P1245, P0198 em `docs/diagnostico/editor/gt_photoshop/P####.png` (alfa = a peça, grelha do scan inteiro).
 3. Registar os 17 grupos montados no projeto (dados em `quadrados_17.json`; porta de escrita na F4b; `QUADRADOS.md`, «Como registar»). Não fazer sem ordem.
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
-1. **F2** (ESPEC §7; ordem F2, F4, F4b, F3, F5, F6): painel da célula (C) e do lugar vazio (V), pôr à mão com verificações (§5.4), «Tirar do lugar», desfazer global. Desfazer «Encaixa» de um par desfaz o par e a posição da outra (decidido 2026-11-12). Só com o OK do Tiago.
+1. **F2** (ESPEC §7; ordem F2, F4, F4b, F4c, F3, F5, F6): painel da célula (C) e do lugar vazio (V), pôr à mão com verificações (§5.4), «Tirar do lugar», desfazer global. Desfazer «Encaixa» de um par desfaz o par e a posição da outra (decidido 2026-11-12). Só com o OK do Tiago.
    - Na F1b, tocar num lugar só escolhe a peça da fila desse lugar.
 2. **Limites da F1b [NT]:**
    - desfazer «Encaixa» de um par não desfaz o `pair_confirmed` nem a posição conhecida da outra peça (corrige-se na F2);
@@ -77,9 +72,10 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
    - «⋯ › Atividade» abre a interface antiga noutro separador (F5);
    - «Ver números» mostra as razões técnicas no painel (F5: Diagnóstico).
 3. **Traços [NT]:** os fatores de folga (½ do limite, 2× a margem mínima) não estão calibrados.
-4. **Ações novas no log** (`rejection_undone`, `pair_unrejected`, `rejection_noted`): checkouts anteriores à F1b deixam de ler um log que as tenha.
-5. Da ronda 10: fase 2 do editor (condicional, por zona), possível sobre-corte no lado S, P0045/P0071/P1064 índice manual por 1 píxel, limiares `GANHO_MIN_MM2` / `GEMEA_RUIDO_MM`, cache das miniaturas `?v=`.
-6. Anteriores: verificar ativos no arranque das CLI; `append_override` escreve CRLF; passo «pares» N²; arranque a frio; GT fora do céu; pose manual 4–9 s; detetor de peça comida; (26,1)/(25,1).
+4. **Ações novas no log** (`rejection_undone`, `pair_unrejected`, `rejection_noted`; F1c: `position_cleared`): checkouts anteriores deixam de ler um log que as tenha.
+5. **Limites da F1c [NT]:** a contagem «para guardar à parte» do ecrã vazio é sempre 0 (esses cartões estão na fila); os grupos só se veem na interface completa até à F4; «Não é esta» pergunta o mesmo «Porquê?» do «Não encaixa».
+6. Da ronda 10: fase 2 do editor (condicional, por zona), possível sobre-corte no lado S, P0045/P0071/P1064 índice manual por 1 píxel, limiares `GANHO_MIN_MM2` / `GEMEA_RUIDO_MM`, cache das miniaturas `?v=`.
+7. Anteriores: verificar ativos no arranque das CLI; `append_override` escreve CRLF; passo «pares» N²; arranque a frio; GT fora do céu; pose manual 4–9 s; detetor de peça comida; (26,1)/(25,1).
 
 ## Convenções que mordem
 - **Testes com o `.venv`** (`.venv/Scripts/python.exe -m pytest tests/`); a suite completa demora ≈ 300 s: correr em segundo plano.

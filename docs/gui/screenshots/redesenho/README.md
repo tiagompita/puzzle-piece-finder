@@ -60,3 +60,20 @@ Leitura dos números:
 | depois, 390 | 72 | 14 |
 
 As palavras contam o texto do painel inteiro (também o que está abaixo da dobra). Os botões são os que estão à vista: no Montar são os 3 do zoom, as 3 abas, o «⋯», «Encaixa», «Não encaixa», as 2 ligações e as 3 linhas «A seguir».
+
+## F1c (2026-11-14): gémeas sem vizinha montada no Montar
+
+`python tools/gui/f1c_capturas.py --project <cópia> --out <dir>`, PNG a 1366×768 e a 390×844 (`device_scale_factor` 1), sobre uma **cópia** do estado atual de `projects/alpes` (log de 3086 eventos, igual ao do commit `596b7f6`). A fila tem as 3 gémeas `ambigua` sem vizinha montada, todas como «Guardar à parte» (saco 4 nº 22 → linha 38 · coluna 3; saco 7 nº 17 → 5 · 48; saco 8 nº 21 → 36 · 3), e 0 «coloca agora»; 32 grupos sem lugar.
+
+- `F1c_guardar_*`: o cartão «Guardar à parte» (sem «Encaixa»), o alvo tracejado «lugar provável», «A seguir, para guardar à parte» e a linha «32 grupos sem lugar: ver na interface completa».
+- `F1c_nao_*`: depois de «Não é esta» (desfeito a seguir, na cópia).
+- `F1c_lupa_peca_*`: a lupa sobre «saco 4 nº 22»: a proposta da peça, com «Ver o cartão».
+- `F1c_lupa_lugar_*`: a lupa sobre «38,3»: o lugar está vazio e tem a proposta da mesma peça.
+- `F1c_vazio_*`: depois de «Guardei à parte» nas 3: o ecrã vazio diz «3 peças guardadas à parte» e «32 grupos sem lugar», com «Abrir a interface completa» (as 3 posições foram desfeitas a seguir pela API, na cópia). A 1366 vê-se também «A preparar mais sugestões… 0 de 1»: as sugestões pelo encaixe recalculam depois das escritas.
+- `F1c_contagens.json`: a fila, `fora_da_fila`, e palavras e botões visíveis (topo + painel) no cartão e no vazio.
+
+| | palavras (topo + painel) | botões visíveis |
+|---|---|---|
+| cartão «Guardar à parte», 1366 | 113 | 14 |
+| cartão «Guardar à parte», 390 | 113 | 12 |
+| vazio com contagens, 1366 / 390 | 58 | 9 |

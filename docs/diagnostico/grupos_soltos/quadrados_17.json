@@ -2034,5 +2034,267 @@
     }
    }
   }
- ]
+ ],
+ "marca_indice": {
+  "log_eventos": 3086,
+  "campos": [
+   "cls",
+   "chords_mm",
+   "area_mm2",
+   "bbox"
+  ],
+  "pecas": {
+   "P0114": {
+    "assinatura": "c621b192af1e",
+    "n_resegmentacoes": 0
+   },
+   "P0160": {
+    "assinatura": "db8d6e1644e2",
+    "n_resegmentacoes": 0
+   },
+   "P0161": {
+    "assinatura": "2cad0082f312",
+    "n_resegmentacoes": 0
+   },
+   "P0170": {
+    "assinatura": "95341d8f3f1f",
+    "n_resegmentacoes": 0
+   },
+   "P0172": {
+    "assinatura": "cc0cc6368a9a",
+    "n_resegmentacoes": 0
+   },
+   "P0174": {
+    "assinatura": "c26fa48a4b4c",
+    "n_resegmentacoes": 0
+   },
+   "P0182": {
+    "assinatura": "c3ebf51f8acb",
+    "n_resegmentacoes": 0
+   },
+   "P0927": {
+    "assinatura": "9f86d1d0d4b9",
+    "n_resegmentacoes": 0
+   },
+   "P0944": {
+    "assinatura": "813331a82b74",
+    "n_resegmentacoes": 0
+   },
+   "P0970": {
+    "assinatura": "57774dbdf59b",
+    "n_resegmentacoes": 0
+   },
+   "P0981": {
+    "assinatura": "9022af4e06ab",
+    "n_resegmentacoes": 0
+   },
+   "P0982": {
+    "assinatura": "8ca0498e95ce",
+    "n_resegmentacoes": 0
+   },
+   "P0985": {
+    "assinatura": "6c2651da601a",
+    "n_resegmentacoes": 0
+   },
+   "P0997": {
+    "assinatura": "c9d5670c9239",
+    "n_resegmentacoes": 0
+   },
+   "P1005": {
+    "assinatura": "14fdbc91118b",
+    "n_resegmentacoes": 0
+   },
+   "P1024": {
+    "assinatura": "57f9109f745b",
+    "n_resegmentacoes": 0
+   },
+   "P1033": {
+    "assinatura": "83afca15c04d",
+    "n_resegmentacoes": 0
+   },
+   "P1057": {
+    "assinatura": "768c0d0e32e3",
+    "n_resegmentacoes": 0
+   },
+   "P1059": {
+    "assinatura": "9ecda857d60c",
+    "n_resegmentacoes": 0
+   },
+   "P1063": {
+    "assinatura": "aeaad1cc6b30",
+    "n_resegmentacoes": 0
+   },
+   "P1123": {
+    "assinatura": "b19230ee25e3",
+    "n_resegmentacoes": 0
+   },
+   "P1128": {
+    "assinatura": "51e89a4b3713",
+    "n_resegmentacoes": 0
+   },
+   "P1129": {
+    "assinatura": "1375700ba27f",
+    "n_resegmentacoes": 0
+   },
+   "P1133": {
+    "assinatura": "e823aab8c7fc",
+    "n_resegmentacoes": 0
+   },
+   "P1136": {
+    "assinatura": "9ed8ac6311c3",
+    "n_resegmentacoes": 0
+   },
+   "P1152": {
+    "assinatura": "d7473236f3db",
+    "n_resegmentacoes": 0
+   },
+   "P1156": {
+    "assinatura": "9b6508c30d2b",
+    "n_resegmentacoes": 0
+   },
+   "P1159": {
+    "assinatura": "7185ee7481e8",
+    "n_resegmentacoes": 0
+   },
+   "P1167": {
+    "assinatura": "64f6323c0807",
+    "n_resegmentacoes": 0
+   },
+   "P1171": {
+    "assinatura": "5679623151be",
+    "n_resegmentacoes": 0
+   },
+   "P1172": {
+    "assinatura": "df877c1d793a",
+    "n_resegmentacoes": 0
+   },
+   "P1189": {
+    "assinatura": "3ecc3d76c35b",
+    "n_resegmentacoes": 0
+   },
+   "P1193": {
+    "assinatura": "13593ed5c755",
+    "n_resegmentacoes": 0
+   },
+   "P1210": {
+    "assinatura": "965f37a2efe3",
+    "n_resegmentacoes": 0
+   },
+   "P1213": {
+    "assinatura": "e4cfb22873c2",
+    "n_resegmentacoes": 0
+   },
+   "P1216": {
+    "assinatura": "a6828a9b3d2f",
+    "n_resegmentacoes": 0
+   },
+   "P1219": {
+    "assinatura": "b66a10ee01a5",
+    "n_resegmentacoes": 0
+   },
+   "P1229": {
+    "assinatura": "767b0b43458b",
+    "n_resegmentacoes": 0
+   },
+   "P1255": {
+    "assinatura": "de6743904715",
+    "n_resegmentacoes": 0
+   },
+   "P1256": {
+    "assinatura": "48167edc04ba",
+    "n_resegmentacoes": 0
+   },
+   "P1262": {
+    "assinatura": "67737f5b5181",
+    "n_resegmentacoes": 0
+   },
+   "P1270": {
+    "assinatura": "073804e3d494",
+    "n_resegmentacoes": 0
+   },
+   "P1278": {
+    "assinatura": "54c3c623e026",
+    "n_resegmentacoes": 0
+   },
+   "P1280": {
+    "assinatura": "b8785725a429",
+    "n_resegmentacoes": 0
+   },
+   "P1284": {
+    "assinatura": "4dce3ec22739",
+    "n_resegmentacoes": 0
+   },
+   "P1295": {
+    "assinatura": "699c340b03f5",
+    "n_resegmentacoes": 0
+   },
+   "P1306": {
+    "assinatura": "94fda3b986d9",
+    "n_resegmentacoes": 0
+   },
+   "P1308": {
+    "assinatura": "b048626e9d9f",
+    "n_resegmentacoes": 0
+   },
+   "P1309": {
+    "assinatura": "e6a3c894b958",
+    "n_resegmentacoes": 0
+   },
+   "P1314": {
+    "assinatura": "9e1f7408f12a",
+    "n_resegmentacoes": 0
+   },
+   "P1327": {
+    "assinatura": "17e4e919d708",
+    "n_resegmentacoes": 0
+   },
+   "P1332": {
+    "assinatura": "502134536008",
+    "n_resegmentacoes": 0
+   },
+   "P1348": {
+    "assinatura": "c5e7be4c4161",
+    "n_resegmentacoes": 0
+   },
+   "P1350": {
+    "assinatura": "c1f1e6a8a41e",
+    "n_resegmentacoes": 0
+   },
+   "P1360": {
+    "assinatura": "cead038193e7",
+    "n_resegmentacoes": 0
+   },
+   "P1365": {
+    "assinatura": "92f5f8b26aa1",
+    "n_resegmentacoes": 0
+   },
+   "P1370": {
+    "assinatura": "29d3eff90022",
+    "n_resegmentacoes": 0
+   },
+   "P1374": {
+    "assinatura": "81547933decb",
+    "n_resegmentacoes": 0
+   },
+   "P1377": {
+    "assinatura": "357de81c9cdc",
+    "n_resegmentacoes": 0
+   },
+   "P1386": {
+    "assinatura": "20da42e4cf50",
+    "n_resegmentacoes": 0
+   },
+   "P1418": {
+    "assinatura": "ea4dc79c4888",
+    "n_resegmentacoes": 0
+   },
+   "P1430": {
+    "assinatura": "dede38343442",
+    "n_resegmentacoes": 0
+   }
+  },
+  "gerada_em": "2026-11-14",
+  "gerada_por": "tools/diagnostico/grupos_soltos/quadrados_marca.py",
+  "nota": "assinatura = sha1 (12 hex) de cls, chords_mm, area_mm2 e bbox da peça no log (arredondados a 0,001); n_resegmentacoes = eventos piece_resegmented da peça até log_eventos. O teste avisa se mudarem."
+ }
 }

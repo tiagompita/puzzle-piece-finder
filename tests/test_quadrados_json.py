@@ -1,7 +1,9 @@
 """Validação de ``docs/diagnostico/grupos_soltos/quadrados_17.json`` (os 17 quadrados 2×2 entre soltas, 17/17 encaixam).
 
 Esquema e coerência interna (posições, rotações, ligações) e, se houver ``projects/alpes/log.jsonl``, que os ids
-existem no projeto (só leitura do texto do log; nada é escrito)."""
+existem no projeto (só leitura do texto do log; nada é escrito). A marca do índice (``marca_indice``, escrita por
+``tools/diagnostico/grupos_soltos/quadrados_marca.py``) é conferida com o projeto: uma peça re-segmentada desde então
+gera um ``UserWarning`` (não falha a suite)."""
 
 import json
 import os
@@ -76,3 +78,76 @@ def test_ids_exist_in_project(data):
 	ids = {q["peca"] for g in data["grupos"] for q in g["pecas"]}
 	missing = sorted(p for p in ids if f'"{p}"' not in txt)
 	assert not missing, missing
+
+
+# ---------------------------------------------------------------- marca do índice (F1c, 2026-11-14)
+def _marca_mod():
+	import importlib.util
+	fp = os.path.join(REPO, "tools", "diagnostico", "grupos_soltos", "quadrados_marca.py")
+	spec = importlib.util.spec_from_file_location("quadrados_marca", fp)
+	mod = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(mod)
+	return mod
+
+
+def _warn_changes(diffs):
+	"""Avisa (não falha): os lados do JSON podem ter sido renumerados por uma re-segmentação."""
+	import warnings
+	if diffs:
+		warnings.warn(UserWarning("quadrados_17.json: peças mudadas no índice desde a marca (os índices de lado podem "
+								  "estar errados; correr quadrados_marca.py depois de conferir): "
+								  + "; ".join(f"{p}: {why}" for p, why in diffs)))
+
+
+def test_marca_schema(data):
+	m = data["marca_indice"]
+	ids = {q["peca"] for g in data["grupos"] for q in g["pecas"]}
+	assert set(m["pecas"]) == ids and len(ids) == 62
+	assert m["campos"] == ["cls", "chords_mm", "area_mm2", "bbox"] and m["log_eventos"] > 0
+	for v in m["pecas"].values():
+		assert re.fullmatch(r"[0-9a-f]{12}", v["assinatura"]) and v["n_resegmentacoes"] >= 0
+
+
+def test_marca_warns_on_resegmented_piece(data):
+	"""O mecanismo: uma peça com um ``piece_resegmented`` novo, ou com a forma do log mudada, gera o aviso."""
+	mod = _marca_mod()
+
+	class Pc:
+		def __init__(self, **k):
+			self.__dict__.update(k)
+
+	class Pr:
+		def __init__(self, pieces, evs):
+			self.pieces, self._e = pieces, evs
+
+		def piece(self, pid):
+			return self.pieces[pid]
+
+		def events(self):
+			return self._e
+	a = Pc(cls="BTBT", chords_mm=[18.1, 17.9, 18.0, 18.2], area_mm2=330.123, bbox=[1, 2, 3, 4])
+	b = Pc(cls="BTTT", chords_mm=[18.0, 17.9, 18.0, 18.2], area_mm2=331.0, bbox=[1, 2, 3, 4])
+	ref = mod.marca(Pr({"P0001": a, "P0002": b}, []), ["P0001", "P0002"])
+	assert mod.diferencas(ref, Pr({"P0001": a, "P0002": b}, [])) == []
+	b2 = Pc(**dict(b.__dict__, chords_mm=[18.4, 17.9, 18.0, 18.2]))
+	evs = [{"action": "piece_resegmented", "piece": "P0001"}]
+	d = mod.diferencas(ref, Pr({"P0001": a, "P0002": b2}, evs))
+	assert [p for p, _ in d] == ["P0001", "P0002"]
+	with pytest.warns(UserWarning, match="P0001"):
+		_warn_changes(d)
+
+
+def test_marca_vs_project(data, tmp_path):
+	"""Avisa (``UserWarning``, a suite continua verde) se uma peça dos quadrados foi re-segmentada desde a marca.
+	Lê uma cópia mínima de ``projects/alpes`` (project.json, puzzle.json, log.jsonl, photos); nada é escrito lá."""
+	import shutil
+	alpes = os.path.dirname(LOG)
+	if not os.path.exists(LOG):
+		pytest.skip("projects/alpes/log.jsonl não está nesta cópia")
+	from src.state import Project
+	for name in ("project.json", "puzzle.json", "log.jsonl"):
+		shutil.copy(os.path.join(alpes, name), tmp_path / name)
+	if os.path.isdir(os.path.join(alpes, "photos")):
+		shutil.copytree(os.path.join(alpes, "photos"), tmp_path / "photos")
+	pr = Project.open(str(tmp_path))
+	_warn_changes(_marca_mod().diferencas(data["marca_indice"], pr))
