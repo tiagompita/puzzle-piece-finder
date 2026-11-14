@@ -555,3 +555,14 @@ servidor real (0,5 ms), `POST /api/cell/1/29/verificar` com Saco 9 · nº 89 (P1
 - Ronda 2: o intervalo do GIL foi medido nesta máquina (Windows 11, `.venv`) e só no servidor; a máquina do Tiago e
   `--lan` ficam [NT]. As medidas de reconsulta e importação são de uma escrita e de uma folha de 10 peças por corrida;
   importações grandes (PDF de várias folhas) ficam [NT]. O §7 é uma análise com estimativas [NT] para as opções.
+- **Pendente: 404 por `FileNotFoundError` num `render/clean` sem origem encontrada.** No teste de esforço
+  (`tests/test_concorrencia.py`, §8.2), na HEAD `6399e31` antes das correções do passo 0, 2 das 22 corridas deram um 404
+  num pedido HTTP por um `FileNotFoundError` num `render/clean/P####.png`. Não encontrei a origem [F]: não voltou em mais
+  30 corridas instrumentadas, nem depois das correções (20/20 sem erros [V]). As causas conhecidas de um `render/clean`
+  a desaparecer (re-segmentação que o apaga, leitor que apaga o que julgou velho) estão corrigidas (`state.remove_file`,
+  escrita atómica, `_clean_or_crop` que trata um ficheiro desaparecido como velho), por isso não se sabe se o 404 já
+  não existe ou só ficou mais raro. Reabrir se voltar a aparecer no teste de esforço (`pytest tests/test_concorrencia.py
+  -m slow`) ou no registo do servidor (`projects/alpes/logs/servidor-AAAAMMDD.log`, linhas `erro`/`pedido` com 404 em
+  `/api/pieces/…/png` ou `/api/board.jpg`). Onde procurar: o caminho que serve a miniatura/região (`Gui.piece_png`,
+  `Gui._region_jpg`) e quem lê `render/clean` (`render._clean_or_crop`, `render.piece_rgba_for_display`) entre o
+  `exists` e a leitura, e quem apaga (`Gui._drop_stale_caches`, `rebuild_assets`); instrumentar com o traceback do 404.
