@@ -1280,12 +1280,18 @@ def _clean_or_crop(project, pid: str) -> Optional[np.ndarray]:
 	p = project.piece(pid)
 	src = project.p(p.crop_path) if p.crop_path else None
 	if os.path.exists(fp):
-		with Image.open(fp) as im:
-			cl = np.asarray(im.convert("RGBA")).copy()
-		ok = src is not None and os.path.exists(src) and os.path.getmtime(fp) >= os.path.getmtime(src)
-		if ok:
-			with Image.open(src) as im:
-				ok = im.size == (cl.shape[1], cl.shape[0])
+		# another thread composing the same piece (a region outside the rlock and the full board, 2026-11-14) may delete
+		# a stale ``fp`` between these calls: a vanished file is a stale one (seen at start-up on a copy: the
+		# full-board composition died with FileNotFoundError in ``getmtime``)
+		try:
+			with Image.open(fp) as im:
+				cl = np.asarray(im.convert("RGBA")).copy()
+			ok = src is not None and os.path.exists(src) and os.path.getmtime(fp) >= os.path.getmtime(src)
+			if ok:
+				with Image.open(src) as im:
+					ok = im.size == (cl.shape[1], cl.shape[0])
+		except OSError:
+			ok = False
 		if ok:
 			return cl
 		try:

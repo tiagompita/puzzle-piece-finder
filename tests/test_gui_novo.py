@@ -638,3 +638,77 @@ def test_five_jumps_leave_one_detail_in_flight(base, browser, monkeypatch):
 	assert pg.evaluate("document.querySelector('#detail').getAttribute('href')").startswith("blob:")
 	assert errs == []
 	pg.close()
+
+
+
+DETAIL_TIMES = """(() => {
+  window.__dt = { fetch: [], wheel: 0, move: 0 };
+  const f = window.fetch;
+  window.fetch = function (u, o) {
+    if (String(u).includes('/api/board.jpg') && String(u).includes('region=')) window.__dt.fetch.push(performance.now());
+    return f.apply(this, arguments);
+  };
+  addEventListener('wheel', () => { window.__dt.wheel = performance.now(); }, { capture: true, passive: true });
+  addEventListener('pointermove', () => { window.__dt.move = performance.now(); }, { capture: true });
+})();"""
+
+_JUMP = """(() => { const n = window.__dt.fetch.length, t = performance.now();
+	%s;
+	return { n, sent: window.__dt.fetch.length, dt: window.__dt.fetch.length > n ? window.__dt.fetch[n] - t : null }; })()"""
+
+
+def test_jump_asks_detail_at_once_drag_and_wheel_keep_debounce(guarda, browser):
+	"""Ronda 2 do detalhe (DETALHE.md §6): um salto (lupa e «localizar» passam por ``zoomCells``) pede o detalhe na
+	mesma tarefa, sem a espera de 280 ms; arrastar e a roda continuam a pedi-lo só ≥ 250 ms depois do último
+	movimento. No código anterior o salto também esperava 280 ms (o 1.º ``assert`` falha)."""
+	url, gui, tw, dec = guarda
+	pg = browser.new_page(viewport={"width": 1366, "height": 768})
+	pg.add_init_script(DETAIL_TIMES)
+	errs = []
+	pg.on("pageerror", lambda e: errs.append(str(e)))
+	shown = "S.detailKey && document.body.dataset.detail === S.detailKey"
+	try:
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		pg.wait_for_selector("#b-localizar", timeout=30_000)
+		pg.wait_for_function("!!document.body.dataset.raster", timeout=30_000)
+		pg.wait_for_timeout(1500)                            # os eventos do arranque (recarregar o Montar) acalmam
+		pg.evaluate("setView({ x: 0, y: 0, w: 2 })")         # o Tiago está noutro canto, com o detalhe dessa vista
+		pg.wait_for_function(shown, timeout=30_000)
+		# salto 1 (o caminho da lupa: showCell → zoomCells): o pedido sai na mesma tarefa
+		r = pg.evaluate(_JUMP % "zoomCells(1, 1, 1, 1, 0.02)")
+		assert r["sent"] == r["n"] + 1 and r["dt"] < 50, r
+		pg.wait_for_function(shown, timeout=30_000)
+		bb = pg.locator("#board").bounding_box()
+		cx, cy = bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2
+		# arrastar: nenhum pedido durante o arrasto; sai ≥ 250 ms depois do último movimento
+		n = pg.evaluate("window.__dt.fetch.length")
+		x0, x1 = bb["x"] + 0.9 * bb["width"], bb["x"] + 0.1 * bb["width"]   # quase a largura da vista: muda a região
+		pg.mouse.move(x0, cy)
+		pg.mouse.down()
+		for i in range(1, 9):
+			pg.mouse.move(x0 + (x1 - x0) * i / 8, cy)
+			pg.wait_for_timeout(30)
+		pg.mouse.up()
+		assert pg.evaluate("window.__dt.fetch.length") == n
+		pg.wait_for_function(f"window.__dt.fetch.length > {n}", timeout=5_000)   # o arrasto mudou a região
+		d = pg.evaluate(f"window.__dt.fetch[{n}] - window.__dt.move")
+		assert d >= 250, d
+		pg.wait_for_function(shown, timeout=30_000)
+		# roda (afastar): idem, ≥ 250 ms depois da última volta
+		n = pg.evaluate("window.__dt.fetch.length")
+		pg.mouse.move(cx, cy)
+		for _ in range(3):
+			pg.mouse.wheel(0, 120)
+			pg.wait_for_timeout(40)
+		pg.wait_for_function(f"window.__dt.fetch.length > {n}", timeout=5_000)
+		d = pg.evaluate(f"window.__dt.fetch[{n}] - window.__dt.wheel")
+		assert d >= 250, d
+		pg.wait_for_function(shown, timeout=30_000)
+		# salto 2: o botão «localizar» do cartão (a vista está longe do alvo)
+		r = pg.evaluate(_JUMP % "document.querySelector('#b-localizar').click()")
+		assert r["sent"] == r["n"] + 1 and r["dt"] < 50, r
+		pg.wait_for_function(shown, timeout=30_000)
+		assert errs == []
+	finally:
+		pg.close()

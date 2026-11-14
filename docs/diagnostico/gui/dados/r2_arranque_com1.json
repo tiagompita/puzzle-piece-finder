@@ -1,0 +1,100 @@
+{
+ "ui": "novo",
+ "vw": 1920,
+ "vh": 1080,
+ "dpr": 1.0,
+ "rows": [
+  {
+   "cenario": "arranque: salto ceu",
+   "ui": "novo",
+   "detalhe_s": 11.34,
+   "chave": "1,20,14,40@100#2299530",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 58,
+   "sondas_max_ms": 336,
+   "sondas_med_ms": 23,
+   "detalhe_enviados": 2,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 1,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 2,
+   "sobreposicao_ms": 1.2,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=1,38,14,58&v=2299530",
+     "t_ms": 0,
+     "fim_ms": 1293,
+     "fila_ms": null,
+     "ttfb_ms": null,
+     "dur_ms": 1293,
+     "kb": 0,
+     "cache": null,
+     "ok": false,
+     "erro": "net::ERR_ABORTED"
+    },
+    {
+     "url": "?ppc=100&region=1,20,14,40&v=2299530",
+     "t_ms": 1292,
+     "fim_ms": 12613,
+     "fila_ms": 1,
+     "ttfb_ms": 11317,
+     "dur_ms": 11321,
+     "kb": 346,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 2,
+   "n_fila_mais_100ms": 0
+  },
+  {
+   "cenario": "arranque: salto relva",
+   "ui": "novo",
+   "detalhe_s": 5.85,
+   "chave": "34,30,47,50@100#2299530",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 30,
+   "sondas_max_ms": 314,
+   "sondas_med_ms": 27,
+   "detalhe_enviados": 1,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 0,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 1,
+   "sobreposicao_ms": 0.0,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=34,30,47,50&v=2299530",
+     "t_ms": 0,
+     "fim_ms": 5837,
+     "fila_ms": 1,
+     "ttfb_ms": 5834,
+     "dur_ms": 5837,
+     "kb": 570,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 2,
+   "n_fila_mais_100ms": 0
+  }
+ ]
+}

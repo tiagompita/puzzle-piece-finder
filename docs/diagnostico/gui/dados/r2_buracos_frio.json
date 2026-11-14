@@ -1,0 +1,92 @@
+{
+ "importar_s": 0.13,
+ "gui_s": 0.05,
+ "frio": {
+  "total_s": 24.02,
+  "resumo": {
+   "n_buracos": 203,
+   "n_soltas": 524,
+   "sigma": 1,
+   "n_sigma": 696,
+   "por_confianca": {
+    "alta": 2,
+    "media": 36,
+    "sem": 165
+   },
+   "alta_m2": 2,
+   "calibrado": true,
+   "versao_fit": "m11-1",
+   "segundos": 24.0
+  },
+  "fases_s": {
+   "eroded_sides": 18.06,
+   "pool_items (soltas: formas, lados erodidos, tiras)": 15.14,
+   "hole_queries (buracos, lados das vizinhas, tiras)": 5.07,
+   "Project.shape (npz → Shape)": 4.94,
+   "board_sigma (inclui poses + formas das colocadas)": 2.86,
+   "render.initial_theta": 2.0,
+   "rank_hole (custo de cada buraco contra o pool)": 0.78,
+   "assign (afetação conjunta)": 0.05,
+   "board_dirs": 0.03,
+   "pool_arrays": 0.01
+  },
+  "chamadas": {
+   "Project.shape (npz → Shape)": 2926,
+   "render.initial_theta": 698,
+   "board_dirs": 696,
+   "board_sigma (inclui poses + formas das colocadas)": 1,
+   "eroded_sides": 738,
+   "hole_queries (buracos, lados das vizinhas, tiras)": 1,
+   "pool_items (soltas: formas, lados erodidos, tiras)": 1,
+   "pool_arrays": 1,
+   "rank_hole (custo de cada buraco contra o pool)": 203,
+   "assign (afetação conjunta)": 1
+  }
+ },
+ "cache": {
+  "tiras_em_disco": 825,
+  "tiras": 825,
+  "lados_erodidos": 738,
+  "formas": 1222
+ },
+ "depois_de_escrita": {
+  "total_s": 0.87,
+  "resumo": {
+   "n_buracos": 203,
+   "n_soltas": 524,
+   "sigma": 1,
+   "n_sigma": 696,
+   "por_confianca": {
+    "alta": 2,
+    "media": 36,
+    "sem": 165
+   },
+   "alta_m2": 2,
+   "calibrado": true,
+   "versao_fit": "m11-1",
+   "segundos": 0.9
+  },
+  "fases_s": {
+   "rank_hole (custo de cada buraco contra o pool)": 0.77,
+   "assign (afetação conjunta)": 0.04,
+   "board_sigma (inclui poses + formas das colocadas)": 0.04,
+   "board_dirs": 0.02,
+   "render.initial_theta": 0.01,
+   "pool_arrays": 0.01,
+   "hole_queries (buracos, lados das vizinhas, tiras)": 0.01,
+   "pool_items (soltas: formas, lados erodidos, tiras)": 0.0,
+   "Project.shape (npz → Shape)": 0.0
+  },
+  "chamadas": {
+   "render.initial_theta": 698,
+   "board_dirs": 696,
+   "Project.shape (npz → Shape)": 1704,
+   "board_sigma (inclui poses + formas das colocadas)": 1,
+   "hole_queries (buracos, lados das vizinhas, tiras)": 1,
+   "pool_items (soltas: formas, lados erodidos, tiras)": 1,
+   "pool_arrays": 1,
+   "rank_hole (custo de cada buraco contra o pool)": 203,
+   "assign (afetação conjunta)": 1
+  }
+ }
+}

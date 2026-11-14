@@ -737,6 +737,27 @@ def test_clean_or_crop_ignores_stale_clean_file(tmp_path):
     assert np.array_equal(R._clean_or_crop(pr, pid), bogus)
 
 
+def test_clean_or_crop_survives_clean_file_deleted_by_another_thread(tmp_path, monkeypatch):
+    """Ronda 2 do detalhe: com as regiões compostas fora do rlock, outro fio pode apagar um ``render/clean`` velho
+    entre o ``exists`` e o ``getmtime`` (visto no arranque de uma cópia: a composição do tabuleiro inteiro morreu
+    com FileNotFoundError). Um ficheiro que desaparece conta como velho: a peça limpa-se na hora."""
+    pr, sid = _ingested(tmp_path)
+    pid = sorted(pr.pieces)[0]
+    fresh = R._clean_or_crop(pr, pid)
+    os.makedirs(pr.p("render", "clean"), exist_ok=True)
+    fp = pr.p("render", "clean", f"{pid}.png")
+    Image.fromarray(np.zeros_like(fresh)).save(fp)
+    real = os.path.getmtime
+
+    def gone(path):
+        if os.path.normcase(os.path.abspath(path)) == os.path.normcase(os.path.abspath(fp)):
+            os.remove(fp)                                       # the other thread got there first
+            raise FileNotFoundError(path)
+        return real(path)
+    monkeypatch.setattr(R.os.path, "getmtime", gone)
+    assert np.array_equal(R._clean_or_crop(pr, pid), fresh) and not os.path.exists(fp)
+
+
 # ---------------------------------------------------------------- manual pose («Editar posicionamento»)
 def _mark_piece(pr, pid):
     """Paint a purple mark halfway between the body centre and a corner of ``pid``'s crop; ``(mark_mm, pivot)``."""

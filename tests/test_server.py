@@ -1163,3 +1163,17 @@ def test_superseded_detail_request_is_dropped_before_composing(env, monkeypatch)
     assert (2, 2, 3, 3) not in st["calls"] and len(st["calls"]) == 3
     # without the headers (old clients, other callers) nothing is dropped
     assert cl.get("/api/board.jpg?ppc=120&region=1,1,1,2").status_code == 200
+
+
+def test_gil_interval_on_by_default_and_zero_keeps_python_default(monkeypatch):
+    """DETALHE.md §6 (ronda 2): o servidor arranca com ``sys.setswitchinterval(GIL_SWITCH_S)``; ``--gil-intervalo 0``
+    deixa o valor do Python."""
+    import sys
+    old = sys.getswitchinterval()
+    try:
+        assert S._parser().parse_args([]).gil_intervalo == S.GIL_SWITCH_S == 0.0005
+        sys.setswitchinterval(0.005)
+        assert S.apply_gil_interval(S._parser().parse_args(["--gil-intervalo", "0"]).gil_intervalo) == pytest.approx(0.005)
+        assert S.apply_gil_interval(S._parser().parse_args([]).gil_intervalo) == pytest.approx(0.0005)
+    finally:
+        sys.setswitchinterval(old)

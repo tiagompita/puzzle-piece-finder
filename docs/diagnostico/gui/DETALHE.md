@@ -4,7 +4,8 @@
 (condições do Tiago no topo). Medido numa **cópia** de `projects/alpes` no scratchpad (698 peças colocadas), Chromium
 headless (Playwright) com CDP `Network`, Windows 11, `.venv` (Python 3.13). Dados em bruto: `dados/*.json`.
 Guiões: `tools/diagnostico/gui/salto_detalhe.py` (browser), `tempo_regiao.py` (servidor: fases e bloqueio),
-`gil_buracos.py` (GIL), `tabela.py` (tabelas a partir dos JSON).
+`gil_buracos.py` (GIL), `tabela.py` (tabelas a partir dos JSON). **Ronda 2** (mesmo dia, §6–§7): `gil_intervalo.py`
+(intervalo do GIL no servidor real, com e sem), `buracos_frio.py` (fases do 1.º ranking dos buracos); dados `dados/r2_*`.
 
 Etiquetas: **[V]** medido aqui; **[NT]** não testado; **[F]** testado e falha o critério.
 
@@ -31,6 +32,16 @@ Etiquetas: **[V]** medido aqui; **[NT]** não testado; **[F]** testado e falha o
   composição; 5 saltos seguidos deixam 1 composição útil (os pedidos obsoletos são abortados no browser e descartados
   no servidor antes de compor) e o detalhe final chega em 3,3–3,9 s em vez de 4,8–8,2 s. **O tempo frio de um salto
   não muda** (2,2–2,8 s em céu/relva): o critério 1 continua **[F]**.
+
+- **Ronda 2 (§6–§7) [V]:**
+  - um salto (lupa, «localizar», «Ver no tabuleiro») pede o detalhe sem a espera de 280 ms; arrastar e a roda mantêm-na.
+    O quente passa de 0,30 para 0,01–0,02 s (1b passa a [V]);
+  - **H adotado:** `sys.setswitchinterval(0.0005)` no servidor (`--gil-intervalo`, 0 = o do Python). Em 6 corridas,
+    o detalhe durante o ranking a frio passou de 20,3 / 23,3 s para 7,6 / 6,6 s (céu / relva); a reconsulta ficou igual
+    (−3 %) e a importação +1,4 % (critério: ≤ 10 %). O 1.º salto logo depois de abrir passou de ≈ 37 s para ≈ 11 s;
+  - causa de fundo do 1.º `/api/montar` (§7): o ranking em si custa < 1 s; os 24 s (sozinho; 43–50 s no servidor) são
+    lados erodidos (18 s) e formas (5 s) que só vivem em memória. Proposta: guardá-los em disco como as tiras;
+  - corrigida uma corrida entre fios em `render._clean_or_crop` que a composição fora do lock (A) expôs (§6.3).
 
 ## 1. Servidor, sem browser: onde vai o tempo de uma composição [V]
 
@@ -182,7 +193,7 @@ Na cópia, GUI nova na aba «Peças» (na aba Montar a vista segue o cartão seg
 | # | critério | resultado |
 |---|---|---|
 | 1a | detalhe p95 ≤ 1,5 s a frio | **[F]** 2,2–2,8 s em céu/relva (máx. 2,79 s, 1366 dpr 1,25); só a zona vazia cumpre (0,36–0,39 s). A + B não mexem no tempo de composição. |
-| 1b | detalhe ≤ 0,3 s a quente | **[F] por 10 ms**: 0,29–0,31 s (p95 0,31 s). O debounce de 280 ms de `scheduleDetail` sozinho gasta 0,28 s; o pedido vem da cache HTTP em 0–1 ms. |
+| 1b | detalhe ≤ 0,3 s a quente | **[F] por 10 ms**: 0,29–0,31 s (p95 0,31 s). O debounce de 280 ms de `scheduleDetail` sozinho gasta 0,28 s; o pedido vem da cache HTTP em 0–1 ms. **Ronda 2: [V]** 0,01–0,02 s (os saltos já não esperam, §6.1). |
 | 2a | browser: nenhuma long task > 200 ms, nenhum intervalo rAF > 250 ms | **[V]** 0 long tasks, rAF ≤ 17 ms (já era assim antes). |
 | 2b | servidor: `/api/status`, `/api/montar`, `/api/cell`, `board.jpg` em cache ≤ 300 ms durante uma composição | **[V] com o servidor estável:** máx. 25 / 64 / 77 / 21 ms. **[F] no arranque:** sondas no browser até 376 ms enquanto o ranking dos buracos corre a frio (antes: 224–390 ms). |
 | 2c | nenhum pedido da GUI > 100 ms em `queued`/`stalled` por falta de ligação | **[V]** máx. 4 ms (antes até 490 ms em 5 saltos). |
@@ -190,7 +201,7 @@ Na cópia, GUI nova na aba «Peças» (na aba Montar a vista segue o cartão seg
 
 ## 5. Recomendação (C–G e o que apareceu fora do plano), com números
 
-1. **(novo, H) Intervalo de troca do GIL no servidor.** `sys.setswitchinterval(0.0005)` no arranque do servidor:
+1. **(novo, H) Intervalo de troca do GIL no servidor.** *Feito na ronda 2 (§6.2), com as medidas pedidas.* `sys.setswitchinterval(0.0005)` no arranque do servidor:
    - com o ranking dos buracos a frio, a composição passou de 26,2 s para 4,1 s;
    - o ranking em si não ficou mais lento (39,8 → 28,7 s, 1 corrida de cada).
    É uma linha, mas mexe em todo o processo: medir antes o ranking, a reconsulta e a importação com e sem o
@@ -214,11 +225,168 @@ Na cópia, GUI nova na aba «Peças» (na aba Montar a vista segue o cartão seg
    por peça, não por píxel (3,4 MP vazios em 0,085 s).
 6. **F — processo à parte:** só se H não chegar. Com o servidor estável, o GIL custa 20–40 ms às outras rotas. O mau
    caso é o ranking a frio, e H resolve-o em 1 linha (na medição em processo).
-7. **Debounce de 280 ms:** é o que separa o quente do critério 1b (0,31 contra 0,30). Com B, um salto (lupa,
+7. **Debounce de 280 ms:** *feito na ronda 2 para os saltos (§6.1), a pedido do Tiago.* é o que separa o quente do critério 1b (0,31 contra 0,30). Com B, um salto (lupa,
    «localizar») podia pedir sem debounce, mantendo-o só no arrasto/roda. Fica para decidir com o Tiago, por ser
    uma mudança de comportamento.
 
-## 6. Limites
+## 6. Ronda 2 (2026-11-14): sem espera nos saltos e intervalo do GIL (H)
+
+Pedido do Tiago: (1) tirar a espera de 280 ms nos saltos (lupa e «localizar») e mantê-la ao arrastar e na roda;
+(2) experiência com `sys.setswitchinterval`, 3 corridas com e 3 sem, adotada só se o detalhe melhorar e a reconsulta e
+a importação não piorarem mais de 10 %; (3) causa de fundo dos 30–40 s do 1.º `/api/montar`, sem implementar (§7);
+E, C, D, F e G ficam para depois da F2. Prompt: `docs/prompts/2026-11-14-detalhe-tabuleiro-ronda2.md`.
+
+Todas as medições numa cópia nova de `projects/alpes` feita com `shutil.copytree` (1433 peças, versão do log 2299530).
+**Atenção [V]:** uma cópia com `cp -r` muda o mtime de `render/placements.json`, a cache do raster em disco
+(`render/gui/board_60.json`, campo `pl_mtime`) deixa de valer e cada arranque recompõe o tabuleiro inteiro (35–60 s)
+por baixo das medidas, porque `/api/status` diz «pronto» antes disso. A 1.ª bateria desta ronda foi feita assim e foi
+deitada fora (`dados/r2_gil_corridas_invalidas.json`): dava à reconsulta um ganho de −28 % que era só a composição do
+tabuleiro a acabar mais cedo com o intervalo curto. Na ronda anterior a cópia `alpes_det` foi reutilizada entre
+corridas, por isso a cache já tinha sido refeita.
+
+### 6.1 Sem espera nos saltos [V]
+
+`src/web/board.js`: `setView(vb, now)` e `fitRect(…, now)`; `zoomCells` (o caminho da lupa / `showCell`, de
+«localizar», do «Ver no tabuleiro» e do «Localizar peça» da GUI antiga, e do cartão seguinte depois de um «Encaixa»)
+passa `now = true` e pede o detalhe na mesma tarefa (`clearTimeout` + `loadDetail`). Arrastar, a roda, a pinça, os
+botões +/−, o duplo clique, «ajustar» e o redimensionar continuam com `scheduleDetail` (280 ms depois da última vista).
+Com B (ronda 1), um salto seguido de outro aborta o pedido anterior no browser e o servidor descarta-o antes de compor.
+
+Teste novo: `tests/test_gui_novo.py::test_jump_asks_detail_at_once_drag_and_wheel_keep_debounce` (Playwright, `slow`):
+- `zoomCells` e o botão «localizar»: o `fetch` do detalhe sai **na mesma tarefa** do salto (< 50 ms; medido ≈ 0 ms);
+- arrastar (8 movimentos a 30 ms): nenhum pedido durante o arrasto, o pedido sai ≥ 250 ms depois do último movimento;
+- roda (3 voltas a 40 ms): idem, ≥ 250 ms depois da última volta.
+Com o `board.js` de HEAD o 1.º `assert` falha (`{'n': 1, 'sent': 1, 'dt': None}`: nenhum pedido no salto).
+
+Browser (`salto_detalhe.py`, GUI nova 1920 × 1080, servidor novo por linha, ranking dos buracos já feito, intervalo
+0,5 ms nos dois; «com espera» = o `board.js` de HEAD servido pelo mesmo código; `dados/r2_saltos_*.json`):
+
+| cenário | com espera (HEAD) | sem espera nos saltos |
+|---|---|---|
+| céu frio / morno (+1 col.) | 4,01 / 3,65 | 3,51 / 3,02 |
+| relva frio / morno | 3,76 / 3,42 | 3,18 / 2,85 |
+| vazia frio / morno | 0,41 / 0,41 | 0,12 / 0,29 |
+| **quente (céu / relva / vazia)** | **0,30 / 0,31 / 0,31** | **0,01 / 0,02 / 0,02** |
+| 5 saltos seguidos (400 ms) | 5,11 (5 enviados, 4 cancelados) | 4,46 (5 enviados, 4 cancelados) |
+
+- O quente passa de 0,30 s (quase só a espera) para 0,01–0,02 s: o critério 1b (≤ 0,3 s) passa a **[V]**.
+- O frio desce 0,3–0,6 s (a espera mais ruído entre servidores); continua acima de 1,5 s em céu/relva (1a **[F]**:
+  2,9–3,5 s neste projeto, que tem mais peças do que a cópia da ronda 1, 2,4–2,7 s). Só E ataca o frio.
+- 0 long tasks e rAF ≤ 17 ms nas duas colunas (como antes).
+
+### 6.2 Intervalo do GIL (H): 6 corridas [V]
+
+`tools/diagnostico/gui/gil_intervalo.py` (`dados/r2_gil_corridas.json`). Cada corrida: cópia nova da base, servidor
+novo (`python -m src.server --gil-intervalo 0` = 5 ms, ou `0.0005` = 0,5 ms; o valor em vigor confirmado na linha
+«intervalo do GIL … ms» do registo de cada servidor), ordem alternada sem/com. Medidas:
+- **detalhe durante o ranking a frio:** `GET /api/montar` (arranca o ranking, como o 1.º pedido da GUI nova), 2 s
+  depois uma região de céu (1,21–14,41) e a seguir uma de relva (34,31–47,51) a ppc 100, LRU vazia; no arranque correm
+  também a verificação de ativos e os fantasmas (como no uso real);
+- **reconsulta:** com o servidor parado, `POST /api/confirm` `place` da solta P0096 em (20,60), a mesma da ronda 1, e depois `unplace` com
+  `desfaz` (tempo do POST; dentro, a consulta incremental do registo de atividade);
+- **importação:** `POST /api/ingest` de uma folha de 10 peças (saco 99) e espera pelo fim do trabalho na fila
+  (`segundos` do trabalho; dentro, a consulta completa).
+
+| corrida | intervalo | detalhe céu (s) | detalhe relva (s) | reconsulta: place / unplace (s) | consulta incremental (s) | importação (s) | consulta completa (s) | ranking dos buracos (s) | detalhe sozinho céu / relva (s) |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 5 ms | 18,18 | 21,41 | 4,52 / 3,83 | 2,1 / 1,9 | 69,3 | 64,6 | 48,7 | 2,76 / 2,76 |
+| 2 | 0,5 ms | 8,20 | 6,75 | 4,37 / 3,70 | 2,0 / 1,8 | 66,9 | 61,9 | 47,7 | 2,74 / 2,72 |
+| 3 | 5 ms | 22,47 | 23,85 | 4,56 / 3,83 | 2,1 / 1,9 | 67,3 | 62,7 | 49,1 | 2,94 / 2,69 |
+| 4 | 0,5 ms | 5,92 | 6,28 | 4,36 / 3,49 | 2,1 / 1,8 | 68,3 | 63,4 | 43,2 | 2,77 / 2,76 |
+| 5 | 5 ms | 20,29 | 24,76 | 4,77 / 4,11 | 2,2 / 2,0 | 67,4 | 62,4 | 49,1 | 2,95 / 2,97 |
+| 6 | 0,5 ms | 8,58 | 6,82 | 4,76 / 3,93 | 2,2 / 1,9 | 71,6 | 66,2 | 49,5 | 2,90 / 2,90 |
+| **média 5 ms** | | **20,31** | **23,34** | **4,62 / 3,92** | 2,03 | **68,0** | 63,2 | 49,0 | 2,88 / 2,81 |
+| **média 0,5 ms** | | **7,57** | **6,62** | **4,50 / 3,71** | 1,97 | **68,9** | 63,8 | 46,8 | 2,80 / 2,79 |
+| **diferença** | | **−63 %** | **−72 %** | **−3 % / −5 %** | −3 % | **+1,4 %** | +0,9 % | −4 % | −3 % / −1 % |
+
+**Decisão (critério fixado pelo Tiago antes de medir): adotado [V].**
+- detalhe durante o ranking a frio: melhora (céu 18,2–22,5 → 5,9–8,6 s; relva 21,4–24,8 → 6,3–6,8 s);
+- reconsulta: não piora (média −3 % / −5 %; pior corrida com 0,5 ms 4,76 s contra a melhor com 5 ms 4,52 s = +5 %);
+- importação: +1,4 % na média (pior corrida 71,6 s = +5,3 % sobre a média com 5 ms), abaixo dos 10 %.
+
+`src/server.py`: `GIL_SWITCH_S = 0.0005`, `apply_gil_interval()` chamado no início de `main()` (antes de qualquer fio:
+a preparação do arranque é um) e a opção `--gil-intervalo S` (omissão 0,0005; `0` deixa o valor do Python, 0,005).
+O registo diz o valor em vigor na linha «mesa de montagem: … intervalo do GIL 0.5 ms». Só o servidor: as CLI
+(`query`, `confirm`, `ingest`, `fit`) e os testes não mudam. Teste: `tests/test_server.py::
+test_gil_interval_on_by_default_and_zero_keeps_python_default`.
+
+Notas:
+- O detalhe durante o ranking continua 2–3 vezes mais lento do que sozinho (6,6–7,6 s contra 2,8 s): H reduz o
+  efeito «comboio», não o elimina (o ranking em Python puro continua a ter o GIL metade do tempo). Isso é o §7.
+- O arranque no browser (1.º salto logo depois de abrir `/novo/`): com a cópia válida (cache do raster em disco, como na máquina do
+  Tiago), 2 corridas de cada, `dados/r2_arranque_{com,sem}{1,2}.json`:
+
+  | intervalo | 1.º salto céu (s) | 1.º salto relva (s) | sonda mais lenta (ms) | ranking dos buracos (s) |
+  |---|---|---|---|---|
+  | 5 ms | 37,23 · 37,32 | 14,46 · 14,70 | 412 · 333 | 53,8 · 54,2 |
+  | 0,5 ms | 11,34 · 11,04 | 5,85 · 5,87 | 336 · 311 | (não registado: o servidor parou antes de acabar) |
+
+  O mau caso do relato do Tiago («primeira lupa depois de abrir») passa de ≈ 37 s para ≈ 11 s [V]; continua longe do
+  critério 1a, e o 2b no arranque continua **[F]** (sondas até 311–336 ms, critério 300 ms).
+- Fora do critério: o ranking a frio não ficou mais lento (49,0 → 46,8 s).
+
+### 6.3 Achado: `_clean_or_crop` podia morrer com `FileNotFoundError` [V], corrigido
+
+Na 1.ª bateria (cópia com `cp -r`), a composição do tabuleiro inteiro no arranque morreu com `FileNotFoundError` em
+`os.path.getmtime` dentro de `render._clean_or_crop`: com A (ronda 1) uma região compõe-se fora do `rlock`, ao mesmo
+tempo que o tabuleiro inteiro; os dois viram o mesmo `render/clean/P####.png` velho e um apagou-o entre o `exists` e o
+`getmtime` do outro. Efeito: «ERRO na preparação» no arranque e o tabuleiro composto mais tarde pelo 1.º pedido
+(o mesmo podia dar um 500 numa região). Só acontece com ficheiros `render/clean` velhos (uma folha re-segmentada
+noutro checkout, ou uma cópia sem mtime). Correção (`src/render.py`): um ficheiro que desaparece a meio conta como
+velho e a peça limpa-se na hora. Teste: `tests/test_render.py::
+test_clean_or_crop_survives_clean_file_deleted_by_another_thread` (falha com o `render.py` de HEAD).
+
+## 7. Causa de fundo: porque é que o 1.º `/api/montar` calcula 30–50 s em cada arranque (só análise)
+
+`tools/diagnostico/gui/buracos_frio.py` (`dados/r2_buracos_frio.json`): `Gui._compute_holes` num processo novo, sozinho
+(sem servidor nem pedidos), com as fases de `src.fit.rank_all` cronometradas (tempo inclusivo; uma fase pode conter
+outra), e a seguir o mesmo cálculo no mesmo processo com a cache do ranking apagada (como depois de uma escrita):
+
+| fase (inclusiva) | a frio, processo novo (s) | chamadas | depois de uma escrita, mesmo processo (s) |
+|---|---|---|---|
+| **total** | **24,0** | | **0,87** |
+| `eroded_sides` (lados erodidos das soltas e das vizinhas, 0,60 mm) | **18,1** | 738 (≈ 24 ms cada) | 0 (em memória) |
+| `pool_items` (soltas: formas, lados erodidos, tiras) | 15,1 | 1 | 0,00 |
+| `hole_queries` (buracos, lados das vizinhas) | 5,1 | 1 | 0,01 |
+| `Project.shape` (`pieces/<scan>.npz` → `Shape`) | 4,9 | 2926 (1222 peças diferentes, ≈ 4 ms cada a frio) | 0,00 |
+| `board_sigma` (poses + formas das colocadas) | 2,9 | 1 | 0,04 |
+| `render.initial_theta` (pose de 698 colocadas) | 2,0 | 698 | 0,01 |
+| `rank_hole` (203 buracos × 524 soltas) | 0,8 | 203 | 0,77 |
+
+No servidor o mesmo cálculo demora 43–50 s (§6.2: 43,2–49,5 s) porque divide o processo com a verificação de ativos,
+os fantasmas e as composições do arranque.
+
+**O que fica em disco e sobrevive a um arranque:**
+- `render/fit/strips.npz`: as tiras de imagem de cada peça (chave: id + bbox); as 825 estavam lá, 0 calculadas;
+- `pieces/<scan>.npz`: as formas (lidas peça a peça);
+- `render/gui/board_60.{jpg,json}` (o raster do fundo, válido enquanto o log e o mtime de `placements.json` batem
+  certo), `render/placements.json`, `fetch.json` (a fila do Montar lê-o).
+
+**O que só existe em memória e se perde em cada arranque:**
+- o resultado do ranking (`Gui._holes`, chave = (tamanho do log, `id(self.pr)`)): 0,9 s a refazer com o resto quente;
+- os lados erodidos (`fit._Cache.sides`): **18 s, 75 % do frio**;
+- as formas (`Project._shape_cache`, `_Cache.shapes`): 4,9 s;
+- as poses das colocadas e os `board_dirs` (`dcache` local de `rank_all`, refeito em cada cálculo): 2 s, mas só a
+  frio (`initial_theta` lê as formas, que ficam em memória).
+
+Ou seja: o ranking em si custa < 1 s; os 24 s (sozinho) são preparação por peça que só vive na memória do processo.
+Depois de uma escrita o servidor refaz o ranking em 1,3 s (registo de §6.2: «203 buracos × 523 soltas em 1,3 s»).
+
+**Opções (nenhuma implementada):**
+
+| opção | o que faz | ganho esperado | risco |
+|---|---|---|---|
+| **A. Lados erodidos em disco** | `render/fit/sides.npz` como as tiras: chave id + bbox + `erosion_mm` + `FIT_VERSION` + um hash dos arrays da forma | frio 24 → ≈ 6 s sozinho (−18 s) em **todos** os arranques, mesmo com o log mudado (CLI, importação com o servidor parado) [NT, estimativa pela tabela] | médio-baixo: lados velhos se a silhueta mudar sem mudar a bbox (contorno manual, re-segmentação) — por isso o hash da forma na chave, não só a bbox; ficheiro de ≈ 1–3 MB [NT] |
+| **B. Formas lidas por folha** | `Project.shape` abre o `npz` da folha uma vez e guarda todas as peças dela, em vez de abrir o zip por peça | 4,9 s → < 1 s [NT] | baixo (só leitura; memória: as formas de todas as peças, já hoje em `_shape_cache` depois do 1.º ranking) |
+| **C. Ranking em disco com a versão do log** | `render/fit/holes.json` com chave sha256 do log + `FIT_VERSION` + calibração + assinatura de `strips.npz` | arranque com o log igual ao da última sessão: 0 s; nada nos outros casos — e a 1.ª escrita depois do arranque volta a pagar os 24 s (as caches por peça continuam frias), ou seja só muda o momento do custo | médio: um resultado velho se mudar algo que o log não vê (código de `fit.py` sem subir `FIT_VERSION`, `puzzle.json`, ativos refeitos); a chave tem de os incluir todos |
+| **D. Calcular em segundo plano ao arrancar** | no fim de `_prepare` (depois do tabuleiro e dos fantasmas) arrancar `holes_json(wait=False)`, com «A preparar sugestões… n de N» | o custo não diminui, mas acontece enquanto o Tiago abre o browser; com H, uma lupa nesse intervalo custa 6–8 s em vez de 20–25 s; o Montar já hoje funciona sem os buracos (`a_preparar.buracos`) e mostra as sugestões quando chegam | baixo; mas o «n de N» de hoje só conta tiras (0/1 o tempo todo neste projeto, ver o registo) — precisa de contar os lados erodidos; CPU gasto em cada arranque mesmo quando o Tiago só vai importar; a fila muda quando as sugestões `alta` chegam (já hoje) |
+
+**Recomendação:** A + B primeiro (tiram ≈ 22 s dos 24 s em qualquer arranque, sem decisões de invalidação novas além
+das que as tiras já têm), depois D (pouco código; a progressão passa a ser verdadeira); C só se ainda fizer falta
+(ganha o arranque sem mudanças, mas é o que tem a invalidação mais frágil). Medir depois o 1.º `/api/montar` e a lupa
+no arranque com o mesmo guião.
+
+## 8. Limites
 
 - Medido em Chromium headless numa máquina, sem rede real (localhost). Firefox, telemóvel e `--lan` ficam [NT]. O
   «deixou de responder» do Tiago não foi reproduzido como bloqueio do fio do browser: aqui o fio nunca bloqueou. A
@@ -229,3 +397,6 @@ Na cópia, GUI nova na aba «Peças» (na aba Montar a vista segue o cartão seg
   código não conhece). O tabuleiro e as peças colocadas ficaram iguais.
 - «arranque» varia entre corridas (29,96 / 31,50 / 34,16 s antes; 32,07 / 32,70 s depois), conforme o salto cai mais
   cedo ou mais tarde no ranking.
+- Ronda 2: o intervalo do GIL foi medido nesta máquina (Windows 11, `.venv`) e só no servidor; a máquina do Tiago e
+  `--lan` ficam [NT]. As medidas de reconsulta e importação são de uma escrita e de uma folha de 10 peças por corrida;
+  importações grandes (PDF de várias folhas) ficam [NT]. O §7 é uma análise com estimativas [NT] para as opções.

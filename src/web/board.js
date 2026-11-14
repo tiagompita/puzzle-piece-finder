@@ -42,7 +42,9 @@ const svg = () => $("#board");
 function svgRect() { return svg().getBoundingClientRect(); }
 function pxPerCell() { const r = svgRect(); return r.width / S.vb.w; }
 
-function setView(vb) {
+/** ``now``: a jump (zoomCells: lupa, «localizar», «Ver no tabuleiro») asks for the detail at once; dragging, the
+ * wheel, the pinch and the zoom buttons keep the 280 ms debounce (many views per second, only the last one matters). */
+function setView(vb, now = false) {
   const r = svgRect();
   const asp = r.height / Math.max(1, r.width);
   let { x, y, w } = vb;
@@ -56,9 +58,9 @@ function setView(vb) {
   const ppc = pxPerCell();
   $("#lyr-grelha").classList.toggle("off", !(S.showGrid && ppc >= 22));
   $("#lyr-fantasma").classList.toggle("off", !(S.showGhost && ppc >= 7));
-  scheduleDetail();
+  if (now) { clearTimeout(detailTimer); loadDetail(); } else scheduleDetail();
 }
-function fitRect(x0, y0, x1, y1, pad = 0.04) {
+function fitRect(x0, y0, x1, y1, pad = 0.04, now = false) {
   const r = svgRect();
   const asp = r.height / Math.max(1, r.width);
   const bw = x1 - x0, bh = y1 - y0;
@@ -66,10 +68,10 @@ function fitRect(x0, y0, x1, y1, pad = 0.04) {
   const hh = w * asp;
   // keep the view inside the board when the board is larger than the view (no empty band)
   const clamp = (v, size, total) => (size >= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size));
-  setView({ x: clamp(x0 + bw / 2 - w / 2, w, boardW()), y: clamp(y0 + bh / 2 - hh / 2, hh, boardH()), w });
+  setView({ x: clamp(x0 + bw / 2 - w / 2, w, boardW()), y: clamp(y0 + bh / 2 - hh / 2, hh, boardH()), w }, now);
 }
 function fitBoard() { fitRect(0, 0, boardW(), boardH(), 0.015); }
-function zoomCells(l0, c0, l1, c1, pad = 0.08) { fitRect(c0 - 1, (l0 - 1) * S.hr, c1, l1 * S.hr, pad); }
+function zoomCells(l0, c0, l1, c1, pad = 0.08) { fitRect(c0 - 1, (l0 - 1) * S.hr, c1, l1 * S.hr, pad, true); }   // a jump
 function zoomAt(factor, cx, cy) {
   const r = svgRect();
   const px = cx === undefined ? 0.5 : (cx - r.left) / r.width;

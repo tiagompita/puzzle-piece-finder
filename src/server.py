@@ -121,6 +121,10 @@ EVENTS_KEEP = 500
 WRITE_WAIT_S = 90.0            # a write waits this long for the lock (an import commit / re-query) before 409
 SSE_KEEPALIVE_S = 15.0
 QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file keeps all)
+# sys.setswitchinterval of the server process (Python default 0.005; --gil-intervalo 0 keeps it). Measured in
+# docs/diagnostico/gui/DETALHE.md §6: detail during the cold hole ranking 19-22 -> 4.6-5.2 s, incremental re-query
+# -28 %, import +2 %.
+GIL_SWITCH_S = 0.0005
 POSE_CONTOUR_PTS = 300         # GET /pose: points of each contour (cell-width units)
 POSE_DIRS = {"N": (-1, 0), "E": (0, 1), "S": (1, 0), "W": (0, -1)}
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
@@ -3392,7 +3396,17 @@ def _lan_ips() -> list:
 	return sorted(ips)
 
 
-def main(argv=None) -> int:
+def apply_gil_interval(seconds: float) -> float:
+	"""``sys.setswitchinterval(seconds)`` when ``seconds > 0`` (else Python's own value stays); returns the interval
+	in force. With the default 5 ms, a CPU-bound thread (the cold hole ranking, a re-query) makes every numpy / OpenCV
+	call of the other threads wait up to 5 ms to get the GIL back after releasing it (convoy effect): a board region
+	that composes in 2-3 s alone took 19-22 s while the ranking ran (DETALHE.md §6)."""
+	if seconds and seconds > 0:
+		sys.setswitchinterval(float(seconds))
+	return sys.getswitchinterval()
+
+
+def _parser() -> argparse.ArgumentParser:
 	ap = argparse.ArgumentParser(prog="python -m src.server", description="Interface web local (mesa de montagem).")
 	ap.add_argument("--project", default=os.path.join("projects", "alpes"))
 	ap.add_argument("--port", type=int, default=DEFAULT_PORT)
@@ -3401,7 +3415,14 @@ def main(argv=None) -> int:
 	ap.add_argument("--no-prepare", action="store_true", help="não regenera recursos em falta no arranque")
 	ap.add_argument("--uploads", default=None, help="pasta onde os scans importados são gravados")
 	ap.add_argument("--ui", choices=("antiga", NOVO_UI), default="antiga", help="interface a anunciar: antiga (/) ou novo (/novo/)")
-	args = ap.parse_args(argv)
+	ap.add_argument("--gil-intervalo", type=float, default=GIL_SWITCH_S, metavar="S",
+					help=f"sys.setswitchinterval do processo (omissão {GIL_SWITCH_S}; 0 = o do Python, 0,005)")
+	return ap
+
+
+def main(argv=None) -> int:
+	args = _parser().parse_args(argv)
+	gil = apply_gil_interval(args.gil_intervalo)    # before any thread starts (the start-up preparation is one)
 	try:
 		import uvicorn
 	except ImportError:
@@ -3417,7 +3438,8 @@ def main(argv=None) -> int:
 		return 1
 	app = create_app(gui)
 	host = "0.0.0.0" if args.lan else "127.0.0.1"
-	log.info(f"mesa de montagem: projeto {gui.path} ({len(gui.pr.pieces)} peças, versão do log {gui.version()})")
+	log.info(f"mesa de montagem: projeto {gui.path} ({len(gui.pr.pieces)} peças, versão do log {gui.version()}; "
+			 f"intervalo do GIL {gil * 1000:g} ms)")
 	page = "/novo/" if args.ui == NOVO_UI else ""
 	log.info(f"abre http://127.0.0.1:{args.port}{page}; registo em {gui._activity_file()}")
 	if args.lan:

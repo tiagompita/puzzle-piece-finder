@@ -1,0 +1,112 @@
+{
+ "ui": "novo",
+ "vw": 1920,
+ "vh": 1080,
+ "dpr": 1.0,
+ "rows": [
+  {
+   "cenario": "arranque: salto ceu",
+   "ui": "novo",
+   "detalhe_s": 37.23,
+   "chave": "1,20,14,40@100#2299530",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 187,
+   "sondas_max_ms": 412,
+   "sondas_med_ms": 28,
+   "detalhe_enviados": 2,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 1,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 2,
+   "sobreposicao_ms": 0.2,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=1,38,14,58&v=2299530",
+     "t_ms": 0,
+     "fim_ms": 1747,
+     "fila_ms": null,
+     "ttfb_ms": null,
+     "dur_ms": 1747,
+     "kb": 0,
+     "cache": null,
+     "ok": false,
+     "erro": "net::ERR_ABORTED"
+    },
+    {
+     "url": "?ppc=100&region=1,20,14,40&v=2299530",
+     "t_ms": 1747,
+     "fim_ms": 38957,
+     "fila_ms": 0,
+     "ttfb_ms": 37205,
+     "dur_ms": 37210,
+     "kb": 346,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 2,
+   "n_fila_mais_100ms": 0
+  },
+  {
+   "cenario": "arranque: salto relva",
+   "ui": "novo",
+   "detalhe_s": 14.46,
+   "chave": "1,38,14,58@100#2299530",
+   "decode_ms": 0,
+   "detalhe_px": [
+    2100,
+    1355
+   ],
+   "longtasks_ms": [],
+   "n_longtasks_200": 0,
+   "raf_max_gap_ms": 17,
+   "sondas_n": 73,
+   "sondas_max_ms": 275,
+   "sondas_med_ms": 30,
+   "detalhe_enviados": 2,
+   "detalhe_terminados": 1,
+   "detalhe_falhados": 0,
+   "detalhe_cancelados": 1,
+   "detalhe_por_acabar": 0,
+   "pico_em_voo": 2,
+   "sobreposicao_ms": 0.2,
+   "detalhe": [
+    {
+     "url": "?ppc=100&region=34,30,47,50&v=2299530",
+     "t_ms": 0,
+     "fim_ms": 14442,
+     "fila_ms": null,
+     "ttfb_ms": null,
+     "dur_ms": 14442,
+     "kb": 0,
+     "cache": null,
+     "ok": false,
+     "erro": "net::ERR_ABORTED"
+    },
+    {
+     "url": "?ppc=100&region=1,38,14,58&v=2299530",
+     "t_ms": 14442,
+     "fim_ms": 14445,
+     "fila_ms": 0,
+     "ttfb_ms": 1,
+     "dur_ms": 3,
+     "kb": 252,
+     "cache": false,
+     "ok": true,
+     "erro": null
+    }
+   ],
+   "fila_max_ms": 2,
+   "n_fila_mais_100ms": 0
+  }
+ ]
+}
