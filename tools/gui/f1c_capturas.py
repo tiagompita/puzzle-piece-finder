@@ -36,9 +36,18 @@ def _shot(pg, out, name, hide_toast=True):
 	print("  ", name)
 
 
-def _search(pg, txt):
-	pg.fill("#q", txt)
-	pg.press("#q", "Enter")
+def _search(pg, a, b):
+	"""F2b: lupa com separadores. ``a``, ``b`` = saco e nº (separador Peça) ou linha e coluna (``lugar=`` no 1.º)."""
+	if a == "lugar":
+		pg.click("#s-lugar")
+		pg.fill("#q-linha", str(b[0]))
+		pg.fill("#q-coluna", str(b[1]))
+		pg.press("#q-coluna", "Enter")
+	else:
+		pg.click("#s-peca")
+		pg.fill("#q-saco", str(a))
+		pg.fill("#q-n", str(b))
+		pg.press("#q-saco", "Enter")
 	pg.wait_for_selector("#lupa-res:not([hidden])", timeout=60_000)
 
 
@@ -70,10 +79,10 @@ def capture(project, out):
 				_shot(pg, out, f"F1c_nao_{tag}.png")
 				pg.click("#b-desfazer")
 				pg.wait_for_selector(f"#tab-montar .card[data-tipo][data-piece='{first['piece']}']", timeout=120_000)
-				_search(pg, f"saco {first['lote']} nº {first['n_no_lote']}")
+				_search(pg, first['lote'], first['n_no_lote'])
 				_shot(pg, out, f"F1c_lupa_peca_{tag}.png")
 				pg.click("#lupa-fechar")
-				_search(pg, f"{first['cell'][0]},{first['cell'][1]}")
+				_search(pg, "lugar", first['cell'])
 				pg.wait_for_selector("#lupa-res[data-kind=lugar]", timeout=60_000)
 				_shot(pg, out, f"F1c_lupa_lugar_{tag}.png")
 				pg.click("#lupa-fechar")

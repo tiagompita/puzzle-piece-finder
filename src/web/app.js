@@ -1291,6 +1291,8 @@ function setJob(job) {
 }
 function connectEvents() {
   const es = new EventSource("/api/events");
+  // F2b: ligação perdida → faixa «Ligação perdida, a tentar religar…»; ao voltar recarrega o estado (core.js)
+  watchConnection(es, () => { if (document.body.dataset.ready === "1") loadAll().catch(() => {}); });
   es.addEventListener("hello", (e) => { const st = JSON.parse(e.data); if (typeof Q !== "undefined" && st.fila) Q.resumo = st.fila; setJob(st.job); });
   es.addEventListener("queue_changed", (e) => { if (typeof queueOnChanged === "function") queueOnChanged(JSON.parse(e.data)); });
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) scheduleReload("board"); });

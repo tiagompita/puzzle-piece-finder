@@ -11,3 +11,5 @@ São servidos por este servidor (nada se carrega da internet) e desenhados por m
 
 F2 (2026-11-14): `rotate-cw`, `settings`, `flag`, `scissors`, `plus`, `sun`, `droplet` e `arrow-up-from-line`, copiados
 sem alterações do mesmo ramo `main` nessa data.
+
+F2b (2026-11-14): `search`, copiado sem alterações do mesmo ramo `main` nessa data (lupa de dois separadores).

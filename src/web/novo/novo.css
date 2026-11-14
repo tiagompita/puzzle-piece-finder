@@ -44,8 +44,16 @@ a:hover { color: #ffd27a; }
   padding: 0 12px; white-space: nowrap; border-radius: 8px 8px 0 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 #tabs button.on { color: var(--text); box-shadow: inset 0 -3px 0 var(--amber); }
 #tabs button b { color: var(--amber); margin-left: 3px; }
-#search { flex: 0 1 220px; min-width: 0; }
-.search { width: 100%; min-height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); padding: 0 12px; }
+/* F2b: lupa com dois separadores (Peça | Lugar); os campos têm o aspeto dos de «Pôr uma peça à mão» (.pm-campos) */
+#search { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; }
+.s-sep { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex: 0 0 auto; }
+.s-sep button { min-height: var(--tap); border: 0; background: transparent; color: var(--muted); padding: 0 10px; cursor: pointer; font-weight: 600; }
+.s-sep button.on { background: var(--bg4); color: var(--text); box-shadow: inset 0 -3px 0 var(--amber); }
+.s-campos { display: flex; gap: 6px; align-items: center; }
+.s-campos label { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+.s-campos input { width: 104px; min-height: var(--tap); border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
+  padding: 0 8px; font-size: 16px; color: var(--text); }
+.s-campos input[type=number] { width: 68px; }
 .menu-wrap { position: relative; order: 4; }
 .icon-btn { width: var(--tap); height: var(--tap); border-radius: 10px; border: 1px solid var(--line); background: var(--bg3);
   cursor: pointer; font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; padding: 0; color: var(--text); }
@@ -160,6 +168,7 @@ h3 { margin: 0 0 4px; font-size: 18px; }
 .i-square-dashed { -webkit-mask-image: url("icons/square-dashed.svg"); mask-image: url("icons/square-dashed.svg"); }
 .i-stethoscope { -webkit-mask-image: url("icons/stethoscope.svg"); mask-image: url("icons/stethoscope.svg"); }
 .i-undo-2 { -webkit-mask-image: url("icons/undo-2.svg"); mask-image: url("icons/undo-2.svg"); }
+.i-search { -webkit-mask-image: url("icons/search.svg"); mask-image: url("icons/search.svg"); }
 .i-x { -webkit-mask-image: url("icons/x.svg"); mask-image: url("icons/x.svg"); }
 .i-arrow-up-from-line { -webkit-mask-image: url("icons/arrow-up-from-line.svg"); mask-image: url("icons/arrow-up-from-line.svg"); }
 .i-droplet { -webkit-mask-image: url("icons/droplet.svg"); mask-image: url("icons/droplet.svg"); }
@@ -177,6 +186,15 @@ h3 { margin: 0 0 4px; font-size: 18px; }
   border: 1px solid var(--line); border-left: 4px solid var(--ok); border-radius: 10px; padding: 6px 6px 6px 12px; margin: 0 0 12px; }
 .ultimo[data-estado="a_gravar"] { border-left-color: var(--muted); color: var(--muted); padding: 12px; }
 .ultimo-txt { flex: 1 1 160px; min-width: 0; }
+/* F2b: indicador de trabalho («A gravar…», «A atualizar sugestões…») no cartão e no tabuleiro */
+.trabalho { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+.trabalho.no-cartao { margin: 0 0 8px; padding: 6px 10px; border-radius: 8px; background: var(--bg3); border: 1px solid var(--line); }
+.trabalho.no-tabuleiro { position: absolute; top: 10px; left: 10px; z-index: 5; padding: 6px 12px; border-radius: 999px; background: rgba(28, 31, 37, .92);
+  border: 1px solid var(--line); pointer-events: none; }
+.trabalho[data-trabalho="gravar"] { color: var(--amber); }
+.spin { width: 14px; height: 14px; flex: 0 0 auto; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: gira .9s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s; } }
 #lyr-conhecida { pointer-events: none; }
 .por-confirmar-img { opacity: .5; }
 
@@ -270,11 +288,14 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
   #app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 38fr) minmax(0, 62fr);
     grid-template-areas: "top" "board" "panel"; }
   #top { flex-wrap: wrap; gap: 4px 10px; padding: 4px 10px; }
-  .brand { flex: 1 1 auto; }
-  .progress { flex: 0 0 70px; }
+  .brand { flex: 1 1 0; }
+  .progress { flex: 0 0 40px; }      /* F2b: o «⋯» fica na 1.ª linha; a lupa tem a sua, por baixo dos separadores */
   #tabs { order: 5; flex: 1 1 100%; margin-left: 0; }
   #tabs button { flex: 1; padding: 0 6px; }
-  #search { order: 3; flex: 0 1 140px; }
+  #search { order: 6; flex: 1 1 100%; }
+  .s-campos { flex: 1 1 auto; min-width: 0; }
+  .s-campos label { flex: 1 1 0; min-width: 0; }
+  .s-campos input, .s-campos input[type=number] { width: 100%; min-width: 0; }
   #panel { border-left: 0; border-top: 1px solid var(--line); }
   .card-top { grid-template-columns: 110px minmax(0, 1fr); }
   .pimg { width: 110px; height: 110px; }

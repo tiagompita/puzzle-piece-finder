@@ -385,6 +385,7 @@ class Gui:
 		self.ring.callback = lambda rec: self.emit("atividade", rec)
 		self._trigger = "pedido"     # who asked for the next board (re)composition: arranque | escrita | externo | pedido
 		self._alta = None            # (version, fit.alta_counter)
+		self._holes_prev = None      # the last COMPLETE hole ranking: shown (validated) while the next one is recomputed
 		self._holes_progress = None  # {n, N, segundos} while the strips of a cold hole ranking are computed
 		self._holes_hit_logged = None
 		self.wlock = threading.RLock()
@@ -417,6 +418,7 @@ class Gui:
 		self.stale_info = None        # start-up check of the assets against the log (render.stale_assets)
 		self._sse_waiters = set()     # one asyncio.Event per connected SSE client (set by emit, from any thread)
 		self._loop = None             # the server's event loop (stored by the first /api/events)
+		self.closing = False          # set by begin_shutdown (Ctrl+C): the SSE streams end so uvicorn can close
 		self._job_queue = False       # True while ``job`` is the import queue's label (writes wait instead of 409)
 		self._qcond = threading.Condition()
 		self._qstop = False
@@ -456,6 +458,19 @@ class Gui:
 				loop.call_soon_threadsafe(ev.set)
 			except RuntimeError:                     # loop closed (server stopping)
 				return
+
+	def begin_shutdown(self) -> None:
+		"""The server is stopping (Ctrl+C): end every SSE stream. uvicorn's graceful shutdown waits for the open
+		connections, and an ``/api/events`` stream never ends by itself, so with a browser tab open the process stayed
+		alive until the tab was closed (F2b, item 2)."""
+		with self.cond:
+			self.closing = True
+			waiters, loop = list(self._sse_waiters), self._loop
+		for ev in waiters:
+			try:
+				loop.call_soon_threadsafe(ev.set)
+			except (RuntimeError, AttributeError):
+				pass
 
 	def sse_register(self, ev, loop) -> None:
 		with self.cond:
@@ -769,15 +784,28 @@ class Gui:
 		``decision='alta'``, ``grupo='coloca_agora'``) plus ``hole`` (rank, J, margem, m, d1, d2, zona, vizinhas),
 		``desenho`` (as ``GET /api/holes/{l}/{c}``), ``fundida_com_gemea`` (the accepted twin proposal says the same
 		piece and cell: one card, two chips) and ``conflito_gemea`` (the twin proposal sends the piece elsewhere).
-		While paused the entries are still returned (the GUI moves them to the «Buracos» page)."""
+		While paused the entries are still returned (the GUI moves them to the «Buracos» page).
+
+		While the ranking is recomputed (every write invalidates it; the first one takes minutes) the entries come from
+		the LAST complete ranking, kept only if still valid (piece still loose, hole still empty, not rejected,
+		neighbours still placed) and marked ``desatualizada``: the list the user was working with stays on screen
+		until the new one is ready (F2b, item 3; before, the entries were [] during the whole recomputation)."""
 		from src import fit as F
 		hj = self.holes_json(wait=False)
 		cnt = self._alta_counter()
 		out = {"a_calcular": bool(hj.get("a_calcular")), "em_pausa": bool(cnt["em_pausa"]), "contador": cnt,
 			   "progresso": self._holes_progress if hj.get("a_calcular") else None, "entries": [], "conflitos": [],
-			   "n_alta": 0, "erro": hj.get("erro")}
-		if hj.get("a_calcular") or hj.get("erro"):
+			   "n_alta": 0, "erro": hj.get("erro"), "desatualizada": False}
+		stale = False
+		if hj.get("a_calcular") and not hj.get("erro"):
+			prev = self._holes_prev
+			if prev is None:
+				return out
+			hj, stale = prev, True
+			out["desatualizada"] = True
+		elif hj.get("erro"):
 			return out
+		rejected = {(pid, tuple(cell)) for pid, cell, _ in self.pr.model.rejections} if stale else set()
 		twins = {}
 		for e in self.fetch_entries():
 			if e.get("piece") and e.get("cell") and e.get("origin") in ("gemeo", "borda") and e.get("decision") in ("aceite", "ambigua"):
@@ -789,6 +817,9 @@ class Gui:
 			out["n_alta"] += 1
 			c0 = h["candidatas"][0]
 			if int(c0["rank"]) != 1:
+				continue
+			if stale and not self._alta_still_valid(h, c0["piece"], rejected):
+				out["n_alta"] -= 1
 				continue
 			if h.get("atribuida") not in (None, c0["piece"]):
 				out["conflitos"].append({"cell": h["cell"], "piece": c0["piece"], "atribuida": h["atribuida"]})
@@ -814,12 +845,30 @@ class Gui:
 				 "fundida_com_gemea": bool(same), "gemea_decision": (same[0].get("decision") if same else None),
 				 "twin_id": (same[0].get("twin_id") if same else None), "twin_cell": (same[0].get("twin_cell") if same else None),
 				 "conflito_gemea": (list(other[0]) if other else None), "desenho": self._hole_drawing(h)}
+			if stale:
+				e["desatualizada"] = True
 			rows.append(e)
 		rows.sort(key=lambda e: (-(e["margin"] or 0.0), e["piece"]))
 		for i, e in enumerate(rows, 1):
 			e["ordem"] = i
 		out["entries"] = rows
 		return out
+
+	def _alta_still_valid(self, h: dict, pid: str, rejected: set) -> bool:
+		"""A suggestion of the previous ranking still stands: the piece is still loose, the hole still empty (and not
+		marked), the pair not rejected and every neighbour that defined the mould still placed."""
+		pr = self.pr
+		p = pr.pieces.get(pid)
+		cell = tuple(h["cell"])
+		if p is None or p.estado not in ("solta", "emparelhada") or (pid, cell) in rejected:
+			return False
+		if pr.board[cell]["estado"] != "vazia" or any(q.estado == "posicao_conhecida" and q.celula == cell for q in pr.pieces.values()):
+			return False
+		for v in h.get("vizinhas", []):
+			q = pr.pieces.get(v["piece"])
+			if q is None or q.estado != "colocada":
+				return False
+		return True
 
 	def resume_alta(self, body: dict) -> dict:
 		"""``POST /api/holes/alta/reativar`` ``{nota?}``: log ``holes_alta_resumed`` (the pause window restarts)."""
@@ -891,6 +940,8 @@ class Gui:
 		self._holes_progress = None
 		out = self._holes_payload(r, key, time.time() - t0)
 		self._holes = (key, out)
+		if "erro" not in out["resumo"]:
+			self._holes_prev = out
 		rs = out["resumo"]
 		tiras = r.get("tiras") or {}
 		if "erro" in rs:
@@ -3559,6 +3610,7 @@ def create_app(gui: Gui):
 		"""SSE: the events after ``Last-Event-ID`` / ``?from=`` (else from now), delivered when :meth:`Gui.emit` wakes this
 		client's ``asyncio.Event`` (no polling); ``: keep-alive`` after :data:`SSE_KEEPALIVE_S` without events."""
 		last = int(request.headers.get("last-event-id") or request.query_params.get("from") or gui.seq)
+		last = min(last, gui.seq)           # a browser that reconnects to a RESTARTED server brings an id from the old counter
 		loop = asyncio.get_running_loop()
 		wake = asyncio.Event()
 
@@ -3566,8 +3618,12 @@ def create_app(gui: Gui):
 			nonlocal last
 			gui.sse_register(wake, loop)
 			try:
+				if gui.closing:
+					return
 				yield f"retry: 2000\nevent: hello\ndata: {json.dumps(gui.status_json(), default=_json_default)}\n\n"
 				while True:
+					if gui.closing:
+						break
 					for n, name, data in gui.events_after(last):
 						last = n
 						yield f"id: {n}\nevent: {name}\ndata: {json.dumps(data, ensure_ascii=False, default=_json_default)}\n\n"
@@ -3579,7 +3635,7 @@ def create_app(gui: Gui):
 							break
 						continue
 					wake.clear()                     # cleared before reading: an emit after this wakes the next wait
-					if await request.is_disconnected():
+					if gui.closing or await request.is_disconnected():
 						break
 			finally:
 				gui.sse_unregister(wake)
@@ -3612,6 +3668,23 @@ def apply_gil_interval(seconds: float) -> float:
 	if seconds and seconds > 0:
 		sys.setswitchinterval(float(seconds))
 	return sys.getswitchinterval()
+
+
+GRACEFUL_SHUTDOWN_S = 3
+
+
+def serve(app, gui, host: str, port: int) -> None:
+	"""``uvicorn.run`` with a Ctrl+C that closes at once: the first signal ends the SSE streams (:meth:`Gui.begin_shutdown`)
+	before uvicorn waits for the connections, and ``timeout_graceful_shutdown`` is the backstop for any other request."""
+	import uvicorn
+
+	class _Server(uvicorn.Server):
+		def handle_exit(self, sig, frame):
+			gui.begin_shutdown()
+			super().handle_exit(sig, frame)
+
+	_Server(uvicorn.Config(app, host=host, port=port, log_level="warning",
+						   timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_S)).run()
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -3655,7 +3728,7 @@ def main(argv=None) -> int:
 			log.info(f"na rede local: http://{ip}:{args.port}")
 		log.warning("sem login. Qualquer pessoa nesta rede Wi-Fi pode ver e alterar o projeto. "
 					"O firewall do Windows pode pedir autorização para a porta.")
-	uvicorn.run(app, host=host, port=args.port, log_level="warning")
+	serve(app, gui, host, args.port)
 	return 0
 
 

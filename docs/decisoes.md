@@ -333,3 +333,40 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
 - **Tabuleiro (medido, DETALHE.md §9.2):** o filtro aumenta o tempo de pintura/rasterização em 20–70 % (≈ 0,5 → 0,9 ms
   por frame a 1366), com 0 frames perdidos, o mesmo nº de frames e 0 long tasks a arrastar e com a roda, a 1366 e a
   390 × 3: fica também no tabuleiro [V em Chromium headless; GPU real e telemóvel NT].
+
+## 2026-11-14 — F2b: correções do teste do Tiago na GUI nova (lupa, Ctrl+C, lista a piscar, indicador de trabalho)
+
+- **Primeira colocação real por «pôr à mão» [V, Tiago, 2026-11-14]:** Saco 9 · nº 89 na linha 1 · coluna 29 (a borda
+  que faltava) funcionou. A cor das peças (Definições) fica com o valor inicial (brilho 0,92, saturação 1,00) por agora.
+- **Lupa de dois separadores (Tiago):** «Peça» (Saco + nº; o 1.º campo aceita também `P####`, com ou sem zeros à
+  esquerda e em minúsculas) e «Lugar» (Linha + Coluna); «Peça» por omissão; o separador escolhido fica no aparelho
+  (`localStorage` `novo-lupa-sep`). Sem interpretar texto livre. Mensagens: «Não existe a linha 99. Linha 1 a 47.»,
+  «Não existe a coluna …. Coluna 1 a 64.», «Saco 9 não tem nº 200.», «Não há o saco 77.», «Escreve …». O formulário tem
+  `novalidate` (o `min` dos campos bloqueava o Enter com uma bolha do browser em vez da nossa mensagem). Os campos têm o
+  aspeto dos de «Pôr uma peça à mão»; a 390 px a lupa passa para uma linha própria por baixo dos separadores.
+- **Ctrl+C com um separador aberto (Tiago) — causa [V]:** o uvicorn, ao parar, espera que as ligações abertas
+  terminem; o fluxo SSE `/api/events` nunca termina sozinho (o gerador só olha para `is_disconnected` ao fim do
+  `keep-alive` de 15 s, e só se o cliente já saiu). Medido num subprocesso com um cliente SSE ligado: > 20 s sem sair
+  (0,18 s sem cliente; 0,22 s depois da correção). O `projects/alpes/erro_terminal.txt` do Tiago (125 linhas de
+  `CancelledError`) é o resultado de um segundo Ctrl+C forçado. Correção: `Gui.begin_shutdown()` chamado pelo tratador do
+  sinal (`serve()` com uma subclasse de `uvicorn.Server`) acaba os fluxos SSE, e `timeout_graceful_shutdown` = 3 s é a
+  rede de segurança para qualquer outro pedido longo. **Efeito colateral corrigido:** um browser que se religa a um
+  servidor REINICIADO traz o `Last-Event-ID` do contador antigo; o servidor ignorava todos os eventos novos até o seu
+  contador passar esse número (agora `last = min(last, gui.seq)`). No browser, `watchConnection` (core.js, as duas GUIs)
+  mostra «Ligação perdida, a tentar religar…» e, ao religar, recarrega o estado.
+- **Lista a piscar (Tiago) — causa [V]:** não foi a reconsulta incremental (ver abaixo). Depois de cada escrita o
+  servidor invalida o ranking dos buracos (`_holes = None`) e recalcula-o em fundo (até minutos); durante isso
+  `alta_json` devolvia `a_calcular` com `entries: []`, e as sugestões «pelo encaixe · alta» (e os cartões fundidos com a
+  gémea) saíam do Montar e do «Vai buscar» até `holes_changed`. Teste que falhava antes: a lista `[]` em vez de
+  `['P0002']`. Correção: `Gui._holes_prev` guarda o último ranking completo e, enquanto o novo se calcula, `alta_json`
+  devolve as sugestões dele, **só as ainda válidas** (peça ainda solta, buraco ainda vazio e sem peça por confirmar, par
+  não rejeitado, vizinhas ainda colocadas), marcadas `desatualizada`; a lista nova substitui-a quando acaba. A página
+  «Buracos» continua a dizer «a calcular» (não tem lista anterior fiável a mostrar).
+  **Reconsulta incremental (`run_query(only_cells=…)`, registada em `docs/estado-e-plano.md`):** medida numa cópia de
+  `projects/alpes` (lista completa → `position_known` de P0113 → comparação da lista incremental com uma completa): 3
+  entradas iguais nas duas [V, um cenário]; **não reproduzi** o erro registado, que fica por reproduzir [NT]; não foi a
+  causa do piscar.
+- **Indicador de trabalho (Tiago):** `trabalho()` em `novo.js`: «A gravar…» enquanto uma ação grava (o `POST`) e «A
+  atualizar sugestões…» (com n de N das tiras) enquanto o servidor diz `a_preparar.buracos`; mostra-se numa faixa no
+  cartão e num selo no canto do tabuleiro. Só os botões da ação em curso ficam desativados; o tabuleiro e o resto
+  continuam a responder. Substitui a linha «A preparar mais sugestões…» do fundo do painel.

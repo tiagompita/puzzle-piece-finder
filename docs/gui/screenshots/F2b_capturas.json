@@ -1,0 +1,17 @@
+{
+ "sugestoes_real": "A atualizar sugestões… 0 de 1",
+ "1366": {
+  "peca": "Saco 9 · nº 89\nFechar\n\nEstá no lugar: linha 1 · coluna 29.\n\nSem propostas do programa.",
+  "lugar": "Linha 1 · coluna 29\nFechar\n\nTem a peça do saco 9 · nº 89.\n\nSem propostas do programa.",
+  "erro_linha": "Não existe a linha 99. Linha 1 a 47.",
+  "erro_saco": "Saco 9 não tem nº 200.",
+  "ligacao": "Ligação perdida, a tentar religar…"
+ },
+ "390": {
+  "peca": "Saco 9 · nº 89\nFechar\n\nEstá no lugar: linha 1 · coluna 29.\n\nSem propostas do programa.",
+  "lugar": "Linha 1 · coluna 29\nFechar\n\nTem a peça do saco 9 · nº 89.\n\nSem propostas do programa.",
+  "erro_linha": "Não existe a linha 99. Linha 1 a 47.",
+  "erro_saco": "Saco 9 não tem nº 200.",
+  "ligacao": "Ligação perdida, a tentar religar…"
+ }
+}

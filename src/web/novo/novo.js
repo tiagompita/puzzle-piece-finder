@@ -194,7 +194,30 @@ function openSheet(it) {
   lightbox(`/api/sheets/${it.scan_id}.jpg?highlight=${it.piece}&max=1400&v=${S.ver}`,
     `Folha do saco ${it.lote ?? "—"}: a peça nº ${it.n_no_lote ?? "?"} está marcada a âmbar`);
 }
-function renderMontar() {
+// ------------------------------------------------------------ indicador de trabalho (F2b, ponto 4)
+/** O que o programa está a fazer agora: gravar uma ação (o POST, que inclui a reconsulta incremental) ou recalcular as
+ * sugestões pelo encaixe (o servidor diz-o em ``a_preparar.buracos``). Mostra-se no cartão e no tabuleiro; nada fica
+ * bloqueado por causa das sugestões (só os botões de uma ação em curso). */
+function trabalho() {
+  if (S.pendente) return { k: "gravar", txt: "A gravar…" };
+  const m = S.montar;
+  if (m && m.a_preparar && m.a_preparar.buracos) {
+    const p = S.holesProgress || m.a_preparar.progresso;
+    return { k: "sugestoes", txt: "A atualizar sugestões…" + (p && p.N ? ` ${p.n} de ${p.N}` : "") };
+  }
+  return null;
+}
+function drawTrabalho() {
+  const w = trabalho();
+  for (const x of $$(".trabalho")) x.remove();
+  if (!w) return;
+  const mk = (cls) => h("div", { class: "trabalho " + cls, "data-trabalho": w.k, role: "status" }, h("span", { class: "spin", "aria-hidden": "true" }), h("span", { class: "trabalho-txt" }, w.txt));
+  const T = $("#tab-montar");
+  (T.querySelector(".card") || T).prepend(mk("no-cartao"));
+  $("#board-wrap").append(mk("no-tabuleiro"));
+}
+function renderMontar() { renderMontar1(); drawTrabalho(); }
+function renderMontar1() {
   const T = $("#tab-montar");
   T.replaceChildren();
   if (S.erro && !S.montar) {
@@ -212,7 +235,6 @@ function renderMontar() {
   if (S.modo === "por_mao" && S.porMao) { renderPorMao(T); drawTarget(false); return; }
   if (!cur) {
     T.append(emptyScreen(m));
-    if (m.a_preparar && m.a_preparar.buracos) T.append(prepLine(m));
     if (m.em_pausa) T.append(pauseLine());
     drawTarget(false);
     return;
@@ -263,7 +285,6 @@ function renderMontar() {
   }
   const fora = groupsLine(m);
   if (fora) T.append(fora);
-  if (m.a_preparar && m.a_preparar.buracos) T.append(prepLine(m));
   if (m.em_pausa) T.append(pauseLine());
   drawTarget();
 }
@@ -293,10 +314,6 @@ function groupsLine(m) {
   const n = (m.fora_da_fila || {}).grupos_sem_lugar || 0;
   if (!n) return null;
   return h("p", { class: "small muted", id: "m-grupos" }, `${plural(n, "grupo", "grupos")} sem lugar: `, h("a", { href: "/" }, "ver na interface completa"));
-}
-function prepLine(m) {
-  const p = S.holesProgress || (m.a_preparar && m.a_preparar.progresso);
-  return h("p", { class: "small muted prep-line", id: "m-prep" }, "A preparar mais sugestões…" + (p && p.N ? ` ${p.n} de ${p.N}` : ""));
 }
 function pauseLine() {
   return h("p", { class: "small muted", id: "m-pausa" }, "Algumas sugestões estão em pausa. ", h("a", { href: "/" }, "Ver no Diagnóstico"));
@@ -899,20 +916,44 @@ function importStatus() {
 }
 
 // ------------------------------------------------------------ procurar peça ou lugar (T10)
-async function onSearch(txt) {
-  const t = String(txt || "").trim().toLowerCase();
-  if (!t) return;
-  let m;
-  if ((m = t.match(/^p\s*0*(\d{1,4})$/))) return findPiece(`P${m[1].padStart(4, "0")}`);
-  if ((m = t.match(/^(?:linha\s*)?(\d{1,2})\s*(?:,|\s+coluna\s*)\s*(\d{1,2})$/))) return findPlace(Number(m[1]), Number(m[2]));
-  if ((m = t.match(/^(?:saco\s*)?(\d{1,3})\s*(?:\s|\/|\s*n[º°o.]?\s*)\s*(\d{1,3})$/))) return findBagNumber(Number(m[1]), Number(m[2]));
-  toast(`Não encontrei «${txt}». Escreve o saco e o nº, ou a linha e a coluna.`);
+// Dois separadores, sem interpretar texto livre (F2b): «Peça» = Saco + nº (o 1.º campo aceita também P####),
+// «Lugar» = Linha + Coluna. O separador escolhido fica guardado neste aparelho.
+const SEP_KEY = "novo-lupa-sep";
+function setSep(k, focar) {
+  S.sep = k === "lugar" ? "lugar" : "peca";
+  lsSet(SEP_KEY, S.sep);
+  $$("#search .s-sep button").forEach((b) => { const on = b.dataset.sep === S.sep; b.classList.toggle("on", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+  $("#s-campos-peca").hidden = S.sep !== "peca";
+  $("#s-campos-lugar").hidden = S.sep !== "lugar";
+  if (focar) (S.sep === "peca" ? $("#q-saco") : $("#q-linha")).focus();
+}
+function initSearch() {
+  S.sep = lsGet(SEP_KEY) === "lugar" ? "lugar" : "peca";
+  $$("#search .s-sep button").forEach((b) => (b.onclick = () => setSep(b.dataset.sep, true)));
+  setSep(S.sep, false);
+}
+const intOf = (s) => (/^\d+$/.test(String(s).trim()) ? Number(String(s).trim()) : null);
+async function onSearch() {
+  if (S.sep === "lugar") {
+    const l = intOf($("#q-linha").value), c = intOf($("#q-coluna").value);
+    if (l === null || c === null) { toast("Escreve a linha e a coluna (números).", true); return; }
+    if (l < 1 || l > S.rows) { toast(`Não existe a linha ${l}. Linha 1 a ${S.rows}.`, true); return; }
+    if (c < 1 || c > S.cols) { toast(`Não existe a coluna ${c}. Coluna 1 a ${S.cols}.`, true); return; }
+    return findPlace(l, c);
+  }
+  const a = $("#q-saco").value.trim(), m = a.match(/^p\s*(\d{1,4})$/i);
+  if (m) return findPiece(`P${m[1].padStart(4, "0")}`);
+  const lote = intOf(a), n = intOf($("#q-n").value);
+  if (lote === null) { toast(a ? `«${a}» não é um saco. Escreve o número do saco, ou P e o número da peça (P0089).` : "Escreve o saco e o nº, ou P e o número da peça (P0089).", true); return; }
+  if (n === null) { toast("Escreve também o nº da peça no saco.", true); return; }
+  return findBagNumber(lote, n);
 }
 async function findBagNumber(lote, n) {
   if (!S.lots) S.lots = await api("/api/lots");
   const L = S.lots.find((x) => Number(x.lote) === lote);
-  const p = L && L.pecas.find((x) => Number(x.n_no_lote) === n);
-  if (!p) { toast(`Não encontrei o nº ${n} no saco ${lote}.`); return; }
+  if (!L) { toast(`Não há o saco ${lote}.`, true); return; }
+  const p = L.pecas.find((x) => Number(x.n_no_lote) === n);
+  if (!p) { toast(`Saco ${lote} não tem nº ${n}.`, true); return; }
   return findPiece(p.id);
 }
 // A lupa mostra as propostas da peça e do lugar (F1c) numa caixa no topo do painel (#lupa-res), não só num aviso.
@@ -954,7 +995,7 @@ async function findPiece(pid) {
   showLupa(nome, linhas, props, "peca");
 }
 async function findPlace(l, c) {
-  if (!S.board || l < 1 || c < 1 || l > S.rows || c > S.cols) { toast(`Linha ${l} · coluna ${c} fica fora do tabuleiro.`); return; }
+  if (!S.board || l < 1 || c < 1 || l > S.rows || c > S.cols) { toast(`Linha ${l} · coluna ${c} fica fora do tabuleiro.`, true); return; }
   showCell(l, c);
   let d;
   try { d = await api(`/api/cell/${l}/${c}`); } catch (e) { toast(e.message, true); return; }
@@ -981,12 +1022,14 @@ function scheduleReload(board) {
 }
 function connectEvents() {
   const es = new EventSource("/api/events");
+  // F2b: ligação perdida → faixa; ao voltar (o servidor pode ter reiniciado) recarrega o tabuleiro e as sugestões
+  watchConnection(es, () => { S.lots = null; S.holesProgress = null; if (document.body.dataset.ready === "1") loadAll().catch(() => {}); });
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) scheduleReload(true); });
   es.addEventListener("fetch_changed", () => scheduleReload(false));
   es.addEventListener("holes_changed", () => { S.holesProgress = null; scheduleReload(false); });
   es.addEventListener("holes_progress", (e) => {
     S.holesProgress = JSON.parse(e.data);
-    const el = $("#m-prep"); if (el && S.holesProgress.N) el.textContent = `A preparar mais sugestões… ${S.holesProgress.n} de ${S.holesProgress.N}`;
+    drawTrabalho();
   });
   es.addEventListener("ingest_progress", (e) => {
     const d = JSON.parse(e.data);
@@ -1042,7 +1085,8 @@ async function boot2() {
 }
 async function boot() {
   $$("#tabs button").forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
-  $("#search").addEventListener("submit", (e) => { e.preventDefault(); onSearch($("#q").value); });
+  initSearch();
+  $("#search").addEventListener("submit", (e) => { e.preventDefault(); onSearch(); });
   $("#lb-close").onclick = () => { $("#lightbox").hidden = true; };
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox" || e.target.classList.contains("lb-body")) $("#lightbox").hidden = true; });
   document.addEventListener("keydown", onKey);

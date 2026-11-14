@@ -206,3 +206,60 @@ def test_pause_rule_and_resume(env):
 	# the report CLI prints the counter line
 	assert "EM PAUSA" not in F.format_counter(F.alta_counter(Project.open(pr.path)))
 	assert "reativadas em" in F.format_counter(F.alta_counter(Project.open(pr.path)))
+
+
+# ---------------------------------------------------------------- F2b (item 3): a lista não pisca durante o recálculo
+def _gated_rank_all(monkeypatch):
+	"""``fit.rank_all`` que só acaba quando o teste deixa (o recálculo dos buracos corre num fio de fundo)."""
+	import threading
+	gate, started = threading.Event(), threading.Event()
+	real = F.rank_all
+
+	def slow(*a, **kw):
+		started.set()
+		gate.wait(30)
+		return real(*a, **kw)
+	monkeypatch.setattr(F, "rank_all", slow)
+	return gate, started
+
+
+def test_alta_list_stays_while_holes_recompute(env, monkeypatch):
+	"""Depois de uma escrita o ranking dos buracos recalcula-se em fundo (até minutos): a lista anterior das sugestões
+	pelo encaixe fica à vista (``desatualizada``) até a nova estar pronta, em vez de ficar vazia."""
+	gui, client, pr, ids = env
+	gui.holes_json(wait=True)
+	f0 = client.get("/api/fetch").json()["buracos_alta"]
+	assert [e["piece"] for e in f0["entries"]] == [ids["A"]] and not f0.get("desatualizada")
+	gate, started = _gated_rank_all(monkeypatch)
+	try:
+		r = client.post("/api/confirm", json={"acao": "cell_full", "cell": [4, 6]})   # escrita que não toca no buraco (2,3)
+		assert r.status_code == 200 and r.json().get("ok"), r.text
+		assert started.wait(10)
+		mid = client.get("/api/fetch").json()["buracos_alta"]
+		assert mid["a_calcular"] is True
+		assert [e["piece"] for e in mid["entries"]] == [ids["A"]], "a lista desapareceu durante o recálculo"
+		assert mid["desatualizada"] is True and mid["entries"][0]["desatualizada"] is True
+		m = client.get("/api/montar").json()
+		assert any(it["piece"] == ids["A"] for it in m["itens"]) and m["a_preparar"]["buracos"] is True
+	finally:
+		gate.set()
+	gui._holes_thread.join(30)
+	fin = client.get("/api/fetch").json()["buracos_alta"]
+	assert fin["a_calcular"] is False and not fin.get("desatualizada") and [e["piece"] for e in fin["entries"]] == [ids["A"]]
+
+
+def test_alta_stale_entry_dropped_when_piece_is_placed(env, monkeypatch):
+	"""A sugestão antiga só fica se ainda for válida: pôr a própria peça (noutro lugar, por exemplo) tira-a da lista."""
+	gui, client, pr, ids = env
+	gui.holes_json(wait=True)
+	gate, started = _gated_rank_all(monkeypatch)
+	try:
+		r = client.post("/api/confirm", json={"acao": "place", "piece": ids["A"], "cell": [3, 3]})
+		assert r.status_code == 200 and r.json().get("ok"), r.text
+		assert started.wait(10)
+		mid = client.get("/api/fetch").json()["buracos_alta"]
+		assert mid["a_calcular"] is True and mid["desatualizada"] is True
+		assert all(e["piece"] != ids["A"] for e in mid["entries"])
+	finally:
+		gate.set()
+	gui._holes_thread.join(30)

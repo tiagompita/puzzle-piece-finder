@@ -59,8 +59,10 @@ def guiao(pg, out, vp, cell, saco, n, rec):
 	l, c = cell
 	steps = rec.setdefault(vp, {})
 	# 1. a lupa vai ao lugar; tocar abre «Lugar marcado por ti»
-	pg.fill("#q", f"{l} {c}")
-	pg.press("#q", "Enter")
+	pg.click("#s-lugar")                      # F2b: lupa com separadores Peça | Lugar
+	pg.fill("#q-linha", str(l))
+	pg.fill("#q-coluna", str(c))
+	pg.press("#q-coluna", "Enter")
 	pg.wait_for_timeout(800)
 	pg.evaluate("closeLupa()")
 	pg.evaluate(f"S.onBoardTap({l}, {c})")

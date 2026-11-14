@@ -369,14 +369,29 @@ def test_empty_screen_counts_groups_only(guarda, browser):
 		pg.close()
 
 
+def _buscar_peca(pg, saco, n=""):
+	"""Lupa (F2b): separador «Peça», campos «Saco» (ou P####) e «nº», Enter."""
+	pg.click("#s-peca")
+	pg.fill("#q-saco", str(saco))
+	pg.fill("#q-n", str(n))
+	pg.press("#q-saco", "Enter")
+
+
+def _buscar_lugar(pg, l, c):
+	"""Lupa (F2b): separador «Lugar», campos «Linha» e «Coluna», Enter."""
+	pg.click("#s-lugar")
+	pg.fill("#q-linha", str(l))
+	pg.fill("#q-coluna", str(c))
+	pg.press("#q-coluna", "Enter")
+
+
 def test_lupa_shows_piece_and_place_proposals(guarda, browser):
 	url, gui, tw, dec = guarda
 	cell = [e for e in gui.fetch_entries() if e.get("piece") == tw][0]["cell"]
 	p = gui.pr.piece(tw)
 	pg, errs = _open_any(browser, url)
 	try:
-		pg.fill("#q", tw)
-		pg.press("#q", "Enter")
+		_buscar_peca(pg, tw)
 		pg.wait_for_selector("#lupa-res:not([hidden]) #lupa-props li", timeout=30_000)
 		assert pg.locator("#lupa-res").get_attribute("data-kind") == "peca"
 		li = pg.locator("#lupa-props li")
@@ -386,16 +401,14 @@ def test_lupa_shows_piece_and_place_proposals(guarda, browser):
 		_no_forbidden(t)
 		pg.click("#lupa-fechar")
 		assert pg.locator("#lupa-res").is_hidden()
-		pg.fill("#q", f"{cell[0]},{cell[1]}")
-		pg.press("#q", "Enter")
+		_buscar_lugar(pg, cell[0], cell[1])
 		pg.wait_for_selector("#lupa-res[data-kind=lugar]:not([hidden]) #lupa-props li", timeout=30_000)
 		t = pg.locator("#lupa-res").inner_text()
 		assert "Ainda vazio." in t and f"Saco {p.lote} · nº {p.n_no_lote}" in t and "ainda sem peças ao lado" in t
 		assert pg.locator("#lupa-props li").get_attribute("data-piece") == tw
 		_no_forbidden(t.replace(f"Linha {cell[0]} · coluna {cell[1]}", ""))
 		# um lugar sem propostas diz-o
-		pg.fill("#q", "1,1")
-		pg.press("#q", "Enter")
+		_buscar_lugar(pg, 1, 1)
 		pg.wait_for_selector("#lupa-res[data-kind=lugar] #lupa-sem", timeout=30_000)
 		assert not errs, errs
 	finally:
@@ -411,8 +424,7 @@ def test_guardar_phone_layout(guarda, browser):
 		for sel in ("#b-guardar", "#b-nao", "#b-saltar", "#b-porque"):
 			bb = pg.locator(sel).bounding_box()
 			assert bb and bb["height"] >= 44 - 0.5 and bb["x"] >= 0 and bb["x"] + bb["width"] <= 390, (sel, bb)
-		pg.fill("#q", tw)
-		pg.press("#q", "Enter")
+		_buscar_peca(pg, tw)
 		pg.wait_for_selector("#lupa-res:not([hidden])", timeout=30_000)
 		bb = pg.locator("#lupa-fechar").bounding_box()
 		assert bb["height"] >= 44 - 0.5

@@ -37,6 +37,26 @@ function s(tag, attrs = {}, ...kids) {
   return el;
 }
 const fmt = (v, nd = 1) => (v === null || v === undefined) ? "—" : Number(v).toFixed(nd).replace(".", ",");
+/** Faixa «Ligação perdida, a tentar religar…» (F2b): o EventSource religa-se sozinho (``retry: 2000`` do servidor);
+ * enquanto a ligação está em baixo a faixa fica visível e, quando volta, chama ``onBack`` (recarregar o estado, que
+ * pode ter mudado ou o servidor ter reiniciado). Não depende de CSS da página. */
+function watchConnection(es, onBack) {
+  let lost = false, el = null;
+  const show = (on) => {
+    if (!el) {
+      el = h("div", { id: "ligacao", role: "status", "aria-live": "polite" }, "Ligação perdida, a tentar religar…");
+      el.style.cssText = "position:fixed;top:0;left:0;right:0;margin:0 auto;width:fit-content;text-align:center;z-index:200;background:#8a2f27;color:#fff;"
+        + "padding:8px 18px;border-radius:0 0 10px 10px;font:600 14px system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.45);max-width:96vw";
+      document.body.append(el);
+    }
+    el.style.display = on ? "block" : "none";
+  };
+  es.addEventListener("error", () => { lost = true; show(true); });
+  es.addEventListener("open", () => {
+    show(false);
+    if (lost) { lost = false; if (onBack) onBack(); }
+  });
+}
 async function api(path, opts = {}) {
   const r = await fetch(path, opts);
   let body = null;
