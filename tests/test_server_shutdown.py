@@ -114,3 +114,36 @@ def test_sse_after_server_restart_ignores_old_last_event_id(proj):
 		assert seen, "o evento novo não chegou ao cliente com um Last-Event-ID de um servidor anterior"
 	finally:
 		_interrupt(p)
+
+
+# ---------------------------------------------------------------- F2c, item 6: uma linha só, código 0, sem traceback
+def _stop_output(proj, with_sse: bool):
+	port = _free_port()
+	p = _start(proj, port)
+	r = _sse(port) if with_sse else None
+	if r is not None:
+		assert r.readline().startswith(b"retry")
+	t0 = time.time()
+	p.send_signal(signal.CTRL_BREAK_EVENT if os.name == "nt" else signal.SIGINT)
+	try:
+		p.wait(LIMIT_S)
+	except subprocess.TimeoutExpired:
+		p.kill(); p.wait(10)
+		raise AssertionError("não fechou")
+	out = p.stdout.read().decode("utf8", "replace")
+	return p.returncode, out
+
+
+def _after_start(out: str) -> list:
+	"""As linhas escritas depois das do arranque (`abre http://…`): o que o Ctrl+C acrescentou."""
+	lines = [x for x in out.splitlines() if x.strip()]
+	i = max((k for k, x in enumerate(lines) if "abre http://" in x or "registo em" in x), default=-1)
+	return lines[i + 1:]
+
+
+@pytest.mark.parametrize("with_sse", [False, True])
+def test_ctrl_c_prints_one_line_and_exits_zero(proj, with_sse):
+	code, out = _stop_output(proj, with_sse)
+	assert "Traceback" not in out and "CancelledError" not in out and "KeyboardInterrupt" not in out, out[-1500:]
+	assert _after_start(out) == ["Servidor parado."], out[-1500:]
+	assert code == 0, (code, out[-800:])

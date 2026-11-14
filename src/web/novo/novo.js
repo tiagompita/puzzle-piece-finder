@@ -70,6 +70,7 @@ async function loadMontar() {
     let m = await api("/api/montar" + q);
     if (sess.scan !== null && m.ultimo_scan && m.ultimo_scan !== sess.scan && q) m = await api("/api/montar");
     S.montar = m; S.erro = null;
+    if (!(m.a_preparar && m.a_preparar.buracos)) S.sugestoesVistas = true;      // a 1.ª vez diz «preparar», as seguintes «atualizar»
     sess.scan = m.ultimo_scan; sess.saco = m.saco;
     saveSess();
   } catch (e) {
@@ -93,6 +94,13 @@ function drawProgress() {
 }
 
 // ------------------------------------------------------------ tabuleiro (camadas da casca nova)
+/** «Mostrar a borda em falta» ligado e nada a mostrar: diz porquê, em vez de não mostrar nada (F2c, item 3). */
+function bordaNota() {
+  const n = $("#m-borda-nota"), b = S.board;
+  const falta = b ? b.borda_em_falta.length : 0;
+  n.hidden = !(S.showBorda && b);
+  n.textContent = !falta ? "Não falta nenhuma peça de borda." : (falta === 1 ? "Falta 1 peça de borda." : `Faltam ${falta} peças de borda.`);
+}
 function drawLayers() {
   const b = S.board; if (!b) return;
   const leg = $("#lyr-legado"); leg.replaceChildren();
@@ -101,6 +109,7 @@ function drawLayers() {
   }));
   const bor = $("#lyr-borda"); bor.replaceChildren();
   if (S.showBorda) for (const [l, c] of b.borda_em_falta) bor.append(rectEl(l, c, cls("borda"), 0.05));
+  bordaNota();
   // F1d: peça «por confirmar» (posicao_conhecida: posta no lugar sem vizinha montada) no lugar, ténue e a tracejado;
   // a célula continua vazia para o motor (não é molde nem vizinha, não conta no progresso)
   const kn = $("#lyr-conhecida"); kn.replaceChildren();
@@ -167,6 +176,7 @@ function drawLegend() {
   }
 }
 S.onBoardTap = (l, c) => {
+  if (S.achado) setAchado(null);          // o destaque da lupa dura até ao próximo toque no tabuleiro
   // F1b: tocar no alvo de uma peça da fila torna-a a peça atual; F2: tocar outra vez no alvo da peça atual, ou
   // noutro lugar, abre o painel desse lugar (com a sugestão do programa e «Pôr uma peça aqui»)
   const it = queue().find((x) => x.cell && x.cell[0] === l && x.cell[1] === c);
@@ -203,7 +213,7 @@ function trabalho() {
   const m = S.montar;
   if (m && m.a_preparar && m.a_preparar.buracos) {
     const p = S.holesProgress || m.a_preparar.progresso;
-    return { k: "sugestoes", txt: "A atualizar sugestões…" + (p && p.N ? ` ${p.n} de ${p.N}` : "") };
+    return { k: "sugestoes", txt: (S.sugestoesVistas ? "A atualizar sugestões…" : "A preparar sugestões…") + (p && p.N ? ` ${p.n} de ${p.N}` : "") };
   }
   return null;
 }
@@ -915,47 +925,108 @@ function importStatus() {
   else c.hidden = true;
 }
 
-// ------------------------------------------------------------ procurar peça ou lugar (T10)
-// Dois separadores, sem interpretar texto livre (F2b): «Peça» = Saco + nº (o 1.º campo aceita também P####),
-// «Lugar» = Linha + Coluna. O separador escolhido fica guardado neste aparelho.
-const SEP_KEY = "novo-lupa-sep";
-function setSep(k, focar) {
-  S.sep = k === "lugar" ? "lugar" : "peca";
-  lsSet(SEP_KEY, S.sep);
-  $$("#search .s-sep button").forEach((b) => { const on = b.dataset.sep === S.sep; b.classList.toggle("on", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
-  $("#s-campos-peca").hidden = S.sep !== "peca";
-  $("#s-campos-lugar").hidden = S.sep !== "lugar";
-  if (focar) (S.sep === "peca" ? $("#q-saco") : $("#q-linha")).focus();
+// ------------------------------------------------------------ procurar peça ou posição (lupa, F2c)
+// Dois botões, «Peça» e «Posição»; cada um abre UMA caixa de texto que desliza (≤ 200 ms, sem animação com
+// prefers-reduced-motion); abrir um fecha o outro e nenhum tapa os botões. O último modo usado fica guardado neste
+// aparelho (a tecla «/» abre-o). Sem ambiguidade entre os dois: a posição tem sempre dois números, a peça é «saco nº»
+// ou P####.
+const LUPA_KEY = "novo-lupa-modo";
+const RE_DOIS = /^(\d+)(?:\s*[,.;:/·-]\s*|\s+)(\d+)$/;            // «1 29», «1,29», «1.29», «1-29», «1/29»
+const RE_PID = /^p\s*(\d{1,4})$/i;
+/** «1,29» → ``{l: 1, c: 29}``; senão ``{erro}`` (em palavras). Pura. */
+function parsePosicao(txt, rows = S.rows, cols = S.cols) {
+  const t = String(txt || "").trim();
+  if (!t) return { erro: "Escreve a linha e a coluna, por exemplo 1 29." };
+  const m = t.match(RE_DOIS);
+  if (!m) return { erro: `«${t}» não é uma posição. Escreve a linha e a coluna, por exemplo 1 29 ou 1,29.` };
+  const l = Number(m[1]), c = Number(m[2]);
+  if (l < 1 || l > rows) return { erro: `A linha ${l} não existe: o puzzle tem as linhas 1 a ${rows}.` };
+  if (c < 1 || c > cols) return { erro: `A coluna ${c} não existe: o puzzle tem as colunas 1 a ${cols}.` };
+  return { l, c };
+}
+/** «9 89», «9/89», «9,89» → ``{lote: 9, n: 89}``; «P1422» → ``{pid: "P1422"}``; senão ``{erro}``. Pura. */
+function parsePeca(txt) {
+  const t = String(txt || "").trim();
+  if (!t) return { erro: "Escreve o saco e o nº da peça, por exemplo 9 89, ou P e o número da peça (P1422)." };
+  const p = t.match(RE_PID);
+  if (p) return { pid: `P${p[1].padStart(4, "0")}` };
+  const m = t.match(RE_DOIS);
+  if (m) {
+    const lote = Number(m[1]), n = Number(m[2]);
+    if (lote < 1) return { erro: "Não existe o saco 0: os sacos começam no 1." };
+    if (n < 1) return { erro: "Não existe a peça nº 0: os números começam no 1." };
+    return { lote, n };
+  }
+  if (/^\d+$/.test(t)) return { erro: `Falta o nº da peça no saco ${t}: escreve por exemplo ${t} 89.` };
+  return { erro: `«${t}» não é uma peça. Escreve o saco e o nº (9 89, 9/89, 9,89) ou P e o número (P1422).` };
+}
+function lupaMsg(modo, txt) {
+  const el = $(modo === "pos" ? "#lupa-m-pos" : "#lupa-m-peca");
+  el.hidden = !txt; el.textContent = txt || "";
+}
+function openLupa(modo) {
+  modo = modo === "pos" ? "pos" : "peca";
+  if (S.lupa === modo) { closeCaixa(); return; }
+  S.lupa = S.lupaUlt = modo;
+  lsSet(LUPA_KEY, modo);
+  for (const k of ["peca", "pos"]) {
+    const on = k === modo, box = $(`#lupa-c-${k}`), b = $(`#lupa-b-${k}`);
+    b.setAttribute("aria-expanded", on ? "true" : "false"); b.classList.toggle("on", on); b.classList.remove("lupa-ult");
+    box.classList.remove("abre");
+    box.hidden = !on;
+    if (on) { void box.offsetWidth; box.classList.add("abre"); }       // repete a animação de abrir
+    lupaMsg(k, "");
+  }
+  const q = $(`#lupa-q-${modo}`);
+  q.focus(); q.select();
+}
+function closeCaixa() {
+  S.lupa = null;
+  for (const k of ["peca", "pos"]) {
+    $(`#lupa-c-${k}`).hidden = true; $(`#lupa-c-${k}`).classList.remove("abre");
+    const b = $(`#lupa-b-${k}`); b.setAttribute("aria-expanded", "false"); b.classList.remove("on"); b.classList.toggle("lupa-ult", k === S.lupaUlt);
+  }
 }
 function initSearch() {
-  S.sep = lsGet(SEP_KEY) === "lugar" ? "lugar" : "peca";
-  $$("#search .s-sep button").forEach((b) => (b.onclick = () => setSep(b.dataset.sep, true)));
-  setSep(S.sep, false);
-}
-const intOf = (s) => (/^\d+$/.test(String(s).trim()) ? Number(String(s).trim()) : null);
-async function onSearch() {
-  if (S.sep === "lugar") {
-    const l = intOf($("#q-linha").value), c = intOf($("#q-coluna").value);
-    if (l === null || c === null) { toast("Escreve a linha e a coluna (números).", true); return; }
-    if (l < 1 || l > S.rows) { toast(`Não existe a linha ${l}. Linha 1 a ${S.rows}.`, true); return; }
-    if (c < 1 || c > S.cols) { toast(`Não existe a coluna ${c}. Coluna 1 a ${S.cols}.`, true); return; }
-    return findPlace(l, c);
+  S.lupa = null;
+  S.lupaUlt = lsGet(LUPA_KEY) === "pos" ? "pos" : "peca";
+  $(`#lupa-b-${S.lupaUlt}`).classList.add("lupa-ult");
+  for (const b of $$(".lupa-b")) b.onclick = () => openLupa(b.dataset.modo);
+  for (const k of ["peca", "pos"]) {
+    $(`#lupa-c-${k}`).addEventListener("submit", (e) => { e.preventDefault(); onSearch(k); });
+    $(`#lupa-q-${k}`).addEventListener("input", () => lupaMsg(k, ""));
   }
-  const a = $("#q-saco").value.trim(), m = a.match(/^p\s*(\d{1,4})$/i);
-  if (m) return findPiece(`P${m[1].padStart(4, "0")}`);
-  const lote = intOf(a), n = intOf($("#q-n").value);
-  if (lote === null) { toast(a ? `«${a}» não é um saco. Escreve o número do saco, ou P e o número da peça (P0089).` : "Escreve o saco e o nº, ou P e o número da peça (P0089).", true); return; }
-  if (n === null) { toast("Escreve também o nº da peça no saco.", true); return; }
-  return findBagNumber(lote, n);
+  document.addEventListener("pointerdown", (e) => { if (S.lupa && !e.target.closest("#search")) closeCaixa(); });
+}
+async function onSearch(modo) {
+  let erro = null;
+  if (modo === "pos") {
+    const r = parsePosicao($("#lupa-q-pos").value);
+    erro = r.erro || await findPlace(r.l, r.c);
+  } else {
+    const r = parsePeca($("#lupa-q-peca").value);
+    erro = r.erro || (r.pid ? await findPiece(r.pid) : await findBagNumber(r.lote, r.n));
+  }
+  if (erro) { lupaMsg(modo, erro); const q = $(`#lupa-q-${modo}`); q.focus(); q.select(); return; }
+  $(`#lupa-q-${modo}`).value = "";
+  closeCaixa();
 }
 async function findBagNumber(lote, n) {
   if (!S.lots) S.lots = await api("/api/lots");
   const L = S.lots.find((x) => Number(x.lote) === lote);
-  if (!L) { toast(`Não há o saco ${lote}.`, true); return; }
+  if (!L) { const ids = S.lots.map((x) => Number(x.lote)).sort((x, y) => x - y); return `Não há o saco ${lote}.` + (ids.length ? ` Existem os sacos ${ids.join(", ")}.` : ""); }
   const p = L.pecas.find((x) => Number(x.n_no_lote) === n);
-  if (!p) { toast(`Saco ${lote} não tem nº ${n}.`, true); return; }
+  if (!p) { const mx = Math.max(0, ...L.pecas.map((x) => Number(x.n_no_lote) || 0)); return `O saco ${lote} não tem a peça nº ${n}` + (mx ? `: vai de 1 a ${mx}.` : "."); }
   return findPiece(p.id);
 }
+// Destaque do resultado no tabuleiro (F2c): contorno animado no lugar, até ao próximo toque no tabuleiro.
+function drawAchado() {
+  const g = $("#lyr-achado"); g.replaceChildren();
+  if (!S.achado || !S.board) return;
+  const [l, c] = S.achado;
+  g.append(rectEl(l, c, "achado-onda", 0.02), rectEl(l, c, "achado", 0.02));
+}
+function setAchado(cell) { S.achado = cell ? [cell[0], cell[1]] : null; drawAchado(); }
 // A lupa mostra as propostas da peça e do lugar (F1c) numa caixa no topo do painel (#lupa-res), não só num aviso.
 const nomePeca = (pc) => (pc && pc.lote !== null && pc.lote !== undefined ? `Saco ${pc.lote} · nº ${pc.n_no_lote ?? "?"}` : "Peça sem saco");
 const GRUPO_TXT = { coloca_agora: "pôr agora: tem uma peça montada ao lado", guarda_posicao: "ainda sem peças ao lado: pôr no lugar, por confirmar" };
@@ -976,34 +1047,39 @@ function showLupa(titulo, linhas, props, kind) {
   box.dataset.kind = kind;
   box.hidden = false;
 }
-function closeLupa() { const b = $("#lupa-res"); b.hidden = true; b.replaceChildren(); }
+function closeLupa() { const b = $("#lupa-res"); b.hidden = true; b.replaceChildren(); setAchado(null); }
 async function findPiece(pid) {
   let p;
-  try { p = await api(`/api/pieces/${pid}`); } catch (e) { toast(`Não encontrei «${pid}».`); return; }
+  try { p = await api(`/api/pieces/${pid}`); } catch (e) { return `Não encontrei a peça ${pid}.`; }
   const pc = p.peca || p, nome = nomePeca(pc);
   const linhas = [];
-  if (pc.estado === "colocada" && pc.celula) { showCell(pc.celula[0], pc.celula[1]); linhas.push(`Está no lugar: ${lugarTxt(pc.celula).toLowerCase()}.`); }
-  else if (pc.estado === "posicao_conhecida" && pc.celula) { showCell(pc.celula[0], pc.celula[1]); linhas.push(`No lugar por confirmar: ${lugarTxt(pc.celula).toLowerCase()}, à espera de uma vizinha montada.`); }
+  let alvo = null;
+  if (pc.estado === "colocada" && pc.celula) { alvo = pc.celula; showCell(pc.celula[0], pc.celula[1]); linhas.push(`Está no lugar: ${lugarTxt(pc.celula).toLowerCase()}.`); }
+  else if (pc.estado === "posicao_conhecida" && pc.celula) { alvo = pc.celula; showCell(pc.celula[0], pc.celula[1]); linhas.push(`No lugar por confirmar: ${lugarTxt(pc.celula).toLowerCase()}, à espera de uma vizinha montada.`); }
   else if (pc.estado === "em_seccao") linhas.push("Está num grupo sem lugar (por agora só na interface completa).");
   else if (pc.estado === "descartada") linhas.push("Foi posta de lado.");
   else linhas.push("Ainda não tem lugar.");
   const withCell = (p.propostas || []).filter((e) => e.cell);
   const props = withCell.map((e) => propLine(e, lugarTxt(e.cell)));
-  if (!pc.celula && withCell.length) showCell(withCell[0].cell[0], withCell[0].cell[1]);
+  if (!pc.celula && withCell.length) { alvo = withCell[0].cell; showCell(withCell[0].cell[0], withCell[0].cell[1]); }
   const inQ = queue().find((it) => it.piece === pid);
   if (inQ) { S.pick = pid; S.modo = "cartao"; showTab("montar"); renderMontar(); }
   showLupa(nome, linhas, props, "peca");
+  setAchado(alvo);
+  return null;
 }
 async function findPlace(l, c) {
-  if (!S.board || l < 1 || c < 1 || l > S.rows || c > S.cols) { toast(`Linha ${l} · coluna ${c} fica fora do tabuleiro.`, true); return; }
+  if (!S.board || l < 1 || c < 1 || l > S.rows || c > S.cols) return `A linha ${l} · coluna ${c} fica fora do tabuleiro.`;
   showCell(l, c);
   let d;
-  try { d = await api(`/api/cell/${l}/${c}`); } catch (e) { toast(e.message, true); return; }
+  try { d = await api(`/api/cell/${l}/${c}`); } catch (e) { return e.message; }
   const pc = d.peca;
   const linhas = [pc ? `Tem a peça do saco ${pc.lote ?? "—"} · nº ${pc.n_no_lote ?? "?"}.` : (d.estado === "vazia" ? "Ainda vazio." : "Marcado como montado.")];
   for (const k of d.conhecidas || []) linhas.push(`Por confirmar aqui: ${nomePeca(k)}.`);
   const props = (d.propostas || []).map((e) => propLine(e, nomePeca(e)));
   showLupa(lugarTxt([l, c]), linhas, props, "lugar");
+  setAchado([l, c]);
+  return null;
 }
 
 // ------------------------------------------------------------ eventos do servidor
@@ -1023,7 +1099,7 @@ function scheduleReload(board) {
 function connectEvents() {
   const es = new EventSource("/api/events");
   // F2b: ligação perdida → faixa; ao voltar (o servidor pode ter reiniciado) recarrega o tabuleiro e as sugestões
-  watchConnection(es, () => { S.lots = null; S.holesProgress = null; if (document.body.dataset.ready === "1") loadAll().catch(() => {}); });
+  if (typeof watchConnection === "function") watchConnection(es, () => { S.lots = null; S.holesProgress = null; if (document.body.dataset.ready === "1") loadAll().catch(() => {}); });
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) scheduleReload(true); });
   es.addEventListener("fetch_changed", () => scheduleReload(false));
   es.addEventListener("holes_changed", () => { S.holesProgress = null; scheduleReload(false); });
@@ -1037,7 +1113,8 @@ function connectEvents() {
     else if (S.importando) S.importando.msg = `a importar saco ${S.importando.lote}…`;
     importStatus();
   });
-  es.addEventListener("ready", () => { if (document.body.dataset.ready !== "1") boot2(); });
+  es.addEventListener("prepare_progress", (e) => { const d = JSON.parse(e.data); if (d.texto) { S.prep = d; if (S.preparando) renderPrep(); } });
+  es.addEventListener("ready", () => { S.preparando = false; if (document.body.dataset.ready !== "1") boot2(); });
   return es;
 }
 
@@ -1054,11 +1131,15 @@ function initMenu() {
     el.onchange = () => { S[prop] = el.checked; lsSet(key, el.checked ? "1" : "0"); after(); };
   };
   bind("#m-fantasmas", "novo-fantasmas", "showGhost", () => setView(S.vb));
-  bind("#m-borda", "novo-borda", "showBorda", drawLayers);
+  bind("#m-borda", "novo-borda", "showBorda", () => {
+    drawLayers();
+    if (S.showBorda && S.board && !S.board.borda_em_falta.length) toast("Não falta nenhuma peça de borda.");
+  });
   bind("#m-guardadas", "novo-por-confirmar", "showGuardadas", () => { drawLayers(); drawLegend(); });
 }
 function onKey(e) {
   if (e.key === "Escape") {
+    if (S.lupa) { closeCaixa(); return; }
     if (!$("#lightbox").hidden) { $("#lightbox").hidden = true; return; }
     if ($("#definicoes")) { $("#definicoes").remove(); return; }
     if (S.modo === "por_mao") { cancelPorMao(); return; }            // F2: volta ao painel do lugar
@@ -1068,6 +1149,7 @@ function onKey(e) {
   const tag = (e.target && e.target.tagName) || "";
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
   if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")) { e.preventDefault(); doUndo(); return; }
+  if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openLupa(S.lupaUlt); return; }
   if (S.tab !== "montar" || e.ctrlKey || e.metaKey || e.altKey) return;
   const cur = current();
   if (S.modo === "cartao") {
@@ -1083,10 +1165,23 @@ async function boot2() {
     document.body.dataset.ready = "1";
   } catch (e) { S.erro = e.message; renderMontar(); }
 }
+/** O ecrã de arranque (F2c): o que o servidor está a fazer e o progresso, em vez de só «a carregar». */
+function renderPrep() {
+  const p = S.prep || { texto: "A preparar o puzzle…" };
+  const frac = p.N ? Math.max(0, Math.min(1, p.n / p.N)) : null;
+  const bar = h("div", { class: "prep-barra" + (frac === null ? " indet" : ""), role: "progressbar", "aria-label": "Preparação" }, h("i", { style: frac === null ? "" : `width:${Math.round(frac * 100)}%` }));
+  if (frac !== null) { bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", String(p.N)); bar.setAttribute("aria-valuenow", String(p.n)); }
+  $("#tab-montar").replaceChildren(h("div", { class: "empty prep", "data-estado": "a_preparar", "data-fase": p.fase || "" },
+    h("strong", {}, "A preparar o puzzle…"),
+    h("p", { class: "prep-line", id: "prep-texto", role: "status" }, p.texto + (p.N ? ` ${p.n} de ${p.N}` : "")),
+    bar,
+    h("p", { class: "small muted" }, "Isto só acontece depois de atualizar, ou no primeiro arranque.")));
+  $("#progress-txt").textContent = p.texto + (p.N ? ` ${p.n} de ${p.N}` : "");
+  $("#pb-n").style.width = frac === null ? "0" : `${Math.round(frac * 100)}%`;       // a barra do topo acompanha a preparação
+}
 async function boot() {
   $$("#tabs button").forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
   initSearch();
-  $("#search").addEventListener("submit", (e) => { e.preventDefault(); onSearch(); });
   $("#lb-close").onclick = () => { $("#lightbox").hidden = true; };
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox" || e.target.classList.contains("lb-body")) $("#lightbox").hidden = true; });
   document.addEventListener("keydown", onKey);
@@ -1098,10 +1193,13 @@ async function boot() {
   let st;
   try { st = await api("/api/status"); } catch (e) { S.erro = e.message; renderMontar(); return; }
   if (st.estado !== "pronto") {
-    $("#tab-montar").replaceChildren(h("div", { class: "empty", "data-estado": "a_preparar" }, h("strong", {}, "A preparar o programa…"),
-      h("p", {}, "Isto só acontece depois de atualizar.")));
+    S.preparando = true; S.prep = st.preparacao; renderPrep();
     const poll = setInterval(async () => {
-      try { const s2 = await api("/api/status"); if (s2.estado === "pronto") { clearInterval(poll); if (document.body.dataset.ready !== "1") boot2(); } } catch (e) { /* a reiniciar */ }
+      try {
+        const s2 = await api("/api/status");
+        if (s2.estado === "pronto") { clearInterval(poll); S.preparando = false; if (document.body.dataset.ready !== "1") boot2(); }
+        else { S.prep = s2.preparacao || S.prep; renderPrep(); }
+      } catch (e) { /* a reiniciar */ }
     }, 3000);
     return;
   }

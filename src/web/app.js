@@ -1289,10 +1289,19 @@ function setJob(job) {
   pill.hidden = !txt;
   pill.textContent = txt;
 }
+/** O que o servidor está a fazer no arranque, em palavras e n de N (F2c; ``status.preparacao`` / SSE ``prepare_progress``). */
+function showPrepNow(p) {
+  if (!p || !p.texto) return;
+  $("#prep-now").textContent = p.texto + (p.N ? ` ${p.n} de ${p.N}` : "");
+  const bar = $("#prep-barra");
+  bar.classList.toggle("indet", !p.N);
+  bar.firstElementChild.style.width = p.N ? `${Math.round(100 * p.n / p.N)}%` : "";
+  if (p.N) { bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", String(p.N)); bar.setAttribute("aria-valuenow", String(p.n)); }
+}
 function connectEvents() {
   const es = new EventSource("/api/events");
   // F2b: ligação perdida → faixa «Ligação perdida, a tentar religar…»; ao voltar recarrega o estado (core.js)
-  watchConnection(es, () => { if (document.body.dataset.ready === "1") loadAll().catch(() => {}); });
+  if (typeof watchConnection === "function") watchConnection(es, () => { if (document.body.dataset.ready === "1") loadAll().catch(() => {}); });
   es.addEventListener("hello", (e) => { const st = JSON.parse(e.data); if (typeof Q !== "undefined" && st.fila) Q.resumo = st.fila; setJob(st.job); });
   es.addEventListener("queue_changed", (e) => { if (typeof queueOnChanged === "function") queueOnChanged(JSON.parse(e.data)); });
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) scheduleReload("board"); });
@@ -1320,6 +1329,7 @@ function connectEvents() {
   });
   es.addEventListener("prepare_progress", (e) => {
     const d = JSON.parse(e.data);
+    showPrepNow(d);
     $("#prep-log").append(h("li", {}, d.msg));
     $("#prep-log").scrollTop = 1e9;
   });
@@ -1364,6 +1374,7 @@ async function boot() {
   S.status = st; setJob(st.job);
   if (st.estado !== "pronto") {
     $("#prep").hidden = false;
+    showPrepNow(st.preparacao || { texto: "A preparar o puzzle…" });
     $("#prep-log").replaceChildren(...st.prep_log.map((m) => h("li", {}, m)));
     // fallback if the "ready" event is missed (reconnects): poll the status
     const poll = setInterval(async () => {

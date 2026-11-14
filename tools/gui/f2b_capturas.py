@@ -29,18 +29,18 @@ def _shot(pg, out, name, settle=600):
 	print("  ", name, flush=True)
 
 
-def _peca(pg, saco, n):
-	pg.click("#s-peca")
-	pg.fill("#q-saco", str(saco))
-	pg.fill("#q-n", str(n))
-	pg.press("#q-saco", "Enter")
+def _peca(pg, saco, n):       # F2c: a lupa passou a dois botões com uma só caixa (esta ferramenta é a da F2b, adaptada)
+	if not pg.locator("#lupa-c-peca").is_visible():
+		pg.click("#lupa-b-peca")
+	pg.fill("#lupa-q-peca", f"{saco} {n}")
+	pg.press("#lupa-q-peca", "Enter")
 
 
 def _lugar(pg, l, c):
-	pg.click("#s-lugar")
-	pg.fill("#q-linha", str(l))
-	pg.fill("#q-coluna", str(c))
-	pg.press("#q-coluna", "Enter")
+	if not pg.locator("#lupa-c-pos").is_visible():
+		pg.click("#lupa-b-pos")
+	pg.fill("#lupa-q-pos", f"{l} {c}")
+	pg.press("#lupa-q-pos", "Enter")
 
 
 def capture(project, out, saco, n, cell):

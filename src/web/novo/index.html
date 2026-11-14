@@ -21,21 +21,22 @@
       <button type="button" role="tab" data-tab="pecas" aria-selected="false"><span class="ico i-layout-grid" aria-hidden="true"></span>Peças</button>
       <button type="button" role="tab" data-tab="importar" aria-selected="false"><span class="ico i-scan-line" aria-hidden="true"></span>Importar scan</button>
     </nav>
-    <form id="search" role="search" autocomplete="off" novalidate aria-label="Procurar peça ou lugar">
-      <div class="s-sep" role="tablist" aria-label="Procurar por">
-        <button type="button" role="tab" id="s-peca" data-sep="peca" class="on" aria-selected="true">Peça</button>
-        <button type="button" role="tab" id="s-lugar" data-sep="lugar" aria-selected="false">Lugar</button>
+    <div id="search" class="lupa" role="search" aria-label="Procurar peça ou posição">
+      <div class="lupa-botoes">
+        <button type="button" id="lupa-b-peca" class="lupa-b" data-modo="peca" aria-expanded="false" aria-controls="lupa-c-peca"><span class="ico i-puzzle" aria-hidden="true"></span>Peça</button>
+        <button type="button" id="lupa-b-pos" class="lupa-b" data-modo="pos" aria-expanded="false" aria-controls="lupa-c-pos"><span class="ico i-map-pin" aria-hidden="true"></span>Posição</button>
       </div>
-      <div class="s-campos" id="s-campos-peca">
-        <label>Saco <input id="q-saco" type="text" inputmode="text" autocapitalize="characters" aria-label="Saco (ou P e o número da peça)" placeholder="9 ou P0089"></label>
-        <label>nº <input id="q-n" type="number" inputmode="numeric" min="1" aria-label="Número da peça no saco"></label>
-      </div>
-      <div class="s-campos" id="s-campos-lugar" hidden>
-        <label>Linha <input id="q-linha" type="number" inputmode="numeric" min="1" aria-label="Linha"></label>
-        <label>Coluna <input id="q-coluna" type="number" inputmode="numeric" min="1" aria-label="Coluna"></label>
-      </div>
-      <button type="submit" id="search-btn" class="icon-btn" aria-label="Procurar" title="Procurar"><span class="ico i-search" aria-hidden="true"></span></button>
-    </form>
+      <form id="lupa-c-peca" class="lupa-caixa" data-modo="peca" hidden novalidate autocomplete="off">
+        <input id="lupa-q-peca" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" aria-label="Peça: saco e número, ou P e o número da peça" placeholder="saco e nº, ex. 9 89, ou P1422">
+        <button type="submit" class="lupa-go" aria-label="Procurar a peça" title="Procurar"><span class="ico i-search" aria-hidden="true"></span></button>
+        <p class="lupa-msg" id="lupa-m-peca" role="alert" hidden></p>
+      </form>
+      <form id="lupa-c-pos" class="lupa-caixa" data-modo="pos" hidden novalidate autocomplete="off">
+        <input id="lupa-q-pos" type="text" inputmode="text" spellcheck="false" aria-label="Posição: linha e coluna" placeholder="linha e coluna, ex. 1 29">
+        <button type="submit" class="lupa-go" aria-label="Ir para a posição" title="Ir para a posição"><span class="ico i-search" aria-hidden="true"></span></button>
+        <p class="lupa-msg" id="lupa-m-pos" role="alert" hidden></p>
+      </form>
+    </div>
     <div class="menu-wrap">
       <button type="button" id="menu-btn" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="Mais opções" title="Mais opções"><span class="ico i-ellipsis" aria-hidden="true"></span></button>
       <div id="menu" class="menu" hidden role="menu">
@@ -43,6 +44,7 @@
         <button type="button" role="menuitem" id="m-atividade"><span class="ico i-activity" aria-hidden="true"></span>Atividade do programa</button>
         <label class="menu-check"><input type="checkbox" id="m-fantasmas"><span class="ico i-ghost" aria-hidden="true"></span>Mostrar a forma esperada</label>
         <label class="menu-check"><input type="checkbox" id="m-borda"><span class="ico i-frame" aria-hidden="true"></span>Mostrar a borda em falta</label>
+        <p class="menu-nota" id="m-borda-nota" hidden role="status"></p>
         <label class="menu-check"><input type="checkbox" id="m-guardadas"><span class="ico i-square-dashed" aria-hidden="true"></span>Mostrar as peças por confirmar</label>
         <button type="button" role="menuitem" id="m-definicoes"><span class="ico i-settings" aria-hidden="true"></span>Definições (cor das peças)</button>
         <div class="menu-keys" id="m-teclas"><span class="ico i-keyboard" aria-hidden="true"></span>Teclas: Enter = Encaixa · N = Não encaixa · S = Saltar · Ctrl+Z = desfazer</div>
@@ -67,6 +69,7 @@
       <g id="lyr-fantasma"></g>
       <g id="lyr-seguinte"></g>
       <g id="lyr-alvo"></g>
+      <g id="lyr-achado"></g>
       <g id="lyr-grelha"></g>
     </svg>
     <div class="zoom-ui">

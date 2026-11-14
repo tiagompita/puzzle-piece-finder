@@ -221,6 +221,12 @@ details.tech li { margin: 2px 0; }
 .prep-box { max-width: 680px; width: 100%; }
 .prep-box h1 { font-size: 24px; margin: 0 0 8px; }
 .prep-box p { color: var(--muted); }
+.prep-now { color: var(--text) !important; font-size: 17px; font-weight: 600; margin: 4px 0 10px; }
+.prep-barra { height: 8px; border-radius: 4px; background: var(--bg3); overflow: hidden; margin: 0 0 14px; position: relative; }
+.prep-barra > i { display: block; height: 100%; width: 0; background: #f2b43c; border-radius: 4px; transition: width .3s ease; }
+.prep-barra.indet > i { width: 35%; position: absolute; animation: prep-vai 1.3s ease-in-out infinite; }
+@keyframes prep-vai { from { left: -35%; } to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .prep-barra.indet > i { animation: none; left: 0; width: 100%; opacity: .45; } }
 #prep-log { font-family: var(--mono); font-size: 13px; max-height: 55vh; overflow: auto; background: var(--bg2);
   padding: 10px 10px 10px 34px; border-radius: 10px; }
 #lightbox { position: fixed; inset: 0; background: rgba(8, 9, 10, .94); z-index: 40; display: flex; flex-direction: column; }

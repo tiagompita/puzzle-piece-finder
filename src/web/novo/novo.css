@@ -44,16 +44,31 @@ a:hover { color: #ffd27a; }
   padding: 0 12px; white-space: nowrap; border-radius: 8px 8px 0 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 #tabs button.on { color: var(--text); box-shadow: inset 0 -3px 0 var(--amber); }
 #tabs button b { color: var(--amber); margin-left: 3px; }
-/* F2b: lupa com dois separadores (Peça | Lugar); os campos têm o aspeto dos de «Pôr uma peça à mão» (.pm-campos) */
-#search { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; }
-.s-sep { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex: 0 0 auto; }
-.s-sep button { min-height: var(--tap); border: 0; background: transparent; color: var(--muted); padding: 0 10px; cursor: pointer; font-weight: 600; }
-.s-sep button.on { background: var(--bg4); color: var(--text); box-shadow: inset 0 -3px 0 var(--amber); }
-.s-campos { display: flex; gap: 6px; align-items: center; }
-.s-campos label { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
-.s-campos input { width: 104px; min-height: var(--tap); border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
-  padding: 0 8px; font-size: 16px; color: var(--text); }
-.s-campos input[type=number] { width: 68px; }
+/* F2c: lupa de dois botões («Peça», «Posição»); cada um abre UMA caixa de texto que desliza por baixo dos botões
+   (nunca por cima deles); só uma aberta de cada vez. Os campos têm o aspeto dos de «Pôr uma peça à mão». */
+#top { position: relative; }
+.lupa { position: relative; flex: 0 0 auto; }
+.lupa-botoes { display: flex; gap: 6px; }
+.lupa-b { min-height: var(--tap); display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg3); color: var(--text); font-weight: 600; cursor: pointer; }
+.lupa-b .ico { width: 18px; height: 18px; color: var(--muted); }
+.lupa-b:hover { background: var(--bg4); }
+.lupa-b.lupa-ult { box-shadow: inset 0 -2px 0 rgba(242, 180, 60, .45); }
+.lupa-b.on { background: var(--bg4); box-shadow: inset 0 -3px 0 var(--amber); }
+.lupa-b.on .ico { color: var(--amber); }
+.lupa-caixa { position: absolute; z-index: 25; top: calc(100% + 10px); right: 0; width: min(340px, calc(100vw - 20px)); display: flex; flex-wrap: wrap; gap: 6px 8px;
+  align-items: center; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+.lupa-caixa input { flex: 1 1 0; min-width: 0; min-height: var(--tap); border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
+  padding: 0 10px; font-size: 16px; color: var(--text); }
+.lupa-caixa input:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+.lupa-go { width: var(--tap); height: var(--tap); flex: 0 0 auto; border-radius: 10px; border: 0; background: var(--amber); color: var(--amber-ink); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.lupa-go .ico { width: 20px; height: 20px; }
+.lupa-msg { flex: 1 1 100%; margin: 0; padding: 0 2px 2px; color: var(--red); font-size: 13px; line-height: 1.35; }
+.lupa-caixa.abre { animation: lupa-abre .16s ease-out; }
+@keyframes lupa-abre { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .lupa-caixa.abre { animation: none; } }
+.menu-nota { margin: 0; padding: 2px 12px 6px 40px; color: var(--muted); font-size: 13px; }
 .menu-wrap { position: relative; order: 4; }
 .icon-btn { width: var(--tap); height: var(--tap); border-radius: 10px; border: 1px solid var(--line); background: var(--bg3);
   cursor: pointer; font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; padding: 0; color: var(--text); }
@@ -289,13 +304,12 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
     grid-template-areas: "top" "board" "panel"; }
   #top { flex-wrap: wrap; gap: 4px 10px; padding: 4px 10px; }
   .brand { flex: 1 1 0; }
-  .progress { flex: 0 0 40px; }      /* F2b: o «⋯» fica na 1.ª linha; a lupa tem a sua, por baixo dos separadores */
+  .progress { flex: 0 0 40px; }      /* o «⋯» fica na 1.ª linha; a lupa tem a sua, por baixo dos separadores */
   #tabs { order: 5; flex: 1 1 100%; margin-left: 0; }
   #tabs button { flex: 1; padding: 0 6px; }
   #search { order: 6; flex: 1 1 100%; }
-  .s-campos { flex: 1 1 auto; min-width: 0; }
-  .s-campos label { flex: 1 1 0; min-width: 0; }
-  .s-campos input, .s-campos input[type=number] { width: 100%; min-width: 0; }
+  .lupa-botoes .lupa-b { flex: 1; }
+  .lupa-caixa { left: 0; right: 0; width: auto; }
   #panel { border-left: 0; border-top: 1px solid var(--line); }
   .card-top { grid-template-columns: 110px minmax(0, 1fr); }
   .pimg { width: 110px; height: 110px; }
@@ -310,3 +324,20 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
   /* F1d: a faixa da última ação no topo do painel já tem «Desfazer»; o aviso em baixo tapava «Colocar aqui» */
   #toast > .undo-toast { display: none; }
 }
+
+/* F2c: o resultado da lupa no tabuleiro: contorno branco com uma onda âmbar que se repete, até ao próximo toque */
+#lyr-achado { pointer-events: none; }
+.achado { fill: rgba(255, 255, 255, .10); stroke: #fff; stroke-width: 3px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px rgba(0, 0, 0, .9));
+  animation: achado-bate 1.2s ease-in-out infinite; }
+.achado-onda { fill: none; stroke: var(--amber); stroke-width: 3px; vector-effect: non-scaling-stroke; transform-box: fill-box; transform-origin: center;
+  animation: achado-onda 1.2s ease-out infinite; }
+@keyframes achado-bate { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: .45; } }
+@keyframes achado-onda { from { transform: scale(1); opacity: .95; } to { transform: scale(1.9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .achado, .achado-onda { animation: none; } .achado-onda { transform: scale(1.18); opacity: .8; } }
+/* F2c: ecrã de arranque */
+.prep-barra { height: 8px; border-radius: 4px; background: var(--bg3); overflow: hidden; margin: 14px auto; max-width: 320px; position: relative; }
+.prep-barra > i { display: block; height: 100%; width: 0; background: var(--amber); border-radius: 4px; transition: width .3s ease; }
+.prep-barra.indet > i { width: 35%; position: absolute; animation: prep-vai 1.3s ease-in-out infinite; }
+@keyframes prep-vai { from { left: -35%; } to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .prep-barra.indet > i { animation: none; left: 0; width: 100%; opacity: .45; } }
+.prep-line { color: var(--text); font-variant-numeric: tabular-nums; }

@@ -393,7 +393,8 @@ class Gui:
 		self.cond = threading.Condition()
 		self.events = collections.deque(maxlen=EVENTS_KEEP)
 		self.seq = 0
-		self.state = "pronto"
+		self.state = "a_preparar" if prepare else "pronto"    # F2c: a página aberta nos primeiros segundos já vê a preparação
+		self.prep_now = {"fase": "arranque", "texto": "A preparar o puzzle…", "n": None, "N": None} if prepare else None
 		self.job = None
 		self.prep_log = []
 		self.job_log = []
@@ -549,7 +550,26 @@ class Gui:
 		line = f"[preparar] {msg}"
 		self.log(line)
 		self.prep_log.append(msg)
-		self.emit("prepare_progress", {"msg": msg})
+		self.emit("prepare_progress", {"msg": msg, **(self.prep_now or {})})
+
+	def _prep_now(self, fase: str, texto: str, n=None, N=None) -> None:
+		"""What the start-up is doing now, in words and ``n`` of ``N`` (F2c): ``status.preparacao`` and the SSE
+		``prepare_progress`` carry it, both GUIs show it instead of a bare «a carregar»."""
+		self.prep_now = {"fase": fase, "texto": texto, "n": n, "N": N}
+		self.emit("prepare_progress", {"msg": texto + (f" {n} de {N}" if N else ""), **self.prep_now})
+
+	def _sheet_counter(self, fase: str, texto: str, N: int):
+		"""A ``progress`` callback for :func:`src.render.rebuild_assets`: the sheet lines (``S0001 (...)``) count
+		``n`` of ``N`` sheets; every line still goes to the log and the preparation list."""
+		done = [0]
+		self._prep_now(fase, texto, 0, N)
+
+		def cb(msg):
+			self._prep(msg)
+			if re.match(r"^S\d+ \(", str(msg)):
+				done[0] += 1
+				self._prep_now(fase, texto, min(done[0], N), N)
+		return cb
 
 	def activity_setup(self, *, console: bool = True, file: bool = True, stream=None):
 		""":func:`src.activity.setup` with this project's ``logs/`` folder and this GUI's ring (the server's ``main``)."""
@@ -573,6 +593,7 @@ class Gui:
 		erros}``."""
 		from src import render
 		t0 = time.time()
+		self._prep_now("ativos", "A verificar as imagens…")
 		st = render.stale_assets(self.pr)
 		info = {"desatualizados_antes": st["n_pecas"], "folhas": sorted(st["sheets"]), "refeitos": 0, "eventos": 0,
 				"restantes": st["n_pecas"], "segundos": None, "aviso": None, "erros": []}
@@ -581,7 +602,7 @@ class Gui:
 			self._prep(f"{st['n_pecas']} peças em {st['n_folhas']} folhas desatualizadas (depois de um git pull?): "
 					   f"a refazer {', '.join(info['folhas'])}…")
 			with self.wlock:
-				r = render.rebuild_stale(self.pr, progress=self._prep)
+				r = render.rebuild_stale(self.pr, progress=self._sheet_counter("imagens", "A refazer imagens: folha", st["n_folhas"]))
 				self._known_stat = self._log_stat()       # our own events (if any) are not an outside change
 			left = r["depois"]["n_pecas"] if r.get("depois") else st["n_pecas"]
 			info.update(refeitos=st["n_pecas"] - left, restantes=left, eventos=int(r.get("eventos") or 0),
@@ -604,17 +625,19 @@ class Gui:
 						   "(segmentação, recortes, folhas numeradas, limpeza, registo: pode demorar vários minutos)")
 				from src import render
 				with self.wlock:
-					r = render.rebuild_assets(self.pr, progress=self._prep)
+					r = render.rebuild_assets(self.pr, progress=self._sheet_counter("imagens", "A refazer imagens: folha", len(self.pr.model.scans)))
 				for e in r.get("errors", []):
 					self._prep(f"ERRO: {e}")
 				self._prep("recursos regenerados" + (" com erros (ver acima)" if r.get("errors") else ""))
 			self._check_stale()
+			self._prep_now("tabuleiro", "A compor o tabuleiro…")
 			self._prep("a compor o tabuleiro")
 			t0 = time.time()
 			self._trigger = "arranque"
 			self.board_jpg(BOARD_PPC)
 			self._prep(f"tabuleiro pronto ({time.time() - t0:.1f} s; versão do log {self.version()})")
 			t1 = time.time()
+			self._prep_now("formas", "A preparar as formas esperadas…")
 			self.ghosts()
 			activity.get("arranque").info(f"fantasmas prontos ({time.time() - t1:.1f} s)")
 		except Exception as e:  # noqa: BLE001 - the server must still come up; reported on the page
@@ -1753,10 +1776,11 @@ class Gui:
 
 	def status_json(self) -> dict:
 		try:
-			cnt = self._alta_counter()
+			cnt = self._alta_counter() if self.state == "pronto" else None    # not while preparing: answer at once
 		except Exception:  # noqa: BLE001
 			cnt = None
-		return {"estado": self.state, "job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
+		return {"estado": self.state, "preparacao": self.prep_now if self.state != "pronto" else None,
+				"job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
 				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info,
 				"contador_alta": cnt, "atividade_seq": self.ring.seq, "fila": self.queue_summary()}
 
@@ -3109,6 +3133,10 @@ def create_app(gui: Gui):
 		t0 = time.perf_counter()
 		resp = await call_next(request)
 		path = request.url.path
+		if not path.startswith("/api/") and "cache-control" not in resp.headers:
+			# the page files (js/css/html) are revalidated (ETag) on every load: a browser with a stale core.js next to a
+			# new app.js would throw «watchConnection is not defined» (F2c, item 2)
+			resp.headers["Cache-Control"] = "no-cache"
 		if path != "/api/events":
 			activity.slow_request(request.method, path + (f"?{request.url.query}" if request.url.query else ""),
 								  time.perf_counter() - t0, resp.status_code)
@@ -3673,9 +3701,13 @@ def apply_gil_interval(seconds: float) -> float:
 GRACEFUL_SHUTDOWN_S = 3
 
 
-def serve(app, gui, host: str, port: int) -> None:
-	"""``uvicorn.run`` with a Ctrl+C that closes at once: the first signal ends the SSE streams (:meth:`Gui.begin_shutdown`)
-	before uvicorn waits for the connections, and ``timeout_graceful_shutdown`` is the backstop for any other request."""
+def serve(app, gui, host: str, port: int) -> int:
+	"""``uvicorn.run`` with a Ctrl+C that closes at once and quietly: the first signal ends the SSE streams
+	(:meth:`Gui.begin_shutdown`) before uvicorn waits for the connections, ``timeout_graceful_shutdown`` is the backstop
+	for any other request, and the signal is NOT re-raised after the graceful shutdown (uvicorn does, which ends a
+	terminal run with a ``KeyboardInterrupt`` traceback and a non-zero exit code). Prints one line, «Servidor parado.»
+	(F2c, item 6); returns 0."""
+	import contextlib
 	import uvicorn
 
 	class _Server(uvicorn.Server):
@@ -3683,8 +3715,21 @@ def serve(app, gui, host: str, port: int) -> None:
 			gui.begin_shutdown()
 			super().handle_exit(sig, frame)
 
-	_Server(uvicorn.Config(app, host=host, port=port, log_level="warning",
-						   timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_S)).run()
+		@contextlib.contextmanager
+		def capture_signals(self):
+			with super().capture_signals():
+				try:
+					yield
+				finally:
+					getattr(self, "_captured_signals", []).clear()     # the stop was asked for: nothing to re-raise
+
+	try:
+		_Server(uvicorn.Config(app, host=host, port=port, log_level="warning",
+							   timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_S)).run()
+	except KeyboardInterrupt:       # a second Ctrl+C before the first one finished
+		pass
+	print("Servidor parado.", flush=True)
+	return 0
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -3728,8 +3773,7 @@ def main(argv=None) -> int:
 			log.info(f"na rede local: http://{ip}:{args.port}")
 		log.warning("sem login. Qualquer pessoa nesta rede Wi-Fi pode ver e alterar o projeto. "
 					"O firewall do Windows pode pedir autorização para a porta.")
-	serve(app, gui, host, args.port)
-	return 0
+	return serve(app, gui, host, args.port)
 
 
 if __name__ == "__main__":

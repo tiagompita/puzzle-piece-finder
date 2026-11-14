@@ -1,22 +1,28 @@
-# HANDOFF — 2026-11-14 (F2b: correções do teste do Tiago; F2 à espera do OK para a F4)
+# HANDOFF — 2026-11-14 (F2c: correções do uso real da GUI nova; F2 à espera do OK para a F4)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-14): `docs/prompts/2026-11-14-f2b-correcoes-teste-tiago.md` (fechado)
-- **Primeira colocação real por «pôr à mão» [V, Tiago]:** Saco 9 · nº 89 em 1 · 29 funcionou; a cor fica no valor inicial.
-- **Lupa [V em testes; NT com o Tiago]:** separadores «Peça» (Saco + nº, ou `P####`) e «Lugar» (Linha + Coluna), guardado
-  por aparelho, mensagens claras («Linha 1 a 47», «Saco 9 não tem nº 200»); `tests/test_gui_novo_f2b.py`.
-- **Ctrl+C [V]:** causa = o `/api/events` mantinha o encerramento do uvicorn à espera (> 20 s sem sair com um cliente SSE; 0,22 s
-  depois). `Gui.begin_shutdown` + `timeout_graceful_shutdown` 3 s; `Last-Event-ID` limitado a `gui.seq`; faixa «Ligação
-  perdida, a tentar religar…» nas duas GUIs, recarrega ao religar. `tests/test_server_shutdown.py` (subprocesso, Ctrl+Break).
-- **Lista a piscar [V]:** causa = durante o recálculo dos buracos (após cada escrita) `alta_json` dava `entries: []`; agora
-  mostra o último ranking completo, só as sugestões ainda válidas (`desatualizada`). A reconsulta incremental registada
-  em `estado-e-plano.md` **não se reproduziu** (lista incremental = completa numa cópia, 1 cenário) [NT].
-- **Indicador [V em testes]:** «A gravar…» / «A atualizar sugestões…» no cartão e no tabuleiro.
-- **Capturas:** `docs/gui/screenshots/F2b_*` (cópia do projeto; `tools/gui/f2b_capturas.py`).
-- **Suite [V]:** 548 passed, 1 skipped, 1 failed: `test_jump_asks_detail_at_once_…` (temporização do debounce 250 ms;
-  intermitente também no HEAD anterior, 2 falhas em 3 corridas), não relacionado.
-- **Por ver pelo Tiago:** lupa no PC e no telemóvel; Ctrl+C com o separador aberto no PC dele (o Windows dele, `erro_terminal.txt`).
+## Última sessão (2026-11-14): `docs/prompts/2026-11-14-f2c-correcoes-uso-real.md` (fechado)
+- **Saco 9 · nº 89 em 1 · 29 encaixa fisicamente [V, Tiago]:** primeiro caso real de «pôr à mão»; a borda está completa (218/218).
+- **Arranque [V em testes]:** `status.preparacao` + SSE `prepare_progress`; as duas GUIs mostram «A refazer imagens: folha n de N»
+  (a nova também na barra do topo); `Gui.state` é `a_preparar` desde o 1.º instante. «A preparar sugestões…» na 1.ª vez.
+- **Aviso vermelho [V + NT]:** a faixa «Ligação perdida» nunca aparece com o servidor vivo mas ocupado (teste). Reproduzido o
+  texto que o Tiago leu: `core.js` velho em cache + `app.js` novo = «watchConnection is not defined». Correção:
+  `Cache-Control: no-cache` nos ficheiros da página e `watchConnection` opcional. [NT] não sei qual dos dois ele viu; quem
+  tiver o `core.js` velho precisa de um Ctrl+F5 uma vez.
+- **Borda [V]:** `missing_border_cells()` = [] (não era defeito); o menu diz «Não falta nenhuma peça de borda.» O botão só existe na nova.
+- **Lupa [V em testes; NT com o Tiago]:** dois botões «Peça» / «Posição», uma caixa que desliza (160 ms, desligada com
+  `prefers-reduced-motion`), formatos «1,29 1 29 1.29 1-29» e «9 89 9/89 9,89 P1422», mensagens na própria caixa, último
+  modo guardado (`novo-lupa-modo`; «/» abre-o). Destaque animado do resultado no tabuleiro até ao próximo toque.
+- **Ctrl+C [V]:** uma linha, «Servidor parado.», código 0 (o uvicorn re-levantava o sinal → traceback).
+- **Testes:** novo `tests/test_gui_f2c.py` (8), 2 em `tests/test_server_shutdown.py`, lupa reescrita em `tests/test_gui_novo_f2b.py`,
+  helpers `_buscar_*` em `tests/test_gui_novo.py`. **Capturas:** `docs/gui/screenshots/F2c_*` (`tools/gui/f2c_capturas.py`).
+- **Por ver pelo Tiago:** lupa e destaque no PC e no telemóvel; Ctrl+C no terminal dele; o arranque com ativos por refazer.
+
+## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-f2b-correcoes-teste-tiago.md` (fechado)
+- Lupa de separadores (substituída na F2c), `Gui.begin_shutdown` + `timeout_graceful_shutdown` 3 s, `Last-Event-ID` limitado a
+  `gui.seq`, faixa «Ligação perdida» (`watchConnection`), lista `alta` mantida durante o recálculo (`_holes_prev`),
+  indicador «A gravar…» / «A atualizar sugestões…». A reconsulta incremental registada em `estado-e-plano.md` não se reproduziu [NT].
 
 ## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-f2-passo0-painel-por-tirar.md` (fechado)
 - **Passo 0a [V] (`6345154`, DETALHE.md §8.1):** com o servidor parado o intervalo de 0,5 ms não piora a composição

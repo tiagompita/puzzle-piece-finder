@@ -370,3 +370,46 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
   atualizar sugestões…» (com n de N das tiras) enquanto o servidor diz `a_preparar.buracos`; mostra-se numa faixa no
   cartão e num selo no canto do tabuleiro. Só os botões da ação em curso ficam desativados; o tabuleiro e o resto
   continuam a responder. Substitui a linha «A preparar mais sugestões…» do fundo do painel.
+
+## 2026-11-14 — F2c: correções do uso real da GUI nova (arranque, aviso vermelho, borda, lupa, Ctrl+C)
+
+- **Primeiro caso real de «pôr à mão» [V, Tiago, 2026-11-14]:** o Saco 9 · nº 89 encaixa fisicamente na linha 1 ·
+  coluna 29 (a única borda que faltava): o primeiro caso real de «pôr à mão» (já registado na F2b como colocação
+  que funcionou; agora também o encaixe físico).
+- **Arranque (item 1):** `Gui.state` passa a `a_preparar` desde o 1.º instante quando há preparação (antes era `pronto`
+  até a thread `preparar` correr `stale_assets`, e uma página aberta nesses segundos ficava só em «a carregar» à espera
+  da composição do tabuleiro). `status.preparacao = {fase, texto, n, N}` e o SSE `prepare_progress` levam o que o
+  servidor faz: `ativos` («A verificar as imagens…»), `imagens` («A refazer imagens: folha n de N»; n conta as linhas
+  `S#### (…)` de `rebuild_assets`), `tabuleiro`, `formas`. A GUI nova mostra um cartão «A preparar o puzzle…» com o
+  texto, a barra (a do topo também) e o n de N; a antiga mostra-os no topo do ecrã de preparação (o registo
+  mantém-se por baixo). As sugestões pelo encaixe dizem «A preparar sugestões…» na 1.ª vez da página e «A atualizar
+  sugestões…» nas seguintes. `status_json` não calcula o contador `alta` enquanto prepara (responde logo).
+- **Aviso vermelho (item 2) — causa:** o servidor vivo mas ocupado **não** faz aparecer a faixa «Ligação perdida»
+  [V: `tests/test_gui_f2c.py`, com o bloqueio de escrita tomado, o keep-alive do SSE a 1 s e a preparação gateada; e uma
+  sonda a `/api/events` a cada 0,5 s durante um arranque a frio sempre com 200]. O que **reproduzi** com o texto que o
+  Tiago leu: um `core.js` de antes da F2b na cache do browser ao lado de um `app.js` novo dá o aviso vermelho
+  «watchConnection is not defined» (`boot().catch(toast)`). Os ficheiros da página (StaticFiles) não levavam
+  `Cache-Control`, por isso o browser aplicava cache heurística (o `core.js` muda pouco: dura mais que o `app.js`).
+  Correção: `Cache-Control: no-cache` em tudo o que não é `/api/` (revalida por ETag) e `watchConnection` opcional nas duas
+  GUIs (`typeof … === "function"`). **A faixa legítima continua:** só aparece se a ligação cair mesmo (teste com o
+  servidor morto). [NT] não sei qual dos dois o Tiago viu: se foi a faixa com a página aberta durante um reinício do
+  servidor, é o comportamento previsto. Quem ainda tiver o `core.js` velho em cache precisa de um Ctrl+F5 uma vez.
+- **«Mostrar a borda em falta» (item 3) — causa:** `Project.missing_border_cells()` devolve `[]` (1 · 29 = P1422,
+  `colocada`; a borda está completa: 218 de 218) e a camada só desenha essa lista, por isso não aparecia nada. Não é
+  defeito. O botão só existe na GUI nova (a antiga desenha sempre a camada, sem botão). Agora, com a opção ligada, o
+  menu diz «Não falta nenhuma peça de borda.» (ou «Falta 1 peça…» / «Faltam N peças…») e um aviso confirma ao ligar.
+- **Lupa (item 5; substitui os separadores com campos da F2b):** dois botões, «Peça» e «Posição»; cada um abre UMA caixa
+  de texto por baixo dos botões (nunca por cima), a deslizar em 160 ms (`@keyframes lupa-abre`; desligada com
+  `prefers-reduced-motion`); abrir um fecha o outro, Esc ou o mesmo botão fecha. Posição: «1,29», «1 29», «1.29»,
+  «1-29» (e «1/29»); Peça: «9 89», «9/89», «9,89» (e «9.89», «9-89») ou «P1422» (qualquer capitalização, «P89» = P0089).
+  Sem ambiguidade: a posição tem sempre dois números; «P» marca a peça. Mensagens na própria caixa («A linha 99 não
+  existe: o puzzle tem as linhas 1 a 47.», «O saco 9 não tem a peça nº 200: vai de 1 a 96.», «Não há o saco 99. Existem
+  os sacos …», «Falta o nº da peça no saco 9…», «Não encontrei a peça P9999.»). Ao achar, a caixa fecha. O último modo
+  usado fica por aparelho (`novo-lupa-modo`; marcado no botão, a tecla «/» abre-o): a caixa não abre sozinha ao carregar.
+- **Destaque (item 4):** achar um lugar ou uma peça (colocada, por confirmar ou com proposta) desenha na camada
+  `#lyr-achado` o contorno branco que pulsa e uma onda âmbar que se repete no lugar; fica até ao próximo toque no
+  tabuleiro (arrastar não o tira), ao fechar o resultado ou a outra busca. Sem animação com `prefers-reduced-motion`.
+- **Ctrl+C (item 6) — causa:** o uvicorn, depois do encerramento gracioso, volta a levantar o sinal capturado
+  (`Server.capture_signals` → `signal.raise_signal`), por isso um terminal acabava com o traceback de `KeyboardInterrupt`
+  (e código ≠ 0). `serve()` esvazia `_captured_signals` e imprime só «Servidor parado.», código 0 (o `CancelledError` das
+  ligações SSE já tinha acabado na F2b). Teste de subprocesso com e sem cliente SSE.

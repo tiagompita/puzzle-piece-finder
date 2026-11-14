@@ -1,0 +1,22 @@
+{
+ "1366": {
+  "erro": "A linha 99 não existe: o puzzle tem as linhas 1 a 47.",
+  "destaque": [
+   [
+    "28.0200",
+    "0.0194"
+   ]
+  ],
+  "borda": "Não falta nenhuma peça de borda."
+ },
+ "390": {
+  "erro": "A linha 99 não existe: o puzzle tem as linhas 1 a 47.",
+  "destaque": [
+   [
+    "28.0200",
+    "0.0194"
+   ]
+  ],
+  "borda": "Não falta nenhuma peça de borda."
+ }
+}

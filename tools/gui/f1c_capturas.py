@@ -37,17 +37,17 @@ def _shot(pg, out, name, hide_toast=True):
 
 
 def _search(pg, a, b):
-	"""F2b: lupa com separadores. ``a``, ``b`` = saco e nº (separador Peça) ou linha e coluna (``lugar=`` no 1.º)."""
+	"""F2c: lupa de dois botões. ``a``, ``b`` = saco e nº (botão «Peça») ou linha e coluna (``lugar=`` no 1.º)."""
 	if a == "lugar":
-		pg.click("#s-lugar")
-		pg.fill("#q-linha", str(b[0]))
-		pg.fill("#q-coluna", str(b[1]))
-		pg.press("#q-coluna", "Enter")
+		if not pg.locator("#lupa-c-pos").is_visible():
+			pg.click("#lupa-b-pos")
+		pg.fill("#lupa-q-pos", f"{b[0]} {b[1]}")
+		pg.press("#lupa-q-pos", "Enter")
 	else:
-		pg.click("#s-peca")
-		pg.fill("#q-saco", str(a))
-		pg.fill("#q-n", str(b))
-		pg.press("#q-saco", "Enter")
+		if not pg.locator("#lupa-c-peca").is_visible():
+			pg.click("#lupa-b-peca")
+		pg.fill("#lupa-q-peca", f"{a} {b}")
+		pg.press("#lupa-q-peca", "Enter")
 	pg.wait_for_selector("#lupa-res:not([hidden])", timeout=60_000)
 
 
