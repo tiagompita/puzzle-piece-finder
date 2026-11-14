@@ -94,6 +94,31 @@ def _active_pair(pr, pid: str):
 	return None
 
 
+def _pair_of_placement(pr, pid: str) -> dict:
+	"""What the last placement of ``pid`` did to its twin pair (:func:`confirm` with ``cell``): ``{pair, outra (the other
+	piece), confirmou (t of the ``pair_confirmed`` it wrote, or None), outra_celula (the cell of the ``position_known``
+	origin ``par`` it wrote for the other piece, or None)}``; {} when ``pid`` has no pair. Only events after that
+	``placed`` count, so a pair confirmed by an earlier placement (of either piece) stays confirmed."""
+	pair = _active_pair(pr, pid)
+	if pair is None:
+		return {}
+	other = pair.b if pair.a == pid else pair.a
+	evs = pr.events()
+	k = next((i for i in range(len(evs) - 1, -1, -1) if evs[i].get("action") == "placed" and evs[i].get("piece") == pid), None)
+	out = {"pair": pair.id, "outra": other, "confirmou": None, "outra_celula": None}
+	if k is None:
+		return out
+	for ev in evs[k + 1:]:
+		a = ev.get("action")
+		if a == "pair_confirmed" and ev.get("pair") == pair.id:
+			out["confirmou"] = ev.get("t")
+		elif a == "pair_unconfirmed" and ev.get("pair") == pair.id:
+			out["confirmou"] = None
+		elif a == "position_known" and ev.get("piece") == other and ev.get("origin") == "par" and out["outra_celula"] is None:
+			out["outra_celula"] = tuple(ev["cell"])
+	return out
+
+
 def _around(pr, cell) -> set:
 	"""The changed cell, its twin cell and their free 4-neighbours (what the twin / border steps re-query:
 	a pending twin or a missing border cell next to the change is re-evaluated, not carried over)."""
@@ -126,7 +151,8 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			discard: bool = False, reason: str = "", cell_full=None, cell_empty=None, requery: bool = True,
 			use_image: bool = True, unplace: bool = False, theta_deg: Optional[float] = None, pose=None,
 			pose_repor: bool = False, nota: str = "", hole=None, hole_reject=None, gemea: bool = False,
-			desfaz: bool = False, undo_reject=None, clear_position: bool = False) -> dict:
+			desfaz: bool = False, undo_reject=None, clear_position: bool = False, theta_force: bool = False,
+			reposicao: bool = False) -> dict:
 	"""Apply one confirmation; returns ``{messages, affected_cells, affected_pieces, entries, invariants}``
 	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error).
 
@@ -134,8 +160,14 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 	(:meth:`src.state.Project.mark_cell_full` / ``mark_cell_empty``).
 
 	``theta_deg`` (with ``cell``): board pose when the fetch entry of that cell has none (refused
-	otherwise). ``unplace``: undo the placement of a loose piece (not of a section piece); with ``desfaz`` it is the
-	user's «desfazer» right after «Encaixa» (the confirmation stops counting, ESPEC §8.1).
+	otherwise); with ``theta_force`` it wins over the list (the user's «Rodar» of «Pôr uma peça à mão», GUI nova F2,
+	ESPEC §8.7 P10b). With ``position_known`` it is the pose stored with the kept-aside position (else the list's).
+	``reposicao`` (with ``cell``): the «desfazer» of «Tirar do lugar» (informative mark on ``placed``).
+	``unplace``: undo the placement of a loose piece (not of a section piece); with ``desfaz`` it is the
+	user's «desfazer» right after «Encaixa» (the confirmation stops counting, ESPEC §8.1). A piece of a twin pair also
+	takes back what its placement did to the pair (decision c of 2026-11-14): the other piece's kept-aside position
+	(``position_known`` origin ``par`` written by that placement, if still there) is cleared, and the pair goes back to
+	``proposto`` if that placement confirmed it (a pair confirmed before stays confirmed).
 
 	``clear_position``: undo a ``position_known`` (the piece is loose again; with ``desfaz`` it is the user's «desfazer»
 	right after «Guardei à parte», GUI nova F1c).
@@ -168,10 +200,11 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			pair = _active_pair(pr, piece_id)
 			th = _entry_theta(e0)
 			if theta_deg is not None:
-				if th is not None:
+				if th is not None and not theta_force:
 					return {"error": f"a lista já tem a pose {th:.2f}° de {piece_id} em {cell}: --theta não se aplica"}
 				th = float(theta_deg)
-			pr.place(piece_id, cell, origin=org, rank=e0.get("rank"), score=e0.get("score"), theta_deg=th)
+			pr.place(piece_id, cell, origin=org, rank=e0.get("rank"), score=e0.get("score"), theta_deg=th,
+					 reposicao=reposicao)
 			msgs.append(f"{piece_id} colocada em {cell} (origem {org}"
 						+ (f", pose {th:.2f}°)" if th is not None else ")"))
 			if org in _CONFIRM_ACTION:
@@ -226,10 +259,30 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			if p.estado != "colocada" or p.celula is None:
 				return {"error": f"{piece_id} está '{p.estado}': não está colocada"}
 			c0 = tuple(p.celula)
+			undo = _pair_of_placement(pr, piece_id)
 			ev = pr.unplace(piece_id, desfaz=desfaz)
 			msgs.append(f"{piece_id} retirada de {c0} (volta a '{ev['to']}'; a célula volta a '{ev['restore']['estado']}')")
 			cells |= _around(pr, c0)
 			pieces.add(piece_id)
+			if undo:
+				other, oc = undo["outra"], undo.get("outra_celula")
+				q = pr.piece(other)
+				if oc is not None:
+					if q.estado == "posicao_conhecida" and q.celula is not None and tuple(q.celula) == tuple(oc):
+						pr.clear_position_known(other, desfaz=desfaz)
+						msgs.append(f"par {undo['pair']}: {other} deixa de estar «por confirmar» em {tuple(oc)}")
+						cells |= _around(pr, oc)
+					else:
+						msgs.append(f"par {undo['pair']}: {other} já não está «por confirmar» em {tuple(oc)} "
+									f"(está '{q.estado}'): fica como está")
+					pieces.add(other)
+				# the pair goes back to «proposto» only if this placement confirmed it and the other piece has not been
+				# placed since (its own placement then stands on the pair too)
+				if undo.get("confirmou") and pr.pairs[undo["pair"]].estado == "confirmado" and q.estado != "colocada":
+					pr.unconfirm_pair(undo["pair"], ref_t=undo.get("confirmou"), desfaz=desfaz)
+					msgs.append(f"par {undo['pair']}: volta a proposto")
+				elif undo.get("confirmou") and q.estado == "colocada":
+					msgs.append(f"par {undo['pair']}: fica confirmado ({other} já está colocada)")
 		elif clear_position:
 			p = pr.piece(piece_id)
 			if p.estado != "posicao_conhecida" or p.celula is None:
@@ -295,7 +348,8 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			pieces.add(piece_id)
 		elif position_known is not None:
 			pc = (int(position_known[0]), int(position_known[1]))
-			pr.set_position_known(piece_id, pc, origin=origin or "manual", theta_deg=_entry_theta(_cell_entry(pr, piece_id, pc)))
+			th = float(theta_deg) if theta_deg is not None else _entry_theta(_cell_entry(pr, piece_id, pc))
+			pr.set_position_known(piece_id, pc, origin=origin or "manual", theta_deg=th)
 			msgs.append(f"{piece_id} posição conhecida {pc}")
 			pieces.add(piece_id)
 			cells |= _around(pr, pc)

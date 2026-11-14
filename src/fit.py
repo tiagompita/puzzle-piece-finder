@@ -48,7 +48,7 @@ import numpy as np
 
 from src.locate import body_center_mm, wrap_deg
 from src.shape import (N_SIDE, Shape, Side, analyse, corner_dist, f_adjacent, _neg_inv, _smooth_closed)
-from src.state import write_atomic
+from src.state import read_retry, write_atomic
 
 __all__ = [
 	"FIT_VERSION", "DIRS", "DIR_IDX", "OPP", "STEP", "NORMAL_DEG", "ZONES", "CONFIDENCES",
@@ -591,14 +591,18 @@ class _Cache:
 		self.n_loaded = 0
 		if os.path.exists(self.path):
 			try:
-				with np.load(self.path, allow_pickle=False) as z:     # closed: a writer replaces the file (Windows)
-					for k in z.files:
-						if k.startswith("bbox__"):
-							continue
-						bb = z[f"bbox__{k}"] if f"bbox__{k}" in z.files else None
-						p = project.pieces.get(k)
-						if p is not None and bb is not None and list(bb) == list(p.bbox):
-							self.strips[k] = z[k]
+				def rd():
+					out = {}
+					with np.load(self.path, allow_pickle=False) as z:     # closed: a writer replaces the file (Windows)
+						for k in z.files:
+							if k.startswith("bbox__"):
+								continue
+							bb = z[f"bbox__{k}"] if f"bbox__{k}" in z.files else None
+							p = project.pieces.get(k)
+							if p is not None and bb is not None and list(bb) == list(p.bbox):
+								out[k] = z[k]
+					return out
+				self.strips = read_retry(rd)
 				self.n_loaded = len(self.strips)
 			except (OSError, ValueError, zipfile.BadZipFile):
 				self.strips = {}
@@ -690,11 +694,12 @@ def board_sigma(project, cache: Optional[_Cache] = None, dcache: Optional[dict] 
 
 
 def hole_queries(project, *, cells=None, min_neighbours: int = 1, cache: Optional[_Cache] = None,
-				 dcache: Optional[dict] = None, exclude_piece: Optional[str] = None) -> list:
+				 dcache: Optional[dict] = None, exclude_piece: Optional[str] = None, include_marked: bool = False) -> list:
 	"""Holes of the board: cells that are not occupied (photo-only cells count as empty, user hints are
 	not neighbours) with >= ``min_neighbours`` placed 4-neighbours with shape and pose. ``cells`` limits
 	the search; ``exclude_piece`` removes one placed piece (its cell becomes a hole: the inverse-direction
-	measurement)."""
+	measurement). ``include_marked``: a cell the user marked full (no scanned piece) is a hole too: the «verificar»
+	of «Pôr uma peça à mão» asks about that one place (GUI nova F2); the ranking never does."""
 	cache = cache or _Cache(project, calibration(project))
 	dcache = {} if dcache is None else dcache
 	prof = project.profile
@@ -704,7 +709,7 @@ def hole_queries(project, *, cells=None, min_neighbours: int = 1, cache: Optiona
 		b = project.board[lc]
 		if b["estado"] == "colocada" and b.get("peca_id") != exclude_piece:
 			continue
-		if b["estado"] == "ocupada_legado" and b.get("fonte") != "foto":
+		if b["estado"] == "ocupada_legado" and b.get("fonte") != "foto" and not include_marked:
 			continue
 		sides = []
 		for d in DIRS:

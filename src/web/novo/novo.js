@@ -14,6 +14,8 @@ const S = {
   // casca nova
   ghosts: [], montar: null, erro: null, tab: "montar", modo: "cartao", pick: null, ultimo: null, undo: null, busy: false,
   pendente: null,
+  // F2: painel do lugar tocado (peça / lugar vazio / marcado por ti) e «Pôr uma peça à mão»
+  painel: null, porMao: null,
   // F1d: as peças «por confirmar» (posição conhecida) desenham-se no lugar por omissão; o menu esconde-as
   showBorda: lsGet("novo-borda") === "1", showGuardadas: lsGet("novo-por-confirmar") !== "0", lots: null, importando: null,
 };
@@ -124,6 +126,12 @@ function drawTarget(move = true) {
   const a = $("#lyr-alvo"), nx = $("#lyr-seguinte");
   a.replaceChildren(); nx.replaceChildren();
   if (!S.board || S.tab !== "montar") return;
+  if ((S.modo === "painel" && S.painel) || (S.modo === "por_mao" && S.porMao)) {
+    // F2: o lugar do painel aberto, tracejado branco (a fila não se desenha por baixo)
+    const [pl, pc] = (S.modo === "painel" ? S.painel : S.porMao).cell;
+    a.append(rectEl(pl, pc, "painel-sel", 0.03));
+    return;
+  }
   const q = queue(), cur = current();
   if (!cur || !cur.cell) return;
   for (const it of q.filter((x) => x !== cur).slice(0, 3)) if (it.cell) nx.append(rectEl(it.cell[0], it.cell[1], cls("seguinte"), 0.06));
@@ -159,9 +167,13 @@ function drawLegend() {
   }
 }
 S.onBoardTap = (l, c) => {
-  // F1b: tocar no lugar de uma peça da fila torna-a a peça atual (o painel da célula / lugar vazio vem na F2)
+  // F1b: tocar no alvo de uma peça da fila torna-a a peça atual; F2: tocar outra vez no alvo da peça atual, ou
+  // noutro lugar, abre o painel desse lugar (com a sugestão do programa e «Pôr uma peça aqui»)
   const it = queue().find((x) => x.cell && x.cell[0] === l && x.cell[1] === c);
-  if (it) { S.pick = it.piece; S.modo = "cartao"; renderMontar(); }
+  if (it && !(S.tab === "montar" && S.modo === "cartao" && current() === it)) {
+    S.pick = it.piece; S.modo = "cartao"; S.painel = null; if (S.tab !== "montar") showTab("montar"); renderMontar(); return;
+  }
+  openPainel(l, c);
 };
 
 // ------------------------------------------------------------ Montar
@@ -196,6 +208,8 @@ function renderMontar() {
   if (S.modo === "nao" && S.undo && S.undo.tipo === "nao") { renderNao(T); drawTarget(false); return; }
   const ult = undoStrip();
   if (ult) T.append(ult);
+  if (S.modo === "painel" && S.painel) { renderPainel(T); drawTarget(false); return; }
+  if (S.modo === "por_mao" && S.porMao) { renderPorMao(T); drawTarget(false); return; }
   if (!cur) {
     T.append(emptyScreen(m));
     if (m.a_preparar && m.a_preparar.buracos) T.append(prepLine(m));
@@ -208,8 +222,8 @@ function renderMontar() {
   const inBag = g ? q.filter(isGuardar) : q.filter((it) => !isGuardar(it) && String(it.lote) === String(cur.lote));
   const k = inBag.indexOf(cur) + 1;
   const card = h("div", { class: "card" + (g ? " guardar" : ""), "data-piece": cur.piece, "data-tipo": cur.tipo, "data-confianca": cur.confianca });
-  card.append(h("div", { class: "card-head" }, h("span", { class: "kicker" }, g ? "Sem vizinha montada" : "Próxima peça"),
-    h("span", { class: "count", id: "m-count" }, g ? `${k} de ${inBag.length} sem vizinha montada` : `${k} de ${inBag.length} neste saco · ${q.length} no total`)));
+  card.append(h("div", { class: "card-head" }, h("span", { class: "kicker" }, g ? "Ainda sem peças ao lado" : "Próxima peça"),
+    h("span", { class: "count", id: "m-count" }, g ? `${k} de ${inBag.length} ainda sem peças ao lado` : `${k} de ${inBag.length} neste saco · ${q.length} no total`)));
   // «localizar» (F1d): só ícone, com aria-label e dica; volta a centrar o tabuleiro no alvo sem mudar de peça
   const loc = cur.cell ? h("button", { type: "button", class: "icon-btn loc", id: "b-localizar", title: "Mostrar o lugar no tabuleiro",
     "aria-label": "Mostrar o lugar no tabuleiro", onclick: () => showCell(cur.cell[0], cur.cell[1], true) }, ico("locate-fixed")) : null;
@@ -241,10 +255,10 @@ function renderMontar() {
   if (nxt.length) {
     const same = nxt.every((x) => String(x.lote) === String(cur.lote));
     const allG = nxt.every(isGuardar);
-    T.append(h("h2", {}, allG ? "A seguir, sem vizinha montada" : (same ? "A seguir, do mesmo saco" : "A seguir, primeiro as do mesmo saco")));
+    T.append(h("h2", {}, allG ? "A seguir, ainda sem peças ao lado" : (same ? "A seguir, do mesmo saco" : "A seguir, primeiro as do mesmo saco")));
     const ul = h("ul", { class: "next", id: "m-seguir" });
     for (const it of nxt) ul.append(h("li", {}, h("button", { type: "button", class: "next-row", "data-tipo": it.tipo, onclick: () => { S.pick = it.piece; renderMontar(); } },
-      h("span", {}, quem(it)), h("span", { class: "w " + it.confianca }, isGuardar(it) ? "sem vizinha montada" : CONF_TXT[it.confianca]))));
+      h("span", {}, quem(it)), h("span", { class: "w " + it.confianca }, isGuardar(it) ? "ainda sem peças ao lado" : CONF_TXT[it.confianca]))));
     T.append(ul);
   }
   const fora = groupsLine(m);
@@ -392,14 +406,18 @@ async function doUndo() {
   lockButtons(true);
   S.pendente = "A desfazer…"; renderMontar();
   try {
-    if (u.tipo === "encaixa") await post("/api/confirm", { acao: "unplace", piece: u.item.piece, desfaz: true });
+    // F2: desfazer global de um nível: as ações dos painéis guardam o pedido inverso (``inversa``); as do Montar, o tipo
+    if (u.inversa) for (const q of [].concat(u.inversa)) await post(q.url, q.body);
+    else if (u.tipo === "encaixa") await post("/api/confirm", { acao: "unplace", piece: u.item.piece, desfaz: true });
     else if (u.tipo === "guardar") await post("/api/confirm", { acao: "position_clear", piece: u.item.piece, desfaz: true });
     else if (u.tipo === "nao" && u.rejeicoes.length) await post("/api/confirm", { acao: "undo_reject", rejeicoes: u.rejeicoes });
-    S.undo = null; S.modo = "cartao"; S.pick = u.item.piece; S.pendente = null;
+    S.undo = null; S.pendente = null;
+    if (!u.painel) { S.modo = "cartao"; S.pick = u.item ? u.item.piece : null; }
     $$("#toast .undo-toast").forEach((x) => x.remove());
     renderMontar();
-    toast(`Desfeito: ${quem(u.item)}.`);
+    toast(`Desfeito: ${u.item ? quem(u.item) : u.msg}`);
     await afterWrite();
+    if (u.painel) await refreshPainel();
   } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); }
 }
 function toastUndo(msg) {
@@ -407,6 +425,423 @@ function toastUndo(msg) {
     h("button", { type: "button", class: "linkish", onclick: () => { el.remove(); doUndo(); } }, ico("undo-2"), "Desfazer"));
   $("#toast").append(el);
   setTimeout(() => el.remove(), 9000);
+}
+
+// ------------------------------------------------------------ F2: painel do lugar tocado (ESPEC §4.4, §4.5)
+// Tocar no tabuleiro abre: a peça (colocada ou «por confirmar»), o lugar vazio, ou o lugar marcado por ti (cheio sem
+// peça digitalizada). As ações guardam o pedido inverso em S.undo (desfazer de um nível, faixa no topo e Ctrl+Z).
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+function dataCurta(t) {
+  if (!t) return null;
+  const d = new Date(t);
+  return isNaN(d) ? null : `${d.getDate()} ${MESES[d.getMonth()]}`;
+}
+function bordaTxt(l, c) {
+  const v = l === 1 ? "de cima" : (l === S.rows ? "de baixo" : null);
+  const hz = c === 1 ? "esquerda" : (c === S.cols ? "direita" : null);
+  if (v && hz) return `no canto ${v}, à ${hz}`;
+  if (v) return `na borda ${v}`;
+  if (hz) return `na borda da ${hz}`;
+  return null;
+}
+const lugarLongo = (cell) => { const b = bordaTxt(cell[0], cell[1]); return lugarTxt(cell) + (b ? `, ${b}` : ""); };
+/** Imagem de peça no lightbox, com o ajuste de cor (só as imagens de peça; a folha e a arte ficam como são). */
+function lightboxPeca(src, cap) { lightbox(src, cap); $("#lb-img").classList.add("peca-img"); }
+function lightboxFolha(src, cap) { lightbox(src, cap); $("#lb-img").classList.remove("peca-img"); }
+
+async function openPainel(l, c) {
+  if (S.tab !== "montar") showTab("montar");
+  closeLupa();
+  S.modo = "painel"; S.porMao = null;
+  S.painel = { cell: [l, c], d: null, erro: null, seq: (S.painel ? S.painel.seq : 0) + 1, report: null };
+  renderMontar();
+  await refreshPainel();
+}
+async function refreshPainel() {
+  const P = S.painel;
+  if (!P) return;
+  const seq = ++P.seq;
+  try {
+    const d = await api(`/api/cell/${P.cell[0]}/${P.cell[1]}`);
+    if (S.painel !== P || P.seq !== seq) return;
+    P.d = d; P.erro = null;
+  } catch (e) { if (S.painel === P) P.erro = e.message; }
+  if (S.modo === "painel" && S.painel === P) renderMontar();
+}
+function painelKind(d) {
+  if (d.estado === "colocada" && d.peca) return "peca";
+  if ((d.conhecidas || []).length) return "por_confirmar";
+  if (d.estado === "ocupada_legado" && d.pista) return "marcado";
+  return "vazio";
+}
+function voltarFila() { S.modo = "cartao"; S.painel = null; S.porMao = null; renderMontar(); }
+function renderPainel(T) {
+  const P = S.painel, d = P.d;
+  const box = h("div", { class: "card painel", id: "painel" });
+  T.append(box);
+  if (P.erro && !d) {
+    box.dataset.kind = "erro";
+    box.append(h("strong", {}, "Não consegui ler este lugar."), h("p", { class: "small muted" }, P.erro));
+  } else if (!d) {
+    box.dataset.kind = "a_carregar";
+    box.append(h("strong", {}, "A carregar…"));
+  } else {
+    const kind = painelKind(d);
+    box.dataset.kind = kind;
+    if (kind === "peca" || kind === "por_confirmar") painelPeca(box, d, kind);
+    else painelVazio(box, d, kind);
+  }
+  box.append(h("div", { class: "links" }, h("button", { class: "linkish", type: "button", id: "p-voltar", onclick: voltarFila }, ico("arrow-left"), "Voltar à fila")));
+}
+/** Uma ação de um painel: «A gravar…», depois a faixa «Desfazer» com o pedido inverso; o painel recarrega o lugar. */
+async function actPainel(req, pend, undo) {
+  if (S.busy) return;
+  lockButtons(true);
+  S.pendente = pend; renderMontar();
+  try {
+    const r = await post(req.url, req.body);
+    writeFailed(r);
+    S.undo = { painel: true, ...undo(r) };
+    S.pendente = null; renderMontar();
+    $("#tab-montar").scrollTop = 0;
+    toastUndo(S.undo.msg);
+    await afterWrite();
+    await refreshPainel();
+  } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); }
+}
+const confirmReq = (body) => ({ url: "/api/confirm", body });
+function painelPeca(box, d, kind) {
+  const pc = kind === "peca" ? d.peca : d.conhecidas[0];
+  const cell = d.cell, nome = nomePeca(pc);
+  const sec = kind === "peca" && pc.seccao_id ? d.secao : null;
+  box.append(h("span", { class: "kicker" }, kind === "peca" ? "Peça no lugar" : "Peça por confirmar"),
+    h("div", { class: "bag" }, pc.lote !== null && pc.lote !== undefined ? `Saco ${pc.lote}` : "Peça sem saco"),
+    h("div", { class: "num" }, `nº ${pc.n_no_lote ?? "?"}`),
+    h("div", { class: "where", id: "p-lugar" }, lugarLongo(cell)));
+  let est, key;
+  if (kind === "por_confirmar") { est = "Por confirmar · ainda sem peças ao lado"; key = "por_confirmar"; }
+  else if (sec) { est = `Veio do grupo (${sec.n} peças)`; key = "grupo"; }
+  else { const dt = dataCurta(d.posta_em); est = dt ? `No lugar · posta por ti a ${dt}` : "No lugar"; key = "no_lugar"; }
+  box.append(h("div", { class: "estado", id: "p-estado", "data-estado": key }, est));
+  const folha = pc.scan_id ? h("button", { type: "button", class: "folha-btn", id: "p-folha", "aria-label": "Ampliar a folha que digitalizaste",
+    onclick: () => lightboxFolha(`/api/sheets/${pc.scan_id}.jpg?highlight=${pc.id}&max=1400&v=${S.ver}`,
+      `Folha do saco ${pc.lote ?? "—"}: a peça nº ${pc.n_no_lote ?? "?"} está marcada a âmbar`) },
+    h("img", { src: `/api/sheets/${pc.scan_id}.jpg?highlight=${pc.id}&max=700&v=${S.ver}`, alt: "" }),
+    h("span", {}, "Na folha que digitalizaste (toca para ampliar)")) : null;
+  box.append(h("div", { class: "painel-imgs" },
+    h("button", { type: "button", class: "pimg", id: "p-peca", "aria-label": "Ampliar a peça",
+      onclick: () => lightboxPeca(`/api/pieces/${pc.id}.png?pose=board&size=700&v=${S.ver}`, nome) },
+    h("img", { src: `/api/pieces/${pc.id}.png?pose=board&size=240&v=${S.ver}`, alt: nome })), folha));
+  box.append(h("div", { class: "pid", id: "p-pid" }, pc.id));
+  const col = h("div", { class: "btn-col" });
+  if (sec) {
+    col.append(h("button", { class: "btn", type: "button", id: "p-tirar", onclick: () => actPainel(
+      confirmReq({ acao: "unanchor", section: sec.id }), `A tirar o grupo de ${sec.n} peças…`,
+      () => ({ tipo: "tirar_grupo", msg: `Grupo de ${sec.n} peças tirado do lugar.`, inversa: confirmReq({ acao: "anchor", section: sec.id,
+        cell: [sec.anchor.l0, sec.anchor.c0], rot: sec.anchor.rot || 0, mirror: !!sec.anchor.mirror }) })) },
+    ico("arrow-up-from-line"), `Tirar o grupo inteiro do lugar (${sec.n} peças)`));
+  } else if (kind === "por_confirmar") {
+    // sem «desfaz»: tirar é neutro (P7b); o desfazer põe-na outra vez «por confirmar» no mesmo lugar e rotação
+    col.append(h("button", { class: "btn", type: "button", id: "p-tirar", onclick: () => actPainel(
+      confirmReq({ acao: "position_clear", piece: pc.id }), `A tirar ${nome.toLowerCase()}…`,
+      () => ({ tipo: "tirar", msg: `${nome} tirada do lugar.`, inversa: confirmReq({ acao: "position_known", piece: pc.id, cell,
+        origin: "manual", theta_deg: pc.theta_deg }) })) }, ico("arrow-up-from-line"), "Tirar do lugar"));
+  } else {
+    // «Tirar do lugar»: neutro (P7b); numa peça de par também limpa a outra «por confirmar» que veio desta colocação (c)
+    col.append(h("button", { class: "btn", type: "button", id: "p-tirar", onclick: () => actPainel(
+      confirmReq({ acao: "unplace", piece: pc.id, tirar: true }), `A tirar ${nome.toLowerCase()}…`,
+      () => ({ tipo: "tirar", msg: `${nome} tirada do lugar.`, inversa: confirmReq({ acao: "place", piece: pc.id, cell,
+        origin: "manual", theta_deg: pc.theta_deg, reposicao: true }) })) }, ico("arrow-up-from-line"), "Tirar do lugar"));
+  }
+  col.append(h("a", { class: "btn", id: "p-recorte", href: `/?peca=${pc.id}&contorno=1`, target: "_blank", rel: "noopener",
+    title: "Abre o editor do recorte na interface completa (o editor novo chega mais tarde)" }, ico("scissors"), "Corrigir recorte"));
+  box.append(col);
+  reportBlock(box, d, pc);
+}
+const REPORT_TIPOS = [["mal_lida", "O recorte está mal"], ["mal_colocada", "Está no lugar errado"], ["nao_encaixa", "Não encaixa"],
+  ["outro", "Outra coisa"]];
+function reportBlock(box, d, pc) {
+  const P = S.painel;
+  for (const r of d.reports_abertos || []) {
+    const t = (REPORT_TIPOS.find((x) => x[0] === r.tipo) || [null, "algo"])[1];
+    box.append(h("p", { class: "small muted p-reportado" }, `Já reportaste: ${t.toLowerCase()}${r.texto ? ` («${r.texto}»)` : ""}.`));
+  }
+  if (!P.report) {
+    box.append(h("div", { class: "btn-col" }, h("button", { class: "btn", type: "button", id: "p-errado",
+      onclick: () => { P.report = { tipo: null }; renderMontar(); } }, ico("flag"), "Algo está errado")));
+    return;
+  }
+  const rb = h("div", { class: "report-box", id: "p-report" }, h("strong", {}, "O que está errado?"));
+  const tipos = h("div", { class: "tipos" });
+  for (const [k, t] of REPORT_TIPOS) tipos.append(h("button", { class: "btn" + (P.report.tipo === k ? " on" : ""), type: "button", "data-tipo": k,
+    onclick: () => { P.report.tipo = k; $$("#p-report .tipos .btn").forEach((b) => b.classList.toggle("on", b.dataset.tipo === k)); } }, t));
+  const txt = h("textarea", { id: "p-report-txt", placeholder: "O que viste (opcional)", "aria-label": "O que viste (opcional)" });
+  rb.append(tipos, txt, h("div", { class: "actions" },
+    h("button", { class: "btn primary", type: "button", id: "p-report-enviar", onclick: async () => {
+      if (!P.report.tipo) { toast("Escolhe o que está errado."); return; }
+      try {
+        await post("/api/report", { piece: pc ? pc.id : null, cell: d.cell, tipo: P.report.tipo, texto: txt.value || "", vista: "novo/painel" });
+        P.report = null; toast("Obrigado. Fica registado."); await refreshPainel();
+      } catch (e) { toast(e.message, true); }
+    } }, "Enviar"),
+    h("button", { class: "btn", type: "button", onclick: () => { P.report = null; renderMontar(); } }, "Cancelar")));
+  box.append(rb);
+}
+function painelVazio(box, d, kind) {
+  const [l, c] = d.cell;
+  box.append(h("span", { class: "kicker" }, kind === "marcado" ? "Lugar marcado por ti" : "Lugar vazio"), h("h3", { id: "p-lugar" }, lugarLongo(d.cell)));
+  if (kind === "marcado") box.append(h("p", { class: "estado", id: "p-estado", "data-estado": "marcado" }, "Marcaste este lugar como montado, mas a peça ainda não foi digitalizada."));
+  else if (d.estado === "ocupada_legado") box.append(h("p", { class: "small muted", id: "p-foto" }, "Na foto do tabuleiro parece cheio: por confirmar."));
+  box.append(h("div", { class: "arte-box" }, h("img", { id: "p-arte", src: `/api/cell/${l}/${c}/zoom.jpg?side=art&dpi=150&v=${S.ver}`, alt: "" }),
+    h("span", {}, "A arte da caixa neste sítio, com o que fica à volta")));
+  const sug = h("div", { class: "sugestao", id: "p-sugestao" });
+  const inQ = queue().filter((it) => it.cell && it.cell[0] === l && it.cell[1] === c);
+  if (inQ.length) {
+    for (const it of inQ) {
+      const g = isGuardar(it);
+      sug.append(h("p", {}, `O programa acha que pode ser: ${quem(it)}`),
+        h("div", { class: "conf", "data-conf": it.confianca }, bars(passes(it)), h("span", {}, g ? "a confirmar por ti" : CONF_TXT[it.confianca])),
+        h("div", { class: "actions" }, g
+          ? h("button", { class: "btn primary", type: "button", onclick: () => doGuardar(it) }, ico("map-pin"), "Colocar aqui")
+          : h("button", { class: "btn primary", type: "button", onclick: () => doEncaixa(it) }, ico("check"), "Encaixa")));
+    }
+  } else if ((d.propostas || []).length) {
+    for (const e of d.propostas) sug.append(h("p", {}, `O programa acha que pode ser: ${nomePeca(e)} (a confirmar por ti).`));
+  } else sug.append(h("p", { class: "muted" }, "Sem sugestão por agora."));
+  box.append(sug);
+  const col = h("div", { class: "btn-col" });
+  if (kind === "marcado") {
+    col.append(h("button", { class: "btn primary", type: "button", id: "p-por", onclick: () => startPorMao(d) }, ico("plus"), "Pôr a peça digitalizada aqui"),
+      h("button", { class: "btn", type: "button", id: "p-vazio", onclick: () => actPainel(confirmReq({ acao: "cell_empty", cell: d.cell }),
+        "A gravar…", () => ({ tipo: "vazio", msg: `${lugarTxt(d.cell)}: afinal está vazio.`, inversa: confirmReq({ acao: "cell_full", cell: d.cell }) })) },
+      ico("x"), "Afinal está vazio"));
+  } else {
+    col.append(h("button", { class: "btn primary", type: "button", id: "p-por", onclick: () => startPorMao(d) }, ico("plus"), "Pôr uma peça aqui"),
+      h("button", { class: "btn", type: "button", id: "p-cheio", onclick: () => actPainel(confirmReq({ acao: "cell_full", cell: d.cell }),
+        "A gravar…", () => ({ tipo: "cheio", msg: `${lugarTxt(d.cell)}: marcado como montado.`, inversa: confirmReq({ acao: "cell_empty", cell: d.cell }) })) },
+      ico("square-dashed"), "Já tem peça, mas não a digitalizei"));
+  }
+  box.append(col);
+}
+
+// ------------------------------------------------------------ F2: «Pôr uma peça à mão» (ESPEC §4.6, §8.7 P10b)
+// Passo 1: saco e nº (ou a grelha das soltas do saco); passo 2: a peça no lugar, «Rodar», 3 verificações que não
+// bloqueiam. Grava `por_mao`: `place` com uma vizinha montada, senão fica «por confirmar» (decisão g, 2026-11-14).
+function startPorMao(d) {
+  S.porMao = { cell: d.cell, d, passo: 1, saco: sess.saco !== null && sess.saco !== undefined ? String(sess.saco) : "", n: "",
+    look: null, lseq: 0, piece: null, theta: null, verif: null, aVerificar: false, vseq: 0, ctrl: null, grade: false, erroVer: null };
+  S.modo = "por_mao"; renderMontar();
+  $("#pm-saco") && ($("#pm-saco").value ? $("#pm-n") : $("#pm-saco")).focus();
+}
+function cancelPorMao() { const M = S.porMao; if (M && M.ctrl) M.ctrl.abort(); S.porMao = null; S.modo = "painel"; renderMontar(); }
+let lookTimer = null;
+function scheduleLookup(now = false) {
+  clearTimeout(lookTimer);
+  lookTimer = setTimeout(doLookup, now ? 0 : 250);
+}
+async function doLookup() {
+  const M = S.porMao;
+  if (!M) return;
+  const seq = ++M.lseq;
+  if (!M.saco || !M.n) { M.look = null; updLook(); return; }
+  try {
+    const r = await api(`/api/pieces/lookup?saco=${encodeURIComponent(M.saco)}&n=${encodeURIComponent(M.n)}`);
+    if (S.porMao !== M || seq !== M.lseq) return;
+    M.look = r;
+  } catch (e) { if (S.porMao === M && seq === M.lseq) M.look = { pode_por: false, frase: e.message }; }
+  updLook();
+}
+/** Só a frase e o botão (sem refazer o painel: o cursor fica no campo onde se escreve). */
+function updLook() {
+  const M = S.porMao, f = $("#pm-frase"), b = $("#pm-continuar");
+  if (!M || !f) return;
+  const L = M.look;
+  f.textContent = L ? L.frase : "";
+  f.dataset.estado = L ? (L.pode_por ? "ok" : "nao") : "";
+  if (b) b.disabled = !(L && L.pode_por);
+  $$("#pm-grade button").forEach((x) => x.classList.toggle("on", !!L && x.dataset.piece === L.piece));
+}
+async function toggleGrade() {
+  const M = S.porMao;
+  M.grade = !M.grade;
+  if (M.grade) { try { S.lots = await api("/api/lots"); } catch (e) { toast(e.message, true); } }
+  renderMontar();
+}
+function gradeEl(M) {
+  const g = h("div", { class: "pm-grade", id: "pm-grade" });
+  const L = (S.lots || []).find((x) => String(x.lote) === String(M.saco));
+  if (!M.saco) { g.append(h("p", { class: "small muted" }, "Escreve primeiro o número do saco.")); return g; }
+  const pcs = L ? L.pecas.filter((p) => ["solta", "emparelhada", "posicao_conhecida"].includes(p.estado)) : [];
+  if (!pcs.length) { g.append(h("p", { class: "small muted" }, `O saco ${M.saco} não tem peças soltas.`)); return g; }
+  for (const p of pcs) {
+    g.append(h("button", { type: "button", "data-piece": p.id, class: M.look && M.look.piece === p.id ? "on" : "", "aria-label": `nº ${p.n_no_lote}`,
+      onclick: () => { M.n = String(p.n_no_lote); $("#pm-n").value = M.n; scheduleLookup(true); } },
+    h("img", { src: `/api/pieces/${p.id}.png?pose=scan&size=112&v=${S.ver}`, alt: "", loading: "lazy" }), `nº ${p.n_no_lote}`));
+  }
+  return g;
+}
+function goPasso2() {
+  const M = S.porMao, L = M.look;
+  if (!L || !L.pode_por) return;
+  M.passo = 2; M.piece = L.piece; M.theta = L.theta_base; M.verif = null;
+  renderMontar();
+  verify(null);
+}
+function rodar() {
+  const M = S.porMao;
+  if (!M || M.theta === null || M.theta === undefined) return;
+  verify(((M.theta + 90 + 180) % 360 + 360) % 360 - 180);
+}
+async function verify(theta) {
+  const M = S.porMao;
+  if (!M || !M.piece) return;
+  if (M.ctrl) M.ctrl.abort();                     // mudar a rotação aborta a verificação anterior (como o detalhe, B)
+  const ctrl = new AbortController(), seq = ++M.vseq;
+  M.ctrl = ctrl; M.aVerificar = true; M.verif = null; M.erroVer = null;
+  if (theta !== null) M.theta = theta;
+  renderMontar();
+  try {
+    const r = await fetch(`/api/cell/${M.cell[0]}/${M.cell[1]}/verificar`, { method: "POST", signal: ctrl.signal,
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({ piece: M.piece, theta_deg: theta }) });
+    const b = await r.json().catch(() => ({}));
+    if (S.porMao !== M || seq !== M.vseq) return;
+    if (!r.ok) throw new Error(b.error || b.detail || `erro ${r.status}`);
+    M.verif = b;
+    if (theta === null) M.theta = b.theta_deg;
+  } catch (e) {
+    if (e.name === "AbortError" || S.porMao !== M || seq !== M.vseq) return;
+    M.erroVer = e.message;
+  }
+  M.aVerificar = false;
+  if (S.modo === "por_mao" && S.porMao === M) renderMontar();
+}
+function previewEl(M) {
+  const [l, c] = M.cell, reg = (M.d.zoom && M.d.zoom.region) || [l, c, l, c];
+  const [l0, c0, l1, c1] = reg, hr = S.hr, span = (S.board && S.board.span_cells) || 1.8;
+  const x0 = c0 - 1, y0 = (l0 - 1) * hr, w = c1 - c0 + 1, hh = (l1 - l0 + 1) * hr;
+  const th = M.theta;
+  const src = th === null || th === undefined ? `/api/pieces/${M.piece}.png?pose=board&size=360&v=${S.ver}`
+    : `/api/pieces/${M.piece}.png?theta=${Number(th).toFixed(2)}&size=360&v=${S.ver}`;
+  return s("svg", { class: "pm-preview", id: "pm-preview", viewBox: `${x0} ${y0} ${w} ${hh}`, role: "img",
+    "aria-label": "A peça no lugar, com as peças à volta", "data-theta": th === null || th === undefined ? "" : Number(th).toFixed(2) },
+  s("image", { href: `/api/cell/${l}/${c}/zoom.jpg?side=render&dpi=150&v=${S.ver}`, x: x0, y: y0, width: w, height: hh, preserveAspectRatio: "none" }),
+  s("image", { class: "pm-peca", href: src, x: c - 0.5 - span / 2, y: (l - 0.5) * hr - span / 2, width: span, height: span, preserveAspectRatio: "xMidYMid meet" }),
+  rectEl(l, c, "pm-cell", 0.02));
+}
+function renderPorMao(T) {
+  const M = S.porMao;
+  const box = h("div", { class: "card painel", id: "por-mao", "data-passo": String(M.passo) });
+  T.append(box);
+  box.append(h("span", { class: "kicker" }, "Pôr uma peça à mão"), h("h3", {}, lugarLongo(M.cell)));
+  if (M.passo === 1) {
+    box.append(h("p", { class: "small muted" }, "Que peça tens na mão? Escreve o saco e o número."));
+    const saco = h("input", { id: "pm-saco", type: "number", inputmode: "numeric", min: 1, value: M.saco, "aria-label": "Saco" });
+    const num = h("input", { id: "pm-n", type: "number", inputmode: "numeric", min: 1, value: M.n, "aria-label": "Número da peça" });
+    const onIn = () => { M.saco = saco.value.trim(); M.n = num.value.trim(); scheduleLookup(); if (M.grade) { const g = $("#pm-grade"); if (g) g.replaceWith(gradeEl(M)); } };
+    saco.addEventListener("input", onIn); num.addEventListener("input", onIn);
+    num.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); goPasso2(); } });
+    box.append(h("div", { class: "pm-campos" }, h("label", {}, "Saco", saco), h("label", {}, "nº", num)),
+      h("p", { class: "pm-frase", id: "pm-frase", "data-estado": "" }),
+      h("div", { class: "actions" },
+        h("button", { class: "btn primary big", type: "button", id: "pm-continuar", disabled: true, onclick: goPasso2 }, ico("arrow-right"), "Continuar"),
+        h("button", { class: "btn", type: "button", id: "pm-folha", onclick: toggleGrade }, ico("layout-grid"), M.grade ? "Esconder a folha" : "Escolher na folha")));
+    if (M.grade) box.append(gradeEl(M));
+    box.append(h("div", { class: "links" }, h("button", { class: "linkish", type: "button", id: "pm-cancelar", onclick: cancelPorMao }, ico("arrow-left"), "Cancelar")));
+    updLook();
+    if (M.saco && M.n && !M.look) scheduleLookup(true);
+    return;
+  }
+  const L = M.look || {}, nome = `Saco ${L.lote ?? "?"} · nº ${L.n_no_lote ?? "?"}`;
+  box.append(h("div", { class: "small", id: "pm-peca-nome" }, nome), previewEl(M));
+  box.append(h("div", { class: "actions" }, h("button", { class: "btn", type: "button", id: "pm-rodar", onclick: rodar,
+    disabled: M.theta === null || M.theta === undefined }, ico("rotate-cw"), "Rodar")));
+  const ul = h("ul", { class: "why ver-lista", id: "pm-ver" });
+  const nViz = M.verif ? M.verif.vizinhas_com_forma : (M.d.vizinhas_com_forma || 0);
+  const borda = !!bordaTxt(M.cell[0], M.cell[1]);
+  if (M.aVerificar || (!M.verif && !M.erroVer)) {
+    const keys = (borda ? [["borda", "Lado liso"]] : []).concat([["forma", "Forma com as peças ao lado"], ["imagem", "Imagem com as peças ao lado"]]);
+    for (const [k, t] of keys) ul.append(h("li", { "data-chave": k, "data-estado": "a_verificar" }, bars(0, "a verificar"), h("span", {}, `${t}: a verificar…`)));
+  } else if (M.erroVer) {
+    ul.append(h("li", { "data-chave": "erro", "data-estado": "nao_testado" }, bars(0, "não verificado"), h("span", {}, `Não consegui verificar: ${M.erroVer}`)));
+  } else {
+    for (const t of M.verif.verificacoes) ul.append(h("li", { "data-chave": t.chave, "data-estado": t.estado },
+      bars(t.tracos, t.estado === "nao_testado" ? "não verificado" : `${t.tracos} de 3`), h("span", {}, t.frase),
+      t.estado === "nao_testado" ? h("em", { class: "nv" }, "não verificado") : null));
+  }
+  box.append(ul);
+  box.append(h("p", { class: "estado-linha", id: "pm-estado", "data-modo": nViz ? "colocar" : "por_confirmar" }, nViz
+    ? `Tem ${nViz === 1 ? "uma peça montada ao lado" : `${nViz} peças montadas ao lado`}: fica no lugar.`
+    : "Ainda sem peças ao lado: fica no tabuleiro «por confirmar» até uma vizinha encaixar."));
+  const falha = !!(M.verif && M.verif.falha);
+  if (falha) box.append(h("p", { class: "aviso", id: "pm-aviso" }, "Uma verificação falhou. Confirma na mão antes de a pôr; se encaixa mesmo, põe na mesma."));
+  const label = nViz ? (falha ? "Pôr na mesma" : "Pôr aqui") : "Colocar aqui, por confirmar";
+  box.append(h("div", { class: "actions" }, h("button", { class: "btn primary big", type: "button", id: "pm-por", onclick: doPorMao }, ico(nViz ? "check" : "map-pin"), label)));
+  box.append(h("div", { class: "links" },
+    h("button", { class: "linkish", type: "button", id: "pm-outra", onclick: () => { if (M.ctrl) M.ctrl.abort(); M.passo = 1; M.verif = null; renderMontar(); } }, ico("arrow-left"), "Outra peça"),
+    h("button", { class: "linkish", type: "button", id: "pm-cancelar", onclick: cancelPorMao }, ico("x"), "Cancelar")));
+}
+async function doPorMao() {
+  const M = S.porMao;
+  if (!M || !M.piece || S.busy) return;
+  if (M.ctrl) M.ctrl.abort();
+  const L = M.look || {}, nome = `Saco ${L.lote ?? "?"} · nº ${L.n_no_lote ?? "?"}`, cell = M.cell, pid = M.piece;
+  lockButtons(true);
+  S.pendente = `A pôr ${nome.toLowerCase()} no lugar…`; renderMontar();
+  try {
+    const r = await post("/api/confirm", { acao: "por_mao", piece: pid, cell, theta_deg: M.theta });
+    writeFailed(r);
+    const conf = r.modo === "por_confirmar";
+    S.undo = { tipo: "por_mao", painel: true, msg: conf ? `${nome} no lugar, por confirmar.` : `${nome} no lugar.`,
+      inversa: confirmReq(conf ? { acao: "position_clear", piece: pid, desfaz: true } : { acao: "unplace", piece: pid, desfaz: true }) };
+    S.pendente = null; S.porMao = null; S.modo = "painel";
+    S.painel = { cell, d: null, erro: null, seq: (S.painel ? S.painel.seq : 0) + 1, report: null };
+    renderMontar();
+    toastUndo(S.undo.msg);
+    await afterWrite();
+    await refreshPainel();
+  } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); }
+}
+
+// ------------------------------------------------------------ F2 (9): «⋯ › Definições › Cor das peças» (só visualização)
+// Um filtro CSS (brilho e saturação) nas imagens de peça dos cartões e painéis e no tabuleiro; guardado por aparelho
+// (localStorage), nunca enviado ao servidor: scans, recortes e índice não mudam. Valor inicial: o desvio scan/arte
+// medido (docs/estado-e-plano.md §3: L*scan ≈ 1,06·L*arte + 1,3, ≈ +5 L* uniforme; croma quase igual): brilho 0,92.
+const COR_INICIAL = { b: 0.92, s: 1.0 };
+const COR_TABULEIRO = true;              // F2: medido (DETALHE.md §9.2): no tabuleiro, 0 frames perdidos a arrastar e com a roda
+function corGet() {
+  try { const v = JSON.parse(lsGet("novo-cor") || "null"); if (v && Number.isFinite(v.b) && Number.isFinite(v.s)) return v; } catch (e) { /* inicial */ }
+  return { ...COR_INICIAL };
+}
+function corApply(v) {
+  const r = document.documentElement.style;
+  r.setProperty("--cor-b", String(v.b)); r.setProperty("--cor-s", String(v.s));
+  document.body.classList.toggle("cor-tabuleiro", COR_TABULEIRO);
+}
+function openDefinicoes() {
+  let v = corGet();
+  const set = (nv) => { v = nv; lsSet("novo-cor", JSON.stringify(v)); corApply(v); b.value = v.b; sa.value = v.s; };
+  const b = h("input", { type: "range", id: "cor-b", min: 0.7, max: 1.3, step: 0.01, value: v.b, "aria-label": "Mais escuro ou mais claro" });
+  const sa = h("input", { type: "range", id: "cor-s", min: 0.5, max: 1.5, step: 0.01, value: v.s, "aria-label": "Cor menos viva ou mais viva" });
+  b.addEventListener("input", () => set({ b: Number(b.value), s: v.s }));
+  sa.addEventListener("input", () => set({ b: v.b, s: Number(sa.value) }));
+  const amostra = current() || null;
+  const back = h("div", { class: "dlg-back", id: "definicoes", role: "dialog", "aria-modal": "true", "aria-labelledby": "def-titulo" });
+  const close = () => back.remove();
+  back.addEventListener("click", (e) => { if (e.target === back) close(); });
+  back.append(h("div", { class: "dlg" },
+    h("h3", { id: "def-titulo" }, "Definições"),
+    h("h2", {}, "Cor das peças"),
+    h("p", { class: "small muted" }, "Só muda como as peças aparecem neste aparelho (cartões, painéis e tabuleiro). Os scans e o que o programa compara ficam iguais."),
+    amostra ? h("div", { class: "cor-amostra" }, h("img", { class: "peca-img", src: `/api/pieces/${amostra.piece}.png?pose=scan&size=240&v=${S.ver}`, alt: "" })) : null,
+    h("div", { class: "slider" }, ico("sun"), b),
+    h("div", { class: "slider-ends" }, h("span", {}, "mais escuro"), h("span", {}, "mais claro")),
+    h("div", { class: "slider" }, ico("droplet"), sa),
+    h("div", { class: "slider-ends" }, h("span", {}, "cor menos viva"), h("span", {}, "cor mais viva")),
+    h("div", { class: "actions" },
+      h("button", { class: "btn", type: "button", id: "cor-repor", onclick: () => set({ ...COR_INICIAL }) }, ico("undo-2"), "Repor"),
+      h("button", { class: "btn primary", type: "button", id: "def-fechar", onclick: close }, "Fechar"))));
+  document.body.append(back);
+  b.focus();
 }
 
 // ------------------------------------------------------------ separadores
@@ -482,7 +917,7 @@ async function findBagNumber(lote, n) {
 }
 // A lupa mostra as propostas da peça e do lugar (F1c) numa caixa no topo do painel (#lupa-res), não só num aviso.
 const nomePeca = (pc) => (pc && pc.lote !== null && pc.lote !== undefined ? `Saco ${pc.lote} · nº ${pc.n_no_lote ?? "?"}` : "Peça sem saco");
-const GRUPO_TXT = { coloca_agora: "pôr agora: tem uma peça montada ao lado", guarda_posicao: "sem vizinha montada: pôr no lugar, por confirmar" };
+const GRUPO_TXT = { coloca_agora: "pôr agora: tem uma peça montada ao lado", guarda_posicao: "ainda sem peças ao lado: pôr no lugar, por confirmar" };
 function propLine(e, quemTxt) {
   const inQ = queue().find((it) => it.piece === e.piece && it.cell && e.cell && it.cell[0] === e.cell[0] && it.cell[1] === e.cell[1]);
   const conf = inQ ? (isGuardar(inQ) ? "a confirmar por ti" : CONF_TXT[inQ.confianca]) : "a confirmar por ti";
@@ -537,7 +972,11 @@ function scheduleReload(board) {
   clearTimeout(reloadTimer);
   reloadTimer = setTimeout(async () => {
     const b = scheduleReload.board; scheduleReload.board = false;
-    try { if (b) await loadBoard(); await loadMontar(); } catch (e) { /* o próximo evento tenta de novo */ }
+    try {
+      if (b) await loadBoard();
+      await loadMontar();
+      if (b && S.modo === "painel" && !S.busy) await refreshPainel();     // F2: o painel aberto mostra o lugar de agora
+    } catch (e) { /* o próximo evento tenta de novo */ }
   }, 350);
 }
 function connectEvents() {
@@ -566,6 +1005,7 @@ function initMenu() {
   btn.onclick = (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute("aria-expanded", menu.hidden ? "false" : "true"); };
   document.addEventListener("click", (e) => { if (!menu.hidden && !menu.contains(e.target)) close(); });
   $("#m-atividade").onclick = () => { lsSet("atividade-open", "1"); window.open("/", "_blank"); close(); };
+  $("#m-definicoes").onclick = () => { close(); openDefinicoes(); };
   const bind = (id, key, prop, after) => {
     const el = $(id); el.checked = !!S[prop];
     el.onchange = () => { S[prop] = el.checked; lsSet(key, el.checked ? "1" : "0"); after(); };
@@ -575,7 +1015,13 @@ function initMenu() {
   bind("#m-guardadas", "novo-por-confirmar", "showGuardadas", () => { drawLayers(); drawLegend(); });
 }
 function onKey(e) {
-  if (e.key === "Escape") { if (!$("#lightbox").hidden) { $("#lightbox").hidden = true; return; } if (S.modo !== "cartao") { S.modo = "cartao"; renderMontar(); } return; }
+  if (e.key === "Escape") {
+    if (!$("#lightbox").hidden) { $("#lightbox").hidden = true; return; }
+    if ($("#definicoes")) { $("#definicoes").remove(); return; }
+    if (S.modo === "por_mao") { cancelPorMao(); return; }            // F2: volta ao painel do lugar
+    if (S.modo !== "cartao") { S.modo = "cartao"; S.painel = null; renderMontar(); }
+    return;
+  }
   const tag = (e.target && e.target.tagName) || "";
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
   if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")) { e.preventDefault(); doUndo(); return; }
@@ -600,6 +1046,7 @@ async function boot() {
   $("#lb-close").onclick = () => { $("#lightbox").hidden = true; };
   $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox" || e.target.classList.contains("lb-body")) $("#lightbox").hidden = true; });
   document.addEventListener("keydown", onKey);
+  corApply(corGet());
   initMenu();
   initPointer();
   connectEvents();

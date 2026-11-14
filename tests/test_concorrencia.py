@@ -1,8 +1,8 @@
 """Teste de esforço da composição do tabuleiro fora dos bloqueios (DETALHE.md §8, passo 0b da F2).
 
 Desde a ronda 1 do detalhe (``e252dc1``) uma região compõe-se fora de qualquer bloqueio, ao mesmo tempo que as escritas.
-Aqui: 4 fios compõem em ciclo (regiões com e sem cache, o tabuleiro inteiro, o zoom 3 × 3, a miniatura da peça, e um
-por HTTP) enquanto o fio principal coloca, tira e re-segmenta peças pelo servidor, e um outro fio deixa
+Aqui: 4 fios compõem em ciclo (regiões com e sem cache, o tabuleiro inteiro, o zoom 3 × 3, a miniatura da peça, o
+«verificar» da F2, e um por HTTP) enquanto o fio principal coloca, tira e re-segmenta peças pelo servidor, e um outro fio deixa
 ``render/clean`` velhos (o caso que matou a composição com ``FileNotFoundError`` na ronda 2). No fim: nenhuma exceção nos
 fios, invariantes no disco, e o que o servidor serve para a versão final é igual ao de um servidor acabado de abrir.
 """
@@ -70,8 +70,12 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 					gui.board_jpg(120, reg)                           # region (LRU)
 				elif x < 0.40 + 0.35:
 					gui._compose(rnd.choice((90, 120, 150)), reg)     # always composes
-				elif x < 0.85:
+				elif x < 0.82:
 					gui.zoom_jpg(rnd.randint(1, 4), rnd.randint(1, 6), "render")
+				elif x < 0.90:
+					# «verificar» da F2: também sem o bloqueio de escrita (DETALHE.md §8.2)
+					r = gui.verify_json(2, 4, rnd.choice((tw, dec)), rnd.choice((None, 0.0, 90.0)))
+					assert "error" not in r and len(r["verificacoes"]) >= 2, r
 				else:
 					gui.piece_png(rnd.choice((placed, tw, dec)), "board", 120)
 				counts["n"] += 1

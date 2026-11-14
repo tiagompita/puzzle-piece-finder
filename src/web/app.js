@@ -1369,7 +1369,7 @@ async function boot() {
         const st2 = await api("/api/status");
         if (st2.estado === "pronto") {
           clearInterval(poll);
-          if (!$("#prep").hidden) { $("#prep").hidden = true; await loadAll(); document.body.dataset.ready = "1"; }
+          if (!$("#prep").hidden) { $("#prep").hidden = true; await loadAll(); document.body.dataset.ready = "1"; await openFromUrl(); }
         }
       } catch (e) { /* server restarting */ }
     }, 3000);
@@ -1377,5 +1377,15 @@ async function boot() {
   }
   await loadAll();
   document.body.dataset.ready = "1";
+  await openFromUrl();
+}
+/** Ponte da GUI nova (F2, «Corrigir recorte» no painel da peça, decisão d de 2026-11-14): ``/?peca=P####`` abre a
+ * peça e ``&contorno=1`` também o editor do recorte, até o editor novo chegar (F5). */
+async function openFromUrl() {
+  const q = new URLSearchParams(location.search);
+  const pid = (q.get("peca") || "").trim().toUpperCase();
+  if (!/^P\d{4}$/.test(pid)) return;
+  await openPiece(pid);
+  if (q.get("contorno") === "1") await openContourEditor(pid, { kind: "piece", pid });
 }
 boot().catch((e) => toast(e.message, true));

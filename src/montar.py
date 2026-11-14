@@ -30,7 +30,7 @@ import math
 from typing import Optional
 
 __all__ = ["QUASE_CERTO_N", "QUASE_CERTO_WILSON", "PENDING_STATES", "GUARDAR_STATES", "track_record", "confidence",
-		   "tracos", "fila", "resumo", "progress"]
+		   "tracos", "fila", "resumo", "progress", "verificacoes", "RMS_FOLGA_MM"]
 
 QUASE_CERTO_N = 10                  # §8.3: decisões físicas mínimas por origem × zona
 QUASE_CERTO_WILSON = 0.80           # §8.3: limite inferior de Wilson 95 % mínimo
@@ -200,6 +200,57 @@ def tracos(item: dict, profile=None) -> list:
 	if imagem == 0 and tipo in ("gemea", "borda", "fundida") and item.get("dE") is not None and not p90:
 		out[1]["frase"] = "Imagem: não verificado (nesta zona a imagem ainda não decide)."
 	return out
+
+
+_FRASES_V = {
+	"borda": {3: "O lado liso fica virado para fora do puzzle.", 1: "O lado liso não fica virado para fora: roda a peça.",
+			  0: "Lado liso: não verificado."},
+	"forma": {3: "A forma encaixa nas peças ao lado.", 2: "A forma passa, mas um lado fica justo.",
+			  1: "A forma não encaixa numa das peças ao lado.", 0: "Forma: não verificado."},
+	"imagem": {3: "A imagem continua a das peças ao lado.", 2: "A imagem passa, mas sem folga.",
+			   1: "A imagem não bate com as peças ao lado.", 0: "Imagem: não verificado."},
+}
+RMS_FOLGA_MM = 1.1      # «forma com folga»: o pior lado com RMS do perfil <= isto (= fit.RMS_SCALE, a mediana das adjacências verdadeiras)
+
+
+def verificacoes(enc: Optional[dict], borda: Optional[dict], t_abs=None) -> list:
+	"""As 3 verificações de «Pôr uma peça à mão» (ESPEC §4.6, §8.4; F2) em palavras e traços: ``borda`` (só num lugar de
+	borda), ``forma`` e ``imagem`` com as peças montadas ao lado.
+
+	``enc``: :func:`src.query.fit_check` na rotação escolhida; ``borda``: ``{necessaria, ok}`` (``ok`` None = rotação sem
+	lados alinhados). Regras (decididas na F2, ``docs/decisoes.md``): a **forma** falha (1) se um lado é impossível (tipo
+	T↔T / B↔B ou corda acima do corte), passa com folga (3) se o pior lado tem RMS do perfil <= :data:`RMS_FOLGA_MM`, senão
+	passa (2); a **imagem** é o custo conjunto do molde (tiras de imagem + forma) contra ``t_abs`` (o único limiar
+	calibrado: 3 = <= metade, 2 = <= ``t_abs``, 1 = acima); sem peças ao lado (ou sem tira de imagem) dizem «não
+	verificado» (0), como no «Porquê» (§8.4). O lado liso verifica-se sempre pela classe e pela rotação."""
+	out = []
+	if borda and borda.get("necessaria"):
+		ok = borda.get("ok")
+		n = 0 if ok is None else (3 if ok else 1)
+		out.append(_trace("borda", n, _FRASES_V["borda"][n], _ESTADO[n]))
+	enc = enc or {}
+	lados = enc.get("lados") or []
+	imposs = [r for r in lados if not r.get("comp") or r.get("hard")]
+	sem_viz = enc.get("estado") == "nao_testado" and not lados
+	if sem_viz:
+		forma = 0
+	elif imposs:
+		forma = 1
+	else:
+		worst = max((float(r["rms"]) for r in lados if r.get("rms") is not None), default=None)
+		forma = 0 if worst is None else (3 if worst <= RMS_FOLGA_MM else 2)
+	J = enc.get("J")
+	imagem = 0 if (sem_viz or imposs or J is None or enc.get("estado") == "nao_testado") else _level(J, t_abs)
+	f = _trace("forma", forma, _FRASES_V["forma"][forma], _ESTADO[forma])
+	i = _trace("imagem", imagem, _FRASES_V["imagem"][imagem], _ESTADO[imagem])
+	if sem_viz:
+		f["frase"] = "Forma: não verificado (ainda sem peças ao lado)."
+		i["frase"] = "Imagem: não verificado (ainda sem peças ao lado)."
+	elif imagem == 0 and imposs:
+		i["frase"] = "Imagem: não verificado (a forma não encaixa)."
+	elif imagem == 0 and forma:
+		i["frase"] = "Imagem: não verificado (sem imagem nas bordas)."
+	return out + [f, i]
 
 
 def _kind(e: dict) -> str:

@@ -69,7 +69,7 @@ import numpy as np
 
 from src import overrides as OV
 from src.locate import CellArt, body_beta_deg, body_center_mm, wrap_deg
-from src.state import remove_file, write_atomic
+from src.state import read_retry, remove_file, write_atomic
 
 __all__ = [
 	"CORNER_RESIDUAL_MAX_MM", "F_ROTATION", "F_SPAN", "F_MAX_DEG", "F_LINE_RMS_MAX", "F_TRANSLATION", "F_TARGET_GROW", "f_side_line", "f_side_fit", "f_rotation", "f_translation", "IMG_SEARCH_CELL", "IMG_ROT_DEG", "IMG_ACCEPT_MM", "IMG_ACCEPT_DEG", "GRAD_W", "IMG_NCC_MIN",
@@ -807,8 +807,10 @@ def load_placements(project) -> dict:
 	fp = project.p("render", "placements.json")
 	if not os.path.exists(fp):
 		return {"log_len": None, "version": PLACEMENTS_VERSION, "placements": {}}
-	with open(fp, encoding="utf-8") as f:
-		d = json.load(f)
+	def rd():
+		with open(fp, encoding="utf-8") as f:
+			return json.load(f)
+	d = read_retry(rd)          # the GUI reads it while a write swaps it (Windows: «delete pending», DETALHE.md §8.2)
 	rule = _rule_flags()
 	if d.get("version") != PLACEMENTS_VERSION or any(d.get(k, False) != v for k, v in rule.items()):
 		# another registration rule (F_ROTATION / F_TRANSLATION / its target switched since the file was

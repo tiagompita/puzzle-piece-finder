@@ -69,7 +69,7 @@ from typing import Optional
 import numpy as np
 
 __all__ = ["ORIGIN_STEP", "CROSS_ORIGINS", "ENC_TAG", "MAX_MISSING_BORDER", "MAX_BORDER_CANDIDATES", "run_query", "write_fetch",
-		   "load_fetch", "render_fetch_md", "ghost_contour", "wrap180", "GHOST_MAX_PTS", "mounted_neighbours", "fetch_group",
+		   "load_fetch", "render_fetch_md", "ghost_contour", "wrap180", "GHOST_MAX_PTS", "mounted_neighbours", "fetch_group", "fit_check",
 		   "main"]
 
 CROSS_ORIGINS = ("gemeo", "borda", "par")   # entries checked against the mounted neighbours (_cross_check)
@@ -647,13 +647,15 @@ def _side_txt(pr, rec) -> str:
 	return f"{where}{rec['vizinha']}"
 
 
-def _fit_check(ctx, pid: str, cell: tuple, theta) -> dict:
-	"""``encaixe`` of piece ``pid`` in the empty ``cell`` against its mounted neighbours (see :func:`_cross_check`)."""
+def fit_check(ctx, pid: str, cell: tuple, theta, marked_ok: bool = False) -> dict:
+	"""``encaixe`` of piece ``pid`` in the empty ``cell`` against its mounted neighbours (see :func:`_cross_check`).
+	``marked_ok``: also a cell the user marked full without a scanned piece (``fit.hole_queries(include_marked=)``;
+	the «verificar» of the GUI nova, F2)."""
 	pr = ctx.pr
 	fc = _fit_ctx(ctx)
 	F, calib, cache, dcache = fc["F"], fc["calib"], fc["cache"], fc["dcache"]
 	base = {"estado": "nao_testado", "fit_version": F.FIT_VERSION, "t_abs": calib.t_abs}
-	holes = F.hole_queries(pr, cells=[tuple(cell)], cache=cache, dcache=dcache)
+	holes = F.hole_queries(pr, cells=[tuple(cell)], cache=cache, dcache=dcache, include_marked=marked_ok)
 	if not holes or not holes[0].sides:
 		return dict(base, motivo="vizinhas montadas sem forma ou pose no índice")
 	hole = holes[0]
@@ -714,6 +716,9 @@ def _fit_check(ctx, pid: str, cell: tuple, theta) -> dict:
 	out.update(estado="ok", motivo=None,
 			   razao=f"encaixe com {hole.m} vizinha{'s' if hole.m != 1 else ''}: custo {_fc(J)}{lim} ({pose_txt})")
 	return out
+
+
+_fit_check = fit_check          # the old private name (used by _cross_check)
 
 
 def _cross_check(ctx, e: dict) -> dict:
@@ -905,8 +910,12 @@ def load_fetch(project) -> dict:
 	fp = project.p("fetch.json")
 	if not os.path.exists(fp):
 		return {"entries": []}
-	with open(fp, encoding="utf-8") as f:
-		return json.load(f)
+	from src.state import read_retry
+
+	def rd():
+		with open(fp, encoding="utf-8") as f:
+			return json.load(f)
+	return read_retry(rd)         # swapped by write_fetch while the GUI reads it (DETALHE.md §8.2)
 
 
 def _pose_txt(e) -> str:

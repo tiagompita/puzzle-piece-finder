@@ -229,7 +229,7 @@ def test_guardar_card_not_nada_no_encaixa_dashed(guarda, browser):
 		txt = _montar_text(pg)
 		assert NADA not in txt
 		assert pg.locator("#tab-montar .card").get_attribute("data-piece") == tw
-		assert "Sem vizinha montada" in txt and "A confirmar por ti" in txt and "Lugar provável: linha" in txt
+		assert "Ainda sem peças ao lado" in txt and "A confirmar por ti" in txt and "Lugar provável: linha" in txt
 		assert pg.locator("#b-encaixa").count() == 0                                   # sem «Encaixa»
 		assert pg.locator("#b-guardar").inner_text() == "Colocar aqui"                 # F1d (era «Guardei à parte»)
 		assert pg.locator("#b-nao").inner_text() == "Não pertence aqui"                # F1d (era «Não é esta»)
@@ -332,7 +332,7 @@ def test_order_coloca_first_then_guardar(guarda, browser):
 		assert pg.locator("#tab-montar .card").get_attribute("data-piece") == dec
 		assert pg.locator("#b-encaixa").count() == 1
 		assert pg.locator("#m-seguir [data-tipo=guardar]").count() == 1
-		assert "sem vizinha montada" in pg.locator("#m-seguir").inner_text()
+		assert "ainda sem peças ao lado" in pg.locator("#m-seguir").inner_text()
 		pg.click("#b-saltar")
 		assert pg.locator("#tab-montar .card").get_attribute("data-piece") == dec        # 1.º salto: ainda antes
 		pg.click("#b-saltar")
@@ -382,7 +382,7 @@ def test_lupa_shows_piece_and_place_proposals(guarda, browser):
 		li = pg.locator("#lupa-props li")
 		assert li.count() == 1 and li.get_attribute("data-grupo") == "guarda_posicao"
 		t = pg.locator("#lupa-res").inner_text()
-		assert f"Saco {p.lote} · nº {p.n_no_lote}" in t and f"Linha {cell[0]} · coluna {cell[1]}" in t and "sem vizinha montada" in t
+		assert f"Saco {p.lote} · nº {p.n_no_lote}" in t and f"Linha {cell[0]} · coluna {cell[1]}" in t and "ainda sem peças ao lado" in t
 		_no_forbidden(t)
 		pg.click("#lupa-fechar")
 		assert pg.locator("#lupa-res").is_hidden()
@@ -390,7 +390,7 @@ def test_lupa_shows_piece_and_place_proposals(guarda, browser):
 		pg.press("#q", "Enter")
 		pg.wait_for_selector("#lupa-res[data-kind=lugar]:not([hidden]) #lupa-props li", timeout=30_000)
 		t = pg.locator("#lupa-res").inner_text()
-		assert "Ainda vazio." in t and f"Saco {p.lote} · nº {p.n_no_lote}" in t and "sem vizinha montada" in t
+		assert "Ainda vazio." in t and f"Saco {p.lote} · nº {p.n_no_lote}" in t and "ainda sem peças ao lado" in t
 		assert pg.locator("#lupa-props li").get_attribute("data-piece") == tw
 		_no_forbidden(t.replace(f"Linha {cell[0]} · coluna {cell[1]}", ""))
 		# um lugar sem propostas diz-o

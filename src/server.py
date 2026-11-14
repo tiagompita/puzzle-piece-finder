@@ -411,6 +411,8 @@ class Gui:
 		self._placements = None       # (ver, dict)
 		self._sheets = {}
 		self._art = None
+		self._verif_lock = threading.Lock()   # «verificar» (F2): one at a time on its own fit cache, never the write lock
+		self._verif_cache = None              # src.fit._Cache of «verificar» (the hole ranking has its own, _fitc)
 		self.ingest_segment = None    # tests: replacement for segment_scan
 		self.stale_info = None        # start-up check of the assets against the log (render.stale_assets)
 		self._sse_waiters = set()     # one asyncio.Event per connected SSE client (set by emit, from any thread)
@@ -1273,15 +1275,17 @@ class Gui:
 		return None
 
 	# ------------------------------------------------------------ images of pieces / sheets / sections
-	def piece_png(self, pid: str, pose: str = "board", size: int = 220) -> tuple:
+	def piece_png(self, pid: str, pose: str = "board", size: int = 220, theta: Optional[float] = None) -> tuple:
 		"""PNG (RGBA) of the cleaned crop: ``pose='board'`` turned as it sits / will sit on the board
 		(placed: its registration; proposed: ``theta_deg`` of the list), else as scanned. The canvas
 		spans ``SPAN_CELLS`` cell widths with the body centre in the middle. Returns
 		``(bytes, pose_used, why, theta_deg | None)``."""
 		from src.query import _body_center, _piece_image
 		size = int(min(max(size, 32), PIECE_PX_MAX))
-		theta, why = (None, "scan")
-		if pose == "board":
+		why = "scan"
+		if theta is not None:
+			theta, why = float(theta), "pedido"            # «Pôr uma peça à mão»: the rotation the user chose (F2)
+		elif pose == "board":
 			theta, why = self.read(lambda: self.board_pose(pid))
 		key = (pid, round(theta, 2) if theta is not None else None, size, self.render_version() if pose == "board" else 0)
 		c = self._pieces.get(key)
@@ -1295,7 +1299,7 @@ class Gui:
 		bgr, al = im
 		rgba = np.dstack([np.clip(bgr + 0.5, 0, 255).astype(np.uint8), np.clip(al[..., 0] * 255 + 0.5, 0, 255).astype(np.uint8)])
 		ok, buf = cv2.imencode(".png", rgba)
-		out = (buf.tobytes(), "board" if theta is not None else "scan", why, theta)
+		out = (buf.tobytes(), "board" if theta is not None else "scan", why, theta)    # ``why`` «pedido» = theta given
 		self._pieces[key] = out
 		while len(self._pieces) > PIECE_LRU:
 			self._pieces.popitem(last=False)
@@ -1483,17 +1487,27 @@ class Gui:
 				nc = pr.board[(a, b)]
 				neigh.append({"dir": d, "cell": [a, b], "estado": nc["estado"], "peca_id": nc["peca_id"], "fonte": nc["fonte"],
 							  "ocupada": pr.board.occupied((a, b))})
-		origin = None
+		origin, posta_em = None, None
 		if pid:
 			for ev in reversed(pr.events()):
 				if ev.get("action") == "placed" and ev.get("piece") == pid:
-					origin = ev.get("origin")
+					origin, posta_em = ev.get("origin"), ev.get("t")
 					break
 				if ev.get("action") == "section_anchored" and any(x.get("piece") == pid for x in ev.get("placements", [])):
 					origin = f"secção {ev.get('section')}"
 					break
 		reg = (max(1, l - 1), max(1, c - 1), min(prof.rows, l + 1), min(prof.cols, c + 1))
+		sec = None
+		if pid:
+			p = pr.piece(pid)
+			if p.seccao_id and p.seccao_id in pr.sections:
+				s = pr.sections[p.seccao_id]
+				a = s.anchor or {}
+				sec = {"id": s.id, "n": sum(1 for q in pr.pieces.values() if q.seccao_id == s.id and q.estado == "colocada"),
+					   "anchor": {k: a.get(k) for k in ("l0", "c0", "rot", "mirror")}}
 		return {
+			"posta_em": posta_em, "secao": sec, "vizinhas_com_forma": self.placed_neighbours_with_shape(l, c),
+			"reports_abertos": self._open_reports(pid or (known[0]["id"] if known else None), (l, c)),
 			"cell": [l, c], "estado": cell["estado"], "estado_txt": cell_text(cell),
 			"por_confirmar": pr.board.unconfirmed((l, c)), "pista": cell["fonte"] == "tiago",
 			"fonte": cell["fonte"], "borda": prof.is_border(l, c), "peca": self.piece_summary(pid) if pid else None,
@@ -1505,6 +1519,137 @@ class Gui:
 			"zoom": {"region": list(reg), "render": f"/api/cell/{l}/{c}/zoom.jpg?side=render",
 					 "arte": f"/api/cell/{l}/{c}/zoom.jpg?side=art"},
 		}
+
+	def placed_neighbours_with_shape(self, l: int, c: int) -> int:
+		"""Orthogonal neighbours of ``(l, c)`` that hold a placed piece with a shape in the index: with one, a piece put
+		there by hand is ``place``; without, it stays «por confirmar» (``position_known``; F2, decision g of 2026-11-14)."""
+		pr = self.pr
+		n = 0
+		for nb in pr.board.neighbours((l, c)):
+			cell = pr.board[nb]
+			if cell["estado"] == "colocada" and cell["peca_id"] and pr.shape(cell["peca_id"]) is not None:
+				n += 1
+		return n
+
+	def _open_reports(self, pid, cell) -> list:
+		"""Open reports of the piece (or, without one, of the cell): ``[{id, tipo, texto}]`` («já reportaste», F2)."""
+		from src import reports
+		try:
+			rs = reports.read_reports(self.pr)
+		except (OSError, ValueError):
+			return []
+		out = []
+		for r in rs:
+			if r.get("estado") != "aberto":
+				continue
+			if (pid and r.get("piece") == pid) or (not r.get("piece") and r.get("cell") and tuple(r["cell"]) == tuple(cell)):
+				out.append({"id": r.get("id"), "tipo": r.get("tipo"), "texto": r.get("texto") or ""})
+		return out
+
+	def lookup_json(self, saco, n) -> dict:
+		"""``GET /api/pieces/lookup?saco=N&n=X`` (F2, «Pôr uma peça à mão»): the piece «Saco N · nº X» in words."""
+		try:
+			saco, n = int(saco), int(n)
+		except (TypeError, ValueError):
+			return {"error": "saco e nº têm de ser números"}
+		p = next((q for q in self.pr.pieces.values() if q.lote == saco and q.n_no_lote == n), None)
+		if p is None:
+			return {"piece": None, "lote": saco, "n_no_lote": n, "estado": None, "pode_por": False,
+					"frase": f"Saco {saco} · nº {n} não existe."}
+		lug = f"linha {p.celula[0]} · coluna {p.celula[1]}" if p.celula else None
+		frase = {"solta": f"Saco {saco} · nº {n} está solta.", "emparelhada": f"Saco {saco} · nº {n} está solta.",
+				 "colocada": f"Saco {saco} · nº {n} já está no lugar {lug}.",
+				 "posicao_conhecida": f"Saco {saco} · nº {n} está no lugar {lug}, por confirmar.",
+				 "em_seccao": f"Saco {saco} · nº {n} está num grupo.",
+				 "descartada": f"Saco {saco} · nº {n} foi posta de lado."}.get(p.estado, p.estado)
+		ok = p.estado in ("solta", "emparelhada", "posicao_conhecida")
+		# the rotation the preview starts from (the first of the 4 that «verificar» tries): «Rodar» adds 90° to it
+		th0 = self._theta_candidates(p.id, self.pr.shape(p.id))[0] if ok else None
+		return {"piece": p.id, "lote": p.lote, "n_no_lote": p.n_no_lote, "estado": p.estado, "scan_id": p.scan_id,
+				"celula": list(p.celula) if p.celula else None, "pode_por": ok, "frase": frase,
+				"theta_base": None if th0 is None else round(th0, 2)}
+
+	def _theta_candidates(self, pid: str, sh) -> list:
+		"""The 4 rotations to try when the user has not turned the piece yet: the pose the board / list / log knows,
+		else the rotation that puts side 0 facing north (:data:`src.fit.NORMAL_DEG`); then + 90°, + 180°, + 270°."""
+		from src import fit as F
+		from src.locate import body_center_mm
+		th, _why = self.board_pose(pid)
+		if th is None and sh is not None and sh.ok and sh.sides:
+			v = 0.5 * (np.asarray(sh.sides[0].p0_mm) + np.asarray(sh.sides[0].p1_mm)) - body_center_mm(sh)
+			th = F.NORMAL_DEG["N"] - float(np.degrees(np.arctan2(v[1], v[0])))
+		th = float(th or 0.0)
+		return [float(((th + 90.0 * k) + 180.0) % 360.0 - 180.0) for k in range(4)]
+
+	def _border_check(self, sh, theta, l: int, c: int) -> dict:
+		"""``{necessaria, ok}``: in a border place, do the F sides of ``sh`` turned by ``theta`` face out (exactly those)."""
+		from src import fit as F
+		req = set(self.pr.profile.flat_directions(l, c))
+		if not req:
+			return {"necessaria": False, "ok": None}
+		dirs = F.board_dirs(sh, theta) if sh is not None else None
+		if dirs is None:
+			return {"necessaria": True, "ok": None}
+		kinds = [s.kind for s in sh.sides]
+		return {"necessaria": True, "ok": all((kinds[dirs[d]] == "F") == (d in req) for d in F.DIRS)}
+
+	def verify_json(self, l: int, c: int, pid: str, theta: Optional[float] = None) -> dict:
+		"""``POST /api/cell/{l}/{c}/verificar`` (F2, «Pôr uma peça à mão», ESPEC §4.6): the 3 checks in words
+		(:func:`src.montar.verificacoes`) of ``pid`` in the place ``(l, c)`` turned by ``theta`` (None = the best of 4
+		rotations, returned as ``theta_deg``). Read only and **without the write lock** (DETALHE.md §8): its own lock
+		and fit cache; a write in another thread that changes the board meanwhile makes it start once more."""
+		from src import fit as F
+		from src import montar as MT
+		from src.query import _Ctx, fit_check
+		t0 = time.perf_counter()
+		if pid not in self.pr.pieces:
+			return {"error": f"peça desconhecida {pid}"}
+		if not self.pr.profile.in_grid(l, c):
+			return {"error": f"célula ({l}, {c}) fora da grelha"}
+
+		def run():
+			pr = self.pr
+			with self._verif_lock:
+				cal = F.calibration(pr)
+				vc = self._verif_cache
+				if vc is None or vc.calib != cal:
+					vc = F._Cache(pr, cal)
+					self._verif_cache = vc
+				elif vc.pr is not pr:
+					vc.rebind(pr)
+				ctx = _Ctx(pr, use_image=False)
+				ctx.fit = {"F": F, "calib": cal, "cache": vc, "dcache": {}, "sigma": None}
+				sh = pr.shape(pid)
+				cands = [float(theta)] if theta is not None else self._theta_candidates(pid, sh)
+				res = []
+				for th in cands:
+					enc = fit_check(ctx, pid, (l, c), th, marked_ok=True)
+					res.append((th, enc, self._border_check(sh, th, l, c)))
+
+				def key(x):
+					th, enc, bd = x
+					bad_b = bd["necessaria"] and bd["ok"] is False
+					lados = enc.get("lados") or []
+					bad_f = any(not r.get("comp") or r.get("hard") for r in lados)
+					J = enc.get("J")
+					return (bad_b, bad_f, enc.get("estado") == "incompativel", float("inf") if J is None else float(J))
+				th, enc, bd = min(res, key=key) if theta is None else res[0]
+				return th, enc, bd, cal
+
+		ver = self.version()
+		try:
+			th, enc, bd, cal = self.read(run)
+		except Exception:  # noqa: BLE001 - a write in another thread changed the board under the check: once more
+			if self.version() == ver:
+				raise
+			th, enc, bd, cal = self.read(run)
+		lines = MT.verificacoes(enc, bd, cal.t_abs)
+		n_viz = self.placed_neighbours_with_shape(l, c)
+		return {"piece": pid, "cell": [l, c], "theta_deg": round(float(th), 2), "verificacoes": lines,
+				"falha": any(x["estado"] == "falha" for x in lines), "vizinhas_com_forma": n_viz,
+				"modo": "colocar" if n_viz else "por_confirmar", "segundos": round(time.perf_counter() - t0, 3),
+				"diagnostico": {"encaixe": {k: enc.get(k) for k in ("estado", "pose", "m", "J", "t_abs", "motivo", "razao")},
+								"lados": enc.get("lados"), "borda": bd}}
 
 	def lots_json(self) -> list:
 		pr = self.pr
@@ -1700,16 +1845,37 @@ class Gui:
 			kw = {"use_image": self.use_image}
 			t0 = time.time()
 			off = self._log_size()
+			modo = None
+			th = body.get("theta_deg")
+			th = None if th is None else float(th)
 			if acao == "place":
 				if not cell:
 					return {"error": "falta a célula"}
-				r = confirm(pr, pid, cell=cell, origin=body.get("origin"), **kw)
+				# the user's rotation wins over the list's only for a placement by hand («Rodar», F2, P10b)
+				r = confirm(pr, pid, cell=cell, origin=body.get("origin"), theta_deg=th,
+							theta_force=th is not None and body.get("origin") == "manual",
+							reposicao=bool(body.get("reposicao")), **kw)
+			elif acao == "por_mao":
+				# «Pôr uma peça à mão» (F2, decision g of 2026-11-14): ``place`` only with a placed neighbour (with a shape);
+				# without one the piece stays «por confirmar» (``position_known``), no mould, not counted in the progress
+				if not cell:
+					return {"error": "falta a célula"}
+				cl = (int(cell[0]), int(cell[1]))
+				other = [q.id for q in pr.pieces.values() if q.estado == "posicao_conhecida" and q.celula == cl and q.id != pid]
+				if other:
+					return {"error": f"este lugar já tem outra peça por confirmar ({other[0]}): tira-a primeiro"}
+				if self.placed_neighbours_with_shape(*cl):
+					modo = "colocada"
+					r = confirm(pr, pid, cell=cl, origin="manual", theta_deg=th, theta_force=th is not None, **kw)
+				else:
+					modo = "por_confirmar"
+					r = confirm(pr, pid, position_known=cl, origin="manual", theta_deg=th, **kw)
 			elif acao == "reject":
 				r = confirm(pr, pid, reject=True, **kw)
 			elif acao == "position_known":
 				if not cell:
 					return {"error": "falta a célula"}
-				r = confirm(pr, pid, position_known=cell, origin=body.get("origin"), **kw)
+				r = confirm(pr, pid, position_known=cell, origin=body.get("origin"), theta_deg=th, **kw)
 			elif acao == "anchor":
 				sec, c0 = body.get("section"), cell or body.get("cell0")
 				if not sec or not c0:
@@ -1724,6 +1890,8 @@ class Gui:
 				r = confirm(pr, pid, discard=True, reason=str(body.get("reason") or "gui"), **kw)
 			elif acao == "unplace" and body.get("desfaz"):
 				r = confirm(pr, pid, unplace=True, desfaz=True, **kw)     # «desfazer» de «Encaixa» (GUI nova)
+			elif acao == "unplace" and body.get("tirar"):
+				r = confirm(pr, pid, unplace=True, **kw)                  # «Tirar do lugar» (GUI nova F2): neutro, com o par
 			elif acao == "unplace":
 				r = self._unplace(pid, _around)
 			elif acao == "position_clear":
@@ -1759,6 +1927,8 @@ class Gui:
 					self.emit("board_changed", {"versao": self.version(), "celulas": [list(hc)]})
 				extra["celula"] = self.cell_json(*hc)
 				extra["vizinhas"] = extra["celula"]["vizinhas"]
+			if modo:
+				extra["modo"] = modo
 			return {"ok": True, "mensagens": r.get("messages", []), "invariantes": r.get("invariants", []),
 					"n_propostas": len([e for e in r.get("entries", []) if e.get("piece")]),
 					"segundos": round(time.time() - t0, 2), "escritos": self._written_since(off), **extra}
@@ -2957,6 +3127,19 @@ def create_app(gui: Gui):
 			raise HTTPException(404, detail=f"célula ({l}, {c}) fora da grelha")
 		return JSON(gui.read(lambda: gui.cell_json(l, c)))
 
+	@app.post("/api/cell/{l}/{c}/verificar")
+	async def cell_verify(l: int, c: int, request: Request):
+		"""As 3 verificações de «Pôr uma peça à mão» (F2): sem o bloqueio de escrita (DETALHE.md §8)."""
+		ready()
+		try:
+			body = await request.json()
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		th = body.get("theta_deg")
+		r = await asyncio.to_thread(lambda: guard(lambda: gui.verify_json(l, c, str(body.get("piece") or ""),
+																		   None if th is None else float(th))))
+		return JSON(r, status_code=400 if "error" in r else 200)
+
 	@app.get("/api/cell/{l}/{c}/zoom.jpg")
 	def cell_zoom(l: int, c: int, side: str = "both", dpi: float = 300, v: Optional[str] = None):
 		ready()
@@ -2964,12 +3147,19 @@ def create_app(gui: Gui):
 			raise HTTPException(404, detail=f"célula ({l}, {c}) fora da grelha")
 		return img(guard(lambda: gui.zoom_jpg(l, c, side, dpi)), "image/jpeg", cache=v is not None)
 
+	@app.get("/api/pieces/lookup")
+	def piece_lookup(saco: Optional[str] = None, n: Optional[str] = None):
+		"""«Saco N · nº X» → a peça e o estado em palavras (F2, «Pôr uma peça à mão»)."""
+		ready()
+		r = gui.read(lambda: gui.lookup_json(saco, n))
+		return JSON(r, status_code=400 if "error" in r else 200)
+
 	@app.get("/api/pieces/{pid}.png")
-	def piece_png(pid: str, pose: str = "board", size: int = 220, v: Optional[str] = None):
+	def piece_png(pid: str, pose: str = "board", size: int = 220, v: Optional[str] = None, theta: Optional[float] = None):
 		ready()
 		if pid not in gui.pr.pieces:
 			raise HTTPException(404, detail=f"peça desconhecida {pid}")
-		data, used, why, theta = guard(lambda: gui.piece_png(pid, pose, size))
+		data, used, why, theta = guard(lambda: gui.piece_png(pid, pose, size, theta=theta))
 		r = img(data, "image/png", cache=v is not None)
 		r.headers["X-Pose"] = used
 		if theta is not None:

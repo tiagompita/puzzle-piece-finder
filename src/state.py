@@ -59,7 +59,7 @@ __all__ = [
 	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS", "SUSPECT_GRAUS", "POSE_MAX_FRAC",
 	"StateError", "Piece", "Pair", "Section", "Photo", "Board", "Model", "apply", "replay", "read_log",
 	"Project", "file_sha256", "section_cell", "undone_decisions", "REJECTION_MOTIVES",
-	"replace_file", "write_atomic", "remove_file",
+	"replace_file", "write_atomic", "remove_file", "read_retry",
 ]
 
 SCHEMA_VERSION = 1
@@ -97,6 +97,23 @@ def remove_file(fp: str) -> bool:
 	return False
 
 
+READ_RETRIES = 25            # read_retry: attempts while a file is being swapped by write_atomic (Windows)
+READ_WAIT_S = 0.02
+
+
+def read_retry(fn):
+	"""``fn()`` retried on ``PermissionError``: on Windows a file that :func:`write_atomic` is replacing is «delete
+	pending» for a moment and opening it is refused (seen in the stress test with ``render/placements.json``,
+	DETALHE.md §8.2). Up to :data:`READ_RETRIES` × :data:`READ_WAIT_S` (0,5 s), then the error goes up."""
+	for k in range(READ_RETRIES):
+		try:
+			return fn()
+		except PermissionError:
+			if k == READ_RETRIES - 1:
+				raise
+			time.sleep(READ_WAIT_S)
+
+
 def write_atomic(fp: str, write) -> None:
 	"""Write ``fp`` through a temporary file in the same folder, then :func:`replace_file`: a reader in another
 	thread (the board composed outside every lock, DETALHE.md §8) sees the old file or the new one, never half of
@@ -132,7 +149,7 @@ ACTIONS = (
 	"cell_occupied_by_user", "cell_cleared_by_user", "section_candidates_updated",
 	"report", "report_closed", "report_edited", "report_reopened", "report_deleted", "report_restored",
 	"piece_resegmented", "suspect_dismissed", "suspect_restored", "pose_set", "pose_cleared", "holes_alta_resumed",
-	"rejection_undone", "pair_unrejected", "rejection_noted", "position_cleared",
+	"rejection_undone", "pair_unrejected", "rejection_noted", "position_cleared", "pair_unconfirmed",
 )
 REJECTION_MOTIVES = ("forma", "imagem", "nao_sei")   # rejection_noted: «Porquê?» after «Não encaixa» (ESPEC §4.2)
 RESEGMENT_FIELDS = ("bbox", "cls", "n_flat", "chords_mm", "area_mm2", "shape_ok", "flags", "mean_lab")  # piece_resegmented
@@ -510,6 +527,8 @@ def apply(m: Model, ev: dict) -> None:
 				m.pieces[pid].estado = "emparelhada"
 	elif a == "pair_confirmed":
 		m.pairs[ev["pair"]].estado = "confirmado"
+	elif a == "pair_unconfirmed":
+		m.pairs[ev["pair"]].estado = "proposto"
 	elif a == "pair_rejected":
 		pr = m.pairs[ev["pair"]]
 		pr.estado = "rejeitado"
@@ -623,11 +642,14 @@ def undone_decisions(events: list) -> set:
 	nor as a miss (ESPEC §8.1). A ``twin_confirmed`` / ``hole_confirmed`` of (piece, cell) is undone by a later
 	``unplaced`` with ``desfaz: true`` of that piece and cell (the user's «desfazer» of «Encaixa»; a plain
 	``unplaced`` is neutral and closes the placement); a ``twin_rejected`` / ``hole_rejected`` by a later
-	``rejection_undone`` with the same (piece, cell, origin); a ``pair_rejected`` by a later ``pair_unrejected``."""
+	``rejection_undone`` with the same (piece, cell, origin); a ``pair_rejected`` by a later ``pair_unrejected``; a
+	``pair_confirmed`` by a later ``pair_unconfirmed`` with ``desfaz: true`` (the «desfazer» of «Encaixa» of a pair piece,
+	F2; without ``desfaz`` it came from «Tirar do lugar», neutral like a plain ``unplaced``)."""
 	out = set()
 	conf: dict = {}     # (piece, cell) -> [index] of the confirmations of the current placement
 	rej: dict = {}      # (piece, cell, origin) -> [index] still standing
 	prej: dict = {}     # pair -> [index]
+	pconf: dict = {}    # pair -> [index] of its confirmations
 	for i, ev in enumerate(events):
 		a = ev.get("action")
 		if a in _CONFIRM_DECISIONS:
@@ -648,6 +670,14 @@ def undone_decisions(events: list) -> set:
 			ks = prej.get(ev.get("pair"))
 			if ks:
 				out.add(ks.pop())
+		elif a == "pair_confirmed":
+			pconf.setdefault(ev.get("pair"), []).append(i)
+		elif a == "pair_unconfirmed":
+			ks = pconf.get(ev.get("pair"))
+			if ks:
+				k = ks.pop()
+				if ev.get("desfaz"):
+					out.add(k)
 	return out
 
 
@@ -844,8 +874,10 @@ class Project:
 		else:
 			fp = self.p("pieces", f"{p.scan_id}.npz")
 			if os.path.exists(fp):
-				with np.load(fp, allow_pickle=False) as z:
-					d = {k[len(pre):]: z[k] for k in z.files if k.startswith(pre)}
+				def rd():
+					with np.load(fp, allow_pickle=False) as z:
+						return {k[len(pre):]: z[k] for k in z.files if k.startswith(pre)}
+				d = read_retry(rd)
 		sh = None
 		if d and "c" in d:
 			sh = Shape.from_arrays({k: v for k, v in d.items() if k not in ("contour_px", "mask")})
@@ -867,9 +899,10 @@ class Project:
 			return arrs[key]
 		fp = self.p("pieces", f"{p.scan_id}.npz")
 		if os.path.exists(fp):
-			with np.load(fp, allow_pickle=False) as z:
-				if key in z.files:
-					return z[key]
+			def rd():
+				with np.load(fp, allow_pickle=False) as z:
+					return z[key] if key in z.files else None
+			return read_retry(rd)
 		return None
 
 	def crop_rgba(self, pid: str):
@@ -881,8 +914,11 @@ class Project:
 		if not os.path.exists(fp):
 			return None
 		from PIL import Image
-		with Image.open(fp) as im:
-			return np.asarray(im.convert("RGBA")).copy()
+
+		def rd():
+			with Image.open(fp) as im:
+				return np.asarray(im.convert("RGBA")).copy()
+		return read_retry(rd)
 
 	def last_photo(self) -> Optional[Photo]:
 		if not self.model.photos:
@@ -1004,8 +1040,10 @@ class Project:
 		return self._emit("lote_changed", scan_ids=sids, lote=lote, pieces=nums)
 
 	def place(self, piece_id: str, cell, *, origin: str = "manual", rank=None, score=None, fonte: str = "log",
-			  theta_deg: Optional[float] = None) -> dict:
-		"""Place a piece in ``cell`` (vazia or ocupada_legado; never over another piece)."""
+			  theta_deg: Optional[float] = None, reposicao: bool = False) -> dict:
+		"""Place a piece in ``cell`` (vazia or ocupada_legado; never over another piece). ``reposicao``: the «desfazer»
+		of «Tirar do lugar» (GUI nova, F2) puts the piece back; the event carries ``reposicao: true`` (informative:
+		no counter takes a ``placed`` as a decision)."""
 		p = self.piece(piece_id)
 		cell = self._check_cell(cell)
 		if p.estado not in _PLACEABLE_FROM:
@@ -1016,8 +1054,9 @@ class Project:
 		if cur["estado"] == "colocada":
 			raise StateError(f"célula {cell} já tem a peça {cur['peca_id']}")
 		before = self._placeable_set()
+		extra = {"reposicao": True} if reposicao else {}
 		ev = self._emit("placed", piece=piece_id, cell=cell, origin=origin, rank=rank, score=score, fonte=fonte,
-						theta_deg=theta_deg, prev=copy.deepcopy(cur), from_state=p.estado)
+						theta_deg=theta_deg, prev=copy.deepcopy(cur), from_state=p.estado, **extra)
 		self._emit_placeable(before)
 		return ev
 
@@ -1147,6 +1186,18 @@ class Project:
 		if pair_id not in self.pairs:
 			raise StateError(f"par desconhecido {pair_id}")
 		return self._emit("pair_confirmed", pair=pair_id)
+
+	def unconfirm_pair(self, pair_id: str, *, ref_t: Optional[str] = None, desfaz: bool = False) -> dict:
+		"""Undo the ``pair_confirmed`` (at ``ref_t``) that a placement made: the pair is ``proposto`` again (GUI nova
+		F2, decision c of 2026-11-14). ``desfaz``: from the «desfazer» of «Encaixa» (that confirmation stops counting,
+		:func:`undone_decisions`); without it, from «Tirar do lugar» (neutral). Same log-compatibility note as
+		:meth:`set_pose` (a new action)."""
+		if pair_id not in self.pairs:
+			raise StateError(f"par desconhecido {pair_id}")
+		if self.pairs[pair_id].estado != "confirmado":
+			raise StateError(f"par {pair_id} não está confirmado ({self.pairs[pair_id].estado})")
+		extra = {"desfaz": True} if desfaz else {}
+		return self._emit("pair_unconfirmed", pair=pair_id, ref_t=ref_t, **extra)
 
 	def reject_pair(self, pair_id: str) -> dict:
 		if pair_id not in self.pairs:
