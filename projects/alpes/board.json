@@ -172,9 +172,9 @@
     "foto_id": null
    },
    {
-    "estado": "ocupada_legado",
-    "peca_id": null,
-    "fonte": "tiago",
+    "estado": "colocada",
+    "peca_id": "P1422",
+    "fonte": "log",
     "foto_id": null
    },
    {

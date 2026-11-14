@@ -877,12 +877,9 @@
    "index_in_scan": 27,
    "lote": 4,
    "n_no_lote": 22,
-   "estado": "posicao_conhecida",
-   "celula": [
-    38,
-    3
-   ],
-   "theta_deg": -90.04,
+   "estado": "solta",
+   "celula": null,
+   "theta_deg": null,
    "seccao_id": null,
    "same_as": null,
    "flags": {
