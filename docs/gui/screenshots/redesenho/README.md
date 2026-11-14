@@ -95,3 +95,22 @@ As palavras contam o texto do painel inteiro (também o que está abaixo da dobr
 | cartão sem vizinha montada, 390 | 100 | 11 |
 | menu «⋯» aberto (só o menu), 1366 / 390 | 30 | 15 / 12 |
 | vazio com contagens, 1366 / 390 | 69 | 10 |
+
+## F2 (2026-11-14): painel da peça e do lugar, pôr e tirar à mão, desfazer global, cor das peças
+
+`python tools/gui/f2_capturas.py --project <cópia> --out <dir>`, PNG a 1366×768 e a 390×844 (`device_scale_factor` 1),
+sobre uma **cópia** de `projects/alpes` (com as alterações locais do Tiago). O guião da borda (plano §5) corre até ao
+passo 7 nas duas larguras; o que cada verificação disse está em `F2_guiao.json`.
+
+- `F2_cartao_*`: o cartão «Ainda sem peças ao lado» (o título novo).
+- `F2_marcado_*`: linha 1 · coluna 29 tocada: «Lugar marcado por ti», a arte da caixa, «Pôr a peça digitalizada aqui» e «Afinal está vazio».
+- `F2_pormao1_*` / `F2_pormao1_folha_*`: «Pôr uma peça à mão», passo 1 (Saco 9 · nº 89 «está solta»; a grelha das soltas do saco).
+- `F2_pormao2_averificar_*`: passo 2 com o pedido retido: as três linhas «a verificar…» e «Pôr aqui» já ativo.
+- `F2_pormao2_falha_*`: a peça rodada 90°: lado liso e forma falham, imagem «não verificado», o aviso e «Pôr na mesma».
+- `F2_pormao2_*`: na rotação certa (θ −171°): lado liso, forma e imagem com 3 traços; «Tem 3 peças montadas ao lado: fica no lugar.»
+- `F2_peca_*`: depois de «Pôr aqui»: a faixa «Saco 9 · nº 89 no lugar.» com «Desfazer», o painel da peça (saco, nº, linha · coluna na borda de cima, «No lugar · posta por ti a 14 nov», a peça, a folha com a peça a âmbar, P1422 em pequeno, «Tirar do lugar», «Corrigir recorte», «Algo está errado»).
+- `F2_tirar_*`: depois de «Tirar do lugar»: a faixa «… tirada do lugar.» e o lugar outra vez «marcado por ti» (não vazio).
+- `F2_grupo_*` / `F2_errado_*`: uma peça de grupo («Veio do grupo (N peças)», «Tirar o grupo inteiro do lugar (N peças)») e «Algo está errado» aberto.
+- `F2_porconfirmar_*`: uma peça «por confirmar» («Por confirmar · ainda sem peças ao lado»).
+- `F2_vazio_*` / `F2_vazio_sugestao_*`: um lugar vazio sem sugestão (11 · 3) e com a sugestão do cartão atual (5 · 48, tocado duas vezes).
+- `F2_definicoes_*`: «⋯ › Definições (cor das peças)» com os dois controlos e «Repor».

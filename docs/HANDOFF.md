@@ -1,18 +1,48 @@
-# HANDOFF — 2026-11-14 (detalhe do tabuleiro ronda 2: saltos sem espera, GIL 0,5 ms; F1d à espera do OK; F2 não arrancou)
+# HANDOFF — 2026-11-14 (passo 0: GIL parado e concorrência; F2 feita, à espera do OK do Tiago)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-14): `docs/prompts/2026-11-14-detalhe-tabuleiro-ronda2.md` (fechado)
-- **Saltos sem espera [V]:** `zoomCells` (lupa / `showCell`, «localizar», «Ver no tabuleiro», cartão seguinte) pede o detalhe na mesma tarefa; arrastar e roda mantêm os 280 ms. Quente 0,30 → 0,01–0,02 s (critério 1b passa a [V]). Teste Playwright novo.
-- **GIL (H) adotado [V]:** `src/server.py` arranca com `sys.setswitchinterval(0.0005)` (`GIL_SWITCH_S`; `--gil-intervalo 0` volta aos 5 ms do Python; o registo diz o valor). 6 corridas no servidor real (DETALHE.md §6.2): detalhe durante o ranking a frio 20,3 / 23,3 → 7,6 / 6,6 s (céu / relva), reconsulta −3 % / −5 %, importação +1,4 % (critério ≤ 10 %). 1.º salto depois de abrir ≈ 37 → ≈ 11 s.
-- **Atenção nas medições:** copiar o projeto com `shutil.copytree`, não `cp -r` (o mtime de `render/placements.json` invalida a cache do raster e o arranque recompõe o tabuleiro inteiro por baixo das medidas; a 1.ª bateria desta ronda foi deitada fora por isso).
-- **Corrigido (achado):** `render._clean_or_crop` morria com `FileNotFoundError` quando outro fio apagava um `render/clean` velho a meio (exposto pela composição fora do lock da ronda 1). Teste novo.
-- **Causa do 1.º `/api/montar` (só análise, DETALHE.md §7):** o ranking em si < 1 s; os 24 s a frio sozinho (43–50 s no servidor) são lados erodidos (18 s) e formas (5 s) que só vivem em memória; as tiras já estão em disco. Recomendado: lados erodidos em disco + formas lidas por folha (≈ −22 s), depois calcular em segundo plano ao arrancar com progresso verdadeiro; ranking em disco por versão do log só se ainda fizer falta.
-- **Scratchpad:** worktrees `wt_head`/`wt_pref1` e cópias `alpes_det`/`alpes_pref1` da ronda 1 removidos (caminhos verificados; `git worktree list` só mostra o repositório).
-- **Testes:** 3 novos (`test_gui_novo` salto/arrasto/roda, `test_server` intervalo do GIL, `test_render` corrida no `_clean_or_crop`); nenhum existente alterado.
-- **Suite [V]:** `.venv/Scripts/python.exe -m pytest tests/`: 516 passed, 1 skipped (o PyMuPDF real no `test_sheets`), 0 failed, 437 s com os slow/Playwright (+3 testes).
+## Última sessão (2026-11-14): `docs/prompts/2026-11-14-f2-passo0-painel-por-tirar.md` (fechado)
+- **Passo 0a [V] (`6345154`, DETALHE.md §8.1):** com o servidor parado o intervalo de 0,5 ms não piora a composição
+  sozinha (3 + 3 corridas: médias +6,6 a +9,3 %, medianas +1,0 a +5,8 %; 4 de controlo iguais). A diferença
+  ronda 1 / ronda 2 é a forma de medir (o protocolo da ronda 2 sobrepunha o ranking dos buracos: 4,6–7,8 s).
+- **Passo 0b [V] (DETALHE.md §8.2):** auditoria do que a composição e o «verificar» leem fora dos bloqueios; teste de
+  esforço `tests/test_concorrencia.py` (HEAD de então: 21 em 22 corridas falhavam; agora 20/20). Corrigido: escritas
+  atómicas (`state.write_atomic`), apagar e ler com repetição no Windows (`remove_file`, `read_retry`), célula lida uma
+  vez na composição, geração da forma em cache, caches com (log, mtime de `placements.json`). Um 404 de `render/clean`
+  visto 2× na HEAD antiga ficou sem origem encontrada (não voltou em 30 corridas instrumentadas).
+- **F2 [V em testes; NT com o Tiago]** (decisões c e g em `docs/decisoes.md` e ESPEC §7):
+  - tocar no tabuleiro: painel da peça (folha com a peça marcada, saco, nº, linha · coluna, P#### pequeno, «Tirar do
+    lugar», «Corrigir recorte» → `/?peca=P####&contorno=1` na GUI antiga, «Algo está errado»), do lugar vazio (arte,
+    sugestão, «Pôr uma peça aqui», «Já tem peça…») e do lugar marcado por ti; o 2.º toque no alvo do cartão atual abre o
+    painel do lugar;
+  - «Pôr uma peça à mão»: saco e nº (ou a grelha das soltas do saco), «Rodar», 3 verificações em palavras que não
+    bloqueiam (`POST /api/cell/{l}/{c}/verificar`, sem bloqueio de escrita); grava `place` com uma vizinha colocada, senão
+    «por confirmar» (decisão g);
+  - par: desfazer «Encaixa» e «Tirar do lugar» desfazem só o que essa colocação fez (decisão c; ação nova
+    `pair_unconfirmed`);
+  - desfazer global de um nível (faixa + Ctrl+Z) para todas as ações dos painéis; «Ainda sem peças ao lado»;
+  - «⋯ › Definições (cor das peças)»: brilho e saturação só no browser, inicial 0,92; também no tabuleiro (medido: 0
+    frames perdidos, DETALHE.md §9.2).
+- **Guião da borda, passos 1–7 numa cópia [V no programa]:** Saco 9 · nº 89 em 1 · 29 dá lado liso, forma e imagem com 3
+  traços numa rotação (−171°) e falhas nas outras 3; pôr, tirar, desfazer e recarregar como no plano. «verificar» 0,6 s a
+  frio, 3,2–4,5 s durante o ranking a frio, ≤ 0,05 s a quente (DETALHE.md §9.1).
+- **Testes:** novos `test_concorrencia`, `test_f2` (11), `test_gui_novo_f2` (8); alterado `test_gui_novo` (4 textos).
+- **Suite [V]:** `.venv/Scripts/python.exe -m pytest tests/`: 537 passed, 1 skipped (PyMuPDF real), 0 failed, 405 s com os slow/Playwright (passo 0: 517 passed, 1 skipped). Commits `6345154` (passo 0), `32c5f5c` (F2).
+- **`CLAUDE.md` por atualizar** (linhas de `state.py`, `server.py`, `montar.py`/GUI nova): um subagente não lhe mexe.
 
-## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-detalhe-tabuleiro.md` (fechado)
+## O que o Tiago tem de ver (F2)
+1. `/novo/` no PC: tocar numa peça, num lugar vazio e em 1 · 29; o guião da borda (plano da F2 §5, passos 1–8): se o
+   nº 89 encaixa fisicamente e se as verificações acertaram (1.º caso real de «pôr à mão»).
+2. Telemóvel real (`--lan`), Firefox/Safari, e o filtro de cor numa GPU real [NT].
+3. OK da F2 para seguir para a F4 (ordem F4, F4b, F4c, F3, F5, F6); a fase de desempenho (lados em disco, formas por
+   folha, segundo plano, E, C) vem depois da F2, como pedido.
+
+## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-detalhe-tabuleiro-ronda2.md` (fechado)
+- Saltos sem espera, GIL 0,5 ms adotado, `_clean_or_crop` corrigido, causa do 1.º `/api/montar` (DETALHE.md §6–§7).
+  Suite 516 passed, 1 skipped.
+
+## Antes (2026-11-14): `docs/prompts/2026-11-14-detalhe-tabuleiro.md` (fechado)
 - A + B do detalhe (`e252dc1`): regiões compostas fora do `rlock`, um só detalhe em voo (AbortController + `X-Detail-Seq`). Medições em `docs/diagnostico/gui/DETALHE.md` §1–§5; o problema é anterior à F1; o fio do browser nunca bloqueou. Suite 513 passed, 1 skipped.
 
 ## Antes (2026-11-14): `docs/prompts/2026-11-14-f1d-correcoes-gui-nova.md` (fechado)
@@ -69,7 +99,6 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 4. F1c: o cartão «Guardar à parte» das 3 gémeas (alvo tracejado, «Guardei à parte» / «Não é esta» e o desfazer), o ecrã vazio com as contagens, a lupa («saco 4 nº 22», «38,3»).
    - Atenção [NT]: a peça do saco 4 nº 22 é clara (céu?) e o lugar 38 · 3 é verde (vale): a imagem pode estar a dizer «Não é esta».
 5. F1d: depois de «Colocar aqui», a faixa «Desfazer» no topo do painel; a peça «por confirmar» no tabuleiro; o «localizar»; os ícones; a 390 px o menu «⋯».
-6. OK para a F2 (célula, lugar vazio, pôr e tirar à mão, desfazer global).
 
 ## Espera pelo Tiago
 1. **Gémeas sem vizinha montada na GUI nova:** feito na F1c (ver acima); falta o OK.
@@ -78,10 +107,8 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
-1. **F2** (ESPEC §7; ordem F2, F4, F4b, F4c, F3, F5, F6): painel da célula (C) e do lugar vazio (V), pôr à mão com verificações (§5.4), «Tirar do lugar», desfazer global. Desfazer «Encaixa» de um par desfaz o par e a posição da outra (decidido 2026-11-12). Só com o OK do Tiago.
-   - Na F1b, tocar num lugar só escolhe a peça da fila desse lugar.
+1. **F2 feita** (2026-11-14, à espera do OK); a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6), depois a fase de desempenho.
 2. **Limites da F1b [NT]:**
-   - desfazer «Encaixa» de um par não desfaz o `pair_confirmed` nem a posição conhecida da outra peça (corrige-se na F2);
    - «Peças» é só uma ligação para a interface completa (F3);
    - «⋯ › Atividade» abre a interface antiga noutro separador (F5);
    - «Ver números» mostra as razões técnicas no painel (F5: Diagnóstico).

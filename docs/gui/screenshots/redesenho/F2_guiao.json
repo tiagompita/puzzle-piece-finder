@@ -1,0 +1,282 @@
+{
+ "1366": {
+  "1_painel": "marcado",
+  "2_frase": "Saco 9 · nº 89 está solta.",
+  "3_por_ativo_a_verificar": true,
+  "3_verificar": [
+   {
+    "theta": -171.19,
+    "segundos_servidor": 0.174,
+    "segundos_browser": 0.19,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "folga",
+      "frase": "O lado liso fica virado para fora do puzzle."
+     },
+     {
+      "chave": "forma",
+      "estado": "folga",
+      "frase": "A forma encaixa nas peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "folga",
+      "frase": "A imagem continua a das peças ao lado."
+     }
+    ],
+    "falha": false,
+    "botao": "Pôr aqui",
+    "estado": "Tem 3 peças montadas ao lado: fica no lugar."
+   },
+   {
+    "theta": -81.19,
+    "segundos_servidor": 0.002,
+    "segundos_browser": 0.06,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "falha",
+      "frase": "O lado liso não fica virado para fora: roda a peça."
+     },
+     {
+      "chave": "forma",
+      "estado": "falha",
+      "frase": "A forma não encaixa numa das peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "nao_testado",
+      "frase": "Imagem: não verificado (a forma não encaixa).\nnão verificado"
+     }
+    ],
+    "falha": true,
+    "botao": "Pôr na mesma"
+   },
+   {
+    "theta": 8.81,
+    "segundos_servidor": 0.004,
+    "segundos_browser": 0.06,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "falha",
+      "frase": "O lado liso não fica virado para fora: roda a peça."
+     },
+     {
+      "chave": "forma",
+      "estado": "falha",
+      "frase": "A forma não encaixa numa das peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "nao_testado",
+      "frase": "Imagem: não verificado (a forma não encaixa).\nnão verificado"
+     }
+    ],
+    "falha": true,
+    "botao": "Pôr na mesma"
+   },
+   {
+    "theta": 98.81,
+    "segundos_servidor": 0.003,
+    "segundos_browser": 0.06,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "falha",
+      "frase": "O lado liso não fica virado para fora: roda a peça."
+     },
+     {
+      "chave": "forma",
+      "estado": "falha",
+      "frase": "A forma não encaixa numa das peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "nao_testado",
+      "frase": "Imagem: não verificado (a forma não encaixa).\nnão verificado"
+     }
+    ],
+    "falha": true,
+    "botao": "Pôr na mesma"
+   },
+   {
+    "theta": -171.19,
+    "segundos_servidor": 0.002,
+    "segundos_browser": 0.06,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "folga",
+      "frase": "O lado liso fica virado para fora do puzzle."
+     },
+     {
+      "chave": "forma",
+      "estado": "folga",
+      "frase": "A forma encaixa nas peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "folga",
+      "frase": "A imagem continua a das peças ao lado."
+     }
+    ],
+    "falha": false,
+    "botao": "Pôr aqui"
+   }
+  ],
+  "4_painel": "PEÇA NO LUGAR\nSaco 9\nnº 89\nLinha 1 · coluna 29, na borda de cima\nNo lugar · posta por ti a 14 nov\nNa folha que digitalizaste (toca para ampliar)\nP1422\nTirar do lugar\nCorrigir recorte\nAlgo está errado\nVoltar à fila",
+  "6_depois_de_tirar": "marcado",
+  "6_depois_de_desfazer": "peca",
+  "7_depois_de_recarregar_e_tirar": "marcado",
+  "vazio": [
+   11,
+   3
+  ],
+  "vazio_sugestao": [
+   5,
+   48
+  ]
+ },
+ "390": {
+  "1_painel": "marcado",
+  "2_frase": "Saco 9 · nº 89 está solta.",
+  "3_por_ativo_a_verificar": true,
+  "3_verificar": [
+   {
+    "theta": -171.19,
+    "segundos_servidor": 0.003,
+    "segundos_browser": 0.02,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "folga",
+      "frase": "O lado liso fica virado para fora do puzzle."
+     },
+     {
+      "chave": "forma",
+      "estado": "folga",
+      "frase": "A forma encaixa nas peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "folga",
+      "frase": "A imagem continua a das peças ao lado."
+     }
+    ],
+    "falha": false,
+    "botao": "Pôr aqui",
+    "estado": "Tem 3 peças montadas ao lado: fica no lugar."
+   },
+   {
+    "theta": -81.19,
+    "segundos_servidor": 0.002,
+    "segundos_browser": 0.06,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "falha",
+      "frase": "O lado liso não fica virado para fora: roda a peça."
+     },
+     {
+      "chave": "forma",
+      "estado": "falha",
+      "frase": "A forma não encaixa numa das peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "nao_testado",
+      "frase": "Imagem: não verificado (a forma não encaixa).\nnão verificado"
+     }
+    ],
+    "falha": true,
+    "botao": "Pôr na mesma"
+   },
+   {
+    "theta": 8.81,
+    "segundos_servidor": 0.003,
+    "segundos_browser": 0.07,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "falha",
+      "frase": "O lado liso não fica virado para fora: roda a peça."
+     },
+     {
+      "chave": "forma",
+      "estado": "falha",
+      "frase": "A forma não encaixa numa das peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "nao_testado",
+      "frase": "Imagem: não verificado (a forma não encaixa).\nnão verificado"
+     }
+    ],
+    "falha": true,
+    "botao": "Pôr na mesma"
+   },
+   {
+    "theta": 98.81,
+    "segundos_servidor": 0.003,
+    "segundos_browser": 0.06,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "falha",
+      "frase": "O lado liso não fica virado para fora: roda a peça."
+     },
+     {
+      "chave": "forma",
+      "estado": "falha",
+      "frase": "A forma não encaixa numa das peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "nao_testado",
+      "frase": "Imagem: não verificado (a forma não encaixa).\nnão verificado"
+     }
+    ],
+    "falha": true,
+    "botao": "Pôr na mesma"
+   },
+   {
+    "theta": -171.19,
+    "segundos_servidor": 0.002,
+    "segundos_browser": 0.06,
+    "linhas": [
+     {
+      "chave": "borda",
+      "estado": "folga",
+      "frase": "O lado liso fica virado para fora do puzzle."
+     },
+     {
+      "chave": "forma",
+      "estado": "folga",
+      "frase": "A forma encaixa nas peças ao lado."
+     },
+     {
+      "chave": "imagem",
+      "estado": "folga",
+      "frase": "A imagem continua a das peças ao lado."
+     }
+    ],
+    "falha": false,
+    "botao": "Pôr aqui"
+   }
+  ],
+  "4_painel": "PEÇA NO LUGAR\nSaco 9\nnº 89\nLinha 1 · coluna 29, na borda de cima\nNo lugar · posta por ti a 14 nov\nNa folha que digitalizaste (toca para ampliar)\nP1422\nTirar do lugar\nCorrigir recorte\nAlgo está errado\nVoltar à fila",
+  "6_depois_de_tirar": "marcado",
+  "6_depois_de_desfazer": "peca",
+  "7_depois_de_recarregar_e_tirar": "marcado",
+  "vazio": [
+   11,
+   3
+  ],
+  "vazio_sugestao": [
+   5,
+   48
+  ]
+ }
+}

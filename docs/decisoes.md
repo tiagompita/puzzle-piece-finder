@@ -267,3 +267,69 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
 - **Ecrã vazio (Tiago, ponto 6):** a linha «para guardar à parte» sai (com a fila vazia era sempre 0); fica «N peças guardadas à parte, no tabuleiro «por confirmar» até uma vizinha encaixar.» (peças `posicao_conhecida` fora da fila). `montar.resumo` não mudou (`guardar` continua no JSON).
 - **Vocabulário (meu, para não ter «guardar» num botão que agora diz «Colocar aqui»):** o título do cartão passa a «Sem vizinha montada», a contagem «k de n sem vizinha montada», «A seguir» «sem vizinha montada», a lupa «sem vizinha montada: pôr no lugar, por confirmar» e «No lugar por confirmar». O menu «⋯» a 390 px abre a toda a largura (ancorado ao botão saía pela esquerda).
 - **`test_twin_real` (Tiago, ponto 7):** a memória do E-real-2 passa a viver no repositório, `tests/data/ereal2_memoria.npz` (53 KB: contornos inteiros como 1.º ponto + passos int8), feita por `tools/diagnostico/gemeos/ereal2_fixture.py` (≈ 45 s, sem `PPF_SCRATCH`; ida e volta exata verificada pelo próprio script); o teste lê-a e já não salta. Gerada com o `segment_scan` de hoje e passa com as asserções de 2026-11-01 sem mudanças.
+
+## 2026-11-14 — Passo 0 da F2: intervalo do GIL confirmado e escritas atómicas (Tiago pediu; critério dele)
+
+- **Salto a frio com o servidor parado (critério do Tiago: parar se 0,5 ms piorar > 10 %):** não piora. 3 + 3 corridas:
+  médias +6,6 % / +8,9 % (browser céu / relva) e +6,7 % / +9,3 % (só o servidor), puxadas por uma corrida mais lenta
+  nas 4 medidas ao mesmo tempo (suspeita de carga minha no PC); medianas +1,0 % a +5,8 %; 4 corridas de controlo sem
+  nada a correr iguais nos dois intervalos. O 0,5 ms fica. A diferença ronda 1 / ronda 2 é a forma de medir
+  (`docs/diagnostico/gui/DETALHE.md` §8.1).
+- **Concorrência (decisão minha, pela auditoria do DETALHE.md §8.2):** todo o ficheiro que a composição ou o «verificar»
+  leem fora dos bloqueios escreve-se por temporário + `os.replace` (`state.write_atomic`), apaga-se com repetição
+  (`state.remove_file`) e lê-se com repetição curta enquanto está a ser trocado (`state.read_retry`, Windows); as caches
+  de regiões, zoom, miniaturas e poses têm a chave (tamanho do log, mtime de `render/placements.json`). Teste de esforço
+  `tests/test_concorrencia.py` na suite.
+
+## 2026-11-14 — F2: painel da peça e do lugar, pôr e tirar à mão, desfazer global (plano aprovado pelo Tiago)
+
+- **Aprovados como propostos (Tiago):** a (painel «Lugar marcado por ti»), b (desfazer de um nível, no cliente; a
+  persistência vem das ações inversas nos painéis), d («Corrigir recorte» abre `/?peca=P####&contorno=1` na GUI antiga),
+  e («Escolher na folha» = grelha das soltas do saco; tocar na folha fica para a F3), f (as 3 verificações contra as
+  vizinhas, sem a arte), h («Tirar do lugar» neutro na F2), i (telemóvel real [NT]), j (medir o 1.º «verificar»).
+- **c (Tiago, alterado):** «Tirar do lugar» numa peça de par limpa a posição «por confirmar» da outra peça que veio dessa
+  colocação, e o par volta a «proposto» se a confirmação veio dessa colocação; se o par já estava confirmado antes, fica
+  confirmado. O mesmo vale para o desfazer de «Encaixa» (decisão de 2026-11-12). Implementação: ação de estado nova
+  **`pair_unconfirmed`** `{pair, ref_t, desfaz?}` (`Project.unconfirm_pair`; checkouts antigos deixam de ler um log
+  que a tenha); `confirm(unplace=True)` procura no log, depois do último `placed` da peça, o `pair_confirmed` e o
+  `position_known` origem `par` que essa colocação escreveu. Com `desfaz` (o desfazer de «Encaixa») a confirmação do par
+  deixa de contar (`undone_decisions`); sem ele («Tirar do lugar») é neutro e continua a contar, como um `unplaced`
+  simples. **Decisão minha:** se entretanto a outra peça foi colocada, o par fica confirmado (a colocação dela também
+  assenta no par) e a resposta diz «fica como está».
+- **g (Tiago, alterado):** «Pôr uma peça à mão» grava `place` só quando o lugar tem pelo menos uma vizinha colocada com
+  forma no índice; sem vizinha grava posição conhecida («por confirmar»: não é molde nem conta no progresso até uma
+  vizinha encaixar). Com vizinha e uma verificação a falhar, o botão passa a «Pôr na mesma» depois do aviso e grava
+  `place`. O botão e a linha de estado dizem qual dos casos é («Pôr aqui» / «Colocar aqui, por confirmar»). Ação do
+  servidor `por_mao` (o servidor decide pela regra, não o browser). O «Rodar» do Tiago manda sobre a pose da lista
+  (`theta_force`, só com origem `manual`).
+- **`verificar` sem bloqueio de escrita (Tiago):** segue a auditoria do passo 0: bloqueio e cache de tiras próprios,
+  leitura por `Gui.read`, recomeça uma vez se uma escrita mudou o tabuleiro a meio; entra no teste de esforço.
+  **Decisão minha:** o lugar «marcado por ti» também se verifica (`fit.hole_queries(include_marked=True)`, só no
+  «verificar»; o ranking dos buracos continua a ignorá-lo). Sem isto a borda (1,29) dizia «não verificado».
+- **As 3 verificações em palavras (decisão minha, não calibrada nesta forma):** lado liso = os lados F da peça rodada
+  viram exatamente para fora (3 ou 1 traço); forma = 1 traço se um lado é impossível (T↔T, B↔B, corda acima do corte),
+  3 se o pior lado tem RMS do perfil ≤ 1,1 mm (a mediana das adjacências verdadeiras, `fit.RMS_SCALE`), senão 2;
+  imagem = o custo conjunto do molde (tiras + forma) contra `t_abs` (≤ metade 3, ≤ `t_abs` 2, acima 1), o único limiar
+  calibrado; sem vizinhas, sem tira ou com a forma impossível, «não verificado».
+- **Toque no tabuleiro (decisão minha):** o 1.º toque no alvo de um cartão da fila escolhe esse cartão (como na F1b); um
+  toque no alvo do cartão atual, ou noutro lugar, abre o painel do lugar. Sem isto o painel «lugar vazio» nunca
+  mostrava a sugestão do programa.
+- **Desfazer das ações dos painéis:** «Tirar do lugar» → `place` outra vez (mesma célula e θ do log, origem `manual`,
+  `reposicao: true`, informativo); «por confirmar» → `position_known` outra vez; grupo → `anchor` com o mesmo `cell0`,
+  `rot`, `mirror`; «Já tem peça» ↔ «Afinal está vazio». Limite: uma pose manual («Editar posicionamento») perde-se ao
+  tirar a peça (como já acontecia com `unplaced`).
+- **Textos (Tiago):** «Sem vizinha montada» → «Ainda sem peças ao lado»; «por confirmar» e o tracejado ficam.
+
+## 2026-11-14 — F2 (9): «Definições › Cor das peças», só visualização (Tiago)
+
+- Dois controlos (mais escuro/mais claro = `brightness` 0,70–1,30; cor menos/mais viva = `saturate` 0,50–1,50), filtro
+  CSS nas imagens de peça (cartões, painéis, grelha da folha, pré-visualização, lightbox da peça) e no tabuleiro
+  (raster e detalhe), guardados no aparelho (`localStorage` `novo-cor`), «Repor». Nunca vai ao servidor: o teste
+  `test_cor_das_pecas_is_display_only` prova que nenhum pedido que não seja GET sai do browser e que os recortes, os
+  `npz`, as folhas, o log e as miniaturas servidas ficam iguais byte a byte.
+- **Valor inicial (decisão minha):** brilho 0,92, saturação 1,00: o desvio scan/arte medido em
+  `docs/estado-e-plano.md` §3 (L\*scan ≈ 1,06·L\*arte + 1,3, ≈ +5 L\* uniforme; a\*/b\* quase iguais) corresponde a ≈ 8 %
+  a mais nos valores sRGB dos meios-tons; a saturação fica.
+- **Tabuleiro (medido, DETALHE.md §9.2):** o filtro aumenta o tempo de pintura/rasterização em 20–70 % (≈ 0,5 → 0,9 ms
+  por frame a 1366), com 0 frames perdidos, o mesmo nº de frames e 0 long tasks a arrastar e com a roda, a 1366 e a
+  390 × 3: fica também no tabuleiro [V em Chromium headless; GPU real e telemóvel NT].

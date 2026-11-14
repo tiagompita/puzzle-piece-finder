@@ -483,6 +483,7 @@ importação (`commit_sheet`), `rebuild_stale` no arranque, e o `sync()` quando 
 | `render/fit/strips.npz` (não é a composição: o ranking dos buracos e o «verificar» da F2) | o ranking (`_Cache.save`, no próprio sítio) | **falha possível**: leitor sem `close` (no Windows impede a troca) e escrita a meio | **corrigido**: leitura com `with`, escrita atómica, cópia da lista antes de gravar |
 | `render/gui/board_60.{jpg,json}` | `_base` (sob `rlock`); apagados por `_drop_stale_caches` | seguro na leitura; o apagar podia rebentar como o `render/clean` | `remove_file` |
 | arte (`images/puzzles/…`), `log.jsonl` (`os.stat`) | ninguém / só acrescenta | seguro | igual |
+| qualquer ficheiro trocado por `write_atomic` (visto com `render/placements.json`) | a escrita, no instante do `os.replace` | **falhou no teste** (com o «verificar» da F2 no ciclo, 1 em 10 corridas): no Windows o ficheiro antigo fica «delete pending» e abri-lo dá `PermissionError [Errno 13]` | **corrigido**: `state.read_retry` (até 25 × 20 ms) em `load_placements`, `crop_rgba`, `Project.shape` / `contour_px`, `load_fetch` e nas tiras; 20/20 depois |
 
 **Teste de esforço** (`tests/test_concorrencia.py`, `slow`, ≈ 10 s): projeto sintético; 4 fios compõem em ciclo
 (tabuleiro inteiro, regiões com e sem LRU, zoom 3 × 3, miniaturas), 1 pede regiões por HTTP e 1 deixa `render/clean`
@@ -501,7 +502,46 @@ Fora da composição, o «verificar» da F2 corre também sem o bloqueio de escr
 projeto por `Gui.read`, tem um bloqueio e uma cache de tiras próprios, e recomeça uma vez se uma escrita mudou o
 tabuleiro a meio); entra no teste de esforço com a F2.
 
-## 9. Limites
+## 9. F2 (2026-11-14): tempo do «verificar» e custo do ajuste de cor no tabuleiro
+
+### 9.1 «verificar» de «Pôr uma peça à mão» (plano da F2 §6 j) [V]
+
+`tools/diagnostico/gui/verificar_tempo.py` (`dados/r3_f2_verificar.json`): cópia nova de `projects/alpes` por cenário,
+servidor real (0,5 ms), `POST /api/cell/1/29/verificar` com Saco 9 · nº 89 (P1422), 2 repetições.
+
+| cenário | 1.º pedido, sem θ (as 4 rotações), HTTP (s) | seguintes, com θ (s) |
+|---|---|---|
+| servidor parado, processo novo | 0,66 · 0,62 | 0,002–0,025 |
+| durante o ranking dos buracos a frio (logo depois de `/api/montar`) | 4,46 · 3,20 | 0,012–0,050 |
+
+- O 1.º pedido lê as tiras de `render/fit/strips.npz` e calcula os lados erodidos das 3 vizinhas e da peça; os
+  seguintes reaproveitam a cache própria do «verificar».
+- Parado fica abaixo dos 2 s do plano. Durante o ranking a frio passa (3,2–4,5 s: o ranking divide o processo, como no
+  §6); a regra «não bloqueia» cumpre-se (as linhas dizem «a verificar…» e «Pôr aqui» está ativo, teste
+  `test_por_mao_non_blocking_rodar_and_undo`). O que o encurta é o §7 (lados em disco), fora da F2.
+- No guião (`F2_guiao.json`, no browser, depois do ranking): 0,17–0,19 s o 1.º, 0,02–0,07 s cada «Rodar».
+- O resultado: na rotação −171° lado liso, forma e imagem com 3 traços; nas outras 3 o lado liso e a forma falham e a
+  imagem fica «não verificado» [V no programa; o encaixe físico é NT, passo 8 do guião].
+
+### 9.2 Ajuste de cor (filtro CSS) no tabuleiro [V em Chromium headless]
+
+`tools/diagnostico/gui/f2_filtro.py` (`dados/r3_f2_filtro.json`): GUI nova sobre uma cópia, tabuleiro aproximado
+(linhas 10–24, colunas 18–42), 3 voltas alternadas filtro ligado (brilho 0,92) / desligado, 3 s a arrastar
+(60 movimentos) e 12 voltas da roda, com trace do Chromium.
+
+| tamanho | gesto | frames (desl. / lig.) | frames perdidos | pintura e rasterização no gesto, ms (desl. → lig.) | maior tarefa (ms) | long tasks |
+|---|---|---|---|---|---|---|
+| 1366 × 768 | arrastar | 320–323 / 319–320 | 0 / 0 | 161–168 → 271–285 (+68 %) | 0,5 / 0,8 | 0 |
+| 1366 × 768 | roda | 134–137 / 133–137 | 0 / 0 | 29–32 → 50–54 (+70 %) | 0,7 / 0,6 | 0 |
+| 390 × 844 × 3 | arrastar | 317–322 / 320–321 | 0 / 0 | 43–58 → 58–62 (+20 %) | 0,7 / 0,5 | 0 |
+| 390 × 844 × 3 | roda | 137–138 / 136–139 | 0 / 0 | 9–11 → 12–13 (+22 %) | 0,7 / 0,5 | 0 |
+
+- O filtro custa ≈ 0,4 ms por frame a 1366 (de ≈ 0,5 para ≈ 0,9 ms, num orçamento de 16,7 ms); o batimento do
+  `requestAnimationFrame` fica igual (16,7 ms, p95 16,8) e não se perde nenhum frame.
+- **Decisão: fica também no tabuleiro.** Limite: Chromium headless rasteriza em software nesta máquina; GPU real,
+  Firefox/Safari e o telemóvel ficam [NT].
+
+## 10. Limites
 
 - Medido em Chromium headless numa máquina, sem rede real (localhost). Firefox, telemóvel e `--lan` ficam [NT]. O
   «deixou de responder» do Tiago não foi reproduzido como bloqueio do fio do browser: aqui o fio nunca bloqueou. A
