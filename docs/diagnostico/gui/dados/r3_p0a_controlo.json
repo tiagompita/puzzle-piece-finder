@@ -1,0 +1,69 @@
+{
+ "ordem": "0.5,5,0.5,5",
+ "rows": [
+  {
+   "tag": "1",
+   "intervalo_ms": 0.5,
+   "copia_s": 1.1,
+   "protocolo": "parado",
+   "arranque_s": 1.1,
+   "tabuleiro_s": 0.13,
+   "buracos_s": 30.7,
+   "browser_ceu_frio_s": 2.56,
+   "browser_relva_frio_s": 2.34,
+   "browser_ceu_morno_s": 2.39,
+   "browser_relva_morno_s": 2.2,
+   "servidor_ceu_s": 2.03,
+   "servidor_relva_s": 2.13,
+   "linha_gil": "ad\\p0a\\work2\\proj_1 (1433 pe�as, vers�o do log 2299530; intervalo do GIL 0.5 ms)"
+  },
+  {
+   "tag": "2",
+   "intervalo_ms": 5.0,
+   "copia_s": 1.2,
+   "protocolo": "parado",
+   "arranque_s": 0.6,
+   "tabuleiro_s": 0.12,
+   "buracos_s": 31.4,
+   "browser_ceu_frio_s": 2.56,
+   "browser_relva_frio_s": 2.3,
+   "browser_ceu_morno_s": 2.39,
+   "browser_relva_morno_s": 2.16,
+   "servidor_ceu_s": 2.03,
+   "servidor_relva_s": 2.14,
+   "linha_gil": "hpad\\p0a\\work2\\proj_2 (1433 pe�as, vers�o do log 2299530; intervalo do GIL 5 ms)"
+  },
+  {
+   "tag": "3",
+   "intervalo_ms": 0.5,
+   "copia_s": 1.2,
+   "protocolo": "parado",
+   "arranque_s": 1.1,
+   "tabuleiro_s": 0.15,
+   "buracos_s": 29.6,
+   "browser_ceu_frio_s": 2.56,
+   "browser_relva_frio_s": 2.36,
+   "browser_ceu_morno_s": 2.39,
+   "browser_relva_morno_s": 2.18,
+   "servidor_ceu_s": 2.03,
+   "servidor_relva_s": 2.13,
+   "linha_gil": "ad\\p0a\\work2\\proj_3 (1433 pe�as, vers�o do log 2299530; intervalo do GIL 0.5 ms)"
+  },
+  {
+   "tag": "4",
+   "intervalo_ms": 5.0,
+   "copia_s": 1.2,
+   "protocolo": "parado",
+   "arranque_s": 0.6,
+   "tabuleiro_s": 0.13,
+   "buracos_s": 30.9,
+   "browser_ceu_frio_s": 2.54,
+   "browser_relva_frio_s": 2.35,
+   "browser_ceu_morno_s": 2.4,
+   "browser_relva_morno_s": 2.21,
+   "servidor_ceu_s": 2.02,
+   "servidor_relva_s": 2.15,
+   "linha_gil": "hpad\\p0a\\work2\\proj_4 (1433 pe�as, vers�o do log 2299530; intervalo do GIL 5 ms)"
+  }
+ ]
+}

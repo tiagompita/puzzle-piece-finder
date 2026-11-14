@@ -39,6 +39,7 @@ import math
 import os
 import sys
 import time
+import zipfile
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -47,6 +48,7 @@ import numpy as np
 
 from src.locate import body_center_mm, wrap_deg
 from src.shape import (N_SIDE, Shape, Side, analyse, corner_dist, f_adjacent, _neg_inv, _smooth_closed)
+from src.state import write_atomic
 
 __all__ = [
 	"FIT_VERSION", "DIRS", "DIR_IDX", "OPP", "STEP", "NORMAL_DEG", "ZONES", "CONFIDENCES",
@@ -589,16 +591,16 @@ class _Cache:
 		self.n_loaded = 0
 		if os.path.exists(self.path):
 			try:
-				z = np.load(self.path, allow_pickle=False)
-				for k in z.files:
-					if k.startswith("bbox__"):
-						continue
-					bb = z[f"bbox__{k}"] if f"bbox__{k}" in z.files else None
-					p = project.pieces.get(k)
-					if p is not None and bb is not None and list(bb) == list(p.bbox):
-						self.strips[k] = z[k]
+				with np.load(self.path, allow_pickle=False) as z:     # closed: a writer replaces the file (Windows)
+					for k in z.files:
+						if k.startswith("bbox__"):
+							continue
+						bb = z[f"bbox__{k}"] if f"bbox__{k}" in z.files else None
+						p = project.pieces.get(k)
+						if p is not None and bb is not None and list(bb) == list(p.bbox):
+							self.strips[k] = z[k]
 				self.n_loaded = len(self.strips)
-			except (OSError, ValueError):
+			except (OSError, ValueError, zipfile.BadZipFile):
 				self.strips = {}
 
 	def rebind(self, project) -> "_Cache":
@@ -657,13 +659,13 @@ class _Cache:
 			return
 		os.makedirs(os.path.dirname(self.path), exist_ok=True)
 		arrs = {}
-		for k, v in self.strips.items():
+		for k, v in list(self.strips.items()):         # another thread (the GUI's «verificar») may add strips meanwhile
 			p = self.pr.pieces.get(k)
 			if p is None:
 				continue
 			arrs[k] = v
 			arrs[f"bbox__{k}"] = np.asarray(p.bbox, int)
-		np.savez_compressed(self.path, **arrs)
+		write_atomic(self.path, lambda tmp: np.savez_compressed(tmp, **arrs))
 		self.dirty = False
 
 

@@ -485,7 +485,16 @@ class Gui:
 
 	def _pl_mtime(self) -> int:
 		fp = self.pr.p("render", "placements.json")
-		return os.stat(fp).st_mtime_ns if os.path.exists(fp) else 0
+		try:
+			return os.stat(fp).st_mtime_ns
+		except OSError:
+			return 0
+
+	def render_version(self) -> tuple:
+		"""What a drawing of the board depends on beyond the log: ``(log size, mtime of render/placements.json)``.
+		A write refreshes ``placements.json`` after the log (:meth:`_refresh_render_assets`), so a region / placement
+		cache keyed on the log alone could keep the on-the-fly pose drawn in between (DETALHE.md §8)."""
+		return (self.version(), self._pl_mtime())
 
 	def sync(self) -> None:
 		"""Re-open the project if ``log.jsonl`` changed outside the server (CLI run)."""
@@ -615,7 +624,7 @@ class Gui:
 	# ------------------------------------------------------------ placements / poses
 	def placements(self) -> dict:
 		from src import render
-		ver = self.version()
+		ver = self.render_version()
 		if self._placements is None or self._placements[0] != ver:
 			raw = render.load_placements(self.pr).get("placements") or {}
 			# an entry registered for another cell / pose (log changed outside the server) is dropped:
@@ -1155,7 +1164,7 @@ class Gui:
 		``client``/``seq`` (the detail raster of a browser tab, :func:`loadDetail`): compositions of one client run one
 		at a time, and a request whose ``seq`` is older than the newest seen for that client is dropped
 		(:class:`Superseded`, HTTP 409) before it starts composing, so a burst of jumps leaves one composition."""
-		ver = self.version()
+		ver = self.render_version()
 		key = (round(ppc, 1), region)
 		jk = (key, ver)
 		with self.region_lock:
@@ -1214,7 +1223,7 @@ class Gui:
 		reg = (max(1, l - 1), max(1, c - 1), min(prof.rows, l + 1), min(prof.cols, c + 1))
 		dpi = float(min(max(dpi, 50), 300))
 		key = ("zoom", side, round(dpi), reg)
-		ver = self.version()
+		ver = self.render_version()
 		with self.region_lock:
 			cc = self._region_cached(key, ver)
 			if cc is not None:
@@ -1274,7 +1283,7 @@ class Gui:
 		theta, why = (None, "scan")
 		if pose == "board":
 			theta, why = self.read(lambda: self.board_pose(pid))
-		key = (pid, round(theta, 2) if theta is not None else None, size, self.version() if pose == "board" else 0)
+		key = (pid, round(theta, 2) if theta is not None else None, size, self.render_version() if pose == "board" else 0)
 		c = self._pieces.get(key)
 		if c is not None:
 			self._pieces.move_to_end(key)
@@ -1581,7 +1590,6 @@ class Gui:
 		"""Cleaned crop + fine registration (with the image when available) of newly placed pieces,
 		written to ``render/clean/`` and ``render/placements.json`` (as :func:`src.render.register_all`
 		would, without its global relaxation pass)."""
-		from PIL import Image
 		from src import render
 		try:
 			if self._art is None and self.use_image:
@@ -1599,8 +1607,7 @@ class Gui:
 				rgba = self.pr.crop_rgba(pid)
 				if rgba is not None:
 					out = render.clean_crop(rgba, self.pr.profile.background_lab, render._scan_mmpp(self.pr, p.scan_id))
-					os.makedirs(self.pr.p("render", "clean"), exist_ok=True)
-					Image.fromarray(out).save(self.pr.p("render", "clean", f"{pid}.png"))
+					render.save_png(self.pr.p("render", "clean", f"{pid}.png"), out)
 				r = render.register_piece(self.pr, pid, art=self._art or None, image=bool(self._art))
 				if "error" not in r:
 					r["key"] = render._entry_key(self.pr, pid)
@@ -1610,6 +1617,17 @@ class Gui:
 				self.log(f"[servidor] registo de {pid} falhou: {e}")
 		d["log_len"] = render._log_len(self.pr)
 		render.save_placements(self.pr, d)
+		# the full-board raster may have patched these cells in between (a GET while this ran, outside the write lock)
+		# with the on-the-fly pose: re-patch them on the next request (DETALHE.md §8)
+		with self.rlock:
+			b = self._board
+			if b is not None:
+				cols = self.pr.profile.cols
+				b["ver"] = None
+				for pid in pids:
+					cel = self.pr.piece(pid).celula
+					if cel is not None and b.get("snap") is not None:
+						b["snap"][(cel[0] - 1) * cols + cel[1] - 1] = None
 
 	def _log_size(self) -> int:
 		try:

@@ -1113,13 +1113,22 @@ def write_fetch(project, entries: list, rest: list, notes: list, suppressed: Opt
 	"""
 	import cv2
 	suppressed = list(suppressed or [])
-	with open(project.p("fetch.md"), "w", encoding="utf-8", newline="\n") as f:
-		f.write(render_fetch_md(project, entries, rest, notes, suppressed))
-	with open(project.p("fetch.json"), "w", encoding="utf-8", newline="\n") as f:
-		json.dump({"t": _dt.datetime.now().isoformat(timespec="seconds"), "entries": entries, "rest": rest,
-				   "notes": notes, "suprimidas": suppressed}, f, ensure_ascii=False, indent=1, default=float)
+	from src.state import remove_file, write_atomic
+	md = render_fetch_md(project, entries, rest, notes, suppressed)
+
+	def w_md(tmp):
+		with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+			f.write(md)
+
+	def w_json(tmp):
+		with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+			json.dump({"t": _dt.datetime.now().isoformat(timespec="seconds"), "entries": entries, "rest": rest,
+					   "notes": notes, "suprimidas": suppressed}, f, ensure_ascii=False, indent=1, default=float)
+	# the GUI reads fetch.json outside the write lock (``/api/montar``, ``/api/fetch``): never half a file (DETALHE.md §8)
+	write_atomic(project.p("fetch.md"), w_md)
+	write_atomic(project.p("fetch.json"), w_json)
 	for old in glob.glob(project.p("fetch_*.jpg")):
-		os.remove(old)
+		remove_file(old)
 	by_lote = {}
 	for e in entries:
 		if e.get("piece"):

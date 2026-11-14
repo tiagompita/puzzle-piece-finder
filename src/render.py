@@ -69,6 +69,7 @@ import numpy as np
 
 from src import overrides as OV
 from src.locate import CellArt, body_beta_deg, body_center_mm, wrap_deg
+from src.state import remove_file, write_atomic
 
 __all__ = [
 	"CORNER_RESIDUAL_MAX_MM", "F_ROTATION", "F_SPAN", "F_MAX_DEG", "F_LINE_RMS_MAX", "F_TRANSLATION", "F_TARGET_GROW", "f_side_line", "f_side_fit", "f_rotation", "f_translation", "IMG_SEARCH_CELL", "IMG_ROT_DEG", "IMG_ACCEPT_MM", "IMG_ACCEPT_DEG", "GRAD_W", "IMG_NCC_MIN",
@@ -826,13 +827,20 @@ def _rule_flags() -> dict:
 def save_placements(project, d: dict) -> str:
 	d.update(_rule_flags())
 	fp = project.p("render", "placements.json")
-	os.makedirs(os.path.dirname(fp), exist_ok=True)
-	tmp = fp + ".tmp"
-	with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-		json.dump(d, f, ensure_ascii=False, indent=0, default=_json_default)
-		f.write("\n")
-	os.replace(tmp, fp)
+
+	def write(tmp):
+		with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+			json.dump(d, f, ensure_ascii=False, indent=0, default=_json_default)
+			f.write("\n")
+	write_atomic(fp, write)         # the GUI reads it while composing, outside every lock (DETALHE.md §8)
 	return fp
+
+
+def save_png(fp: str, rgba: np.ndarray) -> None:
+	"""PNG of an array, written atomically (:func:`src.state.write_atomic`): crops and cleaned crops are read by
+	the board composition outside every lock, so a half-written file must never be visible (DETALHE.md §8)."""
+	from PIL import Image
+	write_atomic(fp, lambda tmp: Image.fromarray(rgba).save(tmp, format="PNG"))
 
 
 def _json_default(o):
@@ -1229,7 +1237,7 @@ def clean_all(project, *, shadow: bool = SHADOW_DEFAULT, force: bool = False,
 		rgba = project.crop_rgba(pid)
 		mmpp = _scan_mmpp(project, p.scan_id)
 		out, m = _clean(rgba, bg, mmpp, shadow=shadow, light_band_mm=light_band_mm)
-		Image.fromarray(out).save(fp)
+		save_png(fp, out)
 		lim = (min(light_band_mm, LIGHT_BAND_MAX_MM) if light_band_mm and is_light(m) else BAND_MM) / mmpp
 		deep = int((m["removed"] & (m["depth_px"] > lim)).sum())
 		stats[pid] = {"removed": int(m["removed"].sum()), "removed_frac": float(m["removed"].sum() / max(1, m["alpha"].sum())),
@@ -1283,7 +1291,9 @@ def _clean_or_crop(project, pid: str) -> Optional[np.ndarray]:
 		# another thread composing the same piece (a region outside the rlock and the full board, 2026-11-14) may delete
 		# a stale ``fp`` between these calls: a vanished file is a stale one (seen at start-up on a copy: the
 		# full-board composition died with FileNotFoundError in ``getmtime``)
+		st = None
 		try:
+			st = os.stat(fp)
 			with Image.open(fp) as im:
 				cl = np.asarray(im.convert("RGBA")).copy()
 			ok = src is not None and os.path.exists(src) and os.path.getmtime(fp) >= os.path.getmtime(src)
@@ -1295,7 +1305,10 @@ def _clean_or_crop(project, pid: str) -> Optional[np.ndarray]:
 		if ok:
 			return cl
 		try:
-			os.remove(fp)
+			# only the file judged stale: a fresh one written meanwhile (``clean_all``, a placement) stays (DETALHE.md §8)
+			now = os.stat(fp)
+			if st is not None and (now.st_mtime_ns, now.st_size) == (st.st_mtime_ns, st.st_size):
+				os.remove(fp)
 		except OSError:
 			pass
 	rgba = project.crop_rgba(pid)
@@ -1545,10 +1558,15 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 	if "pieces" in layers:
 		if placements is None:
 			placements = load_placements(project)["placements"] or {}
-		ids = [pid for pid in placed_ids(project) if piece_ids is None or pid in piece_ids]
-		ids = [pid for pid in ids if l0 - 1 <= project.piece(pid).celula[0] <= l1 + 1
-			   and c0 - 1 <= project.piece(pid).celula[1] <= c1 + 1]
-		ids.sort(key=lambda pid: tuple(project.piece(pid).celula))
+		# one read of each piece's cell: a write in another thread (the GUI composes outside every lock, DETALHE.md §8)
+		# may take a piece off the board meanwhile (``celula`` -> None)
+		cells = {}
+		for pid in placed_ids(project):
+			cel = project.piece(pid).celula
+			if cel is not None and (piece_ids is None or pid in piece_ids):
+				cells[pid] = tuple(cel)
+		ids = [pid for pid, cel in cells.items() if l0 - 1 <= cel[0] <= l1 + 1 and c0 - 1 <= cel[1] <= c1 + 1]
+		ids.sort(key=lambda pid: cells[pid])
 		acc = img.astype(np.float32)
 		zbuf = np.full((H, W), -np.inf, np.float32)     # depth (mm inside its own silhouette) of the winning piece
 		s_mm = 1.0 / ppm                                   # width of the depth-priority transition (1 output px)
@@ -1666,13 +1684,13 @@ def _drop_stale_caches(project, sid: str, pids: list) -> None:
 	"""Display caches that depend on a piece's crop/contour (all regenerated on demand)."""
 	import glob
 	for pid in pids:
-		fp = project.p("render", "clean", f"{pid}.png")
-		if os.path.exists(fp):
-			os.remove(fp)
+		# a composition in another thread may be reading it (Windows: PermissionError): retried; if it stays, it is older
+		# than the new crop and every reader treats it as stale (``_clean_or_crop``, ``clean_all``; DETALHE.md §8)
+		remove_file(project.p("render", "clean", f"{pid}.png"))
 	for pat in (project.p("render", "sheets", f"{sid}_*.jpg"), project.p("render", "gui", "sheets", f"{sid}_*.jpg"),
 				project.p("render", "gui", "board_*.jpg"), project.p("render", "gui", "board_*.json")):
 		for fp in glob.glob(pat):
-			os.remove(fp)
+			remove_file(fp)
 	if os.path.exists(project.p("render", "placements.json")):
 		d = load_placements(project)
 		if any(pid in d.get("placements", {}) for pid in pids):
@@ -1910,11 +1928,11 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 		if dry_run:
 			continue
 		if written:
-			np.savez_compressed(npz, **arrs)
+			write_atomic(npz, lambda tmp: np.savez_compressed(tmp, **arrs))
 		for pid, rgba in crops.items():
-			Image.fromarray(rgba).save(project.p(project.piece(pid).crop_path))
+			save_png(project.p(project.piece(pid).crop_path), rgba)
 		for pid in set(written) | set(crops):
-			project._shape_cache.pop(pid, None)
+			project.forget_shape(pid)
 		if have_npz and written:
 			_drop_stale_caches(project, sid, sorted(set(written) | set(crops)))
 			redraw.add(sid)

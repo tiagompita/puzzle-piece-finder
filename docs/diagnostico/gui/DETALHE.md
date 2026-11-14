@@ -6,6 +6,8 @@ headless (Playwright) com CDP `Network`, Windows 11, `.venv` (Python 3.13). Dado
 Guiões: `tools/diagnostico/gui/salto_detalhe.py` (browser), `tempo_regiao.py` (servidor: fases e bloqueio),
 `gil_buracos.py` (GIL), `tabela.py` (tabelas a partir dos JSON). **Ronda 2** (mesmo dia, §6–§7): `gil_intervalo.py`
 (intervalo do GIL no servidor real, com e sem), `buracos_frio.py` (fases do 1.º ranking dos buracos); dados `dados/r2_*`.
+**Passo 0 da F2** (§8): `salto_frio_gil.py` (salto a frio com o servidor parado, 5 contra 0,5 ms), dados `dados/r3_p0a_*`;
+teste de esforço `tests/test_concorrencia.py`.
 
 Etiquetas: **[V]** medido aqui; **[NT]** não testado; **[F]** testado e falha o critério.
 
@@ -42,6 +44,15 @@ Etiquetas: **[V]** medido aqui; **[NT]** não testado; **[F]** testado e falha o
   - causa de fundo do 1.º `/api/montar` (§7): o ranking em si custa < 1 s; os 24 s (sozinho; 43–50 s no servidor) são
     lados erodidos (18 s) e formas (5 s) que só vivem em memória. Proposta: guardá-los em disco como as tiras;
   - corrigida uma corrida entre fios em `render._clean_or_crop` que a composição fora do lock (A) expôs (§6.3).
+
+- **Passo 0 da F2 (§8) [V]:**
+  - com o servidor parado, o intervalo de 0,5 ms não piora a composição sozinha (3 + 3 corridas: +6,6 % a +9,3 % na média
+    por causa de uma corrida suspeita, medianas +1,0 % a +5,8 %; 4 corridas de controlo iguais nos dois intervalos);
+    a diferença ronda 1 (2,0–2,8 s) / ronda 2 (2,9–3,5 s) é a forma de medir: parado dá os números da ronda 1, e o
+    protocolo da ronda 2 (abrir a página arranca o ranking dos buracos) dá 4,6–7,8 s;
+  - auditoria da composição fora dos bloqueios e teste de esforço novo (`tests/test_concorrencia.py`): na HEAD de então
+    falhou 21 em 22 corridas (escritas não atómicas de recortes, `placements.json`, `npz`; apagar ficheiros que outro fio
+    lê; a forma e a pose em cache guardadas a meio de uma escrita); corrigido, 20/20.
 
 ## 1. Servidor, sem browser: onde vai o tempo de uma composição [V]
 
@@ -386,7 +397,111 @@ das que as tiras já têm), depois D (pouco código; a progressão passa a ser v
 (ganha o arranque sem mudanças, mas é o que tem a invalidação mais frágil). Medir depois o 1.º `/api/montar` e a lupa
 no arranque com o mesmo guião.
 
-## 8. Limites
+## 8. Passo 0 da F2 (2026-11-14): salto a frio com o servidor parado e auditoria de concorrência
+
+Pedido do Tiago antes da F2: (a) medir o salto a frio sem nada do arranque a correr, com o intervalo do GIL a 5 ms e a
+0,5 ms, e dizer porque é que a ronda 1 dava 2,0–2,8 s e a ronda 2 2,9–3,5 s (parar se 0,5 ms piorar > 10 %); (b) listar
+o que a composição lê fora dos bloqueios e o que as escritas mudam entretanto, com um teste de esforço na suite.
+
+### 8.1 Salto a frio, servidor parado: 5 ms contra 0,5 ms [V]
+
+`tools/diagnostico/gui/salto_frio_gil.py` (`dados/r3_p0a_corridas.json`, `r3_p0a_controlo.json`). Cópia nova de
+`projects/alpes` por corrida com `shutil.copytree` (1433 peças, versão do log 2299530), servidor novo
+(`--gil-intervalo 0` = 5 ms ou `0.0005`, o valor confirmado na linha do registo de cada corrida); antes de medir: estado
+«pronto», o tabuleiro inteiro da cache do disco (0,12–0,16 s em todas: a cache era válida), o ranking dos buracos
+arrancado e acabado (30–35 s) e 3 s de folga. Depois: **browser** = `salto_detalhe.py --cenarios saltos` (GUI nova
+1920 × 1080, o mesmo gesto e a mesma região das rondas 1 e 2: céu 1,20–14,40 e relva 34,30–47,50 a ppc 100);
+**servidor** = o pedido HTTP de uma região fria do mesmo tamanho (3 colunas ao lado), sem browser.
+
+| corrida | intervalo | browser céu (s) | browser relva (s) | servidor céu (s) | servidor relva (s) |
+|---|---|---|---|---|---|
+| 1 | 5 ms | 2,58 | 2,35 | 2,29 | 2,22 |
+| 2 | 0,5 ms | 2,73 | 3,02 | 2,66 | 2,78 |
+| 3 | 0,5 ms | 2,66 | 2,40 | 2,05 | 2,16 |
+| 4 | 5 ms | 2,56 | 2,47 | 2,01 | 2,15 |
+| 5 | 5 ms | 2,64 | 2,37 | 2,08 | 2,20 |
+| 6 | 0,5 ms | 2,90 | 2,41 | 2,10 | 2,24 |
+| **média 5 ms** | | **2,59** | **2,40** | **2,13** | **2,19** |
+| **média 0,5 ms** | | **2,76 (+6,6 %)** | **2,61 (+8,9 %)** | **2,27 (+6,7 %)** | **2,39 (+9,3 %)** |
+| mediana 5 ms → 0,5 ms | | 2,58 → 2,73 (+5,8 %) | 2,37 → 2,41 (+1,7 %) | 2,08 → 2,10 (+1,0 %) | 2,20 → 2,24 (+1,8 %) |
+| controlo 7–10 (0,5 / 5 / 0,5 / 5 ms) | | 2,56 / 2,56 / 2,56 / 2,54 | 2,34 / 2,30 / 2,36 / 2,35 | 2,03 / 2,03 / 2,03 / 2,02 | 2,13 / 2,14 / 2,13 / 2,15 |
+
+**Decisão: o intervalo de 0,5 ms não piora a composição sozinha mais de 10 % [V]; a F2 seguiu.** As 3 + 3 corridas
+pedidas dão +6,6 % a +9,3 % na média, puxados pela corrida 2, a mais lenta nas 4 colunas ao mesmo tempo (incluindo a
+medida só do servidor, feita depois do browser). Durante as corridas 1–2 corri no mesmo PC verificações de importação
+(`python -c "import src.server"`), por isso a corrida 2 é suspeita de carga externa [NT: não o consigo provar]. Repeti
+4 corridas de controlo alternadas sem tocar no PC: os dois intervalos dão o mesmo (céu 2,56 contra 2,55 s, relva 2,35
+contra 2,33 s, servidor 2,03 contra 2,02 s). Com as 10 corridas: mediana +3,9 % / +2,1 % (browser) e +1,0 % / +0,5 %
+(servidor).
+
+**Porque é que a ronda 2 deu 2,9–3,5 s e a ronda 1 2,0–2,8 s: a forma de medir, não o intervalo [V em parte].**
+- Com o servidor parado, a mesma região, o mesmo gesto e qualquer dos dois intervalos dá 2,5–2,9 s (céu) e 2,3–3,0 s
+  (relva) no browser: os números da ronda 1 (2,62 / 2,44 s a 1920, já com os 280 ms de espera que a ronda 2 tirou).
+- Uma corrida extra com o protocolo dos saltos da ronda 2 (`--protocolo-r2`: o `salto_detalhe.py` abre `/novo/` logo que
+  o estado diz «pronto»; a abertura pede `/api/montar`, que arranca o ranking dos buracos a frio, e o 1.º salto sai
+  ≈ 1,5 s depois) deu **céu 7,83 s, relva 4,61 s**, morno 4,6 s (`dados/r3_p0a_protocolo_r2_browser.json`): o salto
+  passa a dividir o processo com o ranking (40 s neste projeto).
+- A ronda 2 registou «ranking dos buracos já feito», mas o `_wait_idle` do guião só espera por «pronto» e não pelos
+  buracos, e os ficheiros `r2_saltos_*.json` não guardam a hora: não sei quanto do ranking (ou da recomposição do
+  tabuleiro de uma cópia `cp -r`, §6) ainda corria. Os 2,9–3,5 s ficam entre o parado (2,4–2,9) e o sobreposto
+  (4,6–7,8), o que é consistente com uma sobreposição parcial [NT: não reproduzido exatamente].
+- O intervalo não muda a composição sozinha (tabela acima), e na ronda 2 as duas colunas («com espera» e «sem
+  espera») já corriam com 0,5 ms.
+
+### 8.2 Auditoria: o que a composição lê fora dos bloqueios [V]
+
+Caminhos de composição: `Gui._region_jpg` (detalhe, sem bloqueio desde a ronda 1), `Gui.zoom_jpg` (zoom 3 × 3 da
+célula), `Gui.piece_png` (miniaturas), `Gui._base` (tabuleiro inteiro, sob `rlock`, que nenhuma escrita toma), todos
+por `render.compose_board` / `compose_zone_vs_art` / `piece_rgba_for_display`. Escritas: `Gui.confirm` (sob `wlock`:
+`place`, `unplace`, posições, pares, âncoras, marcas), o editor do contorno (`rebuild_piece`), a pose manual, a
+importação (`commit_sheet`), `rebuild_stale` no arranque, e o `sync()` quando o log muda fora do servidor.
+
+**Estado em memória**
+
+| leitura | quem a muda entretanto | antes | agora |
+|---|---|---|---|
+| `Gui.pr` (o objeto `Project`) | `sync()` troca-o quando a CLI escreve | seguro: a composição usa o objeto que apanhou; a chave da cache é a versão de então | igual |
+| `project.pieces` (dicionário; `placed_ids`) | a importação acrescenta peças | seguro: `RuntimeError` «changed size» repetido por `Gui.read` (até 4×) | igual |
+| `Piece.celula` lida 3 vezes por peça (filtro, ordem, `celula[0]`) | `unplace`, `position_cleared`, `unanchor` põem `None` | **falha possível**: `TypeError` se a peça sair entre as leituras | **corrigido**: uma leitura por peça (`compose_board`) |
+| `Piece.bbox`, `crop_path`, `theta_deg`, `pose_manual`, `seccao_id`, `anchor` | re-segmentação, pose manual, âncoras | transitório: a composição em curso pode misturar o antes e o depois; fica na cache com a chave da versão em que começou, que deixa de ser pedida quando o evento entra no log | igual (documentado) |
+| `project._shape_cache` | re-segmentação (`forget`) | **falha possível**: quem leu o `npz` velho guardava a forma velha depois do `pop` do escritor, e ficava até ao fim do processo | **corrigido**: geração por peça (`Project.forget_shape`); uma leitura apanhada a meio não volta a guardar |
+| `Gui._placements` e a LRU das regiões, do zoom e das miniaturas, chave = tamanho do log | `_refresh_render_assets` regrava `render/placements.json` **depois** do log | **falha possível**: uma composição nesse intervalo guardava, para toda a versão, a pose calculada na hora (sem o registo com imagem) | **corrigido**: chave = `render_version()` = (tamanho do log, mtime de `placements.json`); o tabuleiro inteiro volta a remendar as células dessas peças |
+| `Gui._regions`, `_region_jobs`, `_detail_seq` | outros pedidos | seguro: `region_lock` | igual |
+| `Gui._board` (tabuleiro inteiro) | `_base` noutro pedido; agora também o fim do `_refresh_render_assets` | seguro: `rlock` | igual (o refresh toma o `rlock` só para marcar as células) |
+| `overrides._ARESTA_CACHE` | o editor acrescenta linhas | seguro: chave (tamanho, mtime) do ficheiro | igual |
+
+**Ficheiros**
+
+| ficheiro | quem o escreve / apaga | antes | agora |
+|---|---|---|---|
+| `render/placements.json` | `_refresh_render_assets`, `_drop_stale_caches`, `register_all` (`tmp` + `os.replace` sem repetição) | **falhou no teste**: `PermissionError [WinError 5]` no `os.replace` enquanto uma composição o lia: a escrita (`Gui.confirm`) rebentava depois de o log estar gravado | **corrigido**: `state.write_atomic` (temporário único por fio + `os.replace` repetido como o `_write_json`) |
+| `crops/P####.png` | `rebuild_assets` (editor do contorno, re-segmentação), escrito no próprio sítio | **falhou no teste**: `UnidentifiedImageError` ao ler um PNG a meio (3–4 em 10 corridas) | **corrigido**: escrita atómica (`render.save_png`) |
+| `render/clean/P####.png` | `_refresh_render_assets`, `clean_all` (no próprio sítio); apagado por `_drop_stale_caches` e pelo leitor quando velho | **falhou**: (1) `FileNotFoundError` da ronda 2 (já corrigido em `6399e31`; o teste novo apanha-o 5/5 com o `_clean_or_crop` de antes); (2) `PermissionError [WinError 32]` ao apagar um ficheiro que uma composição lia: a re-segmentação parava **entre** gravar o `npz`/recorte e escrever o evento no log (5–6 em 10 corridas); (3) um leitor podia apagar o ficheiro novo que outro fio acabava de gravar | **corrigido**: escrita atómica; `state.remove_file` (repete; se ficar, é mais velho do que o recorte e todos os leitores o tratam como velho); o leitor só apaga o ficheiro que julgou velho (mesmo mtime e tamanho) |
+| `pieces/<scan>.npz` | `Project.save` (arrays pendentes: importação, re-segmentação) e `rebuild_assets`, no próprio sítio | **falha possível** (não apareceu no teste): `BadZipFile` / `EOFError` num `np.load` a meio | **corrigido**: escrita atómica |
+| `overrides.jsonl` | o editor acrescenta uma linha | **falha possível**: `latest_arestas` lia uma última linha a meio → `JSONDecodeError` | **corrigido**: uma última linha incompleta (sem fim de linha) ainda não existe; uma linha completa partida continua a dar erro |
+| `fetch.json` (lido por `piece_png` → `board_pose`, e por `/api/montar`, `/api/fetch`, `/api/cell`) | `run_query` no fim de cada escrita, no próprio sítio | **falha possível**: JSON a meio | **corrigido**: escrita atómica (`fetch.md` também); `fetch_*.jpg` apagados com `remove_file` |
+| `render/fit/strips.npz` (não é a composição: o ranking dos buracos e o «verificar» da F2) | o ranking (`_Cache.save`, no próprio sítio) | **falha possível**: leitor sem `close` (no Windows impede a troca) e escrita a meio | **corrigido**: leitura com `with`, escrita atómica, cópia da lista antes de gravar |
+| `render/gui/board_60.{jpg,json}` | `_base` (sob `rlock`); apagados por `_drop_stale_caches` | seguro na leitura; o apagar podia rebentar como o `render/clean` | `remove_file` |
+| arte (`images/puzzles/…`), `log.jsonl` (`os.stat`) | ninguém / só acrescenta | seguro | igual |
+
+**Teste de esforço** (`tests/test_concorrencia.py`, `slow`, ≈ 10 s): projeto sintético; 4 fios compõem em ciclo
+(tabuleiro inteiro, regiões com e sem LRU, zoom 3 × 3, miniaturas), 1 pede regiões por HTTP e 1 deixa `render/clean`
+velhos, enquanto o fio principal faz 12 voltas de colocar 2 peças, re-segmentar a peça colocada pelo editor do
+contorno e tirar as 2. No fim: 0 exceções nos fios, invariantes e replay no disco, e o que o servidor serve para a
+versão final (regiões, zoom, miniatura byte a byte; o tabuleiro inteiro em memória até às costuras dos remendos, medidas
+sem fios: ≤ 4 níveis em ≤ 5 píxeis) igual a um servidor acabado de abrir.
+
+| código | corridas | resultado |
+|---|---|---|
+| HEAD `6399e31`, sem as correções | 22 | 1 passou; `PermissionError` em `_drop_stale_caches` 11×, `UnidentifiedImageError` (recorte a meio) 7×, `PermissionError` em `save_placements` 1×, e 2× um 404 por `FileNotFoundError` num `render/clean` (pedido HTTP) cuja origem não encontrei: não voltou em mais 30 corridas instrumentadas [F] |
+| HEAD com o `_clean_or_crop` de antes de `6399e31` (o resto corrigido) | 5 | 5 falham com `FileNotFoundError` (o erro da ronda 2) [V: o teste apanha esta classe] |
+| este commit | 20 + as da suite | 20/20 sem erros [V] |
+
+Fora da composição, o «verificar» da F2 corre também sem o bloqueio de escrita: aplica-se-lhe a mesma regra (lê o
+projeto por `Gui.read`, tem um bloqueio e uma cache de tiras próprios, e recomeça uma vez se uma escrita mudou o
+tabuleiro a meio); entra no teste de esforço com a F2.
+
+## 9. Limites
 
 - Medido em Chromium headless numa máquina, sem rede real (localhost). Firefox, telemóvel e `--lan` ficam [NT]. O
   «deixou de responder» do Tiago não foi reproduzido como bloqueio do fio do browser: aqui o fio nunca bloqueou. A

@@ -341,9 +341,17 @@ def read_overrides(project) -> list:
 	out = []
 	with open(fp, encoding="utf-8") as f:
 		for line in f:
+			done = line.endswith("\n")
 			line = line.strip()
-			if line:
+			if not line:
+				continue
+			try:
 				out.append(json.loads(line))
+			except ValueError:
+				# the last line still being appended by another thread (the board is drawn outside every lock and
+				# reads the painted edges, DETALHE.md §8): it is not there yet; a broken complete line still fails
+				if done:
+					raise
 	return out
 
 

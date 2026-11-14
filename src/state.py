@@ -59,11 +59,64 @@ __all__ = [
 	"PHOTO_SOURCE", "USER_SOURCE", "RESEGMENT_FIELDS", "SUSPECT_GRAUS", "POSE_MAX_FRAC",
 	"StateError", "Piece", "Pair", "Section", "Photo", "Board", "Model", "apply", "replay", "read_log",
 	"Project", "file_sha256", "section_cell", "undone_decisions", "REJECTION_MOTIVES",
+	"replace_file", "write_atomic", "remove_file",
 ]
 
 SCHEMA_VERSION = 1
 REPLACE_RETRIES = 20          # _write_json: attempts of the atomic rename (transient Windows locks by readers/indexers)
 REPLACE_WAIT_S = 0.1
+
+
+def replace_file(tmp: str, fp: str) -> None:
+	"""``os.replace(tmp, fp)`` retried on Windows' transient ``PermissionError`` (a reader, indexer or antivirus holds
+	``fp`` open without sharing delete: Python's ``open`` and PIL / numpy readers do)."""
+	for k in range(REPLACE_RETRIES):
+		try:
+			os.replace(tmp, fp)
+			return
+		except PermissionError:
+			if k == REPLACE_RETRIES - 1:
+				raise
+			time.sleep(REPLACE_WAIT_S)
+
+
+def remove_file(fp: str) -> bool:
+	"""Delete a cache file that readers in other threads may hold open (Windows refuses with ``PermissionError``
+	while they read): retried like :func:`replace_file`; a missing file is fine. Returns False if it is still there
+	(the caller's caches must then tolerate a stale file: they are keyed by mtime / version, DETALHE.md §8)."""
+	for k in range(REPLACE_RETRIES):
+		try:
+			os.remove(fp)
+			return True
+		except FileNotFoundError:
+			return True
+		except PermissionError:
+			if k == REPLACE_RETRIES - 1:
+				return False
+			time.sleep(REPLACE_WAIT_S)
+	return False
+
+
+def write_atomic(fp: str, write) -> None:
+	"""Write ``fp`` through a temporary file in the same folder, then :func:`replace_file`: a reader in another
+	thread (the board composed outside every lock, DETALHE.md §8) sees the old file or the new one, never half of
+	one. ``write(tmp)`` writes the temporary path; it keeps ``fp``'s extension (``np.savez`` and PIL infer the format
+	from it) and is unique per process and thread (two threads may write the same file)."""
+	import threading
+	root, ext = os.path.splitext(fp)
+	tmp = f"{root}.{os.getpid()}-{threading.get_ident()}.tmp{ext}"
+	os.makedirs(os.path.dirname(fp) or ".", exist_ok=True)
+	try:
+		write(tmp)
+		replace_file(tmp, fp)
+	except BaseException:
+		try:
+			os.remove(tmp)
+		except OSError:
+			pass
+		raise
+
+
 PIECE_STATES = ("solta", "emparelhada", "posicao_conhecida", "colocada", "em_seccao", "descartada")
 PAIR_STATES = ("proposto", "confirmado", "rejeitado")
 SECTION_KINDS = ("montado", "blocos", "seccao")
@@ -631,6 +684,7 @@ class Project:
 		self.photo_maps: dict = {}        # photo id -> Photo (with map), loaded from photos/
 		self._pending_arrays: dict = {}   # scan_id -> {key: array}
 		self._shape_cache: dict = {}
+		self._shape_gen: dict = {}        # piece id -> times its shape was forgotten (:meth:`forget_shape`)
 
 	# ------------------------------------------------------------ files
 	@property
@@ -690,20 +744,11 @@ class Project:
 		return cls.create(path, profile_path)
 
 	def _write_json(self, rel: str, obj) -> None:
-		fp = self.p(rel)
-		os.makedirs(os.path.dirname(fp), exist_ok=True)
-		tmp = fp + ".tmp"
-		with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-			json.dump(obj, f, ensure_ascii=False, indent=1)
-			f.write("\n")
-		for k in range(REPLACE_RETRIES):
-			try:
-				os.replace(tmp, fp)
-				break
-			except PermissionError:   # Windows: another process (indexer, antivirus, a reader) holds fp for a moment
-				if k == REPLACE_RETRIES - 1:
-					raise
-				time.sleep(REPLACE_WAIT_S)
+		def write(tmp):
+			with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+				json.dump(obj, f, ensure_ascii=False, indent=1)
+				f.write("\n")
+		write_atomic(self.p(rel), write)
 
 	def save(self) -> None:
 		"""Write the JSON views and pending per-scan arrays (the log is already on disk)."""
@@ -725,7 +770,7 @@ class Project:
 				with np.load(fp, allow_pickle=False) as z:
 					old = {k: z[k] for k in z.files}
 			old.update(arrs)
-			np.savez_compressed(fp, **old)
+			write_atomic(fp, lambda tmp: np.savez_compressed(tmp, **old))
 			del self._pending_arrays[sid]
 
 	# ------------------------------------------------------------ ids + log
@@ -789,6 +834,7 @@ class Project:
 		if pid in self._shape_cache:
 			return self._shape_cache[pid]
 		from src.shape import Shape
+		gen = self._shape_gen.get(pid, 0)
 		p = self.piece(pid)
 		arrs = self._pending_arrays.get(p.scan_id)
 		pre = f"{pid}__"
@@ -803,8 +849,15 @@ class Project:
 		sh = None
 		if d and "c" in d:
 			sh = Shape.from_arrays({k: v for k, v in d.items() if k not in ("contour_px", "mask")})
-		self._shape_cache[pid] = sh
+		if self._shape_gen.get(pid, 0) == gen:      # not forgotten while we read (a re-segmentation in another thread)
+			self._shape_cache[pid] = sh
 		return sh
+
+	def forget_shape(self, pid: str) -> None:
+		"""Drop the cached shape of ``pid`` (its arrays changed on disk). A :meth:`shape` that was reading the old
+		arrays in another thread meanwhile does not store them back (the generation moved on)."""
+		self._shape_gen[pid] = self._shape_gen.get(pid, 0) + 1
+		self._shape_cache.pop(pid, None)
 
 	def contour_px(self, pid: str):
 		p = self.piece(pid)
@@ -1262,7 +1315,7 @@ class Project:
 		bad = sorted(set(static) - set(RESEGMENT_FIELDS))
 		if bad:
 			raise StateError(f"campos não estáticos em piece_resegmented: {bad}")
-		self._shape_cache.pop(piece_id, None)
+		self.forget_shape(piece_id)
 		extra = {"nota": str(nota)} if nota else {}
 		if p.pose_manual is not None:
 			extra["pose_manual_limpa"] = True     # informative: apply clears the manual pose anyway
