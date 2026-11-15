@@ -1120,3 +1120,110 @@ depois.
 
 - O «verificar» só recomeça quando há uma exceção. O ranking rasgado fica guardado em `_holes_prev`, que é a lista
   que «Vai buscar» mostra durante o recálculo seguinte. A correção dos dois com `seq_read` está proposta, não feita.
+
+### 13.6 «Perto» A/B/C/D: o que a disputa com as suspeitas e o ranking custa, e os critérios 1 e 2 em 10 pares (2026-11-15, `f85c092`) [V]
+
+Medição, sem alterar `src/`, `tests/` nem `tools/`. Dados: `dados/r6_perto_abcd.json`, `dados/r6_criterios12_pares.json`.
+
+**Critério fixado antes de medir.** Se o «perto» com as suspeitas e o `rank_all` desligados (D) ficasse ≤ 1,2 s (mediana), a
+alavanca seria a disputa e o remendo de §13.4 não seria prioritário; se ficasse > 1,2 s, o remendo justifica-se.
+
+#### Lançador usado
+
+`scratchpad/abcd/lanca_abcd.py` (fora do repositório). Importa `tools/diagnostico/gui/linha_tempo.py` (linha do tempo de todos os
+fios) e, só em memória e só depois do arranque, conforme a variável de ambiente `PPF_DESLIGA`:
+
+- **B** substitui `Gui._suspeitas_bg` por uma função que não faz nada (regista um instante). «Depois do arranque» = depois de
+  o 1.º ranking completo ter sido servido por `holes_json`.
+- **C** faz `Gui.holes_json` devolver, a seguir a uma escrita, o ranking completo guardado (repõe `_holes` com a chave da versão
+  atual), sem lançar o fio `holes` e com `a_calcular` falso; o ranking do arranque corre normalmente e o guião (`_wait_holes`)
+  não fica à espera. Não se emite `holes_changed`.
+- **D** = B + C; **A** não desliga nada.
+- Embrulha ainda `Gui._compose` para registar `time.thread_time()` (CPU do fio) ao lado do tempo de parede.
+
+O corredor é `scratchpad/abcd/rodar_abcd.py`, que corre `perfil_c3.run` (o protocolo de `desempenho.py --so a`: cópia nova da
+base, servidor novo, Chromium 1920 × 1080, vista fixa no céu 1,20–14,40, «perto» (5,33) e «longe» (20,60)) 20 vezes **em rotação
+A,B,C,D × 5 rondas, na mesma sessão**; `scratchpad/abcd/resumo_abcd.py` produz as tabelas. Não foi preciso tocar em `src/` para
+desligar nada. Verificado na linha do tempo: em B/D aparece «suspeitas_bg desligado» e não há `consistency.evaluate` depois do
+POST; em C/D aparece «holes_json servido da guarda» e não há `fit.rank_all` depois do POST. O pré-aquecimento (`_prewarm`, fio
+`pre-aquecer`) **não** foi desligado em nenhuma condição (ainda corria 20–25 s depois do POST).
+
+#### Resultados (5 corridas por condição; mediana · máximo, em s)
+
+| condição | «perto» (POST → detalhe) | «longe» (controlo) | `_compose` da região (parede) | CPU do fio (`thread_time`) | parede − CPU | `_region_jpg` − `_compose` |
+|---|---|---|---|---|---|---|
+| A nada desligado | **2,80 · 2,95** | 0,29 · 0,32 | 2,45 · 2,61 | 1,95 · 2,19 | 0,52 · 0,52 | 0,24 · 0,29 |
+| B sem suspeitas | 2,73 · 2,81 | 0,28 · 0,30 | 2,47 · 2,55 | 2,00 · 2,17 | 0,47 · 0,51 | 0,24 · 0,27 |
+| C sem `rank_all` | 2,71 · 2,78 | 0,25 · 0,26 | 2,45 · 2,52 | 1,91 · 1,92 | 0,54 · 0,60 | 0,22 · 0,26 |
+| D sem ambos | **2,74 · 2,80** | 0,23 · 0,27 | 2,46 · 2,55 | 2,00 · 2,11 | 0,44 · 0,56 | 0,22 · 0,25 |
+
+**Conclusão segundo o critério fixado: D = 2,74 s > 1,2 s, logo o remendo de §13.4 justifica-se [V]; «a disputa é a alavanca» é
+[F].** Tirar as suspeitas e o ranking juntos poupa 0,06 s (A 2,80 → D 2,74), dentro do ruído entre corridas (≈ 0,1 s). Quase tudo
+é a própria composição da região: ≈ 2,0 s de CPU de um só fio, mais ≈ 0,45–0,5 s de espera, mais 0,22–0,24 s fora da composição,
+mais ≈ 0,2–0,28 s entre o fim do POST e o pedido da região.
+
+- **Espera pelo bloqueio de escrita no caminho do detalhe: não há.** `_region_jpg` não toma `wlock`: lê `wlock.seq` antes e
+  depois (seqlock, sem esperar). O que fica entre `_region_jpg` e `_compose` (≈ 0,22–0,24 s) é a assinatura por conteúdo
+  (`_region_sig`, ≈ 100 `os.stat`), o `region_lock`, o bloqueio por cliente e a codificação do JPEG; não se separou por partes
+  [NT]. Não depende de A/B/C/D.
+- **Parede − CPU** mede o tempo em que o fio da composição não estava a gastar CPU: espera pelo GIL, E/S de disco, trocas de
+  contexto e CPU cedida a outros processos. **Não separa** GIL de E/S nem de outros processos (o `thread_time` do Windows conta
+  tempo de núcleo e de utilizador do fio, nada mais). É 0,44–0,54 s em todas as condições, sem diferença entre A e D: o que as
+  suspeitas e o ranking acrescentam à espera é ≈ 0 [V]; o que fica (≈ 0,45 s) vem de outros fios (as outras respostas do mesmo
+  SSE: `/api/board` com `_base` ≈ 0,2 s, `/api/montar`, `/api/ghosts`, o laço de eventos), de E/S e do sistema [NT: não
+  separado].
+- **Fios concorrentes durante a composição** (sobreposição com a janela do `_compose`, mediana de 5 corridas): em A, as
+  suspeitas, o ranking e o pré-aquecimento estão todos «cedidos» à GUI durante a composição inteira (`cede à GUI` soma 7,36 s =
+  3 fios × 2,45 s); em B só o ranking e o pré-aquecimento (4,94 s); em C só as suspeitas e o pré-aquecimento (4,90 s); em D só o
+  pré-aquecimento (2,46 s). A prioridade (b) já faz o que devia: os trabalhos de fundo estão parados enquanto se compõe, e por
+  isso desligá-los não encurta nada.
+- Os valores absolutos desta sessão são ≈ 2× os de §13.4 («0,85–1,2 s a quente», ≈ 100 peças): é a deriva da máquina de §13.1,
+  por isso só se comparam as quatro condições entre si (mesma sessão, intercaladas).
+
+#### Suspeitas e ranking: mesmo processo, disputa do GIL?
+
+**Mesmo processo, fios diferentes [V].** `Gui._suspeitas_bg` cria `threading.Thread(name="suspeitas")` (`src/server.py` L1058),
+`holes_json` cria `threading.Thread(name="holes")` (L1246), o pré-aquecimento `name="pre-aquecer"` (L831) e a composição do
+detalhe corre num fio do pool do uvicorn (`AnyIO worker thread`). No lançador, todas as linhas da corrida (cada uma com o nome do
+fio) vêm do mesmo `os.getpid()` (32676 numa corrida) e do mesmo ficheiro; não há `multiprocessing` no servidor. Logo, partilham o
+GIL (aqui com `sys.setswitchinterval(0,0005)`).
+
+**Mas a disputa medida é pequena [V]:** pela prioridade (b), os três fios de fundo cedem durante toda a composição e A − D =
+0,06 s. A disputa só existiria dentro de uma peça em curso quando o pedido chega (os fios só cedem entre peças). Mudanças
+possíveis, listadas sem implementar:
+
+| mudança | ganho esperado no «perto» | custo / risco |
+|---|---|---|
+| adiar suspeitas e ranking até o detalhe da versão nova estar servido | ≈ 0 (já cedem durante a composição); só evitaria a fração de peça em curso no início | simples, mas atrasa suspeitas e sugestões no caso normal |
+| ceder com mais granularidade (dentro de uma peça / do `evaluate`) | ≤ 0,1 s [NT] | mexe no interior de `consistency.evaluate` e `fit.rank_all`; o seqlock tem de continuar a valer |
+| prioridade do fio da composição | desconhecido; o GIL não tem prioridades | o Python não dá controlo por fio; só serviria contra outros processos, não medido |
+| processo à parte (`multiprocessing`) para suspeitas/ranking | tira o GIL de vez, mas o ganho medido é ≈ 0,06 s | custo alto: serializar o projeto e as caches (formas, lados erodidos, `ReadyCache`), memória a duplicar (pico já ≈ 1,1 GB), caches coerentes com o log; risco de versões desfasadas |
+| **o remendo de §13.4** (refazer só as células alteradas sobre a região em cache) | o único que ataca os ≈ 2 s de CPU da composição [NT] | já descrito em §13.4: guardar o array da região (≈ 8,5 MB), prova byte a byte antes de ligar |
+
+#### Critérios 1 e 2: 10 pares alternados `987f175` | `f85c092`
+
+Cada par = uma corrida de `desempenho.py --so a --n 1` com `--repo` (worktree em `987f175`), seguida de uma com `--repo` (worktree
+em `f85c092`), cópia nova e servidor novo em cada. IC 95 % pelo bootstrap de pares (10 000 reamostragens) da estatística
+mediana(novo) − mediana(antigo). Mediana · máximo, em s.
+
+| medida | antigo | novo | diferença das medianas | IC 95 % | exclui +0,25 s? | marca |
+|---|---|---|---|---|---|---|
+| critério 1: `salto1_ceu` (alvo 4,0) | 6,08 · 7,02 | 6,45 · 6,88 | +0,36 | [−0,14, +0,65] | **não** | [NT] inconclusivo (nem confirma nem exclui regressão); alvo [F] nos dois |
+| critério 2 browser: `salto_frio_relva` (alvo 2,0) | 3,37 · 3,44 | 3,27 · 3,47 | −0,10 | [−0,21, +0,07] | sim | [V] sem regressão ≥ 0,25 s; alvo [F] nos dois |
+| critério 2 HTTP: `srv_frio_relva_s` | 1,53 · 1,59 | 1,54 · 1,68 | +0,01 | [−0,02, +0,09] | sim | [V] sem regressão |
+| critério 2 HTTP: `srv_frio_ceu_s` | 1,19 · 1,23 | 1,21 · 1,27 | +0,02 | [−0,02, +0,11] | sim | [V] sem regressão |
+| (controlo) «perto» | 5,01 · 5,35 | 2,87 · 3,00 | −2,15 | [−2,34, −2,04] | sim | [V] melhora |
+| (controlo) «longe» | 4,05 · 4,60 | 0,27 · 0,29 | −3,78 | [−3,86, −3,70] | sim | [V] melhora; alvo 0,6 cumprido |
+
+- Critério 1: a diferença das medianas é +0,36 s, mas a média das diferenças emparelhadas é +0,14 s (IC [−0,20, +0,46]). Com
+  10 pares e um desvio entre corridas de ≈ 0,4 s o intervalo não exclui +0,25 s: **não se pode afirmar que não há custo** (o
+  único custo novo conhecido, o `_region_sig`, é de 30–40 ms por pedido; +0,36 s não se explica só por ele, mas também não se
+  confirma) [NT]. Decidir exigiria ≈ 30 pares.
+- A deriva da máquina aparece também aqui: o «perto» e o «longe» do código antigo (5,01 / 4,05 s) estão acima de §13.3 (4,83 /
+  3,94 s) e o 1.º salto (6,1 s) acima dos 5,7 s de §13.3.
+
+#### O teste «1 skipped» da suite
+
+`tests/test_sheets.py:170`: o teste com o PyMuPDF real salta porque o `.venv` não o tem instalado (mensagem: «PyMuPDF não está
+instalado neste Python (o .venv não o tem)»). Confirmado com `.venv/Scripts/python.exe -m pytest tests/ -rs -q`: **621 passed,
+1 skipped** em 10 min 13 s [V]. Os outros testes de `test_sheets.py` forçam os dois caminhos com um substituto e passam.
