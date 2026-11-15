@@ -1401,3 +1401,108 @@ ficaria em ≈ 0,44 s [V no lançador; não implementado]; P-b e P-c tirariam o 
 Fica **inconclusivo**, por decisão do Tiago: em §13.6, +0,36 s (IC [−0,14, +0,65]); nestes 10 pares, +0,04 s (IC
 [−0,38, +0,35]), ainda sem excluir +0,25 s. O alvo de 4 s não se cumpre em nenhum dos lados (≈ 5,6–6,1 s): o 1.º salto
 passa a item próprio (HANDOFF).
+
+### 13.8 P-b: porque é que 620 das 699 peças colocadas não têm registo em `placements.json` (2026-11-15, `b58ae05`, só diagnóstico)
+
+Prompt: `docs/prompts/2026-11-15-pb-placements.md`. Nada mudou em `src/` nem `tests/`. Cópias de `scratchpad/base_c3`
+(log e `render/placements.json` iguais byte a byte aos de `projects/alpes`, `cmp`). Guiões no scratchpad `pb/`
+(`classifica.py`, `grupos_json.py`, `mecanismo.py`, `delta_pose.py`, `lanca_pb.py`, `rodar_pb.py`, `rodar_pb_perto.py`).
+Dados: `dados/r8_pb_grupos.json`, `r8_pb_mecanismo.json`, `r8_pb_delta_pose.json`, `r8_pb_tempos.json`, `r8_pb_perto.json`.
+
+#### O que é uma entrada «válida» (três camadas, no código)
+
+1. **Ficheiro** (`render.load_placements`): `version == PLACEMENTS_VERSION` (1) e `f_rotation` / `f_translation` iguais
+   aos interruptores atuais (`_rule_flags`; uma chave em falta conta como `False`). Senão o ficheiro **inteiro** é tratado
+   como vazio. `log_len` não entra na validade da GUI (só na reutilização de `register_all`).
+2. **Servidor** (`Gui.placements`): `e["key"] == render._entry_key(pr, pid)` = célula, θ do log, `scan_id`,
+   `index_in_scan`, âncora da secção (`rot`, `l0`, `c0`) e, só com pose manual, `['manual', t, θ, dx, dy]`.
+3. **Composição** (`_piece_jobs`, `_region_parts`): `render._manual_entry_ok` (com pose manual, a entrada é essa pose; sem
+   ela, a entrada não é manual). `image_used` e `relaxed` não entram. Sem entrada que passe as três camadas, a peça é
+   registada na hora com `register_piece(image=False)`. (À parte: `compose_board` chamado sem `placements=`, p. ex. pelo
+   CLI, salta a camada 2.)
+
+#### Os 3 grupos, tabuleiro inteiro [V] (`r8_pb_grupos.json`)
+
+| grupo | peças | causa |
+|---|---|---|
+| entrada válida | **79** | todas escritas pelo servidor desde 2026-11-07T17:25: 73 postas pela GUI + 6 de secções antigas tocadas depois por uma escrita do servidor; 5 das 79 têm pose manual |
+| entrada inválida | **0** | nenhum campo falha: o ficheiro só tem 79 entradas, todas válidas |
+| sem entrada | **620** | M1: 606 (504 de secções ancoradas, 88 `gt`, 14 gémeas; 10 delas re-segmentadas antes do reset); M2: 14 |
+
+Na região da vista do céu do critério 3 ((1,20)–(14,40) ± 1): 28 válidas + 88 sem, os 88 de §13.7; relva
+(34,33)–(47,53) ± 1: 1 + 102.
+
+#### Mecanismo, com a prova [V]
+
+- **M1: o ficheiro antigo passou a ser ignorado e nunca foi refeito.** `a249ad6` (2026-11-07 01:09, `F_ROTATION`) fez
+  `load_placements` deitar fora qualquer ficheiro sem `f_rotation: true`; o de `projects/alpes` era anterior. Ninguém correu
+  `register_all` (`python -m src.render --register`/`--rebuild`) depois; `rebuild_stale` e as escritas da GUI usam
+  `register=False`. A 1.ª escrita do servidor (`pose_set` de P0833, 17:25, linha 2113 do log, que é a 1.ª entrada do
+  ficheiro) leu `{}` e gravou só essa peça; desde então `_refresh_render_assets` só acrescenta as peças que ele próprio
+  coloca. Na cópia: tirar `f_rotation` ao ficheiro dá `load_placements` 79 → 0 entradas; uma chamada real de
+  `Gui._refresh_render_assets([P0163])` deixa o ficheiro com **1** entrada, 698 sem.
+- **M2: um contorno gravado tira a entrada e ninguém a repõe.** O POST do contorno chama `rebuild_piece` /
+  `rebuild_assets(register=False)`; `_drop_stale_caches` tira a entrada da peça de `placements.json` e não há novo registo.
+  São as 14 peças postas pelo servidor em 2026-11-08 16:41–17:57 e re-segmentadas depois (contorno manual / reposição).
+  Na cópia: contorno manual 1 % menor em P0095 (válida), `rebuild_piece`, entrada tirada: 79 → **78** válidas.
+- **O caminho que devia registar repõe tudo:** `register_all(image=True)` na cópia, 26,9 s: **699/699 válidas**, 0 sem;
+  relaxação não ligada (|gap| > 0,8 mm em ≤ 10 % das juntas).
+
+#### Correção: o que o tabuleiro desenha [V] (`r8_pb_delta_pose.json`)
+
+Pose na hora (`register_piece(image=False)`, a que o tabuleiro desenha para as 620) contra a que `register_all(image=True)`
+grava; «Δ contorno» = maior deslocamento de um ponto do contorno, em mm. O pivô é o mesmo em todas (Δ 0).
+
+| peças | n | Δθ (°) med · máx | Δx / Δy máx (mm) | Δ contorno (mm) med · p95 · máx |
+|---|---|---|---|---|
+| sem entrada, todas | 620 | 0 · 3,39 | 0,50 / 0,72 | 0 · 0 · 1,39 |
+| … imagem aceite no registo guardado | 24 | 0 · 3,39 | 0,50 / 0,72 | 0,46 · 0,50 · 1,39 |
+| … sem imagem aceite | 596 | 0 · 0 | 0 / 0 | 0 (iguais) |
+| … no céu (1,23)–(14,43) ± 1 | 79 | 0 · 0 | 0 / 0 | 0 (iguais) |
+| … na relva (34,33)–(47,53) ± 1 | 102 | 0 · 3,39 | 0,45 / 0,72 | 0 · 0,46 · 1,39 (9 > 0,1 mm) |
+| controlo: válidas sem pose manual | 74 | 0 · 0 | 0 / 0 | 0 (iguais) |
+
+- **Sim, o tabuleiro desenha 620 poses que não estão guardadas em lado nenhum** [V]: recalculadas em cada composição, mas
+  deterministas. Para 596 são exatamente o que `register_all` gravaria; para **24** (nenhuma no céu; pior P0495, 3,4°,
+  1,39 mm, método `image` contra `none`) o tabuleiro desenha a pose dos cantos e `register_all` daria a pose com o
+  refinamento pela imagem, até 0,5 mm ao lado. A regra é hoje inconsistente: as peças postas pela GUI levam imagem
+  (`image_used: true`), as antigas não.
+
+#### Peso [V no lançador; 5 corridas por condição, intercaladas, mediana · máximo, s; `r8_pb_tempos.json`, `r8_pb_perto.json`]
+
+«válido» = antes de arrancar, o lançador grava para cada peça sem entrada o mesmo `register_piece(image=False)` (a imagem
+servida não muda) e repõe o `mtime` de `placements.json` (senão `render_version` muda e o arranque recompõe o tabuleiro
+inteiro: «tabuleiro pronto» 20,1 s contra 0,2 s, o que deu um 1.º ensaio enganador, 6,45 → 1,98 s). Embrulho só em
+`_piece_jobs` e no `register_piece` chamado dentro dele. O «perto» são 3 pares (protocolo de §13.7 sem reter pedidos).
+
+| medida | hoje | válido | Δ mediana por ronda | `_piece_jobs` hoje → válido | registo na hora (hoje) |
+|---|---|---|---|---|---|
+| 1.º salto depois de abrir (céu, browser) | 6,57 · 6,68 | 6,28 · 6,32 | −0,40 | 4,64 → 4,21 | 0,47 (164 peças, 2 composições) |
+| salto a frio relva (browser) | 3,42 · 3,54 | 3,11 · 3,43 | −0,31 | 2,33 → 2,09 | 0,11 (97) |
+| frio céu (HTTP) | 1,28 · 1,42 | 1,17 · 1,33 | −0,13 | 0,09 → 0,02 | 0,06 (79) |
+| frio relva (HTTP) `srv_frio_relva_s` | 1,67 · 1,75 | 1,55 · 1,65 | −0,12 | 0,52 → 0,41 | 0,10 (102) |
+| «perto» (3 pares) | 1,43 · 1,47 | **1,12 · 1,13** | −0,31 | 1,05 → 0,22 | 0,94 (94) |
+| «longe» (3 pares) | 0,31 · 0,31 | 0,32 · 0,34 | ≈ 0 | — | — |
+
+- **Achado para o 1.º salto:** no 1.º salto `_piece_jobs` custa 4,2–4,6 s e o registo na hora só 0,47 s; o resto é
+  `ready(pid)` com a `ReadyCache` ainda fria [V por subtração, não cronometrado à parte]. P-b não leva o 1.º salto aos
+  4 s; o custo está em preparar as peças antes do pré-aquecimento.
+- No «perto» o registo na hora pesa 0,94 s em disputa, mas o ganho na parede é 0,31 s (o resto da disputa fica). O «hoje»
+  deste lançador (1,43 s) fica abaixo dos 1,60 s de §13.7 (menos embrulhos); n = 3 pares.
+
+#### Proposta (não implementada, à espera do Tiago)
+
+- **A, sem código, uma vez:** `python -m src.render --project projects/alpes --register` (≈ 27 s). Repõe 699/699 hoje,
+  mas muda 24 poses fora do céu (imagem; até 1,39 mm) e o 1.º arranque recompõe o tabuleiro inteiro (≈ 20 s, uma vez).
+  Não impede que volte a apodrecer (M2, ou a próxima mudança de regra).
+- **B, código mínimo (recomendada):** (1) o servidor, no arranque e em fundo (`_check_stale`), completa as entradas em
+  falta ou obsoletas com `register_piece(image=False)` (a pose desenhada hoje: imagem igual byte a byte) e grava uma vez,
+  sob o bloqueio de escrita (o mesmo ficheiro é lido, alterado e gravado por `_refresh_render_assets`: sem isso perde-se
+  uma entrada); (2) o POST do contorno (e `rebuild_stale`) re-regista a peça colocada (`_refresh_render_assets([pid])`) em
+  vez de só lhe tirar a entrada. `image=False` contra `True` nas 620 é decisão do Tiago (True = as 24 poses acima mudam).
+- **Ganho esperado** (no lançador): 1.º salto −0,4 s (6,6 → 6,3; o alvo de 4 s continua [F]); salto a frio −0,3 s no
+  browser, −0,1 s por HTTP; «perto» −0,3 s (1,43 → 1,12: alvo 1,2 cumprido em 3 pares) [NT com o código real].
+- **Risco:** a 1.ª gravação muda o `mtime` de `placements.json`, por isso há um arranque com o tabuleiro inteiro
+  recomposto (≈ 20 s, uma vez); corrida de escrita com `_refresh_render_assets` se não ficar sob o bloqueio; com a opção
+  imagem, mudança visível em 24 peças. A memorização só em memória (a P-b original, como `_susp_pl`) evita o ficheiro mas
+  paga o registo na 1.ª composição de cada arranque.

@@ -1,0 +1,37 @@
+{
+ "m1_antes": {
+  "entradas": 79,
+  "valida": 79,
+  "sem": 620,
+  "invalida": {}
+ },
+ "m1_ficheiro_sem_f_rotation_load": 0,
+ "m1_depois_de_1_escrita_do_servidor": {
+  "entradas": 1,
+  "valida": 1,
+  "sem": 698,
+  "invalida": {}
+ },
+ "m2": {
+  "peca": "P0095",
+  "override_ok": true,
+  "changed": [
+   "P0095"
+  ],
+  "entrada_depois": false,
+  "conta": {
+   "entradas": 78,
+   "valida": 78,
+   "sem": 621,
+   "invalida": {}
+  }
+ },
+ "m3_register_all_s": 26.9,
+ "m3_depois": {
+  "entradas": 699,
+  "valida": 699,
+  "sem": 0,
+  "invalida": {}
+ },
+ "m3_relaxed": false
+}

@@ -5,6 +5,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 ## Última sessão (2026-11-15): `docs/prompts/2026-11-15-perto-remendo.md` (fechado)
 - **Próximo item: o 1.º salto** (critério 1, ≈ 5,6–6,1 s contra o alvo de 4 s). Fica inconclusivo por decisão do Tiago
   (§13.6: +0,36 s, IC [−0,14, +0,65]; nestes 10 pares +0,04 s, IC [−0,38, +0,35]) e passa a item próprio.
+- **P-b diagnosticada (§13.8, `docs/prompts/2026-11-15-pb-placements.md`):** 620/699 peças sem entrada em `placements.json` (ficheiro ignorado desde `a249ad6` e nunca refeito + contornos gravados tiram a entrada); corrigir dá −0,3/−0,4 s, mas no 1.º salto `_piece_jobs` (4,2–4,6 s) é sobretudo a `ReadyCache` fria, não o registo (0,47 s): é aí que o item do 1.º salto deve começar. Correção A/B à espera do Tiago.
 - **Passo 0 [V] (DETALHE §13.7):** os pedidos que o browser faz no `board_changed` (`/api/board`, `/api/ghosts`,
   `/api/montar`) custam ≈ 1,2 s ao «perto» (2,65 → 1,44 s, atrasando-os no lançador), sobretudo pela disputa do GIL no
   código Python da composição (registo na hora de 88 de 117 peças: 1,00 → 0,07 s). Fora da composição, os 0,2 s são o
