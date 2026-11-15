@@ -76,6 +76,7 @@ the :class:`Gui` state object and from :func:`create_app` (routes).
 import argparse
 import asyncio
 import collections
+import contextlib
 import datetime as _dt
 import json
 import math
@@ -125,6 +126,7 @@ QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file k
 # docs/diagnostico/gui/DETALHE.md §6: detail during the cold hole ranking 19-22 -> 4.6-5.2 s, incremental re-query
 # -28 %, import +2 %.
 GIL_SWITCH_S = 0.0005
+YIELD_MAX_S = 30.0             # (b): longest single wait of a background job for the GUI
 READY_MB = 600.0               # E: budget of the pieces ready to draw (--cache-pecas-mb); ≈ 0,74 MB per piece
 POSE_CONTOUR_PTS = 300         # GET /pose: points of each contour (cell-width units)
 POSE_DIRS = {"N": (-1, 0), "E": (0, 1), "S": (1, 0), "W": (0, -1)}
@@ -507,6 +509,9 @@ class Gui:
 		self._sheets = {}
 		self._art = None
 		self.ready = ReadyCache(ready_mb)     # E: pieces ready to draw (render.piece_ready), LRU by bytes
+		self._fg_cond = threading.Condition()  # (b): GUI requests in progress (detail regions, «verificar»)
+		self._fg_n = 0
+		self.yields = {"n": 0, "s": 0.0}      # (b): how often / how long the background work yielded
 		self._last_region = None              # the last detail region asked for (the warm-up starts around it)
 		self._susp_bg_lock = threading.Lock()   # P0b B: the suspects after a write, in one background thread
 		self._susp_bg_thread = None
@@ -807,7 +812,7 @@ class Gui:
 		pl.update(self.placements())
 		return pl
 
-	def suspeitas_json(self) -> dict:
+	def suspeitas_json(self, pause=None) -> dict:
 		"""``{summary, items, falsos_alarmes, n_em_reports}``: :func:`src.consistency.evaluate` (suspects of the
 		placed pieces, read-only; false alarms with an unchanged signature left out) joined with the open
 		reports: each item gets ``report_aberto`` (the most recent open report of the same piece, or of the
@@ -826,7 +831,7 @@ class Gui:
 			r = ev[1]
 		else:
 			pl = self._susp_placements()
-			r = consistency.evaluate(self.pr, pl)
+			r = consistency.evaluate(self.pr, pl, pause=pause)
 			self._susp_pl = pl
 			self._susp_eval = (key, r)
 		out = self._join_reports(r)
@@ -860,17 +865,44 @@ class Gui:
 				 for it in r["items"]]
 		return dict(r, items=items, n_em_reports=sum(it["report_aberto"] is not None for it in items))
 
-	def _emit_suspeitas(self) -> Optional[dict]:
+	def _emit_suspeitas(self, pause=None) -> Optional[dict]:
 		"""SSE ``suspeitas_changed`` with the summary of :meth:`suspeitas_json` plus ``n_em_reports``; never raises
 		(the suspects are informative; a failure is logged and None returned)."""
 		try:
-			s = self.suspeitas_json()
+			s = self.suspeitas_json(pause=pause)
 			data = dict(s["summary"], n_em_reports=s["n_em_reports"])
 		except Exception as e:  # noqa: BLE001
 			self.log(f"[servidor] suspeitas não recalculadas: {e}")
 			return None
 		self.emit("suspeitas_changed", data)
 		return data
+
+	@contextlib.contextmanager
+	def foreground(self):
+		"""(b), 2026-11-15, decision of Tiago: while a GUI request that someone is waiting for runs (a detail region
+		being composed, a «verificar»), every background job yields (:meth:`yield_to_gui`): the hole ranking, the
+		suspects after a write and the warm-up of the pieces ready to draw."""
+		with self._fg_cond:
+			self._fg_n += 1
+		try:
+			yield
+		finally:
+			with self._fg_cond:
+				self._fg_n -= 1
+				if self._fg_n == 0:
+					self._fg_cond.notify_all()
+
+	def yield_to_gui(self) -> None:
+		"""Called by the background jobs between pieces / holes: returns at once when no GUI request runs, else waits
+		until none runs (at most :data:`YIELD_MAX_S` per call, so a stream of requests cannot starve the job; the
+		work already done is kept, the job goes on where it was)."""
+		if not self._fg_n or self.closing:
+			return
+		t0 = time.perf_counter()
+		with self._fg_cond:
+			self._fg_cond.wait_for(lambda: self._fg_n == 0 or self.closing, timeout=YIELD_MAX_S)
+		self.yields["n"] += 1
+		self.yields["s"] += time.perf_counter() - t0
 
 	def _prewarm(self) -> None:
 		"""E (2026-11-15): after the start-up hole ranking, make every placed piece ready to draw (:class:`ReadyCache`),
@@ -896,6 +928,7 @@ class Gui:
 					full = self.ready.nbytes > 0.95 * self.ready.budget
 				if full:
 					break
+				self.yield_to_gui()
 				if not self.ready.has(self.pr, pid):
 					self.read(lambda: self.ready.get(self.pr, pid))
 					n += 1
@@ -922,7 +955,9 @@ class Gui:
 							return
 						self._susp_bg_pending = False
 					try:
-						self.read(self._emit_suspeitas)
+						t0 = time.perf_counter()
+						self.read(lambda: self._emit_suspeitas(pause=self.yield_to_gui))
+						activity.get("cache").info(f"suspeitas recalculadas depois da escrita ({time.perf_counter() - t0:.1f} s)")
 					except Exception as e:  # noqa: BLE001 - informative; logged
 						self.log(f"[servidor] suspeitas não recalculadas: {e}")
 			th = threading.Thread(target=run, name="suspeitas", daemon=True)
@@ -1129,7 +1164,10 @@ class Gui:
 		activity.get("buracos").info(f"buracos: a recalcular o ranking (versão {key[0]})")
 		try:
 			cache = self._fit_cache()
-			r = self.read(lambda: F.rank_all(self.pr, calib=cache.calib, cache=cache, progress=self._holes_progress_cb))
+			# (b): from a background thread the ranking yields to the GUI's detail / «verificar» requests
+			pause = self.yield_to_gui if threading.current_thread() is getattr(self, "_holes_thread", None) else None
+			r = self.read(lambda: F.rank_all(self.pr, calib=cache.calib, cache=cache, progress=self._holes_progress_cb,
+											 pause=pause))
 		except Exception as e:  # noqa: BLE001 - the ranking is informative; the GUI shows the error
 			self.log(f"[servidor] buracos não calculados: {e}")
 			r = {"error": str(e)}
@@ -1454,7 +1492,8 @@ class Gui:
 				else:
 					data = None
 				if data is None:
-					data = _jpeg(self._compose(ppc, region))
+					with self.foreground():
+						data = _jpeg(self._compose(ppc, region))
 					with self.region_lock:
 						self._region_store(key, ver, data)
 			finally:
@@ -1889,12 +1928,13 @@ class Gui:
 				return th, enc, bd, cal
 
 		ver = self.version()
-		try:
-			th, enc, bd, cal = self.read(run)
-		except Exception:  # noqa: BLE001 - a write in another thread changed the board under the check: once more
-			if self.version() == ver:
-				raise
-			th, enc, bd, cal = self.read(run)
+		with self.foreground():              # (b): the background jobs wait while the GUI waits for this
+			try:
+				th, enc, bd, cal = self.read(run)
+			except Exception:  # noqa: BLE001 - a write in another thread changed the board under the check: once more
+				if self.version() == ver:
+					raise
+				th, enc, bd, cal = self.read(run)
 		lines = MT.verificacoes(enc, bd, cal.t_abs)
 		n_viz = self.placed_neighbours_with_shape(l, c)
 		return {"piece": pid, "cell": [l, c], "theta_deg": round(float(th), 2), "verificacoes": lines,

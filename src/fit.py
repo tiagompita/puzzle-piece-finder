@@ -753,6 +753,8 @@ class _Cache:
 		self.profile_sha = _profile_sha(project)
 		self.on_compute = None        # callback(pid) each time a strip is computed (progress of rank_all)
 		self.on_side = None           # callback(pid) each time eroded sides are computed (not read) (progress of rank_all)
+		self.pause = None             # callable or None: called before each piece's work (rank_all(pause=); the server
+		                              # yields to the GUI there, 2026-11-15 (b)); it only waits, the results are the same
 		self.n_loaded = 0
 		if os.path.exists(self.path):
 			try:
@@ -808,9 +810,13 @@ class _Cache:
 		return self
 
 	def shape(self, pid):
+		if self.pause is not None:
+			self.pause()
 		return self.pr.shape(pid)
 
 	def strip(self, pid):
+		if self.pause is not None:
+			self.pause()
 		if pid not in self.strips:
 			self.keys[pid] = strip_key(self.pr, pid)
 			self.strips[pid] = piece_strips(self.pr, pid)
@@ -846,6 +852,8 @@ class _Cache:
 		return [pid for pid in self.involved(cells, lote) if not self.store.known(pid)]
 
 	def eroded(self, pid):
+		if self.pause is not None:
+			self.pause()
 		n0 = self.store.n_computed
 		sds = self.store.get(pid, self.shape(pid), self.calib.erosion_mm, self.profile_sha)
 		if self.on_side is not None and self.store.n_computed != n0:
@@ -963,7 +971,8 @@ _CONF_ORDER = {"alta": 0, "media": 1, "sem": 2}
 
 
 def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[int] = None, cells=None, top: int = 3,
-			 min_neighbours: int = 1, joint: bool = True, cache: Optional[_Cache] = None, progress=None) -> dict:
+			 min_neighbours: int = 1, joint: bool = True, cache: Optional[_Cache] = None, progress=None,
+			 pause=None) -> dict:
 	"""Every hole of the board against the loose pool: ``{'holes': [rank_hole dicts, ordered by confidence
 	(alta with m >= 2 first, then alta, media, sem; margin within)], 'sigma', 'n_pool', 'n_holes', 'calib',
 	'assigned': {cell: piece}, 'tiras': {'calculadas', 'previstas', 'em_cache', 'segundos'}}`` or ``{'error'}``.
@@ -972,7 +981,10 @@ def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[
 	a cold start, about 0.3 s per strip and 24 ms per piece's sides; the sides are on disk since 2026-11-15): once at
 	the start with ``n = 0`` when ``N > 0``, then every :data:`PROGRESS_EVERY_N` items or :data:`PROGRESS_EVERY_S`
 	seconds, and at the end. ``N`` = :meth:`_Cache.strips_todo` + :meth:`_Cache.sides_todo` (an upper bound). The
-	ranking itself does not change with ``progress``."""
+	ranking itself does not change with ``progress``.
+
+	``pause``: a callable run before each piece's work and each hole (it may block: the server yields to the GUI's
+	detail and «verificar» requests there, 2026-11-15 (b)); the ranking does not change with it."""
 	calib = calib or calibration(project)
 	cache = cache or _Cache(project, calib)
 	dcache = {}
@@ -982,6 +994,7 @@ def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[
 	n_cache0 = len(cache.strips)
 	done, done_l = [0], [0]
 	t0 = time.time()
+	cache.pause = pause
 	if progress is not None and n_todo:
 		progress(0, n_todo, 0.0)
 		last = [t0, 0]
@@ -1012,6 +1025,7 @@ def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[
 		items = pool_items(project, lote=lote, cache=cache)
 	finally:
 		cache.on_compute = cache.on_side = None
+		cache.pause = None
 	tiras = {"calculadas": done[0], "previstas": len(todo), "em_cache": n_cache0, "segundos": round(time.time() - t0, 1),
 			 "lados_calculados": done_l[0], "lados_previstos": len(todo_l)}
 	if progress is not None and n_todo and done[0] + done_l[0] < n_todo:
@@ -1022,7 +1036,11 @@ def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[
 				"tiras": tiras}
 	pa = pool_arrays(items)
 	rej = _rejected_for(project)
-	res = [rank_hole(h, pa, calib=calib, sigma=sg["sigma"], top=top, exclude=rej.get(tuple(h.cell), ())) for h in holes]
+	res = []
+	for h in holes:
+		if pause is not None:
+			pause()
+		res.append(rank_hole(h, pa, calib=calib, sigma=sg["sigma"], top=top, exclude=rej.get(tuple(h.cell), ())))
 	assigned = assign(res) if joint else {}
 	res.sort(key=lambda r: (_CONF_ORDER.get(r.get("confidence"), 3), 0 if r.get("m", 0) >= 2 else 1,
 							-(r.get("margin") or 0.0), r.get("d1") if r.get("d1") is not None else np.inf))

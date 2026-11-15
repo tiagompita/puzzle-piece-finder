@@ -6,6 +6,7 @@ Aqui: 4 fios compõem em ciclo (regiões com e sem cache, o tabuleiro inteiro, o
 ``render/clean`` velhos (o caso que matou a composição com ``FileNotFoundError`` na ronda 2). No fim: nenhuma exceção nos
 fios, invariantes no disco, e o que o servidor serve para a versão final é igual ao de um servidor acabado de abrir.
 """
+import json
 import os
 import random
 import threading
@@ -126,11 +127,15 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 			for pid in (tw, dec):
 				r = cl.post("/api/confirm", json={"acao": "unplace", "piece": pid})
 				assert r.status_code == 200, r.text
+			gui.holes_json(wait=False)        # (b): the ranking in the background, yielding to the regions
 	finally:
 		stop.set()
 		for t in threads:
 			t.join(60)
 	gui.wait_suspeitas()
+	th = getattr(gui, "_holes_thread", None)
+	if th is not None:
+		th.join(60)
 	assert not errors, f"{len(errors)} erros nos fios de composição; o 1.º:\n{errors[0]}"
 	assert counts["n"] > 50 and counts["http"] > 5, counts
 	assert gui.ready.evictions > 0 and gui.ready.nbytes <= gui.ready.budget
@@ -161,6 +166,10 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 		assert all(x.kind == y.kind and x.chord_mm == y.chord_mm and np.array_equal(x.profile, y.profile)
 				   for x, y in zip(a, b)), pid
 		assert np.array_equal(np.nan_to_num(c1.strip(pid)), np.nan_to_num(F.piece_strips(pr3, pid))), pid
+	# (b): the ranking computed while yielding to the regions = the one of a process just opened
+	hg = gui.holes_json(wait=True)
+	hf = fresh.holes_json(wait=True)
+	assert json.dumps(hg["buracos"], sort_keys=True, default=str) == json.dumps(hf["buracos"], sort_keys=True, default=str)
 	got = gui.suspeitas_json()["items"]
 	from src import consistency as CO
 	CO._RESIDUAL_CACHE.clear()

@@ -1,0 +1,260 @@
+{
+ "corridas": [
+  {
+   "tag": "a1",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 5.3,
+   "abrir_s": 0.53,
+   "salto1_ceu": {
+    "s": 4.41,
+    "key_at_jump": "1,20,14,40@100#2307663",
+    "key_shown": "1,20,14,40@100#2307663",
+    "yanked": false
+   },
+   "buracos_desde_salto_s": 1.6,
+   "sugestoes_desde_pronto_s": 6.14,
+   "mem_apos_buracos": {
+    "peak_ws_mb": 557,
+    "ws_mb": 555,
+    "peak_private_mb": 1053
+   },
+   "salto_frio_relva": {
+    "s": 2.28,
+    "key_at_jump": "34,30,47,50@100#2307663",
+    "key_shown": "34,30,47,50@100#2307663",
+    "yanked": false
+   },
+   "salto_frio_vale": {
+    "s": 0.33,
+    "key_at_jump": "26,2,40,22@100#2307663",
+    "key_shown": "26,2,40,22@100#2307663",
+    "yanked": false
+   },
+   "srv_frio_ceu_s": 0.78,
+   "srv_frio_relva_s": 1.08,
+   "mem_apos_saltos": {
+    "peak_ws_mb": 792,
+    "ws_mb": 662,
+    "peak_private_mb": 1288
+   },
+   "encaixa_perto": {
+    "cell": [
+     5,
+     33
+    ],
+    "post_s": 1.84,
+    "detalhe_desde_post_s": 3.41,
+    "browser": {
+     "s": 3.40789999999851,
+     "key": "1,20,14,40@100#2311868"
+    },
+    "sugestoes_desde_post_s": 4.86,
+    "suspeitas_desde_post_s": 5.1
+   },
+   "encaixa_longe": {
+    "cell": [
+     20,
+     60
+    ],
+    "post_s": 0.62,
+    "detalhe_desde_post_s": 2.72,
+    "browser": {
+     "s": 2.721,
+     "key": "1,20,14,40@100#2320208"
+    },
+    "sugestoes_desde_post_s": 3.36,
+    "suspeitas_desde_post_s": 1.53
+   },
+   "mem_fim": {
+    "peak_ws_mb": 1106,
+    "ws_mb": 855,
+    "peak_private_mb": 1601
+   }
+  },
+  {
+   "tag": "b1",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 5.2,
+   "a_calcular": true,
+   "verificar1_s": 0.21,
+   "verificar1_srv_s": 0.204,
+   "verificar2_s": 0.02,
+   "mem_fim": {
+    "peak_ws_mb": 241,
+    "ws_mb": 239,
+    "peak_private_mb": 736
+   }
+  },
+  {
+   "tag": "a2",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 5.3,
+   "abrir_s": 0.97,
+   "salto1_ceu": {
+    "s": 3.76,
+    "key_at_jump": "1,20,14,40@100#2307663",
+    "key_shown": "1,20,14,40@100#2307663",
+    "yanked": false
+   },
+   "buracos_desde_salto_s": 1.6,
+   "sugestoes_desde_pronto_s": 5.92,
+   "mem_apos_buracos": {
+    "peak_ws_mb": 559,
+    "ws_mb": 558,
+    "peak_private_mb": 1055
+   },
+   "salto_frio_relva": {
+    "s": 2.15,
+    "key_at_jump": "34,30,47,50@100#2307663",
+    "key_shown": "34,30,47,50@100#2307663",
+    "yanked": false
+   },
+   "salto_frio_vale": {
+    "s": 0.3,
+    "key_at_jump": "26,2,40,22@100#2307663",
+    "key_shown": "26,2,40,22@100#2307663",
+    "yanked": false
+   },
+   "srv_frio_ceu_s": 0.8,
+   "srv_frio_relva_s": 1.03,
+   "mem_apos_saltos": {
+    "peak_ws_mb": 794,
+    "ws_mb": 664,
+    "peak_private_mb": 1290
+   },
+   "encaixa_perto": {
+    "cell": [
+     5,
+     33
+    ],
+    "post_s": 1.77,
+    "detalhe_desde_post_s": 3.26,
+    "browser": {
+     "s": 3.2559000000003726,
+     "key": "1,20,14,40@100#2311868"
+    },
+    "sugestoes_desde_post_s": 4.66,
+    "suspeitas_desde_post_s": 4.91
+   },
+   "encaixa_longe": {
+    "cell": [
+     20,
+     60
+    ],
+    "post_s": 0.59,
+    "detalhe_desde_post_s": 2.71,
+    "browser": {
+     "s": 2.7085999999996275,
+     "key": "1,20,14,40@100#2320208"
+    },
+    "sugestoes_desde_post_s": 3.4,
+    "suspeitas_desde_post_s": 1.46
+   },
+   "mem_fim": {
+    "peak_ws_mb": 1107,
+    "ws_mb": 854,
+    "peak_private_mb": 1600
+   }
+  },
+  {
+   "tag": "b2",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 5.2,
+   "a_calcular": true,
+   "verificar1_s": 0.21,
+   "verificar1_srv_s": 0.204,
+   "verificar2_s": 0.02,
+   "mem_fim": {
+    "peak_ws_mb": 239,
+    "ws_mb": 237,
+    "peak_private_mb": 735
+   }
+  }
+ ],
+ "resumo": {
+  "1_salto1_s": [
+   3.76,
+   4.41
+  ],
+  "2_frio_browser_s": [
+   2.15,
+   2.28
+  ],
+  "2_frio_http_s": [
+   0.78,
+   1.08
+  ],
+  "3_perto_s": [
+   3.26,
+   3.41
+  ],
+  "3_longe_s": [
+   2.71,
+   2.72
+  ],
+  "post_s": [
+   0.59,
+   1.84
+  ],
+  "5_pico_ws_mb": [
+   1106,
+   1107
+  ],
+  "sugestoes_desde_pronto_s": [
+   5.92,
+   6.14
+  ],
+  "sugestoes_desde_post_s": [
+   3.36,
+   4.86
+  ],
+  "suspeitas_desde_post_s": [
+   1.46,
+   5.1
+  ],
+  "5_pico_privada_mb": [
+   1600,
+   1601
+  ],
+  "4_verificar1_s": [
+   0.21,
+   0.21
+  ]
+ }
+}

@@ -221,12 +221,15 @@ def suspect_signature(item: dict, project, *, k0: Optional[int] = None) -> str:
 	return hashlib.sha1(js.encode("utf-8")).hexdigest()[:SIGNATURE_HEX]
 
 
-def _recorte_items(project, ids: list) -> list:
-	"""``recorte`` suspects among ``ids`` (see the module docstring); pure reads of the project."""
+def _recorte_items(project, ids: list, pause=None) -> list:
+	"""``recorte`` suspects among ``ids`` (see the module docstring); pure reads of the project. ``pause``: as in
+	:func:`evaluate`."""
 	from src.overrides import is_manual
 	by_cell = {tuple(p.celula): pid for pid, p in project.pieces.items() if p.estado in _STATES and p.celula is not None}
 	out = []
 	for pid in ids:
+		if pause is not None:
+			pause()
 		p = project.piece(pid)
 		if is_manual(p):
 			continue
@@ -371,7 +374,7 @@ def _item(project, pid: str, k0: int, res: dict, grau: str, ka: Optional[int]) -
 
 
 def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismissed: Optional[dict] = None,
-			 incluir_falsos: bool = False, incluir_pose_manual: bool = False) -> dict:
+			 incluir_falsos: bool = False, incluir_pose_manual: bool = False, pause=None) -> dict:
 	"""``{summary, items, falsos_alarmes}``: :func:`summary` and :func:`suspects` of one pass (see the module
 	docstring).
 
@@ -398,6 +401,9 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 	``incluir_pose_manual`` they are graded with the ``k`` of the manual pose (``corner.k`` of its entry) and
 	reported. Every item of such a piece carries ``pose_manual: True``. As a neighbour, a piece always counts
 	with its effective pose (the manual one).
+
+	``pause``: a callable run before each piece (it may block: the server's background pass yields to the GUI's
+	detail and «verificar» requests, 2026-11-15 (b)); the result does not change with it.
 	"""
 	placements = {} if placements is None else placements
 	ids = checked_ids(project)
@@ -445,6 +451,8 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 	with_pm = {pid for pid in ids if manual_pose(project, pid) is not None}
 	items, n_ok, n_none, n_nb, n_expl = [], 0, 0, 0, 0
 	for pid in ids:
+		if pause is not None:
+			pause()
 		g = grade(pid)
 		if g is None:
 			n_none += 1
@@ -458,7 +466,7 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 			n_expl += 1
 			continue
 		items.append(_item(project, pid, k0, res, grau, ka))
-	items += _recorte_items(project, ids)
+	items += _recorte_items(project, ids, pause)
 	for it in items:
 		if it["piece"] in with_pm:
 			it["pose_manual"] = True

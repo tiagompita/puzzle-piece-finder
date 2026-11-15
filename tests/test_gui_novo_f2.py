@@ -306,6 +306,10 @@ def test_phone_layout_panels(f2, browser):
 		pg.wait_for_selector("#pm-frase[data-estado='ok']", timeout=10_000)
 		pg.click("#pm-continuar")
 		pg.wait_for_selector("#por-mao[data-passo='2']", timeout=10_000)
+		# the panel re-renders when the «verificar» answers (it replaces the buttons): measure after it (2026-11-15:
+		# measuring before raced with that re-render; fails alone also at 9f672c0, 2 in 3 runs)
+		pg.wait_for_function("S.porMao && !S.porMao.aVerificar && (S.porMao.verif || S.porMao.erroVer)", timeout=20_000)
+		pg.wait_for_timeout(100)
 		check(["#pm-rodar", "#pm-por", "#pm-outra", "#pm-cancelar"])
 		assert not errs, errs
 	finally:

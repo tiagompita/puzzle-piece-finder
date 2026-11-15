@@ -840,3 +840,44 @@ depois de um «Encaixa» (perto / longe) sugestões 4,9 · 5,3 / 3,0 · 3,4 s e 
 (`dados/r4_criterios_e.json`.) O salto a frio na relva no browser (2,9–3,0 s) cai durante o pré-aquecimento (8,6 s de CPU,
 registo do servidor): o mesmo pedido por HTTP, com as peças já prontas, demora 0,8–1,2 s; é o que (b) trata. Suite 603
 passed, 1 skipped; `test_concorrencia` 20/20.
+
+### 11.9 (b) alargada: prioridade à interação [V]
+
+- `src/server.py`: `Gui.foreground()` (contexto à volta da composição de uma região de detalhe e de um «verificar») e
+  `Gui.yield_to_gui()`: o trabalho de fundo, entre peças / buracos, espera enquanto houver um desses pedidos em curso
+  (no máximo `YIELD_MAX_S` = 30 s por espera, para uma sequência de pedidos não o parar de vez) e continua onde estava
+  (nada do que já fez se perde). Cedem: o ranking dos buracos (`fit.rank_all(pause=)`, só quando corre no fio de
+  fundo), as suspeitas depois de uma escrita (`consistency.evaluate(pause=)` via `_suspeitas_bg`) e o pré-aquecimento
+  das peças. `Gui.yields` conta as cedências; a linha «suspeitas recalculadas depois da escrita (n s)» vai para o registo.
+- `src/fit.py` `rank_all(pause=)` e `_Cache.pause` (antes de cada forma, lados, tiras e buraco); `src/consistency.py`
+  `evaluate(pause=)` / `_recorte_items(pause=)` (antes de cada peça). Só esperam: o resultado não muda.
+
+**Igual, só mais tarde [V]:** `tests/test_ceder.py` (novo, 6): `rank_all` e `evaluate` com cedências forçadas (pausas
+aleatórias) = sem cedências (JSON igual); o ranking e as suspeitas de fundo esperam enquanto um pedido está em curso e
+acabam iguais a um processo novo; `yield_to_gui` sem pedidos não custa nada (1000 chamadas < 50 ms); pedidos encaixados
+contados. `test_concorrencia` (o ranking relançado em cada volta, a ceder às regiões compostas pelos fios; no fim igual
+ao de um processo novo): 20/20.
+
+| # | critério | alvo | E (antes de (b)) | depois de (b) |
+|---|---|---|---|---|
+| 1 | 1.º salto depois de abrir | ≤ 4,0 s | 4,27 · 4,93 | 4,41 · 3,76 |
+| 2 | salto a frio, relva browser / HTTP | ≤ 2,0 s browser | 2,90 · 3,00 / 0,81–1,16 | 2,28 · 2,15 / 0,78–1,08 |
+| 3 | detalhe depois de um «Encaixa», perto / longe | ≤ 1,2 / ≤ 0,6 s | 5,08 · 5,46 / 3,32 · 3,71 | 3,41 · 3,26 / 2,72 · 2,71 |
+| 4 | 1.º «verificar» | ≤ 1,0 s | 1,18 · 0,97 | **0,21 · 0,21** |
+| 5 | pico do working set | ≤ 1,6 GB | 1109 · 1107 MB | 1106 · 1107 MB |
+
+Quanto atrasa a chegada (ouvinte SSE em `desempenho.py`, `dados/r4_criterios_b.json`):
+
+| | E | (b) |
+|---|---|---|
+| sugestões «pelo encaixe» (`holes_changed`) depois do «pronto» | 2,8 · 3,5 s | 6,1 · 5,9 s |
+| sugestões depois de um «Encaixa», perto / longe | 4,9 · 5,3 / 3,0 · 3,4 s | 4,9 · 4,7 / 3,4 · 3,4 s |
+| suspeitas (`suspeitas_changed`) depois de um «Encaixa», perto / longe | 5,4 · 5,9 / 1,6 · 1,9 s | 5,1 · 4,9 / 1,5 · 1,5 s |
+
+No arranque as sugestões chegam ≈ 3 s mais tarde (o ranking cede ao 1.º salto e à região do cartão: 6,6 s em vez de
+3,3 s no registo); depois de uma escrita ficam iguais (± 0,5 s). O pré-aquecimento também cede (386 peças em 11,2 s).
+
+Teste existente alterado: `tests/test_gui_novo_f2.py::test_phone_layout_panels` media os botões do passo 2 de «Pôr uma
+peça à mão» antes de o «verificar» responder e voltar a desenhar o painel (elemento substituído → `bounding_box` None);
+falha sozinho também em 9f672c0 (2 em 3) e em 244a1cf (3 em 3) [V]: corrida do teste, não de (b). Agora espera pela
+resposta (6/6).
