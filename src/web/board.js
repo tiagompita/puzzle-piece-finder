@@ -105,6 +105,8 @@ function scheduleDetail() {
   clearTimeout(detailTimer);
   detailTimer = setTimeout(loadDetail, 280);
 }
+/** The detail of the current view at once (no 280 ms wait): a new board version (DETALHE.md §13). */
+function detailNow() { clearTimeout(detailTimer); loadDetail(); }
 function abortDetail() { if (detailCtl) { detailCtl.abort(); detailCtl = null; } }
 function loadDetail() {
   const det = $("#detail");
@@ -225,6 +227,7 @@ function initPointer() {
 /** Board geometry from ``S.board`` (/api/board) + the cached full-board raster (#board-bg, #raster). */
 function drawRaster() {
   const b = S.board;
+  const verChanged = S.ver !== b.versao;
   S.rows = b.rows; S.cols = b.cols; S.hr = b.hr; S.rotGemea = b.rotacao_gemea_deg; S.ppc = b.board_ppc; S.ver = b.versao;
   $("#board-bg").setAttribute("width", boardW()); $("#board-bg").setAttribute("height", boardH());
   const r = $("#raster");
@@ -235,7 +238,10 @@ function drawRaster() {
     img.onload = () => { r.setAttribute("href", url); document.body.dataset.raster = String(S.ver); };
     img.src = url;
   }
-  S.detailKey = null;
+  // a new version: the detail of the old one is stale. The same version (a reload after the GUI already moved to it,
+  // boardChanged): the detail asked for it stays (no second request of the same region)
+  if (verChanged) S.detailKey = null;
+  return verChanged;
 }
 /** Cell grid (#lyr-grelha; shown by setView only when zoomed in enough). */
 function drawGrid() {

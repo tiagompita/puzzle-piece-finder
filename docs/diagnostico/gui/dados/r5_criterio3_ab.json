@@ -1,0 +1,2012 @@
+{
+"passo0_sem_instrumentacao_987f175": [
+{
+"tag": "a1",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.3,
+"abrir_s": 1.0,
+"salto1_ceu": {
+"s": 4.04,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 1.6,
+"sugestoes_desde_pronto_s": 6.34,
+"mem_apos_buracos": {
+"peak_ws_mb": 552,
+"ws_mb": 552,
+"peak_private_mb": 1048
+},
+"salto_frio_relva": {
+"s": 2.18,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.27,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.81,
+"srv_frio_relva_s": 1.05,
+"mem_apos_saltos": {
+"peak_ws_mb": 786,
+"ws_mb": 658,
+"peak_private_mb": 1282
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.81,
+"detalhe_desde_post_s": 3.46,
+"browser": {
+"s": 3.4535999999940397,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.14,
+"suspeitas_desde_post_s": 5.46
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.64,
+"detalhe_desde_post_s": 2.99,
+"browser": {
+"s": 2.9869000000059605,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.69,
+"suspeitas_desde_post_s": 1.72
+},
+"mem_fim": {
+"peak_ws_mb": 1108,
+"ws_mb": 853,
+"peak_private_mb": 1601
+}
+},
+{
+"tag": "a2",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.2,
+"abrir_s": 0.98,
+"salto1_ceu": {
+"s": 4.05,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 1.6,
+"sugestoes_desde_pronto_s": 6.39,
+"mem_apos_buracos": {
+"peak_ws_mb": 542,
+"ws_mb": 540,
+"peak_private_mb": 1037
+},
+"salto_frio_relva": {
+"s": 2.27,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.27,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.82,
+"srv_frio_relva_s": 1.06,
+"mem_apos_saltos": {
+"peak_ws_mb": 774,
+"ws_mb": 644,
+"peak_private_mb": 1270
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.86,
+"detalhe_desde_post_s": 3.77,
+"browser": {
+"s": 3.7666000000014903,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.31,
+"suspeitas_desde_post_s": 5.63
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.87,
+"detalhe_desde_post_s": 3.53,
+"browser": {
+"s": 3.5235,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 4.5,
+"suspeitas_desde_post_s": 1.87
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 853,
+"peak_private_mb": 1600
+}
+},
+{
+"tag": "a3",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.6,
+"abrir_s": 0.98,
+"salto1_ceu": {
+"s": 5.76,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.52,
+"mem_apos_buracos": {
+"peak_ws_mb": 505,
+"ws_mb": 505,
+"peak_private_mb": 1001
+},
+"salto_frio_relva": {
+"s": 2.5,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.27,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.8,
+"srv_frio_relva_s": 1.04,
+"mem_apos_saltos": {
+"peak_ws_mb": 740,
+"ws_mb": 611,
+"peak_private_mb": 1236
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.82,
+"detalhe_desde_post_s": 3.86,
+"browser": {
+"s": 3.86069999999553,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.59,
+"suspeitas_desde_post_s": 5.88
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.63,
+"detalhe_desde_post_s": 3.13,
+"browser": {
+"s": 3.1255,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 4.09,
+"suspeitas_desde_post_s": 1.79
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 855,
+"peak_private_mb": 1600
+}
+},
+{
+"tag": "a4",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.2,
+"abrir_s": 1.0,
+"salto1_ceu": {
+"s": 5.61,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.39,
+"mem_apos_buracos": {
+"peak_ws_mb": 510,
+"ws_mb": 510,
+"peak_private_mb": 1006
+},
+"salto_frio_relva": {
+"s": 2.93,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.35,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.03,
+"srv_frio_relva_s": 1.17,
+"mem_apos_saltos": {
+"peak_ws_mb": 745,
+"ws_mb": 616,
+"peak_private_mb": 1241
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.79,
+"detalhe_desde_post_s": 3.88,
+"browser": {
+"s": 3.87489999999851,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.55,
+"suspeitas_desde_post_s": 5.84
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.66,
+"detalhe_desde_post_s": 3.21,
+"browser": {
+"s": 3.2066000000014903,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.9,
+"suspeitas_desde_post_s": 1.93
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 854,
+"peak_private_mb": 1601
+}
+},
+{
+"tag": "a5",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.7,
+"abrir_s": 0.47,
+"salto1_ceu": {
+"s": 4.61,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 1.6,
+"sugestoes_desde_pronto_s": 6.41,
+"mem_apos_buracos": {
+"peak_ws_mb": 545,
+"ws_mb": 545,
+"peak_private_mb": 1041
+},
+"salto_frio_relva": {
+"s": 2.56,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.27,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.81,
+"srv_frio_relva_s": 1.04,
+"mem_apos_saltos": {
+"peak_ws_mb": 777,
+"ws_mb": 647,
+"peak_private_mb": 1274
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.83,
+"detalhe_desde_post_s": 3.74,
+"browser": {
+"s": 3.73679999999702,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.27,
+"suspeitas_desde_post_s": 5.51
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.66,
+"detalhe_desde_post_s": 3.0,
+"browser": {
+"s": 2.99789999999851,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.69,
+"suspeitas_desde_post_s": 1.75
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 854,
+"peak_private_mb": 1601
+}
+}
+],
+"alternado_sem_instr": [
+{
+"tag": "a1",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.2,
+"abrir_s": 1.02,
+"salto1_ceu": {
+"s": 4.21,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 1.6,
+"sugestoes_desde_pronto_s": 6.51,
+"mem_apos_buracos": {
+"peak_ws_mb": 541,
+"ws_mb": 541,
+"peak_private_mb": 1037
+},
+"salto_frio_relva": {
+"s": 2.21,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.27,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.82,
+"srv_frio_relva_s": 1.05,
+"mem_apos_saltos": {
+"peak_ws_mb": 777,
+"ws_mb": 647,
+"peak_private_mb": 1273
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.81,
+"detalhe_desde_post_s": 4.12,
+"browser": {
+"s": 4.11639999999851,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.69,
+"suspeitas_desde_post_s": 5.94
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.58,
+"detalhe_desde_post_s": 2.98,
+"browser": {
+"s": 2.9761999999955298,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.67,
+"suspeitas_desde_post_s": 1.71
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 853,
+"peak_private_mb": 1601
+}
+},
+{
+"tag": "a1",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.2,
+"abrir_s": 0.99,
+"salto1_ceu": {
+"s": 4.26,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 6.98,
+"mem_apos_buracos": {
+"peak_ws_mb": 513,
+"ws_mb": 513,
+"peak_private_mb": 1009
+},
+"salto_frio_relva": {
+"s": 2.91,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.96,
+"srv_frio_relva_s": 1.4,
+"mem_apos_saltos": {
+"peak_ws_mb": 751,
+"ws_mb": 620,
+"peak_private_mb": 1247
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.82,
+"detalhe_desde_post_s": 4.41,
+"browser": {
+"s": 4.41060000000149,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.16,
+"suspeitas_desde_post_s": 6.58
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.86,
+"detalhe_desde_post_s": 3.52,
+"browser": {
+"s": 3.5196999999955296,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 4.43,
+"suspeitas_desde_post_s": 2.0
+},
+"mem_fim": {
+"peak_ws_mb": 1105,
+"ws_mb": 851,
+"peak_private_mb": 1600
+}
+},
+{
+"tag": "a1",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.8,
+"abrir_s": 1.01,
+"salto1_ceu": {
+"s": 4.46,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 1.5,
+"sugestoes_desde_pronto_s": 6.78,
+"mem_apos_buracos": {
+"peak_ws_mb": 543,
+"ws_mb": 542,
+"peak_private_mb": 1039
+},
+"salto_frio_relva": {
+"s": 2.19,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.28,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.81,
+"srv_frio_relva_s": 1.04,
+"mem_apos_saltos": {
+"peak_ws_mb": 777,
+"ws_mb": 647,
+"peak_private_mb": 1272
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.81,
+"detalhe_desde_post_s": 3.62,
+"browser": {
+"s": 3.6172000000029803,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.09,
+"suspeitas_desde_post_s": 5.34
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.57,
+"detalhe_desde_post_s": 2.89,
+"browser": {
+"s": 2.88889999999851,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.57,
+"suspeitas_desde_post_s": 1.62
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 855,
+"peak_private_mb": 1601
+}
+},
+{
+"tag": "a1",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.2,
+"abrir_s": 1.02,
+"salto1_ceu": {
+"s": 3.97,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 1.5,
+"sugestoes_desde_pronto_s": 6.31,
+"mem_apos_buracos": {
+"peak_ws_mb": 544,
+"ws_mb": 542,
+"peak_private_mb": 1040
+},
+"salto_frio_relva": {
+"s": 2.19,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.26,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.81,
+"srv_frio_relva_s": 1.04,
+"mem_apos_saltos": {
+"peak_ws_mb": 779,
+"ws_mb": 649,
+"peak_private_mb": 1275
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.9,
+"detalhe_desde_post_s": 3.8,
+"browser": {
+"s": 3.79439999999851,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.35,
+"suspeitas_desde_post_s": 5.58
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.57,
+"detalhe_desde_post_s": 3.08,
+"browser": {
+"s": 3.0747000000029803,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.78,
+"suspeitas_desde_post_s": 1.8
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 855,
+"peak_private_mb": 1601
+}
+},
+{
+"tag": "a1",
+"repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\df4abd0f-a9db-47d8-b801-b09ceb987a86\\scratchpad\\wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 5.2,
+"abrir_s": 1.02,
+"salto1_ceu": {
+"s": 4.03,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 1.6,
+"sugestoes_desde_pronto_s": 6.38,
+"mem_apos_buracos": {
+"peak_ws_mb": 544,
+"ws_mb": 542,
+"peak_private_mb": 1040
+},
+"salto_frio_relva": {
+"s": 2.21,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.27,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.8,
+"srv_frio_relva_s": 1.06,
+"mem_apos_saltos": {
+"peak_ws_mb": 781,
+"ws_mb": 653,
+"peak_private_mb": 1277
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.83,
+"detalhe_desde_post_s": 3.76,
+"browser": {
+"s": 3.7598000000044705,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 5.29,
+"suspeitas_desde_post_s": 5.54
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.6,
+"detalhe_desde_post_s": 3.12,
+"browser": {
+"s": 3.1143000000044703,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.83,
+"suspeitas_desde_post_s": 1.84
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 853,
+"peak_private_mb": 1601
+}
+}
+],
+"pares_antigo_987f175": [
+{
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 9.3,
+"abrir_s": 1.04,
+"salto1_ceu": {
+"s": 6.43,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.6,
+"sugestoes_desde_pronto_s": 9.71,
+"mem_apos_buracos": {
+"peak_ws_mb": 501,
+"ws_mb": 499,
+"peak_private_mb": 997
+},
+"salto_frio_relva": {
+"s": 3.22,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.4,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.17,
+"srv_frio_relva_s": 1.58,
+"mem_apos_saltos": {
+"peak_ws_mb": 737,
+"ws_mb": 607,
+"peak_private_mb": 1232
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.56,
+"detalhe_desde_post_s": 4.97,
+"browser": {
+"s": 4.97139999999851,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 7.19,
+"suspeitas_desde_post_s": 7.8
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.95,
+"detalhe_desde_post_s": 4.03,
+"browser": {
+"s": 4.031900000005961,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 5.14,
+"suspeitas_desde_post_s": 2.41
+},
+"mem_fim": {
+"peak_ws_mb": 1105,
+"ws_mb": 853,
+"peak_private_mb": 1599
+}
+},
+{
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.9,
+"abrir_s": 1.06,
+"salto1_ceu": {
+"s": 5.69,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.51,
+"mem_apos_buracos": {
+"peak_ws_mb": 511,
+"ws_mb": 511,
+"peak_private_mb": 1007
+},
+"salto_frio_relva": {
+"s": 3.17,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.37,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.16,
+"srv_frio_relva_s": 1.46,
+"mem_apos_saltos": {
+"peak_ws_mb": 746,
+"ws_mb": 617,
+"peak_private_mb": 1242
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.29,
+"detalhe_desde_post_s": 4.83,
+"browser": {
+"s": 4.82370000000298,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.92,
+"suspeitas_desde_post_s": 7.63
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.94,
+"detalhe_desde_post_s": 3.83,
+"browser": {
+"s": 3.82589999999851,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 4.76,
+"suspeitas_desde_post_s": 2.3
+},
+"mem_fim": {
+"peak_ws_mb": 1109,
+"ws_mb": 855,
+"peak_private_mb": 1603
+}
+},
+{
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.8,
+"abrir_s": 0.5,
+"salto1_ceu": {
+"s": 5.83,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.04,
+"mem_apos_buracos": {
+"peak_ws_mb": 519,
+"ws_mb": 517,
+"peak_private_mb": 1014
+},
+"salto_frio_relva": {
+"s": 3.01,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.37,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.11,
+"srv_frio_relva_s": 1.43,
+"mem_apos_saltos": {
+"peak_ws_mb": 753,
+"ws_mb": 625,
+"peak_private_mb": 1249
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.21,
+"detalhe_desde_post_s": 4.8,
+"browser": {
+"s": 4.79610000000149,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.77,
+"suspeitas_desde_post_s": 7.34
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.89,
+"detalhe_desde_post_s": 3.93,
+"browser": {
+"s": 3.92820000000298,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 4.9,
+"suspeitas_desde_post_s": 2.42
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 854,
+"peak_private_mb": 1601
+}
+},
+{
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 1.05,
+"salto1_ceu": {
+"s": 5.67,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.0,
+"sugestoes_desde_pronto_s": 8.52,
+"mem_apos_buracos": {
+"peak_ws_mb": 506,
+"ws_mb": 505,
+"peak_private_mb": 1002
+},
+"salto_frio_relva": {
+"s": 3.02,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.4,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.13,
+"srv_frio_relva_s": 1.47,
+"mem_apos_saltos": {
+"peak_ws_mb": 739,
+"ws_mb": 609,
+"peak_private_mb": 1235
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.21,
+"detalhe_desde_post_s": 4.65,
+"browser": {
+"s": 4.6465,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.71,
+"suspeitas_desde_post_s": 7.2
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.85,
+"detalhe_desde_post_s": 3.94,
+"browser": {
+"s": 3.9423999999985098,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 4.84,
+"suspeitas_desde_post_s": 2.36
+},
+"mem_fim": {
+"peak_ws_mb": 1104,
+"ws_mb": 851,
+"peak_private_mb": 1598
+}
+},
+{
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_main",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 1.04,
+"salto1_ceu": {
+"s": 5.51,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.29,
+"mem_apos_buracos": {
+"peak_ws_mb": 510,
+"ws_mb": 509,
+"peak_private_mb": 1006
+},
+"salto_frio_relva": {
+"s": 2.89,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.35,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.08,
+"srv_frio_relva_s": 1.37,
+"mem_apos_saltos": {
+"peak_ws_mb": 744,
+"ws_mb": 614,
+"peak_private_mb": 1240
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.18,
+"detalhe_desde_post_s": 4.88,
+"browser": {
+"s": 4.879800000004471,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.92,
+"suspeitas_desde_post_s": 7.56
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.9,
+"detalhe_desde_post_s": 4.05,
+"browser": {
+"s": 4.04960000000149,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 5.06,
+"suspeitas_desde_post_s": 2.41
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 854,
+"peak_private_mb": 1600
+}
+}
+],
+"pares_novo": [
+{
+"tag": "a1",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 8.3,
+"abrir_s": 1.08,
+"salto1_ceu": {
+"s": 6.02,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 9.0,
+"mem_apos_buracos": {
+"peak_ws_mb": 501,
+"ws_mb": 492,
+"peak_private_mb": 997
+},
+"salto_frio_relva": {
+"s": 3.28,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.42,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.3,
+"srv_frio_relva_s": 1.67,
+"mem_apos_saltos": {
+"peak_ws_mb": 736,
+"ws_mb": 606,
+"peak_private_mb": 1232
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.47,
+"detalhe_desde_post_s": 3.05,
+"browser": {
+"s": 3.0511999999955295,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.95,
+"suspeitas_desde_post_s": 7.54
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 1.0,
+"detalhe_desde_post_s": 0.28,
+"browser": {
+"s": 0.2761000000014901,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.33,
+"suspeitas_desde_post_s": 2.14
+},
+"mem_fim": {
+"peak_ws_mb": 1104,
+"ws_mb": 852,
+"peak_private_mb": 1597
+}
+},
+{
+"tag": "a1",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 0.43,
+"salto1_ceu": {
+"s": 5.86,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.06,
+"mem_apos_buracos": {
+"peak_ws_mb": 516,
+"ws_mb": 514,
+"peak_private_mb": 1012
+},
+"salto_frio_relva": {
+"s": 2.86,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.35,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.11,
+"srv_frio_relva_s": 1.44,
+"mem_apos_saltos": {
+"peak_ws_mb": 756,
+"ws_mb": 628,
+"peak_private_mb": 1252
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.16,
+"detalhe_desde_post_s": 2.68,
+"browser": {
+"s": 2.6801000000014903,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.1,
+"suspeitas_desde_post_s": 6.72
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.87,
+"detalhe_desde_post_s": 0.27,
+"browser": {
+"s": 0.26959999999403955,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.03,
+"suspeitas_desde_post_s": 1.98
+},
+"mem_fim": {
+"peak_ws_mb": 1105,
+"ws_mb": 851,
+"peak_private_mb": 1598
+}
+},
+{
+"tag": "a1",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 1.03,
+"salto1_ceu": {
+"s": 5.61,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.41,
+"mem_apos_buracos": {
+"peak_ws_mb": 513,
+"ws_mb": 511,
+"peak_private_mb": 1008
+},
+"salto_frio_relva": {
+"s": 3.28,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.38,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.16,
+"srv_frio_relva_s": 1.49,
+"mem_apos_saltos": {
+"peak_ws_mb": 752,
+"ws_mb": 622,
+"peak_private_mb": 1248
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.28,
+"detalhe_desde_post_s": 2.77,
+"browser": {
+"s": 2.7673000000044703,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.42,
+"suspeitas_desde_post_s": 7.1
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.9,
+"detalhe_desde_post_s": 0.27,
+"browser": {
+"s": 0.2707000000029802,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.15,
+"suspeitas_desde_post_s": 2.03
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 854,
+"peak_private_mb": 1599
+}
+},
+{
+"tag": "a1",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.8,
+"abrir_s": 0.42,
+"salto1_ceu": {
+"s": 5.97,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.1,
+"mem_apos_buracos": {
+"peak_ws_mb": 518,
+"ws_mb": 517,
+"peak_private_mb": 1014
+},
+"salto_frio_relva": {
+"s": 2.86,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.09,
+"srv_frio_relva_s": 1.36,
+"mem_apos_saltos": {
+"peak_ws_mb": 757,
+"ws_mb": 628,
+"peak_private_mb": 1253
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.14,
+"detalhe_desde_post_s": 2.74,
+"browser": {
+"s": 2.7345,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.15,
+"suspeitas_desde_post_s": 6.68
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.85,
+"detalhe_desde_post_s": 0.28,
+"browser": {
+"s": 0.27909999999403956,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.09,
+"suspeitas_desde_post_s": 2.04
+},
+"mem_fim": {
+"peak_ws_mb": 1105,
+"ws_mb": 852,
+"peak_private_mb": 1599
+}
+},
+{
+"tag": "a1",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 8.4,
+"abrir_s": 0.54,
+"salto1_ceu": {
+"s": 6.86,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.6,
+"sugestoes_desde_pronto_s": 9.6,
+"mem_apos_buracos": {
+"peak_ws_mb": 499,
+"ws_mb": 495,
+"peak_private_mb": 994
+},
+"salto_frio_relva": {
+"s": 3.4,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.43,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.29,
+"srv_frio_relva_s": 1.64,
+"mem_apos_saltos": {
+"peak_ws_mb": 736,
+"ws_mb": 606,
+"peak_private_mb": 1232
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.26,
+"detalhe_desde_post_s": 2.7,
+"browser": {
+"s": 2.6985,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.39,
+"suspeitas_desde_post_s": 7.16
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.92,
+"detalhe_desde_post_s": 0.28,
+"browser": {
+"s": 0.2753999999985099,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.34,
+"suspeitas_desde_post_s": 2.12
+},
+"mem_fim": {
+"peak_ws_mb": 1105,
+"ws_mb": 853,
+"peak_private_mb": 1599
+}
+}
+],
+"novo_5_seguidas": [
+{
+"tag": "a1",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 10.9,
+"abrir_s": 1.14,
+"salto1_ceu": {
+"s": 6.91,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.6,
+"sugestoes_desde_pronto_s": 10.36,
+"mem_apos_buracos": {
+"peak_ws_mb": 501,
+"ws_mb": 481,
+"peak_private_mb": 997
+},
+"salto_frio_relva": {
+"s": 3.57,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.42,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.29,
+"srv_frio_relva_s": 1.59,
+"mem_apos_saltos": {
+"peak_ws_mb": 722,
+"ws_mb": 594,
+"peak_private_mb": 1217
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.77,
+"detalhe_desde_post_s": 2.78,
+"browser": {
+"s": 2.77289999999851,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.6,
+"suspeitas_desde_post_s": 7.45
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 1.01,
+"detalhe_desde_post_s": 0.28,
+"browser": {
+"s": 0.27780000000447036,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.38,
+"suspeitas_desde_post_s": 2.1
+},
+"mem_fim": {
+"peak_ws_mb": 1105,
+"ws_mb": 851,
+"peak_private_mb": 1599
+}
+},
+{
+"tag": "a2",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 9.4,
+"abrir_s": 0.58,
+"salto1_ceu": {
+"s": 6.86,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.0,
+"sugestoes_desde_pronto_s": 9.48,
+"mem_apos_buracos": {
+"peak_ws_mb": 501,
+"ws_mb": 479,
+"peak_private_mb": 996
+},
+"salto_frio_relva": {
+"s": 3.51,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.42,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.3,
+"srv_frio_relva_s": 1.68,
+"mem_apos_saltos": {
+"peak_ws_mb": 716,
+"ws_mb": 586,
+"peak_private_mb": 1212
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.78,
+"detalhe_desde_post_s": 3.09,
+"browser": {
+"s": 3.0912999999970197,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 7.47,
+"suspeitas_desde_post_s": 8.42
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 1.17,
+"detalhe_desde_post_s": 0.3,
+"browser": {
+"s": 0.3007999999970198,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.33,
+"suspeitas_desde_post_s": 2.14
+},
+"mem_fim": {
+"peak_ws_mb": 1104,
+"ws_mb": 854,
+"peak_private_mb": 1598
+}
+},
+{
+"tag": "a3",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 9.3,
+"abrir_s": 1.09,
+"salto1_ceu": {
+"s": 6.58,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.0,
+"sugestoes_desde_pronto_s": 9.57,
+"mem_apos_buracos": {
+"peak_ws_mb": 501,
+"ws_mb": 485,
+"peak_private_mb": 996
+},
+"salto_frio_relva": {
+"s": 3.47,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.45,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.33,
+"srv_frio_relva_s": 1.5,
+"mem_apos_saltos": {
+"peak_ws_mb": 729,
+"ws_mb": 599,
+"peak_private_mb": 1224
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.54,
+"detalhe_desde_post_s": 2.87,
+"browser": {
+"s": 2.8725,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.67,
+"suspeitas_desde_post_s": 7.47
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.95,
+"detalhe_desde_post_s": 0.26,
+"browser": {
+"s": 0.2603999999985099,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.07,
+"suspeitas_desde_post_s": 1.95
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 853,
+"peak_private_mb": 1601
+}
+},
+{
+"tag": "a4",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 8.8,
+"abrir_s": 1.05,
+"salto1_ceu": {
+"s": 6.19,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 9.08,
+"mem_apos_buracos": {
+"peak_ws_mb": 501,
+"ws_mb": 492,
+"peak_private_mb": 996
+},
+"salto_frio_relva": {
+"s": 3.22,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.42,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.32,
+"srv_frio_relva_s": 1.65,
+"mem_apos_saltos": {
+"peak_ws_mb": 731,
+"ws_mb": 601,
+"peak_private_mb": 1227
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.61,
+"detalhe_desde_post_s": 2.76,
+"browser": {
+"s": 2.7609000000059605,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.77,
+"suspeitas_desde_post_s": 7.63
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 1.06,
+"detalhe_desde_post_s": 0.28,
+"browser": {
+"s": 0.28209999999403956,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.31,
+"suspeitas_desde_post_s": 2.15
+},
+"mem_fim": {
+"peak_ws_mb": 1104,
+"ws_mb": 852,
+"peak_private_mb": 1598
+}
+},
+{
+"tag": "a5",
+"repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 8.9,
+"abrir_s": 0.5,
+"salto1_ceu": {
+"s": 6.51,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.95,
+"mem_apos_buracos": {
+"peak_ws_mb": 500,
+"ws_mb": 488,
+"peak_private_mb": 995
+},
+"salto_frio_relva": {
+"s": 3.53,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.48,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.38,
+"srv_frio_relva_s": 1.61,
+"mem_apos_saltos": {
+"peak_ws_mb": 733,
+"ws_mb": 603,
+"peak_private_mb": 1229
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.52,
+"detalhe_desde_post_s": 2.91,
+"browser": {
+"s": 2.90429999999702,
+"key": "1,20,14,40@100#2311868"
+},
+"sugestoes_desde_post_s": 6.97,
+"suspeitas_desde_post_s": 7.89
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 1.05,
+"detalhe_desde_post_s": 0.27,
+"browser": {
+"s": 0.2683999999985099,
+"key": "1,20,14,40@100#2320208"
+},
+"sugestoes_desde_post_s": 3.31,
+"suspeitas_desde_post_s": 2.08
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 853,
+"peak_private_mb": 1600
+}
+}
+]
+}

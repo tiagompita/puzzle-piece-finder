@@ -29,11 +29,14 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
   E + (b), byte a byte).
 - **Ramos (2026-11-15, Tiago):** C fica fora (etiqueta `archive/desempenho-c`); `teste-a`/`teste-b`/`teste-b3` →
   etiquetas `archive/…`; `wip/desempenho-parte1` apagado. Só resta `main` (`docs/decisoes.md`).
-- **A seguir:** (1) suspeitas: a correção de `33f209f` só apanha exceções; há leitura rasgada sem exceção (provado,
-  DETALHE §11.12 adenda); fecho com contador de escritas proposto, **à espera do OK do Tiago**. (2) Critério 3
-  perfilado sem otimizar (DETALHE §12): longe 1,85 · 1,96 s = temporizadores 630 ms + `loadBoard` ≈ 350 ms +
-  recompor uma região que não mudou 835 ms (a LRU das regiões tem a versão global na chave; a E não é invalidada).
-  Daqui em diante, 5 corridas por critério (mediana e máximo).
+- **Critério 3 e seqlock (2026-11-15, DETALHE §13):**
+  - O seqlock das suspeitas está feito (sem bloqueio de escrita à 3.ª falha).
+  - A chave das regiões passou a ser o conteúdo e o detalhe pede-se logo depois do SSE.
+  - Em 5 pares alternados: «longe» 3,94 → 0,28 s [V]; «perto» 4,83 → 2,74 s [F]; os critérios 1 e 2 e o POST ficam
+    iguais dentro do ruído.
+  - O passo 0 mostrou que os 1,85 s eram a máquina, não o código; daqui em diante só se mede em pares alternados.
+- **À espera do Tiago:** (1) corrigir o «verificar» e o `rank_all`, que no cenário «mover» devolvem estados que nunca
+  existiram (§13.5); (2) o remendo das células alteradas para o «perto» (§13.4).
 
 ## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-f2c-correcoes-uso-real.md` (fechado)
 - **Saco 9 · nº 89 em 1 · 29 encaixa fisicamente [V, Tiago]:** primeiro caso real de «pôr à mão»; a borda está completa (218/218).

@@ -1009,3 +1009,114 @@ cópia de `projects/alpes` (versão do log 2307663) depois de um arranque comple
 `/api/ghosts` leva 1062 · 1141 ms e `/api/board` 635 · 684 ms. Ao mesmo tempo correm as suspeitas, com `evaluate` de
 ≈ 4,0 s (a peça tem vizinhas montadas; longe são 0,39 s), o ranking (3,5 s) e o fim do pré-aquecimento (até ≈ 1,1 s
 depois do POST; o «perto» é o 1.º «Encaixa» da corrida). A composição é igual: 852 ms, 0 falhas da E.
+
+**Correção (2026-11-15, mais tarde):** os 1,85 s das 5 corridas acima não se repetiram (ver §13.1). Nessas corridas,
+as suspeitas levaram 0,39 s; em todas as seguintes levaram 1,7–2,2 s, com o mesmo código, a mesma base e registos do
+servidor iguais linha a linha. A decomposição (o que invalida, o que corre ao mesmo tempo) mantém-se; os tempos
+absolutos não.
+
+## 13. Critério 3: chave das regiões por conteúdo, detalhe logo depois de uma escrita, seqlock (2026-11-15) [V]
+
+### 13.1 Passo 0: 1,85 s contra 2,7 s
+
+- 5 corridas sem instrumentação em `987f175` (`desempenho.py --so a`, base de §12): «longe» **3,13 · 3,53 s**
+  (mediana · máximo), «perto» 3,77 · 3,88 s.
+- Para separar a instrumentação da altura em que se mede: 5 pares alternados (sem, com). Sem: 3,08 · 3,52 s; com:
+  3,10 · 3,50 s. **A instrumentação não pesa.** Código num worktree em `D:` contra `C:` (3 + 3, alternados):
+  3,27 · 3,32 contra 3,31 · 3,56 s. **O disco também não pesa.**
+- Os 1,85 s de §12 não se repetiram em 13 corridas posteriores. A diferença é uniforme em todo o trabalho de CPU do
+  servidor: suspeitas 0,39 → 1,7–2,2 s, `/api/ghosts` 0,34 → 1,5 s, `/api/board` 0,23 → 1,2 s, ranking 2,4 → 3,8 s,
+  pré-aquecimento 10,0 → 11,7 s. Os registos do servidor são iguais, tirando os tempos. Logo, é a máquina e não o
+  código; os 2,7 s de §11.11 ficam entre os dois. A causa concreta (outro processo, energia, antivírus) não está
+  isolada [NT]. **Regra daqui em diante:** antes/depois só em pares alternados na mesma sessão, com o código antigo
+  por `--repo` num worktree.
+
+### 13.2 O que mudou
+
+- **Chave da cache das regiões = conteúdo** (`Gui._region_sig`): sha1 das peças com célula na região ± 1 (a margem
+  da própria composição). Cada peça entra com a célula, a pose com que é desenhada (a entrada de `placements` válida,
+  senão o registo na hora, por `_entry_key`) e `ReadyCache.key` (recorte, aresta pintada, mm/px, fundo, constantes,
+  sha1 do `puzzle.json`); entra também o ficheiro da arte. Custa 30–40 ms por pedido (≈ 100 `os.stat`). Uma
+  composição só fica guardada se nenhuma escrita a cruzou (seqlock, sem esperar); se alguma cruzou, é servida mas não
+  guardada.
+- **Browser** (`novo.js`, `board.js`):
+  - o SSE `board_changed` (`boardChanged`) muda `S.ver` e pede logo o detalhe da versão nova, em paralelo com a
+    recarga (`reloadNow`: tabuleiro + Montar), sem os 350 ms do `scheduleReload` nem os 280 ms do `scheduleDetail`;
+  - a resposta de `/api/board` com a mesma versão não pede a região outra vez;
+  - no fim de uma escrita feita pela própria página, aproveita-se a recarga já lançada por esse SSE;
+  - um `fetch_changed` logo a seguir não recarrega outra vez;
+  - durante um gesto, o detalhe espera pelo fim, como antes.
+- **`/api/board`, `/api/ghosts` e `/api/montar` correm dentro de `foreground()`**: o ranking, as suspeitas e o
+  pré-aquecimento cedem-lhes. Isto revelou um defeito na página «Buracos» da GUI antiga, já corrigido. A página
+  desenhava o banner com `S.fetch.buracos_alta`, mas só se redesenhava quando chegava `/api/holes`; com a nova ordem
+  das respostas ficava presa em «a calcular». O teste `test_reject_rank2_from_page_then_pause_and_resume` passou de
+  0/8 falhas para ≈ 50 %; com a correção, 0/10. `refreshAltaBanners` troca só o banner quando chega `/api/fetch`.
+
+### 13.3 Medido (5 pares alternados, código antigo `987f175` | novo; mediana · máximo; `dados/r5_criterio3_ab.json`)
+
+| critério | alvo | antigo | novo |
+|---|---|---|---|
+| 3 longe (20,60) | ≤ 0,6 s | 3,94 · 4,05 | **0,28 · 0,28 [V]** |
+| 3 perto (5,33) | ≤ 1,2 s | 4,83 · 4,97 | **2,74 · 3,05 [F]** |
+| POST longe / perto | ≤ 2,0 s | 0,90 / 2,21 | 0,90 / 2,26 |
+| 1 1.º salto | ≤ 4,0 s | 5,69 · 6,43 | 5,97 · 6,86 |
+| 2 salto a frio, relva browser / HTTP | ≤ 2,0 s | 3,02 / 1,46 | 3,28 / 1,49 |
+| sugestões desde o «pronto» | — | 8,51 | 8,41 |
+| 5 pico do working set | ≤ 1,6 GB | 1106 MB | 1105 MB |
+
+- Nesta sessão a máquina estava mais lenta do que em §11.11 (o código antigo deu 3,94 s no «longe»). Por isso os
+  números absolutos dos critérios 1 e 2 e do POST não se comparam com §11.11; só se compara antigo com novo.
+- Critérios 1 e 2: o código novo fica ≈ 0,25 s acima na mediana, dentro do ruído (os intervalos sobrepõem-se). O
+  único custo novo conhecido é o `_region_sig`, 30–40 ms por pedido.
+- Prova byte a byte (`tests/test_regiao_conteudo.py`): uma escrita longe acerta na cache e dá a mesma imagem que uma
+  composição a frio; uma escrita na margem, uma pose manual e um «Encaixa» desfeito recompõem e dão a mesma imagem
+  que a frio; uma composição cruzada por uma escrita não fica guardada.
+- `tests/test_gui_detalhe_escrita.py`: o pedido da região sai menos de 150 ms depois do SSE e antes do fim de
+  `/api/board`, e sai uma só vez. Com o código antigo saía 644 ms depois.
+
+### 13.4 «Perto»: proposta, não implementada
+
+O «perto» muda o conteúdo da própria região, por isso a chave muda e a região é recomposta inteira: ≈ 0,85–1,2 s a
+quente, ≈ 100 peças. Essa composição corre ao mesmo tempo que as suspeitas (≈ 4–5 s de `evaluate` para uma peça com
+vizinhas) e que o ranking. A proposta é refazer só as células alteradas sobre a região em cache:
+1. Guardar com o JPEG o array da região (≈ 8,5 MB a ppc 100 no céu; LRU por bytes, com orçamento próprio) e as partes
+   da assinatura por peça, não só o sha1.
+2. Quando um pedido traz outra assinatura e há em cache uma entrada da mesma região e ppc, comparar as partes para
+   obter as peças Δ (entradas, saídas, pose, peça pronta). A zona suja é a união das caixas antigas e novas das peças
+   Δ, já com a sangria (`ext`), em píxeis da mesma moldura da região.
+3. Repintar só a zona suja: primeiro a arte desses píxeis; depois o mesmo ciclo da composição (mesma ordem, os dois
+   passes, prioridade de profundidade) sobre as peças cuja caixa toca a zona. Os warps calculam-se contra a moldura da
+   região inteira, com o mesmo recorte `bx0..bx1` aos limites da região, para dar os mesmos números; escreve-se só
+   dentro da zona. Cada píxel depende só das peças que o cobrem, pela mesma ordem, por isso o resultado é igual byte a
+   byte ao da composição inteira. No fim, o JPEG (6 ms).
+4. Teste antes de ligar: o array remendado tem de ser igual byte a byte à composição inteira, ao colocar, tirar e
+   mover uma peça, com pose manual e com recorte corrigido, no céu e na relva (sintético e cópia real).
+
+Ganho esperado: ≈ 4–10 peças em vez de ≈ 100, ou seja ≈ 0,1 s em vez de ≈ 1 s [NT]. O resto do «perto» (2,74 s) é a
+disputa com as suspeitas e o ranking lançados pela mesma escrita, que este remendo não resolve; terá de ser medido
+depois.
+
+### 13.5 Seqlock das suspeitas e o mesmo padrão noutros leitores
+
+- `Gui.wlock` é um `SeqLock`: o contador sobe ao tomar e ao largar o bloqueio, dentro dele, e fica ímpar durante a
+  escrita. `Gui.seq_read` só aceita uma leitura se o contador era par no início e igual no fim; uma exceção com uma
+  escrita pelo meio conta como tentativa rasgada.
+- `suspeitas_json` usa o `seq_read`. À 3.ª tentativa rasgada devolve o resultado anterior com `desatualizada: true` e
+  pede outra passagem de fundo, **sem tomar o bloqueio de escrita**. Dentro de uma escrita (`_after_suspect_write`)
+  corre uma vez, diretamente.
+- Testes (`tests/test_seqlock.py`):
+  - cenário «mover» nas pausas 1, 2 e 3: dá o estado final com exatamente 2 avaliações (antes dava 1/1, um estado que
+    nunca existiu);
+  - uma escrita durante uma avaliação lenta espera menos de 50 ms pelo bloqueio;
+  - 3 tentativas rasgadas devolvem o resultado anterior marcado, as escritas não esperam, e a passagem seguinte dá o
+    estado final.
+- Cenário «mover» forçado nos outros leitores (código de hoje, sintético) [V]:
+
+| leitor | escrita a meio | resultado |
+|---|---|---|
+| «verificar» (`verify_json`) | na 1.ª / 2.ª / 3.ª de 4 rotações | = depois / **nunca existiu** / **nunca existiu** |
+| `rank_all` no fio dos buracos | na pausa 5 / 14 / 25 de ≈ 30–40 | **nunca existiu** / **nunca existiu** / = antes |
+| pré-aquecimento (`_prewarm`) | na pausa 1 / 2 | peças prontas iguais às calculadas a frio (a pose não entra nelas) |
+
+- O «verificar» só recomeça quando há uma exceção. O ranking rasgado fica guardado em `_holes_prev`, que é a lista
+  que «Vai buscar» mostra durante o recálculo seguinte. A correção dos dois com `seq_read` está proposta, não feita.

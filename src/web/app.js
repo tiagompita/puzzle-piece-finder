@@ -149,6 +149,7 @@ async function loadFetch() {
   warnPlaceable();
   drawFetchLayer();
   renderBuscar();
+  if (typeof refreshAltaBanners === "function") refreshAltaBanners();
 }
 /** A stored position (saquinho) whose cell now has a mounted neighbour: tell Tiago to fetch the bag. */
 function warnPlaceable() {

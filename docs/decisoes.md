@@ -448,3 +448,22 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
 - **Registado: no arranque, as sugestões «pelo encaixe» chegam ≈ 3 s mais tarde**, cerca de 6 s depois do «pronto»
   (5,9–6,1 s, `dados/r4_criterios_b.json`). A causa é a prioridade à interação (`983ae98`): o ranking dos buracos cede
   ao 1.º salto do tabuleiro (detalhe em composição). Depois de uma escrita não há diferença mensurável.
+
+## 2026-11-15 — Seqlock das suspeitas e critério 3 (Tiago)
+
+- **Seqlock** (`SeqLock` em `src/server.py`): o contador fica ímpar durante uma escrita e muda dentro do bloqueio de
+  escrita. Uma leitura feita fora do bloqueio só é aceite se o contador era par no início e igual no fim.
+  - **À 3.ª falha nunca se toma o bloqueio de escrita**: as suspeitas levam segundos e iam atrasar o POST do «Encaixa».
+    Devolve-se o resultado anterior marcado `desatualizada` e repete-se na passagem seguinte.
+  - Para já só se aplica às suspeitas. O «verificar» e o `rank_all` também devolvem estados que nunca existiram no
+    cenário «mover» (DETALHE.md §13.5); fica por decidir se se corrigem.
+- **Chave da cache das regiões = conteúdo da região** (as peças na região ± 1, a pose com que são desenhadas, a peça
+  pronta e a arte), em vez de `render_version()`. Uma composição cruzada por uma escrita é servida mas não guardada.
+- **Depois de uma escrita, o detalhe pede-se logo, em paralelo com a recarga**: sem os 350 ms do `scheduleReload` nem
+  os 280 ms do `scheduleDetail`. A recarga (`/api/board`, `/api/ghosts`, `/api/montar`) corre dentro de
+  `foreground()`.
+- **Medições:** antes/depois só em pares alternados na mesma sessão (código antigo por `--repo` num worktree), com
+  5 corridas e mediana e máximo. Os tempos absolutos variaram até 2× entre períodos do mesmo dia, com o mesmo código
+  (DETALHE.md §13.1).
+- **«Perto»:** a proposta é refazer só as células alteradas sobre o array da região em cache (DETALHE.md §13.4); por
+  implementar.

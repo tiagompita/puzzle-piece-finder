@@ -120,6 +120,7 @@ PIECE_LRU = 600
 SECTION_LRU = 64
 EVENTS_KEEP = 500
 WRITE_WAIT_S = 90.0            # a write waits this long for the lock (an import commit / re-query) before 409
+SEQ_TRIES = 3                  # torn attempts of a seqlock read (Gui.seq_read) before giving up (no write lock)
 SSE_KEEPALIVE_S = 15.0
 QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file keeps all)
 # sys.setswitchinterval of the server process (Python default 0.005; --gil-intervalo 0 keeps it). Measured in
@@ -356,6 +357,60 @@ def _json_default(o):
 
 
 # ---------------------------------------------------------------- server state
+class SeqLock:
+	"""The write lock (``Gui.wlock``) with a sequence counter, a seqlock (2026-11-15, decision of Tiago): ``seq`` goes up
+	by one when a write takes the lock (outermost acquire) and by one when it lets it go (outermost release), both
+	while the lock is held, so ``seq`` is odd exactly while a write runs. A read done outside the lock (the suspects,
+	:meth:`Gui.seq_read`) is accepted only if ``seq`` was even when it started and is the same when it ends: a write
+	that started or ended in between (even one that raised nothing in the reader) makes it count as torn.
+	Re-entrant like the ``RLock`` it wraps (same ``acquire(blocking, timeout)`` / ``release`` / ``with``)."""
+
+	def __init__(self):
+		self._lock = threading.RLock()
+		self._cond = threading.Condition(threading.Lock())
+		self._owner = None
+		self._depth = 0
+		self.seq = 0
+
+	def acquire(self, blocking: bool = True, timeout: float = -1) -> bool:
+		if not self._lock.acquire(blocking, timeout):
+			return False
+		self._depth += 1
+		if self._depth == 1:
+			self._owner = threading.get_ident()
+			self.seq += 1                      # odd: a write is in progress
+		return True
+
+	def release(self) -> None:
+		if self._depth == 1:
+			self.seq += 1                      # even again, still under the lock
+			self._owner = None
+			self._depth = 0
+			with self._cond:
+				self._cond.notify_all()
+		else:
+			self._depth -= 1
+		self._lock.release()
+
+	def __enter__(self):
+		self.acquire()
+		return self
+
+	def __exit__(self, *exc):
+		self.release()
+		return False
+
+	def owned(self) -> bool:
+		"""True when the calling thread holds the lock (a read made under it is consistent by itself)."""
+		return self._owner == threading.get_ident()
+
+	def wait_even(self, timeout: float) -> int:
+		"""Wait (without taking the lock) until no write runs, at most ``timeout`` s; returns ``seq`` (odd = timed out)."""
+		with self._cond:
+			self._cond.wait_for(lambda: self.seq % 2 == 0, timeout)
+		return self.seq
+
+
 class ReadyCache:
 	"""Pieces ready to draw (:func:`src.render.piece_ready`) kept in memory, LRU by bytes (2026-11-15, part E of the
 	performance phase): a cold board region spent ≈ 2/3 of its time preparing each piece's crop (clean, shadow rim,
@@ -483,7 +538,7 @@ class Gui:
 		self._holes_prev = None      # the last COMPLETE hole ranking: shown (validated) while the next one is recomputed
 		self._holes_progress = None  # {n, N, segundos} while the strips of a cold hole ranking are computed
 		self._holes_hit_logged = None
-		self.wlock = threading.RLock()
+		self.wlock = SeqLock()
 		self.rlock = threading.RLock()
 		self.cond = threading.Condition()
 		self.events = collections.deque(maxlen=EVENTS_KEEP)
@@ -516,6 +571,7 @@ class Gui:
 		self._susp_bg_lock = threading.Lock()   # P0b B: the suspects after a write, in one background thread
 		self._susp_bg_thread = None
 		self._susp_bg_pending = False
+		self.n_susp_desatualizadas = 0   # suspects answers given as the previous result (seqlock gave up)
 		self._verif_lock = threading.Lock()   # «verificar» (F2): one at a time on its own fit cache, never the write lock
 		self._verif_cache = None              # src.fit._Cache of «verificar» (the hole ranking has its own, _fitc)
 		self.ingest_segment = None    # tests: replacement for segment_scan
@@ -637,6 +693,28 @@ class Gui:
 				self.emit("fetch_changed", {})
 		finally:
 			self.wlock.release()
+
+	def seq_read(self, fn, tries: int = SEQ_TRIES):
+		"""``(True, fn())`` for a read made outside the write lock with no write starting or ending under it
+		(:class:`SeqLock`), else ``(False, None)`` after ``tries`` torn attempts. Never takes the write lock, so a write
+		never waits for it; between attempts it only waits for the running write to end. An exception raised while a
+		write ran is a torn attempt too; one raised with no write is a real error and goes up. Under the write lock
+		(the caller is a write) the read is consistent by itself and runs once."""
+		if self.wlock.owned():
+			return True, fn()
+		for _ in range(tries):
+			s0 = self.wlock.wait_even(WRITE_WAIT_S)
+			if s0 % 2:
+				continue
+			try:
+				v, err = fn(), None
+			except Exception as e:  # noqa: BLE001 - decided below: torn (retry) or real (raise)
+				v, err = None, e
+			if self.wlock.seq == s0:
+				if err is not None:
+					raise err
+				return True, v
+		return False, None
 
 	def read(self, fn, tries: int = 4):
 		"""Run a read, retrying when a concurrent write changed a dict under it."""
@@ -830,22 +908,27 @@ class Gui:
 		if ev is not None and ev[0] == key:
 			r = ev[1]
 		else:
-			pl = self._susp_placements()
-			for k in range(3):
-				v0 = self.version()
-				try:
-					r = consistency.evaluate(self.pr, pl, pause=pause)
-					break
-				except (TypeError, KeyError, AttributeError):
-					# since P0b B the suspects are evaluated outside the write lock: a write can take a piece off the
-					# board under the evaluation (its ``celula`` becomes None; seen 1 in 45 runs of
-					# tests/test_concorrencia.py). Wait for that write and evaluate again; without a write, a real error
-					if self.wlock.acquire(timeout=WRITE_WAIT_S):
-						self.wlock.release()
-					if k == 2 or self.version() == v0:
-						raise
+			# Evaluated outside the write lock (P0b B): ``evaluate`` reads the live model, and a write applies its
+			# events to it before the log. A seqlock read (:meth:`seq_read`) keeps only an evaluation no write
+			# started or ended under (a move under it gave a state that never existed, with no exception: DETALHE.md
+			# §11.12). After SEQ_TRIES torn attempts: the previous result marked ``desatualizada``, never the write
+			# lock (the evaluation takes seconds and would hold up the «Encaixa» POST), and one more background pass.
+			def go():
+				k = (self.version(), id(self.pr))
+				pl = self._susp_placements()
+				return k, pl, consistency.evaluate(self.pr, pl, pause=pause)
+			ok, v = self.seq_read(go)
+			if not ok:
+				self.n_susp_desatualizadas += 1
+				prev = getattr(self, "_susp_last", None)
+				r = dict(prev) if prev is not None else {"summary": {}, "items": [], "falsos_alarmes": []}
+				r["desatualizada"] = True
+				self._suspeitas_bg()
+				return self._join_reports(r)
+			key, pl, r = v
 			self._susp_pl = pl
 			self._susp_eval = (key, r)
+			self._susp_last = r
 		out = self._join_reports(r)
 		self._suspeitas = (key, out)
 		return out
@@ -1461,6 +1544,46 @@ class Gui:
 		while len(self._regions) > REGION_LRU:
 			self._regions.popitem(last=False)
 
+	def _region_sig(self, region: tuple) -> str:
+		"""sha1 of what a detail region of :meth:`_compose` is made of (2026-11-15, decision of Tiago; DETALHE.md §13),
+		so a write that does not touch the region keeps its cached JPEG (the key was :meth:`render_version`: any write
+		dropped every region). The pieces :func:`src.render.compose_board` draws there are those with a cell in the
+		region ± 1 (its bleed / overhang margin); for each, in its order: id, cell, the pose it is drawn with (the
+		:meth:`placements` entry when it is valid for the piece, else the on-the-fly registration, keyed by
+		:func:`src.render._entry_key`) and :meth:`ReadyCache.key` (crop, painted edge, scan mm/px, background, display
+		constants, sha1 of ``puzzle.json`` = grid, art registration, calibration); plus the art file. Reads the live
+		model, like the composition: :meth:`_region_jpg` stores only what no write crossed (seqlock)."""
+		import hashlib
+		from src import render
+		pr = self.pr
+		l0, c0, l1, c1 = region
+		pl = self.placements()
+		cells = {}
+		for pid, p in list(pr.pieces.items()):
+			cel = p.celula
+			if p.estado == "colocada" and cel is not None and l0 - 1 <= cel[0] <= l1 + 1 and c0 - 1 <= cel[1] <= c1 + 1:
+				cells[pid] = tuple(cel)
+		parts = [self._art_file_sig()]
+		for pid in sorted(cells, key=lambda q: cells[q]):
+			e = pl.get(pid)
+			if e is not None and render._manual_entry_ok(pr, pid, e):
+				pose = ("registo", tuple(e.get("cell") or ()), e.get("theta_deg"), tuple(e.get("pivot_mm") or ()),
+						e.get("dx_mm"), e.get("dy_mm"))
+			else:
+				pose = ("na_hora", render._entry_key(pr, pid))
+			parts.append((pid, cells[pid], pose, ReadyCache.key(pr, pid)))
+		return hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()
+
+	def _art_file_sig(self) -> tuple:
+		f = (self.pr.profile.art or {}).get("file")
+		if not f:
+			return ()
+		try:
+			st = os.stat(os.path.join(REPO, f))
+			return (f, st.st_size, st.st_mtime_ns)
+		except OSError:
+			return (f,)
+
 	def _region_jpg(self, ppc: float, region: tuple, *, client: Optional[str] = None, seq: Optional[int] = None) -> bytes:
 		"""One region JPEG: LRU hit, or join an equal composition in flight, or compose it (outside every lock).
 
@@ -1468,7 +1591,8 @@ class Gui:
 		at a time, and a request whose ``seq`` is older than the newest seen for that client is dropped
 		(:class:`Superseded`, HTTP 409) before it starts composing, so a burst of jumps leaves one composition."""
 		self._last_region = tuple(region)    # E: the warm-up of the pieces starts around the last region asked for
-		ver = self.render_version()
+		s0 = self.wlock.seq
+		ver = self._region_sig(region)       # the content of the region, not the log version (DETALHE.md §13)
 		key = (round(ppc, 1), region)
 		jk = (key, ver)
 		with self.region_lock:
@@ -1506,8 +1630,12 @@ class Gui:
 				if data is None:
 					with self.foreground():
 						data = _jpeg(self._compose(ppc, region))
-					with self.region_lock:
-						self._region_store(key, ver, data)
+					# kept under its content key only when no write started or ended from the signature to the end of
+					# the composition (seqlock, no waiting): else the image may hold another content than ``ver`` says,
+					# and a later request with that content (an «Encaixa» undone) would get it. Served either way.
+					if s0 % 2 == 0 and self.wlock.seq == s0:
+						with self.region_lock:
+							self._region_store(key, ver, data)
 			finally:
 				if clock is not None:
 					clock.release()
@@ -3406,7 +3534,8 @@ def create_app(gui: Gui):
 	@app.get("/api/board")
 	def board(ui: Optional[str] = None):
 		ready()
-		return JSON(gui.read(lambda: gui.board_json(ui if ui == NOVO_UI else None)))
+		with gui.foreground():         # the reload after a write: the background jobs yield (DETALHE.md §13)
+			return JSON(gui.read(lambda: gui.board_json(ui if ui == NOVO_UI else None)))
 
 	@app.get("/api/legend")
 	def legend(ui: Optional[str] = None):
@@ -3415,7 +3544,8 @@ def create_app(gui: Gui):
 	@app.get("/api/montar")
 	def montar(saco: Optional[int] = None):
 		ready()
-		return JSON(gui.read(lambda: gui.montar_json(saco)))
+		with gui.foreground():         # the reload after a write: the background jobs yield (DETALHE.md §13)
+			return JSON(gui.read(lambda: gui.montar_json(saco)))
 
 	@app.get("/", include_in_schema=False)
 	def root(ui: Optional[str] = None):
@@ -3627,8 +3757,9 @@ def create_app(gui: Gui):
 	@app.get("/api/ghosts")
 	def ghosts():
 		ready()
-		return JSON({"versao": gui.version(), "rotacao_gemea_deg": gui.pr.profile.twin_rotation_deg(),
-					 "fantasmas": gui.ghosts()})
+		with gui.foreground():         # the reload after a write: the background jobs yield (DETALHE.md §13)
+			return JSON({"versao": gui.version(), "rotacao_gemea_deg": gui.pr.profile.twin_rotation_deg(),
+						 "fantasmas": gui.ghosts()})
 
 	@app.get("/api/lots")
 	def lots():

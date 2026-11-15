@@ -60,8 +60,8 @@ async function loadBoard() {
   const [b, gh] = await Promise.all([api("/api/board?ui=novo"), api("/api/ghosts").catch(() => ({ fantasmas: [] }))]);
   S.board = b; S.ghosts = gh.fantasmas || [];
   const first = !svg().getAttribute("viewBox");
-  drawRaster(); drawGrid(); drawLayers(); drawLegend();
-  if (first) { fitBoard(); refAltura(); } else setView(S.vb);
+  const nova = drawRaster(); drawGrid(); drawLayers(); drawLegend();
+  if (first) { fitBoard(); refAltura(); } else setView(S.vb, nova && !S.gesto);   // versão nova: o detalhe já, sem 280 ms
 }
 // ------------------------------------------------------------ salto da lupa com o teclado do telemóvel (P1a, 2026-11-15)
 // A 390 px o teclado no ecrã encolhe o tabuleiro (≈ 70 px de altura): um salto feito assim calcula a vista com essa
@@ -435,7 +435,12 @@ async function post(url, body) {
   return api(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 }
 function lockButtons(on) { S.busy = on; $$("#tab-montar button").forEach((b) => { b.disabled = on; }); }
-async function afterWrite() { await Promise.all([loadBoard(), loadMontar()]); }
+// Depois de uma escrita desta página: a recarga que o SSE «board_changed» desta mesma escrita já começou serve
+// (a mesma versão, há menos de 2 s); senão, uma recarga nova. Sem temporizadores (DETALHE.md §13).
+async function afterWrite() {
+  if (reloadP && reloadV === S.ver && performance.now() - reloadT < 2000) return reloadP;
+  return reloadNow(null);
+}
 function writeFailed(r) {
   if (r && r.invariantes && r.invariantes.length) toast("Algo correu mal ao gravar (ver Diagnóstico).", true);
 }
@@ -1151,6 +1156,27 @@ async function findPlace(l, c) {
 
 // ------------------------------------------------------------ eventos do servidor
 let reloadTimer = null;
+// Recarga já (tabuleiro + Montar em paralelo), uma por versão: «board_changed» e o fim de uma escrita desta página
+// pedem a mesma e partilham-na (DETALHE.md §13: os 350 ms do «scheduleReload» ficam só para fetch/holes_changed).
+let reloadP = null, reloadV = null, reloadT = 0;
+function reloadNow(v) {
+  if (v !== null && reloadP && reloadV === v) return reloadP;
+  reloadV = v === null ? S.ver : v; reloadT = performance.now();
+  const p = (async () => {
+    await Promise.all([loadBoard(), loadMontar()]);
+    if (S.modo === "painel" && !S.busy) await refreshPainel();       // F2: o painel aberto mostra o lugar de agora
+  })().catch(() => { /* o próximo evento tenta de novo */ });
+  reloadP = p;
+  return p;
+}
+/** Uma escrita mudou o tabuleiro (SSE, versão ``v``): o detalhe da versão nova pede-se JÁ, em paralelo com a recarga
+ * (antes: 350 ms + a recarga + 280 ms). ``S.ver`` passa logo a ``v`` (a chave e o URL do detalhe); o ``drawRaster``
+ * da resposta de /api/board, com a mesma versão, mantém-no. Durante um gesto o detalhe espera pelo fim, como hoje. */
+function boardChanged(v) {
+  S.ver = v;
+  if (S.board && !S.gesto) detailNow(); else scheduleDetail();
+  reloadNow(v);
+}
 function scheduleReload(board) {
   scheduleReload.board = scheduleReload.board || board;
   clearTimeout(reloadTimer);
@@ -1167,8 +1193,9 @@ function connectEvents() {
   const es = new EventSource("/api/events");
   // F2b: ligação perdida → faixa; ao voltar (o servidor pode ter reiniciado) recarrega o tabuleiro e as sugestões
   if (typeof watchConnection === "function") watchConnection(es, () => { S.lots = null; S.holesProgress = null; if (document.body.dataset.ready === "1") loadAll().catch(() => {}); });
-  es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) scheduleReload(true); });
-  es.addEventListener("fetch_changed", () => scheduleReload(false));
+  es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) boardChanged(d.versao); });
+  // o «fetch_changed» de uma escrita chega logo a seguir ao «board_changed»: a recarga dessa escrita já o cobre
+  es.addEventListener("fetch_changed", () => { if (!(reloadV === S.ver && performance.now() - reloadT < 400)) scheduleReload(false); });
   es.addEventListener("holes_changed", () => { S.holesProgress = null; scheduleReload(false); });
   es.addEventListener("holes_progress", (e) => {
     S.holesProgress = JSON.parse(e.data);

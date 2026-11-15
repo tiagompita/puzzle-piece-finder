@@ -70,6 +70,13 @@ function holeSugChip(e) {
 const fmtMargin = (m) => (m === null || m === undefined ? "—" : (m > 999 ? "> 999" : fmt(m, 2)));
 const altaPct = (c) => (c && c.precisao !== null && c.precisao !== undefined ? `${fmt(100 * c.precisao, 0)} %` : "—");
 const altaIc = (c) => (c && c.ic95 ? ` (IC 95 % ${fmt(100 * c.ic95[0], 0)}–${fmt(100 * c.ic95[1], 0)} %)` : "");
+/** A página «Buracos» desenha o banner com ``S.fetch.buracos_alta``, mas só se redesenha quando /api/holes chega: um
+ * /api/fetch que responda depois deixava o banner antigo («a calcular») até à escrita seguinte. Troca só o banner
+ * (o resto da página, os grupos abertos e o filtro, ficam). Chamado por ``loadFetch``. */
+function refreshAltaBanners() {
+  const old = document.querySelector('#tab-buracos .alta-banner[data-alta="buracos"]');
+  if (old) old.replaceWith(altaBanner("buracos"));
+}
 /** Linha de estado das sugestões pelo encaixe: a calcular (tiras n/N) · contador acertos/falhas/total com Wilson · aviso de pausa + «Reativar». */
 function altaBanner(where) {
   const a = altaInfo();
