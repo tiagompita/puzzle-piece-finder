@@ -413,6 +413,9 @@ class Gui:
 		self._placements = None       # (ver, dict)
 		self._sheets = {}
 		self._art = None
+		self._susp_bg_lock = threading.Lock()   # P0b B: the suspects after a write, in one background thread
+		self._susp_bg_thread = None
+		self._susp_bg_pending = False
 		self._verif_lock = threading.Lock()   # «verificar» (F2): one at a time on its own fit cache, never the write lock
 		self._verif_cache = None              # src.fit._Cache of «verificar» (the hole ranking has its own, _fitc)
 		self.ingest_segment = None    # tests: replacement for segment_scan
@@ -765,6 +768,42 @@ class Gui:
 			return None
 		self.emit("suspeitas_changed", data)
 		return data
+
+	def _suspeitas_bg(self) -> None:
+		"""Recompute the suspects and emit ``suspeitas_changed`` in a background thread, after the write answered
+		(2026-11-15, P0b B, decision of Tiago: the panel and the SSE arrive after the answer; ``consistency.evaluate``
+		was 1,6 s of the «Encaixa» POST, 2,6-3,6 s with the GUI open). Writes that come while it runs are coalesced
+		into one more pass; reads go through :meth:`read` (retried if a write changes the project under it)."""
+		with self._susp_bg_lock:
+			self._susp_bg_pending = True
+			th = self._susp_bg_thread
+			if th is not None and th.is_alive():
+				return
+
+			def run():
+				while True:
+					with self._susp_bg_lock:
+						if not self._susp_bg_pending:
+							self._susp_bg_thread = None
+							return
+						self._susp_bg_pending = False
+					try:
+						self.read(self._emit_suspeitas)
+					except Exception as e:  # noqa: BLE001 - informative; logged
+						self.log(f"[servidor] suspeitas não recalculadas: {e}")
+			th = threading.Thread(target=run, name="suspeitas", daemon=True)
+			self._susp_bg_thread = th
+			th.start()
+
+	def wait_suspeitas(self, timeout: float = 60.0) -> None:
+		"""Wait for the background recomputation of the suspects (tests, CLI-like callers)."""
+		t0 = time.time()
+		while time.time() - t0 < timeout:
+			with self._susp_bg_lock:
+				th = self._susp_bg_thread
+			if th is None:
+				return
+			th.join(0.05)
 
 	def _reports_changed(self, key_before: tuple) -> None:
 		"""After a report write (informative log events only): carry the evaluation over to the new log version
@@ -1798,7 +1837,7 @@ class Gui:
 		self.emit("board_changed", {"versao": self.version(), "celulas": [list(x) for x in ch]})
 		self.emit("fetch_changed", {})
 		self._suspeitas = None
-		self._emit_suspeitas()           # orientation suspects (read-only); never fails a write
+		self._suspeitas_bg()             # orientation suspects (read-only), after the answer (P0b B); never fails a write
 		self._holes = None               # hole moulds changed (new neighbour / piece out of the pool / rejection): recompute in the background
 		try:
 			self.holes_json(wait=False)

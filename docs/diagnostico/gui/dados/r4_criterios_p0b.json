@@ -1,0 +1,238 @@
+{
+ "corridas": [
+  {
+   "tag": "a1",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 5.7,
+   "abrir_s": 0.47,
+   "salto1_ceu": {
+    "s": 10.11,
+    "key_at_jump": "1,20,14,40@100#2307663",
+    "key_shown": "1,20,14,40@100#2307663",
+    "yanked": false
+   },
+   "buracos_desde_salto_s": 26.0,
+   "mem_apos_buracos": {
+    "peak_ws_mb": 399,
+    "ws_mb": 239,
+    "peak_private_mb": 895
+   },
+   "salto_frio_relva": {
+    "s": 3.13,
+    "key_at_jump": "34,30,47,50@100#2307663",
+    "key_shown": "34,30,47,50@100#2307663",
+    "yanked": false
+   },
+   "salto_frio_vale": {
+    "s": 0.52,
+    "key_at_jump": "26,2,40,22@100#2307663",
+    "key_shown": "26,2,40,22@100#2307663",
+    "yanked": false
+   },
+   "srv_frio_ceu_s": 2.97,
+   "srv_frio_relva_s": 3.0,
+   "mem_apos_saltos": {
+    "peak_ws_mb": 453,
+    "ws_mb": 241,
+    "peak_private_mb": 949
+   },
+   "encaixa_perto": {
+    "cell": [
+     5,
+     33
+    ],
+    "post_s": 1.57,
+    "detalhe_desde_post_s": 6.89,
+    "browser": {
+     "s": 6.885699999999255,
+     "key": "1,20,14,40@100#2311868"
+    }
+   },
+   "encaixa_longe": {
+    "cell": [
+     20,
+     60
+    ],
+    "post_s": 0.86,
+    "detalhe_desde_post_s": 5.67,
+    "browser": {
+     "s": 5.6675,
+     "key": "1,20,14,40@100#2320208"
+    }
+   },
+   "mem_fim": {
+    "peak_ws_mb": 551,
+    "ws_mb": 416,
+    "peak_private_mb": 1048
+   }
+  },
+  {
+   "tag": "b1",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 6.2,
+   "a_calcular": true,
+   "verificar1_s": 1.93,
+   "verificar1_srv_s": 1.921,
+   "verificar2_s": 0.01,
+   "mem_fim": {
+    "peak_ws_mb": 222,
+    "ws_mb": 219,
+    "peak_private_mb": 719
+   }
+  },
+  {
+   "tag": "a2",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 6.7,
+   "abrir_s": 0.49,
+   "salto1_ceu": {
+    "s": 10.95,
+    "key_at_jump": "1,20,14,40@100#2307663",
+    "key_shown": "1,20,14,40@100#2307663",
+    "yanked": false
+   },
+   "buracos_desde_salto_s": 23.5,
+   "mem_apos_buracos": {
+    "peak_ws_mb": 402,
+    "ws_mb": 238,
+    "peak_private_mb": 898
+   },
+   "salto_frio_relva": {
+    "s": 3.2,
+    "key_at_jump": "34,30,47,50@100#2307663",
+    "key_shown": "34,30,47,50@100#2307663",
+    "yanked": false
+   },
+   "salto_frio_vale": {
+    "s": 0.55,
+    "key_at_jump": "26,2,40,22@100#2307663",
+    "key_shown": "26,2,40,22@100#2307663",
+    "yanked": false
+   },
+   "srv_frio_ceu_s": 2.84,
+   "srv_frio_relva_s": 2.93,
+   "mem_apos_saltos": {
+    "peak_ws_mb": 455,
+    "ws_mb": 242,
+    "peak_private_mb": 950
+   },
+   "encaixa_perto": {
+    "cell": [
+     5,
+     33
+    ],
+    "post_s": 1.66,
+    "detalhe_desde_post_s": 7.83,
+    "browser": {
+     "s": 7.8314000000003725,
+     "key": "1,20,14,40@100#2311868"
+    }
+   },
+   "encaixa_longe": {
+    "cell": [
+     20,
+     60
+    ],
+    "post_s": 0.89,
+    "detalhe_desde_post_s": 5.51,
+    "browser": {
+     "s": 5.507800000000745,
+     "key": "1,20,14,40@100#2320208"
+    }
+   },
+   "mem_fim": {
+    "peak_ws_mb": 552,
+    "ws_mb": 421,
+    "peak_private_mb": 1047
+   }
+  },
+  {
+   "tag": "b2",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 6.7,
+   "a_calcular": true,
+   "verificar1_s": 2.29,
+   "verificar1_srv_s": 2.281,
+   "verificar2_s": 0.01,
+   "mem_fim": {
+    "peak_ws_mb": 223,
+    "ws_mb": 218,
+    "peak_private_mb": 720
+   }
+  }
+ ],
+ "resumo": {
+  "1_salto1_s": [
+   10.11,
+   10.95
+  ],
+  "2_frio_browser_s": [
+   3.13,
+   3.2
+  ],
+  "2_frio_http_s": [
+   2.84,
+   3.0
+  ],
+  "3_perto_s": [
+   6.89,
+   7.83
+  ],
+  "3_longe_s": [
+   5.51,
+   5.67
+  ],
+  "post_s": [
+   0.86,
+   1.66
+  ],
+  "5_pico_ws_mb": [
+   551,
+   552
+  ],
+  "5_pico_privada_mb": [
+   1047,
+   1048
+  ],
+  "4_verificar1_s": [
+   1.93,
+   2.29
+  ]
+ }
+}

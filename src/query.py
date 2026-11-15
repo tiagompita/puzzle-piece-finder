@@ -93,7 +93,34 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # ---------------------------------------------------------------- helpers
 def _twin_api():
 	from src.twin import TwinItem, find_twin
-	return TwinItem, find_twin
+	return _lazy_item_cls(TwinItem), find_twin
+
+
+_LAZY_CLS = {}
+
+
+def _lazy_item_cls(base):
+	"""A :class:`src.twin.TwinItem` whose ``rgba`` is read only when something uses it (2026-11-15, P0b A2): the twin
+	step built an item with the crop of every loose and placed piece involved (≈ 500 PNG reads per re-query, ≈ 1 s),
+	but only the candidates that reach the image test need it. Constructed with ``rgba`` = a callable that returns the
+	crop; the value read is kept on the item. Same values as before for every reader."""
+	cls = _LAZY_CLS.get(base)
+	if cls is None:
+		class LazyTwinItem(base):
+			@property
+			def rgba(self):
+				v = self.__dict__.get("_rgba")
+				if callable(v):
+					v = v()
+					self.__dict__["_rgba"] = v
+				return v
+
+			@rgba.setter
+			def rgba(self, v):
+				self.__dict__["_rgba"] = v
+		LazyTwinItem.__name__ = base.__name__
+		cls = _LAZY_CLS[base] = LazyTwinItem
+	return cls
 
 
 def _cl(v):
@@ -127,7 +154,8 @@ class _Ctx:
 	def item(self, p):
 		if p.id not in self.items:
 			sh = self.pr.shape(p.id)
-			rgba = self.pr.crop_rgba(p.id) if self.use_image else None
+			pr, pid = self.pr, p.id
+			rgba = (lambda: pr.crop_rgba(pid)) if self.use_image else None
 			cell = p.celula if p.estado == "colocada" else None
 			theta = p.theta_deg
 			if theta is None and p.estado == "colocada":
@@ -994,13 +1022,28 @@ def _font(size: int):
 	return _FONTS[size]
 
 
+_TEXTLEN: dict = {}
+
+
+def _textlen(draw, text: str, size: int) -> float:
+	"""``draw.textlength`` of ``text`` in :func:`_font` ``size``, memoised (2026-11-15, P0b A3: the fetch sheets
+	measured the same labels at every size on every write, ≈ 0,5 s). Same value as the call it replaces."""
+	k = (text, size)
+	v = _TEXTLEN.get(k)
+	if v is None:
+		if len(_TEXTLEN) > 50_000:
+			_TEXTLEN.clear()
+		v = _TEXTLEN[k] = draw.textlength(text, font=_font(size))
+	return v
+
+
 def _fit_text(draw, xy, text: str, width: int, size: int, fill) -> None:
 	"""Draw ``text`` at ``xy`` with the largest font <= ``size`` that fits in ``width`` px (ellipsis below 10 px)."""
 	s = size
-	while s > 10 and draw.textlength(text, font=_font(s)) > width:
+	while s > 10 and _textlen(draw, text, s) > width:
 		s -= 1
 	t = text
-	while len(t) > 3 and draw.textlength(t, font=_font(s)) > width:
+	while len(t) > 3 and _textlen(draw, t, s) > width:
 		t = t[:-2] + "…"
 	draw.text(xy, t, font=_font(s), fill=fill)
 
@@ -1102,7 +1145,7 @@ def _fetch_sheet(project, lote, rows: list) -> np.ndarray:
 	_fit_text(d, (10, 6), f"lote {lote}: {n} peças a ir buscar", W - 20, 24, (0, 0, 0))
 	help_ = ("peça rodada como fica no tabuleiro (triângulo vermelho = topo do tabuleiro; contorno ciano = gémea "
 			 "rodada para a célula); à direita, a gémea colocada como está no tabuleiro")
-	if d.textlength(help_, font=_font(13)) <= W - 20:
+	if _textlen(d, help_, 13) <= W - 20:
 		_fit_text(d, (10, 40), help_, W - 20, 13, (80, 80, 80))
 	else:
 		cut = help_.index("; à direita")
@@ -1111,6 +1154,29 @@ def _fetch_sheet(project, lote, rows: list) -> np.ndarray:
 	for xy, t, w, size, col in texts:
 		_fit_text(d, xy, t, w, size, col)
 	return np.ascontiguousarray(np.asarray(pil)[..., ::-1])
+
+
+_SHEET_SIG: dict = {}   # abs path of fetch_<lote>.jpg -> signature of what drew it (this process)
+
+
+def _sheet_sig(project, lote, rows: list) -> str:
+	"""Signature of everything :func:`_fetch_sheet` draws for ``lote`` (2026-11-15, P0b A3: only the sheet of a bag that
+	changed is redrawn): the rows, and per piece and placed twin the crop (``render.piece_asset_sig``), the state and
+	pose in the log and the registered placement of the twin."""
+	import hashlib
+	try:
+		from src import render
+		pl = render.load_placements(project).get("placements") or {}
+	except Exception:  # noqa: BLE001 - no renderer (stubbed in tests): no signature, the sheet is always redrawn
+		return None
+	parts = [lote, rows]
+	for e in rows:
+		for pid in (e.get("piece"), e.get("twin_id")):
+			if pid and pid in project.pieces:
+				p = project.piece(pid)
+				parts.append([pid, repr(render.piece_asset_sig(project, pid)), p.estado, p.celula, p.theta_deg,
+							  p.pose_manual, pl.get(pid)])
+	return hashlib.sha1(json.dumps(parts, sort_keys=True, default=str, ensure_ascii=False).encode()).hexdigest()
 
 
 def write_fetch(project, entries: list, rest: list, notes: list, suppressed: Optional[list] = None) -> None:
@@ -1136,15 +1202,23 @@ def write_fetch(project, entries: list, rest: list, notes: list, suppressed: Opt
 	# the GUI reads fetch.json outside the write lock (``/api/montar``, ``/api/fetch``): never half a file (DETALHE.md §8)
 	write_atomic(project.p("fetch.md"), w_md)
 	write_atomic(project.p("fetch.json"), w_json)
-	for old in glob.glob(project.p("fetch_*.jpg")):
-		remove_file(old)
 	by_lote = {}
 	for e in entries:
 		if e.get("piece"):
 			by_lote.setdefault(e.get("lote"), []).append(e)
+	keep = {os.path.abspath(project.p(f"fetch_{lote}.jpg")) for lote in by_lote}
+	for old in glob.glob(project.p("fetch_*.jpg")):
+		if os.path.abspath(old) not in keep:
+			remove_file(old)
+			_SHEET_SIG.pop(os.path.abspath(old), None)
 	for lote, rows in by_lote.items():
+		fp = os.path.abspath(project.p(f"fetch_{lote}.jpg"))
+		sig = _sheet_sig(project, lote, rows)
+		if sig is not None and _SHEET_SIG.get(fp) == sig and os.path.exists(fp):
+			continue                      # the same inputs drew this file: the same bytes (P0b A3)
 		sheet = _fetch_sheet(project, lote, rows)
-		cv2.imencode(".jpg", sheet, [cv2.IMWRITE_JPEG_QUALITY, 88])[1].tofile(project.p(f"fetch_{lote}.jpg"))
+		cv2.imencode(".jpg", sheet, [cv2.IMWRITE_JPEG_QUALITY, 88])[1].tofile(fp)
+		_SHEET_SIG[fp] = sig
 
 
 def print_summary(project, entries: list) -> None:

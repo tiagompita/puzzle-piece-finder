@@ -72,6 +72,13 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 					gui._compose(rnd.choice((90, 120, 150)), reg)     # always composes
 				elif x < 0.82:
 					gui.zoom_jpg(rnd.randint(1, 4), rnd.randint(1, 6), "render")
+				elif x < 0.86:
+					# P0b (2026-11-15): decoded crops and the suspects (twin residual) are cached by the crop/shape
+					# content; read them while the placed piece is re-segmented
+					if rnd.random() < 0.5:
+						gui.read(lambda: gui.pr.crop_rgba(rnd.choice((placed, tw, dec))))
+					else:
+						gui.read(gui.suspeitas_json)
 				elif x < 0.90:
 					# «verificar» da F2: também sem o bloqueio de escrita (DETALHE.md §8.2)
 					r = gui.verify_json(2, 4, rnd.choice((tw, dec)), rnd.choice((None, 0.0, 90.0)))
@@ -114,6 +121,7 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 		stop.set()
 		for t in threads:
 			t.join(60)
+	gui.wait_suspeitas()
 	assert not errors, f"{len(errors)} erros nos fios de composição; o 1.º:\n{errors[0]}"
 	assert counts["n"] > 50 and counts["http"] > 5, counts
 	# disk: invariants and the board replayed from the log
@@ -126,6 +134,14 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 		assert gui.board_jpg(120, reg) == fresh.board_jpg(120, reg), reg
 	assert gui.zoom_jpg(2, 3, "render") == fresh.zoom_jpg(2, 3, "render")
 	assert gui.piece_png(placed, "board", 120)[0] == fresh.piece_png(placed, "board", 120)[0]
+	# P0b caches = a process just opened: the crops and the suspects (twin residual cache cleared for the fresh one)
+	gui.sync()
+	for pid in (placed, tw, dec):
+		assert np.array_equal(gui.pr.crop_rgba(pid), Project.open(gui.path).crop_rgba(pid)), pid
+	got = gui.suspeitas_json()["items"]
+	from src import consistency as CO
+	CO._RESIDUAL_CACHE.clear()
+	assert got == fresh.suspeitas_json()["items"]
 	# the full board is patched cell by cell (``_base``): in memory it equals a full composition up to the patch seams
 	# (measured without threads, the same writes: max 4 levels on <= 5 px); a stale piece or pose would differ on
 	# thousands of px. (The JPEGs are not compared: a raster read back from the disk cache is a second JPEG generation.)

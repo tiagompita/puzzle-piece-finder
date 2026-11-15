@@ -688,3 +688,62 @@ parte 1 (1a, 1b+1c, 1d) e E estão escritas e por medir num ramo à parte (ver `
   passed). A suite inteira não foi repetida depois desta mudança (só de teste).
 - Testes existentes alterados: `tests/test_server_queue.py` (portão), `tests/conftest.py` (fixture `autouse`),
   `tests/test_board_interface.py` (`OWNED`).
+
+### 11.6 P0b implementado: A1–A4 + B (decisão do Tiago, 2026-11-15) [V]
+
+Decisão: A1–A4 e B; C (responder antes da reconsulta) não. O que mudou:
+
+- **A1** `src/state.py` `Project._write_json`: uma vista JSON só se reescreve quando o conteúdo (JSON compacto do
+  codificador em C, a mesma estrutura dá o mesmo ficheiro indentado) é outro, ou o ficheiro no disco já não é o que este
+  objeto escreveu (tamanho + mtime). `save` agrupa as peças por folha uma vez.
+- **A2** `Project.crop_rgba`: recortes decodificados em cache entre consultas (LRU de 128 MB, `CROP_CACHE_BYTES`, chave =
+  tamanho + mtime do ficheiro do recorte; devolve uma cópia); `src/query.py`: os `TwinItem` leem o recorte só quando o
+  usam (`_lazy_item_cls`), em vez de ler os ≈ 500 recortes de cada consulta.
+- **A3** `src/query.py`: `_textlen` memoriza as medidas de texto das folhas; `write_fetch` só redesenha a folha
+  `fetch_<lote>.jpg` cuja assinatura (`_sheet_sig`: as linhas, e por peça e gémea `render.piece_asset_sig`, estado, pose
+  e o registo em `placements.json`) mudou; apaga só as folhas de sacos que saíram da lista.
+- **A4** `src/consistency.py`: `twin_local_residual_cached` (chave = sha1 do `z` das duas formas; o limiar
+  `TWIN_LOCAL_MAX_MM` aplica-se depois, por isso uma mudança de calibração vale logo).
+- **B** `src/server.py` `_suspeitas_bg`: depois de uma escrita as suspeitas calculam-se num fio («suspeitas») depois da
+  resposta, com as escritas seguintes juntas numa só passagem; o painel e o SSE `suspeitas_changed` chegam depois.
+  `wait_suspeitas()` para os testes. As outras escritas que devolvem o resumo (falso alarme, reports) ficam síncronas.
+- `render.piece_asset_sig` / `display_params` (da parte 1c) entram já aqui, para a assinatura das folhas.
+
+**Iguais antes/depois [V]** (`tools/diagnostico/gui/p0b_iguais.py`, `dados/r4_p0b_iguais_{antes,depois}.json`): a mesma
+sequência de 5 escritas (P0096 → (20,60), desfazer, → (5,33), desfazer, P0097 → (20,60)) numa cópia nova com o código de
+825c6eb e com este: as entradas devolvidas pela reconsulta, `fetch.json` (sem `t`), `fetch.md` (sem a hora), o sha1 de
+cada `fetch_*.jpg`, o sha1 de cada vista JSON (`project`, `board`, `scans/`, `sections/`, `pairs`, `photos/`) e
+`consistency.evaluate` são iguais nos 5 passos («IGUAIS 5 passos»).
+
+**POST de um «Encaixa» [V]** (`desempenho.py --so pq`, `dados/r4_p0b_depois.json`; critério ≤ 2,0 s):
+
+| | place (1.ª / 2.ª / 3.ª) | unplace | antes (9f672c0) |
+|---|---|---|---|
+| sem browser | 1,70 / 0,67 / 0,67 s | 0,46–0,61 s | 6,74 / 5,28 / 5,28 · 4,99–5,02 s |
+| com `/novo/` aberto | 1,70 / 1,01 / 1,27 s | 0,82–1,04 s | 7,44 / 6,76 / 6,44 · 6,19–6,33 s |
+
+Por fase (place, voltas 2–3, sem / com browser): `confirm` 0,56 / 0,84–1,11 s (`save` 0,10 / 0,17–0,22,
+`check_invariants` 0,14–0,16 / 0,22–0,33, `run_query` 0,35 / 0,52–0,66), `_refresh_render_assets` 0,10 / 0,15 s,
+suspeitas 0 s no POST. A 1.ª escrita depois de abrir é a mais lenta (1,70 s): grava todas as vistas uma vez (147
+ficheiros) e lê os recortes que a consulta usa. **Critério cumprido nas duas condições.**
+
+Testes: `tests/test_recorte_refaz.py` (novo: cada cache de P0b segue o recorte corrigido pelo editor e fica igual a um
+processo novo; as outras peças não são relidas; o limiar das suspeitas vale sem limpar a cache), `tests/test_concorrencia.py`
+(um ramo novo lê recortes e suspeitas a meio das re-segmentações; no fim, iguais a um processo novo).
+
+**Os 5 critérios depois do P0b [V]** (`dados/r4_criterios_p0b.json`, 2 corridas):
+
+| # | critério | alvo | 9f672c0 | depois do P0b |
+|---|---|---|---|---|
+| 1 | 1.º salto depois de abrir | ≤ 4,0 s | 14,07 · 13,76 s | 10,11 · 10,95 s |
+| 2 | salto a frio, relva browser / HTTP | ≤ 2,0 s browser | 4,09 · 3,79 / 3,62–3,83 s | 3,13 · 3,20 / 2,84–3,00 s |
+| 3 | detalhe depois de um «Encaixa», perto / longe (do fim do POST) | ≤ 1,2 / ≤ 0,6 s | 3,34 · 3,30 / 4,09 · 3,60 s | 6,89 · 7,83 / 5,67 · 5,51 s |
+| | POST desse «Encaixa» (perto / longe) | | 7,63 · 6,18 / 7,04 · 5,77 s | 1,57 · 1,66 / 0,86 · 0,89 s |
+| 4 | 1.º «verificar» | ≤ 1,0 s | 2,17 · 1,56 s | 1,93 · 2,29 s |
+| 5 | pico do working set | ≤ 1,6 GB | 738 · 733 MB | 551 · 552 MB |
+
+O critério 3 mede do fim do POST ao detalhe novo: com B, o trabalho que o POST fazia antes de responder (as suspeitas,
+1,6–3,6 s) passa a correr depois da resposta, ao mesmo tempo que a composição do detalhe e o ranking dos buracos; o tempo
+do clique ao detalhe desceu (perto 7,63 + 3,34 = 10,97 → 1,57 + 6,89 = 8,46 s; longe 7,04 + 4,09 = 11,13 → 0,86 + 5,67 =
+6,53 s), mas o «depois do POST» subiu. O critério 3 é o alvo de C (mosaicos), não do P0b. Verificação: suite 586
+passed, 1 skipped, 0 failed; `test_concorrencia` 20/20.

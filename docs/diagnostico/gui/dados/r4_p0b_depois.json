@@ -1,0 +1,879 @@
+{
+ "corridas": [
+  {
+   "tag": "p1",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 6.2,
+   "voltas": [
+    {
+     "place_s": 1.71,
+     "place_srv_s": 1.69,
+     "erro": null,
+     "unplace_s": 0.48,
+     "unplace_erro": null
+    },
+    {
+     "place_s": 0.68,
+     "place_srv_s": 0.67,
+     "erro": null,
+     "unplace_s": 0.49,
+     "unplace_erro": null
+    },
+    {
+     "place_s": 0.68,
+     "place_srv_s": 0.67,
+     "erro": null,
+     "unplace_s": 0.62,
+     "unplace_erro": null
+    }
+   ],
+   "mem_fim": {
+    "peak_ws_mb": 529,
+    "ws_mb": 276,
+    "peak_private_mb": 1022
+   },
+   "fases": [
+    {
+     "acao": "place",
+     "piece": "P0096",
+     "cell": [
+      20,
+      60
+     ],
+     "total_s": 1.696,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       21,
+       0.001
+      ],
+      "board_snapshot": [
+       3,
+       0.003
+      ],
+      "read_retry": [
+       17,
+       0.025
+      ],
+      "write_atomic": [
+       147,
+       0.238
+      ],
+      "  Project.save": [
+       2,
+       0.326
+      ],
+      "  check_invariants": [
+       1,
+       0.164
+      ],
+      "    register_piece": [
+       7,
+       0.085
+      ],
+      "    clean_crop": [
+       4,
+       0.083
+      ],
+      "  run_query": [
+       1,
+       0.993
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       1.429
+      ],
+      "  _refresh_render_assets": [
+       1,
+       0.26
+      ],
+      "  holes_json": [
+       1,
+       0.0
+      ],
+      "_after_write": [
+       1,
+       0.263
+      ],
+      "_written_since": [
+       1,
+       0.0
+      ]
+     }
+    },
+    {
+     "acao": "unplace",
+     "piece": "P0096",
+     "cell": null,
+     "total_s": 0.455,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.0
+      ],
+      "board_snapshot": [
+       3,
+       0.002
+      ],
+      "write_atomic": [
+       4,
+       0.02
+      ],
+      "  Project.save": [
+       2,
+       0.098
+      ],
+      "  check_invariants": [
+       1,
+       0.166
+      ],
+      "read_retry": [
+       5,
+       0.004
+      ],
+      "    register_piece": [
+       5,
+       0.003
+      ],
+      "  run_query": [
+       1,
+       0.204
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       0.45
+      ],
+      "  holes_json": [
+       1,
+       0.0
+      ],
+      "_after_write": [
+       1,
+       0.002
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    },
+    {
+     "acao": "place",
+     "piece": "P0096",
+     "cell": [
+      20,
+      60
+     ],
+     "total_s": 0.671,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.001
+      ],
+      "board_snapshot": [
+       3,
+       0.003
+      ],
+      "read_retry": [
+       7,
+       0.006
+      ],
+      "write_atomic": [
+       6,
+       0.037
+      ],
+      "  Project.save": [
+       2,
+       0.108
+      ],
+      "  check_invariants": [
+       1,
+       0.142
+      ],
+      "    register_piece": [
+       6,
+       0.068
+      ],
+      "  run_query": [
+       1,
+       0.357
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       0.561
+      ],
+      "    clean_crop": [
+       1,
+       0.02
+      ],
+      "  _refresh_render_assets": [
+       1,
+       0.104
+      ],
+      "  holes_json": [
+       1,
+       0.0
+      ],
+      "_after_write": [
+       1,
+       0.106
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    },
+    {
+     "acao": "unplace",
+     "piece": "P0096",
+     "cell": null,
+     "total_s": 0.458,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.0
+      ],
+      "board_snapshot": [
+       3,
+       0.003
+      ],
+      "write_atomic": [
+       4,
+       0.021
+      ],
+      "  Project.save": [
+       2,
+       0.097
+      ],
+      "  check_invariants": [
+       1,
+       0.139
+      ],
+      "read_retry": [
+       5,
+       0.004
+      ],
+      "    register_piece": [
+       5,
+       0.003
+      ],
+      "  run_query": [
+       1,
+       0.202
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       0.452
+      ],
+      "  holes_json": [
+       1,
+       0.0
+      ],
+      "_after_write": [
+       1,
+       0.002
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    },
+    {
+     "acao": "place",
+     "piece": "P0096",
+     "cell": [
+      20,
+      60
+     ],
+     "total_s": 0.672,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.0
+      ],
+      "board_snapshot": [
+       3,
+       0.003
+      ],
+      "read_retry": [
+       7,
+       0.007
+      ],
+      "write_atomic": [
+       6,
+       0.033
+      ],
+      "  Project.save": [
+       2,
+       0.104
+      ],
+      "  check_invariants": [
+       1,
+       0.163
+      ],
+      "    register_piece": [
+       6,
+       0.061
+      ],
+      "  run_query": [
+       1,
+       0.346
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       0.568
+      ],
+      "    clean_crop": [
+       1,
+       0.021
+      ],
+      "  _refresh_render_assets": [
+       1,
+       0.098
+      ],
+      "  holes_json": [
+       1,
+       0.0
+      ],
+      "_after_write": [
+       1,
+       0.1
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    },
+    {
+     "acao": "unplace",
+     "piece": "P0096",
+     "cell": null,
+     "total_s": 0.613,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.0
+      ],
+      "board_snapshot": [
+       3,
+       0.003
+      ],
+      "write_atomic": [
+       4,
+       0.027
+      ],
+      "  Project.save": [
+       2,
+       0.126
+      ],
+      "  check_invariants": [
+       1,
+       0.202
+      ],
+      "read_retry": [
+       5,
+       0.004
+      ],
+      "    register_piece": [
+       5,
+       0.005
+      ],
+      "  run_query": [
+       1,
+       0.253
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       0.607
+      ],
+      "  holes_json": [
+       1,
+       0.0
+      ],
+      "_after_write": [
+       1,
+       0.002
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "tag": "q1",
+   "repo": "D:\\DEKSTOP\\puzzle_piece_finder",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 7.2,
+   "voltas": [
+    {
+     "place_s": 1.71,
+     "place_srv_s": 1.7,
+     "erro": null,
+     "unplace_s": 1.05,
+     "unplace_erro": null
+    },
+    {
+     "place_s": 1.01,
+     "place_srv_s": 1.0,
+     "erro": null,
+     "unplace_s": 0.83,
+     "unplace_erro": null
+    },
+    {
+     "place_s": 1.28,
+     "place_srv_s": 1.27,
+     "erro": null,
+     "unplace_s": 1.05,
+     "unplace_erro": null
+    }
+   ],
+   "mem_fim": {
+    "peak_ws_mb": 685,
+    "ws_mb": 430,
+    "peak_private_mb": 1178
+   },
+   "fases": [
+    {
+     "acao": "place",
+     "piece": "P0096",
+     "cell": [
+      20,
+      60
+     ],
+     "total_s": 1.702,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       21,
+       0.002
+      ],
+      "board_snapshot": [
+       3,
+       0.005
+      ],
+      "read_retry": [
+       16,
+       0.025
+      ],
+      "write_atomic": [
+       147,
+       0.265
+      ],
+      "  Project.save": [
+       2,
+       0.362
+      ],
+      "  check_invariants": [
+       1,
+       0.198
+      ],
+      "    register_piece": [
+       7,
+       0.08
+      ],
+      "    clean_crop": [
+       4,
+       0.083
+      ],
+      "  run_query": [
+       1,
+       0.943
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       1.445
+      ],
+      "  _refresh_render_assets": [
+       1,
+       0.246
+      ],
+      "  holes_json": [
+       1,
+       0.001
+      ],
+      "_after_write": [
+       1,
+       0.25
+      ],
+      "_written_since": [
+       1,
+       0.003
+      ]
+     }
+    },
+    {
+     "acao": "unplace",
+     "piece": "P0096",
+     "cell": null,
+     "total_s": 1.034,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.001
+      ],
+      "board_snapshot": [
+       3,
+       0.01
+      ],
+      "write_atomic": [
+       4,
+       0.048
+      ],
+      "  Project.save": [
+       2,
+       0.233
+      ],
+      "  check_invariants": [
+       1,
+       0.336
+      ],
+      "read_retry": [
+       5,
+       0.009
+      ],
+      "    register_piece": [
+       5,
+       0.007
+      ],
+      "  run_query": [
+       1,
+       0.474
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       1.006
+      ],
+      "  holes_json": [
+       1,
+       0.002
+      ],
+      "_after_write": [
+       1,
+       0.004
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    },
+    {
+     "acao": "place",
+     "piece": "P0096",
+     "cell": [
+      20,
+      60
+     ],
+     "total_s": 1.005,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.001
+      ],
+      "board_snapshot": [
+       3,
+       0.006
+      ],
+      "read_retry": [
+       7,
+       0.008
+      ],
+      "write_atomic": [
+       6,
+       0.054
+      ],
+      "  Project.save": [
+       2,
+       0.17
+      ],
+      "  check_invariants": [
+       1,
+       0.224
+      ],
+      "    register_piece": [
+       6,
+       0.1
+      ],
+      "  run_query": [
+       1,
+       0.523
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       0.842
+      ],
+      "    clean_crop": [
+       1,
+       0.028
+      ],
+      "  _refresh_render_assets": [
+       1,
+       0.152
+      ],
+      "  holes_json": [
+       1,
+       0.001
+      ],
+      "_after_write": [
+       1,
+       0.156
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    },
+    {
+     "acao": "unplace",
+     "piece": "P0096",
+     "cell": null,
+     "total_s": 0.824,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.001
+      ],
+      "board_snapshot": [
+       3,
+       0.007
+      ],
+      "write_atomic": [
+       4,
+       0.035
+      ],
+      "  Project.save": [
+       2,
+       0.198
+      ],
+      "  check_invariants": [
+       1,
+       0.28
+      ],
+      "read_retry": [
+       5,
+       0.007
+      ],
+      "    register_piece": [
+       5,
+       0.005
+      ],
+      "  run_query": [
+       1,
+       0.369
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       0.811
+      ],
+      "  holes_json": [
+       1,
+       0.001
+      ],
+      "_after_write": [
+       1,
+       0.004
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    },
+    {
+     "acao": "place",
+     "piece": "P0096",
+     "cell": [
+      20,
+      60
+     ],
+     "total_s": 1.274,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.001
+      ],
+      "board_snapshot": [
+       3,
+       0.008
+      ],
+      "read_retry": [
+       7,
+       0.009
+      ],
+      "write_atomic": [
+       6,
+       0.059
+      ],
+      "  Project.save": [
+       2,
+       0.218
+      ],
+      "  check_invariants": [
+       1,
+       0.334
+      ],
+      "    register_piece": [
+       6,
+       0.095
+      ],
+      "  run_query": [
+       1,
+       0.661
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       1.112
+      ],
+      "    clean_crop": [
+       1,
+       0.029
+      ],
+      "  _refresh_render_assets": [
+       1,
+       0.146
+      ],
+      "  holes_json": [
+       1,
+       0.001
+      ],
+      "_after_write": [
+       1,
+       0.152
+      ],
+      "_written_since": [
+       1,
+       0.002
+      ]
+     }
+    },
+    {
+     "acao": "unplace",
+     "piece": "P0096",
+     "cell": null,
+     "total_s": 1.037,
+     "fases": {
+      "sync_locked": [
+       1,
+       0.0
+      ],
+      "latest_arestas": [
+       9,
+       0.001
+      ],
+      "board_snapshot": [
+       3,
+       0.008
+      ],
+      "write_atomic": [
+       4,
+       0.04
+      ],
+      "  Project.save": [
+       2,
+       0.224
+      ],
+      "  check_invariants": [
+       1,
+       0.337
+      ],
+      "read_retry": [
+       5,
+       0.006
+      ],
+      "    register_piece": [
+       5,
+       0.005
+      ],
+      "  run_query": [
+       1,
+       0.443
+      ],
+      "confirm (escrita+reconsulta)": [
+       1,
+       1.023
+      ],
+      "  holes_json": [
+       1,
+       0.001
+      ],
+      "_after_write": [
+       1,
+       0.004
+      ],
+      "_written_since": [
+       1,
+       0.001
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "resumo": {}
+}

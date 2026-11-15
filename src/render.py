@@ -84,6 +84,7 @@ __all__ = [
 	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "aresta_rgba", "has_aresta", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
 	"paper_pocket_mask", "PAPER_POCKETS", "PAPER_POCKET_DIST_MAX",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
+	"display_params", "piece_asset_sig",
 ]
 
 # ---------------------------------------------------------------- constants
@@ -435,6 +436,38 @@ def _scan_mmpp(project, sid: str) -> float:
 	s = project.model.scans.get(sid) or {}
 	v = (s.get("meta") or {}).get("mm_per_px")
 	return float(v) if v else 25.4 / float(s.get("dpi") or project.profile.dpi)
+
+
+def display_params() -> tuple:
+	"""The constants that shape a display crop (:func:`piece_rgba_for_display`, the pieces of :func:`compose_board`),
+	for cache keys: a change of any of them makes the cached crops / strips of every piece stale."""
+	return (BAND_MM, LIGHT_BAND_MM, LIGHT_BAND_MAX_MM, BG_DIST_MAX, DECONT_T_MIN, BG_LUMA_WEIGHT, SHADOW_DEFAULT,
+			DISPLAY_SHADOW, BOARD_SHADOW, PAPER_POCKETS, PAPER_POCKET_DIST_MAX, PAPER_POCKET_MAX_FRAC,
+			DISPLAY_SHADOW_BAND_MM, DISPLAY_SHADOW_A_MAX, DISPLAY_SHADOW_DIST_MAX, DISPLAY_SHADOW_L_MAX, BLEED_MM)
+
+
+def piece_asset_sig(project, pid: str) -> tuple:
+	"""What the display crop of ``pid`` is made of, for cache keys (the strips of :mod:`src.fit`): bbox, the crop
+	file (path, size, mtime_ns), the painted edge (its override line's ``t`` and a hash of it), the scan mm per px and the profile
+	background. Not the ``render/clean`` file: it is :func:`clean_crop` of the crop with these same inputs (rewritten
+	at every placement, which would make a cache stale for nothing; ``_clean_or_crop`` ignores one older than the
+	crop). Cheap: one ``os.stat`` (2026-11-15, part 1c of the performance phase)."""
+	p = project.piece(pid)
+	crop = None
+	if p.crop_path:
+		try:
+			st = os.stat(project.p(p.crop_path))
+			crop = (p.crop_path, st.st_size, st.st_mtime_ns)
+		except OSError:
+			crop = (p.crop_path, None, None)
+	ar = OV.latest_arestas(project).get(pid)
+	bg = project.profile.background_lab
+	edge = None
+	if ar is not None:                    # a second edit within the same second has the same ``t``: hash the edge too
+		import hashlib
+		edge = (ar.get("t"), hashlib.sha1(json.dumps(ar.get("aresta_px")).encode()).hexdigest())
+	return (tuple(int(v) for v in p.bbox) if p.bbox else None, crop, edge,
+			_scan_mmpp(project, p.scan_id), None if bg is None else tuple(float(v) for v in bg))
 
 
 # ---------------------------------------------------------------- warping helpers (pure)

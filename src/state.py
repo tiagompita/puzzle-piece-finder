@@ -39,12 +39,14 @@ append and the npz/crop helpers do I/O.
 
 from __future__ import annotations
 
+import collections
 import copy
 import datetime as _dt
 import hashlib
 import json
 import os
 import shutil
+import threading
 import time
 from dataclasses import dataclass, field, fields
 from typing import Optional
@@ -99,6 +101,7 @@ def remove_file(fp: str) -> bool:
 
 READ_RETRIES = 25            # read_retry: attempts while a file is being swapped by write_atomic (Windows)
 READ_WAIT_S = 0.02
+CROP_CACHE_BYTES = 128 * 2**20   # Project.crop_rgba: decoded crops kept in memory between queries (LRU)
 
 
 def read_retry(fn):
@@ -715,6 +718,10 @@ class Project:
 		self._pending_arrays: dict = {}   # scan_id -> {key: array}
 		self._shape_cache: dict = {}
 		self._shape_gen: dict = {}        # piece id -> times its shape was forgotten (:meth:`forget_shape`)
+		self._json_written: dict = {}     # rel path -> (compact JSON, (size, mtime_ns)) last written by _write_json
+		self._crop_cache = collections.OrderedDict()   # crop path -> ((size, mtime_ns), rgba): crop_rgba, LRU by bytes
+		self._crop_bytes = 0
+		self._crop_lock = threading.Lock()
 
 	# ------------------------------------------------------------ files
 	@property
@@ -774,18 +781,41 @@ class Project:
 		return cls.create(path, profile_path)
 
 	def _write_json(self, rel: str, obj) -> None:
+		"""Write a JSON view (indent 1) atomically, skipping it when the content is the one this object last wrote and
+		the file on disk is still that one (same size and mtime): :meth:`save` rewrote ~144 files per write, almost all
+		unchanged (≈ 0,6 s of the «Encaixa» POST; 2026-11-15, P0b A1). The comparison uses the compact C-encoder JSON
+		of ``obj``: the same structure gives the same indented file, so the bytes on disk are as before."""
+		fp = self.p(rel)
+		fprint = json.dumps(obj, ensure_ascii=False, separators=(",", ":"), check_circular=False)
+		prev = self._json_written.get(rel)
+		if prev is not None and prev[0] == fprint:
+			try:
+				st = os.stat(fp)
+				if (st.st_size, st.st_mtime_ns) == prev[1]:
+					return
+			except OSError:
+				pass
+
 		def write(tmp):
 			with open(tmp, "w", encoding="utf-8", newline="\n") as f:
 				json.dump(obj, f, ensure_ascii=False, indent=1)
 				f.write("\n")
-		write_atomic(self.p(rel), write)
+		write_atomic(fp, write)
+		try:
+			st = os.stat(fp)
+			self._json_written[rel] = (fprint, (st.st_size, st.st_mtime_ns))
+		except OSError:
+			self._json_written.pop(rel, None)
 
 	def save(self) -> None:
 		"""Write the JSON views and pending per-scan arrays (the log is already on disk)."""
 		self._write_json("project.json", self.meta)
 		self._write_json("board.json", self.model.board.to_dict())
+		by_scan = {}
+		for p in self.model.pieces.values():
+			by_scan.setdefault(p.scan_id, []).append(p)
 		for sid, scan in self.model.scans.items():
-			pcs = [p.to_dict() for p in self.model.pieces.values() if p.scan_id == sid]
+			pcs = [p.to_dict() for p in by_scan.get(sid, [])]
 			self._write_json(os.path.join("scans", f"{sid}.json"), dict(scan, pieces=pcs))
 		for gid, s in self.model.sections.items():
 			self._write_json(os.path.join("sections", f"{gid}.json"), s.to_dict())
@@ -911,14 +941,35 @@ class Project:
 		if not p.crop_path:
 			return None
 		fp = self.p(p.crop_path)
-		if not os.path.exists(fp):
+		try:
+			st = os.stat(fp)
+		except OSError:
 			return None
+		key = (st.st_size, st.st_mtime_ns)
+		# decoded crops kept between queries (2026-11-15, P0b A2: each re-query re-read ~500 PNGs, ≈ 1 s), keyed by
+		# the file's size and mtime (a corrected or re-segmented crop is a new file); a copy is returned
+		with self._crop_lock:
+			e = self._crop_cache.get(fp)
+			if e is not None and e[0] == key:
+				self._crop_cache.move_to_end(fp)
+				return e[1].copy()
 		from PIL import Image
 
 		def rd():
 			with Image.open(fp) as im:
 				return np.asarray(im.convert("RGBA")).copy()
-		return read_retry(rd)
+		a = read_retry(rd)
+		if a is not None and a.nbytes <= CROP_CACHE_BYTES:
+			with self._crop_lock:
+				old = self._crop_cache.pop(fp, None)
+				if old is not None:
+					self._crop_bytes -= old[1].nbytes
+				self._crop_cache[fp] = (key, a.copy())
+				self._crop_bytes += a.nbytes
+				while self._crop_bytes > CROP_CACHE_BYTES and self._crop_cache:
+					_, (_, v) = self._crop_cache.popitem(last=False)
+					self._crop_bytes -= v.nbytes
+		return a
 
 	def last_photo(self) -> Optional[Photo]:
 		if not self.model.photos:

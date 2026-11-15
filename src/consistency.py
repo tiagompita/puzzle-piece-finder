@@ -59,7 +59,7 @@ from typing import Optional
 from src.state import SUSPECT_GRAUS
 
 __all__ = ["BETTER_FEWER_FAILS", "BETTER_COST_RATIO", "BETTER_COST_MM", "BETTER_COST_MIN_SIDES", "FAIL_COST_MM", "GRAUS",
-		   "TWIN_LOCAL_MAX_MM", "TWIN_EXCEPTIONS", "SIGNATURE_HEX", "twin_local_residual", "twin_exception", "suspect_signature",
+		   "TWIN_LOCAL_MAX_MM", "TWIN_EXCEPTIONS", "SIGNATURE_HEX", "twin_local_residual", "twin_local_residual_cached", "twin_exception", "suspect_signature",
 		   "checked_ids", "evaluate", "suspects", "summary", "suspects_near", "suspects_lines", "rot_text", "format_item",
 		   "format_falso", "main"]
 
@@ -125,6 +125,31 @@ def twin_local_residual(a, b) -> Optional[dict]:
 	zb = np.roll(b.z, -s) * np.exp(1j * np.radians(phi))
 	nn = np.abs(a.z[:, None] - zb[None, :]).min(1)
 	return {"rms_mm": float(rms), "nn_p95_mm": float(np.percentile(nn, 95)), "nn_max_mm": float(nn.max())}
+
+
+_RESIDUAL_CACHE: dict = {}
+
+
+def _shape_key(sh) -> str:
+	"""sha1 of the shape's free vector ``z`` (the 512 points :func:`twin_local_residual` aligns): a corrected or
+	re-segmented silhouette gives another key."""
+	import numpy as np
+	return hashlib.sha1(np.ascontiguousarray(sh.z).tobytes()).hexdigest()
+
+
+def twin_local_residual_cached(a, b) -> Optional[dict]:
+	""":func:`twin_local_residual` memoised by the content of both shapes (2026-11-15, P0b A4: the ``recorte`` grade
+	recomputed it for ≈ 600 pieces on every write, 1,3 of the 1,6 s of the suspects). The threshold
+	(:data:`TWIN_LOCAL_MAX_MM`) is applied by the caller, so a calibration change needs no new entry. Same values."""
+	if a is None or b is None or getattr(a, "z", None) is None or getattr(b, "z", None) is None:
+		return None
+	k = (_shape_key(a), _shape_key(b))
+	r = _RESIDUAL_CACHE.get(k)
+	if r is None:
+		if len(_RESIDUAL_CACHE) > 20_000:
+			_RESIDUAL_CACHE.clear()
+		r = _RESIDUAL_CACHE[k] = twin_local_residual(a, b)
+	return dict(r) if r is not None else None
 
 
 def twin_exception(profile, cell) -> Optional[str]:
@@ -214,7 +239,7 @@ def _recorte_items(project, ids: list) -> list:
 			if sh is None or not sh.ok or len(sh.corners) != 4:
 				falhas.append("silhueta sem 4 cantos")
 			else:
-				r = twin_local_residual(sh, tsh)
+				r = twin_local_residual_cached(sh, tsh)
 				if r is not None and r["nn_max_mm"] > TWIN_LOCAL_MAX_MM:
 					falhas.append(f"gémea local {_num(r['nn_max_mm'])} mm")
 					extra = {"nn_max_mm": round(r["nn_max_mm"], 3), "rms_mm": round(r["rms_mm"], 3)}
