@@ -100,7 +100,7 @@ Sessão principal (retoma, a meio):
 - **P0b [V]: paragem obrigatória.** Sem regressão de código; tabela por fase e opções A1–A4 (sem mudar o comportamento),
   B e C (mudam) em DETALHE §11.3.
 - **P1a, P1b [V em Chromium headless; NT no telemóvel].**
-- **Commit:** o bloco P0+P0b+P1 em `main` (ver `git log`; hash no HANDOFF).
+- **Commit:** o bloco P0+P0b+P1 em `main`: `64ac6e8`.
 - **Por fazer (à espera da decisão do P0b):** parte 1 (1a, 1b+1c, 1d) e E estão escritas mas **não testadas nem
   medidas** no ramo `wip/desempenho-parte1` (`02a483f`, `ab2943f`); C não começou. Capturas «depois» não feitas
   (nenhuma composição mudou).

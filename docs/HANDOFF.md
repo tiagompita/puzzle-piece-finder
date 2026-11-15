@@ -7,7 +7,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
   cartão por ação; «localizar» pisca uma vez quando o cartão muda sozinho com o lugar fora da vista, marca estática com
   `prefers-reduced-motion`; um salto durante um arrasto espera pelo fim dele; portão no teste da fila; `gui.stop()` por
   fixture `autouse` em `tests/conftest.py`), **P1a** (salto da lupa a 390 px com o teclado) e **P1b** (teste: a caixa da
-  lupa não abre sozinha). Os dois testes que falhavam ao acaso: 20/20.
+  lupa não abre sozinha). Os dois testes que falhavam ao acaso: 20/20. Commit `64ac6e8`.
 - **PARADO no P0b (paragem obrigatória):** o POST de um «Encaixa» (5,3 s sem browser, 6,4–7,4 s com a GUI aberta) não é
   uma regressão de código (bisect de 6399e31 a 9f672c0 na mesma cópia: iguais); é crescimento dos dados mais a recarga
   do browser a competir pelo GIL. ≤ 2,0 s com a GUI aberta exige mudar o comportamento. **Decisão do Tiago:** opções
