@@ -121,6 +121,7 @@ SECTION_LRU = 64
 EVENTS_KEEP = 500
 WRITE_WAIT_S = 90.0            # a write waits this long for the lock (an import commit / re-query) before 409
 SEQ_TRIES = 3                  # torn attempts of a seqlock read (Gui.seq_read) before giving up (no write lock)
+VERIF_WAIT_S = 0.5             # «verificar»: longest wait for a running write per attempt (it never waits for a write)
 SSE_KEEPALIVE_S = 15.0
 QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file keeps all)
 # sys.setswitchinterval of the server process (Python default 0.005; --gil-intervalo 0 keeps it). Measured in
@@ -637,6 +638,9 @@ class Gui:
 		self.n_susp_desatualizadas = 0   # suspects answers given as the previous result (seqlock gave up)
 		self._verif_lock = threading.Lock()   # «verificar» (F2): one at a time on its own fit cache, never the write lock
 		self._verif_cache = None              # src.fit._Cache of «verificar» (the hole ranking has its own, _fitc)
+		self._verif_last = {}                 # (l, c, pid, theta) -> the last consistent «verificar» answer (seqlock)
+		self.n_verif_desatualizadas = 0       # «verificar» answers given as the previous one / «não verificado»
+		self.n_holes_rasgados = 0             # hole rankings crossed by a write: not published, computed again
 		self.ingest_segment = None    # tests: replacement for segment_scan
 		self.stale_info = None        # start-up check of the assets against the log (render.stale_assets)
 		self._sse_waiters = set()     # one asyncio.Event per connected SSE client (set by emit, from any thread)
@@ -757,16 +761,17 @@ class Gui:
 		finally:
 			self.wlock.release()
 
-	def seq_read(self, fn, tries: int = SEQ_TRIES):
+	def seq_read(self, fn, tries: int = SEQ_TRIES, wait_s: float = WRITE_WAIT_S):
 		"""``(True, fn())`` for a read made outside the write lock with no write starting or ending under it
 		(:class:`SeqLock`), else ``(False, None)`` after ``tries`` torn attempts. Never takes the write lock, so a write
-		never waits for it; between attempts it only waits for the running write to end. An exception raised while a
+		never waits for it; between attempts it only waits for the running write to end (at most ``wait_s`` per attempt:
+		a write still running then makes the attempt count as torn). An exception raised while a
 		write ran is a torn attempt too; one raised with no write is a real error and goes up. Under the write lock
 		(the caller is a write) the read is consistent by itself and runs once."""
 		if self.wlock.owned():
 			return True, fn()
 		for _ in range(tries):
-			s0 = self.wlock.wait_even(WRITE_WAIT_S)
+			s0 = self.wlock.wait_even(wait_s)
 			if s0 % 2:
 				continue
 			try:
@@ -1319,9 +1324,37 @@ class Gui:
 		self.emit("holes_progress", dict(self._holes_progress))
 
 	def _compute_holes(self, key) -> dict:
+		"""The hole ranking (:func:`src.fit.rank_all`) published in ``_holes`` / ``_holes_prev`` with ``holes_changed``.
+
+		Read outside the write lock (2026-11-15, decision of Tiago; DETALHE.md §13.5 / §13.7): ``rank_all`` reads the live
+		model, and a write in the middle gave a ranking of a state that never existed, kept in ``_holes_prev`` (the list
+		«Vai buscar» shows during the next recomputation). Seqlock: the pass starts when no write runs and is published
+		only if no write started or ended under it; else nothing is touched (no ``_holes``, no ``_holes_prev``, no
+		``holes_changed``: ``alta_json`` keeps showing the previous list marked ``desatualizada``) and it runs again, so
+		it publishes as soon as the writes stop. Under the write lock (a write asking with ``wait=True``) one pass."""
+		if self.wlock.owned():
+			return self._holes_pass(key)[1]
+		while True:
+			s0 = self.wlock.wait_even(WRITE_WAIT_S)
+			if s0 % 2:
+				continue
+			key = (self.version(), id(self.pr))
+			torn_err, out = self._holes_pass(key, publish=lambda: self.wlock.seq == s0)
+			if out is not None:
+				if self.wlock.seq == s0:
+					return out
+				continue           # published, but a write came right after: its request was absorbed by this thread
+			self.n_holes_rasgados += 1
+			activity.get("buracos").info(f"buracos: ranking cruzado por uma escrita (versão {key[0]}): não publicado, a recalcular"
+										 + (f" ({torn_err})" if torn_err else ""))
+
+	def _holes_pass(self, key, publish=None) -> tuple:
+		"""One pass of :meth:`_compute_holes`: ``(error_text | None, out)``; ``out`` None when ``publish()`` says a write
+		crossed it (then nothing is published)."""
 		from src import fit as F
 		t0 = time.time()
 		activity.get("buracos").info(f"buracos: a recalcular o ranking (versão {key[0]})")
+		err = None
 		try:
 			cache = self._fit_cache()
 			# (b): from a background thread the ranking yields to the GUI's detail / «verificar» requests
@@ -1329,8 +1362,12 @@ class Gui:
 			r = self.read(lambda: F.rank_all(self.pr, calib=cache.calib, cache=cache, progress=self._holes_progress_cb,
 											 pause=pause))
 		except Exception as e:  # noqa: BLE001 - the ranking is informative; the GUI shows the error
-			self.log(f"[servidor] buracos não calculados: {e}")
+			err = f"{type(e).__name__}: {e}"
 			r = {"error": str(e)}
+		if publish is not None and not publish():
+			return err, None
+		if err is not None:
+			self.log(f"[servidor] buracos não calculados: {err}")
 		self._holes_progress = None
 		out = self._holes_payload(r, key, time.time() - t0)
 		self._holes = (key, out)
@@ -1345,7 +1382,7 @@ class Gui:
 										 f"alta {rs['por_confianca'].get('alta', 0)} ({rs['alta_m2']} com ≥ 2 viz.), média {rs['por_confianca'].get('media', 0)}, "
 										 f"sem {rs['por_confianca'].get('sem', 0)}; tiras calculadas {tiras.get('calculadas', 0)}, em cache {tiras.get('em_cache', 0)}")
 		self.emit("holes_changed", dict(out["resumo"], versao=key[0]))
-		return out
+		return None, out
 
 	@staticmethod
 	def _hole_row(h: dict) -> dict:
@@ -2162,7 +2199,8 @@ class Gui:
 		"""``POST /api/cell/{l}/{c}/verificar`` (F2, «Pôr uma peça à mão», ESPEC §4.6): the 3 checks in words
 		(:func:`src.montar.verificacoes`) of ``pid`` in the place ``(l, c)`` turned by ``theta`` (None = the best of 4
 		rotations, returned as ``theta_deg``). Read only and **without the write lock** (DETALHE.md §8): its own lock
-		and fit cache; a write in another thread that changes the board meanwhile makes it start once more."""
+		and fit cache; a seqlock read (:meth:`seq_read`): a check crossed by a write is done again (up to SEQ_TRIES),
+		then the previous answer marked ``desatualizada`` or ``estado: nao_verificado``."""
 		from src import fit as F
 		from src import montar as MT
 		from src.query import _Ctx, fit_check
@@ -2201,21 +2239,37 @@ class Gui:
 				th, enc, bd = min(res, key=key) if theta is None else res[0]
 				return th, enc, bd, cal
 
-		ver = self.version()
+		# seqlock (2026-11-15, decision of Tiago; DETALHE.md §13.7): ``fit_check`` reads the live board, and a write in
+		# the middle (no exception) gave the check of a state that never existed. A check is kept only if no write
+		# started or ended under it, up to SEQ_TRIES times; then the previous answer of the same (l, c, piece, theta)
+		# marked ``desatualizada``, or, without one, ``estado: nao_verificado`` (no verdict; the browser asks again).
+		# Never the write lock: a write does not wait for a «verificar».
+		mkey = (int(l), int(c), pid, None if theta is None else round(float(theta), 2))
+
+		def full():
+			th, enc, bd, cal = self.read(run)
+			lines = MT.verificacoes(enc, bd, cal.t_abs)
+			n_viz = self.placed_neighbours_with_shape(l, c)
+			return {"piece": pid, "cell": [l, c], "theta_deg": round(float(th), 2), "verificacoes": lines, "estado": "verificado",
+					"falha": any(x["estado"] == "falha" for x in lines), "vizinhas_com_forma": n_viz,
+					"modo": "colocar" if n_viz else "por_confirmar",
+					"diagnostico": {"encaixe": {k: enc.get(k) for k in ("estado", "pose", "m", "J", "t_abs", "motivo", "razao")},
+									"lados": enc.get("lados"), "borda": bd}}
 		with self.foreground():              # (b): the background jobs wait while the GUI waits for this
-			try:
-				th, enc, bd, cal = self.read(run)
-			except Exception:  # noqa: BLE001 - a write in another thread changed the board under the check: once more
-				if self.version() == ver:
-					raise
-				th, enc, bd, cal = self.read(run)
-		lines = MT.verificacoes(enc, bd, cal.t_abs)
+			# a running write is waited for at most VERIF_WAIT_S per attempt: the check never waits for a write (ESPEC §7 F2)
+			ok, out = self.seq_read(full, wait_s=VERIF_WAIT_S)
+		if ok:
+			self._verif_last[mkey] = out
+			return dict(out, segundos=round(time.perf_counter() - t0, 3))
+		self.n_verif_desatualizadas += 1
+		prev = self._verif_last.get(mkey)
+		if prev is not None:
+			return dict(prev, desatualizada=True, segundos=round(time.perf_counter() - t0, 3))
 		n_viz = self.placed_neighbours_with_shape(l, c)
-		return {"piece": pid, "cell": [l, c], "theta_deg": round(float(th), 2), "verificacoes": lines,
-				"falha": any(x["estado"] == "falha" for x in lines), "vizinhas_com_forma": n_viz,
+		return {"piece": pid, "cell": [l, c], "theta_deg": None if theta is None else round(float(theta), 2),
+				"verificacoes": [], "estado": "nao_verificado", "falha": False, "vizinhas_com_forma": n_viz,
 				"modo": "colocar" if n_viz else "por_confirmar", "segundos": round(time.perf_counter() - t0, 3),
-				"diagnostico": {"encaixe": {k: enc.get(k) for k in ("estado", "pose", "m", "J", "t_abs", "motivo", "razao")},
-								"lados": enc.get("lados"), "borda": bd}}
+				"diagnostico": None}
 
 	def lots_json(self) -> list:
 		pr = self.pr

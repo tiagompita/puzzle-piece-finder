@@ -791,10 +791,12 @@ function rodar() {
   if (!M || M.theta === null || M.theta === undefined) return;
   verify(((M.theta + 90 + 180) % 360 + 360) % 360 - 180);
 }
-async function verify(theta) {
+const VERIF_REPETIR_MS = 500, VERIF_REPETIR_N = 3;
+async function verify(theta, tentativa = 0) {
   const M = S.porMao;
   if (!M || !M.piece) return;
   if (M.ctrl) M.ctrl.abort();                     // mudar a rotação aborta a verificação anterior (como o detalhe, B)
+  if (M.vRetry) { clearTimeout(M.vRetry); M.vRetry = null; }
   const ctrl = new AbortController(), seq = ++M.vseq;
   M.ctrl = ctrl; M.aVerificar = true; M.verif = null; M.erroVer = null;
   if (theta !== null) M.theta = theta;
@@ -805,6 +807,15 @@ async function verify(theta) {
     const b = await r.json().catch(() => ({}));
     if (S.porMao !== M || seq !== M.vseq) return;
     if (!r.ok) throw new Error(b.error || b.detail || `erro ${r.status}`);
+    if (b.estado === "nao_verificado") {
+      // o tabuleiro mudou durante a verificação e não há resultado anterior (seqlock, 2026-11-15): sem veredicto;
+      // continua «a verificar…» e pede outra vez
+      if (tentativa < VERIF_REPETIR_N) {
+        M.vRetry = setTimeout(() => { M.vRetry = null; if (S.porMao === M && seq === M.vseq && M.passo === 2) verify(theta, tentativa + 1); }, VERIF_REPETIR_MS);
+        return;
+      }
+      throw new Error("o tabuleiro estava a mudar enquanto verificava");
+    }
     M.verif = b;
     if (theta === null) M.theta = b.theta_deg;
   } catch (e) {
