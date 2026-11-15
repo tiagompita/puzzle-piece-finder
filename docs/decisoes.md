@@ -413,3 +413,18 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
   (`Server.capture_signals` → `signal.raise_signal`), por isso um terminal acabava com o traceback de `KeyboardInterrupt`
   (e código ≠ 0). `serve()` esvazia `_captured_signals` e imprime só «Servidor parado.», código 0 (o `CancelledError` das
   ligações SSE já tinha acabado na F2b). Teste de subprocesso com e sem cliente SSE.
+
+## 2026-11-15 — Fase de desempenho, P0 e P1 (Tiago, plano aprovado)
+
+- **A vista não salta sozinha:** quando o cartão atual muda sem ação do Tiago (uma recarga por SSE: chegaram sugestões e
+  passaram à frente), a vista fica onde está; se o lugar novo ficar fora da vista, o botão «localizar» pisca uma vez
+  (com `prefers-reduced-motion`: marca estática até ao próximo clique nele ou à próxima ação). A vista só segue o cartão
+  na 1.ª carga e por ação (Encaixa, Não encaixa, Colocar aqui, Saltar, escolher em «A seguir» ou no tabuleiro, a lupa,
+  Desfazer); nunca durante um gesto (o salto espera pelo fim do arrasto/pinça). Uma recarga com o mesmo cartão não
+  mexe na vista (antes trazia-a de volta ao alvo).
+- **Fila de importação no teste:** um portão (`threading.Event`) em vez do `sleep(0.8)`; as `Gui` criadas por um teste
+  são paradas no fim dele (`gui.stop()` por um fixture `autouse` em `tests/conftest.py`).
+- **P1a, 390 px:** o salto da lupa tira o foco da caixa (o teclado fecha), espera 2 frames e, se o tabuleiro ainda tiver
+  < 40 % da altura normal, refaz-se no redimensionar seguinte (até 2 s).
+- **P1b:** a caixa da lupa nunca abre sozinha ao carregar (com ou sem o último modo guardado); o modo guardado só fica
+  marcado no botão. Já era assim; fica um teste.

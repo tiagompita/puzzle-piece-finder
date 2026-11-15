@@ -566,3 +566,125 @@ servidor real (0,5 ms), `POST /api/cell/1/29/verificar` com Saco 9 · nº 89 (P1
   `/api/pieces/…/png` ou `/api/board.jpg`). Onde procurar: o caminho que serve a miniatura/região (`Gui.piece_png`,
   `Gui._region_jpg`) e quem lê `render/clean` (`render._clean_or_crop`, `render.piece_rgba_for_display`) entre o
   `exists` e a leitura, e quem apaga (`Gui._drop_stale_caches`, `rebuild_assets`); instrumentar com o traceback do 404.
+
+## 11. Fase de desempenho (2026-11-15): P0, P0b e P1
+
+Plano aprovado: «Fase de desempenho (antes da F4)», com as decisões e os acrescentos do Tiago de 2026-11-15. Duas linhas
+do plano antigo mudam com os acrescentos: o POST de um «Encaixa» deixa de estar «fora do plano» e passa a ser o **P0b**
+(critério ≤ 2,0 s); a ordem dos blocos é **P0 → P0b → P1a/P1b → 1a → 1b+1c → 1d → E → C**, um commit por bloco
+(P0+P0b+P1, parte 1, E, C).
+
+Guião: `tools/diagnostico/gui/desempenho.py` (promovido de `t0/baseline.py`): cópia `shutil.copytree` nova por corrida,
+servidor real (GIL 0,5 ms), Chromium 1920 × 1080, 2 corridas; `--repo` corre o servidor de outro checkout (bisect em
+`git worktree`), `--so p|q` cronometra o POST por fase (`fases_post.py`: embrulhos só no fio de `Gui.confirm`), `--so r`
+grava as capturas (`capturas/desempenho_{ceu,relva}_antes.jpg`, região a ppc 100). Base: cópia de `projects/alpes`
+(1433 peças, 699 colocadas, versão do log 2307663).
+
+### 11.1 Os 5 critérios, «hoje» (9f672c0) [V]
+
+`dados/r4_base_9f672c0.json` (servidor do worktree de 9f672c0, a mesma cópia de partida):
+
+| # | critério | alvo | hoje (9f672c0), 2 corridas | depois de P0+P1 |
+|---|---|---|---|---|
+| 1 | 1.º salto depois de abrir (céu) | ≤ 4,0 s | 14,07 · 13,76 s | igual (P0/P1 não mexem no servidor) |
+| 2 | salto a frio, relva (browser) / HTTP céu·relva | ≤ 2,0 s browser | 4,09 · 3,79 s / 3,62–3,83 s | igual |
+| 3 | detalhe depois de um «Encaixa», perto / longe | ≤ 1,2 / ≤ 0,6 s | 3,34 · 3,30 / 4,09 · 3,60 s (POST 5,77–7,63 s) | igual |
+| 4 | 1.º «verificar» logo após o arranque | ≤ 1,0 s | 2,17 · 1,56 s | igual |
+| 5 | pico do working set do servidor | ≤ 1,6 GB | 738 · 733 MB (privada 1,23 GB) | igual |
+
+P0 e P1 só mudam o browser (`novo.js`, `board.js`, `novo.css`) e os testes: a coluna «depois» não foi medida de novo,
+porque nenhum dos 5 critérios passa por código alterado no servidor (o critério 3 mede com a vista fixa no separador
+Peças, onde `drawTarget` não corre).
+
+### 11.2 P0: a vista não salta sozinha; testes estáveis [V]
+
+- `src/web/novo/novo.js`: `followTarget` (chave `peça@célula` em `S.alvoMostrado`): a vista segue o cartão na 1.ª carga
+  e com `S.alvoAcao` (Encaixa / Não encaixa / Colocar aqui / Saltar / «A seguir» / toque num alvo / lupa / Desfazer);
+  um cartão que muda sozinho não mexe na vista e, com o lugar fora dela, `#b-localizar` ganha `data-mudou="pisca"`
+  (animação `loc-pisca`, uma vez) ou, com `prefers-reduced-motion`, `data-mudou="marca"` + classe `mudou` até ao próximo
+  clique ou ação; o mesmo cartão numa recarga não mexe em nada. `cellInView` (a regra de `showCell`).
+- `src/web/board.js`: `S.gesto` (entre o 1.º `pointerdown` e o último `pointerup`/`pointercancel`) e `S.saltoPendente`: um
+  `zoomCells` durante um gesto faz-se no fim dele.
+- Testes novos `tests/test_gui_novo_p0.py` (Playwright, `slow`): recarga por `holes_changed`/`fetch_changed` sem ação →
+  vista igual e 0 pedidos; recarga a meio de um arrasto → o pedido só ≥ 250 ms depois do último movimento; salto durante
+  o gesto espera pelo `pointerup`; «Saltar» e «Encaixa» movem a vista; cartão que muda sozinho: pisca com o lugar fora,
+  nada com ele dentro, marca estática sem animação com `reduced_motion`. Com o `novo.js` de 9f672c0, 8 dos 15 falham
+  (os 3 da recarga incluídos).
+- Fila: `test_failed_job_does_not_block_and_move` com um portão (`threading.Event`) em vez do `sleep(0.8)`;
+  `tests/conftest.py` com um fixture `autouse` que para (`gui.stop()`) cada `Gui` criada pelo teste (antes ficavam ~116
+  fios `fila-importacao` vivos na suite).
+- Repetição dos dois testes que falhavam ao acaso (`test_jump_asks_detail_at_once_drag_and_wheel_keep_debounce`, sem
+  alteração, e `test_failed_job_does_not_block_and_move`): ver 11.5.
+
+### 11.3 P0b: o POST de um «Encaixa» [V] — não é uma regressão de código
+
+Protocolo de §6.2 (P0096 → (20,60), `place` + `unplace` com `desfaz`, buracos acabados, 3 voltas), a mesma cópia em
+todos os commits, servidor de cada `git worktree` (`dados/r4_p0b_fases.json`):
+
+| commit | place, s (1.ª / seguintes) | unplace, s |
+|---|---|---|
+| 6399e31 (§6.2) | 5,99 / 5,36–5,46 | 4,84–4,94 |
+| 6345154 | 5,92 / 5,17–5,34 | 4,95–5,07 |
+| 32c5f5c | 6,37 / 5,62–5,83 | 5,01–5,15 |
+| c0741af | 6,87 / 5,38–5,95 | 4,95–5,68 |
+| 9f672c0 | 6,74 / 5,28 | 4,99–5,02 |
+| 9f672c0 com `/novo/` aberto no céu | 7,44 / 6,44–6,76 | 6,19–6,33 |
+
+- Os 5 commits dão o mesmo (dentro do ruído): **nenhum commit culpado**. Os 4,4 s de §6.2 eram de outra cópia (versão do
+  log 2299530, menos peças colocadas): o resto é **crescimento dos dados** (H2) e, com a GUI aberta, a recarga do browser
+  a competir pelo GIL com o fim do POST (H1: as suspeitas passam de 1,6 para 2,6–3,6 s).
+- Por fase, 9f672c0, place (voltas 2–3) sem browser / com browser (s):
+
+| fase | sem browser | com browser |
+|---|---|---|
+| `src.confirm.confirm` (log + `Project.save` + invariantes + reconsulta incremental) | 3,51 | 3,50–3,89 |
+| · `Project.save` (2 ×, 144 ficheiros JSON reescritos em cada uma) | 0,69–0,73 | 0,66–0,79 |
+| · `check_invariants` (replay do log) | 0,24–0,25 | 0,23–0,39 |
+| · `run_query` incremental | 2,91–2,92 | 2,92–3,06 |
+| `_refresh_render_assets` (limpar + registar a peça) | 0,14 | 0,13–0,30 |
+| `_emit_suspeitas` (`consistency.evaluate`, 699 colocadas) | 1,62 | 2,57–3,63 |
+| `holes_json(wait=False)`, `_written_since`, `board_snapshot` × 3 | < 0,01 | < 0,01 |
+| **total** | **5,28** | **6,44–7,44** |
+
+- Perfil (cProfile em processo, com sobrecarga): dentro da reconsulta, ≈ 1,0 s a reler 524 recortes (`crop_rgba`: um
+  `_Ctx` novo por consulta relê as peças do passo das gémeas) e ≈ 0,9 s a reescrever `fetch.*` (≈ 0,5 s a medir texto
+  com `ImageFont.getlength` para as folhas `fetch_<lote>.jpg`); nas suspeitas, 1,27 dos 1,66 s em `twin_local_residual`
+  (o grau «recorte» recalculado para as 613 peças com gémea em cada escrita).
+
+**Opções para chegar a ≤ 2,0 s (nenhuma implementada; paragem obrigatória: decisão do Tiago):**
+
+| opção | o que faz | muda o comportamento? | ganho estimado [NT] |
+|---|---|---|---|
+| A1 | `Project.save` só reescreve os JSON que mudaram | não (mesmos ficheiros) | −0,6 s |
+| A2 | recortes em cache entre consultas (chave: tamanho + mtime do ficheiro) | não | −0,9 s |
+| A3 | medidas de texto das folhas `fetch_*.jpg` em cache; só refazer a folha do saco que mudou | não | −0,4 a −0,8 s |
+| A4 | `twin_local_residual` em cache por peça (chave: formas, poses e células das duas gémeas) | não | −1,2 s |
+| B | as suspeitas (`_emit_suspeitas`) num fio depois da resposta | sim: o painel «Suspeitas» e o SSE `suspeitas_changed` chegam depois da resposta | −1,6 s (−2,6 a −3,6 s com a GUI aberta) |
+| C | responder logo depois de gravar no log; a reconsulta e o resto em segundo plano | sim: o Montar pode mostrar a lista antiga por 3–5 s | POST ≈ 0,4 s |
+
+Só A1–A4 (sem mudar o comportamento) dariam ≈ 5,3 → ≈ 1,6–2,3 s sem browser e ≈ 2,5–3,5 s com a GUI aberta (a
+competição do browser fica); ≤ 2,0 s com a GUI aberta exige B ou C. A1–A4 também não são «corrigir uma regressão»: são
+otimizações novas em `state`, `query` e `consistency`, fora do plano aprovado. **Parei aqui, como o plano manda**; a
+parte 1 (1a, 1b+1c, 1d) e E estão escritas e por medir num ramo à parte (ver `docs/HANDOFF.md`).
+
+### 11.4 P1a e P1b [V em Chromium headless; NT no telemóvel]
+
+- **P1a:** `saltoLupa` (`findPiece`/`findPlace`): tira o foco da caixa, salta 2 frames depois e, se o tabuleiro tiver
+  < 40 % da altura normal (`S.boardRefH`, a altura sem nada a escrever), refaz o salto (forçado) no redimensionar
+  seguinte, até 2 s. Medido: 390 × 844 → teclado 390 × 330 (tabuleiro 264 → 69 px) → fecha: `S.vb.w` 18 (o limite,
+  3 × o tabuleiro sintético) → 6,18, igual ao salto sem teclado. Teste
+  `test_lupa_jump_at_390_with_keyboard_ends_around_the_place`.
+- **P1b:** nenhuma caixa da lupa aberta nem com foco depois de carregar, a 1366 e a 390, sem modo guardado e com «pos» /
+  «peca» (`test_lupa_box_never_opens_by_itself`, 6 casos; já passavam em 9f672c0). Linha em `docs/decisoes.md`.
+
+### 11.5 Verificação do bloco P0 + P0b + P1 [V]
+
+- `test_jump_asks_detail_at_once_drag_and_wheel_keep_debounce` (sem alteração) e `test_failed_job_does_not_block_and_move`:
+  20/20 corridas seguidas, as duas juntas.
+- `tests/test_concorrencia.py`: 20/20.
+- Suite `.venv/Scripts/python.exe -m pytest tests/` (614 s): 579 passed, 1 skipped (PyMuPDF real), 1 failed:
+  `test_board_interface.py::test_board_js_runs_with_only_the_declared_interface`, porque os campos novos que o
+  `board.js` escreve (`gesto`, `saltoPendente`) não estavam na lista `OWNED`. Acrescentados; esse ficheiro passa (2
+  passed). A suite inteira não foi repetida depois desta mudança (só de teste).
+- Testes existentes alterados: `tests/test_server_queue.py` (portão), `tests/conftest.py` (fixture `autouse`),
+  `tests/test_board_interface.py` (`OWNED`).

@@ -21,7 +21,7 @@ HOST = "http://board.test"
 
 # o cabeçalho de board.js: dados + 3 estados + função + gancho, e os campos que o próprio board.js escreve
 INTERFACE = {"board", "showGrid", "showGhost", "pose", "onPoseWheel", "onBoardTap"}
-OWNED = {"rows", "cols", "hr", "ppc", "ver", "rotGemea", "vb", "detailKey"}
+OWNED = {"rows", "cols", "hr", "ppc", "ver", "rotGemea", "vb", "detailKey", "gesto", "saltoPendente"}   # gesto/saltoPendente: P0, 2026-11-15
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8">
 <style>html,body{margin:0;height:100%} #board{width:800px;height:600px;display:block}</style></head><body>

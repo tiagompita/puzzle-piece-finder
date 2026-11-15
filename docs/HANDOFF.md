@@ -1,8 +1,27 @@
-# HANDOFF — 2026-11-14 (F2c: correções do uso real da GUI nova; F2 à espera do OK para a F4)
+# HANDOFF — 2026-11-15 (fase de desempenho: P0 e P1 feitos; PARADO no P0b à espera do Tiago)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-14): `docs/prompts/2026-11-14-f2c-correcoes-uso-real.md` (fechado)
+## Última sessão (2026-11-15): `docs/prompts/2026-11-15-desempenho.md` (fechado)
+- **Estado:** fase de desempenho do plano aprovado (`DETALHE.md` §11). Feito: **P0** (a vista do Montar só segue o
+  cartão por ação; «localizar» pisca uma vez quando o cartão muda sozinho com o lugar fora da vista, marca estática com
+  `prefers-reduced-motion`; um salto durante um arrasto espera pelo fim dele; portão no teste da fila; `gui.stop()` por
+  fixture `autouse` em `tests/conftest.py`), **P1a** (salto da lupa a 390 px com o teclado) e **P1b** (teste: a caixa da
+  lupa não abre sozinha). Os dois testes que falhavam ao acaso: 20/20.
+- **PARADO no P0b (paragem obrigatória):** o POST de um «Encaixa» (5,3 s sem browser, 6,4–7,4 s com a GUI aberta) não é
+  uma regressão de código (bisect de 6399e31 a 9f672c0 na mesma cópia: iguais); é crescimento dos dados mais a recarga
+  do browser a competir pelo GIL. ≤ 2,0 s com a GUI aberta exige mudar o comportamento. **Decisão do Tiago:** opções
+  A1–A4 (otimizações sem mudar o comportamento, ≈ −3 s), B (suspeitas depois da resposta), C (responder logo depois de
+  gravar) em `DETALHE.md` §11.3.
+- **Escrito, NÃO testado nem medido**, no ramo `wip/desempenho-parte1` (fora de `main`): parte 1 (1a formas por folha
+  em `state.py`; 1b lados erodidos em disco `render/fit/sides.npz` + `fit.SidesStore` partilhado; 1c chave das tiras por
+  `render.piece_asset_sig`; 1d ranking dos buracos no fim de `_prepare`; `tests/test_desempenho_cache.py`) e o início
+  de E (`render.piece_ready`, `compose_board(ready=)`; falta a cache do servidor). C não começou.
+- **Medições «antes» (9f672c0) [V]:** `docs/diagnostico/gui/dados/r4_base_9f672c0.json`, capturas
+  `docs/diagnostico/gui/capturas/desempenho_{ceu,relva}_antes.jpg`; guião `tools/diagnostico/gui/desempenho.py`
+  (`--repo` para um worktree, `--so p|q` POST por fase com `fases_post.py`).
+
+## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-f2c-correcoes-uso-real.md` (fechado)
 - **Saco 9 · nº 89 em 1 · 29 encaixa fisicamente [V, Tiago]:** primeiro caso real de «pôr à mão»; a borda está completa (218/218).
 - **Arranque [V em testes]:** `status.preparacao` + SSE `prepare_progress`; as duas GUIs mostram «A refazer imagens: folha n de N»
   (a nova também na barra do topo); `Gui.state` é `a_preparar` desde o 1.º instante. «A preparar sugestões…» na 1.ª vez.
@@ -129,7 +148,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
-1. **F2 feita** (2026-11-14, à espera do OK); a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6), depois a fase de desempenho.
+1. **Fase de desempenho parada no P0b** (decisão do Tiago, `DETALHE.md` §11.3); depois parte 1 (ramo `wip/desempenho-parte1`, por testar), E, C; a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6).
 2. **Limites da F1b [NT]:**
    - «Peças» é só uma ligação para a interface completa (F3);
    - «⋯ › Atividade» abre a interface antiga noutro separador (F5);

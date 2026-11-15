@@ -133,19 +133,35 @@ def test_cancel_second_job_and_retry(env):
 	assert len([p for p in Project.open(gui.path).pieces.values() if p.lote == 8]) == 1
 
 
+def _gated_segment(gate):
+	"""The segmentation waits for ``gate`` (a ``threading.Event``; 30 s safety timeout) before running: the job stays
+	«a_correr» exactly as long as the test needs, whatever the load on the machine (the old ``time.sleep(0.8)`` lost
+	the race when the test thread was delayed by ≈ 1,3 s, 2026-11-15)."""
+	from src.segmentation import segment_scan
+
+	def seg(photo, **k):
+		gate.wait(30)
+		return segment_scan(photo, **k)
+	return seg
+
+
 def test_failed_job_does_not_block_and_move(env):
 	gui, cl, tw, tmp = env
 	bad = tmp / "bad.png"
 	bad.write_bytes(b"isto nao e um png")
-	gui.ingest_segment = _slow_segment(0.8)
-	j0 = _post(cl, [_scan(tmp / "z.png", 1, seed=9)], 3).json()["job"]
-	jb = _post(cl, [str(bad)], 4).json()["job"]
-	jg = _post(cl, [_scan(tmp / "g.png", 1, seed=6)], 5).json()["job"]
-	_wait_state(gui, j0, "a_correr")
-	r = cl.post(f"/api/import_queue/{jg}/mover", json={"posicao": 0})
-	assert r.status_code == 200
-	assert [j["id"] for j in r.json()["fila"] if j["estado"] == "em_fila"] == [jg, jb]
-	assert cl.post(f"/api/import_queue/{jg}/mover", json={}).status_code == 400
+	gate = threading.Event()
+	gui.ingest_segment = _gated_segment(gate)
+	try:
+		j0 = _post(cl, [_scan(tmp / "z.png", 1, seed=9)], 3).json()["job"]
+		jb = _post(cl, [str(bad)], 4).json()["job"]
+		jg = _post(cl, [_scan(tmp / "g.png", 1, seed=6)], 5).json()["job"]
+		_wait_state(gui, j0, "a_correr")
+		r = cl.post(f"/api/import_queue/{jg}/mover", json={"posicao": 0})
+		assert r.status_code == 200
+		assert [j["id"] for j in r.json()["fila"] if j["estado"] == "em_fila"] == [jg, jb]
+		assert cl.post(f"/api/import_queue/{jg}/mover", json={}).status_code == 400
+	finally:
+		gate.set()                                   # j0 may finish now (and the others after it)
 	q = _wait_idle(gui)
 	st = {j["id"]: j for j in q["fila"]}
 	assert st[jb]["estado"] == "falhado" and "não é uma imagem legível" in st[jb]["erro"]

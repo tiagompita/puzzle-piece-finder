@@ -1,0 +1,238 @@
+{
+ "corridas": [
+  {
+   "tag": "a1",
+   "repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\4b8e76f9-7f80-408e-beff-c1cce2de78f9\\scratchpad\\perf\\wt_9f672c0",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 7.8,
+   "abrir_s": 1.09,
+   "salto1_ceu": {
+    "s": 14.07,
+    "key_at_jump": "1,20,14,40@100#2307663",
+    "key_shown": "1,20,14,40@100#2307663",
+    "yanked": false
+   },
+   "buracos_desde_salto_s": 31.9,
+   "mem_apos_buracos": {
+    "peak_ws_mb": 398,
+    "ws_mb": 233,
+    "peak_private_mb": 894
+   },
+   "salto_frio_relva": {
+    "s": 4.09,
+    "key_at_jump": "34,30,47,50@100#2307663",
+    "key_shown": "34,30,47,50@100#2307663",
+    "yanked": false
+   },
+   "salto_frio_vale": {
+    "s": 0.72,
+    "key_at_jump": "26,2,40,22@100#2307663",
+    "key_shown": "26,2,40,22@100#2307663",
+    "yanked": false
+   },
+   "srv_frio_ceu_s": 3.62,
+   "srv_frio_relva_s": 3.83,
+   "mem_apos_saltos": {
+    "peak_ws_mb": 446,
+    "ws_mb": 235,
+    "peak_private_mb": 941
+   },
+   "encaixa_perto": {
+    "cell": [
+     5,
+     33
+    ],
+    "post_s": 7.63,
+    "detalhe_desde_post_s": 3.35,
+    "browser": {
+     "s": 3.34260000000149,
+     "key": "1,20,14,40@100#2311868"
+    }
+   },
+   "encaixa_longe": {
+    "cell": [
+     20,
+     60
+    ],
+    "post_s": 7.04,
+    "detalhe_desde_post_s": 4.12,
+    "browser": {
+     "s": 4.093199999999255,
+     "key": "1,20,14,40@100#2320208"
+    }
+   },
+   "mem_fim": {
+    "peak_ws_mb": 738,
+    "ws_mb": 428,
+    "peak_private_mb": 1235
+   }
+  },
+  {
+   "tag": "b1",
+   "repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\4b8e76f9-7f80-408e-beff-c1cce2de78f9\\scratchpad\\perf\\wt_9f672c0",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 7.7,
+   "a_calcular": true,
+   "verificar1_s": 2.17,
+   "verificar1_srv_s": 2.164,
+   "verificar2_s": 0.01,
+   "mem_fim": {
+    "peak_ws_mb": 221,
+    "ws_mb": 218,
+    "peak_private_mb": 718
+   }
+  },
+  {
+   "tag": "a2",
+   "repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\4b8e76f9-7f80-408e-beff-c1cce2de78f9\\scratchpad\\perf\\wt_9f672c0",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 7.1,
+   "abrir_s": 0.4,
+   "salto1_ceu": {
+    "s": 13.76,
+    "key_at_jump": "1,20,14,40@100#2307663",
+    "key_shown": "1,20,14,40@100#2307663",
+    "yanked": false
+   },
+   "buracos_desde_salto_s": 33.4,
+   "mem_apos_buracos": {
+    "peak_ws_mb": 396,
+    "ws_mb": 233,
+    "peak_private_mb": 892
+   },
+   "salto_frio_relva": {
+    "s": 3.79,
+    "key_at_jump": "34,30,47,50@100#2307663",
+    "key_shown": "34,30,47,50@100#2307663",
+    "yanked": false
+   },
+   "salto_frio_vale": {
+    "s": 0.6,
+    "key_at_jump": "26,2,40,22@100#2307663",
+    "key_shown": "26,2,40,22@100#2307663",
+    "yanked": false
+   },
+   "srv_frio_ceu_s": 3.65,
+   "srv_frio_relva_s": 3.75,
+   "mem_apos_saltos": {
+    "peak_ws_mb": 444,
+    "ws_mb": 234,
+    "peak_private_mb": 940
+   },
+   "encaixa_perto": {
+    "cell": [
+     5,
+     33
+    ],
+    "post_s": 6.18,
+    "detalhe_desde_post_s": 3.3,
+    "browser": {
+     "s": 3.302699999999255,
+     "key": "1,20,14,40@100#2311868"
+    }
+   },
+   "encaixa_longe": {
+    "cell": [
+     20,
+     60
+    ],
+    "post_s": 5.77,
+    "detalhe_desde_post_s": 3.6,
+    "browser": {
+     "s": 3.595199999999255,
+     "key": "1,20,14,40@100#2320208"
+    }
+   },
+   "mem_fim": {
+    "peak_ws_mb": 733,
+    "ws_mb": 420,
+    "peak_private_mb": 1231
+   }
+  },
+  {
+   "tag": "b2",
+   "repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\4b8e76f9-7f80-408e-beff-c1cce2de78f9\\scratchpad\\perf\\wt_9f672c0",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 6.6,
+   "a_calcular": true,
+   "verificar1_s": 1.56,
+   "verificar1_srv_s": 1.55,
+   "verificar2_s": 0.01,
+   "mem_fim": {
+    "peak_ws_mb": 223,
+    "ws_mb": 220,
+    "peak_private_mb": 720
+   }
+  }
+ ],
+ "resumo": {
+  "1_salto1_s": [
+   13.76,
+   14.07
+  ],
+  "2_frio_browser_s": [
+   3.79,
+   4.09
+  ],
+  "2_frio_http_s": [
+   3.62,
+   3.83
+  ],
+  "3_perto_s": [
+   3.3,
+   3.34
+  ],
+  "3_longe_s": [
+   3.6,
+   4.09
+  ],
+  "post_s": [
+   5.77,
+   7.63
+  ],
+  "5_pico_ws_mb": [
+   733,
+   738
+  ],
+  "5_pico_privada_mb": [
+   1231,
+   1235
+  ],
+  "4_verificar1_s": [
+   1.56,
+   2.17
+  ]
+ }
+}

@@ -341,3 +341,10 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
 @keyframes prep-vai { from { left: -35%; } to { left: 100%; } }
 @media (prefers-reduced-motion: reduce) { .prep-barra.indet > i { animation: none; left: 0; width: 100%; opacity: .45; } }
 .prep-line { color: var(--text); font-variant-numeric: tabular-nums; }
+/* «localizar» avisa que o cartão atual mudou sozinho e o lugar novo está fora da vista (2026-11-15, P0): pisca uma
+   vez; com prefers-reduced-motion fica uma marca estática até ao próximo clique ou ação */
+.icon-btn.loc.pisca { animation: loc-pisca .45s ease-in-out 0s 2 alternate; }
+@keyframes loc-pisca { from { box-shadow: none; } to { box-shadow: 0 0 0 3px var(--amber); background: var(--bg4); } }
+.icon-btn.loc.mudou { box-shadow: inset 0 0 0 2px var(--amber); }
+.icon-btn.loc.mudou .ico { color: var(--amber); }
+@media (prefers-reduced-motion: reduce) { .icon-btn.loc.pisca { animation: none; } }

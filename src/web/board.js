@@ -13,7 +13,9 @@
  *   função   S.onPoseWheel(ev)       Alt+roda com S.pose ativo (app.js: poseWheel de pose.js). Opcional.
  *   gancho   S.onBoardTap(l, c, ev)  toque/clique sem arrastar numa célula (app.js: sugestões / gaveta). Opcional.
  * Campos de S que este ficheiro escreve e lê (a casca só lhes dá o valor inicial, se quiser): rows, cols, hr, ppc,
- * ver, rotGemea (drawRaster), vb (setView; {x, y, w, h} antes do primeiro fitBoard), detailKey.
+ * ver, rotGemea (drawRaster), vb (setView; {x, y, w, h} antes do primeiro fitBoard), detailKey, gesto (true entre o
+ * 1.º pointerdown e o último pointerup/pointercancel no tabuleiro: arrastar ou pinça) e saltoPendente (um salto pedido
+ * por zoomCells durante um gesto fica aqui e faz-se no fim do gesto; 2026-11-15, P0 da fase de desempenho).
  * Precisa de core.js ($, s) e destes elementos: svg#board com #board-bg, #raster, #detail, #lyr-grelha e
  * #lyr-fantasma; botões #z-in, #z-out, #z-fit. Escreve body.dataset.raster / .detail (os testes esperam por eles).
  * Nada fora disto: nenhuma função ou variável global da GUI antiga.
@@ -71,7 +73,12 @@ function fitRect(x0, y0, x1, y1, pad = 0.04, now = false) {
   setView({ x: clamp(x0 + bw / 2 - w / 2, w, boardW()), y: clamp(y0 + bh / 2 - hh / 2, hh, boardH()), w }, now);
 }
 function fitBoard() { fitRect(0, 0, boardW(), boardH(), 0.015); }
-function zoomCells(l0, c0, l1, c1, pad = 0.08) { fitRect(c0 - 1, (l0 - 1) * S.hr, c1, l1 * S.hr, pad, true); }   // a jump
+/** A jump (lupa, «localizar», «Ver no tabuleiro», o cartão seguinte). Never under the finger: during a gesture
+ * (``S.gesto``: dragging or pinching) the jump waits in ``S.saltoPendente`` until the last pointer goes up. */
+function zoomCells(l0, c0, l1, c1, pad = 0.08) {
+  if (S.gesto) { S.saltoPendente = [l0, c0, l1, c1, pad]; return; }
+  fitRect(c0 - 1, (l0 - 1) * S.hr, c1, l1 * S.hr, pad, true);
+}
 function zoomAt(factor, cx, cy) {
   const r = svgRect();
   const px = cx === undefined ? 0.5 : (cx - r.left) / r.width;
@@ -152,6 +159,7 @@ function initPointer() {
   el.addEventListener("pointerdown", (e) => {
     el.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    S.gesto = true;
     if (ptrs.size === 1) { start = { x: e.clientX, y: e.clientY, vb: { ...S.vb } }; moved = false; }
     if (ptrs.size === 2) {
       const [a, b] = [...ptrs.values()];
@@ -196,6 +204,10 @@ function initPointer() {
         if (typeof S.onBoardTap === "function") S.onBoardTap(l, c, e);   // the shell decides (app.js: suggestions / cell)
       }
       start = null;
+      S.gesto = false;
+      const jp = S.saltoPendente;
+      S.saltoPendente = null;
+      if (jp) zoomCells(...jp);
     } else if (ptrs.size === 1) {
       const [a] = [...ptrs.values()];
       start = { x: a.x, y: a.y, vb: { ...S.vb } };

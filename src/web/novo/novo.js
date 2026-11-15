@@ -61,7 +61,35 @@ async function loadBoard() {
   S.board = b; S.ghosts = gh.fantasmas || [];
   const first = !svg().getAttribute("viewBox");
   drawRaster(); drawGrid(); drawLayers(); drawLegend();
-  if (first) fitBoard(); else setView(S.vb);
+  if (first) { fitBoard(); refAltura(); } else setView(S.vb);
+}
+// ------------------------------------------------------------ salto da lupa com o teclado do telemóvel (P1a, 2026-11-15)
+// A 390 px o teclado no ecrã encolhe o tabuleiro (≈ 70 px de altura): um salto feito assim calcula a vista com essa
+// proporção (largura no limite, 3 × o tabuleiro) e, quando o teclado fecha, a vista fica assim. O salto da lupa tira o
+// foco da caixa (o teclado fecha), espera 2 frames e, se o tabuleiro ainda tiver < 40 % da altura normal, refaz-se no
+// redimensionar seguinte (até 2 s depois). A altura normal é a do tabuleiro sem nada a escrever.
+const escrever = () => { const t = (document.activeElement && document.activeElement.tagName) || ""; return t === "INPUT" || t === "TEXTAREA"; };
+function refAltura() { if (!escrever()) S.boardRefH = svgRect().height; }
+window.addEventListener("resize", refAltura);
+function saltoLupa(l, c) {
+  const ae = document.activeElement;
+  if (ae && ae !== document.body && typeof ae.blur === "function") ae.blur();
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    showCell(l, c);
+    const ref = S.boardRefH;
+    if (!ref || svgRect().height >= 0.4 * ref) return;
+    const t0 = performance.now(), vv = window.visualViewport;
+    const off = () => { window.removeEventListener("resize", redo); if (vv) vv.removeEventListener("resize", redo); };
+    function redo() {
+      if (performance.now() - t0 > 2000) { off(); return; }
+      if (svgRect().height < 0.4 * ref) return;
+      off();
+      showCell(l, c, true);      // forçado: a vista feita com o teclado aberto pode já «conter» o lugar, mas larga demais
+    }
+    window.addEventListener("resize", redo);
+    if (vv) vv.addEventListener("resize", redo);
+    setTimeout(off, 2100);
+  }));
 }
 async function loadMontar() {
   // o saco que o browser está a esgotar fica fixo; um scan novo importado manda para o saco dele (§8.2)
@@ -142,7 +170,7 @@ function drawTarget(move = true) {
     return;
   }
   const q = queue(), cur = current();
-  if (!cur || !cur.cell) return;
+  if (!cur || !cur.cell) { if (S.alvoMostrado === undefined && S.montar) S.alvoMostrado = null; return; }
   for (const it of q.filter((x) => x !== cur).slice(0, 3)) if (it.cell) nx.append(rectEl(it.cell[0], it.cell[1], cls("seguinte"), 0.06));
   const [l, c] = cur.cell;
   // sem vizinha montada: alvo tracejado (lugar provável, sem vizinha para verificar), nunca o «vai aqui» cheio
@@ -153,15 +181,52 @@ function drawTarget(move = true) {
   lab.append(s("rect", { x: -w / 2, y: -0.42, width: w, height: 0.36, rx: 0.08 }),
     s("text", { x: 0, y: -0.17 }, document.createTextNode(g ? "lugar provável" : "vai aqui")));
   a.append(lab);
-  if (move) showCell(l, c);
+  if (move) followTarget(cur.piece, l, c);
+  if (S.locAviso && S.locAviso.key === `${cur.piece}@${l},${c}`) marcarLocalizar();
+}
+/** A vista segue o cartão atual só por ação do Tiago (2026-11-15, P0 da fase de desempenho; decisão do Tiago).
+ * - 1.ª carga, ou ``S.alvoAcao`` (Encaixa / Não encaixa / Colocar aqui / Saltar / escolher em «A seguir» ou no
+ *   tabuleiro / a lupa / Desfazer): desloca até ao alvo (``showCell``; durante um gesto o salto espera pelo fim dele).
+ * - O cartão atual mudou sozinho (uma recarga por SSE: chegaram sugestões e passaram à frente): a vista NÃO salta; se o
+ *   alvo novo ficar fora da vista, o botão «localizar» pisca uma vez (com ``prefers-reduced-motion``: marca estática).
+ * - O mesmo cartão (uma recarga qualquer): nada; antes cada recarga trazia a vista de volta ao alvo. */
+function followTarget(piece, l, c) {
+  const key = `${piece}@${l},${c}`;
+  if (S.alvoAcao || S.alvoMostrado === undefined) {
+    S.alvoMostrado = key; S.locAviso = null;
+    showCell(l, c);
+    return;
+  }
+  if (key === S.alvoMostrado) return;
+  S.alvoMostrado = key;
+  S.locAviso = cellInView(l, c) ? null : { key, animado: false };
+}
+const reducedMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+/** «localizar» avisa que o lugar mudou: pisca uma vez (``pisca``) ou, sem animações, fica marcado (``mudou``) até ao
+ * próximo clique nele ou à próxima ação. ``data-mudou`` = «pisca» / «marca» (os testes leem-no). */
+function marcarLocalizar() {
+  const b = $("#b-localizar"), a = S.locAviso;
+  if (!b || !a) return;
+  if (reducedMotion()) { b.dataset.mudou = "marca"; b.classList.add("mudou"); return; }
+  b.dataset.mudou = "pisca";
+  if (a.animado) return;
+  a.animado = true;
+  b.classList.add("pisca");
+  b.addEventListener("animationend", () => b.classList.remove("pisca"), { once: true });
+}
+/** Uma ação do Tiago: a vista pode seguir o cartão que ela fizer aparecer. ``fn`` síncrona; as assíncronas (``act``,
+ * ``doUndo``) ligam e desligam ``S.alvoAcao`` à volta do pedido. */
+function porAcao(fn) { S.alvoAcao = true; try { return fn(); } finally { S.alvoAcao = false; } }
+/** O centro da célula dentro da vista (a mesma margem de 12 % de ``showCell``). */
+function cellInView(l, c) {
+  const x = c - 0.5, y = (l - 0.5) * S.hr;
+  const v = S.vb, mx = v.w * 0.12, my = v.h * 0.12;
+  return x > v.x + mx && x < v.x + v.w - mx && y > v.y + my && y < v.y + v.h - my;
 }
 /** Desloca o tabuleiro até ao lugar, com contexto à volta (só se não estiver já bem à vista; ``force``: sempre,
  * centrado, o botão «localizar» do cartão). */
 function showCell(l, c, force = false) {
-  const x = c - 0.5, y = (l - 0.5) * S.hr;
-  const v = S.vb, mx = v.w * 0.12, my = v.h * 0.12;
-  const inside = x > v.x + mx && x < v.x + v.w - mx && y > v.y + my && y < v.y + v.h - my;
-  if (!force && inside && v.w <= 30) return;
+  if (!force && cellInView(l, c) && S.vb.w <= 30) return;
   zoomCells(Math.max(1, l - 5), Math.max(1, c - 8), Math.min(S.rows, l + 5), Math.min(S.cols, c + 8), 0.04);
 }
 function drawLegend() {
@@ -181,7 +246,7 @@ S.onBoardTap = (l, c) => {
   // noutro lugar, abre o painel desse lugar (com a sugestão do programa e «Pôr uma peça aqui»)
   const it = queue().find((x) => x.cell && x.cell[0] === l && x.cell[1] === c);
   if (it && !(S.tab === "montar" && S.modo === "cartao" && current() === it)) {
-    S.pick = it.piece; S.modo = "cartao"; S.painel = null; if (S.tab !== "montar") showTab("montar"); renderMontar(); return;
+    porAcao(() => { S.pick = it.piece; S.modo = "cartao"; S.painel = null; if (S.tab !== "montar") showTab("montar"); renderMontar(); }); return;
   }
   openPainel(l, c);
 };
@@ -258,7 +323,7 @@ function renderMontar1() {
     h("span", { class: "count", id: "m-count" }, g ? `${k} de ${inBag.length} ainda sem peças ao lado` : `${k} de ${inBag.length} neste saco · ${q.length} no total`)));
   // «localizar» (F1d): só ícone, com aria-label e dica; volta a centrar o tabuleiro no alvo sem mudar de peça
   const loc = cur.cell ? h("button", { type: "button", class: "icon-btn loc", id: "b-localizar", title: "Mostrar o lugar no tabuleiro",
-    "aria-label": "Mostrar o lugar no tabuleiro", onclick: () => showCell(cur.cell[0], cur.cell[1], true) }, ico("locate-fixed")) : null;
+    "aria-label": "Mostrar o lugar no tabuleiro", onclick: (e) => { S.locAviso = null; const lb = e.currentTarget; lb.classList.remove("mudou", "pisca"); delete lb.dataset.mudou; showCell(cur.cell[0], cur.cell[1], true); } }, ico("locate-fixed")) : null;
   const who = h("div", { class: "who" },
     h("div", { class: "bag" }, cur.lote !== null && cur.lote !== undefined ? `Saco ${cur.lote}` : "Peça sem saco"),
     h("div", { class: "num" }, `peça nº ${cur.n_no_lote ?? "?"}`),
@@ -289,7 +354,7 @@ function renderMontar1() {
     const allG = nxt.every(isGuardar);
     T.append(h("h2", {}, allG ? "A seguir, ainda sem peças ao lado" : (same ? "A seguir, do mesmo saco" : "A seguir, primeiro as do mesmo saco")));
     const ul = h("ul", { class: "next", id: "m-seguir" });
-    for (const it of nxt) ul.append(h("li", {}, h("button", { type: "button", class: "next-row", "data-tipo": it.tipo, onclick: () => { S.pick = it.piece; renderMontar(); } },
+    for (const it of nxt) ul.append(h("li", {}, h("button", { type: "button", class: "next-row", "data-tipo": it.tipo, onclick: () => porAcao(() => { S.pick = it.piece; renderMontar(); }) },
       h("span", {}, quem(it)), h("span", { class: "w " + it.confianca }, isGuardar(it) ? "ainda sem peças ao lado" : CONF_TXT[it.confianca]))));
     T.append(ul);
   }
@@ -378,6 +443,7 @@ function writeFailed(r) {
  * seguinte antes da resposta), depois a faixa «última ação» com «Desfazer» (fica até à ação seguinte) e o aviso. */
 async function act(it, req, pend, undo, after) {
   lockButtons(true);
+  S.alvoAcao = true;                             // o cartão seguinte (mesmo o que uma recarga por SSE mostre antes da resposta)
   S.pendente = pend; renderMontar();
   try {
     const r = await post(req.url, req.body);
@@ -389,7 +455,7 @@ async function act(it, req, pend, undo, after) {
     $("#tab-montar").scrollTop = 0;              // a faixa «Desfazer» fica no topo do painel: mostra-a
     if (S.modo === "cartao") toastUndo(S.undo.msg);
     await afterWrite();
-  } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); }
+  } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); S.alvoAcao = false; }
 }
 async function doEncaixa(it) {
   if (S.busy || !it || !it.encaixa) return;
@@ -425,12 +491,13 @@ function doSaltar(it) {
   sess.saltos[it.piece] = (sess.saltos[it.piece] || 0) + 1;
   saveSess();
   S.pick = null; S.modo = "cartao";
-  renderMontar();
+  porAcao(renderMontar);
 }
 async function doUndo() {
   const u = S.undo;
   if (!u || S.busy) return;
   lockButtons(true);
+  S.alvoAcao = true;
   S.pendente = "A desfazer…"; renderMontar();
   try {
     // F2: desfazer global de um nível: as ações dos painéis guardam o pedido inverso (``inversa``); as do Montar, o tipo
@@ -445,7 +512,7 @@ async function doUndo() {
     toast(`Desfeito: ${u.item ? quem(u.item) : u.msg}`);
     await afterWrite();
     if (u.painel) await refreshPainel();
-  } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); }
+  } catch (e) { S.pendente = null; renderMontar(); toast(e.message, true); } finally { lockButtons(false); S.alvoAcao = false; }
 }
 function toastUndo(msg) {
   const el = h("div", { class: "undo-toast" }, h("span", {}, msg),
@@ -1035,7 +1102,7 @@ function propLine(e, quemTxt) {
   const conf = inQ ? (isGuardar(inQ) ? "a confirmar por ti" : CONF_TXT[inQ.confianca]) : "a confirmar por ti";
   const li = h("li", { "data-piece": e.piece, "data-grupo": e.grupo || "" },
     h("span", {}, `${quemTxt}: ${GRUPO_TXT[e.grupo] || "proposta do programa"} (${conf}).`));
-  if (inQ) li.append(h("button", { type: "button", class: "linkish", onclick: () => { closeLupa(); S.pick = inQ.piece; S.modo = "cartao"; showTab("montar"); renderMontar(); } }, "Ver o cartão"));
+  if (inQ) li.append(h("button", { type: "button", class: "linkish", onclick: () => { closeLupa(); porAcao(() => { S.pick = inQ.piece; S.modo = "cartao"; showTab("montar"); renderMontar(); }); } }, "Ver o cartão"));
   return li;
 }
 function showLupa(titulo, linhas, props, kind) {
@@ -1054,23 +1121,23 @@ async function findPiece(pid) {
   const pc = p.peca || p, nome = nomePeca(pc);
   const linhas = [];
   let alvo = null;
-  if (pc.estado === "colocada" && pc.celula) { alvo = pc.celula; showCell(pc.celula[0], pc.celula[1]); linhas.push(`Está no lugar: ${lugarTxt(pc.celula).toLowerCase()}.`); }
-  else if (pc.estado === "posicao_conhecida" && pc.celula) { alvo = pc.celula; showCell(pc.celula[0], pc.celula[1]); linhas.push(`No lugar por confirmar: ${lugarTxt(pc.celula).toLowerCase()}, à espera de uma vizinha montada.`); }
+  if (pc.estado === "colocada" && pc.celula) { alvo = pc.celula; saltoLupa(pc.celula[0], pc.celula[1]); linhas.push(`Está no lugar: ${lugarTxt(pc.celula).toLowerCase()}.`); }
+  else if (pc.estado === "posicao_conhecida" && pc.celula) { alvo = pc.celula; saltoLupa(pc.celula[0], pc.celula[1]); linhas.push(`No lugar por confirmar: ${lugarTxt(pc.celula).toLowerCase()}, à espera de uma vizinha montada.`); }
   else if (pc.estado === "em_seccao") linhas.push("Está num grupo sem lugar (por agora só na interface completa).");
   else if (pc.estado === "descartada") linhas.push("Foi posta de lado.");
   else linhas.push("Ainda não tem lugar.");
   const withCell = (p.propostas || []).filter((e) => e.cell);
   const props = withCell.map((e) => propLine(e, lugarTxt(e.cell)));
-  if (!pc.celula && withCell.length) { alvo = withCell[0].cell; showCell(withCell[0].cell[0], withCell[0].cell[1]); }
+  if (!pc.celula && withCell.length) { alvo = withCell[0].cell; saltoLupa(withCell[0].cell[0], withCell[0].cell[1]); }
   const inQ = queue().find((it) => it.piece === pid);
-  if (inQ) { S.pick = pid; S.modo = "cartao"; showTab("montar"); renderMontar(); }
+  if (inQ) porAcao(() => { S.pick = pid; S.modo = "cartao"; showTab("montar"); renderMontar(); });
   showLupa(nome, linhas, props, "peca");
   setAchado(alvo);
   return null;
 }
 async function findPlace(l, c) {
   if (!S.board || l < 1 || c < 1 || l > S.rows || c > S.cols) return `A linha ${l} · coluna ${c} fica fora do tabuleiro.`;
-  showCell(l, c);
+  saltoLupa(l, c);
   let d;
   try { d = await api(`/api/cell/${l}/${c}`); } catch (e) { return e.message; }
   const pc = d.peca;
