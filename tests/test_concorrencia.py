@@ -75,10 +75,16 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 				elif x < 0.86:
 					# P0b (2026-11-15): decoded crops and the suspects (twin residual) are cached by the crop/shape
 					# content; read them while the placed piece is re-segmented
-					if rnd.random() < 0.5:
+					y = rnd.random()
+					if y < 0.3:
 						gui.read(lambda: gui.pr.crop_rgba(rnd.choice((placed, tw, dec))))
-					else:
+					elif y < 0.6:
 						gui.read(gui.suspeitas_json)
+					else:
+						# parte 1: the hole ranking with the sides on disk (shared store) and the shapes read per sheet,
+						# while the placed piece is re-segmented
+						from src import fit as F
+						gui.read(lambda: F.rank_all(gui.pr, cache=F._Cache(gui.pr, F.calibration(gui.pr))))
 				elif x < 0.90:
 					# «verificar» da F2: também sem o bloqueio de escrita (DETALHE.md §8.2)
 					r = gui.verify_json(2, 4, rnd.choice((tw, dec)), rnd.choice((None, 0.0, 90.0)))
@@ -138,6 +144,19 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 	gui.sync()
 	for pid in (placed, tw, dec):
 		assert np.array_equal(gui.pr.crop_rgba(pid), Project.open(gui.path).crop_rgba(pid)), pid
+	# parte 1: the shapes, eroded sides and strips this process holds = a process just opened
+	from src import fit as F
+	c1 = F._Cache(gui.pr, F.calibration(gui.pr))
+	with F.SidesStore._stores_lock:
+		F.SidesStore._stores.clear()
+	pr3 = Project.open(gui.path)
+	c3 = F._Cache(pr3, F.calibration(pr3))
+	for pid in (placed, tw, dec):
+		assert np.array_equal(gui.pr.shape(pid).c, pr3.shape(pid).c), pid
+		a, b = c1.eroded(pid), c3.eroded(pid)
+		assert all(x.kind == y.kind and x.chord_mm == y.chord_mm and np.array_equal(x.profile, y.profile)
+				   for x, y in zip(a, b)), pid
+		assert np.array_equal(np.nan_to_num(c1.strip(pid)), np.nan_to_num(F.piece_strips(pr3, pid))), pid
 	got = gui.suspeitas_json()["items"]
 	from src import consistency as CO
 	CO._RESIDUAL_CACHE.clear()

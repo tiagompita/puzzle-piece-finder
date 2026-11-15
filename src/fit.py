@@ -38,6 +38,7 @@ import json
 import math
 import os
 import sys
+import threading
 import time
 import zipfile
 from dataclasses import dataclass, field
@@ -56,7 +57,7 @@ __all__ = [
 	"HoleSide", "HoleQuery", "FitItem", "FitCalibration", "PoolArrays",
 	"lab_of", "eroded_sides", "side_strips", "side_orientation", "board_dirs", "zone_of", "wilson",
 	"pool_arrays", "side_costs", "joint_costs", "theta_for", "confidence", "rank_hole", "assign",
-	"calibration", "piece_strips", "hole_queries", "pool_items", "board_sigma", "rank_all", "report", "main",
+	"calibration", "piece_strips", "strip_key", "side_key", "SidesStore", "hole_queries", "pool_items", "board_sigma", "rank_all", "report", "main",
 	"ALTA_JANELA", "ALTA_MAX_FALHAS", "alta_counter", "alta_suggestions",
 ]
 
@@ -580,95 +581,288 @@ def piece_strips(project, pid: str) -> np.ndarray:
 	return side_strips(rgba, sh, render._scan_mmpp(project, p.scan_id), np.asarray(p.bbox[:2], float))
 
 
+def _profile_sha(project) -> str:
+	"""sha1 of the project's ``puzzle.json`` (calibration, background, grid: part of every fit cache key), cached by
+	the file's size and mtime."""
+	fp = project.p(project.meta.get("puzzle", "puzzle.json"))
+	try:
+		st = os.stat(fp)
+	except OSError:
+		return ""
+	k = (os.path.abspath(fp), st.st_size, st.st_mtime_ns)
+	v = _PROFILE_SHA.get(k[0])
+	if v is None or v[0] != k:
+		import hashlib
+		with open(fp, "rb") as f:
+			v = (k, hashlib.sha1(f.read()).hexdigest())
+		_PROFILE_SHA[k[0]] = v
+	return v[1]
+
+
+_PROFILE_SHA: dict = {}
+
+
+def strip_key(project, pid: str) -> str:
+	"""Key of a piece's strips in ``render/fit/strips.npz``: the display crop they are measured on
+	(:func:`src.render.piece_asset_sig`: bbox, crop file, painted edge, scan mm/px, background), the display constants,
+	the strip parameters and the profile. Until 2026-11-15 (part 1c of the performance phase) the key was the id and
+	the bbox: a crop corrected with the same bbox kept its old strips."""
+	import hashlib
+	from src import render
+	sig = (render.piece_asset_sig(project, pid), render.display_params(), BAND_MM, N_STRIP, HALF_WIN, _profile_sha(project))
+	return hashlib.sha1(repr(sig).encode()).hexdigest()
+
+
+def side_key(shape: Shape, erosion_mm: float, profile_sha: str) -> str:
+	"""Key of a piece's eroded sides in ``render/fit/sides.npz``: the shape itself (contour and corners, not the
+	bbox: a manual contour may keep it), the erosion and its constants, ``FIT_VERSION`` and the profile."""
+	import hashlib
+	h = hashlib.sha1(np.ascontiguousarray(shape.c, np.float64).tobytes())
+	h.update(np.ascontiguousarray(shape.corners, np.int64).tobytes())
+	h.update(repr((float(erosion_mm), ERODE_SMOOTH_SIGMA, N_SIDE, FIT_VERSION, profile_sha)).encode())
+	return h.hexdigest()
+
+
+class SidesStore:
+	"""Eroded sides per piece, shared by every :class:`_Cache` of one project folder (the hole ranking, the «verificar»
+	of the GUI, the cross-check of :func:`src.query.run_query`) and kept on disk in ``render/fit/sides.npz``
+	(2026-11-15, part 1b of the performance phase: computing them was 34 of the 46 s of a cold ranking).
+
+	One entry per piece: ``(key, sides)`` with :func:`side_key`; a piece whose shape changed gets a new key and is
+	computed again. Thread-safe: the dictionary under a lock, the computation outside it. ``save()`` writes the file
+	atomically when something changed (``state.write_atomic``); the reader goes through ``state.read_retry``."""
+
+	_stores: dict = {}
+	_stores_lock = threading.Lock()
+
+	@classmethod
+	def for_project(cls, project) -> "SidesStore":
+		path = os.path.abspath(project.p(os.path.join("render", "fit", "sides.npz")))
+		with cls._stores_lock:
+			st = cls._stores.get(path)
+			if st is None:
+				st = cls._stores[path] = cls(path)
+			return st
+
+	def __init__(self, path: str):
+		self.path = path
+		self.lock = threading.Lock()
+		self.mem: dict = {}                    # pid -> (key, sides | None)
+		self.disk: Optional[dict] = None       # pid -> (key, kind, num, prof), read once
+		self.dirty = False
+		self.n_disk = self.n_computed = 0
+
+	def _load(self) -> dict:
+		if not os.path.exists(self.path):
+			return {}
+		try:
+			def rd():
+				d = {}
+				with np.load(self.path, allow_pickle=False) as z:
+					for k in z.files:
+						if not k.startswith("key__"):
+							continue
+						pid = k[5:]
+						kind = str(z[f"kind__{pid}"])
+						num = z[f"num__{pid}"] if kind else None
+						prof = z[f"prof__{pid}"] if kind else None
+						d[pid] = (str(z[k]), kind, num, prof)
+				return d
+			return read_retry(rd)
+		except (OSError, ValueError, KeyError, zipfile.BadZipFile):
+			return {}
+
+	@staticmethod
+	def _decode(kind, num, prof):
+		if not kind:
+			return None
+		return [Side(kind[i], float(num[i, 0]), prof[i], float(num[i, 1]), num[i, 2:4], num[i, 4:6]) for i in range(4)]
+
+	def known(self, pid: str) -> bool:
+		"""An entry exists for ``pid`` (any key: for a progress estimate only)."""
+		with self.lock:
+			if self.disk is None:
+				self.disk = self._load()
+			return pid in self.mem or pid in self.disk
+
+	def get(self, pid: str, shape: Optional[Shape], erosion_mm: float, profile_sha: str):
+		"""The eroded sides of ``pid`` (what :meth:`_Cache.eroded` returned before: :func:`eroded_sides`, or the
+		shape's own sides when the eroded contour has no 4 corners); None when the shape is missing or not ok."""
+		if shape is None or not shape.ok:
+			return None
+		k = side_key(shape, erosion_mm, profile_sha)
+		with self.lock:
+			e = self.mem.get(pid)
+			if e is not None and e[0] == k:
+				return e[1]
+			if self.disk is None:
+				self.disk = self._load()
+			d = self.disk.get(pid)
+			if d is not None and d[0] == k:
+				sides = self._decode(*d[1:])
+				self.mem[pid] = (k, sides)
+				self.n_disk += 1
+				return sides
+		sides = eroded_sides(shape, erosion_mm) or list(shape.sides)
+		with self.lock:
+			self.mem[pid] = (k, sides)
+			self.dirty = True
+			self.n_computed += 1
+		return sides
+
+	def forget(self, pid: str) -> None:
+		with self.lock:
+			self.mem.pop(pid, None)
+
+	def save(self) -> None:
+		"""Write ``sides.npz`` (the entries in memory plus the ones read from disk that were not touched)."""
+		with self.lock:
+			if not self.dirty:
+				return
+			ent = dict(self.disk or {})
+			for pid, (k, sides) in self.mem.items():
+				if sides is None:
+					ent[pid] = (k, "", None, None)
+				else:
+					ent[pid] = (k, "".join(sd.kind for sd in sides),
+								np.array([[sd.chord_mm, sd.direction_deg, *np.asarray(sd.p0_mm, float),
+										   *np.asarray(sd.p1_mm, float)] for sd in sides], np.float64),
+								np.stack([np.asarray(sd.profile) for sd in sides]))
+			self.disk = ent
+			self.dirty = False
+		arrs = {}
+		for pid, (k, kind, num, prof) in ent.items():
+			arrs[f"key__{pid}"] = np.array(k)
+			arrs[f"kind__{pid}"] = np.array(kind)
+			if kind:
+				arrs[f"num__{pid}"] = num
+				arrs[f"prof__{pid}"] = prof
+		os.makedirs(os.path.dirname(self.path), exist_ok=True)
+		write_atomic(self.path, lambda tmp: np.savez(tmp, **arrs))
+
+
 class _Cache:
-	"""Strips (disk, ``render/fit/strips.npz``, keyed by piece id + bbox) and eroded sides (memory)."""
+	"""Strips (disk, ``render/fit/strips.npz``, keyed by :func:`strip_key`) and eroded sides (:class:`SidesStore`,
+	shared by the project's caches, on disk in ``render/fit/sides.npz``)."""
 
 	def __init__(self, project, calib: FitCalibration):
 		self.pr, self.calib = project, calib
 		self.path = project.p(os.path.join("render", "fit", "strips.npz"))
-		self.strips, self.sides, self.shapes, self.dirty = {}, {}, {}, False
+		self.strips, self.keys, self.dirty = {}, {}, False
+		self.store = SidesStore.for_project(project)
+		self.profile_sha = _profile_sha(project)
 		self.on_compute = None        # callback(pid) each time a strip is computed (progress of rank_all)
+		self.on_side = None           # callback(pid) each time eroded sides are computed (not read) (progress of rank_all)
 		self.n_loaded = 0
 		if os.path.exists(self.path):
 			try:
+				file_mtime = os.stat(self.path).st_mtime_ns
+
 				def rd():
-					out = {}
+					out, old = {}, {}
 					with np.load(self.path, allow_pickle=False) as z:     # closed: a writer replaces the file (Windows)
-						for k in z.files:
-							if k.startswith("bbox__"):
-								continue
-							bb = z[f"bbox__{k}"] if f"bbox__{k}" in z.files else None
-							p = project.pieces.get(k)
-							if p is not None and bb is not None and list(bb) == list(p.bbox):
-								out[k] = z[k]
-					return out
-				self.strips = read_retry(rd)
+						names = set(z.files)
+						for k in names:
+							if k.startswith("key__"):
+								pid = k[5:]
+								if pid in project.pieces and pid in names:
+									out[pid] = (str(z[k]), z[pid])
+							elif k.startswith("bbox__"):
+								pid = k[6:]
+								if pid in project.pieces and pid in names and f"key__{pid}" not in names:
+									old[pid] = (z[k], z[pid])
+					return out, old
+				new, old = read_retry(rd)
+				for pid, (k, v) in new.items():
+					if k == strip_key(project, pid):
+						self.strips[pid], self.keys[pid] = v, k
+				# the format before 2026-11-15 (id + bbox): kept once, converted to the new key, only when the bbox is the
+				# same and the crop file is not newer than strips.npz (a crop corrected after the strips were measured is
+				# measured again); otherwise the next ranking recomputes it
+				from src import render as _render
+				for pid, (bb, v) in old.items():
+					p = project.pieces[pid]
+					if _render.has_aresta(project, pid):
+						continue                                   # a painted edge was never part of the old key
+					try:
+						crop_new = p.crop_path is not None and os.stat(project.p(p.crop_path)).st_mtime_ns > file_mtime
+					except OSError:
+						crop_new = True
+					if list(bb) == list(p.bbox) and not crop_new:
+						self.strips[pid], self.keys[pid] = v, strip_key(project, pid)
+						self.dirty = True
 				self.n_loaded = len(self.strips)
 			except (OSError, ValueError, zipfile.BadZipFile):
-				self.strips = {}
+				self.strips, self.keys = {}, {}
 
 	def rebind(self, project) -> "_Cache":
-		"""Point the cache at a reopened project object: entries of pieces whose bbox changed (re-segmented) or that
-		disappeared are dropped; the rest (strips, eroded sides, shapes) is kept."""
-		old = self.pr
+		"""Point the cache at a reopened project object: strips whose :func:`strip_key` changed (crop re-segmented or
+		corrected, painted edge) or of pieces that disappeared are dropped; the eroded sides are checked by their own
+		key at every use (:class:`SidesStore`)."""
 		self.pr = project
-		for pid in list(set(self.strips) | set(self.sides) | set(self.shapes)):
-			p, q = project.pieces.get(pid), old.pieces.get(pid)
-			if p is None or q is None or list(p.bbox) != list(q.bbox):
+		self.profile_sha = _profile_sha(project)
+		for pid in list(self.strips):
+			if pid not in project.pieces or self.keys.get(pid) != strip_key(project, pid):
 				self.strips.pop(pid, None)
-				self.sides.pop(pid, None)
-				self.shapes.pop(pid, None)
+				self.keys.pop(pid, None)
 		return self
 
 	def shape(self, pid):
-		if pid not in self.shapes:
-			self.shapes[pid] = self.pr.shape(pid)
-		return self.shapes[pid]
+		return self.pr.shape(pid)
 
 	def strip(self, pid):
 		if pid not in self.strips:
+			self.keys[pid] = strip_key(self.pr, pid)
 			self.strips[pid] = piece_strips(self.pr, pid)
 			self.dirty = True
 			if self.on_compute is not None:
 				self.on_compute(pid)
 		return self.strips[pid]
 
-	def strips_todo(self, cells=None, lote=None) -> list:
-		"""Pieces whose strips :func:`rank_all` will compute (not yet in the cache): the placed pieces that touch an
-		empty cell (the neighbours of the holes; ``cells`` limits them) and the loose pool. A cheap upper bound for
-		the progress line, not the ranking itself."""
+	def involved(self, cells=None, lote=None) -> list:
+		"""The pieces :func:`rank_all` reads: the placed pieces that touch an empty cell (``cells`` limits them) and the
+		loose pool."""
 		pr = self.pr
-		todo = set()
+		out = set()
 		cell_set = None if cells is None else {tuple(c) for c in cells}
-		for pid, p in pr.pieces.items():
-			if p.estado != "colocada" or p.celula is None or pid in self.strips:
+		for pid, p in list(pr.pieces.items()):
+			if p.estado != "colocada" or p.celula is None:
 				continue
 			for n in pr.board.neighbours(tuple(p.celula)):
 				if not pr.board.occupied(n) and (cell_set is None or tuple(n) in cell_set):
-					todo.add(pid)
+					out.add(pid)
 					break
 		for p in pr.loose_pieces(lote):
-			if p.id not in self.strips:
-				todo.add(p.id)
-		return sorted(todo)
+			out.add(p.id)
+		return sorted(out)
+
+	def strips_todo(self, cells=None, lote=None) -> list:
+		"""Pieces whose strips :func:`rank_all` will compute (not yet in the cache), out of :meth:`involved`. A cheap
+		upper bound for the progress line, not the ranking itself."""
+		return [pid for pid in self.involved(cells, lote) if pid not in self.strips]
+
+	def sides_todo(self, cells=None, lote=None) -> list:
+		"""Pieces of :meth:`involved` with no eroded sides in memory or on disk (progress estimate only)."""
+		return [pid for pid in self.involved(cells, lote) if not self.store.known(pid)]
 
 	def eroded(self, pid):
-		if pid not in self.sides:
-			sh = self.shape(pid)
-			self.sides[pid] = None if sh is None or not sh.ok else (eroded_sides(sh, self.calib.erosion_mm) or list(sh.sides))
-		return self.sides[pid]
+		n0 = self.store.n_computed
+		sds = self.store.get(pid, self.shape(pid), self.calib.erosion_mm, self.profile_sha)
+		if self.on_side is not None and self.store.n_computed != n0:
+			self.on_side(pid)
+		return sds
 
 	def save(self):
+		self.store.save()
 		if not self.dirty:
 			return
 		os.makedirs(os.path.dirname(self.path), exist_ok=True)
 		arrs = {}
 		for k, v in list(self.strips.items()):         # another thread (the GUI's «verificar») may add strips meanwhile
-			p = self.pr.pieces.get(k)
-			if p is None:
+			if k not in self.pr.pieces or k not in self.keys:
 				continue
 			arrs[k] = v
-			arrs[f"bbox__{k}"] = np.asarray(p.bbox, int)
+			arrs[f"key__{k}"] = np.array(self.keys[k])
 		write_atomic(self.path, lambda tmp: np.savez_compressed(tmp, **arrs))
 		self.dirty = False
 
@@ -774,30 +968,42 @@ def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[
 	(alta with m >= 2 first, then alta, media, sem; margin within)], 'sigma', 'n_pool', 'n_holes', 'calib',
 	'assigned': {cell: piece}, 'tiras': {'calculadas', 'previstas', 'em_cache', 'segundos'}}`` or ``{'error'}``.
 
-	``progress(n, N, segundos)``: called while the image strips are computed (the slow part of a cold start,
-	about 0.3 s per piece): once at the start with ``n = 0`` when ``N > 0``, then every :data:`PROGRESS_EVERY_N`
-	strips or :data:`PROGRESS_EVERY_S` seconds, and at the end. ``N`` = :meth:`_Cache.strips_todo` (an upper
-	bound). The ranking itself does not change with ``progress``."""
+	``progress(n, N, segundos)``: called while the image strips and the eroded sides are computed (the slow parts of
+	a cold start, about 0.3 s per strip and 24 ms per piece's sides; the sides are on disk since 2026-11-15): once at
+	the start with ``n = 0`` when ``N > 0``, then every :data:`PROGRESS_EVERY_N` items or :data:`PROGRESS_EVERY_S`
+	seconds, and at the end. ``N`` = :meth:`_Cache.strips_todo` + :meth:`_Cache.sides_todo` (an upper bound). The
+	ranking itself does not change with ``progress``."""
 	calib = calib or calibration(project)
 	cache = cache or _Cache(project, calib)
 	dcache = {}
 	todo = cache.strips_todo(cells=cells, lote=lote)
+	todo_l = cache.sides_todo(cells=cells, lote=lote)
+	n_todo = len(todo) + len(todo_l)
 	n_cache0 = len(cache.strips)
-	done = [0]
+	done, done_l = [0], [0]
 	t0 = time.time()
-	if progress is not None and todo:
-		progress(0, len(todo), 0.0)
+	if progress is not None and n_todo:
+		progress(0, n_todo, 0.0)
 		last = [t0, 0]
+
+		def tick():
+			n = done[0] + done_l[0]
+			now = time.time()
+			if n - last[1] >= PROGRESS_EVERY_N or now - last[0] >= PROGRESS_EVERY_S or n >= n_todo:
+				last[0], last[1] = now, n
+				progress(min(n, n_todo), n_todo, now - t0)
 
 		def hook(pid):
 			done[0] += 1
-			now = time.time()
-			if done[0] - last[1] >= PROGRESS_EVERY_N or now - last[0] >= PROGRESS_EVERY_S or done[0] >= len(todo):
-				last[0], last[1] = now, done[0]
-				progress(done[0], len(todo), now - t0)
-		cache.on_compute = hook
+			tick()
+
+		def hook_l(pid):
+			done_l[0] += 1
+			tick()
+		cache.on_compute, cache.on_side = hook, hook_l
 	else:
 		cache.on_compute = (lambda pid: done.__setitem__(0, done[0] + 1))
+		cache.on_side = (lambda pid: done_l.__setitem__(0, done_l[0] + 1))
 	try:
 		sg = board_sigma(project, cache, dcache)
 		if "error" in sg:
@@ -805,10 +1011,11 @@ def rank_all(project, *, calib: Optional[FitCalibration] = None, lote: Optional[
 		holes = hole_queries(project, cells=cells, min_neighbours=min_neighbours, cache=cache, dcache=dcache)
 		items = pool_items(project, lote=lote, cache=cache)
 	finally:
-		cache.on_compute = None
-	tiras = {"calculadas": done[0], "previstas": len(todo), "em_cache": n_cache0, "segundos": round(time.time() - t0, 1)}
-	if progress is not None and todo and done[0] < len(todo):
-		progress(done[0], len(todo), time.time() - t0)      # fewer than predicted (pieces without shape): close the line
+		cache.on_compute = cache.on_side = None
+	tiras = {"calculadas": done[0], "previstas": len(todo), "em_cache": n_cache0, "segundos": round(time.time() - t0, 1),
+			 "lados_calculados": done_l[0], "lados_previstos": len(todo_l)}
+	if progress is not None and n_todo and done[0] + done_l[0] < n_todo:
+		progress(done[0] + done_l[0], n_todo, time.time() - t0)      # fewer than predicted (pieces without shape): close the line
 	cache.save()
 	if not items:
 		return {"error": "sem peças soltas no índice" + (f" (lote {lote})" if lote else ""), "sigma": sg["sigma"], "n_holes": len(holes),

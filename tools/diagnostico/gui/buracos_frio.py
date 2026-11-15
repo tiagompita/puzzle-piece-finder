@@ -76,8 +76,10 @@ def main(argv=None) -> int:
 					   "chamadas": dict(cnt)}
 		if rodada == "frio":
 			fc = gui._fit_cache()
-			out["cache"] = {"tiras_em_disco": fc.n_loaded, "tiras": len(fc.strips), "lados_erodidos": len(fc.sides),
-							"formas": len(fc.shapes)}
+			# 2026-11-15 (parte 1b): os lados erodidos vivem em fit.SidesStore (partilhados, em render/fit/sides.npz)
+			out["cache"] = {"tiras_em_disco": fc.n_loaded, "tiras": len(fc.strips), "lados_erodidos": len(fc.store.mem),
+							"lados_do_disco": fc.store.n_disk, "lados_calculados": fc.store.n_computed,
+							"formas": len(gui.pr._shape_cache)}
 	s = json.dumps(out, ensure_ascii=False, indent=1)
 	if a.out:
 		with open(a.out, "w", encoding="utf-8") as fh:

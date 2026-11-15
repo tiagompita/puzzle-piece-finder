@@ -123,3 +123,76 @@ def test_json_views_skipped_only_when_unchanged(env):
 	for fp, b in files.items():
 		with open(fp, "rb") as f:
 			assert f.read() == b, os.path.basename(fp)
+
+
+# ---------------------------------------------------------------- parte 1: formas por folha, lados erodidos, tiras
+def _fresh_fit_stores():
+	from src import fit as F
+	with F.SidesStore._stores_lock:
+		F.SidesStore._stores.clear()
+
+
+def _sides_eq(a, b):
+	if a is None or b is None:
+		return a is b
+	return all(x.kind == y.kind and x.chord_mm == y.chord_mm and np.array_equal(x.profile, y.profile)
+			   and np.array_equal(np.asarray(x.p0_mm, float), np.asarray(y.p0_mm, float)) for x, y in zip(a, b))
+
+
+def test_shapes_sides_strips_follow_the_corrected_crop(env):
+	from src import fit as F
+	gui, cl, placed, tw, dec = env
+	_fresh_fit_stores()
+	cal = F.calibration(gui.pr)
+	c = F._Cache(gui.pr, cal)
+	for pid in (placed, tw, dec):                       # warm: shapes, sides (saved to disk), strips
+		c.eroded(pid)
+		c.strip(pid)
+	c.save()
+	old_sides, old_strip, old_shape = c.eroded(dec), c.strip(dec), gui.pr.shape(dec)
+	n0 = c.store.n_computed
+	_correct(cl, dec)
+	gui.sync()
+	c.rebind(gui.pr)
+	sh = gui.pr.shape(dec)
+	assert not np.array_equal(sh.c, old_shape.c)                       # the shape of the new crop
+	new_sides = c.eroded(dec)
+	assert c.store.n_computed == n0 + 1                                 # only this piece recomputed
+	assert not _sides_eq(new_sides, old_sides)
+	assert dec not in c.strips or c.keys[dec] == F.strip_key(gui.pr, dec)
+	new_strip = c.strip(dec)
+	for pid in (placed, tw):                                            # the others: no new computation
+		c.eroded(pid)
+	assert c.store.n_computed == n0 + 1
+	c.save()
+	# = a process just opened (stores empty, shapes and strips read from the disk / computed anew)
+	_fresh_fit_stores()
+	pr2 = Project.open(gui.path)
+	c2 = F._Cache(pr2, cal)
+	assert np.array_equal(pr2.shape(dec).c, sh.c)
+	assert _sides_eq(c2.eroded(dec), new_sides) and c2.store.n_computed == 0
+	assert np.array_equal(np.nan_to_num(c2.strip(dec)), np.nan_to_num(new_strip))
+
+
+def test_calibration_change_recomputes_sides_and_strips(env):
+	from src import fit as F
+	gui, cl, placed, tw, dec = env
+	_fresh_fit_stores()
+	c = F._Cache(gui.pr, F.calibration(gui.pr))
+	a = c.eroded(dec)
+	c.strip(dec)
+	c.save()
+	fp = gui.pr.p("puzzle.json")
+	d = json.load(open(fp, encoding="utf-8"))
+	d.setdefault("calibration", {}).setdefault("buraco", {})["erosion_mm"] = 0.9
+	with open(fp, "w", encoding="utf-8") as f:
+		json.dump(d, f, ensure_ascii=False, indent=2)
+	gui.sync()
+	pr2 = Project.open(gui.path)
+	cal2 = F.calibration(pr2)
+	assert cal2.erosion_mm == 0.9
+	c2 = F._Cache(pr2, cal2)
+	assert c2.n_loaded == 0                                             # the profile is in the strip key
+	n0 = c2.store.n_computed
+	b = c2.eroded(dec)
+	assert c2.store.n_computed == n0 + 1 and not _sides_eq(a, b)

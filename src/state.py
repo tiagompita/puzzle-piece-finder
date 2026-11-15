@@ -102,6 +102,7 @@ def remove_file(fp: str) -> bool:
 READ_RETRIES = 25            # read_retry: attempts while a file is being swapped by write_atomic (Windows)
 READ_WAIT_S = 0.02
 CROP_CACHE_BYTES = 128 * 2**20   # Project.crop_rgba: decoded crops kept in memory between queries (LRU)
+_SHAPE_SKIP = ("contour_px", "mask")   # per-piece arrays of pieces/<scan>.npz that are not part of the Shape
 
 
 def read_retry(fn):
@@ -898,21 +899,45 @@ class Project:
 		p = self.piece(pid)
 		arrs = self._pending_arrays.get(p.scan_id)
 		pre = f"{pid}__"
-		d = None
 		if arrs and any(k.startswith(pre) for k in arrs):
 			d = {k[len(pre):]: v for k, v in arrs.items() if k.startswith(pre)}
-		else:
-			fp = self.p("pieces", f"{p.scan_id}.npz")
-			if os.path.exists(fp):
-				def rd():
-					with np.load(fp, allow_pickle=False) as z:
-						return {k[len(pre):]: z[k] for k in z.files if k.startswith(pre)}
-				d = read_retry(rd)
+			sh = Shape.from_arrays({k: v for k, v in d.items() if k not in _SHAPE_SKIP}) if "c" in d else None
+			if self._shape_gen.get(pid, 0) == gen:      # not forgotten while we read (a re-segmentation in another thread)
+				self._shape_cache[pid] = sh
+			return sh
+		fp = self.p("pieces", f"{p.scan_id}.npz")
+		if not os.path.exists(fp):
+			if self._shape_gen.get(pid, 0) == gen:
+				self._shape_cache[pid] = None
+			return None
+		# the whole sheet in one pass (2026-11-15, part 1a of the performance phase): opening the zip per piece cost
+		# ≈ 4 ms × 1223 pieces at the first hole ranking; per sheet the same shapes in ≈ 1/3 of the time. The
+		# generations are read BEFORE opening the file: a piece forgotten meanwhile (re-segmented in another thread)
+		# is not stored back, the same rule as before for the one piece asked.
+		gens = {q.id: self._shape_gen.get(q.id, 0) for q in list(self.model.pieces.values()) if q.scan_id == p.scan_id}
+		gens[pid] = gen
+
+		def rd():
+			out = {}
+			with np.load(fp, allow_pickle=False) as z:
+				for k in z.files:
+					q, _, name = k.partition("__")
+					if name and name not in _SHAPE_SKIP and q in gens:
+						out.setdefault(q, {})[name] = z[k]
+			return out
+		sheet = read_retry(rd)
+		pend = arrs or {}
 		sh = None
-		if d and "c" in d:
-			sh = Shape.from_arrays({k: v for k, v in d.items() if k not in ("contour_px", "mask")})
-		if self._shape_gen.get(pid, 0) == gen:      # not forgotten while we read (a re-segmentation in another thread)
-			self._shape_cache[pid] = sh
+		for q, d in sheet.items():
+			if q != pid and (q in self._shape_cache or any(k.startswith(f"{q}__") for k in pend)):
+				continue                                  # already cached / newer arrays waiting to be saved
+			s = Shape.from_arrays(d) if "c" in d else None
+			if q == pid:
+				sh = s
+			if self._shape_gen.get(q, 0) == gens[q]:
+				self._shape_cache[q] = s
+		if pid not in sheet and self._shape_gen.get(pid, 0) == gen:
+			self._shape_cache[pid] = None
 		return sh
 
 	def forget_shape(self, pid: str) -> None:

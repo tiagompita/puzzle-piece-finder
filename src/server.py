@@ -643,6 +643,10 @@ class Gui:
 			self._prep_now("formas", "A preparar as formas esperadas…")
 			self.ghosts()
 			activity.get("arranque").info(f"fantasmas prontos ({time.time() - t1:.1f} s)")
+			# 1d (2026-11-15, performance phase): the hole ranking starts now, in the background, instead of with the
+			# first /api/montar of the GUI (the first jump after opening shared the process with it). «pronto» does not
+			# wait for it; the Montar already works without it (``a_preparar.buracos``, «A preparar sugestões… n de N»).
+			self.holes_json(wait=False)
 		except Exception as e:  # noqa: BLE001 - the server must still come up; reported on the page
 			self._prep(f"ERRO na preparação: {type(e).__name__}: {e}")
 			self.log(traceback.format_exc())
@@ -986,7 +990,7 @@ class Gui:
 
 	def _holes_progress_cb(self, n: int, N: int, secs: float) -> None:
 		self._holes_progress = {"n": n, "N": N, "segundos": round(secs, 1)}
-		activity.get("progresso").info(f"tiras das peças montadas e soltas: {n}/{N} ({secs:.0f} s)")
+		activity.get("progresso").info(f"tiras e lados das peças montadas e soltas: {n}/{N} ({secs:.0f} s)")
 		self.emit("holes_progress", dict(self._holes_progress))
 
 	def _compute_holes(self, key) -> dict:

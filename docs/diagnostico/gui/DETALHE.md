@@ -747,3 +747,62 @@ O critério 3 mede do fim do POST ao detalhe novo: com B, o trabalho que o POST 
 do clique ao detalhe desceu (perto 7,63 + 3,34 = 10,97 → 1,57 + 6,89 = 8,46 s; longe 7,04 + 4,09 = 11,13 → 0,86 + 5,67 =
 6,53 s), mas o «depois do POST» subiu. O critério 3 é o alvo de C (mosaicos), não do P0b. Verificação: suite 586
 passed, 1 skipped, 0 failed; `test_concorrencia` 20/20.
+
+### 11.7 Parte 1: formas por folha, lados em disco, chave das tiras, ranking ao arrancar [V] — critérios 1 e 4 [F]: paragem
+
+O que mudou (escrito no ramo `wip/desempenho-parte1`, testado e medido antes de entrar em `main`):
+
+- **1a** `src/state.py` `Project.shape`: na 1.ª falha de uma folha lê o `pieces/<scan>.npz` uma vez e guarda as formas de
+  todas as peças dela (sem `contour_px`/`mask`); as gerações lidas antes de abrir o ficheiro (uma `forget_shape` a meio
+  não volta à cache); arrays por gravar (`_pending_arrays`) continuam a ganhar.
+- **1b** `src/fit.py` `SidesStore`: lados erodidos partilhados por todos os `_Cache` do projeto (ranking, «verificar»,
+  validação cruzada da reconsulta) e em disco (`render/fit/sides.npz`, `write_atomic` / `read_retry`); chave `side_key` =
+  sha1 do contorno e dos cantos da forma + `erosion_mm`, `ERODE_SMOOTH_SIGMA`, `N_SIDE`, `FIT_VERSION`, sha1 do
+  `puzzle.json`. `_Cache.shape` passa a ser `Project.shape`.
+- **1c** chave das tiras `strip_key` = `render.piece_asset_sig` (bbox, ficheiro do recorte, aresta pintada, mm/px da folha,
+  fundo) + `render.display_params()` + `BAND_MM`, `N_STRIP`, `HALF_WIN` + sha1 do `puzzle.json`; `rebind` compara a
+  chave. Formato antigo (`bbox__P`) **convertido uma vez** quando a bbox é a mesma, o recorte não é mais novo do que o
+  ficheiro e a peça não tem aresta pintada; os outros medem-se de novo.
+- **1d** `src/server.py` `_prepare`: o ranking dos buracos arranca em segundo plano no fim (depois do tabuleiro e dos
+  fantasmas); o «n de N» do progresso soma tiras e lados por calcular (`sides_todo`).
+
+**Achado (1c) [V]:** na cópia, 23 das 825 tiras de `strips.npz` eram velhas — todas de peças com **aresta pintada** (a
+chave antiga, id + bbox, não a via); as outras 802 são iguais às medidas de novo, bit a bit.
+
+**Ranking igual [V]** (`tools/diagnostico/gui/rank_iguais.py`, `dados/r4_p1_rank_*.json`): o código antigo (825c6eb)
+com todas as tiras medidas de novo e o novo (802 tiras convertidas + 16 medidas) dão o mesmo `rank_all` (203 buracos,
+JSON igual sem o campo `tiras`), a frio e numa 2.ª corrida com os lados lidos do disco. Contra o código antigo com o
+`strips.npz` antigo, 21 de 203 buracos mudam o custo das candidatas: são as tiras velhas das 23 peças com aresta.
+Tempo de `rank_all` sozinho na cópia: 1.º arranque depois de atualizar 41,8 s (calcula e grava os 738 lados), seguintes
+5,9 s (antes 33–46 s em todos os arranques); no servidor 4,2–5,1 s.
+
+A partir daqui as medições usam uma base com `sides.npz` e o `strips.npz` já convertido (o estado depois do 1.º
+arranque), porque cada corrida copia a base de novo.
+
+| # | critério | alvo | 9f672c0 | P0b | parte 1 |
+|---|---|---|---|---|---|
+| 1 | 1.º salto depois de abrir | ≤ 4,0 s | 14,07 · 13,76 | 10,11 · 10,95 | **7,75 · 7,38 [F]** |
+| 2 | salto a frio, relva browser / HTTP | ≤ 2,0 s browser | 4,09 · 3,79 / 3,62–3,83 | 3,13 · 3,20 / 2,84–3,00 | 3,01 · 3,05 / 2,83–2,95 |
+| 3 | detalhe depois de um «Encaixa», perto / longe | ≤ 1,2 / ≤ 0,6 s | 3,34 · 3,30 / 4,09 · 3,60 | 6,89 · 7,83 / 5,67 · 5,51 | 7,59 · 7,63 / 5,38 · 5,57 |
+| 4 | 1.º «verificar» | ≤ 1,0 s | 2,17 · 1,56 | 1,93 · 2,29 | **1,42 · 1,10 [F]** |
+| 5 | pico do working set | ≤ 1,6 GB | 738 · 733 MB | 551 · 552 MB | 549 · 550 MB |
+
+(`dados/r4_criterios_p1.json`.) Suite 596 passed, 1 skipped, 0 failed; `test_concorrencia` 20/20 (com um ramo novo:
+ranking com os lados partilhados e formas por folha a meio das re-segmentações; no fim formas, lados e tiras iguais a um
+processo novo). `tests/test_desempenho_cache.py` (novo, 9) e `tests/test_recorte_refaz.py` (+2: formas, lados e tiras
+seguem o recorte corrigido; mudar a erosão em `puzzle.json` refaz lados e tiras).
+
+**Porque falham 1 e 4 (do registo do servidor):** o ranking já não é o problema (4,2–4,8 s em vez de 30 s), mas não é
+zero e corre ao mesmo tempo que o que se mede:
+- critério 1: ao abrir `/novo/`, o browser pede **duas** regiões frias ao mesmo tempo (a do cartão, 31,1–45,19: 3,9 s; e a
+  do salto ao céu: 7,7 s), com o ranking a correr. Uma região fria sozinha custa ≈ 3 s (critério 2): o critério 1 fica
+  preso ao custo da composição a frio, que é o alvo de E;
+- critério 4: o 1.º «verificar» (0,6 s sozinho, §9.1) sai 1 s depois de `/api/montar`, a meio do ranking (4,2 s):
+  1,1–1,4 s.
+
+**Paragem obrigatória** (critério de sucesso falha depois da parte que o devia cumprir). E e C não começaram em `main`;
+o código de E (`render.piece_ready`, `compose_board(ready=)`) continua no ramo `wip/desempenho-parte1` e a cache do
+servidor está escrita mas não aplicada. Opções para o Tiago: (a) seguir para E (ataca a composição a frio, o que
+domina o critério 1; o critério 4 só desce se o «verificar» não competir com o ranking); (b) baixar a prioridade do
+ranking ao arrancar (adiá-lo até a GUI estar parada alguns segundos, ou pausá-lo durante um pedido de detalhe /
+«verificar»); (c) aceitar 1 e 4 como estão.
