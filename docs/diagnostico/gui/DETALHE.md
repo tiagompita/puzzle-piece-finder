@@ -806,3 +806,37 @@ servidor está escrita mas não aplicada. Opções para o Tiago: (a) seguir para
 domina o critério 1; o critério 4 só desce se o «verificar» não competir com o ranking); (b) baixar a prioridade do
 ranking ao arrancar (adiá-lo até a GUI estar parada alguns segundos, ou pausá-lo durante um pedido de detalhe /
 «verificar»); (c) aceitar 1 e 4 como estão.
+
+### 11.8 E: peças prontas a desenhar em memória [V] (decisão do Tiago: E, depois (b) alargada, depois C)
+
+- `src/render.py` `piece_ready(project, pid)` → `(rgba, ext, pad, mmpp, origem)`: a parte de desenhar uma peça que não
+  depende da pose (recorte limpo, orla de sombra e bolsas de papel tiradas, sangria); `compose_board(..., ready=)` passa
+  sempre por ela (com ou sem cache), por isso o resultado é o mesmo; `ready_nbytes`.
+- `src/server.py` `ReadyCache`: LRU por bytes (`--cache-pecas-mb`, omissão 600), cálculo fora do lock, um por peça em
+  voo, arrays só de leitura; chave = `render.piece_asset_sig` (recorte, aresta, mm/px, fundo) + `display_params` + sha1
+  do `puzzle.json`; `forget` em `_refresh_render_assets` e no contorno gravado pelo editor, `clear` depois de
+  `rebuild_assets` / `rebuild_stale` no arranque. `Gui._prewarm`: depois do ranking do arranque, as colocadas ficam prontas
+  (as mais perto da última região pedida primeiro) até 95 % do orçamento (na cópia: 500 peças em 8,6 s, 512 MB).
+  `/api/status` traz `cache_pecas`.
+
+**Igual byte a byte [V]** (`tools/diagnostico/gui/e_iguais.py`, `dados/r4_e_iguais_*.json`): céu (1,20–14,40) e relva
+(34,30–47,50) a ppc 100 e o tabuleiro inteiro a ppc 60 na cópia, com o código de antes de E e com o novo sem cache, com a
+cache fria, quente e com orçamento de 1 MB: 12 composições, o mesmo sha1 dos píxeis. Tempo (céu / relva a ppc 100):
+sem cache 2,81 / 2,28 s, cache fria 2,26 / 2,17, **quente 0,84 / 0,72 s**. Testes: `tests/test_ready_cache.py` (novo, 6:
+igual com e sem cache a 3 ppc, orçamento minúsculo com expulsões e saída igual, só leitura, um cálculo por peça entre
+fios, chave segue o recorte e o `puzzle.json`), `test_recorte_refaz` (+1: a entrada da peça corrigida sai, as outras não
+se recalculam, região = processo novo), `test_concorrencia` (orçamento de ~1 peça: expulsões contínuas).
+
+| # | critério | alvo | 9f672c0 | parte 1 | E |
+|---|---|---|---|---|---|
+| 1 | 1.º salto depois de abrir | ≤ 4,0 s | 14,07 · 13,76 | 7,75 · 7,38 | 4,27 · 4,93 |
+| 2 | salto a frio, relva browser / HTTP | ≤ 2,0 s browser | 4,09 · 3,79 / 3,62–3,83 | 3,01 · 3,05 / 2,83–2,95 | 2,90 · 3,00 / 0,81–1,16 |
+| 3 | detalhe depois de um «Encaixa», perto / longe | ≤ 1,2 / ≤ 0,6 s | 3,34 · 3,30 / 4,09 · 3,60 | 7,59 · 7,63 / 5,38 · 5,57 | 5,08 · 5,46 / 3,32 · 3,71 |
+| 4 | 1.º «verificar» | ≤ 1,0 s | 2,17 · 1,56 | 1,42 · 1,10 | 1,18 · 0,97 |
+| 5 | pico do working set | ≤ 1,6 GB | 738 · 733 MB | 549 · 550 MB | 1109 · 1107 MB |
+
+Chegada (novo em `desempenho.py`, ouvinte SSE): sugestões «pelo encaixe» (`holes_changed`) 2,8 · 3,5 s depois do «pronto»;
+depois de um «Encaixa» (perto / longe) sugestões 4,9 · 5,3 / 3,0 · 3,4 s e suspeitas 5,4 · 5,9 / 1,6 · 1,9 s.
+(`dados/r4_criterios_e.json`.) O salto a frio na relva no browser (2,9–3,0 s) cai durante o pré-aquecimento (8,6 s de CPU,
+registo do servidor): o mesmo pedido por HTTP, com as peças já prontas, demora 0,8–1,2 s; é o que (b) trata. Suite 603
+passed, 1 skipped; `test_concorrencia` 20/20.

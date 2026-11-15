@@ -125,6 +125,7 @@ QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file k
 # docs/diagnostico/gui/DETALHE.md §6: detail during the cold hole ranking 19-22 -> 4.6-5.2 s, incremental re-query
 # -28 %, import +2 %.
 GIL_SWITCH_S = 0.0005
+READY_MB = 600.0               # E: budget of the pieces ready to draw (--cache-pecas-mb); ≈ 0,74 MB per piece
 POSE_CONTOUR_PTS = 300         # GET /pose: points of each contour (cell-width units)
 POSE_DIRS = {"N": (-1, 0), "E": (0, 1), "S": (1, 0), "W": (0, -1)}
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
@@ -353,6 +354,97 @@ def _json_default(o):
 
 
 # ---------------------------------------------------------------- server state
+class ReadyCache:
+	"""Pieces ready to draw (:func:`src.render.piece_ready`) kept in memory, LRU by bytes (2026-11-15, part E of the
+	performance phase): a cold board region spent ≈ 2/3 of its time preparing each piece's crop (clean, shadow rim,
+	bleed) again. The dictionary is under a lock; the computation is outside it, one per piece in flight (a second
+	thread asking for the same piece waits for it). Key = piece id + :func:`src.render.piece_asset_sig` (bbox, crop
+	file, painted edge, scan mm/px, background) + :func:`src.render.display_params` + sha1 of ``puzzle.json`` (the calibration): a corrected crop gets a new key by
+	itself (one ``os.stat`` per use); :meth:`forget` frees an entry at once. The arrays are read-only (shared)."""
+
+	def __init__(self, budget_mb: float):
+		self.budget = int(float(budget_mb) * 2**20)
+		self.lock = threading.Lock()
+		self.d = collections.OrderedDict()      # pid -> (key, ready, nbytes)
+		self.nbytes = 0
+		self.inflight = {}                      # pid -> (key, Event)
+		self.hits = self.misses = self.evictions = 0
+
+	@staticmethod
+	def key(project, pid: str) -> tuple:
+		from src import fit, render
+		return (render.piece_asset_sig(project, pid), render.display_params(), fit._profile_sha(project))
+
+	def get(self, project, pid: str):
+		from src import render
+		k = self.key(project, pid)
+		for _ in range(3):
+			with self.lock:
+				e = self.d.get(pid)
+				if e is not None and e[0] == k:
+					self.d.move_to_end(pid)
+					self.hits += 1
+					return e[1]
+				fl = self.inflight.get(pid)
+				mine = fl is None or fl[0] != k
+				if mine:
+					fl = (k, threading.Event())
+					self.inflight[pid] = fl
+			if mine:
+				break
+			fl[1].wait(30)
+		try:
+			rd = render.piece_ready(project, pid)
+			if rd is not None:
+				for a in (rd[0], rd[1]):
+					if a is not None:
+						a.flags.writeable = False
+			self.put(pid, k, rd)
+			return rd
+		finally:
+			with self.lock:
+				if self.inflight.get(pid) is fl:
+					del self.inflight[pid]
+			fl[1].set()
+
+	def put(self, pid: str, k, rd) -> None:
+		from src import render
+		n = render.ready_nbytes(rd)
+		with self.lock:
+			self.misses += 1
+			old = self.d.pop(pid, None)
+			if old is not None:
+				self.nbytes -= old[2]
+			if n <= self.budget:
+				self.d[pid] = (k, rd, n)
+				self.nbytes += n
+			while self.nbytes > self.budget and self.d:
+				_, (_, _, m) = self.d.popitem(last=False)
+				self.nbytes -= m
+				self.evictions += 1
+
+	def has(self, project, pid: str) -> bool:
+		with self.lock:
+			e = self.d.get(pid)
+		return e is not None and e[0] == self.key(project, pid)
+
+	def forget(self, pid: str) -> None:
+		with self.lock:
+			old = self.d.pop(pid, None)
+			if old is not None:
+				self.nbytes -= old[2]
+
+	def clear(self) -> None:
+		with self.lock:
+			self.d.clear()
+			self.nbytes = 0
+
+	def stats(self) -> dict:
+		with self.lock:
+			return {"pecas": len(self.d), "mb": round(self.nbytes / 2**20, 1), "orcamento_mb": round(self.budget / 2**20),
+					"acertos": self.hits, "calculos": self.misses, "expulsas": self.evictions}
+
+
 class Busy(RuntimeError):
 	"""A write was attempted while a background job holds the project."""
 
@@ -373,7 +465,8 @@ class Gui:
 	"""
 
 	def __init__(self, project_path: str, *, prepare: bool = True, use_image: bool = True,
-				 uploads: Optional[str] = None, log="activity", ring=None, queue: bool = True):
+				 uploads: Optional[str] = None, log="activity", ring=None, queue: bool = True,
+				 ready_mb: float = READY_MB):
 		self.path = os.path.abspath(project_path)
 		self.pr = Project.open(self.path)
 		self.use_image = use_image
@@ -413,6 +506,8 @@ class Gui:
 		self._placements = None       # (ver, dict)
 		self._sheets = {}
 		self._art = None
+		self.ready = ReadyCache(ready_mb)     # E: pieces ready to draw (render.piece_ready), LRU by bytes
+		self._last_region = None              # the last detail region asked for (the warm-up starts around it)
 		self._susp_bg_lock = threading.Lock()   # P0b B: the suspects after a write, in one background thread
 		self._susp_bg_thread = None
 		self._susp_bg_pending = False
@@ -606,6 +701,7 @@ class Gui:
 					   f"a refazer {', '.join(info['folhas'])}…")
 			with self.wlock:
 				r = render.rebuild_stale(self.pr, progress=self._sheet_counter("imagens", "A refazer imagens: folha", st["n_folhas"]))
+				self.ready.clear()
 				self._known_stat = self._log_stat()       # our own events (if any) are not an outside change
 			left = r["depois"]["n_pecas"] if r.get("depois") else st["n_pecas"]
 			info.update(refeitos=st["n_pecas"] - left, restantes=left, eventos=int(r.get("eventos") or 0),
@@ -629,6 +725,7 @@ class Gui:
 				from src import render
 				with self.wlock:
 					r = render.rebuild_assets(self.pr, progress=self._sheet_counter("imagens", "A refazer imagens: folha", len(self.pr.model.scans)))
+				self.ready.clear()
 				for e in r.get("errors", []):
 					self._prep(f"ERRO: {e}")
 				self._prep("recursos regenerados" + (" com erros (ver acima)" if r.get("errors") else ""))
@@ -647,6 +744,8 @@ class Gui:
 			# first /api/montar of the GUI (the first jump after opening shared the process with it). «pronto» does not
 			# wait for it; the Montar already works without it (``a_preparar.buracos``, «A preparar sugestões… n de N»).
 			self.holes_json(wait=False)
+			# E: the placed pieces made ready to draw in the background, after the hole ranking
+			threading.Thread(target=self._prewarm, name="pre-aquecer", daemon=True).start()
 		except Exception as e:  # noqa: BLE001 - the server must still come up; reported on the page
 			self._prep(f"ERRO na preparação: {type(e).__name__}: {e}")
 			self.log(traceback.format_exc())
@@ -772,6 +871,37 @@ class Gui:
 			return None
 		self.emit("suspeitas_changed", data)
 		return data
+
+	def _prewarm(self) -> None:
+		"""E (2026-11-15): after the start-up hole ranking, make every placed piece ready to draw (:class:`ReadyCache`),
+		the ones around the last detail region first, until the budget is nearly full. Never fails."""
+		try:
+			th = getattr(self, "_holes_thread", None)
+			if th is not None:
+				th.join()
+			t0 = time.time()
+			pr = self.pr
+			cells = {pid: tuple(p.celula) for pid, p in list(pr.pieces.items()) if p.estado == "colocada" and p.celula}
+			reg = self._last_region
+			if reg:
+				cl, cc = (reg[0] + reg[2]) / 2.0, (reg[1] + reg[3]) / 2.0
+			else:
+				cl, cc = pr.profile.rows / 2.0, pr.profile.cols / 2.0
+			order = sorted(cells, key=lambda pid: (cells[pid][0] - cl) ** 2 + (cells[pid][1] - cc) ** 2)
+			n = 0
+			for pid in order:
+				if self.closing:
+					return
+				with self.ready.lock:
+					full = self.ready.nbytes > 0.95 * self.ready.budget
+				if full:
+					break
+				if not self.ready.has(self.pr, pid):
+					self.read(lambda: self.ready.get(self.pr, pid))
+					n += 1
+			activity.get("cache").info(f"peças prontas a desenhar: {n} em {time.time() - t0:.1f} s ({self.ready.stats()['mb']} MB)")
+		except Exception as e:  # noqa: BLE001 - only a warm-up
+			self.log(f"[servidor] pré-aquecimento das peças parado: {e}")
 
 	def _suspeitas_bg(self) -> None:
 		"""Recompute the suspects and emit ``suspeitas_changed`` in a background thread, after the write answered
@@ -1161,8 +1291,12 @@ class Gui:
 	# ------------------------------------------------------------ board raster
 	def _compose(self, ppc: float, region=None) -> np.ndarray:
 		from src import render
-		return self.read(lambda: render.compose_board(self.pr, ppc, region=region, layers=("art", "pieces"),
-													  placements=self.placements()))
+
+		def go():
+			pr = self.pr
+			return render.compose_board(pr, ppc, region=region, layers=("art", "pieces"), placements=self.placements(),
+										ready=lambda pid: self.ready.get(pr, pid))
+		return self.read(go)
 
 	def _disk_cache(self, ppc: int) -> tuple:
 		d = self.pr.p("render", "gui")
@@ -1283,6 +1417,7 @@ class Gui:
 		``client``/``seq`` (the detail raster of a browser tab, :func:`loadDetail`): compositions of one client run one
 		at a time, and a request whose ``seq`` is older than the newest seen for that client is dropped
 		(:class:`Superseded`, HTTP 409) before it starts composing, so a burst of jumps leaves one composition."""
+		self._last_region = tuple(region)    # E: the warm-up of the pieces starts around the last region asked for
 		ver = self.render_version()
 		key = (round(ppc, 1), region)
 		jk = (key, ver)
@@ -1825,7 +1960,8 @@ class Gui:
 		return {"estado": self.state, "preparacao": self.prep_now if self.state != "pronto" else None,
 				"job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
 				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info,
-				"contador_alta": cnt, "atividade_seq": self.ring.seq, "fila": self.queue_summary()}
+				"contador_alta": cnt, "atividade_seq": self.ring.seq, "fila": self.queue_summary(),
+				"cache_pecas": self.ready.stats()}
 
 	# ------------------------------------------------------------ writes
 	def _after_write(self, before_snap: list, placed: list) -> dict:
@@ -1863,6 +1999,7 @@ class Gui:
 			self._art = False
 		d = render.load_placements(self.pr)
 		for pid in pids:
+			self.ready.forget(pid)                 # its clean crop is rewritten (the key would move on anyway)
 			p = self.pr.piece(pid)
 			if p.estado != "colocada":
 				continue
@@ -2847,6 +2984,10 @@ class Gui:
 				return {"error": f"contorno gravado em {OV.OVERRIDES_FILE} mas não aplicado: {msg}"}
 			bad = pr.check_invariants(disk=True)
 			# caches that hold this piece's crop / contour (the version-keyed ones follow the log by themselves)
+			self.ready.forget(pid)
+			for ch in (r.get("changed") or []):
+				if isinstance(ch, dict) and ch.get("piece"):
+					self.ready.forget(ch["piece"])
 			self._pieces.clear()
 			self._sections.clear()
 			self._sheets.clear()
@@ -3786,6 +3927,8 @@ def _parser() -> argparse.ArgumentParser:
 	ap.add_argument("--ui", choices=("antiga", NOVO_UI), default="antiga", help="interface a anunciar: antiga (/) ou novo (/novo/)")
 	ap.add_argument("--gil-intervalo", type=float, default=GIL_SWITCH_S, metavar="S",
 					help=f"sys.setswitchinterval do processo (omissão {GIL_SWITCH_S}; 0 = o do Python, 0,005)")
+	ap.add_argument("--cache-pecas-mb", type=float, default=READY_MB, metavar="MB",
+					help=f"memória das peças prontas a desenhar (omissão {READY_MB:g} MB; 0 = sem cache)")
 	return ap
 
 
@@ -3801,7 +3944,8 @@ def main(argv=None) -> int:
 	activity.setup(os.path.abspath(args.project), console=True, ring=ring)   # terminal + logs/servidor-AAAAMMDD.log + GUI ring
 	log = activity.get("arranque")
 	try:
-		gui = Gui(args.project, prepare=not args.no_prepare, use_image=not args.no_image, uploads=args.uploads, ring=ring)
+		gui = Gui(args.project, prepare=not args.no_prepare, use_image=not args.no_image, uploads=args.uploads, ring=ring,
+				  ready_mb=args.cache_pecas_mb)
 	except (StateError, ValueError) as e:
 		log.error(f"erro: {e}")
 		return 1

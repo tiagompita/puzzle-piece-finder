@@ -52,7 +52,10 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 	from src.query import run_query
 	pr, placed, tw, dec = _project(tmp_path)
 	run_query(pr, use_image=False)
+	# E: a budget for about one piece ready to draw, so the ReadyCache evicts all the time while it is shared
 	gui = S.Gui(pr.path, prepare=False, use_image=False, uploads=str(tmp_path / "up"), log=None, queue=False)
+	from src import render as _r
+	gui.ready.budget = int(1.5 * _r.ready_nbytes(_r.piece_ready(gui.pr, placed)))
 	app = S.create_app(gui)
 	cl = TestClient(app)
 	stop = threading.Event()
@@ -130,6 +133,7 @@ def test_compose_in_a_loop_while_placing_unplacing_and_resegmenting(tmp_path):
 	gui.wait_suspeitas()
 	assert not errors, f"{len(errors)} erros nos fios de composição; o 1.º:\n{errors[0]}"
 	assert counts["n"] > 50 and counts["http"] > 5, counts
+	assert gui.ready.evictions > 0 and gui.ready.nbytes <= gui.ready.budget
 	# disk: invariants and the board replayed from the log
 	pr2 = Project.open(gui.path)
 	assert pr2.check_invariants(disk=True) == []

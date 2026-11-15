@@ -196,3 +196,20 @@ def test_calibration_change_recomputes_sides_and_strips(env):
 	n0 = c2.store.n_computed
 	b = c2.eroded(dec)
 	assert c2.store.n_computed == n0 + 1 and not _sides_eq(a, b)
+
+
+# ---------------------------------------------------------------- E: peças prontas a desenhar (ReadyCache)
+def test_ready_cache_follows_the_corrected_crop(env):
+	gui, cl, placed, tw, dec = env
+	gui.board_jpg(120, (1, 1, 4, 6))                        # warm: the three pieces made ready
+	assert all(gui.ready.has(gui.pr, pid) for pid in (placed, tw))
+	ent_tw = gui.ready.d[tw]
+	n0 = gui.ready.misses
+	_correct(cl, placed)
+	gui.sync()
+	assert placed not in gui.ready.d                         # forgotten by the contour save
+	data = gui.board_jpg(120, (1, 1, 4, 6))
+	assert gui.ready.d[tw] is ent_tw                         # the others were not recomputed
+	assert gui.ready.misses == n0 + 1
+	fresh = S.Gui(gui.path, prepare=False, use_image=False, uploads=gui.uploads, log=None, queue=False)
+	assert data == fresh.board_jpg(120, (1, 1, 4, 6))

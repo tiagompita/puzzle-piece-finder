@@ -26,6 +26,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -121,6 +122,43 @@ def jump(pg, l, c):
 	return {"s": round(time.perf_counter() - t0, 2), "key_at_jump": k, "key_shown": r["key"], "yanked": r["key"] != k}
 
 
+class Events(threading.Thread):
+	"""SSE listener (``/api/events``): arrival time (``perf_counter``) of each event, to measure when the suggestions
+	(``holes_changed``) and the suspects (``suspeitas_changed``) reach the GUI (DETALHE.md §11, (b))."""
+
+	def __init__(self):
+		super().__init__(daemon=True)
+		self.seen = []
+		self.stop = False
+
+	def run(self):
+		import urllib.request
+		try:
+			with urllib.request.urlopen(G.BASE_URL + "/api/events", timeout=3600) as r:
+				name = None
+				for raw in r:
+					if self.stop:
+						return
+					line = raw.decode("utf-8", "replace").rstrip("\r\n")
+					if line.startswith("event: "):
+						name = line[7:]
+					elif line == "" and name:
+						self.seen.append((name, time.perf_counter()))
+						name = None
+		except Exception:  # noqa: BLE001 - the server went away
+			pass
+
+	def first(self, name, t0, timeout=120.0):
+		"""Seconds from ``t0`` to the first ``name`` at or after it (waits up to ``timeout``), or None."""
+		end = time.perf_counter() + timeout
+		while time.perf_counter() < end:
+			for n, t in list(self.seen):
+				if n == name and t >= t0:
+					return round(t - t0, 2)
+			time.sleep(0.05)
+		return None
+
+
 class Run:
 	"""One fresh copy + one server; ``with Run(...) as r:``."""
 
@@ -159,6 +197,9 @@ class Run:
 				raise RuntimeError("servidor não ficou pronto")
 			time.sleep(0.5)
 		self.out["pronto_s"] = round(time.time() - t0, 1)
+		self.t_pronto = time.perf_counter()
+		self.ev = Events()
+		self.ev.start()
 		return self
 
 	def __exit__(self, *exc):
@@ -206,6 +247,7 @@ def run_a(a, k, browser):
 		G._wait_holes()
 		G._wait_ready()
 		out["buracos_desde_salto_s"] = round(time.perf_counter() - tb, 1)
+		out["sugestoes_desde_pronto_s"] = r.ev.first("holes_changed", r.t_pronto, 5)
 		time.sleep(2)
 		out["mem_apos_buracos"] = mem(r.p.pid)
 		out["salto_frio_relva"] = jump(pg, 44, 40)
@@ -221,9 +263,12 @@ def run_a(a, k, browser):
 			t1 = time.perf_counter()
 			G._post("/api/confirm", {"acao": "place", "piece": out["piece"], "cell": cell, "origin": "manual"})
 			post_s = time.perf_counter() - t1
+			t_post = time.perf_counter()
 			w = pg.evaluate(WAIT_SHOWN, str(ver0))
 			out[f"encaixa_{kind}"] = {"cell": cell, "post_s": round(post_s, 2),
-									  "detalhe_desde_post_s": round(time.perf_counter() - t1 - post_s, 2), "browser": w}
+									  "detalhe_desde_post_s": round(time.perf_counter() - t1 - post_s, 2), "browser": w,
+									  "sugestoes_desde_post_s": r.ev.first("holes_changed", t_post),
+									  "suspeitas_desde_post_s": r.ev.first("suspeitas_changed", t_post)}
 			G._wait_ready()
 			G._wait_holes()
 			G._post("/api/confirm", {"acao": "unplace", "piece": out["piece"], "desfaz": True})
@@ -317,6 +362,9 @@ def resumo(rows):
 		out["3_longe_s"] = rng([r["encaixa_longe"]["browser"]["s"] for r in a])
 		out["post_s"] = rng([r[f"encaixa_{k}"]["post_s"] for r in a for k in ("perto", "longe")])
 		out["5_pico_ws_mb"] = rng([(r.get("mem_fim") or {}).get("peak_ws_mb") for r in a])
+		out["sugestoes_desde_pronto_s"] = rng([r.get("sugestoes_desde_pronto_s") for r in a])
+		out["sugestoes_desde_post_s"] = rng([r[f"encaixa_{k}"].get("sugestoes_desde_post_s") for r in a for k in ("perto", "longe")])
+		out["suspeitas_desde_post_s"] = rng([r[f"encaixa_{k}"].get("suspeitas_desde_post_s") for r in a for k in ("perto", "longe")])
 		out["5_pico_privada_mb"] = rng([(r.get("mem_fim") or {}).get("peak_private_mb") for r in a])
 	if b:
 		out["4_verificar1_s"] = rng([r["verificar1_s"] for r in b])

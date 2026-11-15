@@ -84,7 +84,7 @@ __all__ = [
 	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "aresta_rgba", "has_aresta", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
 	"paper_pocket_mask", "PAPER_POCKETS", "PAPER_POCKET_DIST_MAX",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
-	"display_params", "piece_asset_sig",
+	"display_params", "piece_asset_sig", "piece_ready", "ready_nbytes",
 ]
 
 # ---------------------------------------------------------------- constants
@@ -1521,11 +1521,55 @@ def _bleed_rgba(rgba: np.ndarray, r_px: int, deep_px: float = 0.0):
 	return out, r_px
 
 
+def piece_ready(project, pid: str, *, clean: bool = True, board_shadow: Optional[bool] = None,
+				bleed_mm: float = BLEED_MM) -> Optional[tuple]:
+	"""The part of drawing ``pid`` on the board that does not depend on its pose or on the output (2026-11-15, part E
+	of the performance phase): ``(rgba, ext, pad, mmpp, origin_px)`` = the crop :func:`compose_board` warps (cleaned,
+	the shadow rim and paper pockets dropped when ``board_shadow``), the bleed crop (:func:`_bleed_rgba` of it, ``None``
+	without bleed) and its pad, the scan mm per px and the crop's top-left in the scan. uint8 (≈ 0.7 MB per piece);
+	the premultiplication and the depth map are made at use, with the same arithmetic as before. None when the crop is
+	missing. :func:`compose_board` always goes through this function (with or without a cache), so a cached value and
+	a fresh one draw the same bytes."""
+	if board_shadow is None:
+		board_shadow = BOARD_SHADOW
+	p = project.piece(pid)
+	if not p.bbox:
+		return None
+	rgba = _clean_or_crop(project, pid) if clean else project.crop_rgba(pid)
+	if rgba is None:
+		return None
+	mmpp = _scan_mmpp(project, p.scan_id)
+	# the bleed keeps the cleaned silhouette: where the shadow rim is dropped, the gap it leaves at a seam
+	# or on the frontier is filled with the piece's own deep colour (as every hairline gap), never the base
+	rb = rgba
+	if clean and board_shadow and not has_aresta(project, pid):
+		sh, pk = _display_masks(project, pid, rgba)
+		if (sh | pk).any():
+			dropped = np.array(rgba, np.uint8, copy=True)
+			dropped[..., 3][sh | pk] = 0
+			rb = _fill_transparent(dropped, BAND_MM / mmpp)
+			# extent of the cleaned silhouette (dropped shadow rim in the deep colour), minus a paper pocket:
+			# a blank must stay open, not be painted with the piece colour
+			rb[..., 3] = np.where(pk, 0, rgba[..., 3])
+			rgba = dropped
+	ext, pad = None, 0
+	if bleed_mm and bleed_mm > 0:
+		ext, pad = _bleed_rgba(rb, max(1, int(round(bleed_mm / mmpp))), BAND_MM / mmpp)
+	return rgba, ext, pad, mmpp, np.asarray(p.bbox[:2], float)
+
+
+def ready_nbytes(rd) -> int:
+	"""Memory of a :func:`piece_ready` value (for the byte budget of a cache)."""
+	if rd is None:
+		return 64
+	return int(rd[0].nbytes) + (int(rd[1].nbytes) if rd[1] is not None else 0) + 256
+
+
 def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float = 0.34,
 				  layers=("art", "pieces", "legacy", "missing_border", "grid"), placements: Optional[dict] = None,
 				  art_bgr: Optional[np.ndarray] = None, piece_ids=None, clean: bool = True,
 				  depth_priority: bool = True, bleed_mm: float = BLEED_MM, base_bgr=(40, 40, 40),
-				  board_shadow: Optional[bool] = None) -> np.ndarray:
+				  board_shadow: Optional[bool] = None, ready=None) -> np.ndarray:
 	"""Render the board (BGR uint8).
 
 	``px_per_cell`` = output px per cell width (the height follows ``cell_mm``; ~218.5 = 300 dpi
@@ -1548,9 +1592,13 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 	outer ``DISPLAY_SHADOW_BAND_MM`` of each cleaned crop is dropped before drawing (:func:`shadow_paper_mask`,
 	the thumbnails' rule; RENDER.md §7): on frontier sides no neighbour covers that rim. The bleed pass keeps the
 	cleaned silhouette, so the dropped rim is filled with the piece's deep colour, not the base. Drawing only.
+	``ready``: ``ready(pid)`` returns a (cached) :func:`piece_ready` of the piece with the default ``clean``,
+	``board_shadow`` and ``bleed_mm`` (the server's cache, 2026-11-15); other arguments compute it here. The output is
+	the same bytes either way.
 	"""
 	if board_shadow is None:
 		board_shadow = BOARD_SHADOW
+	use_ready = ready is not None and clean and board_shadow == BOARD_SHADOW and bleed_mm == BLEED_MM
 	prof = project.profile
 	rows, cols = prof.rows, prof.cols
 	l0, c0, l1, c1 = region if region is not None else (1, 1, rows, cols)
@@ -1612,30 +1660,15 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 				pl = register_piece(project, pid, art=None, image=False)
 				if "error" in pl:
 					continue
-			rgba = _clean_or_crop(project, pid) if clean else project.crop_rgba(pid)
-			if rgba is None:
+			rd = ready(pid) if use_ready else piece_ready(project, pid, clean=clean, board_shadow=board_shadow, bleed_mm=bleed_mm)
+			if rd is None:
 				continue
-			# the bleed keeps the cleaned silhouette: where the shadow rim is dropped, the gap it leaves at a seam
-			# or on the frontier is filled with the piece's own deep colour (as every hairline gap), never the base
-			rb = rgba
-			if clean and board_shadow and not has_aresta(project, pid):
-				sh, pk = _display_masks(project, pid, rgba)
-				if (sh | pk).any():
-					dropped = np.array(rgba, np.uint8, copy=True)
-					dropped[..., 3][sh | pk] = 0
-					rb = _fill_transparent(dropped, BAND_MM / _scan_mmpp(project, project.piece(pid).scan_id))
-					# extent of the cleaned silhouette (dropped shadow rim in the deep colour), minus a paper pocket:
-					# a blank must stay open, not be painted with the piece colour
-					rb[..., 3] = np.where(pk, 0, rgba[..., 3])
-					rgba = dropped
-			jobs.append((pid, pl, rgba, rb))
+			jobs.append((pid, pl, rd))
 		passes = (("bleed", "pieces") if bleed_mm and bleed_mm > 0 else ("pieces",))
-		for pas, (pid, pl, rgba, rb) in [(q, j) for q in passes for j in jobs]:
-			p = project.piece(pid)
-			mmpp = _scan_mmpp(project, p.scan_id)
-			origin = np.asarray(p.bbox[:2], float)
+		for pas, (pid, pl, rd) in [(q, j) for q in passes for j in jobs]:
+			rgba, ext, pad, mmpp, origin = rd
 			if pas == "bleed":
-				rgba, pad = _bleed_rgba(rb, max(1, int(round(bleed_mm / mmpp))), BAND_MM / mmpp)
+				rgba = ext
 				origin = origin - pad
 			A = _crop_to_out(pl["theta_deg"], pl["pivot_mm"], cell_centre_mm(prof, *pl["cell"]), (pl["dx_mm"], pl["dy_mm"]),
 							 origin, mmpp, (ppm, ppm), (ox, oy))
