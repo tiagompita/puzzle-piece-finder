@@ -1,0 +1,260 @@
+{
+ "corridas": [
+  {
+   "tag": "a1",
+   "repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\4b8e76f9-7f80-408e-beff-c1cce2de78f9\\scratchpad\\perf\\wt_b",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 5.3,
+   "abrir_s": 0.46,
+   "salto1_ceu": {
+    "s": 7.18,
+    "key_at_jump": "1,20,14,40@100#2307663",
+    "key_shown": "1,20,14,40@100#2307663",
+    "yanked": false
+   },
+   "buracos_desde_salto_s": 1.6,
+   "sugestoes_desde_pronto_s": 9.03,
+   "mem_apos_buracos": {
+    "peak_ws_mb": 620,
+    "ws_mb": 619,
+    "peak_private_mb": 1116
+   },
+   "salto_frio_relva": {
+    "s": 4.19,
+    "key_at_jump": "34,30,47,50@100#2307663",
+    "key_shown": "34,30,47,50@100#2307663",
+    "yanked": false
+   },
+   "salto_frio_vale": {
+    "s": 0.05,
+    "key_at_jump": "26,2,40,22@100#2307663",
+    "key_shown": "26,2,40,22@100#2307663",
+    "yanked": false
+   },
+   "srv_frio_ceu_s": 0.4,
+   "srv_frio_relva_s": 0.06,
+   "mem_apos_saltos": {
+    "peak_ws_mb": 809,
+    "ws_mb": 771,
+    "peak_private_mb": 1305
+   },
+   "encaixa_perto": {
+    "cell": [
+     5,
+     33
+    ],
+    "post_s": 1.41,
+    "detalhe_desde_post_s": 2.64,
+    "browser": {
+     "s": 2.6375,
+     "key": "1,20,14,40@100#2311868"
+    },
+    "sugestoes_desde_post_s": 3.43,
+    "suspeitas_desde_post_s": 3.95
+   },
+   "encaixa_longe": {
+    "cell": [
+     20,
+     60
+    ],
+    "post_s": 0.63,
+    "detalhe_desde_post_s": 2.39,
+    "browser": {
+     "s": 2.38839999999851,
+     "key": "1,20,14,40@100#2320208"
+    },
+    "sugestoes_desde_post_s": 3.09,
+    "suspeitas_desde_post_s": 1.93
+   },
+   "mem_fim": {
+    "peak_ws_mb": 1148,
+    "ws_mb": 895,
+    "peak_private_mb": 1642
+   }
+  },
+  {
+   "tag": "b1",
+   "repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\4b8e76f9-7f80-408e-beff-c1cce2de78f9\\scratchpad\\perf\\wt_b",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 5.2,
+   "a_calcular": true,
+   "verificar1_s": 0.21,
+   "verificar1_srv_s": 0.209,
+   "verificar2_s": 0.0,
+   "mem_fim": {
+    "peak_ws_mb": 256,
+    "ws_mb": 254,
+    "peak_private_mb": 752
+   }
+  },
+  {
+   "tag": "a2",
+   "repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\4b8e76f9-7f80-408e-beff-c1cce2de78f9\\scratchpad\\perf\\wt_b",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 5.2,
+   "abrir_s": 1.0,
+   "salto1_ceu": {
+    "s": 7.66,
+    "key_at_jump": "1,20,14,40@100#2307663",
+    "key_shown": "1,20,14,40@100#2307663",
+    "yanked": false
+   },
+   "buracos_desde_salto_s": 1.5,
+   "sugestoes_desde_pronto_s": 10.15,
+   "mem_apos_buracos": {
+    "peak_ws_mb": 604,
+    "ws_mb": 602,
+    "peak_private_mb": 1100
+   },
+   "salto_frio_relva": {
+    "s": 4.19,
+    "key_at_jump": "34,30,47,50@100#2307663",
+    "key_shown": "34,30,47,50@100#2307663",
+    "yanked": false
+   },
+   "salto_frio_vale": {
+    "s": 0.03,
+    "key_at_jump": "26,2,40,22@100#2307663",
+    "key_shown": "26,2,40,22@100#2307663",
+    "yanked": false
+   },
+   "srv_frio_ceu_s": 0.44,
+   "srv_frio_relva_s": 0.07,
+   "mem_apos_saltos": {
+    "peak_ws_mb": 789,
+    "ws_mb": 753,
+    "peak_private_mb": 1285
+   },
+   "encaixa_perto": {
+    "cell": [
+     5,
+     33
+    ],
+    "post_s": 1.87,
+    "detalhe_desde_post_s": 3.82,
+    "browser": {
+     "s": 3.8225,
+     "key": "1,20,14,40@100#2311868"
+    },
+    "sugestoes_desde_post_s": 5.29,
+    "suspeitas_desde_post_s": 5.84
+   },
+   "encaixa_longe": {
+    "cell": [
+     20,
+     60
+    ],
+    "post_s": 0.91,
+    "detalhe_desde_post_s": 2.35,
+    "browser": {
+     "s": 2.34739999999851,
+     "key": "1,20,14,40@100#2320208"
+    },
+    "sugestoes_desde_post_s": 3.31,
+    "suspeitas_desde_post_s": 1.8
+   },
+   "mem_fim": {
+    "peak_ws_mb": 1147,
+    "ws_mb": 896,
+    "peak_private_mb": 1641
+   }
+  },
+  {
+   "tag": "b2",
+   "repo": "C:\\Users\\tiago\\AppData\\Local\\Temp\\claude\\011f846714d7d8db\\4b8e76f9-7f80-408e-beff-c1cce2de78f9\\scratchpad\\perf\\wt_b",
+   "piece": "P0096",
+   "near": [
+    5,
+    33
+   ],
+   "far": [
+    20,
+    60
+   ],
+   "pronto_s": 7.3,
+   "a_calcular": true,
+   "verificar1_s": 0.32,
+   "verificar1_srv_s": 0.308,
+   "verificar2_s": 0.02,
+   "mem_fim": {
+    "peak_ws_mb": 242,
+    "ws_mb": 241,
+    "peak_private_mb": 738
+   }
+  }
+ ],
+ "resumo": {
+  "1_salto1_s": [
+   7.18,
+   7.66
+  ],
+  "2_frio_browser_s": [
+   4.19,
+   4.19
+  ],
+  "2_frio_http_s": [
+   0.06,
+   0.44
+  ],
+  "3_perto_s": [
+   2.64,
+   3.82
+  ],
+  "3_longe_s": [
+   2.35,
+   2.39
+  ],
+  "post_s": [
+   0.63,
+   1.87
+  ],
+  "5_pico_ws_mb": [
+   1147,
+   1148
+  ],
+  "sugestoes_desde_pronto_s": [
+   9.03,
+   10.15
+  ],
+  "sugestoes_desde_post_s": [
+   3.09,
+   5.29
+  ],
+  "suspeitas_desde_post_s": [
+   1.8,
+   5.84
+  ],
+  "5_pico_privada_mb": [
+   1641,
+   1642
+  ],
+  "4_verificar1_s": [
+   0.21,
+   0.32
+  ]
+ }
+}

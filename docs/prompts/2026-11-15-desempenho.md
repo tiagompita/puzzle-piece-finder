@@ -103,11 +103,25 @@ Sessão principal (decisão do Tiago sobre o P0b):
 > pela ordem e com as paragens do plano, um commit por bloco em main (testa e mede o que está no wip antes de fundir;
 > não fundas nada sem testes verdes). C2: só se mede. […]
 
+Sessão principal (decisão do Tiago sobre a paragem depois da parte 1; e a retoma):
+
+> Decisão do Tiago (2026-11-15) sobre a paragem depois da parte 1: (a) E, depois (b) alargada, depois C. […] 2. (b)
+> alargada: prioridade à interação. Enquanto houver um pedido de detalhe (região do board.jpg) ou um «verificar» em
+> curso, TODO o trabalho de fundo cede: o ranking dos buracos, as suspeitas calculadas depois da resposta […] e o
+> pré-aquecimento da E. […] O resultado do ranking e das suspeitas tem de ficar IGUAL, só mais tarde […]. 3. C, com as
+> duas condições dos mosaicos confirmadas ANTES de começar […]. Se alguma condição falhar, pára e reporta. C2 só se
+> mede […]. EXCEÇÃO dada pelo Tiago: se, no FIM de E + (b) + C, algum critério ainda falhar, regista-o como [F] […].
+
+> Retoma a fase de desempenho, interrompida pelo limite de sessão (pedido do Tiago). […] 4. Limpeza no fim: remove o
+> worktree tmp/b e os ramos teste-a, teste-b, teste-b3, tmp/b e wip/desempenho-parte1, só depois de confirmares que nada
+> deles falta em main […].
+
 ## Resultado
 
-- `64ac6e8` **P0 + P1 [V]** e a medição do P0b (sem regressão de código: bisect de 5 commits iguais).
-- `aae3a9d` **P0b [V]:** A1–A4 + B; POST 0,7–1,7 s (sem browser e com a GUI aberta); saídas iguais antes/depois.
-- `2d34c19` **parte 1 [V nos testes e no ranking; F nos critérios 1 e 4]:** paragem obrigatória (DETALHE §11.7).
-- Suite 596 passed, 1 skipped, 0 failed; `test_concorrencia` 20/20.
-- **Por fazer:** decisão do Tiago sobre os critérios 1 e 4; E (no ramo `wip/desempenho-parte1`), C, medição de C2,
-  capturas «depois».
+- `64ac6e8` **P0 + P1 [V]**; `aae3a9d` **P0b [V]** (POST 0,6–1,8 s); `2d34c19` **parte 1 [V]**; `3d616c3` **E [V]**
+  (igual byte a byte); `983ae98` **(b) [V]** (resultado igual com cedências; «verificar» 0,21 s).
+- **C parado** (ramo `wip/desempenho-c`, `043435c`): condições confirmadas, mas a mudança na relva excede o limite aceite
+  e os critérios 1 e 2 pioram (DETALHE §11.10). C2 não medido.
+- **[F] em `main`:** critérios 1 (3,76–4,41 s), 2 (2,15–2,28 s), 3 (3,3–3,4 / 2,7 s). [V]: 4, 5, POST.
+- Ramos `teste-a`, `teste-b`, `teste-b3` não apagados (commits fora de `main`); `tmp/b` e `wip/desempenho-parte1`
+  apagados (conteúdo em `main`).

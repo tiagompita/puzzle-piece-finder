@@ -1,28 +1,33 @@
-# HANDOFF — 2026-11-15 (fase de desempenho: P0, P0b, P1 e parte 1 feitos; PARADO: critérios 1 e 4 falham depois da parte 1)
+# HANDOFF — 2026-11-15 (fase de desempenho: P0, P0b, P1, parte 1, E e (b) em main; C parado à espera do Tiago)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
 ## Última sessão (2026-11-15): `docs/prompts/2026-11-15-desempenho.md` (fechado)
 - **Estado:** fase de desempenho do plano aprovado (`docs/diagnostico/gui/DETALHE.md` §11). Em `main`:
   - `64ac6e8` **P0 + P1**: a vista do Montar só segue o cartão por ação; «localizar» pisca quando o cartão muda sozinho;
-    salto durante um arrasto espera pelo fim; portão no teste da fila; `gui.stop()` por fixture `autouse`; P1a (lupa a
-    390 px com teclado), P1b (teste). Os dois testes que falhavam ao acaso: 20/20.
-  - `aae3a9d` **P0b** (decisão do Tiago: A1–A4 + B, C não): POST de um «Encaixa» 5,3–7,4 → 0,7–1,7 s, sem browser e com
-    `/novo/` aberto (critério ≤ 2,0 s [V]); `fetch.*`, reconsulta, vistas JSON e `consistency.evaluate` iguais antes/depois
-    (`tools/diagnostico/gui/p0b_iguais.py`). As suspeitas chegam depois da resposta (fio «suspeitas»).
-  - `2d34c19` **parte 1** (1a formas por folha, 1b lados em `render/fit/sides.npz`, 1c chave das tiras pelo recorte com
-    conversão do formato antigo, 1d ranking no fim do arranque): ranking a frio 33–46 → 5,9 s (41,8 s só no 1.º arranque
-    depois de atualizar); `rank_all` igual (`rank_iguais.py`). Achado: 23 tiras velhas, todas de peças com aresta pintada.
-- **PARADO (paragem obrigatória):** depois da parte 1, critério 1 (1.º salto) 7,4–7,8 s (alvo 4,0) e critério 4
-  (1.º «verificar») 1,1–1,4 s (alvo 1,0) falham. Causa no §11.7: ao abrir, duas regiões frias compõem-se ao mesmo tempo
-  com o ranking (≈ 4,5 s); o «verificar» compete com o ranking. **Decisão do Tiago:** (a) seguir para E; (b) adiar /
-  pausar o ranking enquanto a GUI pede detalhe ou «verificar»; (c) aceitar.
-- **Critério 3 piorou com B** (o trabalho das suspeitas passou para depois da resposta): do clique ao detalhe desceu
-  (perto 11,0 → 9,3 s), mas «do fim do POST ao detalhe» subiu para 5,4–7,6 s. É o alvo de C.
-- **Não feito:** E (código de `render.piece_ready` no ramo `wip/desempenho-parte1`, `ab2943f`; a `ReadyCache` do servidor
-  está escrita no scratchpad, não aplicada), C, C2 (medição), capturas «depois» (a composição não mudou até aqui).
+    salto durante um arrasto espera pelo fim; portão no teste da fila; `gui.stop()` por fixture `autouse`; P1a, P1b.
+  - `aae3a9d` **P0b** (A1–A4 + B): POST de um «Encaixa» 5,3–7,4 → 0,6–1,8 s; saídas iguais antes/depois; as suspeitas
+    chegam depois da resposta.
+  - `2d34c19` **parte 1**: formas por folha, lados em `render/fit/sides.npz`, chave das tiras pelo recorte, ranking ao
+    arrancar; ranking a frio 33–46 → ≈ 5 s (41,8 s só no 1.º arranque depois de atualizar).
+  - `3d616c3` **E**: peças prontas a desenhar (`ReadyCache`, 600 MB, pré-aquecimento); composição igual byte a byte;
+    região quente 2,3–2,8 → 0,7–0,8 s.
+  - `983ae98` **(b) alargada**: o trabalho de fundo (ranking, suspeitas, pré-aquecimento) cede enquanto há uma região de
+    detalhe ou um «verificar» em curso; resultado igual (`tests/test_ceder.py`); 1.º «verificar» 0,21 s.
+- **C PARADO, não fundido** (ramo `wip/desempenho-c`, `043435c`): as duas condições dos mosaicos confirmadas (colagens = 0
+  px; motor independente, saídas iguais), mas a mudança contra a grelha de hoje na relva (24–38 % dos píxeis, até
+  33–55 níveis; invisível à vista) excede o que o Tiago aceitou (≤ 5 níveis em ≤ 0,06 %), e com C os critérios 1 e 2
+  pioram (7,2–7,7 s; 4,2 s). **Decisão do Tiago:** aceitar a mudança / outro limite, ou deixar C (§11.10).
+- **Critérios em `main` (§11.11):** 1 (1.º salto) 3,76–4,41 s [F numa corrida], 2 (salto a frio no browser) 2,15–2,28 s
+  [F], 3 (detalhe depois de um «Encaixa») 3,3–3,4 / 2,7 s [F; o encadeamento de recarga do browser fica ≈ 2,4 s mesmo
+  com C], 4 0,21 s [V], 5 1,1 GB [V], POST [V].
+- **No arranque as sugestões «pelo encaixe» chegam ≈ 3 s mais tarde** (6 s depois do «pronto»), porque o ranking cede
+  ao 1.º salto; depois de uma escrita, iguais.
 - **Medições:** `docs/diagnostico/gui/dados/r4_*.json`; guião `tools/diagnostico/gui/desempenho.py` (`--repo`, `--so
-  a|b|p|q|r`). As medições depois da parte 1 usam uma base com `sides.npz` (o estado depois do 1.º arranque).
+  a|b|p|q|r`, ouvinte SSE). As medições depois da parte 1 usam uma base com `sides.npz` (o estado depois do 1.º arranque).
+- **Capturas:** `docs/diagnostico/gui/capturas/desempenho_{ceu,relva}_{antes,depois_E_b,depois_C}.jpg` (antes = depois de
+  E + (b), byte a byte).
+- **Ramos:** `teste-a`, `teste-b`, `teste-b3` têm commits que não estão em `main` (não apagados); `wip/desempenho-c` é C.
 
 ## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-f2c-correcoes-uso-real.md` (fechado)
 - **Saco 9 · nº 89 em 1 · 29 encaixa fisicamente [V, Tiago]:** primeiro caso real de «pôr à mão»; a borda está completa (218/218).
@@ -151,7 +156,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
-1. **Fase de desempenho parada depois da parte 1** (critérios 1 e 4, `DETALHE.md` §11.7; decisão do Tiago); depois E, C; a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6).
+1. **Fase de desempenho: C parado** (decisão do Tiago sobre a mudança de píxeis na relva, `DETALHE.md` §11.10); critérios 1–3 [F] em `main` (§11.11); a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6).
 2. **Limites da F1b [NT]:**
    - «Peças» é só uma ligação para a interface completa (F3);
    - «⋯ › Atividade» abre a interface antiga noutro separador (F5);

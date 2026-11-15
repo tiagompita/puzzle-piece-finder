@@ -881,3 +881,81 @@ Teste existente alterado: `tests/test_gui_novo_f2.py::test_phone_layout_panels` 
 peça à mão» antes de o «verificar» responder e voltar a desenhar o painel (elemento substituído → `bounding_box` None);
 falha sozinho também em 9f672c0 (2 em 3) e em 244a1cf (3 em 3) [V]: corrida do teste, não de (b). Agora espera pela
 resposta (6/6).
+
+### 11.10 C (mosaicos): condições confirmadas, mas PARADO antes de fundir [V]
+
+O código está no ramo `wip/desempenho-c` (`043435c`, sobre `983ae98`), **não em `main`**:
+- `render.compose_board(px_box=)` na grelha global de píxeis (arte por `cv2.remap` com mapas absolutos; cada peça
+  deformada na sua caixa inteira em píxeis absolutos e cortada depois), `board_px_size`, `cell_px_box`;
+- `server.MosaicCache` (8 × 8 células, LRU por bytes, `--cache-mosaicos-mb` 256), chave por peça a ± 2 células (célula,
+  registo, chave da `ReadyCache`), arte e grelha; a região de ppc inteiro cola os mosaicos; a LRU das regiões fica
+  válida enquanto as chaves dos mosaicos não mudam;
+- `tests/test_mosaicos.py` (10) e `tools/diagnostico/gui/mosaicos_iguais.py`.
+
+**As duas condições do Tiago, confirmadas antes de fundir [V]:**
+1. Mosaicos colados = composição única do mesmo `px_box`: metades em x, metades em y, 2 × 2 e os mosaicos de 8 × 8 do
+   servidor — **0 píxeis diferentes** no sintético (céu e relva, ppc 60/100/140/217) e na cópia real (céu 1,20–14,40 e
+   relva 34,30–47,50, ppc 100 e 240; `dados/r4_c_mosaicos_copia.json`).
+2. (a) `compose_board`, as regiões e `render/gui/board_*` só são usados por `src/server.py` e `src/render.py` (e pelo CLI
+   `src/artreg.py`, fora do motor); `fit`, `twin`, `query`, `consistency`, `legacy`, `border` e `state`: 0 referências
+   (grep; `graphify path compose_board rank_all` só liga por imports genéricos). O caminho sem `px_box` não mudou.
+   (b) Na cópia, código de `983ae98` contra o de C: `p0b_iguais.py` «IGUAIS 5 passos» (reconsulta, `fetch.*`, vistas
+   JSON, `consistency.evaluate`) e `rank_iguais.py` «IGUAIS» (`rank_all`).
+
+**Porque parei:** a decisão do Tiago para C aceitava a grelha nova «deslocada < 0,5 px na vertical e com ≤ 5 níveis
+em ≤ 0,06 % dos píxeis». Medido na cópia (região inteira, código de hoje contra a grelha nova, `y` arredondado para o
+deslocamento ser ≤ 0,5 px; com `floor` a relva a ppc 100 ficava deslocada 0,97 px):
+
+| região | píxeis diferentes | máx. níveis | píxeis > 5 níveis |
+|---|---|---|---|
+| céu, ppc 100 | 0,07 % | 13 | 1 |
+| céu, ppc 240 | 0,08 % | 8 | 3 |
+| relva, ppc 100 | **24 %** | **33** | 521 |
+| relva, ppc 240 | **38 %** | **55** | 857 687 |
+
+No céu (arte lisa) fica perto do que foi aceite; na relva (arte com textura) uma reamostragem com outra fase sub-píxel
+(e `remap` em vez de `warpAffine` na arte) muda muitos píxeis em poucos níveis. À vista não se distingue (recorte
+ampliado da relva: `capturas/desempenho_relva_depois_C.jpg` contra `desempenho_relva_antes.jpg`; a diferença ×8 são faixas
+horizontais ténues), mas excede os números aceites, e os 0,06 % do plano vinham de outra medição (costuras entre regiões
+vizinhas, não a região inteira). **Decisão do Tiago:** aceitar esta mudança (ou um limite novo) para C.
+
+Medido também com C (ramo, 2 corridas, `dados/r4_criterios_c_wip.json`), contra (b):
+
+| # | critério | alvo | (b) em `main` | com C (ramo) |
+|---|---|---|---|---|
+| 1 | 1.º salto depois de abrir | ≤ 4,0 s | 4,41 · 3,76 | 7,18 · 7,66 |
+| 2 | salto a frio relva, browser / HTTP | ≤ 2,0 s | 2,28 · 2,15 / 0,78–1,08 | 4,19 · 4,19 / 0,06–0,44 |
+| 3 | detalhe depois de um «Encaixa», perto / longe | ≤ 1,2 / ≤ 0,6 s | 3,41 · 3,26 / 2,72 · 2,71 | 2,64 · 3,82 / 2,39 · 2,35 |
+| 4 | 1.º «verificar» | ≤ 1,0 s | 0,21 · 0,21 | 0,21 · 0,32 |
+| 5 | pico do working set | ≤ 1,6 GB | 1106 · 1107 MB | 1147 · 1148 MB |
+
+Com C, o frio piora (uma região de 21 × 14 células toca até 12 mosaicos de 8 × 8 e compõe ≈ 24 × 16 células), o
+quente melhora (0,06–0,44 s por HTTP) e o critério 3 desce pouco: depois de uma escrita longe, o servidor já não
+compõe nada (nenhum pedido lento no registo), mas o browser só pede o detalhe depois de recarregar o tabuleiro (350 ms
+de espera + `/api/board` + fantasmas + raster): é esse encadeamento, não a composição, que fica nos 2,4 s. **C2 não
+medido** (depende de C).
+
+### 11.11 Estado final dos critérios (código em `main`, `983ae98`) — o que fica [F]
+
+| # | critério | alvo | 9f672c0 | `main` (E + (b)) | |
+|---|---|---|---|---|---|
+| 1 | 1.º salto depois de abrir | ≤ 4,0 s | 14,07 · 13,76 | 4,41 · 3,76 | **[F]** numa das 2 corridas |
+| 2 | salto a frio relva, browser | ≤ 2,0 s | 4,09 · 3,79 | 2,28 · 2,15 | **[F]** |
+| 3 | detalhe depois de um «Encaixa», perto / longe | ≤ 1,2 / ≤ 0,6 s | 3,34 · 3,30 / 4,09 · 3,60 | 3,41 · 3,26 / 2,72 · 2,71 | **[F]** (o alvo era de C) |
+| 4 | 1.º «verificar» | ≤ 1,0 s | 2,17 · 1,56 | 0,21 · 0,21 | [V] |
+| 5 | pico do working set | ≤ 1,6 GB | 738 · 733 MB | 1106 · 1107 MB | [V] |
+| — | POST de um «Encaixa» (P0b) | ≤ 2,0 s | 5,3–7,4 | 0,6–1,8 | [V] |
+
+Capturas antes / depois (região a ppc 100 do servidor, cópia): `capturas/desempenho_{ceu,relva}_antes.jpg` e
+`..._depois_E_b.jpg` são **iguais byte a byte** (E e (b) não mudam a composição); `..._depois_C.jpg` = o ramo de C.
+
+### 11.12 Verificação final e uma corrida encontrada no fim [V]
+
+- `test_concorrencia` no fim deu **19/20**. Capturada a falha (1 em 45 corridas): `consistency.evaluate`, chamada fora do
+  bloqueio de escrita (desde o P0b B, e no `GET /api/suspeitas` já antes), lia `celula` de uma peça que uma escrita
+  tirava do tabuleiro a meio (`TypeError: 'NoneType' object is not subscriptable` em `twin_exception`). No servidor o fio
+  das suspeitas apanhava o erro e as suspeitas ficavam por recalcular até à escrita seguinte. Correção
+  (`Gui.suspeitas_json`): com um `TypeError`/`KeyError`/`AttributeError`, espera que a escrita acabe e avalia outra vez
+  (até 3 vezes; sem uma escrita pelo meio, o erro sobe). Depois: 40/40 corridas.
+- Suite completa com o `.venv` (incl. slow): antes desta correção 609 passed, 1 skipped, 0 failed; depois dela 609
+  passed, 1 skipped, 0 failed.

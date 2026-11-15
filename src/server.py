@@ -831,7 +831,19 @@ class Gui:
 			r = ev[1]
 		else:
 			pl = self._susp_placements()
-			r = consistency.evaluate(self.pr, pl, pause=pause)
+			for k in range(3):
+				v0 = self.version()
+				try:
+					r = consistency.evaluate(self.pr, pl, pause=pause)
+					break
+				except (TypeError, KeyError, AttributeError):
+					# since P0b B the suspects are evaluated outside the write lock: a write can take a piece off the
+					# board under the evaluation (its ``celula`` becomes None; seen 1 in 45 runs of
+					# tests/test_concorrencia.py). Wait for that write and evaluate again; without a write, a real error
+					if self.wlock.acquire(timeout=WRITE_WAIT_S):
+						self.wlock.release()
+					if k == 2 or self.version() == v0:
+						raise
 			self._susp_pl = pl
 			self._susp_eval = (key, r)
 		out = self._join_reports(r)
