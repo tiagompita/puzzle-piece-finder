@@ -129,6 +129,9 @@ QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file k
 GIL_SWITCH_S = 0.0005
 YIELD_MAX_S = 30.0             # (b): longest single wait of a background job for the GUI
 READY_MB = 600.0               # E: budget of the pieces ready to draw (--cache-pecas-mb); ≈ 0,74 MB per piece
+PATCH_MB = 128.0              # arrays of the detail regions for the patch (--cache-remendo-mb); ≈ 2 × 8,5 MB per céu region at ppc 100
+PATCH_MAX_PECAS = 12          # more changed pieces than this in a region -> whole composition instead of a patch
+PATCH_MAX_FRAC = 0.35         # a dirty zone above this share of the region -> whole composition
 POSE_CONTOUR_PTS = 300         # GET /pose: points of each contour (cell-width units)
 POSE_DIRS = {"N": (-1, 0), "E": (0, 1), "S": (1, 0), "W": (0, -1)}
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
@@ -502,6 +505,62 @@ class ReadyCache:
 					"acertos": self.hits, "calculos": self.misses, "expulsas": self.evictions}
 
 
+class PatchCache:
+	"""The arrays of the last composition of each detail region (2026-11-15, the patch of DETALHE.md §13.4): ``(ppc,
+	region)`` -> ``{parts, art, img, boxes}`` (the parts of :meth:`Gui._region_parts`, the base under the pieces, the
+	image, the box of each piece), LRU by bytes (``--cache-remendo-mb``). A request whose content changed redraws only
+	the pieces that changed and their neighbours (:func:`src.render.compose_patch`) over the entry of the same region.
+	The arrays are read-only (shared); a crop that changes changes the piece's part, so no ``forget`` per piece is
+	needed (``clear`` where :class:`ReadyCache` is cleared: assets rebuilt)."""
+
+	def __init__(self, budget_mb: float):
+		self.budget = int(float(budget_mb) * 2**20)
+		self.lock = threading.Lock()
+		self.d = collections.OrderedDict()      # key -> (entry, nbytes)
+		self.nbytes = 0
+		self.evictions = 0
+
+	def get(self, key):
+		with self.lock:
+			e = self.d.get(key)
+			if e is None:
+				return None
+			self.d.move_to_end(key)
+			return e[0]
+
+	def put(self, key, entry: dict) -> None:
+		for k in ("art", "img"):
+			entry[k].flags.writeable = False
+		n = int(entry["art"].nbytes) + int(entry["img"].nbytes) + 64 * (len(entry["parts"]) + len(entry["boxes"])) + 256
+		with self.lock:
+			old = self.d.pop(key, None)
+			if old is not None:
+				self.nbytes -= old[1]
+			if n <= self.budget:
+				self.d[key] = (entry, n)
+				self.nbytes += n
+			while self.nbytes > self.budget and self.d:
+				_, (_, m) = self.d.popitem(last=False)
+				self.nbytes -= m
+				self.evictions += 1
+
+	def touch(self, key) -> None:
+		"""Mark ``key`` as used (a JPEG hit of the region): the LRU keeps the regions on screen."""
+		with self.lock:
+			if key in self.d:
+				self.d.move_to_end(key)
+
+	def clear(self) -> None:
+		with self.lock:
+			self.d.clear()
+			self.nbytes = 0
+
+	def stats(self) -> dict:
+		with self.lock:
+			return {"regioes": len(self.d), "mb": round(self.nbytes / 2**20, 1), "orcamento_mb": round(self.budget / 2**20),
+					"expulsas": self.evictions}
+
+
 class Busy(RuntimeError):
 	"""A write was attempted while a background job holds the project."""
 
@@ -523,7 +582,7 @@ class Gui:
 
 	def __init__(self, project_path: str, *, prepare: bool = True, use_image: bool = True,
 				 uploads: Optional[str] = None, log="activity", ring=None, queue: bool = True,
-				 ready_mb: float = READY_MB):
+				 ready_mb: float = READY_MB, patch_mb: float = PATCH_MB):
 		self.path = os.path.abspath(project_path)
 		self.pr = Project.open(self.path)
 		self.use_image = use_image
@@ -564,6 +623,10 @@ class Gui:
 		self._sheets = {}
 		self._art = None
 		self.ready = ReadyCache(ready_mb)     # E: pieces ready to draw (render.piece_ready), LRU by bytes
+		self.patches = PatchCache(patch_mb)   # arrays of the detail regions: a changed region is patched, not recomposed
+		self._patch_tl = threading.local()    # the patch context of the region composition running in this thread
+		self.patch_lock = threading.Lock()
+		self.patch_stats = {"remendos": 0, "inteiras": 0, "iguais": 0, "motivos": {}}
 		self._fg_cond = threading.Condition()  # (b): GUI requests in progress (detail regions, «verificar»)
 		self._fg_n = 0
 		self.yields = {"n": 0, "s": 0.0}      # (b): how often / how long the background work yielded
@@ -785,6 +848,7 @@ class Gui:
 			with self.wlock:
 				r = render.rebuild_stale(self.pr, progress=self._sheet_counter("imagens", "A refazer imagens: folha", st["n_folhas"]))
 				self.ready.clear()
+				self.patches.clear()
 				self._known_stat = self._log_stat()       # our own events (if any) are not an outside change
 			left = r["depois"]["n_pecas"] if r.get("depois") else st["n_pecas"]
 			info.update(refeitos=st["n_pecas"] - left, restantes=left, eventos=int(r.get("eventos") or 0),
@@ -809,6 +873,7 @@ class Gui:
 				with self.wlock:
 					r = render.rebuild_assets(self.pr, progress=self._sheet_counter("imagens", "A refazer imagens: folha", len(self.pr.model.scans)))
 				self.ready.clear()
+				self.patches.clear()
 				for e in r.get("errors", []):
 					self._prep(f"ERRO: {e}")
 				self._prep("recursos regenerados" + (" com erros (ver acima)" if r.get("errors") else ""))
@@ -1424,12 +1489,65 @@ class Gui:
 	# ------------------------------------------------------------ board raster
 	def _compose(self, ppc: float, region=None) -> np.ndarray:
 		from src import render
+		ctx = getattr(self._patch_tl, "ctx", None)
+		if ctx is not None and region is not None and ctx["key"] == (float(ppc), tuple(region)):
+			self._patch_tl.ctx = None                      # one use: the detail composition of :meth:`_region_jpg`
+			return self._compose_region(ppc, tuple(region), ctx)
 
 		def go():
 			pr = self.pr
 			return render.compose_board(pr, ppc, region=region, layers=("art", "pieces"), placements=self.placements(),
 										ready=lambda pid: self.ready.get(pr, pid))
 		return self.read(go)
+
+	def _compose_region(self, ppc: float, region: tuple, ctx: dict) -> np.ndarray:
+		"""A detail region from the :class:`PatchCache` entry of the same ``(ppc, region)`` (2026-11-15, DETALHE.md
+		§13.4): the parts of the request (``ctx['parts']``, :meth:`_region_parts`) against the stored ones give the
+		pieces that changed (new, gone, another cell / pose / ready piece); none -> the stored image; up to
+		``PATCH_MAX_PECAS`` -> :func:`src.render.compose_patch` (only the dirty zone redrawn; whole region if the zone is
+		above ``PATCH_MAX_FRAC``); else, or without an entry, or with another art -> the whole composition. The new
+		entry goes in ``ctx['entry']``: :meth:`_region_jpg` stores it only when no write crossed (seqlock)."""
+		from src import render
+		key, parts = ctx["key"], ctx["parts"]
+		old = self.patches.get(key)
+		changed, why = None, None
+		if old is None:
+			why = "sem_base"
+		elif old["parts"][0] != parts[0]:
+			why = "arte"
+		else:
+			a = {p[0]: p for p in old["parts"][1:]}
+			b = {p[0]: p for p in parts[1:]}
+			changed = {pid for pid in set(a) | set(b) if a.get(pid) != b.get(pid)}
+			if len(changed) > PATCH_MAX_PECAS:
+				why, changed = "muitas_pecas", None
+		if changed is not None and not changed:
+			ctx["entry"], ctx["modo"] = dict(old, parts=parts), "igual"
+			self._count_patch("iguais")
+			return np.array(old["img"], copy=True)
+
+		def go():
+			pr = self.pr
+			kw = dict(placements=self.placements(), ready=lambda pid: self.ready.get(pr, pid))
+			if changed is None:
+				base = old["art"] if old is not None and why != "arte" else None
+				r = render.compose_board(pr, ppc, region=region, layers=("art", "pieces"), base_art=base, return_parts=True, **kw)
+				return dict(r, modo="inteira")
+			return render.compose_patch(pr, ppc, region, base_art=old["art"], old_img=old["img"], old_boxes=old["boxes"],
+										changed=changed, max_frac=PATCH_MAX_FRAC, **kw)
+		r = self.read(go)
+		if r["modo"] == "inteira" and why is None:
+			why = "zona_grande"
+		ctx["entry"] = {"parts": parts, "art": r["art"], "img": r["img"], "boxes": r["boxes"]}
+		ctx["modo"] = r["modo"]
+		self._count_patch("remendos" if r["modo"] == "remendo" else "inteiras", why)
+		return r["img"]
+
+	def _count_patch(self, what: str, why: Optional[str] = None) -> None:
+		with self.patch_lock:
+			self.patch_stats[what] += 1
+			if why:
+				self.patch_stats["motivos"][why] = self.patch_stats["motivos"].get(why, 0) + 1
 
 	def _disk_cache(self, ppc: int) -> tuple:
 		d = self.pr.p("render", "gui")
@@ -1545,15 +1663,20 @@ class Gui:
 			self._regions.popitem(last=False)
 
 	def _region_sig(self, region: tuple) -> str:
-		"""sha1 of what a detail region of :meth:`_compose` is made of (2026-11-15, decision of Tiago; DETALHE.md §13),
+		"""sha1 of :meth:`_region_parts` (the content key of a detail region)."""
+		import hashlib
+		return hashlib.sha1(repr(self._region_parts(region)).encode("utf-8")).hexdigest()
+
+	def _region_parts(self, region: tuple) -> list:
+		"""What a detail region of :meth:`_compose` is made of (2026-11-15, decision of Tiago; DETALHE.md §13),
 		so a write that does not touch the region keeps its cached JPEG (the key was :meth:`render_version`: any write
 		dropped every region). The pieces :func:`src.render.compose_board` draws there are those with a cell in the
 		region ± 1 (its bleed / overhang margin); for each, in its order: id, cell, the pose it is drawn with (the
 		:meth:`placements` entry when it is valid for the piece, else the on-the-fly registration, keyed by
 		:func:`src.render._entry_key`) and :meth:`ReadyCache.key` (crop, painted edge, scan mm/px, background, display
-		constants, sha1 of ``puzzle.json`` = grid, art registration, calibration); plus the art file. Reads the live
-		model, like the composition: :meth:`_region_jpg` stores only what no write crossed (seqlock)."""
-		import hashlib
+		constants, sha1 of ``puzzle.json`` = grid, art registration, calibration); plus the art file (the first part).
+		Reads the live model, like the composition: :meth:`_region_jpg` stores only what no write crossed (seqlock).
+		The parts per piece also give the pieces that changed for the patch (:meth:`_compose_region`)."""
 		from src import render
 		pr = self.pr
 		l0, c0, l1, c1 = region
@@ -1572,7 +1695,7 @@ class Gui:
 			else:
 				pose = ("na_hora", render._entry_key(pr, pid))
 			parts.append((pid, cells[pid], pose, ReadyCache.key(pr, pid)))
-		return hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()
+		return parts
 
 	def _art_file_sig(self) -> tuple:
 		f = (self.pr.profile.art or {}).get("file")
@@ -1592,12 +1715,15 @@ class Gui:
 		(:class:`Superseded`, HTTP 409) before it starts composing, so a burst of jumps leaves one composition."""
 		self._last_region = tuple(region)    # E: the warm-up of the pieces starts around the last region asked for
 		s0 = self.wlock.seq
-		ver = self._region_sig(region)       # the content of the region, not the log version (DETALHE.md §13)
+		import hashlib
+		parts = self._region_parts(region)
+		ver = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()   # the content of the region (DETALHE.md §13)
 		key = (round(ppc, 1), region)
 		jk = (key, ver)
 		with self.region_lock:
 			data = self._region_cached(key, ver)
 			if data is not None:
+				self.patches.touch((float(ppc), tuple(region)))
 				return data
 			if client is not None and seq is not None:
 				self._detail_seq[client] = max(int(seq), self._detail_seq.get(client, -1))
@@ -1628,14 +1754,22 @@ class Gui:
 				else:
 					data = None
 				if data is None:
-					with self.foreground():
-						data = _jpeg(self._compose(ppc, region))
+					ctx = {"key": (float(ppc), tuple(region)), "parts": parts, "entry": None, "modo": None}   # exact ppc: same frame
+					self._patch_tl.ctx = ctx
+					try:
+						with self.foreground():
+							data = _jpeg(self._compose(ppc, region))
+					finally:
+						self._patch_tl.ctx = None
 					# kept under its content key only when no write started or ended from the signature to the end of
 					# the composition (seqlock, no waiting): else the image may hold another content than ``ver`` says,
-					# and a later request with that content (an «Encaixa» undone) would get it. Served either way.
+					# and a later request with that content (an «Encaixa» undone) would get it. Served either way. The
+					# same rule for the arrays of the patch (a patch over a torn base would carry the tear on).
 					if s0 % 2 == 0 and self.wlock.seq == s0:
 						with self.region_lock:
 							self._region_store(key, ver, data)
+						if ctx["entry"] is not None:
+							self.patches.put(ctx["key"], ctx["entry"])
 			finally:
 				if clock is not None:
 					clock.release()
@@ -2141,7 +2275,15 @@ class Gui:
 				"job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
 				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info,
 				"contador_alta": cnt, "atividade_seq": self.ring.seq, "fila": self.queue_summary(),
-				"cache_pecas": self.ready.stats()}
+				"cache_pecas": self.ready.stats(), "remendo": self.patch_json()}
+
+	def patch_json(self) -> dict:
+		"""Counters of the detail regions composed since the start (``/api/status.remendo``): ``remendos`` (only the
+		changed pieces redrawn), ``inteiras`` (whole region, with ``motivos``), ``iguais`` (same content, the stored
+		array), plus the memory of :class:`PatchCache`."""
+		with self.patch_lock:
+			out = dict(self.patch_stats, motivos=dict(self.patch_stats["motivos"]))
+		return dict(out, cache=self.patches.stats())
 
 	# ------------------------------------------------------------ writes
 	def _after_write(self, before_snap: list, placed: list) -> dict:
@@ -4110,6 +4252,8 @@ def _parser() -> argparse.ArgumentParser:
 	ap.add_argument("--ui", choices=("antiga", NOVO_UI), default="antiga", help="interface a anunciar: antiga (/) ou novo (/novo/)")
 	ap.add_argument("--gil-intervalo", type=float, default=GIL_SWITCH_S, metavar="S",
 					help=f"sys.setswitchinterval do processo (omissão {GIL_SWITCH_S}; 0 = o do Python, 0,005)")
+	ap.add_argument("--cache-remendo-mb", type=float, default=PATCH_MB, metavar="MB",
+					help=f"memória das regiões de detalhe guardadas para o remendo (omissão {PATCH_MB:.0f} MB)")
 	ap.add_argument("--cache-pecas-mb", type=float, default=READY_MB, metavar="MB",
 					help=f"memória das peças prontas a desenhar (omissão {READY_MB:g} MB; 0 = sem cache)")
 	return ap
@@ -4128,7 +4272,7 @@ def main(argv=None) -> int:
 	log = activity.get("arranque")
 	try:
 		gui = Gui(args.project, prepare=not args.no_prepare, use_image=not args.no_image, uploads=args.uploads, ring=ring,
-				  ready_mb=args.cache_pecas_mb)
+				  ready_mb=args.cache_pecas_mb, patch_mb=args.cache_remendo_mb)
 	except (StateError, ValueError) as e:
 		log.error(f"erro: {e}")
 		return 1

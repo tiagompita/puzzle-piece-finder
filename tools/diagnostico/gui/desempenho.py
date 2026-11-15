@@ -265,8 +265,10 @@ def run_a(a, k, browser):
 			post_s = time.perf_counter() - t1
 			t_post = time.perf_counter()
 			w = pg.evaluate(WAIT_SHOWN, str(ver0))
+			det_s = round(time.perf_counter() - t1 - post_s, 2)
 			out[f"encaixa_{kind}"] = {"cell": cell, "post_s": round(post_s, 2),
-									  "detalhe_desde_post_s": round(time.perf_counter() - t1 - post_s, 2), "browser": w,
+									  "detalhe_desde_post_s": det_s, "browser": w,
+									  "remendo": G._json("/api/status", 60).get("remendo"),   # None before the patch (2026-11-15)
 									  "sugestoes_desde_post_s": r.ev.first("holes_changed", t_post),
 									  "suspeitas_desde_post_s": r.ev.first("suspeitas_changed", t_post)}
 			G._wait_ready()

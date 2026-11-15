@@ -84,7 +84,7 @@ __all__ = [
 	"warp_rgba", "resize_rgba", "piece_rgba_for_display", "aresta_rgba", "has_aresta", "shadow_paper_mask", "DISPLAY_SHADOW", "BOARD_SHADOW",
 	"paper_pocket_mask", "PAPER_POCKETS", "PAPER_POCKET_DIST_MAX",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
-	"display_params", "piece_asset_sig", "piece_ready", "ready_nbytes",
+	"display_params", "piece_asset_sig", "piece_ready", "ready_nbytes", "compose_patch", "PATCH_PAD_PX",
 ]
 
 # ---------------------------------------------------------------- constants
@@ -1565,11 +1565,156 @@ def ready_nbytes(rd) -> int:
 	return int(rd[0].nbytes) + (int(rd[1].nbytes) if rd[1] is not None else 0) + 256
 
 
+def _frame(prof, px_per_cell: float, region) -> tuple:
+	"""Output frame of :func:`compose_board`: ``((l0, c0, l1, c1), ppm, ox, oy, W, H)`` (px per mm, the region's
+	top-left in board px, the output size)."""
+	l0, c0, l1, c1 = region if region is not None else (1, 1, prof.rows, prof.cols)
+	w_mm, h_mm = float(prof.cell_mm["w"]), float(prof.cell_mm["h"])
+	ppm = float(px_per_cell) / w_mm
+	ox, oy = (c0 - 1) * w_mm * ppm, (l0 - 1) * h_mm * ppm
+	W = int(round((c1 - c0 + 1) * w_mm * ppm))
+	H = int(round((l1 - l0 + 1) * h_mm * ppm))
+	return (l0, c0, l1, c1), ppm, ox, oy, W, H
+
+
+def _art_layer(prof, ppm: float, ox: float, oy: float, W: int, H: int, art_alpha: float, art_bgr, base_bgr,
+			   with_art: bool) -> np.ndarray:
+	"""The base of a composition: ``base_bgr`` with the art blended at ``art_alpha`` (``with_art``)."""
+	img = np.zeros((H, W, 3), np.uint8) + np.array(base_bgr, np.uint8)
+	if not with_art:
+		return img
+	art = art_bgr if art_bgr is not None else _art_rgb(prof)
+	if art is None:
+		return img
+	rows, cols = prof.rows, prof.cols
+	w_mm, h_mm = float(prof.cell_mm["w"]), float(prof.cell_mm["h"])
+	ah, aw = art.shape[:2]
+	sx, sy = aw / float(cols * w_mm * ppm), ah / float(rows * h_mm * ppm)
+	# output index -> art index: (i + 0.5 + o) * s - 0.5
+	A = np.array([[sx, 0, (0.5 + ox) * sx - 0.5], [0, sy, (0.5 + oy) * sy - 0.5]])
+	interp = cv2.INTER_CUBIC if sx < 1 else cv2.INTER_AREA
+	if sx >= 1:
+		big = cv2.resize(art, (int(round(cols * w_mm * ppm)), int(round(rows * h_mm * ppm))), interpolation=cv2.INTER_AREA)
+		a_img = big[int(round(oy)):int(round(oy)) + H, int(round(ox)):int(round(ox)) + W]
+	else:
+		a_img = cv2.warpAffine(art, A, (W, H), flags=interp | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
+	return cv2.addWeighted(a_img, float(art_alpha), img, 1.0 - float(art_alpha), 0)
+
+
+def _piece_jobs(project, reg: tuple, placements: dict, piece_ids, ready, use_ready: bool, clean: bool,
+				board_shadow: bool, bleed_mm: float) -> list:
+	"""``[(pid, placement, piece_ready)]`` of the pieces :func:`compose_board` draws in ``reg``: placed, with a cell in
+	the region ± 1 (the overhang / bleed margin), in cell order; a piece without a valid placement entry is registered
+	on the fly (corners, no image)."""
+	l0, c0, l1, c1 = reg
+	# one read of each piece's cell: a write in another thread (the GUI composes outside every lock, DETALHE.md §8)
+	# may take a piece off the board meanwhile (``celula`` -> None)
+	cells = {}
+	for pid in placed_ids(project):
+		cel = project.piece(pid).celula
+		if cel is not None and (piece_ids is None or pid in piece_ids):
+			cells[pid] = tuple(cel)
+	ids = [pid for pid, cel in cells.items() if l0 - 1 <= cel[0] <= l1 + 1 and c0 - 1 <= cel[1] <= c1 + 1]
+	ids.sort(key=lambda pid: cells[pid])
+	jobs = []
+	for pid in ids:
+		pl = placements.get(pid)
+		if pl is None or not _manual_entry_ok(project, pid, pl):
+			pl = register_piece(project, pid, art=None, image=False)
+			if "error" in pl:
+				continue
+		rd = ready(pid) if use_ready else piece_ready(project, pid, clean=clean, board_shadow=board_shadow, bleed_mm=bleed_mm)
+		if rd is None:
+			continue
+		jobs.append((pid, pl, rd))
+	return jobs
+
+
+def _job_geom(prof, pl: dict, rd: tuple, pas: str, ppm: float, ox: float, oy: float, W: int, H: int):
+	"""``(rgba, mmpp, A, bx0, by0, bx1, by1)`` of one pass (``bleed`` | ``pieces``) of a job: the crop drawn, the 2x3
+	crop px -> output px affine and its box (the warped crop corners, −1 / +2 px, cut to the output), or None when the
+	box is empty."""
+	rgba, ext, pad, mmpp, origin = rd
+	if pas == "bleed":
+		rgba = ext
+		origin = origin - pad
+	A = _crop_to_out(pl["theta_deg"], pl["pivot_mm"], cell_centre_mm(prof, *pl["cell"]), (pl["dx_mm"], pl["dy_mm"]),
+					 origin, mmpp, (ppm, ppm), (ox, oy))
+	h0, w0 = rgba.shape[:2]
+	box = _apply(A, [[0, 0], [w0, 0], [w0, h0], [0, h0]])
+	bx0, by0 = np.maximum(np.floor(box.min(0)).astype(int) - 1, 0)
+	bx1, by1 = np.minimum(np.ceil(box.max(0)).astype(int) + 2, [W, H])
+	if bx1 <= bx0 or by1 <= by0:
+		return None
+	return rgba, mmpp, A, int(bx0), int(by0), int(bx1), int(by1)
+
+
+def _job_boxes(jobs: list, prof, ppm: float, ox: float, oy: float, W: int, H: int, passes) -> dict:
+	"""``{pid: (x0, y0, x1, y1)}``: the union of the boxes of both passes of each job (output px, cut to the output)."""
+	out = {}
+	for pas in passes:
+		for pid, pl, rd in jobs:
+			g = _job_geom(prof, pl, rd, pas, ppm, ox, oy, W, H)
+			if g is None:
+				continue
+			b = g[3:]
+			o = out.get(pid)
+			out[pid] = b if o is None else (min(o[0], b[0]), min(o[1], b[1]), max(o[2], b[2]), max(o[3], b[3]))
+	return out
+
+
+def _draw_jobs(acc: np.ndarray, zbuf: np.ndarray, jobs: list, prof, ppm: float, ox: float, oy: float, W: int, H: int,
+			   passes, depth_priority: bool, clip=None) -> int:
+	"""The piece loop of :func:`compose_board` (pure, in place on ``acc`` float32 BGR and ``zbuf``): every pass of every
+	job, in that order (all bleeds, then all pieces). ``clip = (x0, y0, x1, y1)`` (output px): ``acc`` / ``zbuf`` hold
+	only that rectangle of the output; a job is warped over its whole box exactly as without ``clip`` and blended only
+	where the box meets the rectangle. Each output pixel depends only on the jobs whose box covers it, in the same
+	order, so a clipped draw from the same base gives the same bytes as the whole one there (the patch of a cached
+	region, :func:`compose_patch`). Returns the number of (job, pass) blended."""
+	cx0, cy0, cx1, cy1 = clip if clip is not None else (0, 0, W, H)
+	s_mm = 1.0 / ppm                                   # width of the depth-priority transition (1 output px)
+	n = 0
+	for pas, (pid, pl, rd) in [(q, j) for q in passes for j in jobs]:
+		g = _job_geom(prof, pl, rd, pas, ppm, ox, oy, W, H)
+		if g is None:
+			continue
+		rgba, mmpp, A, bx0, by0, bx1, by1 = g
+		ix0, iy0, ix1, iy1 = max(bx0, cx0), max(by0, cy0), min(bx1, cx1), min(by1, cy1)
+		if ix1 <= ix0 or iy1 <= iy0:
+			continue
+		n += 1
+		Aw = A.copy()
+		Aw[:, 2] -= [bx0, by0]
+		size = (bx1 - bx0, by1 - by0)
+		sl = (slice(iy0 - by0, iy1 - by0), slice(ix0 - bx0, ix1 - bx0))
+		out = (slice(iy0 - cy0, iy1 - cy0), slice(ix0 - cx0, ix1 - cx0))
+		# premultiplied warp: colour of transparent pixels does not bleed into the edge
+		al = rgba[..., 3].astype(np.float32) / 255.0
+		pm = rgba[..., :3].astype(np.float32) * al[..., None]
+		wpm = _warp(np.dstack([pm, al]), Aw, size)[sl]
+		a = wpm[..., 3]
+		col = wpm[..., :3][..., ::-1] / np.maximum(a, 1e-6)[..., None]    # RGB -> BGR, un-premultiplied
+		sub = acc[out]
+		if pas == "bleed":
+			wt = a[..., None]
+		elif depth_priority:
+			dep = _warp((_depth_px(rgba[..., 3] > 0) * mmpp).astype(np.float32), Aw, size)[sl]
+			z = zbuf[out]
+			k = np.where(np.isinf(z), 1.0, np.clip(0.5 + (dep - z) / (2 * s_mm), 0.0, 1.0))
+			wt = (a * k)[..., None]
+			zbuf[out] = np.where(a * k >= 0.5, dep, z)
+		else:
+			wt = a[..., None]
+		acc[out] = col * wt + sub * (1.0 - wt)
+	return n
+
+
 def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float = 0.34,
 				  layers=("art", "pieces", "legacy", "missing_border", "grid"), placements: Optional[dict] = None,
 				  art_bgr: Optional[np.ndarray] = None, piece_ids=None, clean: bool = True,
 				  depth_priority: bool = True, bleed_mm: float = BLEED_MM, base_bgr=(40, 40, 40),
-				  board_shadow: Optional[bool] = None, ready=None) -> np.ndarray:
+				  board_shadow: Optional[bool] = None, ready=None, base_art: Optional[np.ndarray] = None,
+				  return_parts: bool = False):
 	"""Render the board (BGR uint8).
 
 	``px_per_cell`` = output px per cell width (the height follows ``cell_mm``; ~218.5 = 300 dpi
@@ -1595,33 +1740,22 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 	``ready``: ``ready(pid)`` returns a (cached) :func:`piece_ready` of the piece with the default ``clean``,
 	``board_shadow`` and ``bleed_mm`` (the server's cache, 2026-11-15); other arguments compute it here. The output is
 	the same bytes either way.
+	``base_art`` (2026-11-15, the patch of a cached region): the base under the pieces of an earlier composition of
+	the same frame (``return_parts``), used instead of composing the art again (same bytes; not with ``legacy``).
+	``return_parts``: ``{img, art, boxes}`` instead of the image: the base under the pieces and, per piece, the union of
+	the boxes of its two passes (output px), for :func:`compose_patch`.
 	"""
 	if board_shadow is None:
 		board_shadow = BOARD_SHADOW
 	use_ready = ready is not None and clean and board_shadow == BOARD_SHADOW and bleed_mm == BLEED_MM
 	prof = project.profile
-	rows, cols = prof.rows, prof.cols
-	l0, c0, l1, c1 = region if region is not None else (1, 1, rows, cols)
+	reg, ppm, ox, oy, W, H = _frame(prof, px_per_cell, region)
+	l0, c0, l1, c1 = reg
 	w_mm, h_mm = float(prof.cell_mm["w"]), float(prof.cell_mm["h"])
-	ppm = float(px_per_cell) / w_mm
-	ox, oy = (c0 - 1) * w_mm * ppm, (l0 - 1) * h_mm * ppm
-	W = int(round((c1 - c0 + 1) * w_mm * ppm))
-	H = int(round((l1 - l0 + 1) * h_mm * ppm))
-	img = np.zeros((H, W, 3), np.uint8) + np.array(base_bgr, np.uint8)
-	if "art" in layers:
-		art = art_bgr if art_bgr is not None else _art_rgb(prof)
-		if art is not None:
-			ah, aw = art.shape[:2]
-			sx, sy = aw / float(cols * w_mm * ppm), ah / float(rows * h_mm * ppm)
-			# output index -> art index: (i + 0.5 + o) * s - 0.5
-			A = np.array([[sx, 0, (0.5 + ox) * sx - 0.5], [0, sy, (0.5 + oy) * sy - 0.5]])
-			interp = cv2.INTER_CUBIC if sx < 1 else cv2.INTER_AREA
-			if sx >= 1:
-				big = cv2.resize(art, (int(round(cols * w_mm * ppm)), int(round(rows * h_mm * ppm))), interpolation=cv2.INTER_AREA)
-				a_img = big[int(round(oy)):int(round(oy)) + H, int(round(ox)):int(round(ox)) + W]
-			else:
-				a_img = cv2.warpAffine(art, A, (W, H), flags=interp | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
-			img = cv2.addWeighted(a_img, float(art_alpha), img, 1.0 - float(art_alpha), 0)
+	if base_art is not None and base_art.shape[:2] == (H, W) and "legacy" not in layers:
+		img = np.array(base_art, np.uint8, copy=True)
+	else:
+		img = _art_layer(prof, ppm, ox, oy, W, H, art_alpha, art_bgr, base_bgr, "art" in layers)
 
 	def cell_box(l, c):
 		x0 = int(round((c - 1) * w_mm * ppm - ox))
@@ -1638,67 +1772,17 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 					hat = sub.copy()
 					_hatch(hat, 0, 0, x1 - x0, y1 - y0, max(4, int(px_per_cell / 6)), (166, 143, 125), lw)
 					img[max(0, y0):y1, max(0, x0):x1] = cv2.addWeighted(hat, 0.7, sub, 0.3, 0)
+	parts = {"art": img.copy() if return_parts else None, "boxes": {}}
 	if "pieces" in layers:
 		if placements is None:
 			placements = load_placements(project)["placements"] or {}
-		# one read of each piece's cell: a write in another thread (the GUI composes outside every lock, DETALHE.md §8)
-		# may take a piece off the board meanwhile (``celula`` -> None)
-		cells = {}
-		for pid in placed_ids(project):
-			cel = project.piece(pid).celula
-			if cel is not None and (piece_ids is None or pid in piece_ids):
-				cells[pid] = tuple(cel)
-		ids = [pid for pid, cel in cells.items() if l0 - 1 <= cel[0] <= l1 + 1 and c0 - 1 <= cel[1] <= c1 + 1]
-		ids.sort(key=lambda pid: cells[pid])
+		jobs = _piece_jobs(project, reg, placements, piece_ids, ready, use_ready, clean, board_shadow, bleed_mm)
+		passes = (("bleed", "pieces") if bleed_mm and bleed_mm > 0 else ("pieces",))
+		if return_parts:
+			parts["boxes"] = _job_boxes(jobs, prof, ppm, ox, oy, W, H, passes)
 		acc = img.astype(np.float32)
 		zbuf = np.full((H, W), -np.inf, np.float32)     # depth (mm inside its own silhouette) of the winning piece
-		s_mm = 1.0 / ppm                                   # width of the depth-priority transition (1 output px)
-		jobs = []
-		for pid in ids:
-			pl = placements.get(pid)
-			if pl is None or not _manual_entry_ok(project, pid, pl):
-				pl = register_piece(project, pid, art=None, image=False)
-				if "error" in pl:
-					continue
-			rd = ready(pid) if use_ready else piece_ready(project, pid, clean=clean, board_shadow=board_shadow, bleed_mm=bleed_mm)
-			if rd is None:
-				continue
-			jobs.append((pid, pl, rd))
-		passes = (("bleed", "pieces") if bleed_mm and bleed_mm > 0 else ("pieces",))
-		for pas, (pid, pl, rd) in [(q, j) for q in passes for j in jobs]:
-			rgba, ext, pad, mmpp, origin = rd
-			if pas == "bleed":
-				rgba = ext
-				origin = origin - pad
-			A = _crop_to_out(pl["theta_deg"], pl["pivot_mm"], cell_centre_mm(prof, *pl["cell"]), (pl["dx_mm"], pl["dy_mm"]),
-							 origin, mmpp, (ppm, ppm), (ox, oy))
-			h0, w0 = rgba.shape[:2]
-			box = _apply(A, [[0, 0], [w0, 0], [w0, h0], [0, h0]])
-			bx0, by0 = np.maximum(np.floor(box.min(0)).astype(int) - 1, 0)
-			bx1, by1 = np.minimum(np.ceil(box.max(0)).astype(int) + 2, [W, H])
-			if bx1 <= bx0 or by1 <= by0:
-				continue
-			Aw = A.copy()
-			Aw[:, 2] -= [bx0, by0]
-			size = (bx1 - bx0, by1 - by0)
-			# premultiplied warp: colour of transparent pixels does not bleed into the edge
-			al = rgba[..., 3].astype(np.float32) / 255.0
-			pm = rgba[..., :3].astype(np.float32) * al[..., None]
-			wpm = _warp(np.dstack([pm, al]), Aw, size)
-			a = wpm[..., 3]
-			col = wpm[..., :3][..., ::-1] / np.maximum(a, 1e-6)[..., None]    # RGB -> BGR, un-premultiplied
-			sub = acc[by0:by1, bx0:bx1]
-			if pas == "bleed":
-				wt = a[..., None]
-			elif depth_priority:
-				dep = _warp((_depth_px(rgba[..., 3] > 0) * mmpp).astype(np.float32), Aw, size)
-				z = zbuf[by0:by1, bx0:bx1]
-				k = np.where(np.isinf(z), 1.0, np.clip(0.5 + (dep - z) / (2 * s_mm), 0.0, 1.0))
-				wt = (a * k)[..., None]
-				zbuf[by0:by1, bx0:bx1] = np.where(a * k >= 0.5, dep, z)
-			else:
-				wt = a[..., None]
-			acc[by0:by1, bx0:bx1] = col * wt + sub * (1.0 - wt)
+		_draw_jobs(acc, zbuf, jobs, prof, ppm, ox, oy, W, H, passes, depth_priority)
 		img = np.clip(acc + 0.5, 0, 255).astype(np.uint8)
 	if "missing_border" in layers:
 		for l in range(l0, l1 + 1):
@@ -1713,7 +1797,67 @@ def compose_board(project, px_per_cell: float, *, region=None, art_alpha: float 
 		for l in range(l0, l1 + 2):
 			y = int(round((l - 1) * h_mm * ppm - oy))
 			cv2.line(img, (0, y), (W - 1, y), (90, 90, 90), 1)
+	if return_parts:
+		return dict(parts, img=img)
 	return img
+
+
+PATCH_PAD_PX = 2               # the dirty zone of a patch grows by this much (safety only: the result does not change)
+
+
+def compose_patch(project, px_per_cell: float, region, *, base_art: np.ndarray, old_img: np.ndarray, old_boxes: dict,
+				  changed, placements: Optional[dict] = None, ready=None, max_frac: float = 0.35,
+				  depth_priority: bool = True, bleed_mm: float = BLEED_MM, clean: bool = True,
+				  board_shadow: Optional[bool] = None, art_alpha: float = 0.34, base_bgr=(40, 40, 40)) -> dict:
+	"""Redraw only what ``changed`` (piece ids: new, gone, or with another cell / pose / ready piece) altered in a cached
+	composition of the same frame (2026-11-15, DETALHE.md §13.4), layers ``art`` + ``pieces``.
+
+	``base_art`` / ``old_img`` / ``old_boxes``: the ``art``, ``img`` and ``boxes`` of an earlier :func:`compose_board`
+	``(..., return_parts=True)`` (or of a patch) of the same ``px_per_cell`` and ``region``. The dirty zone is the union
+	of the old and the new boxes of the changed pieces (both passes, bleed included), grown by ``PATCH_PAD_PX`` and cut
+	to the output. There, from ``base_art`` and an empty depth buffer, EVERY piece whose box meets the zone is drawn
+	again, in the normal order, warped over its whole box (:func:`_draw_jobs` with ``clip``); outside it the old pixels
+	stay. No step of the composition reads beyond a piece's own box (the art is stored, not warped again), so the bytes
+	equal a whole composition. A zone above ``max_frac`` of the output (or a frame that does not match) composes the
+	whole region from ``base_art`` instead.
+
+	Returns ``{img, art, boxes, modo: 'remendo' | 'inteira', zona: (x0, y0, x1, y1) | None, n_desenhos}``.
+	"""
+	if board_shadow is None:
+		board_shadow = BOARD_SHADOW
+	use_ready = ready is not None and clean and board_shadow == BOARD_SHADOW and bleed_mm == BLEED_MM
+	prof = project.profile
+	reg, ppm, ox, oy, W, H = _frame(prof, px_per_cell, region)
+	if placements is None:
+		placements = load_placements(project)["placements"] or {}
+	jobs = _piece_jobs(project, reg, placements, None, ready, use_ready, clean, board_shadow, bleed_mm)
+	passes = (("bleed", "pieces") if bleed_mm and bleed_mm > 0 else ("pieces",))
+	boxes = _job_boxes(jobs, prof, ppm, ox, oy, W, H, passes)
+	ok = base_art is not None and old_img is not None and base_art.shape[:2] == (H, W) and old_img.shape[:2] == (H, W)
+	zone = None
+	for pid in changed:
+		for b in (old_boxes.get(pid), boxes.get(pid)):
+			if b is not None:
+				zone = b if zone is None else (min(zone[0], b[0]), min(zone[1], b[1]), max(zone[2], b[2]), max(zone[3], b[3]))
+	if zone is not None:
+		zone = (max(0, zone[0] - PATCH_PAD_PX), max(0, zone[1] - PATCH_PAD_PX), min(W, zone[2] + PATCH_PAD_PX),
+				min(H, zone[3] + PATCH_PAD_PX))
+	if not ok or (zone is not None and (zone[2] - zone[0]) * (zone[3] - zone[1]) > max_frac * W * H):
+		art = np.array(base_art, np.uint8, copy=True) if ok else _art_layer(prof, ppm, ox, oy, W, H, art_alpha, None, base_bgr, True)
+		acc = art.astype(np.float32)
+		zbuf = np.full((H, W), -np.inf, np.float32)
+		n = _draw_jobs(acc, zbuf, jobs, prof, ppm, ox, oy, W, H, passes, depth_priority)
+		return {"img": np.clip(acc + 0.5, 0, 255).astype(np.uint8), "art": art, "boxes": boxes, "modo": "inteira",
+				"zona": None, "n_desenhos": n}
+	img = np.array(old_img, np.uint8, copy=True)
+	n = 0
+	if zone is not None:
+		x0, y0, x1, y1 = zone
+		acc = base_art[y0:y1, x0:x1].astype(np.float32)
+		zbuf = np.full((y1 - y0, x1 - x0), -np.inf, np.float32)
+		n = _draw_jobs(acc, zbuf, jobs, prof, ppm, ox, oy, W, H, passes, depth_priority, clip=zone)
+		img[y0:y1, x0:x1] = np.clip(acc + 0.5, 0, 255).astype(np.uint8)
+	return {"img": img, "art": base_art, "boxes": boxes, "modo": "remendo", "zona": zone, "n_desenhos": n}
 
 
 def compose_zone_vs_art(project, region, dpi: float = 300, *, placements: Optional[dict] = None,
