@@ -428,3 +428,23 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
   < 40 % da altura normal, refaz-se no redimensionar seguinte (até 2 s).
 - **P1b:** a caixa da lupa nunca abre sozinha ao carregar (com ou sem o último modo guardado); o modo guardado só fica
   marcado no botão. Já era assim; fica um teste.
+
+## 2026-11-15 — Fase de desempenho: C fora, ramos arquivados, atraso das sugestões no arranque (Tiago)
+
+- **C (mosaicos do tabuleiro na grelha global) fica fora.** O código está na etiqueta `archive/desempenho-c` (`043435c`,
+  era o ramo `wip/desempenho-c`, apagado). As duas condições do Tiago confirmaram-se: os mosaicos colados dão 0 píxeis
+  diferentes da composição única, e o motor não lê a composição. Mas:
+  - contra a grelha de hoje, a relva muda **24–38 % dos píxeis, até 33–55 níveis** (ppc 100 / 240); o limite aceite
+    era ≤ 5 níveis em ≤ 0,06 %. No céu: 0,07–0,08 %, até 8–13 níveis;
+  - com C, os **critérios 1 e 2 pioram**: 1.º salto 7,2–7,7 s, salto a frio 4,2 s (uma região junta até 12 mosaicos);
+  - o **critério 3 quase não melhora: 2,4–3,8 s**.
+  A C2 (tabuleiro inteiro a partir dos mosaicos) não foi medida, porque depende do C. Números em
+  `docs/diagnostico/gui/DETALHE.md` §11.10 e `dados/r4_criterios_c_wip.json`.
+- **Ramos arquivados como etiquetas e apagados:** `teste-a`, `teste-b` e `teste-b3` passam a `archive/teste-a`,
+  `archive/teste-b` e `archive/teste-b3`. São três tentativas de 2026-11-04/05 da ronda GUI/render, cada uma com cor de
+  visualização scan→arte, recorte da silhueta pelo viés célula↔silhueta, «Vai buscar» só com vizinha ortogonal
+  montada e ajustes de layout. `wip/desempenho-parte1` foi apagado sem etiqueta: o que tinha está em `main`, exceto
+  8 linhas substituídas de propósito.
+- **Registado: no arranque, as sugestões «pelo encaixe» chegam ≈ 3 s mais tarde**, cerca de 6 s depois do «pronto»
+  (5,9–6,1 s, `dados/r4_criterios_b.json`). A causa é a prioridade à interação (`983ae98`): o ranking dos buracos cede
+  ao 1.º salto do tabuleiro (detalhe em composição). Depois de uma escrita não há diferença mensurável.

@@ -959,3 +959,53 @@ Capturas antes / depois (região a ppc 100 do servidor, cópia): `capturas/desem
   (até 3 vezes; sem uma escrita pelo meio, o erro sobe). Depois: 40/40 corridas.
 - Suite completa com o `.venv` (incl. slow): antes desta correção 609 passed, 1 skipped, 0 failed; depois dela 609
   passed, 1 skipped, 0 failed.
+- **Adenda (2026-11-15, depois do commit):** 40/40 não prova a correção: com o erro ainda a 1/45, passar 40 seguidas
+  tem P ≈ 0,41. Prova determinística (escrita noutro fio dentro do gancho `pause` de `evaluate`, projeto sintético de
+  `test_query._project`, 3 posições × 3 escritas) [V]: tirar uma peça do lugar repete e acerta (3/3); re-segmentar
+  acerta (3/3); **mover uma peça devolve um resultado rasgado sem exceção** (3/3): `n_com_vizinhas` antes 0, depois 3,
+  devolvido 1. A correção só apanha exceções. Corrige-se sozinho (o resultado fica guardado com a versão antiga e a
+  passagem seguinte recalcula), mas o painel/SSE pode mostrá-lo uma vez; o `test_concorrencia` não o vê (compara só o
+  estado final). Causa: `evaluate` lê o modelo vivo sem bloqueio (tira `ids`/`mounted` no início, lê `celula` e a forma
+  em direto) e `Project._emit` aplica cada evento antes de o escrever no log. Fecho proposto (por aprovar): contador
+  de escritas que sobe ao tomar e ao largar o `wlock`; um resultado só é aceite se o contador não mudou e é par; senão
+  (resultado ou exceção) repete, e à 3.ª vez avalia sob o `wlock`; mais um teste determinístico com o cenário «mover».
+
+## 12. Perfil do critério 3 (2026-11-15, `9d59717`): linha do tempo de um detalhe depois de um «Encaixa» [V]
+
+Sem otimizar. Guião `tools/diagnostico/gui/perfil_c3.py` (protocolo de `desempenho.py --so a`, 5 corridas, cópia nova
+e servidor novo em cada uma) com o servidor lançado por `linha_tempo.py` (início/fim de cada fase em todos os fios,
+cada pedido HTTP, cada evento SSE, cada falha e `forget` da `ReadyCache`, cada espera de um trabalho de fundo pela GUI;
+embrulhos só em memória) e o browser instrumentado (SSE recebidos, `fetch`, `loadBoard`/`loadMontar`/`loadDetail`,
+recursos, momento em que o detalhe aparece). Leitura: `perfil_c3_ler.py`. Dados: `dados/r5_perfil_c3.json`. Base:
+cópia de `projects/alpes` (versão do log 2307663) depois de um arranque completo. Vista fixa no céu (1,20–14,40, ppc
+100), separador Peças; longe = (20,60), perto = (5,33).
+
+**Longe, ms desde a resposta do POST (mediana · máximo de 5):**
+
+| momento | mediana · máx. | o que o determina |
+|---|---|---|
+| POST | 557 · 571 | reconsulta 285 ms, `_refresh_render_assets` 85 ms |
+| SSE `board_changed` recebido | −2 · 0 | emitido antes de a resposta sair |
+| `loadBoard` começa | 354 · 359 | temporizador de 350 ms do `scheduleReload` |
+| `loadBoard` acaba | 701 · 808 | espera por `/api/ghosts` (340 · 444 ms no servidor) e `/api/board` (232 · 312) |
+| pedido do detalhe | 988 · 1091 | temporizador de 280 ms do `scheduleDetail`, armado no fim do `loadBoard` (`loadMontar` corre em paralelo: `/api/montar` 157 · 176) |
+| composição da região | 834 · 838 | 0 falhas da E: só composição com as peças já prontas |
+| detalhe no ecrã | **1854 · 1956** | transferência + `decode` ≈ 20 ms |
+
+- **O que invalida:** a cache da E não. O único `forget` é o da peça colocada, em `_refresh_render_assets`, e a
+  composição do céu tem 0 falhas nas 5 corridas. Quem obriga a recompor é **a LRU das regiões**: a chave é
+  `render_version()` (tamanho do log, mtime de `placements.json`), por isso qualquer escrita invalida todas as regiões,
+  mesmo as que não mudaram. A região do céu é recomposta inteira (834 ms) sem nenhuma peça diferente.
+- **O que corre ao mesmo tempo:** o ranking dos buracos começa com o POST e acaba a 2,4 s. Cede durante a composição
+  inteira: 1 espera de 836 ms, igual à composição. As suspeitas correm de 9 a 398 ms (`evaluate` ≈ 0,39 s), em cima
+  do `loadBoard`. O pré-aquecimento já tinha acabado. `/api/board`, `/api/ghosts` e `/api/montar` não são pedidos de
+  primeiro plano (o fundo não lhes cede); quanto do seu tempo é disputa do GIL não está medido [NT].
+- **Soma:** 350 (temporizador) + ≈ 350 (`loadBoard`) + 280 (temporizador) + 835 (composição) + ≈ 40 ≈ 1,85 s. Os
+  temporizadores fixos são 630 ms (34 %); a composição de uma região que não mudou, 835 ms (45 %).
+- Estas 5 corridas dão 1,80–1,96 s, abaixo dos 2,71–2,72 s da tabela §11.11 (2 corridas, outra base, sem
+  instrumentação). A diferença não está explicada [NT].
+
+**Perto (5,33), para comparar:** detalhe no ecrã 2636 · 2694 ms; POST 1344 ms. O `loadBoard` acaba a 1439 ms, porque
+`/api/ghosts` leva 1062 · 1141 ms e `/api/board` 635 · 684 ms. Ao mesmo tempo correm as suspeitas, com `evaluate` de
+≈ 4,0 s (a peça tem vizinhas montadas; longe são 0,39 s), o ranking (3,5 s) e o fim do pré-aquecimento (até ≈ 1,1 s
+depois do POST; o «perto» é o 1.º «Encaixa» da corrida). A composição é igual: 852 ms, 0 falhas da E.

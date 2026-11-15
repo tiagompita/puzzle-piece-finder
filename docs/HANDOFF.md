@@ -27,7 +27,13 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
   a|b|p|q|r`, ouvinte SSE). As medições depois da parte 1 usam uma base com `sides.npz` (o estado depois do 1.º arranque).
 - **Capturas:** `docs/diagnostico/gui/capturas/desempenho_{ceu,relva}_{antes,depois_E_b,depois_C}.jpg` (antes = depois de
   E + (b), byte a byte).
-- **Ramos:** `teste-a`, `teste-b`, `teste-b3` têm commits que não estão em `main` (não apagados); `wip/desempenho-c` é C.
+- **Ramos (2026-11-15, Tiago):** C fica fora (etiqueta `archive/desempenho-c`); `teste-a`/`teste-b`/`teste-b3` →
+  etiquetas `archive/…`; `wip/desempenho-parte1` apagado. Só resta `main` (`docs/decisoes.md`).
+- **A seguir:** (1) suspeitas: a correção de `33f209f` só apanha exceções; há leitura rasgada sem exceção (provado,
+  DETALHE §11.12 adenda); fecho com contador de escritas proposto, **à espera do OK do Tiago**. (2) Critério 3
+  perfilado sem otimizar (DETALHE §12): longe 1,85 · 1,96 s = temporizadores 630 ms + `loadBoard` ≈ 350 ms +
+  recompor uma região que não mudou 835 ms (a LRU das regiões tem a versão global na chave; a E não é invalidada).
+  Daqui em diante, 5 corridas por critério (mediana e máximo).
 
 ## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-f2c-correcoes-uso-real.md` (fechado)
 - **Saco 9 · nº 89 em 1 · 29 encaixa fisicamente [V, Tiago]:** primeiro caso real de «pôr à mão»; a borda está completa (218/218).
