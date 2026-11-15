@@ -789,7 +789,7 @@ arranque), porque cada corrida copia a base de novo.
 
 (`dados/r4_criterios_p1.json`.) Suite 596 passed, 1 skipped, 0 failed; `test_concorrencia` 20/20 (com um ramo novo:
 ranking com os lados partilhados e formas por folha a meio das re-segmentações; no fim formas, lados e tiras iguais a um
-processo novo). `tests/test_desempenho_cache.py` (novo, 9) e `tests/test_recorte_refaz.py` (+2: formas, lados e tiras
+processo novo). `tests/test_desempenho_cache.py` (novo, 8) e `tests/test_recorte_refaz.py` (+2: formas, lados e tiras
 seguem o recorte corrigido; mudar a erosão em `puzzle.json` refaz lados e tiras).
 
 **Porque falham 1 e 4 (do registo do servidor):** o ranking já não é o problema (4,2–4,8 s em vez de 30 s), mas não é

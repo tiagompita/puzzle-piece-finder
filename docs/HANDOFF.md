@@ -1,25 +1,28 @@
-# HANDOFF — 2026-11-15 (fase de desempenho: P0 e P1 feitos; PARADO no P0b à espera do Tiago)
+# HANDOFF — 2026-11-15 (fase de desempenho: P0, P0b, P1 e parte 1 feitos; PARADO: critérios 1 e 4 falham depois da parte 1)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
 ## Última sessão (2026-11-15): `docs/prompts/2026-11-15-desempenho.md` (fechado)
-- **Estado:** fase de desempenho do plano aprovado (`DETALHE.md` §11). Feito: **P0** (a vista do Montar só segue o
-  cartão por ação; «localizar» pisca uma vez quando o cartão muda sozinho com o lugar fora da vista, marca estática com
-  `prefers-reduced-motion`; um salto durante um arrasto espera pelo fim dele; portão no teste da fila; `gui.stop()` por
-  fixture `autouse` em `tests/conftest.py`), **P1a** (salto da lupa a 390 px com o teclado) e **P1b** (teste: a caixa da
-  lupa não abre sozinha). Os dois testes que falhavam ao acaso: 20/20. Commit `64ac6e8`.
-- **PARADO no P0b (paragem obrigatória):** o POST de um «Encaixa» (5,3 s sem browser, 6,4–7,4 s com a GUI aberta) não é
-  uma regressão de código (bisect de 6399e31 a 9f672c0 na mesma cópia: iguais); é crescimento dos dados mais a recarga
-  do browser a competir pelo GIL. ≤ 2,0 s com a GUI aberta exige mudar o comportamento. **Decisão do Tiago:** opções
-  A1–A4 (otimizações sem mudar o comportamento, ≈ −3 s), B (suspeitas depois da resposta), C (responder logo depois de
-  gravar) em `DETALHE.md` §11.3.
-- **Escrito, NÃO testado nem medido**, no ramo `wip/desempenho-parte1` (fora de `main`): parte 1 (1a formas por folha
-  em `state.py`; 1b lados erodidos em disco `render/fit/sides.npz` + `fit.SidesStore` partilhado; 1c chave das tiras por
-  `render.piece_asset_sig`; 1d ranking dos buracos no fim de `_prepare`; `tests/test_desempenho_cache.py`) e o início
-  de E (`render.piece_ready`, `compose_board(ready=)`; falta a cache do servidor). C não começou.
-- **Medições «antes» (9f672c0) [V]:** `docs/diagnostico/gui/dados/r4_base_9f672c0.json`, capturas
-  `docs/diagnostico/gui/capturas/desempenho_{ceu,relva}_antes.jpg`; guião `tools/diagnostico/gui/desempenho.py`
-  (`--repo` para um worktree, `--so p|q` POST por fase com `fases_post.py`).
+- **Estado:** fase de desempenho do plano aprovado (`docs/diagnostico/gui/DETALHE.md` §11). Em `main`:
+  - `64ac6e8` **P0 + P1**: a vista do Montar só segue o cartão por ação; «localizar» pisca quando o cartão muda sozinho;
+    salto durante um arrasto espera pelo fim; portão no teste da fila; `gui.stop()` por fixture `autouse`; P1a (lupa a
+    390 px com teclado), P1b (teste). Os dois testes que falhavam ao acaso: 20/20.
+  - `aae3a9d` **P0b** (decisão do Tiago: A1–A4 + B, C não): POST de um «Encaixa» 5,3–7,4 → 0,7–1,7 s, sem browser e com
+    `/novo/` aberto (critério ≤ 2,0 s [V]); `fetch.*`, reconsulta, vistas JSON e `consistency.evaluate` iguais antes/depois
+    (`tools/diagnostico/gui/p0b_iguais.py`). As suspeitas chegam depois da resposta (fio «suspeitas»).
+  - `2d34c19` **parte 1** (1a formas por folha, 1b lados em `render/fit/sides.npz`, 1c chave das tiras pelo recorte com
+    conversão do formato antigo, 1d ranking no fim do arranque): ranking a frio 33–46 → 5,9 s (41,8 s só no 1.º arranque
+    depois de atualizar); `rank_all` igual (`rank_iguais.py`). Achado: 23 tiras velhas, todas de peças com aresta pintada.
+- **PARADO (paragem obrigatória):** depois da parte 1, critério 1 (1.º salto) 7,4–7,8 s (alvo 4,0) e critério 4
+  (1.º «verificar») 1,1–1,4 s (alvo 1,0) falham. Causa no §11.7: ao abrir, duas regiões frias compõem-se ao mesmo tempo
+  com o ranking (≈ 4,5 s); o «verificar» compete com o ranking. **Decisão do Tiago:** (a) seguir para E; (b) adiar /
+  pausar o ranking enquanto a GUI pede detalhe ou «verificar»; (c) aceitar.
+- **Critério 3 piorou com B** (o trabalho das suspeitas passou para depois da resposta): do clique ao detalhe desceu
+  (perto 11,0 → 9,3 s), mas «do fim do POST ao detalhe» subiu para 5,4–7,6 s. É o alvo de C.
+- **Não feito:** E (código de `render.piece_ready` no ramo `wip/desempenho-parte1`, `ab2943f`; a `ReadyCache` do servidor
+  está escrita no scratchpad, não aplicada), C, C2 (medição), capturas «depois» (a composição não mudou até aqui).
+- **Medições:** `docs/diagnostico/gui/dados/r4_*.json`; guião `tools/diagnostico/gui/desempenho.py` (`--repo`, `--so
+  a|b|p|q|r`). As medições depois da parte 1 usam uma base com `sides.npz` (o estado depois do 1.º arranque).
 
 ## Sessão anterior (2026-11-14): `docs/prompts/2026-11-14-f2c-correcoes-uso-real.md` (fechado)
 - **Saco 9 · nº 89 em 1 · 29 encaixa fisicamente [V, Tiago]:** primeiro caso real de «pôr à mão»; a borda está completa (218/218).
@@ -148,7 +151,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
-1. **Fase de desempenho parada no P0b** (decisão do Tiago, `DETALHE.md` §11.3); depois parte 1 (ramo `wip/desempenho-parte1`, por testar), E, C; a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6).
+1. **Fase de desempenho parada depois da parte 1** (critérios 1 e 4, `DETALHE.md` §11.7; decisão do Tiago); depois E, C; a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6).
 2. **Limites da F1b [NT]:**
    - «Peças» é só uma ligação para a interface completa (F3);
    - «⋯ › Atividade» abre a interface antiga noutro separador (F5);

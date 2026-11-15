@@ -93,14 +93,21 @@ Sessão principal (retoma, a meio):
 > obrigatórias, entre elas: se chegar a POST ≤ 2,0 s no P0b exigir mudar o comportamento, para e devolve a tabela por
 > fase com as opções.
 
+Sessão principal (decisão do Tiago sobre o P0b):
+
+> Decisão do Tiago sobre o P0b: implementa A1–A4 + B; C não. Depois continua com a parte 1, E e C a partir do ramo
+> wip/desempenho-parte1. […] A chave de cada cache nova inclui o recorte da peça e a calibração; cobre-as no
+> tests/test_concorrencia.py e no teste «corrigir o recorte refaz o que dela depende». `fetch.*`,
+> `consistency.evaluate` e o resultado da reconsulta ficam iguais antes/depois na cópia (prova-o). Critério: POST do
+> «Encaixa» ≤ 2,0 s, sem browser e com `/novo/` aberto. […] Commit próprio do P0b. Depois, sem parar: parte 1 → E → C,
+> pela ordem e com as paragens do plano, um commit por bloco em main (testa e mede o que está no wip antes de fundir;
+> não fundas nada sem testes verdes). C2: só se mede. […]
+
 ## Resultado
 
-- **P0 [V]:** a vista só segue o cartão por ação do Tiago; `S.gesto` no `board.js`; «localizar» pisca / marca; portão
-  no teste da fila; `gui.stop()` por fixture `autouse`. Testes novos `tests/test_gui_novo_p0.py`.
-- **P0b [V]: paragem obrigatória.** Sem regressão de código; tabela por fase e opções A1–A4 (sem mudar o comportamento),
-  B e C (mudam) em DETALHE §11.3.
-- **P1a, P1b [V em Chromium headless; NT no telemóvel].**
-- **Commit:** o bloco P0+P0b+P1 em `main`: `64ac6e8`.
-- **Por fazer (à espera da decisão do P0b):** parte 1 (1a, 1b+1c, 1d) e E estão escritas mas **não testadas nem
-  medidas** no ramo `wip/desempenho-parte1` (`02a483f`, `ab2943f`); C não começou. Capturas «depois» não feitas
-  (nenhuma composição mudou).
+- `64ac6e8` **P0 + P1 [V]** e a medição do P0b (sem regressão de código: bisect de 5 commits iguais).
+- `aae3a9d` **P0b [V]:** A1–A4 + B; POST 0,7–1,7 s (sem browser e com a GUI aberta); saídas iguais antes/depois.
+- `2d34c19` **parte 1 [V nos testes e no ranking; F nos critérios 1 e 4]:** paragem obrigatória (DETALHE §11.7).
+- Suite 596 passed, 1 skipped, 0 failed; `test_concorrencia` 20/20.
+- **Por fazer:** decisão do Tiago sobre os critérios 1 e 4; E (no ramo `wip/desempenho-parte1`), C, medição de C2,
+  capturas «depois».
