@@ -467,3 +467,25 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
   (DETALHE.md §13.1).
 - **«Perto»:** a proposta é refazer só as células alteradas sobre o array da região em cache (DETALHE.md §13.4); por
   implementar.
+
+## 2026-11-15 — Remendo das regiões, `rank_all` e «verificar» com seqlock (Tiago; DETALHE.md §13.7)
+
+- **Remendo das regiões de detalhe** (`Gui._compose_region`, `render.compose_patch`): o servidor guarda, por
+  `(ppc, região)`, a base sob as peças, a imagem e a caixa de cada peça (`PatchCache`, LRU por bytes, 128 MB,
+  `--cache-remendo-mb`). Quando o conteúdo muda, as peças Δ saem da comparação das partes por peça (célula, pose
+  desenhada, peça pronta), não da célula da escrita. Zona suja = união das caixas antigas e novas das peças Δ (com a
+  sangria) + 2 px; nela redesenham-se, a partir da base e de um `zbuf` limpo, **todas** as peças cuja caixa a toca, pela
+  ordem normal. Limiares: mais de **12 peças Δ** (`PATCH_MAX_PECAS`) ou zona acima de **35 %** da região
+  (`PATCH_MAX_FRAC`) → composição inteira (com a base guardada); sem entrada ou com outra arte → composição inteira.
+  Nenhum passo da composição lê para lá da caixa da própria peça (tabela de §13.7); a arte guarda-se, não se recalcula.
+  Os arrays só ficam guardados se nenhuma escrita cruzou a composição (a regra de `f85c092`).
+- **`rank_all` deteta e descarta:** o fio dos buracos começa quando não há escrita (`wait_even`) e só publica
+  (`_holes`, `_holes_prev`, `holes_changed`) se o contador do seqlock não mudou; senão volta a calcular. Durante isso a
+  lista mostrada é a anterior, marcada `desatualizada`. Se uma escrita chegar logo depois de publicar, calcula outra vez
+  (o pedido dela foi absorvido pelo fio vivo). Dentro de uma escrita (`wait=True` com o bloqueio), uma passagem.
+- **«verificar» repete:** `seq_read` (3 tentativas, nunca o bloqueio de escrita; espera por uma escrita em curso no
+  máximo 0,5 s por tentativa, `VERIF_WAIT_S`, porque o «verificar» nunca espera por uma escrita). À 3.ª tentativa rasgada devolve o
+  resultado anterior da mesma `(linha, coluna, peça, θ)` marcado `desatualizada`; **sem resultado anterior devolve
+  `estado: "nao_verificado"`** (lista vazia, sem veredicto). O browser (`novo.js`) mantém «a verificar…» e pede outra
+  vez ao fim de 500 ms, até 3 vezes; depois mostra «Não consegui verificar: o tabuleiro estava a mudar enquanto
+  verificava». O botão «Pôr aqui» nunca fica bloqueado.

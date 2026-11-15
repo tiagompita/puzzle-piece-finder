@@ -1,8 +1,29 @@
-# HANDOFF — 2026-11-15 (fase de desempenho: P0, P0b, P1, parte 1, E e (b) em main; C parado à espera do Tiago)
+# HANDOFF — 2026-11-15 (critério 3 «perto»: remendo das regiões e leitores com seqlock em main; próximo: o 1.º salto)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-15): `docs/prompts/2026-11-15-desempenho.md` (fechado)
+## Última sessão (2026-11-15): `docs/prompts/2026-11-15-perto-remendo.md` (fechado)
+- **Próximo item: o 1.º salto** (critério 1, ≈ 5,6–6,1 s contra o alvo de 4 s). Fica inconclusivo por decisão do Tiago
+  (§13.6: +0,36 s, IC [−0,14, +0,65]; nestes 10 pares +0,04 s, IC [−0,38, +0,35]) e passa a item próprio.
+- **Passo 0 [V] (DETALHE §13.7):** os pedidos que o browser faz no `board_changed` (`/api/board`, `/api/ghosts`,
+  `/api/montar`) custam ≈ 1,2 s ao «perto» (2,65 → 1,44 s, atrasando-os no lançador), sobretudo pela disputa do GIL no
+  código Python da composição (registo na hora de 88 de 117 peças: 1,00 → 0,07 s). Fora da composição, os 0,2 s são o
+  `_region_sig`. **Propostas, não implementadas, à espera do Tiago:** P-a (pedir esses três só depois do detalhe, ou
+  fazê-los ceder ao detalhe; «perto» medido 0,44 s com o remendo), P-b (porque é que 88 peças não têm registo válido),
+  P-c (memorizar a assinatura por peça).
+- **Bloco 1 (`b7a88cf`), remendo [V em testes e na cópia real; critério 3 «perto» F]:** a região em cache redesenha só a zona das
+  peças que mudaram (`render.compose_patch`, `PatchCache` 128 MB). Igual byte a byte em 8 casos sintéticos, no esforço e
+  em 12 escritas na cópia real (0 diferenças). 10 pares: «perto» 2,51 → **1,60 s [F, alvo 1,2]**, 0/10 caíram na
+  composição inteira; «longe» 0,27 s [V]; memória +99 MB [V]; **POST «perto» +0,12 s e salto a frio no browser +0,17 s
+  com IC que não exclui +0,25 s [F]** (por HTTP +0,09 s, IC exclui). Paragem: não se afinou; decomposição nova em §13.7
+  (o redesenho custa 0,07 s; o resto é `_piece_jobs` a disputar o GIL e a assinatura).
+- **Bloco 2 (`1ba4b19`) [V em testes]:** `rank_all` só publica sem escrita pelo meio (senão recalcula; lista anterior marcada
+  `desatualizada`); «verificar» repete e, sem resultado anterior, devolve «não verificado» e o browser pede outra vez
+  (500 ms, até 3 vezes). 8 testes novos falhavam antes, 9/9 depois.
+- **À espera do Tiago:** P-a / P-b / P-c; aceitar ou não o custo do remendo no salto a frio (+0,05–0,17 s) e no POST
+  «perto».
+
+## Sessão anterior (2026-11-15): `docs/prompts/2026-11-15-desempenho.md` (fechado)
 - **Estado:** fase de desempenho do plano aprovado (`docs/diagnostico/gui/DETALHE.md` §11). Em `main`:
   - `64ac6e8` **P0 + P1**: a vista do Montar só segue o cartão por ação; «localizar» pisca quando o cartão muda sozinho;
     salto durante um arrasto espera pelo fim; portão no teste da fila; `gui.stop()` por fixture `autouse`; P1a, P1b.

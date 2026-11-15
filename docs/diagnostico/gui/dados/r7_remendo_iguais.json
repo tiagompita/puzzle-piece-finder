@@ -1,0 +1,281 @@
+{
+ "n_escritas": 12,
+ "linhas": [
+  {
+   "escrita": 1,
+   "tipo": "pose_gravar",
+   "zona_da_escrita": "ceu",
+   "piece": "P0295",
+   "regioes": {
+    "ceu": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.205,
+     "bytes": 355215
+    },
+    "relva": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.013,
+     "bytes": 583344
+    }
+   }
+  },
+  {
+   "escrita": 2,
+   "tipo": "tirar",
+   "zona_da_escrita": "ceu",
+   "piece": "P1102",
+   "cell": null,
+   "regioes": {
+    "ceu": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.198,
+     "bytes": 353676
+    },
+    "relva": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.018,
+     "bytes": 583344
+    }
+   }
+  },
+  {
+   "escrita": 3,
+   "tipo": "colocar",
+   "zona_da_escrita": "ceu",
+   "piece": "P1057",
+   "cell": [
+    5,
+    40
+   ],
+   "regioes": {
+    "ceu": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.205,
+     "bytes": 357342
+    },
+    "relva": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.017,
+     "bytes": 583344
+    }
+   }
+  },
+  {
+   "escrita": 4,
+   "tipo": "colocar",
+   "zona_da_escrita": "ceu",
+   "piece": "P1412",
+   "cell": [
+    7,
+    25
+   ],
+   "regioes": {
+    "ceu": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.223,
+     "bytes": 360177
+    },
+    "relva": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.015,
+     "bytes": 583344
+    }
+   }
+  },
+  {
+   "escrita": 5,
+   "tipo": "colocar",
+   "zona_da_escrita": "relva",
+   "piece": "P1002",
+   "cell": [
+    43,
+    34
+   ],
+   "regioes": {
+    "ceu": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.023,
+     "bytes": 360177
+    },
+    "relva": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.213,
+     "bytes": 585032
+    }
+   }
+  },
+  {
+   "escrita": 6,
+   "tipo": "desfazer",
+   "zona_da_escrita": "relva",
+   "piece": "P1002",
+   "regioes": {
+    "ceu": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.022,
+     "bytes": 360177
+    },
+    "relva": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.185,
+     "bytes": 583344
+    }
+   }
+  },
+  {
+   "escrita": 7,
+   "tipo": "desfazer",
+   "zona_da_escrita": "ceu",
+   "piece": "P1412",
+   "regioes": {
+    "ceu": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.167,
+     "bytes": 357342
+    },
+    "relva": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.017,
+     "bytes": 583344
+    }
+   }
+  },
+  {
+   "escrita": 8,
+   "tipo": "pose_repor",
+   "zona_da_escrita": "ceu",
+   "piece": "P0295",
+   "regioes": {
+    "ceu": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.218,
+     "bytes": 357692
+    },
+    "relva": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.016,
+     "bytes": 583344
+    }
+   }
+  },
+  {
+   "escrita": 9,
+   "tipo": "colocar",
+   "zona_da_escrita": "relva",
+   "piece": "P1194",
+   "cell": [
+    43,
+    44
+   ],
+   "regioes": {
+    "ceu": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.019,
+     "bytes": 357692
+    },
+    "relva": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.194,
+     "bytes": 585556
+    }
+   }
+  },
+  {
+   "escrita": 10,
+   "tipo": "desfazer",
+   "zona_da_escrita": "relva",
+   "piece": "P1194",
+   "regioes": {
+    "ceu": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.017,
+     "bytes": 357692
+    },
+    "relva": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.144,
+     "bytes": 583344
+    }
+   }
+  },
+  {
+   "escrita": 11,
+   "tipo": "pose_gravar",
+   "zona_da_escrita": "relva",
+   "piece": "P0398",
+   "regioes": {
+    "ceu": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.016,
+     "bytes": 357692
+    },
+    "relva": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.185,
+     "bytes": 583029
+    }
+   }
+  },
+  {
+   "escrita": 12,
+   "tipo": "pose_gravar",
+   "zona_da_escrita": "ceu",
+   "piece": "P0306",
+   "regioes": {
+    "ceu": {
+     "modo": "remendos",
+     "igual": true,
+     "s": 0.204,
+     "bytes": 357399
+    },
+    "relva": {
+     "modo": "acerto_jpeg",
+     "igual": true,
+     "s": 0.015,
+     "bytes": 583029
+    }
+   }
+  }
+ ],
+ "remendo": {
+  "remendos": 12,
+  "inteiras": 2,
+  "iguais": 0,
+  "motivos": {
+   "sem_base": 2
+  },
+  "cache": {
+   "regioes": 2,
+   "mb": 32.6,
+   "orcamento_mb": 128,
+   "expulsas": 0
+  }
+ },
+ "n_diferentes": 0,
+ "por_modo": {
+  "remendos": 12,
+  "acerto_jpeg": 12
+ }
+}

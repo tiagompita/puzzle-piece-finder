@@ -1,0 +1,2361 @@
+{
+"estatistica": {
+"perto (crit. 3)": {
+"old": [
+2.37,
+2.57,
+2.53,
+2.5,
+2.44,
+2.55,
+2.52,
+2.57,
+2.22,
+2.39
+],
+"new": [
+1.26,
+1.68,
+1.54,
+1.76,
+1.8,
+1.69,
+1.66,
+1.38,
+1.26,
+1.55
+],
+"med_old": 2.51,
+"max_old": 2.57,
+"med_new": 1.605,
+"max_new": 1.8,
+"dif_medianas": -0.9049999999999998,
+"ic_dif_medianas": [
+-1.1,
+-0.76
+],
+"media_dif_emparelhada": -0.908,
+"ic_media": [
+-1.0030000000000001,
+-0.815
+],
+"exclui_mais_025": true
+},
+"longe (crit. 3)": {
+"old": [
+0.2,
+0.25,
+0.29,
+0.24,
+0.24,
+0.26,
+0.28,
+0.2,
+0.23,
+0.26
+],
+"new": [
+0.24,
+0.27,
+0.27,
+0.28,
+0.27,
+0.29,
+0.23,
+0.23,
+0.28,
+0.27
+],
+"med_old": 0.245,
+"max_old": 0.29,
+"med_new": 0.27,
+"max_new": 0.29,
+"dif_medianas": 0.025000000000000022,
+"ic_dif_medianas": [
+-0.010000000000000009,
+0.040000000000000036
+],
+"media_dif_emparelhada": 0.01800000000000001,
+"ic_media": [
+-0.0010000000000000037,
+0.034000000000000016
+],
+"exclui_mais_025": true
+},
+"POST perto": {
+"old": [
+2.26,
+2.21,
+2.13,
+2.15,
+2.12,
+2.11,
+2.17,
+1.93,
+2.01,
+1.92
+],
+"new": [
+2.36,
+2.23,
+2.36,
+2.09,
+2.26,
+2.28,
+2.08,
+2.17,
+2.37,
+2.23
+],
+"med_old": 2.125,
+"max_old": 2.26,
+"med_new": 2.245,
+"max_new": 2.37,
+"dif_medianas": 0.1200000000000001,
+"ic_dif_medianas": [
+0.010000000000000231,
+0.26000000000000023
+],
+"media_dif_emparelhada": 0.14200000000000002,
+"ic_media": [
+0.051999999999999914,
+0.22900000000000012
+],
+"exclui_mais_025": false
+},
+"POST longe": {
+"old": [
+0.78,
+0.94,
+0.96,
+0.84,
+0.88,
+0.85,
+0.83,
+0.93,
+0.73,
+0.88
+],
+"new": [
+0.71,
+0.91,
+0.92,
+0.9,
+0.87,
+0.9,
+0.8,
+0.87,
+0.89,
+0.85
+],
+"med_old": 0.865,
+"max_old": 0.96,
+"med_new": 0.88,
+"max_new": 0.92,
+"dif_medianas": 0.015000000000000013,
+"ic_dif_medianas": [
+-0.03500000000000003,
+0.06000000000000005
+],
+"media_dif_emparelhada": 2.2204460492503132e-17,
+"ic_media": [
+-0.03699999999999999,
+0.044000000000000025
+],
+"exclui_mais_025": true
+},
+"salto1_ceu (crit. 1)": {
+"old": [
+5.84,
+6.13,
+5.53,
+5.63,
+5.33,
+5.59,
+5.45,
+6.03,
+5.06,
+6.03
+],
+"new": [
+5.64,
+5.37,
+5.52,
+5.31,
+5.76,
+5.93,
+5.92,
+6.16,
+5.46,
+5.67
+],
+"med_old": 5.609999999999999,
+"max_old": 6.13,
+"med_new": 5.654999999999999,
+"max_new": 6.16,
+"dif_medianas": 0.04499999999999993,
+"ic_dif_medianas": [
+-0.3799999999999999,
+0.34999999999999964
+],
+"media_dif_emparelhada": 0.011999999999999834,
+"ic_media": [
+-0.23400000000000015,
+0.24499999999999983
+],
+"exclui_mais_025": false
+},
+"salto_frio_relva browser (crit. 2)": {
+"old": [
+3.2,
+2.93,
+2.92,
+2.84,
+2.79,
+2.94,
+2.88,
+2.55,
+2.64,
+3.1
+],
+"new": [
+3.11,
+2.95,
+3.09,
+2.79,
+3.11,
+3.19,
+2.95,
+2.84,
+3.24,
+3.04
+],
+"med_old": 2.9,
+"max_old": 3.2,
+"med_new": 3.065,
+"max_new": 3.24,
+"dif_medianas": 0.16500000000000004,
+"ic_dif_medianas": [
+0.020000000000000018,
+0.31999999999999984
+],
+"media_dif_emparelhada": 0.152,
+"ic_media": [
+0.03299999999999996,
+0.28600000000000003
+],
+"exclui_mais_025": false
+},
+"srv_frio_relva_s HTTP (crit. 2)": {
+"old": [
+1.39,
+1.4,
+1.45,
+1.36,
+1.35,
+1.38,
+1.41,
+1.2,
+1.3,
+1.47
+],
+"new": [
+1.47,
+1.48,
+1.47,
+1.36,
+1.52,
+1.46,
+1.42,
+1.37,
+1.5,
+1.48
+],
+"med_old": 1.3849999999999998,
+"max_old": 1.47,
+"med_new": 1.47,
+"max_new": 1.52,
+"dif_medianas": 0.08500000000000019,
+"ic_dif_medianas": [
+0.02499999999999991,
+0.1399999999999999
+],
+"media_dif_emparelhada": 0.08200000000000003,
+"ic_media": [
+0.039000000000000014,
+0.12800000000000006
+],
+"exclui_mais_025": true
+},
+"srv_frio_ceu_s HTTP (crit. 2)": {
+"old": [
+1.17,
+1.09,
+1.1,
+1.05,
+1.05,
+1.06,
+1.12,
+0.9,
+0.97,
+1.14
+],
+"new": [
+1.12,
+1.12,
+1.15,
+1.09,
+1.16,
+1.18,
+1.1,
+1.09,
+1.2,
+1.13
+],
+"med_old": 1.0750000000000002,
+"max_old": 1.17,
+"med_new": 1.125,
+"max_new": 1.2,
+"dif_medianas": 0.04999999999999982,
+"ic_dif_medianas": [
+-0.004999999999999893,
+0.11499999999999999
+],
+"media_dif_emparelhada": 0.06899999999999998,
+"ic_media": [
+0.016999999999999994,
+0.12499999999999994
+],
+"exclui_mais_025": true
+},
+"pico WS MB": {
+"old": [
+1107,
+1106,
+1107,
+1105,
+1105,
+1107,
+1106,
+1106,
+1106,
+1106
+],
+"new": [
+1206,
+1203,
+1205,
+1206,
+1206,
+1205,
+1204,
+1206,
+1204,
+1207
+],
+"med_old": 1106.0,
+"max_old": 1107,
+"med_new": 1205.5,
+"max_new": 1207,
+"dif_medianas": 99.5,
+"ic_dif_medianas": [
+98.0,
+100.5
+],
+"media_dif_emparelhada": 99.1,
+"ic_media": [
+98.2,
+100
+],
+"exclui_mais_025": false
+},
+"pico privada MB": {
+"old": [
+1600,
+1600,
+1601,
+1599,
+1599,
+1601,
+1600,
+1600,
+1600,
+1600
+],
+"new": [
+1700,
+1697,
+1700,
+1700,
+1700,
+1699,
+1698,
+1700,
+1698,
+1702
+],
+"med_old": 1600.0,
+"max_old": 1601,
+"med_new": 1700.0,
+"max_new": 1702,
+"dif_medianas": 100.0,
+"ic_dif_medianas": [
+98.0,
+100.5
+],
+"media_dif_emparelhada": 99.4,
+"ic_media": [
+98.5,
+100.4
+],
+"exclui_mais_025": false
+},
+"perto_remendado": 10,
+"perto_motivos": [
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+},
+{
+"sem_base": 6
+}
+],
+"remendo_cache_mb": [
+98.4,
+98.4,
+98.4,
+98.4,
+98.4,
+98.4,
+98.4,
+98.4,
+98.4,
+98.4
+]
+},
+"corridas": {
+"old_1": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.8,
+"abrir_s": 1.08,
+"salto1_ceu": {
+"s": 5.84,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 9.01,
+"mem_apos_buracos": {
+"peak_ws_mb": 502,
+"ws_mb": 487,
+"peak_private_mb": 998
+},
+"salto_frio_relva": {
+"s": 3.2,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.37,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.17,
+"srv_frio_relva_s": 1.39,
+"mem_apos_saltos": {
+"peak_ws_mb": 730,
+"ws_mb": 602,
+"peak_private_mb": 1226
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.26,
+"detalhe_desde_post_s": 2.37,
+"browser": {
+"s": 2.36689999999851,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 5.7,
+"suspeitas_desde_post_s": 6.16
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.78,
+"detalhe_desde_post_s": 0.2,
+"browser": {
+"s": 0.20230000000447035,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 3.04,
+"suspeitas_desde_post_s": 1.91
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 853,
+"peak_private_mb": 1600
+}
+},
+"old_2": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.8,
+"abrir_s": 0.53,
+"salto1_ceu": {
+"s": 6.13,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.52,
+"mem_apos_buracos": {
+"peak_ws_mb": 505,
+"ws_mb": 503,
+"peak_private_mb": 1000
+},
+"salto_frio_relva": {
+"s": 2.93,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.35,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.09,
+"srv_frio_relva_s": 1.4,
+"mem_apos_saltos": {
+"peak_ws_mb": 744,
+"ws_mb": 615,
+"peak_private_mb": 1239
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.21,
+"detalhe_desde_post_s": 2.57,
+"browser": {
+"s": 2.5667000000029803,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 6.28,
+"suspeitas_desde_post_s": 6.77
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.94,
+"detalhe_desde_post_s": 0.25,
+"browser": {
+"s": 0.2458999999985099,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 3.26,
+"suspeitas_desde_post_s": 2.11
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 854,
+"peak_private_mb": 1600
+}
+},
+"old_3": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 1.1,
+"salto1_ceu": {
+"s": 5.53,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.46,
+"mem_apos_buracos": {
+"peak_ws_mb": 509,
+"ws_mb": 507,
+"peak_private_mb": 1005
+},
+"salto_frio_relva": {
+"s": 2.92,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.1,
+"srv_frio_relva_s": 1.45,
+"mem_apos_saltos": {
+"peak_ws_mb": 749,
+"ws_mb": 618,
+"peak_private_mb": 1245
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.13,
+"detalhe_desde_post_s": 2.53,
+"browser": {
+"s": 2.52510000000149,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 6.16,
+"suspeitas_desde_post_s": 6.64
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.96,
+"detalhe_desde_post_s": 0.29,
+"browser": {
+"s": 0.288,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 3.33,
+"suspeitas_desde_post_s": 2.18
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 855,
+"peak_private_mb": 1601
+}
+},
+"old_4": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.2,
+"abrir_s": 1.07,
+"salto1_ceu": {
+"s": 5.63,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.54,
+"mem_apos_buracos": {
+"peak_ws_mb": 507,
+"ws_mb": 507,
+"peak_private_mb": 1002
+},
+"salto_frio_relva": {
+"s": 2.84,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.05,
+"srv_frio_relva_s": 1.36,
+"mem_apos_saltos": {
+"peak_ws_mb": 743,
+"ws_mb": 616,
+"peak_private_mb": 1239
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.15,
+"detalhe_desde_post_s": 2.5,
+"browser": {
+"s": 2.49720000000298,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 6.12,
+"suspeitas_desde_post_s": 6.57
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.84,
+"detalhe_desde_post_s": 0.24,
+"browser": {
+"s": 0.23779999999701976,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 3.29,
+"suspeitas_desde_post_s": 2.2
+},
+"mem_fim": {
+"peak_ws_mb": 1105,
+"ws_mb": 854,
+"peak_private_mb": 1599
+}
+},
+"old_5": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.8,
+"abrir_s": 1.08,
+"salto1_ceu": {
+"s": 5.33,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.13,
+"mem_apos_buracos": {
+"peak_ws_mb": 521,
+"ws_mb": 521,
+"peak_private_mb": 1016
+},
+"salto_frio_relva": {
+"s": 2.79,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.05,
+"srv_frio_relva_s": 1.35,
+"mem_apos_saltos": {
+"peak_ws_mb": 759,
+"ws_mb": 631,
+"peak_private_mb": 1255
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.12,
+"detalhe_desde_post_s": 2.44,
+"browser": {
+"s": 2.4406999999955294,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 5.85,
+"suspeitas_desde_post_s": 6.32
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.88,
+"detalhe_desde_post_s": 0.24,
+"browser": {
+"s": 0.237,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 3.26,
+"suspeitas_desde_post_s": 2.16
+},
+"mem_fim": {
+"peak_ws_mb": 1105,
+"ws_mb": 851,
+"peak_private_mb": 1599
+}
+},
+"old_6": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.9,
+"abrir_s": 1.08,
+"salto1_ceu": {
+"s": 5.59,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.5,
+"mem_apos_buracos": {
+"peak_ws_mb": 502,
+"ws_mb": 488,
+"peak_private_mb": 998
+},
+"salto_frio_relva": {
+"s": 2.94,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.06,
+"srv_frio_relva_s": 1.38,
+"mem_apos_saltos": {
+"peak_ws_mb": 728,
+"ws_mb": 598,
+"peak_private_mb": 1224
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.11,
+"detalhe_desde_post_s": 2.55,
+"browser": {
+"s": 2.5468000000044704,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 6.3,
+"suspeitas_desde_post_s": 6.85
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.85,
+"detalhe_desde_post_s": 0.26,
+"browser": {
+"s": 0.26160000000149014,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 3.27,
+"suspeitas_desde_post_s": 2.11
+},
+"mem_fim": {
+"peak_ws_mb": 1107,
+"ws_mb": 855,
+"peak_private_mb": 1601
+}
+},
+"old_7": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.4,
+"abrir_s": 1.08,
+"salto1_ceu": {
+"s": 5.45,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.4,
+"mem_apos_buracos": {
+"peak_ws_mb": 520,
+"ws_mb": 518,
+"peak_private_mb": 1015
+},
+"salto_frio_relva": {
+"s": 2.88,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.35,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.12,
+"srv_frio_relva_s": 1.41,
+"mem_apos_saltos": {
+"peak_ws_mb": 758,
+"ws_mb": 630,
+"peak_private_mb": 1254
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.17,
+"detalhe_desde_post_s": 2.52,
+"browser": {
+"s": 2.51870000000298,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 6.2,
+"suspeitas_desde_post_s": 6.71
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.83,
+"detalhe_desde_post_s": 0.28,
+"browser": {
+"s": 0.278,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 3.33,
+"suspeitas_desde_post_s": 2.25
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 852,
+"peak_private_mb": 1600
+}
+},
+"old_8": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 0.56,
+"salto1_ceu": {
+"s": 6.03,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.33,
+"mem_apos_buracos": {
+"peak_ws_mb": 522,
+"ws_mb": 522,
+"peak_private_mb": 1017
+},
+"salto_frio_relva": {
+"s": 2.55,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.3,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.9,
+"srv_frio_relva_s": 1.2,
+"mem_apos_saltos": {
+"peak_ws_mb": 758,
+"ws_mb": 628,
+"peak_private_mb": 1254
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.93,
+"detalhe_desde_post_s": 2.57,
+"browser": {
+"s": 2.56779999999702,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 6.05,
+"suspeitas_desde_post_s": 6.53
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.93,
+"detalhe_desde_post_s": 0.2,
+"browser": {
+"s": 0.1956000000014901,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 2.94,
+"suspeitas_desde_post_s": 1.7
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 853,
+"peak_private_mb": 1600
+}
+},
+"old_9": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.8,
+"abrir_s": 1.07,
+"salto1_ceu": {
+"s": 5.06,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 7.79,
+"mem_apos_buracos": {
+"peak_ws_mb": 532,
+"ws_mb": 531,
+"peak_private_mb": 1028
+},
+"salto_frio_relva": {
+"s": 2.64,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.32,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 0.97,
+"srv_frio_relva_s": 1.3,
+"mem_apos_saltos": {
+"peak_ws_mb": 768,
+"ws_mb": 638,
+"peak_private_mb": 1264
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.01,
+"detalhe_desde_post_s": 2.22,
+"browser": {
+"s": 2.21310000000149,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 5.23,
+"suspeitas_desde_post_s": 5.65
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.73,
+"detalhe_desde_post_s": 0.23,
+"browser": {
+"s": 0.22669999999552964,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 2.78,
+"suspeitas_desde_post_s": 1.77
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 852,
+"peak_private_mb": 1600
+}
+},
+"old_10": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_old",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.9,
+"abrir_s": 1.12,
+"salto1_ceu": {
+"s": 6.03,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 9.1,
+"mem_apos_buracos": {
+"peak_ws_mb": 503,
+"ws_mb": 495,
+"peak_private_mb": 998
+},
+"salto_frio_relva": {
+"s": 3.1,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.37,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.14,
+"srv_frio_relva_s": 1.47,
+"mem_apos_saltos": {
+"peak_ws_mb": 736,
+"ws_mb": 606,
+"peak_private_mb": 1231
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 1.92,
+"detalhe_desde_post_s": 2.39,
+"browser": {
+"s": 2.3841999999955297,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 5.82,
+"suspeitas_desde_post_s": 6.3
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.88,
+"detalhe_desde_post_s": 0.26,
+"browser": {
+"s": 0.26160000000149014,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": null,
+"sugestoes_desde_post_s": 3.28,
+"suspeitas_desde_post_s": 2.13
+},
+"mem_fim": {
+"peak_ws_mb": 1106,
+"ws_mb": 854,
+"peak_private_mb": 1600
+}
+},
+"new_1": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.4,
+"abrir_s": 1.08,
+"salto1_ceu": {
+"s": 5.64,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.0,
+"sugestoes_desde_pronto_s": 8.51,
+"mem_apos_buracos": {
+"peak_ws_mb": 539,
+"ws_mb": 539,
+"peak_private_mb": 1035
+},
+"salto_frio_relva": {
+"s": 3.11,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.35,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.12,
+"srv_frio_relva_s": 1.47,
+"mem_apos_saltos": {
+"peak_ws_mb": 822,
+"ws_mb": 715,
+"peak_private_mb": 1318
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.36,
+"detalhe_desde_post_s": 1.26,
+"browser": {
+"s": 1.2612000000029802,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.23,
+"suspeitas_desde_post_s": 5.98
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.71,
+"detalhe_desde_post_s": 0.24,
+"browser": {
+"s": 0.23380000000447035,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 3.07,
+"suspeitas_desde_post_s": 2.06
+},
+"mem_fim": {
+"peak_ws_mb": 1206,
+"ws_mb": 954,
+"peak_private_mb": 1700
+}
+},
+"new_2": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.4,
+"abrir_s": 1.07,
+"salto1_ceu": {
+"s": 5.37,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.25,
+"mem_apos_buracos": {
+"peak_ws_mb": 538,
+"ws_mb": 536,
+"peak_private_mb": 1033
+},
+"salto_frio_relva": {
+"s": 2.95,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.35,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.12,
+"srv_frio_relva_s": 1.48,
+"mem_apos_saltos": {
+"peak_ws_mb": 819,
+"ws_mb": 712,
+"peak_private_mb": 1315
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.23,
+"detalhe_desde_post_s": 1.68,
+"browser": {
+"s": 1.6803000000044703,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.56,
+"suspeitas_desde_post_s": 6.24
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.91,
+"detalhe_desde_post_s": 0.27,
+"browser": {
+"s": 0.272,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 3.3,
+"suspeitas_desde_post_s": 2.18
+},
+"mem_fim": {
+"peak_ws_mb": 1203,
+"ws_mb": 953,
+"peak_private_mb": 1697
+}
+},
+"new_3": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.8,
+"abrir_s": 1.07,
+"salto1_ceu": {
+"s": 5.52,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.44,
+"mem_apos_buracos": {
+"peak_ws_mb": 532,
+"ws_mb": 532,
+"peak_private_mb": 1028
+},
+"salto_frio_relva": {
+"s": 3.09,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.35,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.15,
+"srv_frio_relva_s": 1.47,
+"mem_apos_saltos": {
+"peak_ws_mb": 819,
+"ws_mb": 712,
+"peak_private_mb": 1315
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.36,
+"detalhe_desde_post_s": 1.54,
+"browser": {
+"s": 1.5342000000029803,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.39,
+"suspeitas_desde_post_s": 5.88
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.92,
+"detalhe_desde_post_s": 0.27,
+"browser": {
+"s": 0.2656000000014901,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 3.36,
+"suspeitas_desde_post_s": 2.23
+},
+"mem_fim": {
+"peak_ws_mb": 1205,
+"ws_mb": 953,
+"peak_private_mb": 1700
+}
+},
+"new_4": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 6.8,
+"abrir_s": 1.08,
+"salto1_ceu": {
+"s": 5.31,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.14,
+"mem_apos_buracos": {
+"peak_ws_mb": 553,
+"ws_mb": 553,
+"peak_private_mb": 1049
+},
+"salto_frio_relva": {
+"s": 2.79,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.09,
+"srv_frio_relva_s": 1.36,
+"mem_apos_saltos": {
+"peak_ws_mb": 838,
+"ws_mb": 731,
+"peak_private_mb": 1334
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.09,
+"detalhe_desde_post_s": 1.76,
+"browser": {
+"s": 1.7567999999970199,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.36,
+"suspeitas_desde_post_s": 5.88
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.9,
+"detalhe_desde_post_s": 0.28,
+"browser": {
+"s": 0.279,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 3.35,
+"suspeitas_desde_post_s": 2.23
+},
+"mem_fim": {
+"peak_ws_mb": 1206,
+"ws_mb": 954,
+"peak_private_mb": 1700
+}
+},
+"new_5": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 1.09,
+"salto1_ceu": {
+"s": 5.76,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.73,
+"mem_apos_buracos": {
+"peak_ws_mb": 533,
+"ws_mb": 533,
+"peak_private_mb": 1029
+},
+"salto_frio_relva": {
+"s": 3.11,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.37,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.16,
+"srv_frio_relva_s": 1.52,
+"mem_apos_saltos": {
+"peak_ws_mb": 817,
+"ws_mb": 708,
+"peak_private_mb": 1313
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.26,
+"detalhe_desde_post_s": 1.8,
+"browser": {
+"s": 1.7981000000014902,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.63,
+"suspeitas_desde_post_s": 6.09
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.87,
+"detalhe_desde_post_s": 0.27,
+"browser": {
+"s": 0.27230000000447036,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 3.27,
+"suspeitas_desde_post_s": 2.2
+},
+"mem_fim": {
+"peak_ws_mb": 1206,
+"ws_mb": 952,
+"peak_private_mb": 1700
+}
+},
+"new_6": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 1.07,
+"salto1_ceu": {
+"s": 5.93,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.91,
+"mem_apos_buracos": {
+"peak_ws_mb": 539,
+"ws_mb": 537,
+"peak_private_mb": 1035
+},
+"salto_frio_relva": {
+"s": 3.19,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.38,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.18,
+"srv_frio_relva_s": 1.46,
+"mem_apos_saltos": {
+"peak_ws_mb": 818,
+"ws_mb": 712,
+"peak_private_mb": 1315
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.28,
+"detalhe_desde_post_s": 1.69,
+"browser": {
+"s": 1.6907000000029802,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.43,
+"suspeitas_desde_post_s": 5.89
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.9,
+"detalhe_desde_post_s": 0.29,
+"browser": {
+"s": 0.2833999999985099,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 3.05,
+"suspeitas_desde_post_s": 1.99
+},
+"mem_fim": {
+"peak_ws_mb": 1205,
+"ws_mb": 951,
+"peak_private_mb": 1699
+}
+},
+"new_7": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 1.07,
+"salto1_ceu": {
+"s": 5.92,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.86,
+"mem_apos_buracos": {
+"peak_ws_mb": 536,
+"ws_mb": 535,
+"peak_private_mb": 1031
+},
+"salto_frio_relva": {
+"s": 2.95,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.1,
+"srv_frio_relva_s": 1.42,
+"mem_apos_saltos": {
+"peak_ws_mb": 819,
+"ws_mb": 712,
+"peak_private_mb": 1315
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.08,
+"detalhe_desde_post_s": 1.66,
+"browser": {
+"s": 1.6607000000029801,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.29,
+"suspeitas_desde_post_s": 5.75
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.8,
+"detalhe_desde_post_s": 0.23,
+"browser": {
+"s": 0.22769999999552964,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 3.03,
+"suspeitas_desde_post_s": 1.97
+},
+"mem_fim": {
+"peak_ws_mb": 1204,
+"ws_mb": 952,
+"peak_private_mb": 1698
+}
+},
+"new_8": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.4,
+"abrir_s": 0.55,
+"salto1_ceu": {
+"s": 6.16,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.44,
+"mem_apos_buracos": {
+"peak_ws_mb": 555,
+"ws_mb": 554,
+"peak_private_mb": 1051
+},
+"salto_frio_relva": {
+"s": 2.84,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.33,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.09,
+"srv_frio_relva_s": 1.37,
+"mem_apos_saltos": {
+"peak_ws_mb": 837,
+"ws_mb": 730,
+"peak_private_mb": 1334
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.17,
+"detalhe_desde_post_s": 1.38,
+"browser": {
+"s": 1.37639999999851,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 4.95,
+"suspeitas_desde_post_s": 5.47
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.87,
+"detalhe_desde_post_s": 0.23,
+"browser": {
+"s": 0.2251000000014901,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 2.88,
+"suspeitas_desde_post_s": 1.74
+},
+"mem_fim": {
+"peak_ws_mb": 1206,
+"ws_mb": 952,
+"peak_private_mb": 1700
+}
+},
+"new_9": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.3,
+"abrir_s": 1.07,
+"salto1_ceu": {
+"s": 5.46,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.21,
+"mem_apos_buracos": {
+"peak_ws_mb": 540,
+"ws_mb": 539,
+"peak_private_mb": 1035
+},
+"salto_frio_relva": {
+"s": 3.24,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.37,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.2,
+"srv_frio_relva_s": 1.5,
+"mem_apos_saltos": {
+"peak_ws_mb": 821,
+"ws_mb": 714,
+"peak_private_mb": 1317
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.37,
+"detalhe_desde_post_s": 1.26,
+"browser": {
+"s": 1.2596999999955296,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.03,
+"suspeitas_desde_post_s": 5.5
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.89,
+"detalhe_desde_post_s": 0.28,
+"browser": {
+"s": 0.2785,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 2.85,
+"suspeitas_desde_post_s": 1.7
+},
+"mem_fim": {
+"peak_ws_mb": 1204,
+"ws_mb": 951,
+"peak_private_mb": 1698
+}
+},
+"new_10": {
+"tag": "a1",
+"repo": "C:/Users/tiago/AppData/Local/Temp/claude/011f846714d7d8db/df4abd0f-a9db-47d8-b801-b09ceb987a86/scratchpad/wt_new",
+"piece": "P0096",
+"near": [
+5,
+33
+],
+"far": [
+20,
+60
+],
+"pronto_s": 7.9,
+"abrir_s": 1.09,
+"salto1_ceu": {
+"s": 5.67,
+"key_at_jump": "1,20,14,40@100#2307663",
+"key_shown": "1,20,14,40@100#2307663",
+"yanked": false
+},
+"buracos_desde_salto_s": 2.1,
+"sugestoes_desde_pronto_s": 8.57,
+"mem_apos_buracos": {
+"peak_ws_mb": 547,
+"ws_mb": 547,
+"peak_private_mb": 1042
+},
+"salto_frio_relva": {
+"s": 3.04,
+"key_at_jump": "34,30,47,50@100#2307663",
+"key_shown": "34,30,47,50@100#2307663",
+"yanked": false
+},
+"salto_frio_vale": {
+"s": 0.37,
+"key_at_jump": "26,2,40,22@100#2307663",
+"key_shown": "26,2,40,22@100#2307663",
+"yanked": false
+},
+"srv_frio_ceu_s": 1.13,
+"srv_frio_relva_s": 1.48,
+"mem_apos_saltos": {
+"peak_ws_mb": 828,
+"ws_mb": 721,
+"peak_private_mb": 1324
+},
+"encaixa_perto": {
+"cell": [
+5,
+33
+],
+"post_s": 2.23,
+"detalhe_desde_post_s": 1.55,
+"browser": {
+"s": 1.5467999999970197,
+"key": "1,20,14,40@100#2311868"
+},
+"remendo": {
+"remendos": 1,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 5.36,
+"suspeitas_desde_post_s": 5.87
+},
+"encaixa_longe": {
+"cell": [
+20,
+60
+],
+"post_s": 0.85,
+"detalhe_desde_post_s": 0.27,
+"browser": {
+"s": 0.2653999999985099,
+"key": "1,20,14,40@100#2320208"
+},
+"remendo": {
+"remendos": 2,
+"inteiras": 6,
+"iguais": 0,
+"motivos": {
+"sem_base": 6
+},
+"cache": {
+"regioes": 6,
+"mb": 98.4,
+"orcamento_mb": 128,
+"expulsas": 0
+}
+},
+"sugestoes_desde_post_s": 3.02,
+"suspeitas_desde_post_s": 1.92
+},
+"mem_fim": {
+"peak_ws_mb": 1207,
+"ws_mb": 953,
+"peak_private_mb": 1702
+}
+}
+}
+}

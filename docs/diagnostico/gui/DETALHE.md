@@ -1227,3 +1227,177 @@ mediana(novo) − mediana(antigo). Mediana · máximo, em s.
 `tests/test_sheets.py:170`: o teste com o PyMuPDF real salta porque o `.venv` não o tem instalado (mensagem: «PyMuPDF não está
 instalado neste Python (o .venv não o tem)»). Confirmado com `.venv/Scripts/python.exe -m pytest tests/ -rs -q`: **621 passed,
 1 skipped** em 10 min 13 s [V]. Os outros testes de `test_sheets.py` forçam os dois caminhos com um substituto e passam.
+
+### 13.7 «Perto»: passo 0, remendo das células alteradas, leitores rasgados (2026-11-15)
+
+Plano aprovado pelo Tiago (`docs/prompts/2026-11-15-perto-remendo.md`). Critérios fixados antes de medir: «perto» ≤ 1,2 s
+e «longe» ≤ 0,6 s (mediana, pares alternados `8668365 | novo` na mesma sessão); imagem servida igual byte a byte a uma
+composição a frio; POST e critério 2 sem regressão (IC 95 % que exclua +0,25 s); pico de memória ≤ +200 MB.
+
+#### Passo 0: onde estão os ≈ 0,45 s que não são CPU e os ≈ 0,22 s fora da composição [V]
+
+Lançador `scratchpad/p0/lanca_p0.py` (fora do repositório): `linha_tempo.py` mais cronómetros por fase (parede e
+`time.thread_time()`), só em memória, numa cópia de `compose_board` e de `Gui._region_jpg` de `8668365` (servidor num
+worktree nesse commit). Corredor `scratchpad/p0/rodar_p0.py`: o protocolo de `perfil_c3.run`, 5 rondas × 2 condições
+intercaladas. Na condição «atrasado», `page.route` retém no browser `/api/board`, `/api/ghosts` e `/api/montar` desde
+antes do POST até o detalhe da versão nova aparecer; a rota está instalada também na «normal» (deixa seguir logo), para
+custar o mesmo. Dados: `dados/r7_passo0_paralelos.json`. Mediana · máximo, em s; 117 peças desenhadas, 88 delas
+registadas na hora (sem entrada válida em `placements`).
+
+| medida | normal | pedidos paralelos atrasados |
+|---|---|---|
+| «perto» (fim do POST → detalhe) | **2,65 · 2,77** | **1,44 · 1,47** |
+| «longe» | 0,26 · 0,27 | 0,18 · 0,21 |
+| `_region_jpg` (parede) | 2,53 · 2,63 | 1,37 · 1,40 |
+| `_compose` (parede) | 2,32 · 2,46 | 1,19 · 1,25 |
+| `_compose` parede − CPU | 0,49 · 0,58 | 0,13 · 0,14 |
+| `_region_jpg` fora do `_compose` | 0,19 · 0,21 | 0,17 · 0,18 |
+| … `_region_sig` | 0,18 · 0,21 | 0,16 · 0,17 |
+| … JPEG / `region_lock` / bloqueio por cliente / repetições de `self.read` | 0,006 / 0 / 0 / 1 | iguais |
+| dentro de `compose_board`: registo na hora (88 peças) | **1,00 · 1,07** | **0,07 · 0,07** |
+| … peças prontas (`ReadyCache`) | 0,10 | 0,04 |
+| … warps (sangria + peças + profundidade) | 0,41 | 0,38 |
+| … pré-multiplicação | 0,34 | 0,32 |
+| … mistura + `_depth_px` + arte + `clip` | 0,40 | 0,37 |
+| pedidos paralelos sobrepostos ao detalhe (parede): `board_json` / `ghosts` / `montar_json` / `_base` | 0,76 / 1,31 / 0,97 / 0,20 | — |
+| POST «perto» | 2,27 | 2,20 |
+| `srv_frio_relva_s` (referência da máquina) | 1,40 · 1,51 | 1,43 · 1,44 |
+
+- **Hipótese «pedidos paralelos» [V]:** atrasá-los tira 1,21 s ao «perto» (2,65 → 1,44) e 0,08 s ao «longe». O ganho está
+  quase todo no código Python da composição (o registo na hora: 1,00 → 0,07 s; as células, as peças prontas); os passos
+  em C (warps, mistura) quase não mudam. É o padrão de disputa do GIL: três pedidos em Python correm ao mesmo tempo, todos
+  em `foreground()` (os trabalhos de fundo cedem, estes não).
+- **Os ≈ 0,45 s «não CPU»:** 0,49 → 0,13 s; ≈ 0,36 s vêm dos pedidos paralelos; os ≈ 0,13 s restantes não se separaram
+  (E/S, sistema) [NT]. O `thread_time` do Windows tem grão de 15,6 ms: as somas por fase de CPU de chamadas curtas não
+  são fiáveis; o total por composição sim (1,81 → 1,06 s de CPU: a espera do GIL também gasta CPU de núcleo nos
+  acordares a cada 0,5 ms [NT, não medido à parte]). Não separa GIL de E/S.
+- **Os ≈ 0,22 s fora da composição:** são quase só o `_region_sig` (0,16–0,18 s; 0,13–0,16 s de CPU), não os 30–40 ms
+  estimados em §13.2. JPEG 6 ms; bloqueios ≈ 0.
+- **Propostas baratas, separadas do remendo, não implementadas:**
+  - **P-a** o browser pede `/api/board`, `/api/ghosts` e `/api/montar` só depois de o detalhe da versão nova aparecer
+    (ou o servidor faz esses três cederem a uma composição de detalhe em curso). Medido no lançador: −1,2 s antes do
+    remendo, e −1,2 s também depois dele (ver a decomposição nova abaixo).
+  - **P-b** 88 das 117 peças do céu são registadas na hora em cada composição (a entrada de `placements.json` não vale
+    para elas); vale a pena perceber porquê e guardar o registo por `_entry_key` no servidor [NT].
+  - **P-c** `_region_sig` / `_region_parts` 0,17–0,20 s por pedido: memorizar `ReadyCache.key` por peça (um `os.stat` e o
+    sha1 do `puzzle.json` por peça hoje) [NT a divisão exata].
+
+#### Bloco 1: remendo das células alteradas
+
+**Tabela 1-0 confirmada no código** (`compose_board`, camadas `art` + `pieces`): fundo e `clip` píxel a píxel; a arte lê só
+o ficheiro da arte (guarda-se como `base_art`, não se recalcula); `_display_masks`, `_fill_transparent`, `_bleed_rgba`,
+`_depth_px` correm no recorte da própria peça, antes do warp; o warp bilinear (com pré-redução `INTER_AREA`) escreve só na
+caixa da peça (cantos −1 / +2 px, cortada à região); a mistura dos dois passes (sangria «over», prioridade de
+profundidade com `zbuf`) depende só das peças que cobrem o píxel, pela ordem das células. A escolha das peças (célula na
+região ± 1) é uma regra de seleção, já na assinatura. **Nenhum passo global** [V].
+
+**O que mudou** (`src/render.py`, `src/server.py`):
+- `compose_board` foi partido em auxiliares puros (`_frame`, `_art_layer`, `_piece_jobs`, `_job_geom`, `_job_boxes`,
+  `_draw_jobs`); a composição inteira chama o mesmo `_draw_jobs` sem `clip` (mesmos números). Novos `base_art=` e
+  `return_parts=` (`{img, art, boxes}`).
+- `compose_patch`: zona suja = união das caixas antigas e novas das peças Δ + 2 px; nela, a partir de `base_art` e de um
+  `zbuf` limpo, redesenham-se todas as peças cuja caixa a toca, pela ordem normal, cada uma com o warp da caixa inteira;
+  fora dela ficam os píxeis antigos. Zona > 35 % da região → composição inteira a partir da base.
+- Servidor: `_region_parts` (as partes que já entravam no sha1 de `_region_sig`), `PatchCache` (LRU por bytes, 128 MB,
+  `--cache-remendo-mb`, `clear` onde a `ReadyCache` é limpa, `touch` num acerto da LRU de JPEG), `_compose_region` (Δ pela
+  comparação das partes; Δ = ∅ → a imagem guardada; > 12 peças, sem entrada ou outra arte → inteira), contadores em
+  `/api/status.remendo`. Os arrays só ficam guardados se o seqlock não mudou (a regra de `f85c092`).
+
+**Testes, escritos antes do código** (`tests/test_regiao_remendo.py`, projeto sintético 6 × 8 com arte de céu liso e
+relva com textura, 16 peças colocadas, região (1,2)–(6,6) a ppc 120; cada caso contra um servidor acabado de abrir, byte
+a byte, e com o contador do remendo): antes 7 falham e 1 passa (a peça «por confirmar», que já era um acerto); depois
+8/8 [V].
+
+| caso | resultado |
+|---|---|
+| colocar no céu e na relva | 2 remendos, iguais a frio |
+| vizinha com pose manual gravada e reposta | 2 remendos; a reposta volta ao JPEG de antes |
+| desfazer (`unplace` + `desfaz`) | volta ao JPEG de antes, igual a frio |
+| tirar do lugar | remendo, igual a frio |
+| peça «por confirmar» | acerto na LRU (sem composição), igual a frio |
+| peça re-segmentada (contorno manual pelo `POST …/contorno`) | 1 composição (remendo), igual a frio |
+| escrita a meio de um remendo | servido; nem os arrays nem o JPEG ficam guardados; o pedido seguinte = a frio |
+| sem base / > 12 peças / zona > limiar | composição inteira (`sem_base`, `muitas_pecas`, `zona_grande`), igual a frio |
+
+- `test_concorrencia.py` não foi alterado. Uma sonda mostrou que nele as composições nunca ficam guardadas (as escritas não
+  têm pausas: 169 inteiras «sem base», 0 remendos), por isso o esforço com remendos ficou num teste novo,
+  `tests/test_remendo_concorrencia.py` (slow): 3 fios pedem regiões enquanto o principal coloca, desfaz, tira e muda poses
+  com pausas de 0,4 s (92 remendos e 22 inteiras numa corrida); no fim, mais duas escritas sem concorrência, cada região
+  remendada sobre o que ficou guardado durante o esforço e comparada com um servidor novo: iguais [V].
+- **Cópia real** (`tools/diagnostico/gui/remendo_iguais.py`, base `base_c3`, semente 20261115, `dados/r7_remendo_iguais.json`):
+  12 escritas ao acaso (4 colocar, 3 desfazer, 3 gravar pose manual, 1 repor, 1 tirar), céu (1,20–14,40) e relva
+  (34,30–47,50) a ppc 100: **12 remendos, 12 acertos na LRU, 0 composições inteiras depois das 2 bases, 0 diferenças
+  byte a byte** [V]. Cada remendo 0,14–0,22 s no processo sem browser.
+
+**10 pares alternados `8668365 | novo`** (`desempenho.py --so a --n 1 --repo <worktree>`; IC 95 % por bootstrap de pares,
+10 000 reamostragens, da diferença das medianas; `dados/r7_pares_remendo.json`). Mediana · máximo, em s.
+
+| medida | alvo | `8668365` | novo | diferença | IC 95 % | exclui +0,25? | marca |
+|---|---|---|---|---|---|---|---|
+| 3 «perto» (5,33) | ≤ 1,2 | 2,51 · 2,57 | **1,60 · 1,80** | −0,90 | [−1,10, −0,76] | sim | melhora [V]; alvo **[F]** |
+| 3 «longe» (20,60) | ≤ 0,6 | 0,24 · 0,29 | 0,27 · 0,29 | +0,03 | [−0,01, +0,04] | sim | [V] |
+| POST «perto» | — | 2,12 · 2,26 | 2,25 · 2,37 | +0,12 | [+0,01, +0,26] | **não** | regressão não excluída **[F]** |
+| POST «longe» | — | 0,86 · 0,96 | 0,88 · 0,92 | +0,02 | [−0,04, +0,06] | sim | [V] |
+| 2 salto a frio, relva (browser) | — | 2,90 · 3,20 | 3,06 · 3,24 | +0,17 | [+0,02, +0,32] | **não** | regressão não excluída **[F]** |
+| 2 salto a frio, relva (HTTP) `srv_frio_relva_s` | — | 1,38 · 1,47 | 1,47 · 1,52 | +0,09 | [+0,02, +0,14] | sim | [V] sem regressão ≥ 0,25; custo medido ≈ +0,08 |
+| 2 salto a frio, céu (HTTP) | — | 1,08 · 1,17 | 1,12 · 1,20 | +0,05 | [−0,00, +0,11] | sim | [V] |
+| 1 1.º salto (céu) | ≤ 4,0 | 5,61 · 6,13 | 5,65 · 6,16 | +0,04 | [−0,38, +0,35] | não | [NT] inconclusivo |
+| 5 pico do working set | ≤ +200 MB | 1106 MB | 1206 MB | **+99 MB** | [+98, +100] | — | [V] |
+
+- **«Perto» que caíram na composição inteira: 0 de 10** (os 10 remendados; as inteiras de cada corrida são só as 6
+  regiões «sem base» dos saltos e dos pedidos a frio) [V]. A `PatchCache` ficou com 98,4 MB (6 regiões) em todas.
+- O custo novo da composição a frio (+0,05–0,09 s por HTTP) é o `return_parts`: uma cópia da base, as caixas de todas as
+  peças e a escrita na `PatchCache`. No browser aparece +0,15–0,17 s; não se afinou (paragem abaixo).
+- O POST «perto» (+0,12 s, IC até +0,26) corre ao mesmo tempo que o pedido do detalhe; não decomposto [NT].
+
+**Paragem: «perto» = 1,60 s > 1,2 s, não se afinou nada.** Decomposição nova (`scratchpad/p0/lanca_novo.py`: embrulhos
+de parede/CPU em `_region_parts`, `_compose_region`, `compose_patch`, `_piece_jobs`, `_draw_jobs`, `_jpeg` e nos três
+pedidos paralelos; 3 + 3 corridas intercaladas, código novo; `dados/r7_perto_remendo_decomposicao.json`; mediana · máximo):
+
+| medida | normal | pedidos paralelos atrasados |
+|---|---|---|
+| «perto» | **1,62 · 1,82** | **0,44 · 0,44** |
+| `_region_jpg` | 1,52 · 1,71 | 0,36 · 0,37 |
+| … `_region_parts` (assinatura) | 0,20 · 0,23 | 0,17 · 0,17 |
+| … `compose_patch` | 1,29 · 1,49 | 0,19 · 0,19 |
+| …… `_piece_jobs` (pose de todas as 117 peças, 88 registadas na hora, e peças prontas) | **1,21 · 1,38** | 0,12 · 0,12 |
+| …… `_draw_jobs` (o redesenho da zona suja) | 0,07 · 0,09 | 0,05 · 0,06 |
+| … JPEG | 0,007 | 0,006 |
+| fim do POST → pedido / pedido → detalhe no ecrã | 0,05 / 0,06 | 0,04 / 0,03 |
+| pedidos paralelos sobrepostos: `board_json` / `ghosts` / `montar_json` | 0,81 / 1,32 / 1,05 | — |
+
+O redesenho em si custa 0,07 s. O que fica é a preparação das 117 peças (`_piece_jobs`, com o registo na hora das 88)
+a disputar o GIL com os três pedidos paralelos (1,21 s; 0,12 s sem eles), e a assinatura (0,20 s). Com P-a o «perto»
+ficaria em ≈ 0,44 s [V no lançador; não implementado]; P-b e P-c tirariam o resto da preparação e da assinatura [NT].
+
+#### Bloco 2: leitores rasgados
+
+- **`rank_all`** (`Gui._compute_holes`): no fio dos buracos espera que não haja escrita (`wait_even`), lê o contador e só
+  publica (`_holes`, `_holes_prev`, `holes_changed`) se ele não mudou; senão não toca em nada e calcula outra vez (a
+  lista mostrada continua a anterior, marcada `desatualizada`). Se uma escrita chegar logo depois de publicar, calcula
+  outra vez (o pedido dela foi absorvido pelo fio vivo). Dentro de uma escrita, uma passagem.
+- **«verificar»** (`Gui.verify_json`): `seq_read` (3 tentativas, nunca o bloqueio de escrita; uma escrita em curso é
+  esperada no máximo `VERIF_WAIT_S` = 0,5 s por tentativa, senão a tentativa conta como rasgada: a suite apanhou-o, o
+  teste existente `test_f2.py::test_verificar_does_not_wait_for_the_write_lock` deu 10,06 s com a espera de 90 s das
+  suspeitas, contra < 3 s exigidos; com o limite passa); à 3.ª tentativa rasgada, o
+  resultado anterior da mesma `(l, c, peça, θ)` marcado `desatualizada`; sem nenhum, `estado: "nao_verificado"` (lista
+  vazia, sem veredicto). `novo.js` mantém «a verificar…» e pede outra vez a cada 500 ms, até 3 vezes; depois mostra «Não
+  consegui verificar: o tabuleiro estava a mudar enquanto verificava». «Pôr aqui» nunca fica bloqueado.
+- **Testes, escritos antes** (`tests/test_seqlock_leitores.py`, `tests/test_gui_verificar_repete.py`): com o código do
+  bloco 1, **8 falham e 1 passa** (a escrita não espera pelo «verificar», que já era assim); com o bloco 2, **9/9** [V].
+
+| cenário | antes | depois |
+|---|---|---|
+| `rank_all`, «mover» na pausa 5 / 14 | publicado (e guardado em `_holes_prev`) um ranking que nunca existiu | nada publicado a meio; a 1.ª publicação = processo novo; durante o recálculo, a lista anterior `desatualizada` |
+| `rank_all`, 5 colocações a 1 s (ranking de 1,82 s) | publicações de versões antigas | 1 publicação, 2,57 s depois da última escrita (< 1 ranking + 1,5 s); **lista desatualizada no máximo 6,80 s** (da 1.ª escrita à publicação: 4 s de escritas + 1 ranking) |
+| «verificar», «mover» na 2.ª chamada de `fit_check` | um estado que nunca existiu | igual a um processo novo depois da escrita |
+| «verificar», 3 tentativas rasgadas | — (sem `estado`) | o resultado anterior marcado `desatualizada`; cada escrita esperou < 50 ms |
+| «verificar» sem resultado anterior | — | `nao_verificado`; pedido outra vez sem escrita: veredicto |
+| browser, 2 respostas `nao_verificado` | lista vazia, presa | 3 pedidos, depois o veredicto |
+| browser, 4 respostas `nao_verificado` | lista vazia, presa | 4 pedidos, depois «Não consegui verificar», «Pôr aqui» ativo |
+
+#### Critério 1
+
+Fica **inconclusivo**, por decisão do Tiago: em §13.6, +0,36 s (IC [−0,14, +0,65]); nestes 10 pares, +0,04 s (IC
+[−0,38, +0,35]), ainda sem excluir +0,25 s. O alvo de 4 s não se cumpre em nenhum dos lados (≈ 5,6–6,1 s): o 1.º salto
+passa a item próprio (HANDOFF).
