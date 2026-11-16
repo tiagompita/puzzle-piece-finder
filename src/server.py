@@ -40,7 +40,10 @@ Design (docs/gui-design.md):
   ``prepare_progress``); the data endpoints answer 503 until it ends. Then (always) the assets are
   checked against the log (:func:`src.render.stale_assets`: the log comes with ``git pull``, the npz /
   crops do not); stale sheets are re-segmented (:func:`src.render.rebuild_stale`) the same way, and the
-  summary is ``ativos`` in ``/api/status`` (``eventos`` > 0 = this code segments differently).
+  summary is ``ativos`` in ``/api/status`` (``eventos`` > 0 = this code segments differently). After the board,
+  the placed pieces without a valid ``render/placements.json`` entry (:func:`src.render.missing_placements`) are
+  a warning and are registered in a background thread (``Gui._fill_placements``: computed outside the write lock,
+  yielding to the GUI, committed under it; ``placements`` in ``/api/status``; P-b, DETALHE.md §13.9).
 * **Contour editor** (``/api/pieces/{id}/contorno``, docs/gui-design.md §18): the scan around the
   piece, a preview of a drawn outline, the stroke solver (``POST …/contorno/resolver``: strokes ->
   trimap -> :mod:`src.strokes` -> polygon, read-only, no lock; contract in
@@ -129,6 +132,7 @@ QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file k
 # -28 %, import +2 %.
 GIL_SWITCH_S = 0.0005
 YIELD_MAX_S = 30.0             # (b): longest single wait of a background job for the GUI
+PL_FILL_PASSES = 3             # P-b: passes of the start-up fill of render/placements.json (a write in between = one more)
 READY_MB = 600.0               # E: budget of the pieces ready to draw (--cache-pecas-mb); ≈ 0,74 MB per piece
 PATCH_MB = 128.0              # arrays of the detail regions for the patch (--cache-remendo-mb); ≈ 2 × 8,5 MB per céu region at ppc 100
 PATCH_MAX_PECAS = 12          # more changed pieces than this in a region -> whole composition instead of a patch
@@ -643,6 +647,10 @@ class Gui:
 		self.n_holes_rasgados = 0             # hole rankings crossed by a write: not published, computed again
 		self.ingest_segment = None    # tests: replacement for segment_scan
 		self.stale_info = None        # start-up check of the assets against the log (render.stale_assets)
+		# P-b (DETALHE.md §13.9): start-up fill of render/placements.json (``/api/status.placements``)
+		self.pl_info = {"em_falta_no_arranque": None, "preenchidas": 0, "em_falta": None, "a_preencher": False,
+						"gravacoes": 0, "passagens": 0, "descartadas": 0, "sem_registo": [], "segundos": None}
+		self._pl_thread = None
 		self._sse_waiters = set()     # one asyncio.Event per connected SSE client (set by emit, from any thread)
 		self._loop = None             # the server's event loop (stored by the first /api/events)
 		self.closing = False          # set by begin_shutdown (Ctrl+C): the SSE streams end so uvicorn can close
@@ -893,10 +901,17 @@ class Gui:
 			self._prep_now("formas", "A preparar as formas esperadas…")
 			self.ghosts()
 			activity.get("arranque").info(f"fantasmas prontos ({time.time() - t1:.1f} s)")
+			# P-b: the placed pieces without a registration entry are registered in the background, after the board (its
+			# disk cache is kept: the fill rewrites only its pl_mtime when no drawn pose changes) and after the ghosts
+			# (measured: started before them, the two shared the GIL and «pronto» went 4.7 -> 21.9 s; DETALHE.md §13.9)
+			# With a fill, the hole ranking starts when it ends (_fill_then_holes): its commit takes the write lock, and a
+			# ranking running meanwhile was torn and computed again (measured, DETALHE.md §13.9)
+			filling = self._start_fill(then_holes=True)
 			# 1d (2026-11-15, performance phase): the hole ranking starts now, in the background, instead of with the
 			# first /api/montar of the GUI (the first jump after opening shared the process with it). «pronto» does not
 			# wait for it; the Montar already works without it (``a_preparar.buracos``, «A preparar sugestões… n de N»).
-			self.holes_json(wait=False)
+			if not filling:
+				self.holes_json(wait=False)
 			# E: the placed pieces made ready to draw in the background, after the hole ranking
 			threading.Thread(target=self._prewarm, name="pre-aquecer", daemon=True).start()
 		except Exception as e:  # noqa: BLE001 - the server must still come up; reported on the page
@@ -1073,6 +1088,8 @@ class Gui:
 		"""E (2026-11-15): after the start-up hole ranking, make every placed piece ready to draw (:class:`ReadyCache`),
 		the ones around the last detail region first, until the budget is nearly full. Never fails."""
 		try:
+			if self._pl_thread is not None:             # after the P-b fill, which starts the ranking when it ends
+				self._pl_thread.join()
 			th = getattr(self, "_holes_thread", None)
 			if th is not None:
 				th.join()
@@ -2329,7 +2346,7 @@ class Gui:
 				"job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
 				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info,
 				"contador_alta": cnt, "atividade_seq": self.ring.seq, "fila": self.queue_summary(),
-				"cache_pecas": self.ready.stats(), "remendo": self.patch_json()}
+				"cache_pecas": self.ready.stats(), "remendo": self.patch_json(), "placements": dict(self.pl_info)}
 
 	def patch_json(self) -> dict:
 		"""Counters of the detail regions composed since the start (``/api/status.remendo``): ``remendos`` (only the
@@ -2362,17 +2379,20 @@ class Gui:
 		return {"celulas_mudadas": [list(x) for x in ch]}
 
 	def _refresh_render_assets(self, pids: list) -> None:
-		"""Cleaned crop + fine registration (with the image when available) of newly placed pieces,
-		written to ``render/clean/`` and ``render/placements.json`` (as :func:`src.render.register_all`
-		would, without its global relaxation pass)."""
+		"""Cleaned crop + fine registration of newly placed pieces with the current rule (:data:`src.render.REGISTER_IMAGE`,
+		the same as every other path; the image only when the rule says so and the art loads), written to
+		``render/clean/`` and ``render/placements.json`` (as :func:`src.render.register_all` would, without its global
+		relaxation pass)."""
 		from src import render
+		image = bool(render.REGISTER_IMAGE)
 		try:
-			if self._art is None and self.use_image:
+			if self._art is None and self.use_image and image:
 				from src.locate import CellArt
 				self._art = CellArt.load(self.pr.profile, REPO)
 		except Exception as e:  # noqa: BLE001 - registration falls back to the corners
 			self.log(f"[servidor] arte indisponível para o registo: {e}")
 			self._art = False
+		art = (self._art or None) if image else None
 		d = render.load_placements(self.pr)
 		for pid in pids:
 			self.ready.forget(pid)                 # its clean crop is rewritten (the key would move on anyway)
@@ -2384,10 +2404,13 @@ class Gui:
 				if rgba is not None:
 					out = render.clean_crop(rgba, self.pr.profile.background_lab, render._scan_mmpp(self.pr, p.scan_id))
 					render.save_png(self.pr.p("render", "clean", f"{pid}.png"), out)
-				r = render.register_piece(self.pr, pid, art=self._art or None, image=bool(self._art))
+				r = render.register_piece(self.pr, pid, art=art, image=art is not None)
 				if "error" not in r:
+					# the key carries the current rule even when the art failed to load (corners): the rule is the
+					# same everywhere, the image step is only skipped
 					r["key"] = render._entry_key(self.pr, pid)
-					r["image_used"] = bool(self._art)
+					r["image_used"] = art is not None
+					r["regra"] = render.register_rule()
 					d["placements"][pid] = r
 			except Exception as e:  # noqa: BLE001 - the board still renders with the on-the-fly fallback
 				self.log(f"[servidor] registo de {pid} falhou: {e}")
@@ -2404,6 +2427,134 @@ class Gui:
 					cel = self.pr.piece(pid).celula
 					if cel is not None and b.get("snap") is not None:
 						b["snap"][(cel[0] - 1) * cols + cel[1] - 1] = None
+
+	def _start_fill(self, then_holes: bool = False) -> bool:
+		"""P-b (2026-11-15, decision of Tiago; DETALHE.md §13.9): permanent check of ``render/placements.json`` at the
+		start-up. Placed pieces without a valid entry (:func:`src.render.missing_placements`: none, another key or rule,
+		an old file format) are a warning (activity + preparation log) and are registered in a background thread
+		(:meth:`_fill_placements`); ``/api/status.placements`` follows it. ``then_holes``: that thread starts the hole
+		ranking when it ends. Returns True when a fill was started."""
+		from src import render
+		try:
+			miss = self.read(lambda: render.missing_placements(self.pr))
+		except Exception as e:  # noqa: BLE001 - informative; the board still draws the on-the-fly pose
+			self._prep(f"ERRO ao verificar render/placements.json: {type(e).__name__}: {e}")
+			return False
+		self.pl_info.update(em_falta_no_arranque=len(miss), em_falta=len(miss))
+		if not miss:
+			return False
+		msg = (f"{len(miss)} peças colocadas sem registo em render/placements.json: a completar em fundo "
+			   f"(regra {render.register_rule()})")
+		activity.get("arranque").warning(msg)
+		self.prep_log.append(msg)
+		self.pl_info["a_preencher"] = True
+
+		def run():
+			try:
+				self._fill_placements()
+			finally:
+				if then_holes:
+					self.holes_json(wait=False)
+		th = threading.Thread(target=run, name="registo-em-falta", daemon=True)
+		self._pl_thread = th
+		th.start()
+		return True
+
+	def wait_placements(self, timeout: Optional[float] = None) -> None:
+		"""Wait for the start-up fill of ``render/placements.json`` (tests, measurements)."""
+		th = self._pl_thread
+		if th is not None and th is not threading.current_thread():
+			th.join(timeout)
+
+	def _fill_placements(self) -> dict:
+		"""Register the placed pieces missing from ``render/placements.json`` (:func:`src.render.register_missing`) and
+		write the file once per pass (:func:`src.render.commit_placements`).
+
+		The computation runs outside the write lock and yields to the GUI (:meth:`yield_to_gui`, between pieces), after
+		waiting for no write to run (the pattern of :meth:`_compute_holes`); only the commit is under the write lock:
+		the file is read again, and an entry is kept only if its key and :func:`src.render.entry_token` (contour, crop)
+		are still the ones it was computed from; what a write changed meanwhile is computed again in the next pass (at
+		most :data:`PL_FILL_PASSES`). After a commit that changes no drawn pose (the current rule: the entries are the
+		pose the board already drew on the fly) the full-board disk cache keeps its image and gets the new
+		``pl_mtime`` (else the next start-up would recompose the whole board, ≈ 20 s); a changed pose re-patches its
+		cell. Returns :attr:`pl_info`."""
+		from src import render
+		info = self.pl_info
+		t0 = time.time()
+		info["a_preencher"] = True
+		try:
+			for _ in range(PL_FILL_PASSES):
+				if self.closing:
+					break
+				s0 = self.wlock.wait_even(WRITE_WAIT_S)
+				if s0 % 2:
+					continue
+				pr = self.pr
+				miss = self.read(lambda: render.missing_placements(pr))
+				if info["em_falta_no_arranque"] is None:
+					info["em_falta_no_arranque"] = len(miss)
+				miss = [pid for pid in miss if pid not in info["sem_registo"]]
+				if not miss:
+					break
+				info["passagens"] += 1
+				r = render.register_missing(pr, miss, pause=self.yield_to_gui)
+				with self.wlock:
+					if self.pr is not pr:                 # re-opened by an outside change: computed again
+						continue
+					c = render.commit_placements(pr, r["entries"], r["tokens"])
+					self._placements = None
+					if c["gravou"]:
+						info["gravacoes"] += 1
+						self._board_after_fill(c["pose_mudou"])
+				info["preenchidas"] += c["gravadas"]
+				info["descartadas"] += len(c["descartadas"])
+				info["sem_registo"] = sorted(set(info["sem_registo"]) | set(r["errors"]))
+				activity.get("cache").info(
+					f"registo em falta: {c['gravadas']} entradas gravadas, {len(c['descartadas'])} descartadas (uma escrita "
+					f"pelo meio), {len(r['errors'])} sem registo, {len(c['pose_mudou'])} poses mudadas")
+				if not c["descartadas"]:
+					break
+		except Exception as e:  # noqa: BLE001 - informative: the board still draws the on-the-fly pose
+			self.log(f"[servidor] registo em falta não completado: {type(e).__name__}: {e}")
+			self.log(traceback.format_exc())
+		finally:
+			try:
+				info["em_falta"] = len(render.missing_placements(self.pr))
+			except Exception:  # noqa: BLE001
+				pass
+			info["a_preencher"] = False
+			info["segundos"] = round(time.time() - t0, 2)
+			activity.get("arranque").info(f"registo em falta: {info['preenchidas']} preenchidas em {info['segundos']} s, "
+										  f"{info['em_falta']} ainda em falta, {info['gravacoes']} gravações do ficheiro")
+		return info
+
+	def _board_after_fill(self, moved: list) -> None:
+		"""After a commit of :meth:`_fill_placements` (caller holds the write lock): the cells of ``moved`` pieces are
+		re-patched on the next full-board request; with none, the disk cache of the full board gets the new
+		``pl_mtime`` (its image is still right: the poses it was drawn with did not change)."""
+		with self.rlock:
+			b = self._board
+			if b is None:
+				return
+			if moved:
+				cols = self.pr.profile.cols
+				b["ver"] = None
+				if b.get("snap") is not None:
+					b["snap"] = list(b["snap"])
+					for pid in moved:
+						cel = self.pr.piece(pid).celula
+						if cel is not None:
+							b["snap"][(cel[0] - 1) * cols + cel[1] - 1] = None
+				return
+			if b.get("ver") != self.version() or b.get("snap") is None:
+				return
+			jp, mp = self._disk_cache(BOARD_PPC)
+			try:
+				if os.path.exists(jp):
+					with open(mp, "w", encoding="utf-8") as f:
+						json.dump({"ver": b["ver"], "ppc": BOARD_PPC, "pl_mtime": self._pl_mtime(), "snap": b["snap"]}, f)
+			except OSError as e:
+				self.log(f"[servidor] cache do tabuleiro não atualizada: {e}")
 
 	def _log_size(self) -> int:
 		try:

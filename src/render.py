@@ -29,7 +29,9 @@ Three steps, each usable on its own:
    corners or the corner gate fails. With corners the image refines the translation only (a
    1 deg turn moves the body edge by ~0.2 art px: the rotation is not observable at 0.75 mm/px). Seam metric between
    neighbours: :func:`seam_gaps`. Results are cached in ``projects/<id>/render/placements.json``
-   (derived; never written to the log).
+   (derived; never written to the log), with the rule :data:`REGISTER_IMAGE` (corners only since 2026-11-15) in
+   every path and in the entry key; :func:`missing_placements` / :func:`register_missing` /
+   :func:`commit_placements` keep it complete (the GUI server's start-up fill, ``rebuild_*``).
 2. **Fringe cleaning** (:func:`clean_crop`): green background blended into the outermost
    pixels of the silhouette is removed, only inside a band of ``band_mm`` (<= 0.7 mm) from the
    alpha boundary and only as connected components that touch the boundary; pixels deeper
@@ -85,6 +87,7 @@ __all__ = [
 	"paper_pocket_mask", "PAPER_POCKETS", "PAPER_POCKET_DIST_MAX",
 	"DISPLAY_SHADOW_BAND_MM", "DISPLAY_SHADOW_A_MAX", "DISPLAY_SHADOW_DIST_MAX", "DISPLAY_SHADOW_L_MAX",
 	"display_params", "piece_asset_sig", "piece_ready", "ready_nbytes", "compose_patch", "PATCH_PAD_PX",
+	"REGISTER_IMAGE", "register_rule", "missing_placements", "register_missing", "commit_placements", "entry_token",
 ]
 
 # ---------------------------------------------------------------- constants
@@ -137,6 +140,13 @@ RELAX_MAX_MM = 0.5             # max translation of the relaxation pass
 DIRS = ("N", "E", "S", "W")    # cell sides; target corner order TL, TR, BR, BL -> side j = DIRS[j]
 _STEP = {"E": (0, 1), "S": (1, 0)}
 PLACEMENTS_VERSION = 1
+# Registration rule of the stored entries (2026-11-15, decision of Tiago by the seam metric; DETALHE.md §13.9,
+# docs/decisoes.md): corners (and F lines) only, no image refinement. Over the 24 pieces whose pose the image moved,
+# |gap| of their 70 seams median 0.202 / p95 0.499 mm without the image against 0.250 / 0.641 mm with it. The same
+# rule in every path: the start-up fill, the GUI writes, rebuild_*, register_all, and the on-the-fly fallback of the
+# readers (``register_piece(image=False)``); it is part of the entry key (:func:`_entry_key`), so an entry made with
+# the other rule is stale and is made again.
+REGISTER_IMAGE = False
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -820,14 +830,21 @@ def register_piece(project, pid: str, *, art: Optional[CellArt] = None, profile=
 	return out
 
 
-def _entry_key(project, pid: str) -> list:
-	"""Cache key of a placement entry: cell, log theta, scan, index, section anchor; plus, only when the piece
-	has a manual pose, ``['manual', t, theta, dx, dy]`` (so the keys of pieces without one, and the caches
-	written before the manual pose existed, keep matching)."""
+def register_rule(image: Optional[bool] = None) -> str:
+	"""Name of a registration rule: ``'imagem'`` (corners + image refinement) or ``'cantos'`` (corners / F lines
+	only); ``image`` None = the current rule (:data:`REGISTER_IMAGE`)."""
+	return "imagem" if (REGISTER_IMAGE if image is None else image) else "cantos"
+
+
+def _entry_key(project, pid: str, image: Optional[bool] = None) -> list:
+	"""Cache key of a placement entry: cell, log theta, scan, index, section anchor, the registration rule
+	(``['regra', 'cantos' | 'imagem']``, :func:`register_rule`; ``image`` None = the current one, so an entry made
+	with the other rule, or before the rule was in the key, is stale: DETALHE.md §13.9); plus, only when the piece
+	has a manual pose, ``['manual', t, theta, dx, dy]``."""
 	p = project.piece(pid)
 	a = project.sections[p.seccao_id].anchor if p.seccao_id in project.sections else {}
 	key = [list(p.celula) if p.celula else None, p.theta_deg, p.scan_id, p.index_in_scan, a.get("rot"),
-		   a.get("l0"), a.get("c0")]
+		   a.get("l0"), a.get("c0"), ["regra", register_rule(image)]]
 	pm = manual_pose(project, pid)
 	if pm is not None:
 		key.append(["manual", pm.get("t"), round(float(pm["theta_deg"]), 4), round(float(pm["dx_mm"]), 4),
@@ -847,8 +864,9 @@ def load_placements(project) -> dict:
 	rule = _rule_flags()
 	if d.get("version") != PLACEMENTS_VERSION or any(d.get(k, False) != v for k, v in rule.items()):
 		# another registration rule (F_ROTATION / F_TRANSLATION / its target switched since the file was
-		# written; a file without the keys predates them): stale
-		return {"log_len": None, "version": PLACEMENTS_VERSION, "placements": {}}
+		# written; a file without the keys predates them): stale. ``formato_antigo`` marks it to be made again
+		# (every placed piece is missing, :func:`missing_placements`; the next commit writes the current format)
+		return {"log_len": None, "version": PLACEMENTS_VERSION, "placements": {}, "formato_antigo": True}
 	return d
 
 
@@ -860,6 +878,7 @@ def _rule_flags() -> dict:
 
 
 def save_placements(project, d: dict) -> str:
+	d.pop("formato_antigo", None)
 	d.update(_rule_flags())
 	fp = project.p("render", "placements.json")
 
@@ -899,32 +918,34 @@ def placed_ids(project) -> list:
 	return sorted(pid for pid, p in project.pieces.items() if p.estado == "colocada" and p.celula is not None)
 
 
-def register_all(project, *, art: Optional[CellArt] = None, image: bool = True, force: bool = False, relax_pass=None,
-				 progress=print, manual: bool = True) -> dict:
+def register_all(project, *, art: Optional[CellArt] = None, image: Optional[bool] = None, force: bool = False,
+				 relax_pass=None, progress=print, manual: bool = True) -> dict:
 	"""Register every placed piece (cache-aware) and write ``render/placements.json``.
 
-	An entry is reused when the log length is unchanged, or when its key (cell, log theta,
-	scan, index, section anchor, manual pose) is unchanged. ``relax_pass``: None = automatic (only when
+	``image`` None = the current rule (:data:`REGISTER_IMAGE`); another value writes entries keyed with that rule,
+	which the GUI treats as stale (diagnostic tools). An entry is reused when its key (cell, log theta, scan, index,
+	section anchor, rule, manual pose) is unchanged (no longer on the log length alone: an entry of another rule
+	must not be reused). ``relax_pass``: None = automatic (only when
 	|gap| > ``RELAX_GAP_MM`` on more than ``RELAX_SHARE`` of the seams), True / False to force; the
 	relaxation never moves a manual pose. ``manual=False`` (metric tools on a copy): the automatic pose
 	of every piece; the entries of pieces with a manual pose get a key that never matches
 	:func:`_entry_key` (suffix ``'auto'``), so the GUI does not draw them.
 	Returns ``{pid: placement}``.
 	"""
+	image = REGISTER_IMAGE if image is None else bool(image)
 	if image and art is None:
 		art = CellArt.load(project.profile, REPO)
 	old = load_placements(project)
 	n_log = _log_len(project)
-	same_log = old.get("log_len") == n_log and not force
 	out, cache, t0, n_new = {}, {}, time.time(), 0
 	ids = placed_ids(project)
 	for i, pid in enumerate(ids):
-		key = _entry_key(project, pid)
+		key = _entry_key(project, pid, image=image)
 		has_pm = manual_pose(project, pid) is not None
 		if not manual and has_pm:
 			key = key + ["auto"]
 		e = old["placements"].get(pid)
-		if (e is not None and not force and (same_log or e.get("key") == key) and e.get("image_used") == bool(image)
+		if (e is not None and not force and e.get("key") == key and e.get("image_used") == bool(image)
 				and bool(e.get("manual")) == (manual and has_pm) and bool(e.get("manual_ignorada")) == (not manual and has_pm)):
 			out[pid] = e
 			continue
@@ -935,6 +956,7 @@ def register_all(project, *, art: Optional[CellArt] = None, image: bool = True, 
 			continue
 		r["key"] = key
 		r["image_used"] = bool(image)
+		r["regra"] = register_rule(image)
 		out[pid] = r
 		n_new += 1
 		if progress and n_new % 100 == 0:
@@ -950,6 +972,112 @@ def register_all(project, *, art: Optional[CellArt] = None, image: bool = True, 
 		progress(f"registo: {len(out)} peças ({n_new} novas, {time.time() - t0:.1f} s); |gap| > {RELAX_GAP_MM} mm em "
 				 f"{100 * share:.1f} % das junções; relaxação {'sim' if do_relax else 'não'}")
 	return out
+
+
+def missing_placements(project, placements: Optional[dict] = None) -> list:
+	"""Placed pieces (sorted ids) without a valid ``render/placements.json`` entry: none, or one whose key is not
+	:func:`_entry_key` now (another cell / pose / anchor / rule) or that disagrees with the manual pose
+	(:func:`_manual_entry_ok`). A file of an old format counts as empty (:func:`load_placements`). ``placements``:
+	the entries to check (default the file). Pure apart from reading the file (2026-11-15, DETALHE.md §13.9)."""
+	if placements is None:
+		placements = load_placements(project).get("placements") or {}
+	out = []
+	for pid in placed_ids(project):
+		e = placements.get(pid)
+		if e is None or e.get("key") != _entry_key(project, pid) or not _manual_entry_ok(project, pid, e):
+			out.append(pid)
+	return out
+
+
+def entry_token(project, pid: str) -> tuple:
+	"""What an entry was computed from, beyond its key: the key, the piece's shape generation
+	(:meth:`src.state.Project.forget_shape`) and :func:`piece_asset_sig` (bbox, crop file). A contour saved while the
+	entry was being computed keeps the key but changes the token, so :func:`commit_placements` drops the old pose."""
+	return (repr(_entry_key(project, pid)), getattr(project, "_shape_gen", {}).get(pid, 0), piece_asset_sig(project, pid))
+
+
+def register_missing(project, pids, *, pause=None, art: Optional[CellArt] = None) -> dict:
+	"""Entries of ``pids`` (placed pieces) with the current rule (:data:`REGISTER_IMAGE`), WITHOUT writing:
+	``{entries: {pid: entry}, tokens: {pid: entry_token}, errors: {pid: msg}}`` (each entry with ``key``,
+	``image_used``, ``regra``; a manual pose stays the manual pose, :func:`register_piece`). The key and token are
+	read before the registration, so a write in between makes the entry stale for :func:`commit_placements`.
+	``pause``: called before each piece (the GUI's background yield)."""
+	image = bool(REGISTER_IMAGE)
+	if image and art is None:
+		art = CellArt.load(project.profile, REPO)
+	out = {"entries": {}, "tokens": {}, "errors": {}}
+	cache = {}
+	for pid in pids:
+		if pause is not None:
+			pause()
+		try:
+			p = project.piece(pid)
+			if p.estado != "colocada" or p.celula is None:
+				continue
+			key = _entry_key(project, pid)
+			tok = entry_token(project, pid)
+			r = register_piece(project, pid, art=art, image=image, _cache=cache)
+		except Exception as e:  # noqa: BLE001 - a write in another thread changed the piece: left for the next pass
+			out["errors"][pid] = f"{type(e).__name__}: {e}"
+			continue
+		if "error" in r:
+			out["errors"][pid] = r["error"]
+			continue
+		r["key"] = key
+		r["image_used"] = image
+		r["regra"] = register_rule(image)
+		out["entries"][pid] = r
+		out["tokens"][pid] = tok
+	return out
+
+
+def _pose_of(e: Optional[dict]):
+	if e is None:
+		return None
+	return (tuple(e.get("cell") or ()), float(e["theta_deg"]), float(e.get("dx_mm") or 0.0), float(e.get("dy_mm") or 0.0),
+			tuple(float(v) for v in (e.get("pivot_mm") or ())))
+
+
+def _same_pose(a, b) -> bool:
+	return (a[0] == b[0] and len(a[4]) == len(b[4]) and all(abs(x - y) <= 1e-9 for x, y in zip(a[1:4], b[1:4]))
+			and all(abs(x - y) <= 1e-9 for x, y in zip(a[4], b[4])))
+
+
+def commit_placements(project, entries: dict, tokens: Optional[dict] = None) -> dict:
+	"""Merge ``entries`` (:func:`register_missing`) into ``render/placements.json`` and write it ONCE (nothing written
+	when nothing is kept and the file is in the current format). The caller holds the write lock: the file is read
+	again here, and an entry is kept only if its key is still :func:`_entry_key` (and agrees with the manual pose)
+	and, with ``tokens``, :func:`entry_token` is unchanged; the others are dropped (``descartadas``: computed again on
+	the next pass). ``pose_mudou``: kept pieces whose pose differs from the entry the file had for them (any key), or,
+	with the image rule, from the on-the-fly corner pose the board drew without an entry: the cells the full-board
+	raster must redraw. Returns ``{gravadas, descartadas, pose_mudou, gravou}``."""
+	d = load_placements(project)
+	old = dict(d.get("placements") or {})
+	kept, dropped, moved = [], [], []
+	for pid, e in sorted(entries.items()):
+		try:
+			p = project.piece(pid)
+			ok = (p.estado == "colocada" and p.celula is not None and e.get("key") == _entry_key(project, pid)
+				  and _manual_entry_ok(project, pid, e)
+				  and (tokens is None or tokens.get(pid) == entry_token(project, pid)))
+		except Exception:  # noqa: BLE001 - piece gone / changed meanwhile
+			ok = False
+		if not ok:
+			dropped.append(pid)
+			continue
+		prev = _pose_of(old.get(pid))
+		if prev is not None:
+			if not _same_pose(prev, _pose_of(e)):
+				moved.append(pid)
+		elif REGISTER_IMAGE and not e.get("manual"):
+			moved.append(pid)               # the board drew the corner pose on the fly; with the image it may differ
+		d["placements"][pid] = e
+		kept.append(pid)
+	wrote = bool(kept) or bool(d.get("formato_antigo"))
+	if wrote:
+		d["log_len"] = _log_len(project)
+		save_placements(project, d)
+	return {"gravadas": len(kept), "descartadas": dropped, "pose_mudou": moved, "gravou": wrote}
 
 
 def effective_pose(project, pid: str, placements: Optional[dict] = None) -> dict:
@@ -2003,7 +2131,7 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 	if not dry_run:
 		os.makedirs(project.p("pieces"), exist_ok=True)
 		os.makedirs(project.p("crops"), exist_ok=True)
-	redraw, n_events = set(), 0
+	redraw, n_events, rereg = set(), 0, set()
 
 	def _err(msg):
 		out["errors"].append(msg)
@@ -2147,6 +2275,7 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 			project.forget_shape(pid)
 		if have_npz and written:
 			_drop_stale_caches(project, sid, sorted(set(written) | set(crops)))
+			rereg.update(set(written) | set(crops))
 			redraw.add(sid)
 		for q, static, rec in changes:
 			project.resegment_piece(q.id, motivo=rec["motivo"], nota=rec["nota"] or None, **static)
@@ -2172,6 +2301,17 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 			out["errors"].append(f"{sid}: overlay: {e}")
 	if progress and out["overlays"]:
 		progress(f"overlays regenerados: {len(out['overlays'])}")
+	if not register:
+		# the placed pieces whose entry was dropped are registered again with the current rule (P-b, DETALHE.md §13.9:
+		# a contour applied by rebuild_piece / rebuild_stale used to leave them without an entry for good)
+		placed = [pid for pid in sorted(rereg) if pid in project.pieces and project.piece(pid).estado == "colocada"
+				  and project.piece(pid).celula is not None]
+		if placed:
+			rr = register_missing(project, placed)
+			commit_placements(project, rr["entries"])
+			if progress:
+				progress(f"registo refeito: {len(rr['entries'])} peças colocadas"
+						 + (f" ({len(rr['errors'])} sem registo: {', '.join(sorted(rr['errors']))})" if rr["errors"] else ""))
 	if out["errors"]:
 		return out
 	if clean:
@@ -2208,7 +2348,11 @@ def stale_assets(project) -> dict:
 	``cls`` or ``side_chord_mm`` vs ``cls`` / ``chords_mm`` beyond :data:`STALE_CHORD_MM`). Manual overrides
 	are compared the same way (their npz contour is the rasterised polygon). Reads the disk only.
 
-	Returns ``{sheets: {sid: {motivos: [...], pecas: [...]}}, pecas: {pid: [motivos]}, n_pecas, n_folhas}``.
+	Also (P-b, DETALHE.md §13.9; a permanent check, not a reason to re-segment): ``placements_em_falta``, the placed
+	pieces without a valid ``render/placements.json`` entry (:func:`missing_placements`), and its count.
+
+	Returns ``{sheets: {sid: {motivos: [...], pecas: [...]}}, pecas: {pid: [motivos]}, n_pecas, n_folhas,
+	placements_em_falta, n_placements_em_falta}``.
 	"""
 	from PIL import Image
 	out = {"sheets": {}, "pecas": {}}
@@ -2265,6 +2409,8 @@ def stale_assets(project) -> dict:
 			out["pecas"].update(bad)
 	out["n_pecas"] = len(out["pecas"])
 	out["n_folhas"] = len(out["sheets"])
+	out["placements_em_falta"] = missing_placements(project)
+	out["n_placements_em_falta"] = len(out["placements_em_falta"])
 	return out
 
 
@@ -2314,7 +2460,8 @@ def main(argv=None) -> int:
 	ap.add_argument("--project", default=os.path.join("projects", "alpes"))
 	ap.add_argument("--rebuild", action="store_true", help="regenera pieces/*.npz e crops/ em falta a partir dos scans")
 	ap.add_argument("--register", action="store_true", help="registo fino de todas as peças colocadas")
-	ap.add_argument("--no-image", action="store_true", help="registo só pelos cantos (sem o passo de imagem)")
+	ap.add_argument("--no-image", action="store_true", help="registo só pelos cantos (sem o passo de imagem; é a regra "
+					"atual, REGISTER_IMAGE = False: a opção só conta se a regra mudar)")
 	ap.add_argument("--force", action="store_true", help="ignora a cache (placements.json, render/clean)")
 	ap.add_argument("--clean", action="store_true", help="limpa a franja verde dos recortes (render/clean/)")
 	ap.add_argument("--light-band", type=float, default=LIGHT_BAND_MM, metavar="MM",
@@ -2339,7 +2486,7 @@ def main(argv=None) -> int:
 	if args.clean or args.rebuild:
 		clean_all(pr, force=args.force, light_band_mm=args.light_band)
 	if args.register or args.rebuild:
-		register_all(pr, image=not args.no_image, force=args.force)
+		register_all(pr, image=(False if args.no_image else None), force=args.force)
 	if args.board:
 		img = compose_board(pr, args.ppc)
 		_imwrite(args.board, img)
