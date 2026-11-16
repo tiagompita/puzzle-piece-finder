@@ -1,8 +1,36 @@
-# HANDOFF — 2026-11-15 (critério 3 «perto»: remendo das regiões e leitores com seqlock em main; próximo: o 1.º salto)
+# HANDOFF — 2026-11-16 (P-b corrigida: placements.json completo, regra «cantos»; «perto» 1,21 s [F por 0,01]; próximo: o 1.º salto)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-15): `docs/prompts/2026-11-15-perto-remendo.md` (fechado)
+## Última sessão (2026-11-15/16): `docs/prompts/2026-11-15-pb-correcao.md` (fechado)
+- **Próximo item: o 1.º salto** (critério 1: 5,80 · 6,43 s nos 10 pares, alvo 4 s [F]). Começar por cronometrar
+  **diretamente** a `ReadyCache` fria dentro de `_piece_jobs` no 1.º salto (até aqui só por subtração: §13.8 dizia
+  ≈ 4 s de `ready(pid)` frio contra 0,47 s de registo na hora); depois decidir. Fica também por decidir a **P-a**
+  (pedir `/api/board`, `/api/ghosts`, `/api/montar` depois do detalhe, ou fazê-los ceder): é o que falta ao «perto».
+- **Regra de registo [V] (DETALHE §13.9, `docs/decisoes.md`):** «sem imagem» (`render.REGISTER_IMAGE = False`): nas 70
+  juntas das 24 peças que a imagem movia, |gap| mediana 0,202 / p95 0,499 mm sem imagem contra 0,250 / 0,641 com. A
+  regra entra na chave da entrada (`['regra', 'cantos']`) e é a mesma em todos os caminhos (as escritas da GUI usavam
+  a imagem). Das 79 entradas antigas nenhuma tinha a imagem aceite.
+- **Leitores [V]:** completar as 699 entradas não muda nenhuma proposta, suspeita, buraco nem «verificar»; só 3 textos
+  `pose_reason` («registo (cantos, sem imagem)» → «registo»).
+- **Bloco 1 (`6c66217`) [V]:** o servidor completa as entradas em falta no arranque, em fundo (depois dos fantasmas; o
+  ranking dos buracos começa no fim dele), cede à GUI, commit sob o bloqueio de escrita com chave e `entry_token`
+  verificados, grava o ficheiro **uma vez**; `rebuild_piece`/`rebuild_stale` voltam a registar as colocadas; aviso no
+  arranque, `/api/status.placements`, `stale_assets.placements_em_falta`. Testes novos `tests/test_placements_completo.py`:
+  8 falhavam, 1 passava (o contorno pela GUI já re-registava), 9/9 depois. Composição do tabuleiro igual byte a byte
+  (tabuleiro inteiro e céu/relva a ppc 100). Preenchimento 5,2 s no arranque (3,3 s sozinho); **sem recomposição do
+  tabuleiro** (a cache do disco recebe o `pl_mtime` novo); o 2.º arranque não preenche nem grava nada.
+- **Na sessão do preenchimento** (uma vez): o 1.º salto foi 6,4–7,7 s e o 1.º «perto» recompõe a região inteira
+  (`muitas_pecas`, 2,1–2,3 s), porque a região guardada antes do preenchimento tinha as peças «na hora».
+- **10 pares `8668365 | novo` [V salvo o «perto»]:** «perto» 2,64 → **1,21 s [F, alvo 1,2]** (10/10 remendados);
+  «longe» 0,38 s; POST «perto» −0,29 s; salto a frio −0,08 s (browser) e `srv_frio_relva_s` 1,48 → 1,41 s; memória
+  +71 MB. Viés: na cópia completada o `8668365` aceita 0 entradas (chave com a regra) e regista as 699 na hora.
+  **Paragem** (não se afinou): decomposição em §13.9, `_piece_jobs` 1,21 → 0,24 s; o resto é a disputa com os três
+  pedidos paralelos (sem eles 0,38 s).
+- **Para o Tiago:** ao arrancar o servidor em `projects/alpes` com este código, o 1.º arranque mostra o aviso «699
+  peças colocadas sem registo… a completar em fundo» e completa-as em segundos; os seguintes não.
+
+## Sessão anterior (2026-11-15): `docs/prompts/2026-11-15-perto-remendo.md` (fechado)
 - **Próximo item: o 1.º salto** (critério 1, ≈ 5,6–6,1 s contra o alvo de 4 s). Fica inconclusivo por decisão do Tiago
   (§13.6: +0,36 s, IC [−0,14, +0,65]; nestes 10 pares +0,04 s, IC [−0,38, +0,35]) e passa a item próprio.
 - **P-b diagnosticada (§13.8, `docs/prompts/2026-11-15-pb-placements.md`):** 620/699 peças sem entrada em `placements.json` (ficheiro ignorado desde `a249ad6` e nunca refeito + contornos gravados tiram a entrada); corrigir dá −0,3/−0,4 s, mas no 1.º salto `_piece_jobs` (4,2–4,6 s) é sobretudo a `ReadyCache` fria, não o registo (0,47 s): é aí que o item do 1.º salto deve começar. Correção A/B à espera do Tiago.

@@ -1,0 +1,37 @@
+{
+ "nota": "Bloco 1 de DETALHE §13.9: composição a frio (Gui._compose) do tabuleiro inteiro a ppc 60 e das regiões céu (1,20)-(14,40) e relva (34,30)-(47,50) a ppc 100; A = código 2040513 na cópia de hoje (79 entradas válidas), B = código novo depois do preenchimento do servidor (699). Comparação píxel a píxel dos PNG sem perdas.",
+ "A": {
+  "validas": 79,
+  "colocadas": 699,
+  "inteiro_s": 23.77,
+  "ceu_s": 1.13,
+  "relva_s": 1.08
+ },
+ "B": {
+  "fill": {
+   "em_falta_no_arranque": 699,
+   "preenchidas": 699,
+   "em_falta": 0,
+   "a_preencher": false,
+   "gravacoes": 1,
+   "passagens": 1,
+   "descartadas": 0,
+   "sem_registo": [],
+   "segundos": 3.34
+  },
+  "fill_s": 3.34,
+  "validas": 699,
+  "colocadas": 699,
+  "inteiro_s": 20.1,
+  "ceu_s": 1.11,
+  "relva_s": 0.92
+ },
+ "pixels_diferentes": {
+  "inteiro": 0,
+  "ceu": 0,
+  "relva": 0
+ },
+ "iguais_byte_a_byte": true,
+ "celulas_esperadas_a_mudar": [],
+ "celulas_que_mudaram": []
+}

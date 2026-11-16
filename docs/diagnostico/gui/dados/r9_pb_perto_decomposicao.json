@@ -1,0 +1,184 @@
+{
+ "normal": {
+  "n": 3,
+  "perto_s": [
+   1.271,
+   1.353
+  ],
+  "longe_s": [
+   0.34,
+   0.39
+  ],
+  "post_perto_s": [
+   2.04,
+   2.435
+  ],
+  "region_jpg_parede": [
+   1.18,
+   1.246
+  ],
+  "region_jpg_cpu": [
+   0.781,
+   0.938
+  ],
+  "post_fim_ate_region_jpg": [
+   0.041,
+   0.078
+  ],
+  "region_jpg_fim_ate_mostrado": [
+   0.053,
+   0.066
+  ],
+  "novo _region_parts parede": [
+   0.204,
+   0.221
+  ],
+  "novo _region_parts cpu": [
+   0.141,
+   0.156
+  ],
+  "novo _compose_region parede": [
+   0.963,
+   1.045
+  ],
+  "novo _compose_region cpu": [
+   0.625,
+   0.781
+  ],
+  "novo compose_patch parede": [
+   0.958,
+   1.037
+  ],
+  "novo compose_patch cpu": [
+   0.625,
+   0.781
+  ],
+  "novo _piece_jobs parede": [
+   0.241,
+   0.354
+  ],
+  "novo _piece_jobs cpu": [
+   0.156,
+   0.234
+  ],
+  "novo _draw_jobs parede": [
+   0.39,
+   0.477
+  ],
+  "novo _draw_jobs cpu": [
+   0.297,
+   0.375
+  ],
+  "novo _jpeg parede": [
+   0.008,
+   0.008
+  ],
+  "novo _jpeg cpu": [
+   0.0,
+   0.016
+  ],
+  "novo board_json sobreposto parede": [
+   0.906,
+   0.953
+  ],
+  "novo ghosts sobreposto parede": [
+   0.781,
+   0.844
+  ],
+  "novo montar_json sobreposto parede": [
+   1.097,
+   1.179
+  ]
+ },
+ "atrasado": {
+  "n": 3,
+  "perto_s": [
+   0.377,
+   0.422
+  ],
+  "longe_s": [
+   0.219,
+   0.247
+  ],
+  "post_perto_s": [
+   2.102,
+   2.355
+  ],
+  "region_jpg_parede": [
+   0.31,
+   0.333
+  ],
+  "region_jpg_cpu": [
+   0.266,
+   0.266
+  ],
+  "post_fim_ate_region_jpg": [
+   0.042,
+   0.055
+  ],
+  "region_jpg_fim_ate_mostrado": [
+   0.036,
+   0.039
+  ],
+  "novo _region_parts parede": [
+   0.172,
+   0.179
+  ],
+  "novo _region_parts cpu": [
+   0.125,
+   0.141
+  ],
+  "novo _compose_region parede": [
+   0.126,
+   0.142
+  ],
+  "novo _compose_region cpu": [
+   0.125,
+   0.141
+  ],
+  "novo compose_patch parede": [
+   0.123,
+   0.14
+  ],
+  "novo compose_patch cpu": [
+   0.125,
+   0.141
+  ],
+  "novo _piece_jobs parede": [
+   0.04,
+   0.05
+  ],
+  "novo _piece_jobs cpu": [
+   0.047,
+   0.047
+  ],
+  "novo _draw_jobs parede": [
+   0.07,
+   0.075
+  ],
+  "novo _draw_jobs cpu": [
+   0.078,
+   0.078
+  ],
+  "novo _jpeg parede": [
+   0.006,
+   0.007
+  ],
+  "novo _jpeg cpu": [
+   0.0,
+   0.0
+  ],
+  "novo board_json sobreposto parede": [
+   0,
+   0
+  ],
+  "novo ghosts sobreposto parede": [
+   0,
+   0
+  ],
+  "novo montar_json sobreposto parede": [
+   0,
+   0
+  ]
+ }
+}

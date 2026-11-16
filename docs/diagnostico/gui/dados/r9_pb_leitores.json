@@ -1,0 +1,37 @@
+{
+ "nota": "Passo 0 b) de DETALHE §13.9: base_c3 tal como está (A) contra a mesma cópia com as 699 entradas completadas com register_piece(image=False) (B), código 2040513.",
+ "completadas_B": 699,
+ "fetch_json": "diferente",
+ "fetch_md": "igual",
+ "fetch_jpg": "igual",
+ "suspeitas": "igual",
+ "buracos": "igual",
+ "verificar": "igual",
+ "fetch_json_diferencas": [
+  {
+   "entrada": 0,
+   "piece": "P0113",
+   "campo": "pose_reason",
+   "A": "theta P0571 (registo (cantos, sem imagem)) + phi + rotação do gémeo",
+   "B": "theta P0571 (registo) + phi + rotação do gémeo"
+  },
+  {
+   "entrada": 1,
+   "piece": "P0112",
+   "campo": "pose_reason",
+   "A": "theta P0577 (registo (cantos, sem imagem)) + phi + rotação do gémeo",
+   "B": "theta P0577 (registo) + phi + rotação do gémeo"
+  },
+  {
+   "entrada": 4,
+   "piece": "P1200",
+   "campo": "pose_reason",
+   "A": "theta P0582 (registo (cantos, sem imagem)) + phi + rotação do gémeo",
+   "B": "theta P0582 (registo) + phi + rotação do gémeo"
+  }
+ ],
+ "n_entradas_fetch": 37,
+ "n_buracos": 203,
+ "n_verificar": 72,
+ "n_suspeitas": 19
+}

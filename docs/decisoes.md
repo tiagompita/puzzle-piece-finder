@@ -489,3 +489,20 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
   `estado: "nao_verificado"`** (lista vazia, sem veredicto). O browser (`novo.js`) mantém «a verificar…» e pede outra
   vez ao fim de 500 ms, até 3 vezes; depois mostra «Não consegui verificar: o tabuleiro estava a mudar enquanto
   verificava». O botão «Pôr aqui» nunca fica bloqueado.
+
+## 2026-11-15 — Regra de registo das entradas de `placements.json`: só cantos, sem imagem (Tiago; DETALHE.md §13.9)
+
+- **Decisão pela medição, com o critério fixado antes** («com imagem» só se a mediana do |gap| melhorar **e** o p95 não
+  piorar): nas 24 peças em que o refinamento pela imagem muda a pose dos cantos, as 70 juntas com as vizinhas colocadas
+  (métrica `render.seam_gaps`, RENDER.md) dão |gap| mediana **0,202 mm** / p95 **0,499 mm** sem imagem contra
+  **0,250 / 0,641 mm** com imagem (20 juntas melhoram, 50 pioram). Fica **«sem imagem»** (`render.REGISTER_IMAGE =
+  False`). No tabuleiro inteiro: 0,188 / 0,599 mm (tudo cantos) contra 0,192 / 0,607 mm (tudo imagem).
+- **A mesma regra em todos os caminhos:** o preenchimento do arranque, as escritas da GUI (`_refresh_render_assets`,
+  que até aqui usava a imagem), `rebuild_*`, `register_all` (por omissão) e o registo na hora dos leitores.
+- **A regra entra na chave** (`_entry_key` → `['regra', 'cantos' | 'imagem']`): uma entrada feita com a outra regra, ou
+  antes de a regra estar na chave (as 79 de hoje), é desatualizada e refeita. Das 79, nenhuma tinha a imagem aceite: a
+  pose refeita é igual e a composição do tabuleiro fica igual byte a byte.
+- **Preenchimento (proposta B do §13.8):** o servidor completa as entradas em falta no arranque, em fundo (cálculo fora
+  do bloqueio, a ceder à GUI; só o commit sob o bloqueio de escrita, com chave e `entry_token` — contorno, recorte —
+  verificados de novo), grava o ficheiro uma vez, e começa depois dos fantasmas, com o ranking dos buracos no fim dele.
+  Verificação permanente: aviso no arranque, `/api/status.placements`, `render.stale_assets.placements_em_falta`.

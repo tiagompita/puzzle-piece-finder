@@ -1,0 +1,151 @@
+{
+ "mtime0": 1794675398155244700,
+ "arranque1": {
+  "tag": "1",
+  "linha": [
+   [
+    1.61,
+    "a_preparar",
+    false,
+    0,
+    1.608
+   ],
+   [
+    1.68,
+    "a_preparar",
+    false,
+    0,
+    0.016
+   ],
+   [
+    1.73,
+    "a_preparar",
+    false,
+    0,
+    0.003
+   ],
+   [
+    8.97,
+    "pronto",
+    true,
+    0,
+    0.218
+   ],
+   [
+    12.73,
+    "pronto",
+    true,
+    0,
+    0.021
+   ],
+   [
+    12.79,
+    "pronto",
+    true,
+    0,
+    0.008
+   ]
+  ],
+  "status_durante_preenchimento_s": 0.218,
+  "preenchimento_visto_em_s": 8.97,
+  "regiao_s": 3.73,
+  "regiao_respondida_em_s": 12.7,
+  "preenchimento_ainda_a_correr_na_resposta": true,
+  "pronto_s": 12.73,
+  "placements": {
+   "em_falta_no_arranque": 699,
+   "preenchidas": 699,
+   "em_falta": 0,
+   "a_preencher": false,
+   "gravacoes": 1,
+   "passagens": 1,
+   "descartadas": 0,
+   "sem_registo": [],
+   "segundos": 5.19
+  },
+  "placements_fim": {
+   "em_falta_no_arranque": 699,
+   "preenchidas": 699,
+   "em_falta": 0,
+   "a_preencher": false,
+   "gravacoes": 1,
+   "passagens": 1,
+   "descartadas": 0,
+   "sem_registo": [],
+   "segundos": 5.19
+  },
+  "linhas_tabuleiro": [
+   "00:33:52 info  arranque  a compor o tabuleiro",
+   "00:33:52 info  arranque  tabuleiro pronto (0.2 s; vers�o do log 2307663)"
+  ],
+  "linhas_registo": [
+   "00:33:54 aviso arranque  699 pe�as colocadas sem registo em render/placements.json: a completar em fundo (regra cantos)",
+   "00:34:00 info  cache     registo em falta: 699 entradas gravadas, 0 descartadas (uma escrita pelo meio), 0 sem registo, 0 poses mudadas",
+   "00:34:00 info  arranque  registo em falta: 699 preenchidas em 5.19 s, 0 ainda em falta, 1 grava��es do ficheiro"
+  ],
+  "linhas_buracos_pre": [
+   "00:34:02 info  buracos   buracos: 203 buracos � 524 soltas em 2.2 s; alta 2 (2 com ? 2 viz.), m�dia 38, sem 163; tiras calculadas 0, em cache 818"
+  ]
+ },
+ "mtime1": 1794789240108519000,
+ "board_meta_pl_mtime1": 1794789240108519000,
+ "arranque2": {
+  "tag": "2",
+  "linha": [
+   [
+    1.55,
+    "a_preparar",
+    false,
+    0,
+    1.554
+   ],
+   [
+    1.61,
+    "a_preparar",
+    false,
+    0,
+    0.004
+   ],
+   [
+    1.68,
+    "a_preparar",
+    false,
+    0,
+    0.02
+   ]
+  ],
+  "pronto_s": 4.8,
+  "placements": {
+   "em_falta_no_arranque": 0,
+   "preenchidas": 0,
+   "em_falta": 0,
+   "a_preencher": false,
+   "gravacoes": 0,
+   "passagens": 0,
+   "descartadas": 0,
+   "sem_registo": [],
+   "segundos": null
+  },
+  "placements_fim": {
+   "em_falta_no_arranque": 0,
+   "preenchidas": 0,
+   "em_falta": 0,
+   "a_preencher": false,
+   "gravacoes": 0,
+   "passagens": 0,
+   "descartadas": 0,
+   "sem_registo": [],
+   "segundos": null
+  },
+  "linhas_tabuleiro": [
+   "00:34:30 info  arranque  a compor o tabuleiro",
+   "00:34:30 info  arranque  tabuleiro pronto (0.2 s; vers�o do log 2307663)"
+  ],
+  "linhas_registo": [],
+  "linhas_buracos_pre": [
+   "00:34:35 info  buracos   buracos: 203 buracos � 524 soltas em 2.9 s; alta 2 (2 com ? 2 viz.), m�dia 38, sem 163; tiras calculadas 0, em cache 818"
+  ]
+ },
+ "mtime2": 1794789240108519000,
+ "board_meta_pl_mtime2": 1794789240108519000
+}

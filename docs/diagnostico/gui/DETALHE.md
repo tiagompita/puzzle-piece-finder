@@ -1506,3 +1506,179 @@ inteiro: «tabuleiro pronto» 20,1 s contra 0,2 s, o que deu um 1.º ensaio enga
   recomposto (≈ 20 s, uma vez); corrida de escrita com `_refresh_render_assets` se não ficar sob o bloqueio; com a opção
   imagem, mudança visível em 24 peças. A memorização só em memória (a P-b original, como `_susp_pl`) evita o ficheiro mas
   paga o registo na 1.ª composição de cada arranque.
+
+### 13.9 P-b corrigida: `placements.json` completo, sem voltar a perder entradas, regra «cantos» na chave (2026-11-15/16)
+
+Prompt e correções ao plano: `docs/prompts/2026-11-15-pb-correcao.md`. Trabalho só em cópias de `scratchpad/base_c3`
+(`cmp`: log e `placements.json` iguais aos de `projects/alpes`). Guiões: `tools/diagnostico/gui/pb_juntas.py`,
+`pb_leitores.py`, `pb_compor.py`, `pb_arranque.py`. Dados: `dados/r9_pb_*.json`.
+
+#### Passo 0 a): juntas das 24 peças e regra de registo [V] (`r9_pb_juntas.json`)
+
+Critério fixado antes: «com imagem» só se a mediana do |gap| melhorar **e** o p95 não piorar. As 24 peças são as que
+`register_piece(image=True)` move em relação à pose dos cantos (todas entre as 620 sem entrada; as outras peças ficam
+com a pose desenhada hoje nas duas condições). |gap| de `render.seam_gaps` (RENDER.md, corte estimado), em mm, só das
+juntas com pelo menos uma das 24:
+
+| condição | juntas | mediana | p95 | máx. | > 0,8 mm |
+|---|---|---|---|---|---|
+| sem imagem (cantos, o que o tabuleiro desenha hoje) | 70 | **0,202** | **0,499** | 0,998 | 1,4 % |
+| com imagem | 70 | 0,250 | 0,641 | 1,183 | 1,4 % |
+
+Por junta: 20 melhoram com a imagem, 50 pioram. **Fica «sem imagem»** (`render.REGISTER_IMAGE = False`), e as escritas
+da GUI, que usavam a imagem, passam também a «sem imagem». Contexto, tabuleiro inteiro (1153 juntas): tudo cantos
+0,188 / 0,599 mm, tudo imagem 0,192 / 0,607 mm.
+
+**As 79 entradas atuais, medidas da mesma forma:** nenhuma das 74 sem pose manual muda de pose com a regra «cantos» (a
+imagem nunca foi aceite nelas; as 5 manuais ficam a pose manual): 0 juntas a comparar. Refazê-las não muda nenhum píxel
+(abaixo).
+
+#### Passo 0 b): leitores de `placements.json` [V] (`r9_pb_leitores.json`)
+
+| leitor | o que lê | decide alguma coisa? |
+|---|---|---|
+| `render.compose_board` / `compose_patch` / `_piece_jobs` | a entrada (servidor: `Gui.placements()`, filtrada pela chave), senão registo na hora sem imagem | não (desenho) |
+| `render.effective_pose`, `registered_theta` | idem | pose mostrada / θ da gémea |
+| `query._pose` (pose da gémea colocada → `theta_deg` da proposta, `_cross_check`), `_fetch_sheet` (θ da gémea), `_sheet_sig` (assinatura da folha) | idem | **sim** (θ da proposta e encaixe) |
+| `consistency.evaluate` (CLI e `Gui._susp_placements`) | idem | **sim** (suspeitas) |
+| `Gui.board_pose`, `_effective_entry`, `_evaluate_pose`, `pose_json`, `_region_parts` | idem | não (mostrar / chave das regiões) |
+| `confirm` (`--pose`: `antes` do `pose_set`) | `effective_pose` | não (informativo) |
+| `fit` (`rank_all`, «verificar»: `fit_check`, `hole_queries`), `montar` | **não leem** (θ das vizinhas pelo log, `initial_theta`) | — |
+
+Comparação numa cópia, código `2040513`, antes (A: 79 entradas válidas) e depois (B: 699 completadas com
+`register_piece(image=False)`, a regra escolhida): `fetch.md` igual, as 4 `fetch_*.jpg` iguais, as 19 suspeitas iguais,
+o ranking dos 203 buracos igual, as 72 respostas do «verificar» (12 buracos × 3 soltas × θ livre / 0°, semente fixa)
+iguais. `fetch.json`: as 37 entradas e todas as decisões iguais; mudam **3 textos `pose_reason`** (gémeas P0571, P0577,
+P0582: «registo (cantos, sem imagem)» → «registo»), porque a pose da gémea passou a vir da entrada em vez do registo
+na hora. É o mesmo número: o registo na hora já era a regra «cantos». Nenhuma proposta mudou.
+
+#### Passo 0 c): pose manual [V]
+
+`register_piece(manual=True)` devolve a pose manual sem registar (retorno antecipado) e `_entry_key` leva
+`['manual', t, θ, dx, dy]`; o preenchimento usa esse caminho. Na cópia completada as 5 peças com pose manual (P0133,
+P0135, P0147, P0177, P0833) ficam com `method: manual` e `_manual_entry_ok`; o teste 4 prova-o no código novo.
+
+#### Bloco 1: testes primeiro (`tests/test_placements_completo.py`, 9 testes)
+
+Antes do código **8 falham e 1 passa**; depois **9/9** [V]. O que passava: gravar um contorno **pela GUI** numa peça
+colocada já re-registava a peça (`_after_write` → `_refresh_render_assets`). O M2 do §13.8 foi o caminho sem servidor:
+as 14 peças sem entrada foram re-segmentadas fora do servidor (rajadas de 2026-11-09 02:26–02:31, motivos `manual` e
+`reposicao`, pelo CLI) com `rebuild_piece`/`rebuild_assets(register=False)`.
+
+| teste | antes | depois |
+|---|---|---|
+| 1 arranque com entradas em falta → todas preenchidas, nenhuma velha | falha | passa |
+| 2 contorno manual (`rebuild_piece`) numa colocada → a entrada continua, com a forma nova | falha | passa |
+| 2b contorno manual pela GUI → idem | passa | passa |
+| 3 `rebuild_stale` de uma folha com colocadas → as entradas continuam | falha | passa |
+| 4 pose manual preservada no preenchimento | falha | passa |
+| 5 `placements.json` sem `f_rotation` → refeito (formato atual, todas as entradas) | falha | passa |
+| 6 preenchimento cruzado por 3 escritas (contorno: mesma chave, forma nova; pose manual: chave nova; colocar) → 0 perdidas, 0 velhas, 2 descartadas e refeitas | falha | passa |
+| 7 verificação permanente: aviso no arranque, `/api/status.placements`, `stale_assets.n_placements_em_falta`; 2.º arranque não preenche nem grava | falha | passa |
+| 8 entrada feita com a outra regra → refeita | falha | passa |
+
+O teste 6 sem a verificação do `entry_token` no commit falha (a entrada do contorno, com a mesma chave e a forma velha,
+seria gravada) [V].
+
+#### Bloco 1: código
+
+- `src/render.py`: `REGISTER_IMAGE = False`; `register_rule`; `_entry_key(..., image=None)` com `['regra', 'cantos' |
+  'imagem']`; `missing_placements` (sem entrada, outra chave/regra, desacordo com a pose manual, formato antigo);
+  `register_missing` (calcula, não escreve; chave e `entry_token` lidos antes do registo); `commit_placements` (relê o
+  ficheiro, guarda só o que mantém chave e token, grava uma vez, diz que poses mudaram); `entry_token` (chave, geração
+  da forma, `piece_asset_sig`); `load_placements` marca `formato_antigo`; `register_all` com a regra atual por omissão e
+  reutilização só pela chave (já não pelo tamanho do log, que reutilizaria entradas da outra regra);
+  `rebuild_assets(register=False)` (logo `rebuild_piece`, `rebuild_stale`) volta a registar as colocadas que tirou;
+  `stale_assets.placements_em_falta`.
+- `src/server.py`: `_start_fill` / `_fill_placements` (até `PL_FILL_PASSES` = 3 passagens: `wait_even`, cálculo fora do
+  bloqueio com `yield_to_gui` por peça, commit sob `wlock`); aviso no arranque (atividade + `prep_log`);
+  `/api/status.placements = {em_falta_no_arranque, preenchidas, em_falta, a_preencher, gravacoes, passagens,
+  descartadas, sem_registo, segundos}`; `_board_after_fill` (sem poses mudadas, a cache do tabuleiro em disco recebe o
+  `pl_mtime` novo; com poses mudadas, as células voltam a remendar-se); `_refresh_render_assets` com a mesma regra; o
+  pré-aquecimento espera pelo preenchimento.
+- **Duas mudanças de ordem, medidas** (`r9_pb_arranque.json`, servidor real numa cópia nova de `base_c3`):
+  - lançado antes dos fantasmas, os dois disputavam o GIL: fantasmas 2,1 → 12,7 s, preenchimento 3,3 → 17,5 s e o
+    «pronto» 4,7 → 21,9 s. Passou para depois dos fantasmas.
+  - o commit toma o bloqueio de escrita e rasgava o ranking dos buracos que corria ao lado (o ranking foi deitado fora e
+    recalculado). O ranking do arranque passou a começar no fim do preenchimento.
+
+#### Verificação do bloco 1 [V]
+
+- **Composição do tabuleiro, regra «sem imagem»:** `Gui._compose` a frio do tabuleiro inteiro (ppc 60) e das regiões
+  céu (1,20)–(14,40) e relva (34,30)–(47,50) a ppc 100: código `2040513` na cópia de hoje (79 entradas) contra o código
+  novo depois do preenchimento (699 entradas): **0 píxeis diferentes nas 3, iguais byte a byte**. Células que deviam
+  mudar (peças das 79 cuja pose muda): nenhuma; células que mudaram: nenhuma (mapa vazio). `r9_pb_igualdade.json`.
+- **Preenchimento no arranque** (servidor real, cópia nova de `base_c3`; a região do céu a ppc 100 pedida logo que o
+  preenchimento é visto em `/api/status`):
+
+| medida | 1.º arranque (com preenchimento) | 2.º arranque (mesma cópia) |
+|---|---|---|
+| entradas em falta no arranque | 699 | 0 |
+| preenchidas / gravações do ficheiro / descartadas | 699 / **1** / 0 | 0 / **0** / 0 |
+| tempo do preenchimento | 5,2 s, com uma região de 3,7 s pelo meio a que ele cede (3,3 s sozinho, no processo sem servidor; 9,6–12,4 s nas 3 corridas do 1.º salto abaixo, que abrem o browser e saltam durante ele) | — |
+| «pronto» (1.ª linha de `/api/status` com `pronto`) | 9,0 s | 4,8 s |
+| `/api/status` durante o preenchimento | 0,22 s | — |
+| 1.ª região de detalhe durante o preenchimento (céu, a frio, 699 peças registadas na hora) | 3,7 s | — |
+| ranking dos buracos | começa no fim do preenchimento (2,2 s), não rasgado | 2,9 s |
+| recomposição do tabuleiro inteiro | **nenhuma** nas duas sessões (`tabuleiro pronto (0,2 s)` da cache do disco; a cache recebe o `pl_mtime` novo no commit) | nenhuma |
+| `mtime` de `placements.json` | muda uma vez | não muda |
+
+  O «pronto» do 1.º arranque (9,0 s) fica acima dos 6,8–7,9 s das cópias novas de §13.7: o tempo extra está antes do
+  tabuleiro (`_check_stale` numa cópia acabada de copiar: 5 s contra 2 s no 2.º arranque), antes de o preenchimento
+  começar [NT a divisão exata].
+- **1.º salto num arranque com preenchimento** (`desempenho.py --so a`, 3 corridas, cópia de `base_c3` sem entradas,
+  `r9_pb_salto_com_preenchimento.json`): 6,40 · 6,45 · 7,70 s (§13.7: 5,61 · 6,13 s com `8668365`, outra sessão). Nessa
+  sessão o «perto» foi 2,05–2,28 s, **composição inteira** (`muitas_pecas`): a região do céu guardada no 1.º salto tinha
+  as 699 peças registadas na hora, e depois do preenchimento as partes de todas as peças mudam (de «na hora» para
+  «registo»), por isso a 1.ª escrita perto recompõe a região inteira uma vez. Só acontece na sessão do preenchimento.
+- Suite com os `slow`/Playwright: **648 passed, 1 skipped**; `test_concorrencia.py` **20/20** (duas vezes, antes e depois
+  da mudança de ordem); `test_regiao_remendo`, `test_regiao_conteudo`, `test_seqlock*` dentro da suite [V].
+
+#### Medição final: 10 pares alternados `8668365 | novo` (`6c66217`) (`r9_pb_pares.json`)
+
+`desempenho.py --so a --n 1 --repo <worktree>`, as duas versões na mesma cópia, completada pelo servidor novo (a cópia do
+2.º arranque acima: 699 entradas, regra «cantos», cache do tabuleiro em disco coerente). IC 95 % por bootstrap de pares
+(10 000) da diferença das medianas. Mediana · máximo, em s. **Atenção ao viés:** com esta cópia o `8668365` aceita **0**
+das 699 entradas (a chave nova leva a regra), por isso regista todas na hora (com `base_c3` aceitava 79); o lado antigo
+fica um pouco mais lento do que em §13.7 (perto 2,64 contra 2,51 s), o que favorece o novo nas comparações de regressão.
+
+| medida | alvo | `8668365` | novo | diferença | IC 95 % | exclui +0,25? | marca |
+|---|---|---|---|---|---|---|---|
+| 3 «perto» (5,33) | ≤ 1,2 | 2,64 · 2,81 | **1,21 · 1,33** | −1,43 | [−1,53, −1,35] | sim | melhora [V]; alvo **[F]** por 0,01 s |
+| 3 «longe» (20,60) | ≤ 0,6 | 0,33 · 0,41 | 0,38 · 0,47 | +0,04 | [−0,01, +0,10] | sim | [V] |
+| POST «perto» | — | 2,31 · 2,71 | 2,02 · 2,30 | −0,29 | [−0,39, −0,11] | sim | [V] |
+| POST «longe» | — | 0,95 · 1,17 | 0,97 · 1,09 | +0,02 | [−0,10, +0,08] | sim | [V] |
+| 2 salto a frio, relva (browser) | — | 3,04 · 3,40 | 2,96 · 3,47 | −0,08 | [−0,19, +0,16] | sim | [V] |
+| 2 salto a frio, relva (HTTP) `srv_frio_relva_s` | — | 1,48 · 1,82 | 1,41 · 1,59 | −0,07 | [−0,15, +0,00] | sim | [V] |
+| 2 salto a frio, céu (HTTP) | — | 1,17 · 1,39 | 1,14 · 1,29 | −0,03 | [−0,11, +0,06] | sim | [V] |
+| 1 1.º salto (céu) | ≤ 4,0 | 5,88 · 6,61 | 5,80 · 6,43 | −0,08 | [−0,41, +0,29] | não | [NT] inconclusivo; alvo [F] |
+| 5 pico do working set | ≤ +200 MB | 1107 MB | 1178 MB | **+71 MB** | [+70, +73] | — | [V] |
+
+- «Perto» novo, por corrida: 1,29 · 1,20 · 0,94 · 1,12 · 1,23 · 1,31 · 1,33 · 1,26 · 1,06 · 1,01 s; **10/10 remendados**
+  (as composições inteiras de cada corrida são só as 6 «sem base» dos saltos e dos pedidos a frio).
+- Pico +71 MB (§13.7, o remendo sozinho contra o mesmo `8668365`: +99 MB); a `PatchCache` acaba com 98 MB nas duas
+  medições [NT a divisão do resto].
+
+**Paragem: «perto» = 1,21 s > 1,2 s (mediana de 10; 5 de 10 corridas acima de 1,2 s), não se afinou nada.** Decomposição com o
+código novo (o lançador de §13.7, `scratchpad/p0/lanca_novo.py`, na cópia completada; 3 + 3 corridas intercaladas;
+«atrasado» = `/api/board`, `/api/ghosts`, `/api/montar` retidos no browser até o detalhe aparecer;
+`dados/r9_pb_perto_decomposicao.json`; mediana · máximo, s):
+
+| medida | normal | pedidos paralelos atrasados | §13.7 normal (antes da P-b) |
+|---|---|---|---|
+| «perto» | **1,27 · 1,35** | **0,38 · 0,42** | 1,62 · 1,82 |
+| `_region_jpg` | 1,18 · 1,25 | 0,31 · 0,33 | 1,52 · 1,71 |
+| … `_region_parts` (assinatura) | 0,20 · 0,22 | 0,17 · 0,18 | 0,20 · 0,23 |
+| … `compose_patch` | 0,96 · 1,04 | 0,12 · 0,14 | 1,29 · 1,49 |
+| …… `_piece_jobs` (poses e peças prontas; já sem registo na hora) | **0,24 · 0,35** | 0,04 · 0,05 | **1,21 · 1,38** |
+| …… `_draw_jobs` (redesenho da zona suja) | 0,39 · 0,48 | 0,07 · 0,08 | 0,07 · 0,09 |
+| … JPEG | 0,008 | 0,006 | 0,007 |
+| fim do POST → pedido / pedido → detalhe no ecrã | 0,04 / 0,05 | 0,04 / 0,04 | 0,05 / 0,06 |
+| pedidos paralelos sobrepostos: `board_json` / `ghosts` / `montar_json` | 0,91 / 0,78 / 1,10 | — | 0,81 / 1,32 / 1,05 |
+
+- A P-b fez o que se esperava: `_piece_jobs` 1,21 → 0,24 s (o registo na hora saiu). O que fica é a disputa do GIL com
+  os três pedidos que o browser faz no `board_changed`: o redesenho passa de 0,07 para 0,39 s e a parede da composição
+  fica ≈ 0,3 s acima do CPU. Sem eles o «perto» fica em 0,38 s.
+- O que falta para o alvo é a **P-a** (§13.7: o browser pede esses três só depois do detalhe, ou o servidor fá-los ceder
+  a uma composição de detalhe em curso) [V no lançador: 0,38 s; não implementada]. A P-c (assinatura, 0,20 s) daria
+  menos [NT].
