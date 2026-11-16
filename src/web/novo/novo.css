@@ -44,11 +44,13 @@ a:hover { color: #ffd27a; }
   padding: 0 12px; white-space: nowrap; border-radius: 8px 8px 0 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 #tabs button.on { color: var(--text); box-shadow: inset 0 -3px 0 var(--amber); }
 #tabs button b { color: var(--amber); margin-left: 3px; }
-/* F2c: lupa de dois botões («Peça», «Posição»); cada um abre UMA caixa de texto que desliza por baixo dos botões
+/* F2c: grupo «Procurar» (ícone lupa) com dois botões («Peça», «Lugar»); cada um abre UMA caixa de texto que desliza por baixo dos botões
    (nunca por cima deles); só uma aberta de cada vez. Os campos têm o aspeto dos de «Pôr uma peça à mão». */
 #top { position: relative; }
 .lupa { position: relative; flex: 0 0 auto; }
-.lupa-botoes { display: flex; gap: 6px; }
+.lupa-botoes { display: flex; align-items: center; gap: 6px; }
+.lupa-grupo-ico { width: 20px; height: 20px; color: var(--amber); margin-left: 4px; }
+.lupa-grupo-txt { color: var(--muted); font-size: 13px; font-weight: 650; margin-right: 2px; }
 .lupa-b { min-height: var(--tap); display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border-radius: 10px;
   border: 1px solid var(--line); background: var(--bg3); color: var(--text); font-weight: 600; cursor: pointer; }
 .lupa-b .ico { width: 18px; height: 18px; color: var(--muted); }
@@ -73,8 +75,10 @@ a:hover { color: #ffd27a; }
 .icon-btn { width: var(--tap); height: var(--tap); border-radius: 10px; border: 1px solid var(--line); background: var(--bg3);
   cursor: pointer; font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; padding: 0; color: var(--text); }
 .icon-btn .ico { width: 20px; height: 20px; }
-.menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; background: var(--bg2); border: 1px solid var(--line);
-  border-radius: 12px; padding: 6px; min-width: 260px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); display: flex; flex-direction: column; }
+.menu { flex: 1; min-height: 0; overflow-y: auto; background: var(--bg2); padding: 8px 10px 20px; display: flex; flex-direction: column; }
+.menu-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 2px 8px; }
+.menu-head h3 { margin: 0; }
+#panel.com-menu > .tab, #panel.com-menu > .lupa-res { display: none !important; }      /* F2c: o menu esconde o separador (não o redesenha) */
 .menu > a, .menu > button, .menu-check { display: flex; align-items: center; gap: 10px; min-height: var(--tap); padding: 0 12px;
   border-radius: 8px; background: none; border: 0; color: var(--text); text-decoration: none; cursor: pointer; text-align: left; }
 .menu > a:hover, .menu > button:hover, .menu-check:hover { background: var(--bg3); }
@@ -85,6 +89,7 @@ a:hover { color: #ffd27a; }
 
 /* ------------------------------------------------------------ tabuleiro (o resto em board.css) */
 #lyr-legado .b-legado { opacity: .35; }
+.alvo-tag.longe { display: none; }       /* F2c: texto < 9 px no ecrã: fica só o quadrado */
 .alvo-tag rect { fill: var(--amber); }
 .alvo-tag text { fill: var(--amber-ink); font-size: .22px; font-weight: 700; text-anchor: middle; font-family: var(--font); }
 #lyr-alvo, #lyr-seguinte { pointer-events: none; }
@@ -170,6 +175,7 @@ h3 { margin: 0 0 4px; font-size: 18px; }
 .i-check { -webkit-mask-image: url("icons/check.svg"); mask-image: url("icons/check.svg"); }
 .i-circle-question-mark { -webkit-mask-image: url("icons/circle-question-mark.svg"); mask-image: url("icons/circle-question-mark.svg"); }
 .i-ellipsis { -webkit-mask-image: url("icons/ellipsis.svg"); mask-image: url("icons/ellipsis.svg"); }
+.i-menu { -webkit-mask-image: url("icons/menu.svg"); mask-image: url("icons/menu.svg"); }
 .i-frame { -webkit-mask-image: url("icons/frame.svg"); mask-image: url("icons/frame.svg"); }
 .i-ghost { -webkit-mask-image: url("icons/ghost.svg"); mask-image: url("icons/ghost.svg"); }
 .i-keyboard { -webkit-mask-image: url("icons/keyboard.svg"); mask-image: url("icons/keyboard.svg"); }
@@ -317,10 +323,10 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
   .who .num { font-size: 20px; }
   .legend-short { font-size: 12px; gap: 4px 10px; }
   .zoom-ui button { width: 44px; height: 44px; }
-  /* F1d: o menu «⋯» abre a toda a largura (ancorado ao botão saía pela esquerda a 390 px) */
-  #top { position: relative; }
-  .menu-wrap { position: static; }
-  .menu { top: 100%; left: 8px; right: 8px; min-width: 0; }
+  /* F2c: o menu abre no ecrã inteiro (a 390 px o painel é a metade de baixo), com «Fechar» */
+  #panel.com-menu { position: fixed; inset: 0; z-index: 40; border-top: 0; }
+  .lupa-grupo-txt { display: none; }       /* a 390 px só o ícone (o nome fica no aria-label do grupo) */
+  .lupa-botoes .lupa-grupo-ico { margin-right: 2px; }
   /* F1d: a faixa da última ação no topo do painel já tem «Desfazer»; o aviso em baixo tapava «Colocar aqui» */
   #toast > .undo-toast { display: none; }
 }

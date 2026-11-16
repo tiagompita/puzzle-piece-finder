@@ -1,0 +1,30 @@
+{
+ "1366": {
+  "cartao": {
+   "fonte_vb": 0.22,
+   "px_por_unidade": 53.7037037037037,
+   "altura_px": 11.814814814814815,
+   "visivel": true
+  },
+  "inteiro": {
+   "fonte_vb": 0.22,
+   "px_por_unidade": 14.95752427184466,
+   "altura_px": 3.290655339805825,
+   "visivel": true
+  }
+ },
+ "390": {
+  "cartao": {
+   "fonte_vb": 0.22,
+   "px_por_unidade": 21.241830065359476,
+   "altura_px": 4.673202614379085,
+   "visivel": true
+  },
+  "inteiro": {
+   "fonte_vb": 0.22,
+   "px_por_unidade": 5.638216369949882,
+   "altura_px": 1.240407601388974,
+   "visivel": true
+  }
+ }
+}

@@ -13,3 +13,6 @@ F2 (2026-11-14): `rotate-cw`, `settings`, `flag`, `scissors`, `plus`, `sun`, `dr
 sem alterações do mesmo ramo `main` nessa data.
 
 F2b (2026-11-14): `search`, copiado sem alterações do mesmo ramo `main` nessa data (lupa de dois separadores).
+
+F2c (2026-11-16): `menu` (três barras do botão «Menu»), copiado sem alterações do mesmo ramo `main` nessa data; o `ellipsis`
+ficou na pasta sem uso (o menu deixou de ser «⋯»).

@@ -1,7 +1,8 @@
 """Registo de atividade: linhas úteis no terminal, num ficheiro por dia e num anel em memória para a GUI.
 
 Um só logger raiz ``ppf`` com um filho por **tipo** de linha (``ppf.<tipo>``): ``servidor``, ``arranque``,
-``consulta``, ``cache``, ``ativos``, ``progresso``, ``evento``, ``pedido``, ``buracos``, ``erro``. Níveis
+``consulta``, ``cache``, ``ativos``, ``progresso``, ``evento``, ``pedido``, ``buracos``, ``erro``, ``erro_cliente``
+(um erro do browser, ``POST /api/cliente/erro``, nível aviso). Níveis
 ``info`` / ``aviso`` / ``erro`` (INFO / WARNING / ERROR do :mod:`logging`). Formato::
 
 	HH:MM:SS info  evento    placed P0177 (2,37) origem buraco
@@ -32,7 +33,7 @@ __all__ = [
 ]
 
 LOGGER = "ppf"
-TIPOS = ("servidor", "arranque", "consulta", "cache", "ativos", "progresso", "evento", "pedido", "buracos", "importar", "erro")
+TIPOS = ("servidor", "arranque", "consulta", "cache", "ativos", "progresso", "evento", "pedido", "buracos", "importar", "erro", "erro_cliente")
 NIVEIS = ("info", "aviso", "erro")
 _NIVEL = {logging.DEBUG: "info", logging.INFO: "info", logging.WARNING: "aviso", logging.ERROR: "erro", logging.CRITICAL: "erro"}
 SLOW_REQUEST_S = 1.0          # a request slower than this gets a line (tipo ``pedido``, nível info)

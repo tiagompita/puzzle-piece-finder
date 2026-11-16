@@ -80,3 +80,55 @@ function lightbox(src, cap) {
   $("#lb-cap").textContent = cap || "";
   $("#lightbox").hidden = false;
 }
+
+// ------------------------------------------------------------ registo de erros do browser (F2c)
+/** Os erros da página (``error``, ``unhandledrejection``, ``console.error``) vão para o registo de atividade do servidor
+ * (``POST /api/cliente/erro`` → linha ``erro_cliente``, nível aviso), nas duas GUIs. Um JSON curto (tipo, mensagem,
+ * fonte:linha:coluna, stack cortada, página, user agent) de ≤ 4 KB por ``navigator.sendBeacon`` (``fetch`` com
+ * ``keepalive`` como alternativa). Limites aqui: 1 erro igual (mesma mensagem e fonte) por minuto e 20 por página; no
+ * servidor há outro por cliente. Nunca bloqueia nem rebenta a página: tudo em ``try``, o envio não é esperado, o erro de um
+ * envio não se volta a enviar (``cliErr.busy``) e o ``console.error`` original continua a ser chamado. */
+const cliErr = { max: 4096, repete: 60000, sessao: 20, n: 0, vistos: new Map(), busy: false };
+function cliErrSend(tipo, mensagem, fonte, stack) {
+  if (cliErr.busy) return;
+  cliErr.busy = true;
+  try {
+    mensagem = String(mensagem == null ? "" : mensagem);
+    fonte = String(fonte || "");
+    const key = mensagem + "|" + fonte, agora = Date.now(), ant = cliErr.vistos.get(key);
+    if ((ant !== undefined && agora - ant < cliErr.repete) || cliErr.n >= cliErr.sessao) return;
+    cliErr.vistos.set(key, agora); cliErr.n += 1;
+    const o = { tipo, mensagem: mensagem.slice(0, 400), fonte: fonte.slice(0, 300), stack: String(stack || "").slice(0, 1500),
+      pagina: location.pathname, ua: (navigator.userAgent || "").slice(0, 200) };
+    const bytes = (t) => new TextEncoder().encode(t).length;
+    let corpo = JSON.stringify(o);
+    while (bytes(corpo) > cliErr.max && o.stack.length > 0) { o.stack = o.stack.slice(0, Math.max(0, o.stack.length - 300)); corpo = JSON.stringify(o); }
+    if (bytes(corpo) > cliErr.max) { o.mensagem = o.mensagem.slice(0, 100); o.ua = ""; corpo = JSON.stringify(o); }
+    let ok = false;
+    try { ok = !!(navigator.sendBeacon && navigator.sendBeacon("/api/cliente/erro", new Blob([corpo], { type: "text/plain;charset=UTF-8" }))); } catch (e) { ok = false; }
+    if (!ok) {
+      try { fetch("/api/cliente/erro", { method: "POST", body: corpo, keepalive: true, headers: { "Content-Type": "text/plain;charset=UTF-8" } }).catch(() => {}); } catch (e) { /* sem registo */ }
+    }
+  } catch (e) { /* o registo nunca rebenta a página */ } finally { cliErr.busy = false; }
+}
+(function cliErrHooks() {
+  if (window.__cliErrHooks) return;
+  window.__cliErrHooks = true;
+  window.addEventListener("error", (ev) => {
+    if (!ev || (ev.target && ev.target !== window)) return;                  // recursos que não carregam não são erros de código
+    cliErrSend("error", ev.message || (ev.error && ev.error.message), `${ev.filename || ""}:${ev.lineno || 0}:${ev.colno || 0}`, ev.error && ev.error.stack);
+  });
+  window.addEventListener("unhandledrejection", (ev) => {
+    const r = ev && ev.reason, st = r && r.stack ? String(r.stack) : "";
+    const m = st.match(/(?:\(|at |@)(\S+?:\d+:\d+)\)?\s*$/m);
+    cliErrSend("unhandledrejection", r && r.message ? r.message : String(r), m ? m[1] : "", st);
+  });
+  const orig = console.error;
+  console.error = function (...args) {
+    try {
+      const txt = args.map((a) => (a instanceof Error ? (a.stack || a.message) : (typeof a === "object" && a ? (() => { try { return JSON.stringify(a); } catch (e) { return String(a); } })() : String(a)))).join(" ");
+      cliErrSend("console.error", txt, "", "");
+    } catch (e) { /* ignora */ }
+    return orig.apply(this, args);
+  };
+})();

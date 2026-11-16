@@ -21,10 +21,11 @@
       <button type="button" role="tab" data-tab="pecas" aria-selected="false"><span class="ico i-layout-grid" aria-hidden="true"></span>Peças</button>
       <button type="button" role="tab" data-tab="importar" aria-selected="false"><span class="ico i-scan-line" aria-hidden="true"></span>Importar scan</button>
     </nav>
-    <div id="search" class="lupa" role="search" aria-label="Procurar peça ou posição">
-      <div class="lupa-botoes">
-        <button type="button" id="lupa-b-peca" class="lupa-b" data-modo="peca" aria-expanded="false" aria-controls="lupa-c-peca"><span class="ico i-puzzle" aria-hidden="true"></span>Peça</button>
-        <button type="button" id="lupa-b-pos" class="lupa-b" data-modo="pos" aria-expanded="false" aria-controls="lupa-c-pos"><span class="ico i-map-pin" aria-hidden="true"></span>Posição</button>
+    <div id="search" class="lupa" role="search" aria-label="Procurar peça ou lugar">
+      <div class="lupa-botoes" role="group" aria-label="Procurar">
+        <span class="lupa-grupo-ico ico i-search" aria-hidden="true"></span><span class="lupa-grupo-txt" aria-hidden="true">Procurar</span>
+        <button type="button" id="lupa-b-peca" class="lupa-b" data-modo="peca" aria-expanded="false" aria-controls="lupa-c-peca">Peça</button>
+        <button type="button" id="lupa-b-pos" class="lupa-b" data-modo="pos" aria-expanded="false" aria-controls="lupa-c-pos">Lugar</button>
       </div>
       <form id="lupa-c-peca" class="lupa-caixa" data-modo="peca" hidden novalidate autocomplete="off">
         <input id="lupa-q-peca" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" aria-label="Peça: saco e número, ou P e o número da peça" placeholder="saco e nº, ex. 9 89, ou P1422">
@@ -32,23 +33,13 @@
         <p class="lupa-msg" id="lupa-m-peca" role="alert" hidden></p>
       </form>
       <form id="lupa-c-pos" class="lupa-caixa" data-modo="pos" hidden novalidate autocomplete="off">
-        <input id="lupa-q-pos" type="text" inputmode="text" spellcheck="false" aria-label="Posição: linha e coluna" placeholder="linha e coluna, ex. 1 29">
-        <button type="submit" class="lupa-go" aria-label="Ir para a posição" title="Ir para a posição"><span class="ico i-search" aria-hidden="true"></span></button>
+        <input id="lupa-q-pos" type="text" inputmode="text" spellcheck="false" aria-label="Lugar: linha e coluna" placeholder="linha e coluna, ex. 1 29">
+        <button type="submit" class="lupa-go" aria-label="Ir para o lugar" title="Ir para o lugar"><span class="ico i-search" aria-hidden="true"></span></button>
         <p class="lupa-msg" id="lupa-m-pos" role="alert" hidden></p>
       </form>
     </div>
     <div class="menu-wrap">
-      <button type="button" id="menu-btn" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="Mais opções" title="Mais opções"><span class="ico i-ellipsis" aria-hidden="true"></span></button>
-      <div id="menu" class="menu" hidden role="menu">
-        <a role="menuitem" href="/" id="m-diag"><span class="ico i-stethoscope" aria-hidden="true"></span>Diagnóstico (interface completa)</a>
-        <button type="button" role="menuitem" id="m-atividade"><span class="ico i-activity" aria-hidden="true"></span>Atividade do programa</button>
-        <label class="menu-check"><input type="checkbox" id="m-fantasmas"><span class="ico i-ghost" aria-hidden="true"></span>Mostrar a forma esperada</label>
-        <label class="menu-check"><input type="checkbox" id="m-borda"><span class="ico i-frame" aria-hidden="true"></span>Mostrar a borda em falta</label>
-        <p class="menu-nota" id="m-borda-nota" hidden role="status"></p>
-        <label class="menu-check"><input type="checkbox" id="m-guardadas"><span class="ico i-square-dashed" aria-hidden="true"></span>Mostrar as peças por confirmar</label>
-        <button type="button" role="menuitem" id="m-definicoes"><span class="ico i-settings" aria-hidden="true"></span>Definições (cor das peças)</button>
-        <div class="menu-keys" id="m-teclas"><span class="ico i-keyboard" aria-hidden="true"></span>Teclas: Enter = Encaixa · N = Não encaixa · S = Saltar · Ctrl+Z = desfazer</div>
-      </div>
+      <button type="button" id="menu-btn" class="icon-btn" aria-controls="menu" aria-expanded="false" aria-label="Menu" title="Menu"><span class="ico i-menu" aria-hidden="true"></span></button>
     </div>
   </header>
 
@@ -85,6 +76,17 @@
     <section class="tab on" id="tab-montar" aria-live="polite"></section>
     <section class="tab" id="tab-pecas"></section>
     <section class="tab" id="tab-importar"></section>
+    <div id="menu" class="menu" hidden role="region" aria-label="Menu">
+      <div class="menu-head"><h3>Menu</h3><button type="button" id="menu-fechar" class="btn"><span class="ico i-x" aria-hidden="true"></span>Fechar</button></div>
+      <a href="/" id="m-diag"><span class="ico i-stethoscope" aria-hidden="true"></span>Diagnóstico (interface completa)</a>
+      <button type="button" id="m-atividade"><span class="ico i-activity" aria-hidden="true"></span>Atividade do programa</button>
+      <label class="menu-check"><input type="checkbox" id="m-fantasmas"><span class="ico i-ghost" aria-hidden="true"></span>Mostrar a forma esperada</label>
+      <label class="menu-check"><input type="checkbox" id="m-borda"><span class="ico i-frame" aria-hidden="true"></span>Mostrar a borda em falta</label>
+      <p class="menu-nota" id="m-borda-nota" hidden role="status"></p>
+      <label class="menu-check"><input type="checkbox" id="m-guardadas"><span class="ico i-square-dashed" aria-hidden="true"></span>Mostrar as peças por confirmar</label>
+      <button type="button" id="m-definicoes"><span class="ico i-settings" aria-hidden="true"></span>Definições (cor das peças)</button>
+      <div class="menu-keys" id="m-teclas"><span class="ico i-keyboard" aria-hidden="true"></span>Teclas: Enter = Encaixa · N = Não encaixa · S = Saltar · Ctrl+Z = desfazer</div>
+    </div>
   </aside>
 </div>
 

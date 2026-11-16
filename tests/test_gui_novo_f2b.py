@@ -34,7 +34,7 @@ def _toast_text(pg):
 	return pg.locator("#toast").inner_text()
 
 
-# ---------------------------------------------------------------- 1. lupa de dois botões «Peça» e «Posição» (F2c)
+# ---------------------------------------------------------------- 1. lupa de dois botões «Peça» e «Lugar» (F2c)
 def _vis(pg, sel):
 	return pg.locator(sel).is_visible()
 
@@ -57,7 +57,7 @@ def test_lupa_two_buttons_one_box_at_a_time(base, browser):
 	url, gui, tw = base
 	pg, errs = _open(browser, url)
 	try:
-		assert pg.locator("#lupa-b-peca").inner_text().strip() == "Peça" and pg.locator("#lupa-b-pos").inner_text().strip() == "Posição"
+		assert pg.locator("#lupa-b-peca").inner_text().strip() == "Peça" and pg.locator("#lupa-b-pos").inner_text().strip() == "Lugar"
 		assert _boxes(pg) == (False, False)                       # fechada por omissão
 		pg.click("#lupa-b-peca")
 		assert _boxes(pg) == (True, False)

@@ -4301,6 +4301,52 @@ def create_app(gui: Gui):
 			return JSON(r, status_code=400)
 		return JSON(r)
 
+	# --- F2c: browser errors (``core.js`` hooks) → one ``erro_cliente`` activity line each
+	CLI_ERR_MAX_BYTES = 4096        # body read and every line written is cut at this size
+	CLI_ERR_PER_MIN = 20            # per client (IP): beyond this, 429 and no line
+	cli_err_seen: dict = {}
+
+	def cli_err_line(raw: bytes) -> str:
+		"""One short line from the (cut) body: a JSON object from ``core.js`` or, if it is not one, the text itself."""
+		def one(v, n: int) -> str:
+			return " ".join(str(v if v is not None else "").replace("\r", " ").replace("\n", " | ").split())[:n]
+		try:
+			d = json.loads(raw.decode("utf-8", errors="replace"))
+		except ValueError:
+			d = None
+		if not isinstance(d, dict):
+			d = {"tipo": "?", "mensagem": raw.decode("utf-8", errors="replace")}
+		parts = [f"{one(d.get('tipo'), 30) or '?'}: {one(d.get('mensagem'), 400)}"]
+		for k, n, pre in (("fonte", 300, "@ "), ("pagina", 100, "página "), ("ua", 200, "ua "), ("stack", 1500, "stack ")):
+			if d.get(k):
+				parts.append(pre + one(d[k], n))
+		return " · ".join(parts).encode("utf-8")[:CLI_ERR_MAX_BYTES].decode("utf-8", errors="ignore")
+
+	@app.post("/api/cliente/erro")
+	async def post_cliente_erro(request: Request):
+		now = time.monotonic()
+		who = request.client.host if request.client else "?"
+		hits = cli_err_seen.setdefault(who, collections.deque())
+		while hits and now - hits[0] > 60.0:
+			hits.popleft()
+		if len(cli_err_seen) > 1000:
+			for k in [k for k, v in cli_err_seen.items() if not v or now - v[-1] > 60.0]:
+				cli_err_seen.pop(k, None)
+			hits = cli_err_seen.setdefault(who, hits)
+		if len(hits) >= CLI_ERR_PER_MIN:
+			return Response(status_code=429)
+		raw = b""
+		async for chunk in request.stream():          # at most 4 KB are read, however big the body is
+			raw += chunk
+			if len(raw) >= CLI_ERR_MAX_BYTES:
+				break
+		raw = raw[:CLI_ERR_MAX_BYTES]
+		if not raw.strip():
+			return JSON({"error": "corpo vazio"}, status_code=400)
+		hits.append(now)
+		activity.get("erro_cliente").warning(cli_err_line(raw))
+		return Response(status_code=204)
+
 	@app.get("/api/atividade")
 	def get_atividade(desde: Optional[int] = None, n: int = 300):
 		return JSON(gui.activity_json(desde, max(1, min(int(n), 1000))))

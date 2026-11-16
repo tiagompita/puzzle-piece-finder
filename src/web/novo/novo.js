@@ -181,8 +181,24 @@ function drawTarget(move = true) {
   lab.append(s("rect", { x: -w / 2, y: -0.42, width: w, height: 0.36, rx: 0.08 }),
     s("text", { x: 0, y: -0.17 }, document.createTextNode(g ? "lugar provável" : "vai aqui")));
   a.append(lab);
+  updateAlvoTag();
   if (move) followTarget(cur.piece, l, c);
   if (S.locAviso && S.locAviso.key === `${cur.piece}@${l},${c}`) marcarLocalizar();
+}
+/** Rótulo do alvo («vai aqui» / «lugar provável», F2c): esconde-se quando o zoom já não deixa ler o texto e fica só o
+ * quadrado. O critério é a altura do texto no ecrã (tamanho da fonte em unidades da viewBox × px de ecrã por unidade) abaixo
+ * de ``ALVO_TXT_MIN_PX``. Corre ao desenhar o alvo e sempre que board.js muda a vista (``setView`` escreve a ``viewBox``;
+ * observada em ``boot``) ou o tamanho do tabuleiro muda. ``data-px`` guarda a altura medida (os testes leem-na). */
+const ALVO_TXT_MIN_PX = 9;
+function updateAlvoTag() {
+  const r = svgRect();
+  if (!r.width || !S.vb || !S.vb.w) return;
+  for (const g of $$("#lyr-alvo .alvo-tag")) {
+    const t = g.querySelector("text");
+    const px = parseFloat(getComputedStyle(t).fontSize) * r.width / S.vb.w;
+    g.dataset.px = px.toFixed(1);
+    g.classList.toggle("longe", px < ALVO_TXT_MIN_PX);
+  }
 }
 /** A vista segue o cartão atual só por ação do Tiago (2026-11-15, P0 da fase de desempenho; decisão do Tiago).
  * - 1.ª carga, ou ``S.alvoAcao`` (Encaixa / Não encaixa / Colocar aqui / Saltar / escolher em «A seguir» ou no
@@ -242,14 +258,25 @@ function drawLegend() {
 }
 S.onBoardTap = (l, c) => {
   if (S.achado) setAchado(null);          // o destaque da lupa dura até ao próximo toque no tabuleiro
-  // F1b: tocar no alvo de uma peça da fila torna-a a peça atual; F2: tocar outra vez no alvo da peça atual, ou
-  // noutro lugar, abre o painel desse lugar (com a sugestão do programa e «Pôr uma peça aqui»)
+  // F1b: tocar no alvo de uma peça da fila torna-a a peça atual. F2c (decisão do Tiago, 2026-11-16): tocar no alvo do
+  // cartão ATUAL mantém o cartão e não abre o painel: centra o lugar e «localizar» pisca (o painel do lugar abre-se pelo
+  // botão «Ver lugar» do cartão). Tocar noutro lugar abre o painel desse lugar (sugestão do programa e «Pôr uma peça aqui»).
   const it = queue().find((x) => x.cell && x.cell[0] === l && x.cell[1] === c);
-  if (it && !(S.tab === "montar" && S.modo === "cartao" && current() === it)) {
+  if (it) {
+    if (S.tab === "montar" && S.modo === "cartao" && current() === it) { centrarAlvo(it); return; }
     porAcao(() => { S.pick = it.piece; S.modo = "cartao"; S.painel = null; if (S.tab !== "montar") showTab("montar"); renderMontar(); }); return;
   }
   openPainel(l, c);
 };
+/** Toque no alvo do cartão atual: centra o lugar (``showCell`` forçado) e faz «localizar» piscar uma vez (``marcarLocalizar``:
+ * classe ``pisca`` e ``data-mudou``; com ``prefers-reduced-motion`` fica a marca estática). */
+function centrarAlvo(it) {
+  const [l, c] = it.cell, b = $("#b-localizar");
+  if (b) { b.classList.remove("pisca", "mudou"); delete b.dataset.mudou; void b.offsetWidth; }
+  S.locAviso = { key: `${it.piece}@${l},${c}`, animado: false };
+  showCell(l, c, true);
+  marcarLocalizar();
+}
 
 // ------------------------------------------------------------ Montar
 function bars(n, label) {
@@ -345,6 +372,7 @@ function renderMontar1() {
   }
   card.append(acts);
   card.append(h("div", { class: "links" },
+    cur.cell ? h("button", { class: "linkish", type: "button", id: "b-ver-lugar", onclick: () => openPainel(cur.cell[0], cur.cell[1]) }, ico("map-pin"), "Ver lugar") : null,
     h("button", { class: "linkish", type: "button", id: "b-saltar", onclick: () => doSaltar(cur) }, ico("skip-forward"), "Saltar por agora"),
     h("button", { class: "linkish", type: "button", id: "b-porque", onclick: () => { S.modo = "porque"; renderMontar(); } }, ico("circle-question-mark"), "Porquê esta peça?")));
   T.append(card);
@@ -1008,8 +1036,8 @@ function importStatus() {
   else c.hidden = true;
 }
 
-// ------------------------------------------------------------ procurar peça ou posição (lupa, F2c)
-// Dois botões, «Peça» e «Posição»; cada um abre UMA caixa de texto que desliza (≤ 200 ms, sem animação com
+// ------------------------------------------------------------ procurar peça ou lugar (lupa, F2c)
+// Um grupo «Procurar» com dois botões, «Peça» e «Lugar»; cada um abre UMA caixa de texto que desliza (≤ 200 ms, sem animação com
 // prefers-reduced-motion); abrir um fecha o outro e nenhum tapa os botões. O último modo usado fica guardado neste
 // aparelho (a tecla «/» abre-o). Sem ambiguidade entre os dois: a posição tem sempre dois números, a peça é «saco nº»
 // ou P####.
@@ -1224,11 +1252,21 @@ function connectEvents() {
 }
 
 // ------------------------------------------------------------ arranque
+/** O menu (F2c) é mais um separador do painel (#panel): abre no lugar dele, com o mesmo tamanho (a 390 px, no ecrã inteiro,
+ * com «Fechar»), e o mesmo botão, Esc ou «Fechar» voltam ao separador de antes. Só esconde e mostra (``#panel.com-menu``):
+ * o separador anterior não se redesenha e ``S.pick`` / ``S.modo`` / ``S.tab`` ficam como estavam. */
+const menuAberto = () => !$("#menu").hidden;
+function setMenu(on) {
+  $("#menu").hidden = !on;
+  $("#panel").classList.toggle("com-menu", on);
+  $("#menu-btn").setAttribute("aria-expanded", on ? "true" : "false");
+}
 function initMenu() {
-  const btn = $("#menu-btn"), menu = $("#menu");
-  const close = () => { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); };
-  btn.onclick = (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute("aria-expanded", menu.hidden ? "false" : "true"); };
-  document.addEventListener("click", (e) => { if (!menu.hidden && !menu.contains(e.target)) close(); });
+  const btn = $("#menu-btn");
+  const close = () => setMenu(false);
+  btn.onclick = (e) => { e.stopPropagation(); setMenu(!menuAberto()); };
+  $("#menu-fechar").onclick = close;
+  document.addEventListener("click", (e) => { if (menuAberto() && !e.target.closest("#menu") && !e.target.closest("#menu-btn")) close(); });
   $("#m-atividade").onclick = () => { lsSet("atividade-open", "1"); window.open("/", "_blank"); close(); };
   $("#m-definicoes").onclick = () => { close(); openDefinicoes(); };
   const bind = (id, key, prop, after) => {
@@ -1245,6 +1283,7 @@ function initMenu() {
 function onKey(e) {
   if (e.key === "Escape") {
     if (S.lupa) { closeCaixa(); return; }
+    if (menuAberto()) { setMenu(false); return; }
     if (!$("#lightbox").hidden) { $("#lightbox").hidden = true; return; }
     if ($("#definicoes")) { $("#definicoes").remove(); return; }
     if (S.modo === "por_mao") { cancelPorMao(); return; }            // F2: volta ao painel do lugar
@@ -1293,6 +1332,9 @@ async function boot() {
   corApply(corGet());
   initMenu();
   initPointer();
+  // F2c: o rótulo do alvo segue o zoom pelo caminho que board.js já usa (setView escreve a viewBox) e o tamanho do tabuleiro
+  new MutationObserver(updateAlvoTag).observe(svg(), { attributes: true, attributeFilter: ["viewBox"] });
+  window.addEventListener("resize", updateAlvoTag);
   connectEvents();
   renderMontar();
   let st;

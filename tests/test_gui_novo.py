@@ -370,7 +370,7 @@ def test_empty_screen_counts_groups_only(guarda, browser):
 
 
 def _abrir_lupa(pg, modo):
-	"""Abre a caixa do botão «Peça» (``peca``) ou «Posição» (``pos``) se ainda não estiver aberta."""
+	"""Abre a caixa do botão «Peça» (``peca``) ou «Lugar» (``pos``) se ainda não estiver aberta."""
 	if not pg.locator(f"#lupa-c-{modo}").is_visible():
 		pg.click(f"#lupa-b-{modo}")
 
@@ -383,7 +383,7 @@ def _buscar_peca(pg, saco, n=""):
 
 
 def _buscar_lugar(pg, l, c=None):
-	"""Lupa (F2c): botão «Posição», uma só caixa («1 29», «1,29», «1.29», «1-29»), Enter. ``l`` pode ser o texto todo."""
+	"""Lupa (F2c): botão «Lugar», uma só caixa («1 29», «1,29», «1.29», «1-29»), Enter. ``l`` pode ser o texto todo."""
 	_abrir_lupa(pg, "pos")
 	pg.fill("#lupa-q-pos", str(l) if c is None else f"{l} {c}")
 	pg.press("#lupa-q-pos", "Enter")
