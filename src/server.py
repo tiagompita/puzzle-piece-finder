@@ -132,6 +132,9 @@ QUEUE_DONE_KEEP = 30           # finished jobs in the queue snapshot (the file k
 # -28 %, import +2 %.
 GIL_SWITCH_S = 0.0005
 YIELD_MAX_S = 30.0             # (b): longest single wait of a background job for the GUI
+# P-a (2026-11-16, DETALHE.md §13.10): longest wait of /api/board, /api/ghosts and /api/montar for a detail region in
+# composition (Gui.after_detail); a detail that fails or is dropped (409) lets them go at once
+DETALHE_ESPERA_S = 1.0
 PL_FILL_PASSES = 3             # P-b: passes of the start-up fill of render/placements.json (a write in between = one more)
 READY_MB = 600.0               # E: budget of the pieces ready to draw (--cache-pecas-mb); ≈ 0,74 MB per piece
 PATCH_MB = 128.0              # arrays of the detail regions for the patch (--cache-remendo-mb); ≈ 2 × 8,5 MB per céu region at ppc 100
@@ -570,6 +573,24 @@ class Busy(RuntimeError):
 	"""A write was attempted while a background job holds the project."""
 
 
+class DetailFirst:
+	"""P-a (2026-11-16, DETALHE.md §13.10): pure ASGI middleware that holds :meth:`Gui.priority` for every detail
+	request (``/api/board.jpg`` with ``region=``) from the moment the event loop reads it until its answer is sent.
+	Taken here, not in the worker thread, because the browser asks for the detail and for ``/api/board``,
+	``/api/ghosts``, ``/api/montar`` in the same instant: inside the thread the three often checked before the detail
+	had registered (a synthetic test saw it in 1 of 2 runs)."""
+
+	def __init__(self, app, gui):
+		self.app, self.gui = app, gui
+
+	async def __call__(self, scope, receive, send):
+		if scope.get("type") == "http" and scope.get("path") == "/api/board.jpg" and b"region=" in scope.get("query_string", b""):
+			with self.gui.priority():
+				await self.app(scope, receive, send)
+		else:
+			await self.app(scope, receive, send)
+
+
 class Superseded(RuntimeError):
 	"""A detail-raster request older than the newest one of the same client (dropped before composing)."""
 
@@ -635,6 +656,9 @@ class Gui:
 		self._fg_cond = threading.Condition()  # (b): GUI requests in progress (detail regions, «verificar»)
 		self._fg_n = 0
 		self.yields = {"n": 0, "s": 0.0}      # (b): how often / how long the background work yielded
+		self._det_cond = threading.Condition()  # P-a: detail regions in progress (Gui.priority)
+		self._det_n = 0
+		self.det_waits = {"n": 0, "s": 0.0}   # P-a: how often / how long /api/board, /api/ghosts, /api/montar waited
 		self._last_region = None              # the last detail region asked for (the warm-up starts around it)
 		self._susp_bg_lock = threading.Lock()   # P0b B: the suspects after a write, in one background thread
 		self._susp_bg_thread = None
@@ -1083,6 +1107,38 @@ class Gui:
 			self._fg_cond.wait_for(lambda: self._fg_n == 0 or self.closing, timeout=YIELD_MAX_S)
 		self.yields["n"] += 1
 		self.yields["s"] += time.perf_counter() - t0
+
+	@contextlib.contextmanager
+	def priority(self):
+		"""P-a (2026-11-16, DETALHE.md §13.10): a detail region (``board.jpg`` with ``region``) in progress, held by
+		:class:`DetailFirst` from the arrival of the request to its answer. ``/api/board``, ``/api/ghosts`` and
+		``/api/montar`` wait for it at their start (:meth:`after_detail`): after a write the browser asks for the detail
+		of the new version and for those three at the same moment, and the three in Python took the GIL from the
+		composition («perto» 1,21 s, 0,38 s without them). A detail that ends, fails or is dropped (409) leaves at once;
+		nothing here takes a lock of the writes."""
+		with self._det_cond:
+			self._det_n += 1
+		try:
+			yield
+		finally:
+			with self._det_cond:
+				self._det_n -= 1
+				if self._det_n == 0:
+					self._det_cond.notify_all()
+
+	def after_detail(self) -> float:
+		"""Called at the start of ``/api/board``, ``/api/ghosts`` and ``/api/montar`` (no lock held): returns at once
+		when no detail region is in progress, else waits until none is, at most :data:`DETALHE_ESPERA_S` (a detail that
+		never ends cannot hold them longer). Returns the seconds waited."""
+		if not self._det_n or self.closing:
+			return 0.0
+		t0 = time.perf_counter()
+		with self._det_cond:
+			self._det_cond.wait_for(lambda: self._det_n == 0 or self.closing, timeout=DETALHE_ESPERA_S)
+		dt = time.perf_counter() - t0
+		self.det_waits["n"] += 1
+		self.det_waits["s"] += dt
+		return dt
 
 	def _prewarm(self) -> None:
 		"""E (2026-11-15): after the start-up hole ranking, make every placed piece ready to draw (:class:`ReadyCache`),
@@ -2346,7 +2402,8 @@ class Gui:
 				"job": self.job, "prep_log": self.prep_log[-60:], "job_log": self.job_log[-60:],
 				"versao": self.version(), "seq": self.seq, "projeto": self.pr.meta.get("id"), "ativos": self.stale_info,
 				"contador_alta": cnt, "atividade_seq": self.ring.seq, "fila": self.queue_summary(),
-				"cache_pecas": self.ready.stats(), "remendo": self.patch_json(), "placements": dict(self.pl_info)}
+				"cache_pecas": self.ready.stats(), "remendo": self.patch_json(), "placements": dict(self.pl_info),
+				"espera_detalhe": {"n": self.det_waits["n"], "s": round(self.det_waits["s"], 3)}}
 
 	def patch_json(self) -> dict:
 		"""Counters of the detail regions composed since the start (``/api/status.remendo``): ``remendos`` (only the
@@ -3836,6 +3893,7 @@ def create_app(gui: Gui):
 
 	app = FastAPI(title="Puzzle Piece Finder — mesa de montagem", docs_url="/api/docs", openapi_url="/api/openapi.json")
 	app.add_middleware(GZipMiddleware, minimum_size=2000)
+	app.add_middleware(DetailFirst, gui=gui)      # P-a: the detail goes before /api/board, /api/ghosts, /api/montar
 	app.state.gui = gui
 
 	@app.middleware("http")
@@ -3881,6 +3939,7 @@ def create_app(gui: Gui):
 	@app.get("/api/board")
 	def board(ui: Optional[str] = None):
 		ready()
+		gui.after_detail()             # P-a: a detail region being composed goes first (at most DETALHE_ESPERA_S)
 		with gui.foreground():         # the reload after a write: the background jobs yield (DETALHE.md §13)
 			return JSON(gui.read(lambda: gui.board_json(ui if ui == NOVO_UI else None)))
 
@@ -3891,6 +3950,7 @@ def create_app(gui: Gui):
 	@app.get("/api/montar")
 	def montar(saco: Optional[int] = None):
 		ready()
+		gui.after_detail()             # P-a: a detail region being composed goes first (at most DETALHE_ESPERA_S)
 		with gui.foreground():         # the reload after a write: the background jobs yield (DETALHE.md §13)
 			return JSON(gui.read(lambda: gui.montar_json(saco)))
 
@@ -4104,6 +4164,7 @@ def create_app(gui: Gui):
 	@app.get("/api/ghosts")
 	def ghosts():
 		ready()
+		gui.after_detail()             # P-a: a detail region being composed goes first (at most DETALHE_ESPERA_S)
 		with gui.foreground():         # the reload after a write: the background jobs yield (DETALHE.md §13)
 			return JSON({"versao": gui.version(), "rotacao_gemea_deg": gui.pr.profile.twin_rotation_deg(),
 						 "fantasmas": gui.ghosts()})
