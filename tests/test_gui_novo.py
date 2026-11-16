@@ -560,6 +560,13 @@ def test_icons_local_aria_and_layout(guarda, browser, vp):
 		pg.goto(url + "/novo/")
 		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
 		pg.wait_for_selector("#b-guardar", timeout=30_000)
+		# F2c (2026-11-16, OK do Tiago): o menu passou a separador e esconde o cartão; os botões do cartão medem-se antes de o abrir
+		def _medir(sels):
+			for sel in sels:
+				for i in range(pg.locator(sel).count()):
+					bb = pg.locator(sel).nth(i).bounding_box()
+					assert bb and bb["height"] >= 44 - 0.5 and bb["x"] >= 0 and bb["x"] + bb["width"] <= vp[0] + 0.5, (sel, bb)
+		_medir(("#tabs button", "#b-guardar", "#b-nao", "#b-saltar", "#b-porque", "#b-localizar"))
 		pg.click("#menu-btn")
 		pg.wait_for_timeout(300)
 		# blob: da mesma origem = o raster de detalhe já descarregado (objectURL de loadDetail, DETALHE.md), não um pedido de fora
@@ -583,11 +590,7 @@ def test_icons_local_aria_and_layout(guarda, browser, vp):
 			.filter((b) => !b.innerText.trim() && !b.getAttribute('aria-label')).map((b) => b.id || b.className)""")
 		assert not noname, noname
 		assert not pg.evaluate("document.documentElement.scrollWidth > window.innerWidth")
-		for sel in ("#tabs button", "#b-guardar", "#b-nao", "#b-saltar", "#b-porque", "#b-localizar", "#menu-btn",
-					"#m-diag", "#m-atividade"):
-			for i in range(pg.locator(sel).count()):
-				bb = pg.locator(sel).nth(i).bounding_box()
-				assert bb and bb["height"] >= 44 - 0.5 and bb["x"] >= 0 and bb["x"] + bb["width"] <= vp[0] + 0.5, (sel, bb)
+		_medir(("#menu-btn", "#m-diag", "#m-atividade"))
 		assert not errs, errs
 	finally:
 		pg.close()

@@ -526,3 +526,44 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
 - **Decisão:** a fase de desempenho («antes da F4») fica fechada. Critérios 3 («perto» 0,28 s, «longe» 0,17 s), 4 (1.º «verificar» 0,21 s) e 5 (pico 1158 MB) estão [V]. Os critérios 1 (1.º salto 3,96 s na mediana de 10 pares, ≈ 4–6 s conforme a máquina; alvo 4 s) e 2 (salto a frio no browser 2,19 s; alvo 2 s) são **aceites como estão**.
 - **Porquê:** a diferença que falta é pequena e do mesmo tamanho da variação da máquina entre sessões (≈ 2×, DETALHE §13.1), com IC do 1.º salto a incluir 0 (§13.10); mais rondas custariam mais do que valem e o Tiago prefere passar à GUI.
 - **Sem mais rondas** de desempenho. Próximo: teste do Tiago à GUI nova, depois a F4 (plano em `/plan`).
+
+## 2026-11-16 — P0833 rodada pela âncora; P0343 falso alarme (Tiago; `docs/diagnostico/reports/P0833-2026-11-16.md`)
+
+- **P0833 (8,2):** o Tiago confirmou fisicamente que estava rodada 90° e tem de rodar 90° no sentido anti-horário. O diagnóstico (numa cópia) deu a mesma rotação: `melhor_rotacao` −90° em θ (θ roda no sentido dos ponteiros no ecrã), lado N contra P0807 RMS 2,17 mm. Origem: G0068 é uma secção de uma só peça (`montado_p15` nº 59), ancorada a 2026-11-02 com rot 180 e confiança `alta`. A pista do Tiago decidiu o lugar e a imagem decidiu a rotação, em céu cinzento onde a imagem não distingue rotações (180 → 5,148 contra 90 → 5,315). A margem da âncora compara só lugares, não rotações. A pose manual de 2026-11-07 (só translação) tinha tirado a peça das suspeitas.
+- **Aplicado pelo Tiago em `projects/alpes`:** `src.confirm --unanchor G0068` e `--anchor G0068 8 2 --rot 90` (a pose manual é limpa sozinha). A peça ficou certa e o servidor arrancou bem. R0035 fechado com nota. O Tiago vai afinar à mão a pose de P0833 (rotação ligeira).
+- **Contornos manuais de 2026-11-16** (P0833, P0807, P0640, P1023, P0660, P0139): ficam. Cortam a sombra do scanner (sempre do mesmo lado do scan) e nenhum foi deformado para compensar a rotação. Só P0139 muda a forma do índice (IoU 0,9999).
+- **P0343 (5,20):** confirmada fisicamente pelo Tiago como certa; a suspeita «melhor_rotacao 180°» fica registada como falso alarme (`src.consistency --falso-alarme P0343`, assinatura `c44397f36638`). Hoje: 0 suspeitas de orientação, 18 de recorte (as do bloco c32|c33 e (4–5,32–33)/(43–44,32–33)).
+
+## 2026-11-16 — Backlog: pose manual e âncoras de uma só peça (propostas por decidir, sem código)
+
+Saídas do diagnóstico de P0833. Uma rotação feita só pela pose manual corrige o desenho e o `consistency` mas não o molde, a gémea nem as verificações, que leem a rotação da âncora ou do log (medido na cópia: (9,2) e (8,3) ficaram `sem` com d1 2,917 / 2,859).
+1. **A pose manual serve só para ajustes finos** (por exemplo até ±15°). Uma rotação maior faz-se pela âncora ou pelo θ do log, com um botão «Rodar a peça 90°».
+2. **Uma pose manual só tira a peça das suspeitas de orientação** se o θ manual diferir do θ da âncora em menos de 45°.
+3. **Uma secção de uma só peça só fica com confiança `alta`** se a rotação for confirmada pelas vizinhas montadas (ou se houver margem entre rotações, não só entre lugares). Esta foi a origem do erro de P0833.
+
+## 2026-11-16 — «Editar posicionamento» na GUI nova: o que se vê por omissão (Tiago; entra na F5)
+
+Para quando o editor de pose chegar à GUI nova (F5, «Mais opções › Ajustar posição», P8 do ESPEC; inventário B14/C12/PO1):
+- **Por omissão vê-se só a peça (a imagem) e a linha e a pega de rotação.** Não há contornos por cima: hoje os amarelos e azuis tapam os encaixes. (Tiago)
+- **Os contornos ficam atrás de um interruptor «Mostrar contornos», desligado por omissão.** É uma proposta do Claude; o Tiago confirma na maquete.
+- **As folgas medidas, se existirem, aparecem como números no painel**, não como linhas no tabuleiro. (Tiago)
+- Junta-se às regras do backlog acima: ajuste fino até ±15°, rotações maiores pela âncora.
+
+## 2026-11-16 — F2c (2.ª ronda com este nome; a 1.ª é a de 2026-11-14): alvo, menu, rótulo, Procurar, erros do browser (commit `cbb189b`)
+
+Do Tiago:
+- **Tocar no alvo do cartão atual não abre o painel do lugar:** mantém o cartão, centra o lugar e o «localizar» pisca uma vez (marca estática com `prefers-reduced-motion`). O cartão ganha «Ver lugar», que abre o painel do lugar. Tocar no alvo de outro cartão da fila continua a escolhê-lo; tocar noutro lugar continua a abrir o painel desse lugar.
+- **Menu de três barras (Lucide `menu`), que se comporta como mais um separador:** abre no lugar do painel (`#panel.com-menu`) e, ao fechar, volta ao separador anterior com o estado intacto (o mesmo cartão e a faixa «Desfazer»; esconde e mostra, sem voltar a desenhar). A 390 px ocupa o ecrã com «Fechar». Fecha também com o mesmo botão e com Esc.
+- **Grupo «Procurar»** com o ícone lupa e as opções **Peça | Lugar** (antes «Peça | Posição»). Ids e comportamento iguais.
+- **O rótulo «lugar provável» / «vai aqui» desaparece quando o texto já não se lê;** fica só o quadrado.
+- **Os erros do browser ficam registados:** `core.js` (as duas GUIs) apanha `error`, `unhandledrejection` e `console.error` e manda-os para `POST /api/cliente/erro`. O servidor escreve uma linha de tipo `erro_cliente` (aviso) no ficheiro do dia e no painel «Atividade». No cliente: no máximo 1 erro igual por minuto e 20 por página.
+
+Decisões minhas:
+- **Limiar do rótulo: 9 px** de altura de texto no ecrã (o exemplo do pedido). Medido no projeto real: 1366×768 → zoom do cartão 11,8 px (visível), tabuleiro inteiro 3,3 px (escondido). 390×844 → zoom do cartão 4,7 px, por isso **a 390 o rótulo não aparece no zoom do cartão**; aparece ao aproximar (10,8 px).
+- **Como o rótulo se atualiza:** um `MutationObserver` na `viewBox`, mais o evento `resize`. Não mexe em `board.js` nem na interface `S`, que `tests/test_board_interface.py` fixa.
+- **O texto «Procurar» esconde-se a 390 px:** fica só o ícone, com o nome acessível.
+- **A 390 px o menu tapa o botão de três barras:** ali fecha-se com «Fechar» ou Esc. As Definições da cor continuam a abrir como diálogo, depois de fechar o menu.
+- **Erros do browser no servidor:** o corpo é cortado a 4 KB, há um limite de 20 por minuto por IP (429 sem linha), 400 com corpo vazio, e um corpo que não seja JSON é registado como texto. O envio usa `sendBeacon`, com `fetch keepalive` de reserva, e não entra em ciclo.
+- **Testes existentes alterados:**
+  - `tests/test_gui_novo_f2b.py` (texto «Posição» → «Lugar», mais um comentário) e duas docstrings de `tests/test_gui_novo.py`. Motivo: o vocabulário do ESPEC.
+  - `tests/test_gui_novo.py::test_icons_local_aria_and_layout`, com o OK do Tiago: os botões do cartão medem-se antes de abrir o menu, porque com o menu como separador o cartão fica escondido.

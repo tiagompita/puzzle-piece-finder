@@ -1,8 +1,32 @@
-# HANDOFF — 2026-11-16 (fase de desempenho FECHADA pelo Tiago; próximo: o teste do Tiago à GUI nova, depois a F4)
+# HANDOFF — 2026-11-16 (teste do Tiago à GUI nova: P0833 corrigida, F2c feita; próximo: o Tiago testa a F2c, depois a F4)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-16): `docs/prompts/2026-11-16-pa-detalhe.md` (fechado)
+## Última sessão (2026-11-16): `docs/prompts/2026-11-16-teste-gui-p0833-f2c.md` (fechado)
+- **P0833 (8,2) [V, físico]:** rodada 90° anti-horário pela âncora (`--unanchor G0068`, depois `--anchor G0068 8 2 --rot 90`), aplicado e confirmado pelo Tiago.
+  - Origem: uma secção de uma só peça ancorada com confiança `alta` e a rotação decidida pela imagem do céu; a pose manual de 2026-11-07 escondia a suspeita.
+  - Diagnóstico: `docs/diagnostico/reports/P0833-2026-11-16.md`.
+  - R0035 fechado com nota. Os contornos manuais de hoje ficam: cortam a sombra.
+  - O Tiago vai afinar à mão a pose de P0833.
+- **P0343 (5,20):** confirmada certa pelo Tiago; falso alarme registado. Hoje: 0 suspeitas de orientação, 18 de recorte, 0 reports abertos.
+- **F2c (`cbb189b`):**
+  - alvo do cartão atual: centra o lugar e faz piscar o «localizar»; «Ver lugar» abre o painel do lugar;
+  - menu de três barras como separador;
+  - grupo «Procurar» com Peça | Lugar;
+  - rótulo do alvo escondido abaixo de 9 px de texto (a 390 px só aparece ao aproximar);
+  - erros do browser vão para o registo de atividade (`erro_cliente`).
+  Regras e «decisões minhas» em `docs/decisoes.md`; capturas em `F2c_{antes,depois}_*`.
+- **O que o Tiago tem de ver [NT]:** a F2c no PC e no telemóvel. O rótulo a 390 px, «Ver lugar» e o menu a fechar por «Fechar»/Esc.
+- **Backlog por decidir** (`docs/decisoes.md`, 2026-11-16):
+  - a pose manual só para ajustes até ±15°; rotações maiores com «Rodar a peça 90°» pela âncora;
+  - uma pose manual só esconde a suspeita abaixo de 45° face à âncora;
+  - uma secção de uma só peça só `alta` com a rotação confirmada pelas vizinhas;
+  - o «Editar posicionamento» na F5: sem contornos por omissão, «Mostrar contornos» desligado (proposta minha, a confirmar na maquete), folgas como números.
+- **Por gravar no git:** as alterações do Tiago em `projects/alpes` (log, overrides, secção G0068, reports).
+- **Flake por provar:** `test_gui_novo_p0.py::…localizar_blinks…[fora]` falhou uma vez sob carga.
+- **Próximo passo:** o Tiago testa a F2c; depois a **F4** (grupos soltos), com plano em `/plan`.
+
+## Sessão anterior (2026-11-16): `docs/prompts/2026-11-16-pa-detalhe.md` (fechado)
 - **Critério 3 fechado [V]** (`docs/diagnostico/gui/DETALHE.md` §13.10): 10 pares `8668365 | novo` (cada um na sua
   cópia completada): «perto» 2,24 → **0,28 s** (alvo 1,2; 10/10 remendados); próximo cartão +0,02 s (IC [−0,02, +0,09],
   alvo ≤ +0,25); POST «perto» −0,14 s; salto a frio no browser −0,05 s; `srv_frio_relva_s` 1,07 → 1,02 s; memória
