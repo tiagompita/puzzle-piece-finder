@@ -58,3 +58,7 @@
 {"evento": "estado", "id": "R0032", "t": "2026-11-08T22:19:06", "acao": "close", "nota": "", "estado": "fechado"}
 {"evento": "estado", "id": "R0033", "t": "2026-11-08T22:19:13", "acao": "close", "nota": "", "estado": "fechado"}
 {"evento": "estado", "id": "R0034", "t": "2026-11-08T22:19:20", "acao": "close", "nota": "", "estado": "fechado"}
+{"id": "R0035", "t": "2026-11-16T15:05:19", "tipo": "outro", "texto": "Os encaixes das vizinhas nao coincidem perfeitamente, a peça percente a esse lugar, mas o tamanho dos encaixes está diferente.", "piece": "P0833", "cell": [8, 2], "scan_id": "S0023", "n_no_lote": 59, "lote": null, "crop_path": "crops/P0833.png", "captura": "reports/R0035.jpg", "vista": "novo/painel", "estado": "aberto"}
+{"evento": "estado", "id": "R0035", "t": "2026-11-16T15:55:44", "acao": "close", "nota": "", "estado": "fechado"}
+{"evento": "estado", "id": "R0035", "t": "2026-11-16T15:58:18", "acao": "reopen", "nota": "reaberto só para gravar a nota de fecho", "estado": "aberto"}
+{"evento": "estado", "id": "R0035", "t": "2026-11-16T15:58:19", "acao": "close", "nota": "P0833 rodada 90° anti-horário pela âncora (G0068 --rot 90); confirmado fisicamente pelo Tiago 2026-11-16", "estado": "fechado"}
