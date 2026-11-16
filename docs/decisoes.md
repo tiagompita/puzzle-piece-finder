@@ -520,3 +520,9 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
   logo; um que o browser cancela continua a ser composto no servidor e prende-os no máximo o limite. Nenhum bloqueio de
   escrita entra (uma escrita durante um detalhe espera < 50 ms pelo bloqueio, testado).
 - Nada no browser: as duas GUIs ficam cobertas pelo servidor; a GUI antiga tem só o teste (sai na F6).
+
+## 2026-11-16 — Fase de desempenho fechada (Tiago; DETALHE.md §11.13)
+
+- **Decisão:** a fase de desempenho («antes da F4») fica fechada. Critérios 3 («perto» 0,28 s, «longe» 0,17 s), 4 (1.º «verificar» 0,21 s) e 5 (pico 1158 MB) estão [V]. Os critérios 1 (1.º salto 3,96 s na mediana de 10 pares, ≈ 4–6 s conforme a máquina; alvo 4 s) e 2 (salto a frio no browser 2,19 s; alvo 2 s) são **aceites como estão**.
+- **Porquê:** a diferença que falta é pequena e do mesmo tamanho da variação da máquina entre sessões (≈ 2×, DETALHE §13.1), com IC do 1.º salto a incluir 0 (§13.10); mais rondas custariam mais do que valem e o Tiago prefere passar à GUI.
+- **Sem mais rondas** de desempenho. Próximo: teste do Tiago à GUI nova, depois a F4 (plano em `/plan`).

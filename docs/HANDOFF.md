@@ -1,4 +1,4 @@
-# HANDOFF — 2026-11-16 (P-a: o detalhe passa à frente dos três pedidos; critério 3 fechado, «perto» 0,28 s [V]; próximo: o 1.º salto)
+# HANDOFF — 2026-11-16 (fase de desempenho FECHADA pelo Tiago; próximo: o teste do Tiago à GUI nova, depois a F4)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
@@ -16,14 +16,13 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
   ≤ `DETALHE_ESPERA_S` = 1,0 s; 409/500 soltam logo; nenhum bloqueio de escrita; `/api/status.espera_detalhe`. Nada no
   browser (cobre as duas GUIs; a GUI antiga só tem o teste). 12 testes novos (11 falhavam antes, vários só por falta
   dos nomes novos), suite 660 passed, 1 skipped, `test_concorrencia` 20/20; testes existentes alterados: nenhum.
-- **Próximo item: o 1.º salto** (critério 1; nesta sessão 3,96 · 4,42 s, IC da diferença a incluir 0). Começar por
-  cronometrar **diretamente** a `ReadyCache` fria dentro de `_piece_jobs` no 1.º salto; depois decidir.
+- **Fase de desempenho FECHADA (decisão do Tiago, 2026-11-16; DETALHE §11.13, `docs/decisoes.md`):** critérios 3, 4 e 5 [V];
+  1 (1.º salto, ≈ 4–6 s conforme a máquina) e 2 (salto a frio 2,19 s contra 2 s) aceites como estão. Sem mais rondas.
+- **Próximo passo:** o Tiago testa a GUI nova (`/novo/`; OK pendente da F1b à F2b). Depois, a **F4** (grupos soltos no
+  tabuleiro), com plano em `/plan`.
 
 ## Sessão anterior (2026-11-15/16): `docs/prompts/2026-11-15-pb-correcao.md` (fechado)
-- **Próximo item: o 1.º salto** (critério 1: 5,80 · 6,43 s nos 10 pares, alvo 4 s [F]). Começar por cronometrar
-  **diretamente** a `ReadyCache` fria dentro de `_piece_jobs` no 1.º salto (até aqui só por subtração: §13.8 dizia
-  ≈ 4 s de `ready(pid)` frio contra 0,47 s de registo na hora); depois decidir. Fica também por decidir a **P-a**
-  (pedir `/api/board`, `/api/ghosts`, `/api/montar` depois do detalhe, ou fazê-los ceder): é o que falta ao «perto».
+- (O 1.º salto ficou aceite, fase fechada: ver topo.)
 - **Regra de registo [V] (DETALHE §13.9, `docs/decisoes.md`):** «sem imagem» (`render.REGISTER_IMAGE = False`): nas 70
   juntas das 24 peças que a imagem movia, |gap| mediana 0,202 / p95 0,499 mm sem imagem contra 0,250 / 0,641 com. A
   regra entra na chave da entrada (`['regra', 'cantos']`) e é a mesma em todos os caminhos (as escritas da GUI usavam

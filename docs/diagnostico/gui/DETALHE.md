@@ -1799,3 +1799,19 @@ da diferença das medianas. Mediana · máximo, em s.
 - A memória (+52 MB) é a do remendo e da P-b contra `8668365` (§13.7: +99 MB; §13.9: +71 MB); a P-a não guarda nada.
 - O 1.º salto ficou abaixo dos 4 s na mediana desta sessão (3,96 s), mas com o máximo acima (4,42 s) e o IC a incluir 0:
   continua como item próprio (HANDOFF).
+
+### 11.13 Quadro final dos 5 critérios: fase de desempenho FECHADA (decisão do Tiago, 2026-11-16)
+
+Última medição: 10 pares alternados contra `8668365`, código em `a655066` (§13.10, `dados/r10_pa_pares.json`). Medianas.
+
+| # | critério | alvo | valor final | estado |
+|---|---|---|---|---|
+| 1 | 1.º salto depois de abrir (céu) | ≤ 4,0 s | 3,96 s (máx. 4,42; ≈ 4–6 s conforme o estado da máquina) | aceite pelo Tiago como está |
+| 2 | salto a frio, relva (browser) | ≤ 2,0 s | 2,19 s (máx. 2,39) | aceite pelo Tiago como está |
+| 3 | detalhe depois de um «Encaixa», perto / longe | ≤ 1,2 / ≤ 0,6 s | 0,28 / 0,17 s | **[V]** |
+| 4 | 1.º «verificar» | ≤ 1,0 s | 0,21 s (§11.11) | **[V]** |
+| 5 | pico do working set | ≤ 1,6 GB | 1158 MB | **[V]** |
+
+- Critérios 1 e 2 aceites com a ressalva da variação de ≈ 2× da máquina entre sessões (§13.1: mesma causa em todo o
+  trabalho de CPU do servidor, não é o código); por isso não se perseguem mais.
+- Números e comparações detalhadas em §13.10. Sem mais rondas de desempenho; a fase «antes da F4» fica fechada.
