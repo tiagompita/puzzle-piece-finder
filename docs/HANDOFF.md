@@ -1,8 +1,25 @@
-# HANDOFF — 2026-11-16 (P-b corrigida: placements.json completo, regra «cantos»; «perto» 1,21 s [F por 0,01]; próximo: o 1.º salto)
+# HANDOFF — 2026-11-16 (P-a: o detalhe passa à frente dos três pedidos; critério 3 fechado, «perto» 0,28 s [V]; próximo: o 1.º salto)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
-## Última sessão (2026-11-15/16): `docs/prompts/2026-11-15-pb-correcao.md` (fechado)
+## Última sessão (2026-11-16): `docs/prompts/2026-11-16-pa-detalhe.md` (fechado)
+- **Critério 3 fechado [V]** (`docs/diagnostico/gui/DETALHE.md` §13.10): 10 pares `8668365 | novo` (cada um na sua
+  cópia completada): «perto» 2,24 → **0,28 s** (alvo 1,2; 10/10 remendados); próximo cartão +0,02 s (IC [−0,02, +0,09],
+  alvo ≤ +0,25); POST «perto» −0,14 s; salto a frio no browser −0,05 s; `srv_frio_relva_s` 1,07 → 1,02 s; memória
+  +52 MB. Nenhuma paragem.
+- **Passo 0 [V]:** cada pedido em separado no «perto» (normal 0,73 s nesta sessão): só `/api/board` retido 0,66, só
+  `/api/ghosts` 0,51, só `/api/montar` 0,43, os três 0,33; (a) browser (board + ghosts, ≤ 1 s) 0,37; (b) servidor (os
+  três cedem, ≤ 1 s) 0,25. Próximo cartão hoje 1,77 s (quase todo o POST). **Escolha pela regra: (b)**, melhor 0,12 s
+  > 0,1 s.
+- **Bloco 1 (`a655066`) [V]:** só `src/server.py`: `Gui.priority` (registado num middleware ASGI, `DetailFirst`, à
+  chegada do pedido de detalhe) e `Gui.after_detail` no início de `/api/board`, `/api/ghosts`, `/api/montar`, espera
+  ≤ `DETALHE_ESPERA_S` = 1,0 s; 409/500 soltam logo; nenhum bloqueio de escrita; `/api/status.espera_detalhe`. Nada no
+  browser (cobre as duas GUIs; a GUI antiga só tem o teste). 12 testes novos (11 falhavam antes, vários só por falta
+  dos nomes novos), suite 660 passed, 1 skipped, `test_concorrencia` 20/20; testes existentes alterados: nenhum.
+- **Próximo item: o 1.º salto** (critério 1; nesta sessão 3,96 · 4,42 s, IC da diferença a incluir 0). Começar por
+  cronometrar **diretamente** a `ReadyCache` fria dentro de `_piece_jobs` no 1.º salto; depois decidir.
+
+## Sessão anterior (2026-11-15/16): `docs/prompts/2026-11-15-pb-correcao.md` (fechado)
 - **Próximo item: o 1.º salto** (critério 1: 5,80 · 6,43 s nos 10 pares, alvo 4 s [F]). Começar por cronometrar
   **diretamente** a `ReadyCache` fria dentro de `_piece_jobs` no 1.º salto (até aqui só por subtração: §13.8 dizia
   ≈ 4 s de `ready(pid)` frio contra 0,47 s de registo na hora); depois decidir. Fica também por decidir a **P-a**
@@ -215,7 +232,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 4. Anteriores: PDF vetorial (PyMuPDF no `.venv`?), lock entre processos, pares T0001/T0002/T0005, T0003/T0004, p90 por zona, P0343/P0833, corte c32|c33.
 
 ## Pendentes técnicos (por ordem)
-1. **Fase de desempenho: C parado** (decisão do Tiago sobre a mudança de píxeis na relva, `DETALHE.md` §11.10); critérios 1–3 [F] em `main` (§11.11); a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6).
+1. **Fase de desempenho: C parado** (decisão do Tiago sobre a mudança de píxeis na relva, `DETALHE.md` §11.10); critérios 1–2 [F] em `main` (§11.11), critério 3 fechado em 2026-11-16 (§13.10); a seguir F4 (ordem F4, F4b, F4c, F3, F5, F6).
 2. **Limites da F1b [NT]:**
    - «Peças» é só uma ligação para a interface completa (F3);
    - «⋯ › Atividade» abre a interface antiga noutro separador (F5);

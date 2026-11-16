@@ -506,3 +506,17 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
   do bloqueio, a ceder à GUI; só o commit sob o bloqueio de escrita, com chave e `entry_token` — contorno, recorte —
   verificados de novo), grava o ficheiro uma vez, e começa depois dos fantasmas, com o ranking dos buracos no fim dele.
   Verificação permanente: aviso no arranque, `/api/status.placements`, `render.stale_assets.placements_em_falta`.
+
+## 2026-11-16 — P-a: o detalhe passa à frente de /api/board, /api/ghosts e /api/montar, no servidor (Tiago; DETALHE.md §13.10)
+
+- **Forma (b), escolhida pela regra fixada antes:** no lançador as duas formas cumpriam o «perto»; a (b) (os três cedem
+  no servidor) deu 0,25 s contra 0,37 s da (a) (o browser atrasa `/api/board` e `/api/ghosts`), melhor em 0,12 s > 0,1 s,
+  por isso fica a (b) seja qual for a «mais simples». Atrasar só os pedidos que não se veem ((b) sem `/api/montar`) dava
+  0,43 s: o `/api/montar` é o que mais disputa o GIL e a espera dele fica escondida atrás do POST (cartão +0,02 s).
+- **Como:** `Gui.priority` enquanto um pedido de detalhe (`/api/board.jpg` com `region=`) está em curso, tomado num
+  middleware ASGI (`DetailFirst`) quando o pedido chega ao ciclo de eventos (no fio os três verificavam muitas vezes
+  antes de o detalhe se registar); `Gui.after_detail` no início dos três, antes de qualquer leitura e de `foreground()`.
+- **Limite da espera: `DETALHE_ESPERA_S` = 1,0 s.** Um detalhe que acaba, falha (500) ou é ultrapassado (409) solta-os
+  logo; um que o browser cancela continua a ser composto no servidor e prende-os no máximo o limite. Nenhum bloqueio de
+  escrita entra (uma escrita durante um detalhe espera < 50 ms pelo bloqueio, testado).
+- Nada no browser: as duas GUIs ficam cobertas pelo servidor; a GUI antiga tem só o teste (sai na F6).

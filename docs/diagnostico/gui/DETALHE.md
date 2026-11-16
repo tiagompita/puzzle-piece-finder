@@ -1682,3 +1682,120 @@ código novo (o lançador de §13.7, `scratchpad/p0/lanca_novo.py`, na cópia co
 - O que falta para o alvo é a **P-a** (§13.7: o browser pede esses três só depois do detalhe, ou o servidor fá-los ceder
   a uma composição de detalhe em curso) [V no lançador: 0,38 s; não implementada]. A P-c (assinatura, 0,20 s) daria
   menos [NT].
+
+### 13.10 P-a: o detalhe passa à frente de `/api/board`, `/api/ghosts` e `/api/montar` (2026-11-16, `a655066`) [V]
+
+Prompt, correções ao plano e resultado: `docs/prompts/2026-11-16-pa-detalhe.md`. Última ronda do critério 3. Trabalho só
+em cópias de `scratchpad/base_c3`. Guiões: `tools/diagnostico/gui/pa_lanca.py` (lançador de §13.7 + simulação da
+forma (b)), `pa_rodar.py` (passo 0), `pa_pares.py` (10 pares), `pa_ic.py`, `pa_resumo.py`. Dados:
+`dados/r10_pa_passo0.json`, `dados/r10_pa_pares.json`.
+
+#### Passo 0: cada pedido em separado, (a) e (b) simuladas, e o próximo cartão [V]
+
+Servidor `10fee57` (sem mudanças), cópia completada (`pbc/base_pb`), protocolo de `desempenho.py --so a` (cópia e
+servidor novos por corrida); 5 rondas × 8 condições intercaladas. A retenção passou a ser feita **no browser** (um
+embrulho de `fetch` armado quando chega o `board_changed`, solto quando o detalhe seguinte aparece ou ao fim do limite);
+armar antes do POST não serve: o POST dura ≈ 2 s e o limite de 1 s esgotava-se antes do `board_changed`. «Cartão» =
+separador Montar, clique no botão principal do cartão até o DOM mostrar o seguinte: nesta cópia a fila só tem os 3
+cartões «Colocar aqui» (`position_known`, P0980 → P1200), sem nenhum «Encaixa»; o caminho é o mesmo (`act` → POST →
+SSE → recarga). Mediana · máximo, s; n = 5 por condição.
+
+| condição | «perto» | «longe» | próximo cartão | POST «perto» | `_piece_jobs` | `_draw_jobs` | espera no servidor (board / ghosts / montar) |
+|---|---|---|---|---|---|---|---|
+| normal (nada retido) | 0,73 · 1,29 | 0,31 · 0,43 | 1,77 · 2,00 | 2,35 | 0,21 | 0,43 | — |
+| só `/api/board` retido | 0,66 · 0,87 | 0,22 · 0,34 | 1,92 · 2,67 | 2,43 | 0,19 | 0,35 | — |
+| só `/api/ghosts` retido | 0,51 · 0,83 | 0,18 · 0,34 | 1,84 · 1,96 | 2,42 | 0,17 | 0,35 | — |
+| só `/api/montar` retido | 0,43 · 0,72 | 0,15 · 0,26 | 1,84 · 2,13 | 2,40 | 0,13 | 0,34 | — |
+| os três retidos (referência) | 0,33 · 0,44 | 0,15 · 0,26 | 1,97 · 2,08 | 2,35 | 0,07 | 0,31 | — |
+| **(a)** board + ghosts retidos no browser, ≤ 1 s | **0,37 · 0,44** | 0,16 · 0,27 | 1,96 · 1,98 | 2,41 | 0,11 | 0,32 | — |
+| **(b)** os três cedem no servidor, ≤ 1 s | **0,25 · 0,29** | 0,08 · 0,15 | 1,81 · 1,92 | 2,41 | 0,07 | 0,31 | 0,19 / 0,18 / 0,17 |
+| (b) só board + ghosts | 0,43 · 0,56 | 0,14 · 0,21 | 1,83 · 2,10 | 2,41 | 0,12 | 0,32 | 0,35 / 0,35 / — |
+
+- O «normal» desta sessão (0,64–0,74 s, uma corrida 1,29 s) ficou abaixo dos 1,21–1,27 s de §13.9 com o mesmo código:
+  outra sessão da máquina. As comparações valem dentro da mesma sessão (condições intercaladas).
+- **O que cada pedido custa ao «perto»:** o maior é o `/api/montar` (0,73 → 0,43 s só com ele retido), depois
+  `/api/ghosts` (0,51) e `/api/board` (0,66). Os três juntos: 0,33 s.
+- **O que cada um mostra logo a seguir a uma escrita** (lido no código): `/api/montar` traz o cartão, o contador e o
+  progresso (visível; só na GUI nova); `/api/board` traz as camadas SVG (legado, borda em falta, peças «por confirmar»,
+  alvo) e a versão do raster do tabuleiro inteiro, que fica por baixo do detalhe com zoom (na GUI antiga, as classes
+  das células); `/api/ghosts` traz os contornos fantasma. Na **GUI antiga** a recarga é `board_changed` → 350 ms →
+  `/api/board` + `/api/ghosts` → 280 ms → detalhe: o detalhe só é pedido depois da recarga, por isso nela quase nunca
+  há um detalhe em curso quando os dois chegam.
+- **Próximo cartão hoje:** 1,77 s (mediana, n = 5; 1,32 s nos 10 pares abaixo, outra sessão); é quase todo o POST (o
+  cartão só muda quando a resposta chega e `S.pendente` se apaga).
+
+**Escolha pela regra fixada:** as duas formas cumprem o «perto» no lançador; (b) dá 0,25 s contra 0,37 s da (a), melhor
+em **0,12 s > 0,1 s**, e o cartão também fica mais perto do normal (1,81 contra 1,96 s). Qualquer que seja a «mais
+simples» ((b): 1 ficheiro, uma espera nova no servidor que não toca no bloqueio das escritas; (a): `core.js`,
+`board.js`, `novo.js`, `app.js`, sem espera nova), **fica a (b)**. Atrasar só os pedidos que não se veem ((b) sem o
+`/api/montar`) dá 0,43 s, pior do que a (a): o `/api/montar` é o que mais disputa o GIL, e a espera dele (≤ 0,2 s)
+fica escondida atrás do POST, que acaba depois (medido abaixo: cartão +0,02 s).
+
+#### Bloco 1: testes primeiro, depois o código
+
+**O que mudou (`src/server.py`, nada no browser nem em `render.py`):**
+- `Gui.priority()` (contador + `Condition`) enquanto um pedido de detalhe (`/api/board.jpg` com `region=`) está em
+  curso; `Gui.after_detail()` no início de `/api/board`, `/api/ghosts` e `/api/montar` (antes de `foreground()` e de
+  qualquer leitura): espera que não haja detalhe em curso, **no máximo `DETALHE_ESPERA_S` = 1,0 s**; contadores em
+  `/api/status.espera_detalhe`.
+- **O registo do detalhe é feito num middleware ASGI** (`DetailFirst`), quando o ciclo de eventos lê o pedido, e não no
+  fio que compõe (como na simulação): no teste no browser, com o registo no fio, os três verificavam antes de o detalhe
+  se registar em 1 de 2 corridas (`espera_detalhe.n` = 0); com o middleware, 3 corridas seguidas sem falhar.
+- Um detalhe que acaba, falha (500) ou é ultrapassado (409) solta-os logo (o `finally` do middleware); um detalhe que o
+  browser cancela continua a ser composto no servidor (Starlette não interrompe um pedido síncrono), por isso prende-os
+  no máximo o limite; um que nunca acaba, também no máximo o limite.
+
+**Testes** (`tests/test_detalhe_prioridade.py`, 7; `tests/test_gui_detalhe_prioridade.py`, 5, `slow`): antes do código
+**11 falham e 1 passa**; depois **12/12** [V]. Nota honesta: no código antigo vários falham só porque
+`DETALHE_ESPERA_S`/`det_waits` não existem; o comportamento que verificam («falha → solta logo», «cancelado / nunca
+acaba → no máximo o limite», GUI antiga) já valia sem espera nenhuma. O que passa antes é «uma escrita espera < 50 ms
+pelo bloqueio» (nada aqui toma o bloqueio de escrita).
+
+| teste | o que verifica |
+|---|---|
+| os três esperam por um detalhe em curso | 0,45 ≤ espera < 1,1 s com um detalhe de 0,6 s |
+| detalhe que nunca acaba | limite 0,3 s: cada um responde em [0,25, 0,8) s |
+| detalhe ultrapassado (409) | contador volta a 0; `/api/board` < 0,3 s |
+| detalhe que falha (500) | soltos quando falha (< 0,8 s), não no limite |
+| escrita durante um detalhe (X = 50 ms) | `wlock` em < 50 ms com o detalhe em curso e os três à espera |
+| sem detalhe | 1000 chamadas < 50 ms, 0 esperas |
+| conta só enquanto corre | contador 1 durante a composição, 0 depois; o tabuleiro inteiro não conta |
+| browser, GUI nova: detalhe pendurado 4 s / falha / cancelado pelo browser | `/api/board`, `/api/ghosts`, `/api/montar` acabam < limite + 1 s depois do `board_changed`; pendurado: houve espera (`espera_detalhe`) |
+| browser, GUI nova: próximo cartão com o detalhe pendurado | o cartão muda (clique em «Encaixa») |
+| browser, GUI antiga com um detalhe pendurado | `/api/board` < 350 ms + limite + 1 s |
+
+O plano pedia, para a (a), «o próximo cartão aparece sem esperar pelo detalhe»; com a (b) o `/api/montar` espera (no
+máximo o limite), por isso o teste verifica que o cartão muda com o detalhe pendurado e a medição abaixo verifica o
+critério. A GUI antiga não precisa do auxiliar em `core.js` (a (b) não mexe no browser): fica só o teste.
+
+Suite com os `slow`/Playwright: **660 passed, 1 skipped**; `test_concorrencia.py` **20/20** [V]. Testes existentes
+alterados: nenhum.
+
+#### Medição final: 10 pares alternados `8668365 | novo` (`a655066`) (`r10_pa_pares.json`)
+
+Cada versão na sua cópia (corrige o viés de §13.9): `8668365` sobre `base_c3` tal como está; o novo sobre uma cópia de
+`base_c3` completada pelo servidor novo (1.º arranque: 699 entradas em 1,0 s, uma gravação; 2.º arranque: nada).
+`pa_pares.py`: servidor real sem lançador, o protocolo do passo 0 sem retenção. IC 95 % por bootstrap de pares (10 000)
+da diferença das medianas. Mediana · máximo, em s.
+
+| medida | alvo | `8668365` | novo | diferença | IC 95 % | exclui +0,25? | marca |
+|---|---|---|---|---|---|---|---|
+| 3 «perto» (5,33) | ≤ 1,2 | 2,24 · 2,30 | **0,28 · 0,33** | −1,96 | [−2,00, −1,88] | sim | **[V]** |
+| 3 «longe» (20,60) | — | 0,21 · 0,22 | 0,17 · 0,22 | −0,03 | [−0,04, −0,02] | sim | [V] |
+| próximo cartão (clique → cartão seguinte) | ≤ +0,25 | 1,32 · 1,41 | 1,34 · 1,43 | +0,02 | [−0,02, +0,09] | sim | **[V]** |
+| POST «perto» | sem regressão | 1,86 · 1,90 | 1,71 · 1,75 | −0,14 | [−0,20, −0,12] | sim | [V] |
+| POST «longe» | sem regressão | 0,59 · 0,63 | 0,59 · 0,64 | −0,00 | [−0,02, +0,03] | sim | [V] |
+| 2 salto a frio, relva (browser) | sem regressão | 2,24 · 2,29 | 2,19 · 2,39 | −0,05 | [−0,09, −0,04] | sim | [V] |
+| 2 salto a frio, relva (HTTP) `srv_frio_relva_s` | — | 1,07 · 1,12 | 1,02 · 1,05 | −0,06 | [−0,07, −0,03] | sim | [V] |
+| 2 salto a frio, céu (HTTP) | — | 0,83 · 0,86 | 0,79 · 0,82 | −0,04 | [−0,05, −0,02] | sim | [V] |
+| 1 1.º salto (céu) | ≤ 4,0 | 4,29 · 4,65 | 3,96 · 4,42 | −0,33 | [−0,61, +0,28] | não | [NT] informação |
+| 5 pico do working set | — | 1106 MB | 1158 MB | +52 MB | [+52, +54] | — | [V] |
+
+- «Perto» novo por corrida: 0,33 · 0,28 · 0,28 · 0,33 · 0,27 · 0,22 · 0,30 · 0,33 · 0,26 · 0,29 s; **10/10 remendados**.
+- **Critério 3 fechado [V]:** «perto» 0,28 s ≤ 1,2 s; o próximo cartão não atrasa (+0,02 s, IC até +0,09); POST e
+  critério 2 sem regressão (IC excluem +0,25 s e ficam abaixo de 0).
+- Esta sessão da máquina estava mais rápida do que a de §13.9 (`srv_frio_relva_s` 1,07 contra 1,48 s no `8668365`): os
+  números absolutos não se comparam entre secções, só dentro dos pares.
+- A memória (+52 MB) é a do remendo e da P-b contra `8668365` (§13.7: +99 MB; §13.9: +71 MB); a P-a não guarda nada.
+- O 1.º salto ficou abaixo dos 4 s na mediana desta sessão (3,96 s), mas com o máximo acima (4,42 s) e o IC a incluir 0:
+  continua como item próprio (HANDOFF).
