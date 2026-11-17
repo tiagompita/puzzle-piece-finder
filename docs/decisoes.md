@@ -549,7 +549,7 @@ Para quando o editor de pose chegar à GUI nova (F5, «Mais opções › Ajustar
 - **As folgas medidas, se existirem, aparecem como números no painel**, não como linhas no tabuleiro. (Tiago)
 - Junta-se às regras do backlog acima: ajuste fino até ±15°, rotações maiores pela âncora.
 
-## 2026-11-16 — F2c (2.ª ronda com este nome; a 1.ª é a de 2026-11-14): alvo, menu, rótulo, Procurar, erros do browser (commit `cbb189b`)
+## 2026-11-16 — F2d (antes chamada «F2c, 2.ª ronda com este nome»; a F2c é a de 2026-11-14): alvo, menu, rótulo, Procurar, erros do browser (commit `cbb189b`)
 
 Do Tiago:
 - **Tocar no alvo do cartão atual não abre o painel do lugar:** mantém o cartão, centra o lugar e o «localizar» pisca uma vez (marca estática com `prefers-reduced-motion`). O cartão ganha «Ver lugar», que abre o painel do lugar. Tocar no alvo de outro cartão da fila continua a escolhê-lo; tocar noutro lugar continua a abrir o painel desse lugar.
@@ -567,3 +567,22 @@ Decisões minhas:
 - **Testes existentes alterados:**
   - `tests/test_gui_novo_f2b.py` (texto «Posição» → «Lugar», mais um comentário) e duas docstrings de `tests/test_gui_novo.py`. Motivo: o vocabulário do ESPEC.
   - `tests/test_gui_novo.py::test_icons_local_aria_and_layout`, com o OK do Tiago: os botões do cartão medem-se antes de abrir o menu, porque com o menu como separador o cartão fica escondido.
+
+## 2026-11-17 — F2e: transições, «Fechar» com ícone, toque duplo, «Ver lugar» com a sugestão do cartão
+
+Teste do Tiago no iPhone (Brave): a interface do telemóvel está boa. Do Tiago:
+- **Transições:** o menu e os painéis (painel do lugar, «Pôr uma peça à mão») entram a deslizar/aparecer em ≈ 180 ms, ease-out, e saem do mesmo modo. Sem animação com `prefers-reduced-motion`. Nada responde mais devagar: o conteúdo é o de hoje, só a entrada é animada.
+- **«Fechar» (390 px)** passa a um ícone X (Lucide local `x`) com `aria-label` «Fechar».
+- **Toque duplo no tabuleiro, só com `pointerType` touch** (rato e clique no PC não mudam): o toque simples espera ≈ 250 ms por um segundo toque; o duplo aproxima 2× no ponto tocado, até uma célula ocupar ≈ ⅓ da menor dimensão do ecrã (no limite não faz nada); nunca abre o painel nem escolhe cartão; a pinça e o arrasto não mudam; o WebKit do iOS não faz o seu zoom (`touch-action`).
+- **«Ver lugar» vindo do cartão:** o painel do lugar mostra também a sugestão do cartão ao lado da arte (imagem da peça, saco e nº, o mesmo «Encaixa» do cartão) e um botão «Voltar ao cartão». Aberto de outra forma (tocar num lugar vazio) fica como antes («Voltar à fila»).
+- **Documentos:** a ronda de 2026-11-16 que ficou como «F2c, 2.ª ronda com este nome» passa a chamar-se **F2d** (decisoes.md, ESPEC, HANDOFF e o ficheiro do prompt em `docs/prompts/`, renomeado para `2026-11-16-teste-gui-p0833-f2d.md`). Esta ronda é a F2e.
+
+Decisões minhas:
+- **O botão «Fechar» é só ícone em todos os tamanhos** (a 1366 também), não só a 390: é o mesmo botão, e assim não há duas formas.
+- **Transição de entrada em CSS** (`@keyframes entra-lado`: opacidade e `translateX(24px)`, 180 ms ease-out) no menu e nos cartões `.painel` («lugar» e «à mão»), uma vez por abertura (não repete quando o painel se redesenha com os dados do lugar). **A saída é um clone visual** (`.sai-fantasma`, sem ids, `inert`, `aria-hidden`, `pointer-events: none`) que desliza e esvanece por cima durante 180 ms; o estado lógico (menu fechado, `S.modo`) muda logo. Com `prefers-reduced-motion` não há animação nem clone.
+- **Toque duplo ligado por `S.toqueDuplo`** (só a GUI nova o liga; a GUI antiga, que partilha `board.js`, fica como estava, sem a espera de 250 ms). Dois toques a ≤ 30 px um do outro dentro dos 250 ms contam como duplo; o segundo toque noutro sítio dispara o primeiro de imediato. O `dblclick` nativo ignora-se quando o último ponteiro foi touch (senão o Chromium zoomava 2× por cima).
+- **Limite do toque duplo:** ⅓ de `min(innerWidth, innerHeight)` px por célula (em 1366×768 são 256 px, a 390×844 são 130 px). Usa `zoomAt`, a função da roda e da pinça. O ponto tocado fica quieto.
+- **`touch-action: none` também no `svg#board`** (já estava em `#board-wrap`); o meta viewport não mudou (`user-scalable` não foi mexido, por acessibilidade). Não é possível provar o iOS aqui [NT].
+- **«Voltar ao cartão» substitui «Voltar à fila» no painel vindo do cartão**, com o mesmo id `p-voltar` e a mesma ação (volta ao cartão atual). A sugestão do cartão usa os ids `b-encaixa` / `b-guardar` e `doEncaixa` / `doGuardar`, por isso o pedido é o do cartão (testado: o corpo do POST é igual). O painel não repete essa sugestão na lista de baixo.
+- **Testes existentes alterados:** `tests/test_gui_novo_f2c.py::test_menu_fills_the_phone_screen_with_fechar` (o botão deixa de ter o texto «Fechar»: verifica o `aria-label` e o ícone X) e `tests/test_board_interface.py` (`toqueDuplo` entra no conjunto `INTERFACE` da casca: é a nova opção declarada no cabeçalho de `board.js`). Nenhum outro.
+- **Nomes que não se mexeram** (`tests/test_gui_novo_f2c.py`, `F2c_*` em `docs/gui/screenshots/redesenho/`, comentários «F2c» no código e no `CLAUDE.md` da 2.ª ronda): só se renomearam os documentos pedidos.

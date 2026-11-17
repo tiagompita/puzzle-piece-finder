@@ -16,6 +16,8 @@ const S = {
   pendente: null,
   // F2: painel do lugar tocado (peça / lugar vazio / marcado por ti) e «Pôr uma peça à mão»
   painel: null, porMao: null,
+  // F2e: toque duplo no tabuleiro (board.js), só com ponteiro touch
+  toqueDuplo: true,
   // F1d: as peças «por confirmar» (posição conhecida) desenham-se no lugar por omissão; o menu esconde-as
   showBorda: lsGet("novo-borda") === "1", showGuardadas: lsGet("novo-por-confirmar") !== "0", lots: null, importando: null,
 };
@@ -318,7 +320,35 @@ function drawTrabalho() {
   (T.querySelector(".card") || T).prepend(mk("no-cartao"));
   $("#board-wrap").append(mk("no-tabuleiro"));
 }
-function renderMontar() { renderMontar1(); drawTrabalho(); }
+function renderMontar() {
+  const prev = saidaPainel();
+  renderMontar1();
+  if (prev && !$("#tab-montar .painel-anim")) lancarSaida(prev.el, prev.rect);      // saiu do painel: só a imagem desliza
+  drawTrabalho();
+}
+// ------------------------------------------------------------ F2e: transições (≈ 180 ms, ease-out; sem animação com prefers-reduced-motion)
+// A entrada é CSS (``@keyframes entra-lado``). A saída é só visual: o elemento já foi escondido ou trocado (o estado lógico
+// não espera) e um clone sem ids, sem eventos de ponteiro e escondido dos leitores de ecrã desliza e esvanece por cima.
+const reduzMov = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ANIM_MS = 180;
+function saidaPainel() {
+  const el = $("#tab-montar > .painel-anim");
+  return el && !reduzMov() ? { el, rect: el.getBoundingClientRect() } : null;
+}
+function lancarSaida(el, rect) {
+  if (!el || !rect || reduzMov() || !rect.width || !rect.height) return;
+  const g = el.cloneNode(true);
+  g.removeAttribute("id"); g.removeAttribute("hidden");
+  g.querySelectorAll("[id]").forEach((x) => x.removeAttribute("id"));
+  g.classList.remove("entra");
+  g.classList.add("sai-fantasma");
+  g.setAttribute("aria-hidden", "true"); g.setAttribute("inert", "");
+  Object.assign(g.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+  document.body.append(g);
+  const fim = () => g.remove();
+  if (g.animate) g.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateX(24px)" }], { duration: ANIM_MS, easing: "ease-out" }).onfinish = fim;
+  setTimeout(fim, ANIM_MS + 120);
+}
 function renderMontar1() {
   const T = $("#tab-montar");
   T.replaceChildren();
@@ -372,7 +402,7 @@ function renderMontar1() {
   }
   card.append(acts);
   card.append(h("div", { class: "links" },
-    cur.cell ? h("button", { class: "linkish", type: "button", id: "b-ver-lugar", onclick: () => openPainel(cur.cell[0], cur.cell[1]) }, ico("map-pin"), "Ver lugar") : null,
+    cur.cell ? h("button", { class: "linkish", type: "button", id: "b-ver-lugar", onclick: () => openPainel(cur.cell[0], cur.cell[1], cur.piece) }, ico("map-pin"), "Ver lugar") : null,
     h("button", { class: "linkish", type: "button", id: "b-saltar", onclick: () => doSaltar(cur) }, ico("skip-forward"), "Saltar por agora"),
     h("button", { class: "linkish", type: "button", id: "b-porque", onclick: () => { S.modo = "porque"; renderMontar(); } }, ico("circle-question-mark"), "Porquê esta peça?")));
   T.append(card);
@@ -576,11 +606,12 @@ const lugarLongo = (cell) => { const b = bordaTxt(cell[0], cell[1]); return luga
 function lightboxPeca(src, cap) { lightbox(src, cap); $("#lb-img").classList.add("peca-img"); }
 function lightboxFolha(src, cap) { lightbox(src, cap); $("#lb-img").classList.remove("peca-img"); }
 
-async function openPainel(l, c) {
+/** ``deCartao`` (F2e): a peça do cartão de onde veio «Ver lugar»; o painel mostra essa sugestão ao lado da arte. */
+async function openPainel(l, c, deCartao = null) {
   if (S.tab !== "montar") showTab("montar");
   closeLupa();
   S.modo = "painel"; S.porMao = null;
-  S.painel = { cell: [l, c], d: null, erro: null, seq: (S.painel ? S.painel.seq : 0) + 1, report: null };
+  S.painel = { cell: [l, c], d: null, erro: null, seq: (S.painel ? S.painel.seq : 0) + 1, report: null, deCartao };
   renderMontar();
   await refreshPainel();
 }
@@ -595,6 +626,12 @@ async function refreshPainel() {
   } catch (e) { if (S.painel === P) P.erro = e.message; }
   if (S.modo === "painel" && S.painel === P) renderMontar();
 }
+/** A entrada da fila que o painel aberto por «Ver lugar» mostra (a mesma peça, ainda neste lugar), ou null. */
+function cartaoDoPainel(P) {
+  if (!P || !P.deCartao) return null;
+  return queue().find((it) => it.piece === P.deCartao && it.cell && P.d && it.cell[0] === P.d.cell[0] && it.cell[1] === P.d.cell[1])
+    || (P.d ? null : queue().find((it) => it.piece === P.deCartao && it.cell && it.cell[0] === P.cell[0] && it.cell[1] === P.cell[1])) || null;
+}
 function painelKind(d) {
   if (d.estado === "colocada" && d.peca) return "peca";
   if ((d.conhecidas || []).length) return "por_confirmar";
@@ -604,8 +641,9 @@ function painelKind(d) {
 function voltarFila() { S.modo = "cartao"; S.painel = null; S.porMao = null; renderMontar(); }
 function renderPainel(T) {
   const P = S.painel, d = P.d;
-  const box = h("div", { class: "card painel", id: "painel" });
+  const box = h("div", { class: "card painel painel-anim", id: "painel" });
   T.append(box);
+  if (d && !P.animado) { P.animado = true; box.classList.add("entra"); }          // F2e: a entrada anima-se uma vez por lugar
   if (P.erro && !d) {
     box.dataset.kind = "erro";
     box.append(h("strong", {}, "Não consegui ler este lugar."), h("p", { class: "small muted" }, P.erro));
@@ -618,7 +656,8 @@ function renderPainel(T) {
     if (kind === "peca" || kind === "por_confirmar") painelPeca(box, d, kind);
     else painelVazio(box, d, kind);
   }
-  box.append(h("div", { class: "links" }, h("button", { class: "linkish", type: "button", id: "p-voltar", onclick: voltarFila }, ico("arrow-left"), "Voltar à fila")));
+  box.append(h("div", { class: "links" }, h("button", { class: "linkish", type: "button", id: "p-voltar", onclick: voltarFila },
+    ico("arrow-left"), cartaoDoPainel(P) ? "Voltar ao cartão" : "Voltar à fila")));
 }
 /** Uma ação de um painel: «A gravar…», depois a faixa «Desfazer» com o pedido inverso; o painel recarrega o lugar. */
 async function actPainel(req, pend, undo) {
@@ -719,10 +758,21 @@ function painelVazio(box, d, kind) {
   box.append(h("span", { class: "kicker" }, kind === "marcado" ? "Lugar marcado por ti" : "Lugar vazio"), h("h3", { id: "p-lugar" }, lugarLongo(d.cell)));
   if (kind === "marcado") box.append(h("p", { class: "estado", id: "p-estado", "data-estado": "marcado" }, "Marcaste este lugar como montado, mas a peça ainda não foi digitalizada."));
   else if (d.estado === "ocupada_legado") box.append(h("p", { class: "small muted", id: "p-foto" }, "Na foto do tabuleiro parece cheio: por confirmar."));
-  box.append(h("div", { class: "arte-box" }, h("img", { id: "p-arte", src: `/api/cell/${l}/${c}/zoom.jpg?side=art&dpi=150&v=${S.ver}`, alt: "" }),
-    h("span", {}, "A arte da caixa neste sítio, com o que fica à volta")));
+  const arte = h("div", { class: "arte-box" }, h("img", { id: "p-arte", src: `/api/cell/${l}/${c}/zoom.jpg?side=art&dpi=150&v=${S.ver}`, alt: "" }),
+    h("span", {}, "A arte da caixa neste sítio, com o que fica à volta"));
+  // F2e: vindo de «Ver lugar», a sugestão do cartão fica ao lado da arte (os mesmos botões do cartão)
+  const doCartao = cartaoDoPainel(S.painel);
+  if (doCartao) {
+    const g = isGuardar(doCartao);
+    box.append(h("div", { class: "painel-lado" }, arte, h("div", { class: "sug-cartao", id: "p-cartao" },
+      pieceImg(doCartao, 96),
+      h("div", { class: "bag" }, doCartao.lote !== null && doCartao.lote !== undefined ? `Saco ${doCartao.lote}` : "Peça sem saco"),
+      h("div", { class: "num" }, `nº ${doCartao.n_no_lote ?? "?"}`),
+      g ? h("button", { class: "btn primary", type: "button", id: "b-guardar", onclick: () => doGuardar(doCartao) }, ico("map-pin"), "Colocar aqui")
+        : h("button", { class: "btn primary", type: "button", id: "b-encaixa", onclick: () => doEncaixa(doCartao) }, ico("check"), "Encaixa"))));
+  } else box.append(arte);
   const sug = h("div", { class: "sugestao", id: "p-sugestao" });
-  const inQ = queue().filter((it) => it.cell && it.cell[0] === l && it.cell[1] === c);
+  const inQ = queue().filter((it) => it.cell && it.cell[0] === l && it.cell[1] === c && it !== doCartao);
   if (inQ.length) {
     for (const it of inQ) {
       const g = isGuardar(it);
@@ -732,6 +782,8 @@ function painelVazio(box, d, kind) {
           ? h("button", { class: "btn primary", type: "button", onclick: () => doGuardar(it) }, ico("map-pin"), "Colocar aqui")
           : h("button", { class: "btn primary", type: "button", onclick: () => doEncaixa(it) }, ico("check"), "Encaixa")));
     }
+  } else if (doCartao) {
+    sug.hidden = true;
   } else if ((d.propostas || []).length) {
     for (const e of d.propostas) sug.append(h("p", {}, `O programa acha que pode ser: ${nomePeca(e)} (a confirmar por ti).`));
   } else sug.append(h("p", { class: "muted" }, "Sem sugestão por agora."));
@@ -868,8 +920,9 @@ function previewEl(M) {
 }
 function renderPorMao(T) {
   const M = S.porMao;
-  const box = h("div", { class: "card painel", id: "por-mao", "data-passo": String(M.passo) });
+  const box = h("div", { class: "card painel painel-anim", id: "por-mao", "data-passo": String(M.passo) });
   T.append(box);
+  if (!M.animado) { M.animado = true; box.classList.add("entra"); }
   box.append(h("span", { class: "kicker" }, "Pôr uma peça à mão"), h("h3", {}, lugarLongo(M.cell)));
   if (M.passo === 1) {
     box.append(h("p", { class: "small muted" }, "Que peça tens na mão? Escreve o saco e o número."));
@@ -1257,7 +1310,9 @@ function connectEvents() {
  * o separador anterior não se redesenha e ``S.pick`` / ``S.modo`` / ``S.tab`` ficam como estavam. */
 const menuAberto = () => !$("#menu").hidden;
 function setMenu(on) {
-  $("#menu").hidden = !on;
+  const m = $("#menu");
+  if (!on && !m.hidden) { const rect = m.getBoundingClientRect(); m.hidden = true; lancarSaida(m, rect); }   // F2e: a saída é só visual
+  m.hidden = !on;
   $("#panel").classList.toggle("com-menu", on);
   $("#menu-btn").setAttribute("aria-expanded", on ? "true" : "false");
 }

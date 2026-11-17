@@ -2,7 +2,7 @@
  * Carregado ANTES de app.css (as regras de ecrã estreito / baixo de app.css continuam a vir depois destas). */
 /* ------------------------------------------------------------ board */
 #board-wrap { grid-area: board; position: relative; overflow: hidden; background: #101215; touch-action: none; }
-#board { width: 100%; height: 100%; display: block; cursor: grab; user-select: none; -webkit-user-select: none; }
+#board { width: 100%; height: 100%; display: block; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; }
 #board.dragging { cursor: grabbing; }
 #board-bg { fill: #282828; }
 #raster, #detail { image-rendering: auto; }

@@ -20,7 +20,7 @@ WEB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 HOST = "http://board.test"
 
 # o cabeçalho de board.js: dados + 3 estados + função + gancho, e os campos que o próprio board.js escreve
-INTERFACE = {"board", "showGrid", "showGhost", "pose", "onPoseWheel", "onBoardTap"}
+INTERFACE = {"board", "showGrid", "showGhost", "pose", "onPoseWheel", "onBoardTap", "toqueDuplo"}   # F2e: opção opcional da casca nova (toque duplo)
 OWNED = {"rows", "cols", "hr", "ppc", "ver", "rotGemea", "vb", "detailKey", "gesto", "saltoPendente"}   # gesto/saltoPendente: P0, 2026-11-15
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8">

@@ -12,6 +12,8 @@
  *                           Alt+roda vai para S.onPoseWheel em vez de fazer zoom.
  *   função   S.onPoseWheel(ev)       Alt+roda com S.pose ativo (app.js: poseWheel de pose.js). Opcional.
  *   gancho   S.onBoardTap(l, c, ev)  toque/clique sem arrastar numa célula (app.js: sugestões / gaveta). Opcional.
+ *   opção    S.toqueDuplo    bool (F2e, só a GUI nova): com ponteiro touch, o toque simples espera 250 ms por um segundo
+ *                           toque e o toque duplo aproxima 2x no ponto tocado (limite: célula = 1/3 do ecrã). Rato: igual.
  * Campos de S que este ficheiro escreve e lê (a casca só lhes dá o valor inicial, se quiser): rows, cols, hr, ppc,
  * ver, rotGemea (drawRaster), vb (setView; {x, y, w, h} antes do primeiro fitBoard), detailKey, gesto (true entre o
  * 1.º pointerdown e o último pointerup/pointercancel no tabuleiro: arrastar ou pinça) e saltoPendente (um salto pedido
@@ -147,10 +149,36 @@ function loadDetail() {
     .finally(() => { if (detailCtl === ctl) detailCtl = null; });
 }
 
+/** F2e: toque duplo (só ``pointerType`` touch, só com ``S.toqueDuplo``). O toque simples espera ``DOUBLE_TAP_MS`` por um
+ * segundo toque a menos de ``DOUBLE_TAP_PX``; o duplo aproxima 2x no ponto tocado, no máximo até uma célula ocupar 1/3 da
+ * menor dimensão do ecrã (já no limite: não faz nada). Usa ``zoomAt``, a mesma função do zoom da roda. */
+const DOUBLE_TAP_MS = 250, DOUBLE_TAP_PX = 30;
+function doubleTapZoom(cx, cy) {
+  const cap = Math.min(window.innerWidth, window.innerHeight) / 3;
+  const ppc = pxPerCell();
+  if (ppc >= cap - 0.5) return;
+  zoomAt(Math.min(2, cap / ppc), cx, cy);
+}
 function initPointer() {
   const el = svg();
   const ptrs = new Map();
-  let start = null, pinch = null, moved = false;
+  let start = null, pinch = null, moved = false, lastType = "mouse", tapPend = null;
+  const fireTap = (e) => {
+    const p = clientToBoard(e.clientX, e.clientY);
+    const c = Math.floor(p.x) + 1, l = Math.floor(p.y / S.hr) + 1;
+    if (typeof S.onBoardTap === "function") S.onBoardTap(l, c, e);   // the shell decides (app.js: suggestions / cell)
+  };
+  const touchTap = (e) => {
+    if (tapPend && Math.hypot(e.clientX - tapPend.x, e.clientY - tapPend.y) <= DOUBLE_TAP_PX) {
+      clearTimeout(tapPend.timer); tapPend = null;
+      doubleTapZoom(e.clientX, e.clientY);
+      return;
+    }
+    if (tapPend) { clearTimeout(tapPend.timer); const p = tapPend; tapPend = null; fireTap(p.ev); }   // another place: the first was a single tap
+    const pend = { x: e.clientX, y: e.clientY, ev: e };
+    pend.timer = setTimeout(() => { if (tapPend === pend) { tapPend = null; fireTap(e); } }, DOUBLE_TAP_MS);
+    tapPend = pend;
+  };
   el.addEventListener("wheel", (e) => {
     if (e.ctrlKey || e.metaKey) return;   // Ctrl+wheel / trackpad pinch = browser page zoom
     if (S.pose && e.altKey) { e.preventDefault(); if (typeof S.onPoseWheel === "function") S.onPoseWheel(e); return; }   // Alt+wheel = rotate the piece (app.js: pose.js)
@@ -159,6 +187,7 @@ function initPointer() {
     zoomAt(f, e.clientX, e.clientY);
   }, { passive: false });
   el.addEventListener("pointerdown", (e) => {
+    lastType = e.pointerType;
     el.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     S.gesto = true;
@@ -201,9 +230,7 @@ function initPointer() {
     if (ptrs.size < 2) pinch = null;
     if (ptrs.size === 0) {
       if (!moved && start && e.type === "pointerup" && !S.pose) {
-        const p = clientToBoard(e.clientX, e.clientY);
-        const c = Math.floor(p.x) + 1, l = Math.floor(p.y / S.hr) + 1;
-        if (typeof S.onBoardTap === "function") S.onBoardTap(l, c, e);   // the shell decides (app.js: suggestions / cell)
+        if (S.toqueDuplo && e.pointerType === "touch") touchTap(e); else fireTap(e);
       }
       start = null;
       S.gesto = false;
@@ -217,7 +244,7 @@ function initPointer() {
   };
   el.addEventListener("pointerup", up);
   el.addEventListener("pointercancel", up);
-  el.addEventListener("dblclick", (e) => zoomAt(2, e.clientX, e.clientY));
+  el.addEventListener("dblclick", (e) => { if (S.toqueDuplo && lastType === "touch") return; zoomAt(2, e.clientX, e.clientY); });
   $("#z-in").onclick = () => zoomAt(1.6);
   $("#z-out").onclick = () => zoomAt(1 / 1.6);
   $("#z-fit").onclick = fitBoard;

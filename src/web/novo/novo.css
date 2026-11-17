@@ -331,6 +331,22 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
   #toast > .undo-toast { display: none; }
 }
 
+/* F2e: transições de ≈ 180 ms (ease-out) na entrada do menu e dos painéis; a saída é um clone visual (``.sai-fantasma``,
+   criado por novo.js, que o próprio JS anima). Com prefers-reduced-motion não há animação nenhuma. */
+@keyframes entra-lado { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .menu:not([hidden]), .card.entra { animation: entra-lado 180ms ease-out; }
+}
+.sai-fantasma { position: fixed; z-index: 45; margin: 0; pointer-events: none; overflow: hidden; animation: none !important; }
+/* F2e: «Ver lugar» do cartão: a sugestão do cartão ao lado da arte do lugar */
+.painel-lado { display: grid; grid-template-columns: minmax(0, 1fr) 112px; gap: 10px; align-items: start; margin: 10px 0; }
+.painel-lado .arte-box { margin: 0; }
+.sug-cartao { display: flex; flex-direction: column; align-items: stretch; gap: 4px; text-align: center; }
+.sug-cartao .pimg { width: 96px; height: 96px; align-self: center; }
+.sug-cartao .bag { font-size: 18px; }
+.sug-cartao .num { font-size: 15px; }
+.sug-cartao .btn { width: 100%; justify-content: center; padding: 0 6px; }
+
 /* F2c: o resultado da lupa no tabuleiro: contorno branco com uma onda âmbar que se repete, até ao próximo toque */
 #lyr-achado { pointer-events: none; }
 .achado { fill: rgba(255, 255, 255, .10); stroke: #fff; stroke-width: 3px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px rgba(0, 0, 0, .9));

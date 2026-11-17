@@ -268,7 +268,7 @@ def test_menu_fills_the_phone_screen_with_fechar(base, browser):
 		m = pg.locator("#menu").bounding_box()
 		assert m["x"] <= 0.5 and m["y"] <= 0.5 and m["width"] >= VP_TEL[0] - 1 and m["height"] >= VP_TEL[1] - 1, m
 		f = pg.locator("#menu #menu-fechar")
-		assert f.is_visible() and f.inner_text().strip() == "Fechar" and f.locator(".ico.i-x").count() == 1
+		assert f.is_visible() and f.get_attribute("aria-label") == "Fechar" and f.locator(".ico.i-x").count() == 1   # F2e: só o ícone X (antes o texto «Fechar»)
 		bb = f.bounding_box()
 		assert bb["height"] >= 44 - 0.5 and bb["x"] >= 0 and bb["x"] + bb["width"] <= VP_TEL[0] + 0.5
 		assert not pg.evaluate("document.documentElement.scrollWidth > window.innerWidth")
