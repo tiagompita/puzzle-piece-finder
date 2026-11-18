@@ -81,6 +81,17 @@ def _abrir(browser, url, extra, vp=(1366, 768), touch=False):
 	return ctx, pg, errs
 
 
+def _fechar(ctx):
+	"""Fecha o contexto sem deixar o ``handle`` de /api/montar a meio. Uma recarga (p. ex. a do SSE ``holes_changed``, que
+	chega ≈ 1,3 s depois de abrir, mais tarde com a suite carregada) pode estar em ``route.fetch()`` quando o teste acaba;
+	fechado o contexto, o Playwright levanta «Route.fetch: Request context disposed» nesse handler e entrega o erro na
+	chamada seguinte, ou seja no ``_abrir`` do teste SEGUINTE (``Browser.new_context`` / ``BrowserContext.new_page``).
+	``unroute_all(behavior="ignoreErrors")`` deixa de esperar pelo handler e cala os erros dele depois de desligado."""
+	for pg in ctx.pages:
+		pg.unroute_all(behavior="ignoreErrors")
+	ctx.close()
+
+
 def _perto(pg, cell):
 	l, c = cell
 	pg.evaluate(f"zoomCells({l - 5}, {c - 10}, {l}, {c + 2}, 0.04)")
@@ -110,7 +121,7 @@ def test_alvos_de_todos_os_cartoes_com_outro_lugar_selecionado(fila, browser):
 			assert _fracos(pg).nth(i).is_visible()
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 def test_atual_forte_com_rotulo_e_outros_tenues_sem_rotulo(fila, browser):
@@ -127,7 +138,7 @@ def test_atual_forte_com_rotulo_e_outros_tenues_sem_rotulo(fila, browser):
 		assert alfa(st["forte"]["stroke"]) > alfa(st["tenue"]["stroke"]), st
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 @pytest.mark.parametrize("vp", [(1366, 768), (390, 844)])
@@ -154,7 +165,7 @@ def test_limiar_de_zoom_esconde_os_tenues_e_nao_roubam_o_toque(fila, browser, vp
 		print(f"\n[F2f limiar] {vp}: inteiro {px_inteiro:.1f} px/celula, limiar {FRACO_MIN_PX}")
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 def test_clique_num_alvo_tenue_escolhe_o_cartao(fila, browser):
@@ -170,7 +181,7 @@ def test_clique_num_alvo_tenue_escolhe_o_cartao(fila, browser):
 		assert pg.locator(f"#lyr-seguinte rect.b-seguinte[data-piece='{tw}']").count() == 1     # o de antes passou a tenue
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 def test_toque_num_alvo_tenue_escolhe_o_cartao_sem_toque_duplo_nem_painel(fila, browser):
@@ -191,7 +202,7 @@ def test_toque_num_alvo_tenue_escolhe_o_cartao_sem_toque_duplo_nem_painel(fila, 
 		assert pg.locator("#lyr-alvo rect.painel-sel").count() == 0            # nem abriu o painel do lugar
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 def test_alvo_sai_com_encaixa_e_volta_com_o_desfazer(fila, browser):
@@ -213,7 +224,7 @@ def test_alvo_sai_com_encaixa_e_volta_com_o_desfazer(fila, browser):
 		assert pg.locator(f"#lyr-seguinte rect[data-piece='{tw}']").count() == 0            # e o atual outra vez, forte
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -248,7 +259,7 @@ def test_relativo_vista_inteira_sem_tenues(fila, browser, vp):
 			assert not _fracos(pg).nth(i).is_visible(), (vp, px)
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 @pytest.mark.parametrize("vp", [(1366, 768), (1920, 1080)])
@@ -266,7 +277,7 @@ def test_relativo_a_1_5_vezes_o_zoom_de_caber_tudo_os_tenues_aparecem(fila, brow
 			assert not _fracos(pg).nth(i).is_visible(), (vp, base)
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 def test_vista_inteira_toque_no_alvo_do_cartao_atual_centra_e_pisca_sem_abrir_o_painel(fila, browser):
@@ -288,4 +299,4 @@ def test_vista_inteira_toque_no_alvo_do_cartao_atual_centra_e_pisca_sem_abrir_o_
 		assert pg.locator("#b-localizar").get_attribute("data-mudou") in ("pisca", "marca")
 		assert not errs, errs
 	finally:
-		ctx.close()
+		_fechar(ctx)
