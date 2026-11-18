@@ -165,28 +165,46 @@ function drawTarget(move = true) {
   const a = $("#lyr-alvo"), nx = $("#lyr-seguinte");
   a.replaceChildren(); nx.replaceChildren();
   if (!S.board || S.tab !== "montar") return;
-  if ((S.modo === "painel" && S.painel) || (S.modo === "por_mao" && S.porMao)) {
-    // F2: o lugar do painel aberto, tracejado branco (a fila não se desenha por baixo)
-    const [pl, pc] = (S.modo === "painel" ? S.painel : S.porMao).cell;
-    a.append(rectEl(pl, pc, "painel-sel", 0.03));
-    return;
-  }
+  const emPainel = (S.modo === "painel" && S.painel) || (S.modo === "por_mao" && S.porMao);
+  // F2: o lugar do painel aberto, tracejado branco com véu claro (distinto dos alvos, que são âmbar)
+  const sel = emPainel ? (S.modo === "painel" ? S.painel : S.porMao).cell : null;
   const q = queue(), cur = current();
-  if (!cur || !cur.cell) { if (S.alvoMostrado === undefined && S.montar) S.alvoMostrado = null; return; }
-  for (const it of q.filter((x) => x !== cur).slice(0, 3)) if (it.cell) nx.append(rectEl(it.cell[0], it.cell[1], cls("seguinte"), 0.06));
-  const [l, c] = cur.cell;
-  // sem vizinha montada: alvo tracejado (lugar provável, sem vizinha para verificar), nunca o «vai aqui» cheio
-  const g = isGuardar(cur);
-  a.append(rectEl(l, c, cls(g ? "alvo_guardar" : "alvo"), 0.02));
-  const x = c - 0.5, y = (l - 1) * S.hr - 0.12, w = g ? 1.9 : 1.24;
-  const lab = s("g", { class: "alvo-tag" + (g ? " tracejado" : ""), transform: `translate(${x} ${y})` });
-  lab.append(s("rect", { x: -w / 2, y: -0.42, width: w, height: 0.36, rx: 0.08 }),
-    s("text", { x: 0, y: -0.17 }, document.createTextNode(g ? "lugar provável" : "vai aqui")));
-  a.append(lab);
+  // F2f (2026-11-18, decisão do Tiago): os alvos de TODAS as entradas da fila ficam desenhados, também com um lugar
+  // selecionado ou o painel aberto; o do cartão atual forte e com rótulo, os outros ténues e sem rótulo
+  // (``#lyr-seguinte``, desenhado quando a fila muda, nunca por frame; o zoom só o mostra/esconde, ver ``updateAlvoTag``)
+  for (const it of q) {
+    if (it === cur || !it.cell) continue;
+    const r = rectEl(it.cell[0], it.cell[1], cls("seguinte"), 0.06);
+    r.setAttribute("data-piece", it.piece);
+    nx.append(r);
+  }
+  if (cur && cur.cell) {
+    const [l, c] = cur.cell;
+    // sem vizinha montada: alvo tracejado (lugar provável, sem vizinha para verificar), nunca o «vai aqui» cheio
+    const g = isGuardar(cur);
+    a.append(rectEl(l, c, cls(g ? "alvo_guardar" : "alvo"), 0.02));
+    const x = c - 0.5, y = (l - 1) * S.hr - 0.12, w = g ? 1.9 : 1.24;
+    const lab = s("g", { class: "alvo-tag" + (g ? " tracejado" : ""), transform: `translate(${x} ${y})` });
+    lab.append(s("rect", { x: -w / 2, y: -0.42, width: w, height: 0.36, rx: 0.08 }),
+      s("text", { x: 0, y: -0.17 }, document.createTextNode(g ? "lugar provável" : "vai aqui")));
+    a.append(lab);
+  } else if (!emPainel && S.alvoMostrado === undefined && S.montar) S.alvoMostrado = null;
+  if (sel) a.append(rectEl(sel[0], sel[1], "painel-sel", 0.03));
   updateAlvoTag();
-  if (move) followTarget(cur.piece, l, c);
-  if (S.locAviso && S.locAviso.key === `${cur.piece}@${l},${c}`) marcarLocalizar();
+  if (emPainel || !cur || !cur.cell) return;
+  if (move) followTarget(cur.piece, cur.cell[0], cur.cell[1]);
+  if (S.locAviso && S.locAviso.key === `${cur.piece}@${cur.cell[0]},${cur.cell[1]}`) marcarLocalizar();
 }
+/** Px de ecrã por célula (a menor das duas escalas da ``viewBox``). */
+function celulaPx() {
+  const r = svgRect();
+  if (!r.width || !S.vb || !S.vb.w || !S.vb.h) return 0;
+  return Math.min(r.width / S.vb.w, r.height / S.vb.h);
+}
+/** F2f: os alvos ténues desaparecem com a célula abaixo de 16 px no ecrã (a ~14,7 px do tabuleiro inteiro a 1366 px de largura
+ * enche o ecrã de caixas; com 12 não saía); escondidos, também não escolhem o cartão ao toque (``S.onBoardTap``). */
+const FRACO_MIN_PX = 16;
+const fracosVisiveis = () => celulaPx() >= FRACO_MIN_PX;
 /** Rótulo do alvo («vai aqui» / «lugar provável», F2c): esconde-se quando o zoom já não deixa ler o texto e fica só o
  * quadrado. O critério é a altura do texto no ecrã (tamanho da fonte em unidades da viewBox × px de ecrã por unidade) abaixo
  * de ``ALVO_TXT_MIN_PX``. Corre ao desenhar o alvo e sempre que board.js muda a vista (``setView`` escreve a ``viewBox``;
@@ -195,6 +213,9 @@ const ALVO_TXT_MIN_PX = 9;
 function updateAlvoTag() {
   const r = svgRect();
   if (!r.width || !S.vb || !S.vb.w) return;
+  const nx = $("#lyr-seguinte"), cpx = celulaPx();           // F2f: a camada dos ténues liga/desliga por zoom (uma classe, não por frame)
+  nx.dataset.celulaPx = cpx.toFixed(1);
+  nx.classList.toggle("longe", cpx < FRACO_MIN_PX);
   for (const g of $$("#lyr-alvo .alvo-tag")) {
     const t = g.querySelector("text");
     const px = parseFloat(getComputedStyle(t).fontSize) * r.width / S.vb.w;
@@ -263,7 +284,8 @@ S.onBoardTap = (l, c) => {
   // F1b: tocar no alvo de uma peça da fila torna-a a peça atual. F2c (decisão do Tiago, 2026-11-16): tocar no alvo do
   // cartão ATUAL mantém o cartão e não abre o painel: centra o lugar e «localizar» pisca (o painel do lugar abre-se pelo
   // botão «Ver lugar» do cartão). Tocar noutro lugar abre o painel desse lugar (sugestão do programa e «Pôr uma peça aqui»).
-  const it = queue().find((x) => x.cell && x.cell[0] === l && x.cell[1] === c);
+  // F2f: um alvo ténue só escolhe o cartão se estiver à vista (zoom acima do limiar); escondido, o toque vai para o lugar
+  const it = queue().find((x) => x.cell && x.cell[0] === l && x.cell[1] === c && (x === current() || fracosVisiveis()));
   if (it) {
     if (S.tab === "montar" && S.modo === "cartao" && current() === it) { centrarAlvo(it); return; }
     porAcao(() => { S.pick = it.piece; S.modo = "cartao"; S.painel = null; if (S.tab !== "montar") showTab("montar"); renderMontar(); }); return;

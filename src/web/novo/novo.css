@@ -93,6 +93,7 @@ a:hover { color: #ffd27a; }
 .alvo-tag rect { fill: var(--amber); }
 .alvo-tag text { fill: var(--amber-ink); font-size: .22px; font-weight: 700; text-anchor: middle; font-family: var(--font); }
 #lyr-alvo, #lyr-seguinte { pointer-events: none; }
+#lyr-seguinte.longe { display: none; }        /* F2f: célula < 16 px no ecrã: os alvos ténues saem */
 .legend-short { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 6px 10px;
   background: rgba(19, 21, 25, .78); border-radius: 8px; font-size: 13px; color: var(--muted); pointer-events: none; max-width: calc(100% - 80px); }
 .lg { display: inline-flex; align-items: center; gap: 6px; }
@@ -220,7 +221,7 @@ h3 { margin: 0 0 4px; font-size: 18px; }
 .por-confirmar-img { opacity: .5; }
 
 /* F2: painel da peça, lugar vazio, lugar marcado por ti, «Pôr uma peça à mão» */
-.painel-sel { fill: none; stroke: #fff; stroke-width: 2px; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+.painel-sel { fill: rgba(255, 255, 255, .12); stroke: #fff; stroke-width: 2.5px; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
 .painel h3 { font-size: 20px; }
 .painel .bag { font-size: 28px; font-weight: 750; line-height: 1.1; }
 .painel .num { font-size: 22px; font-weight: 650; line-height: 1.2; }

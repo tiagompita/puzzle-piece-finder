@@ -1,6 +1,12 @@
-# HANDOFF — 2026-11-17 (F2e feita a seguir ao teste do Tiago no iPhone; próximo: o Tiago testa a F2e, depois a F4)
+# HANDOFF — 2026-11-18 (F2f feita; OK do Tiago da F1b à F2e; próximo: o Tiago testa a F2f, depois a F4)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
+
+## Sessão de 2026-11-18 (F2f): `docs/prompts/2026-11-18-f2f-sugestoes-sempre.md` (fechado)
+- **OK do Tiago da F1b à F2e** (ESPEC §7, `docs/decisoes.md`). Ronda **F2f**: as sugestões aparecem sempre no tabuleiro [V em Chromium headless; telemóvel real [NT]].
+  - Alvos de todas as entradas da fila desenhados, também com outro lugar selecionado ou o painel aberto; atual forte com rótulo, outros ténues sem rótulo, escondidos com a célula < 16 px no ecrã (limiar escolhido por mim: 14,7 px no tabuleiro inteiro a 1366); tocar num ténue à vista escolhe o cartão (regra de hoje de `S.onBoardTap`, mantida).
+  - Seleção de um lugar: branco tracejado com véu, distinto do âmbar. Testes `tests/test_gui_novo_f2f.py` (7; 5 falhavam antes); testes existentes alterados: nenhum; suite 723 passed, 1 skipped. Capturas `F2f_*`; desempenho com 60 cartões: 0 frames perdidos num arrasto.
+- **O Tiago vê [NT]:** o aspeto com uma fila real de dezenas de cartões e o limiar de 16 px (se prefere 12, é a constante `FRACO_MIN_PX` em `src/web/novo/novo.js`).
 
 ## Sessão de 2026-11-18: `docs/prompts/2026-11-18-correcao-toque-multidedo.md` (fechado)
 - **Toque multi-dedo no iPhone [V em Chromium com toque real CDP; iPhone [NT]]:** (a) vinha da F2e (2.º dedo não cancelava o toque pendente), (b) é anterior (`f8151d3`: dedo que fica no mapa de ponteiros). Corrigido em `src/web/board.js`; testes `tests/test_gui_novo_toque.py`; causas e decisões em `docs/decisoes.md` (2026-11-18).
