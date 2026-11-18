@@ -2,6 +2,10 @@
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
+## Sessão de 2026-11-18: `docs/prompts/2026-11-18-correcao-toque-multidedo.md` (fechado)
+- **Toque multi-dedo no iPhone [V em Chromium com toque real CDP; iPhone [NT]]:** (a) vinha da F2e (2.º dedo não cancelava o toque pendente), (b) é anterior (`f8151d3`: dedo que fica no mapa de ponteiros). Corrigido em `src/web/board.js`; testes `tests/test_gui_novo_toque.py`; causas e decisões em `docs/decisoes.md` (2026-11-18).
+- **O Tiago confirma no iPhone [NT]:** pinça sem aproximar, arrasto e toque depois da pinça, toque duplo. Os `erro_cliente` de 2026-11-18 eram só do Brave (`window.ethereum`).
+
 ## Última sessão (2026-11-17): `docs/prompts/2026-11-17-f2e-toque-duplo-transicoes.md` (fechado)
 - **F2e [V em Chromium headless com toque emulado; iPhone real [NT]]:** transições de ≈ 180 ms (menu e painéis), «Fechar» com ícone X,
   toque duplo no tabuleiro (só touch: o simples espera 250 ms, o duplo aproxima 2×, limite ⅓ do ecrã), «Ver lugar» com a sugestão do

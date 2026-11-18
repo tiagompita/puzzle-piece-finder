@@ -188,9 +188,13 @@ function initPointer() {
   }, { passive: false });
   el.addEventListener("pointerdown", (e) => {
     lastType = e.pointerType;
-    el.setPointerCapture(e.pointerId);
+    // Um toque primário é o 1.º dedo no ecrã: o que ainda estiver no mapa ficou pousado sem pointerup/pointercancel
+    // (iOS) e deixaria um arrasto de um dedo a fazer pinça e os toques sem efeito. 2026-11-18.
+    if (e.pointerType === "touch" && e.isPrimary && ptrs.size) { ptrs.clear(); pinch = null; start = null; }
+    try { el.setPointerCapture(e.pointerId); } catch (err) { /* o ponteiro já acabou: segue sem captura */ }
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     S.gesto = true;
+    if (ptrs.size >= 2 && tapPend) { clearTimeout(tapPend.timer); tapPend = null; }   // um 2.º dedo cancela o toque pendente (nem simples nem duplo)
     if (ptrs.size === 1) { start = { x: e.clientX, y: e.clientY, vb: { ...S.vb } }; moved = false; }
     if (ptrs.size === 2) {
       const [a, b] = [...ptrs.values()];
@@ -223,27 +227,32 @@ function initPointer() {
       }
     }
   });
+  /** Tira um dedo (``pointerup``/``pointercancel`` no tabuleiro ou fora dele, ``lostpointercapture``). Só um ``pointerup``
+   * sobre o tabuleiro com o último dedo, sem movimento nem pinça, é um toque. */
   const up = (e) => {
     if (!ptrs.has(e.pointerId)) return;
     ptrs.delete(e.pointerId);
     el.classList.remove("dragging");
     if (ptrs.size < 2) pinch = null;
     if (ptrs.size === 0) {
-      if (!moved && start && e.type === "pointerup" && !S.pose) {
+      if (!moved && start && e.type === "pointerup" && !S.pose && (e.target === el || el.contains(e.target))) {
         if (S.toqueDuplo && e.pointerType === "touch") touchTap(e); else fireTap(e);
       }
-      start = null;
+      start = null; pinch = null; moved = false;
       S.gesto = false;
       const jp = S.saltoPendente;
       S.saltoPendente = null;
       if (jp) zoomCells(...jp);
     } else if (ptrs.size === 1) {
       const [a] = [...ptrs.values()];
-      start = { x: a.x, y: a.y, vb: { ...S.vb } };
+      start = { x: a.x, y: a.y, vb: { ...S.vb } };   // o que fica arrasta a partir de onde está, sem salto (moved continua true)
     }
   };
   el.addEventListener("pointerup", up);
   el.addEventListener("pointercancel", up);
+  el.addEventListener("lostpointercapture", up);
+  window.addEventListener("pointerup", up);
+  window.addEventListener("pointercancel", up);
   el.addEventListener("dblclick", (e) => { if (S.toqueDuplo && lastType === "touch") return; zoomAt(2, e.clientX, e.clientY); });
   $("#z-in").onclick = () => zoomAt(1.6);
   $("#z-out").onclick = () => zoomAt(1 / 1.6);

@@ -586,3 +586,22 @@ Decisões minhas:
 - **«Voltar ao cartão» substitui «Voltar à fila» no painel vindo do cartão**, com o mesmo id `p-voltar` e a mesma ação (volta ao cartão atual). A sugestão do cartão usa os ids `b-encaixa` / `b-guardar` e `doEncaixa` / `doGuardar`, por isso o pedido é o do cartão (testado: o corpo do POST é igual). O painel não repete essa sugestão na lista de baixo.
 - **Testes existentes alterados:** `tests/test_gui_novo_f2c.py::test_menu_fills_the_phone_screen_with_fechar` (o botão deixa de ter o texto «Fechar»: verifica o `aria-label` e o ícone X) e `tests/test_board_interface.py` (`toqueDuplo` entra no conjunto `INTERFACE` da casca: é a nova opção declarada no cabeçalho de `board.js`). Nenhum outro.
 - **Nomes que não se mexeram** (`tests/test_gui_novo_f2c.py`, `F2c_*` em `docs/gui/screenshots/redesenho/`, comentários «F2c» no código e no `CLAUDE.md` da 2.ª ronda): só se renomearam os documentos pedidos.
+
+## 2026-11-18 — Correção do toque multi-dedo no tabuleiro (iPhone, Brave/WebKit)
+
+Sintomas do Tiago depois da F2e: (a) uma pinça para afastar às vezes aproxima; (b) depois de uma pinça, um dedo a arrastar faz zoom sozinho e os toques num lugar deixam de funcionar até recarregar.
+
+- **Erros do browser de hoje** (`projects/alpes/logs/servidor-20261118.log`): 4 linhas `erro_cliente`, 2 pares «Script error.» + «TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')» às 08:04:31 e 08:05:21 (script injetado pelo Brave, `/novo/:1:16`). Nenhuma vem do nosso código nem do toque.
+- **Causas [V em Chromium com toque real via CDP `Input.dispatchTouchEvent`]:**
+  - (a) introduzida pela F2e (`3dcfcc8`): o 2.º dedo não cancelava o toque pendente. Reproduzido: um toque completo seguido de dois dedos a pousar < 250 ms aproximava 2× (toque duplo) por cima da pinça. Antes da F2e (`d510f0a`) não havia toque duplo.
+  - (b) anterior à F2e, vem do tabuleiro inicial (`f8151d3`): o mapa de ponteiros só limpava em `pointerup`/`pointercancel` no próprio elemento; um dedo que ficasse no mapa (`lostpointercapture`, `pointerup` fora do elemento) fazia de um dedo duas «pinças» e `ptrs.size` nunca voltava a 0 (sem toques). Reproduzido em `d510f0a` e em `3dcfcc8`. Além disso `setPointerCapture` lançava `NotFoundError` para um ponteiro já terminado, antes de o inserir no mapa. [NT que seja esta a sequência exata no iOS; o mecanismo está provado, o evento que falha no iOS não.]
+  - Refutado: «a pinça não é limpa quando sobra um dedo» (sai um dedo, o outro arrasta sem salto: já passava, nos dois sentidos).
+- **Correção (`src/web/board.js`, partilhado: a GUI antiga também ganha (b); rato inalterado):**
+  - um 2.º dedo cancela o toque pendente (nem simples nem duplo);
+  - `pointercancel`, `lostpointercapture` e `pointerup` em qualquer sítio (`window`) limpam o dedo; sem dedos o estado volta ao inicial (`start`, `pinch`, `moved`, `S.gesto`);
+  - `setPointerCapture` dentro de `try`;
+  - decisão minha: um `pointerdown` touch **primário** (1.º dedo no ecrã) limpa o que esteja no mapa, como defesa se o iOS não mandar nenhum evento de fim;
+  - decisão minha: um `pointerup` fora do tabuleiro limpa o dedo mas nunca conta como toque.
+- **Testes:** `tests/test_gui_novo_toque.py` (12, toque real CDP). Antes da correção 6 falhavam (arquivo `antes_toque.txt` no scratchpad), depois 12/12. Nenhum teste existente alterado.
+- **Nota de teste:** no CDP o `touchEnd` leva os pontos que terminam, não os que ficam.
+
