@@ -93,7 +93,7 @@ a:hover { color: #ffd27a; }
 .alvo-tag rect { fill: var(--amber); }
 .alvo-tag text { fill: var(--amber-ink); font-size: .22px; font-weight: 700; text-anchor: middle; font-family: var(--font); }
 #lyr-alvo, #lyr-seguinte { pointer-events: none; }
-#lyr-seguinte.longe { display: none; }        /* F2f: célula < 16 px no ecrã: os alvos ténues saem */
+#lyr-seguinte.longe { display: none; }        /* F2f: zoom ≤ 1,3 × o de caber tudo: os alvos ténues saem */
 .legend-short { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 6px 10px;
   background: rgba(19, 21, 25, .78); border-radius: 8px; font-size: 13px; color: var(--muted); pointer-events: none; max-width: calc(100% - 80px); }
 .lg { display: inline-flex; align-items: center; gap: 6px; }

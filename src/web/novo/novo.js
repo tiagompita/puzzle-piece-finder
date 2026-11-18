@@ -201,10 +201,17 @@ function celulaPx() {
   if (!r.width || !S.vb || !S.vb.w || !S.vb.h) return 0;
   return Math.min(r.width / S.vb.w, r.height / S.vb.h);
 }
-/** F2f: os alvos ténues desaparecem com a célula abaixo de 16 px no ecrã (a ~14,7 px do tabuleiro inteiro a 1366 px de largura
- * enche o ecrã de caixas; com 12 não saía); escondidos, também não escolhem o cartão ao toque (``S.onBoardTap``). */
-const FRACO_MIN_PX = 16;
-const fracosVisiveis = () => celulaPx() >= FRACO_MIN_PX;
+/** F2f: os alvos ténues escondem-se enquanto o zoom ≤ ``FRACO_ZOOM_REL`` × o zoom de «caber tudo» (a vista do botão «⤢»,
+ * ``fitBoard``: margem de 1,5 %); um limiar em px absolutos só servia a um tamanho de ecrã (a 1920 px a vista inteira dá
+ * ≈ 20 px/célula). Escondidos, também não escolhem o cartão ao toque (``S.onBoardTap``): uma só função para os dois. */
+const FRACO_ZOOM_REL = 1.3;
+/** Px de ecrã por célula na vista de «caber tudo» (a mesma conta de ``fitRect`` com ``fitBoard``). */
+function fitPx() {
+	const r = svgRect();
+	if (!r.width || !r.height) return 0;
+	return r.width / (Math.max(boardW(), boardH() * r.width / r.height) * 1.03);
+}
+const fracosVisiveis = () => { const f = fitPx(); return f > 0 && celulaPx() > FRACO_ZOOM_REL * f; };
 /** Rótulo do alvo («vai aqui» / «lugar provável», F2c): esconde-se quando o zoom já não deixa ler o texto e fica só o
  * quadrado. O critério é a altura do texto no ecrã (tamanho da fonte em unidades da viewBox × px de ecrã por unidade) abaixo
  * de ``ALVO_TXT_MIN_PX``. Corre ao desenhar o alvo e sempre que board.js muda a vista (``setView`` escreve a ``viewBox``;
@@ -215,7 +222,7 @@ function updateAlvoTag() {
   if (!r.width || !S.vb || !S.vb.w) return;
   const nx = $("#lyr-seguinte"), cpx = celulaPx();           // F2f: a camada dos ténues liga/desliga por zoom (uma classe, não por frame)
   nx.dataset.celulaPx = cpx.toFixed(1);
-  nx.classList.toggle("longe", cpx < FRACO_MIN_PX);
+  nx.classList.toggle("longe", !fracosVisiveis());
   for (const g of $$("#lyr-alvo .alvo-tag")) {
     const t = g.querySelector("text");
     const px = parseFloat(getComputedStyle(t).fontSize) * r.width / S.vb.w;

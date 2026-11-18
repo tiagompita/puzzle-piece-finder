@@ -193,7 +193,7 @@ LEGEND = [
 				"para o programa o lugar continua vazio (não serve de molde nem de vizinha e não conta no progresso)",
 	 "gui": "novo"},
 	{"id": "seguinte", "tipo": "svg", "classe": "b-seguinte", "rotulo": "A seguir", "texto": "lugares das peças seguintes",
-	 "detalhe": "os lugares de todas as outras peças da fila, com contorno ténue (só com a célula a 16 px ou mais no ecrã)", "gui": "novo"},
+	 "detalhe": "os lugares de todas as outras peças da fila, com contorno ténue (só com um zoom acima de 1,3 × o da vista inteira)", "gui": "novo"},
 	{"id": "por_montar", "tipo": "raster", "classe": None, "rotulo": "Por montar", "texto": "só a arte da caixa",
 	 "detalhe": "lugar sem peça: vê-se a arte da caixa, esbatida", "gui": "novo", "curta": True},
 ]
