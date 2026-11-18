@@ -605,3 +605,8 @@ Sintomas do Tiago depois da F2e: (a) uma pinça para afastar às vezes aproxima;
 - **Testes:** `tests/test_gui_novo_toque.py` (12, toque real CDP). Antes da correção 6 falhavam (arquivo `antes_toque.txt` no scratchpad), depois 12/12. Nenhum teste existente alterado.
 - **Nota de teste:** no CDP o `touchEnd` leva os pontos que terminam, não os que ficam.
 
+
+## 2026-11-18 — Uma árvore de trabalho, um agente de cada vez (Tiago)
+
+- **Regra:** nunca correr a suite, nem medições, enquanto outro agente edita a mesma árvore de trabalho. Trabalho em paralelo só com worktrees separados (`git worktree add`); senão, em sequência. Registada também no `CLAUDE.md` («Subagents & Model Routing»).
+- **Porquê:** nesta data a suite completa (704 passed, 1 skipped) correu sobre `3dcfcc8` enquanto o helper da correção do toque já editava `src/web/board.js` e criava `tests/test_gui_novo_toque.py` na mesma árvore; os testes Playwright podem ter servido o `board.js` a meio da edição, por isso o resultado não se pode atribuir a um commit. Só a suite seguinte, corrida depois do commit `1da45d8` (716 passed, 1 skipped), ficou limpa.
