@@ -385,15 +385,19 @@ def fila(entries: list, alta: Optional[dict], record: dict, profile=None, *, sac
 			"n_por_saco": {str(k): len(by[k]) for k in order}}
 
 
-def resumo(entries: list, itens: list, guardadas: int = 0) -> dict:
+def resumo(entries: list, itens: list, guardadas: int = 0, grupos_soltos: Optional[dict] = None) -> dict:
 	"""O que fica fora da fila, para o ecrã vazio dizer a verdade (F1c, Tiago 2026-11-14): ``guardar`` (cartões
 	«Guardar à parte» na fila), ``guardadas`` (peças já guardadas à parte à espera de uma vizinha montada, contadas
 	pelo chamador), ``grupos_sem_lugar`` (grupos por ancorar na consulta, ``origin == 'seccao'``) e ``propostas``
-	(entradas da consulta com peça ou grupo). Até à F4, os grupos só se veem na interface completa."""
+	(entradas da consulta com peça ou grupo). ``grupos_soltos`` (F4 B2, T2 «N em grupos soltos»): ``{grupos, pecas}``
+	dos grupos visíveis sem lugar (:func:`src.grupos.count_loose`, contado pelo chamador); só entra quando é dado."""
 	n_sec = sum(1 for e in entries if e.get("origin") == "seccao")
 	n_prop = sum(1 for e in entries if e.get("piece") or e.get("origin") == "seccao")
-	return {"guardar": sum(1 for it in itens if it.get("tipo") == "guardar"), "guardadas": int(guardadas),
-			"grupos_sem_lugar": n_sec, "propostas": n_prop}
+	out = {"guardar": sum(1 for it in itens if it.get("tipo") == "guardar"), "guardadas": int(guardadas),
+		   "grupos_sem_lugar": n_sec, "propostas": n_prop}
+	if grupos_soltos is not None:
+		out["grupos_soltos"] = {"grupos": int(grupos_soltos["grupos"]), "pecas": int(grupos_soltos["pecas"])}
+	return out
 
 
 def progress(board, user_source: str = "tiago") -> dict:

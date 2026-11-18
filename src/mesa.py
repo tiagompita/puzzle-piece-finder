@@ -5,16 +5,22 @@ the board of the new GUI and moved / turned freely (``docs/gui/redesenho/F4_PLAN
 position is NOT state of the puzzle: the engine never reads it (not a mould, not a neighbour, no twin proposals, not
 in the progress), so it lives outside the log, in an APPEND-ONLY file like ``overrides.jsonl``, one line per write::
 
-	{"gid", "l0", "c0", "rot", "t", "log_n"}         (+ "mirror": true only for a mirrored group)
+	{"gid", "l0", "c0", "rot", "t", "log_n", "log_sig"}   (+ "mirror": true only for a mirrored group,
+	                                                      + "rodado": true only for a «Rodar»)
 
 ``(l0, c0, rot[, mirror])`` is an anchor dict as :func:`src.state.section_cell` reads it (local (0, 0) on the board
 cell ``(l0, c0)``, ``rot`` degrees clockwise, multiple of 90). ``log_n`` = number of events of ``log.jsonl`` when the
-line was written.
+line was written; ``log_sig`` = sha1 (hex) of the log line of event ``log_n − 1``, the last event at that moment
+(F4 B2, decision 3 of Tiago: a log rebuilt from scratch, even of the same size or bigger, no longer has that line
+there, so the old lines stop counting by themselves). ``rodado`` (F4 B2, correction C1): the write came from
+«Rodar»; the server decides ``rot_fonte`` of «Fixar» from it, never the browser.
 
 **Which line counts.** A line counts only if its group exists, is visible (not every piece a re-scan, ``same_as``),
-has no place now, and ``log_n`` is greater than the 0-based index of the group's last ``section_anchored`` /
-``section_unanchored`` event (a line written before the last anchor / unanchor is stale). The last counting line of
-each group wins (file order). Broken lines, an incomplete last line, lines of unknown or anchored groups and invalid
+has no place now, its ``log_sig`` is the sha1 of the current log line ``log_n − 1`` (a line without ``log_sig``, or
+written against another log, does not count: reasons ``sem_log_sig`` / ``log_reescrito``), and ``log_n`` is greater
+than the 0-based index of the group's last ``section_anchored`` / ``section_unanchored`` event (a line written before
+the last anchor / unanchor is stale). The last counting line of each group wins (file order); the group is
+``rodado`` when any of its counting lines has ``rodado`` (a «Rodar» since its last anchor / unanchor). Broken lines, an incomplete last line, lines of unknown or anchored groups and invalid
 positions (outside the grid, ``rot`` not ×90, wrong types) are skipped and counted per reason
 (:func:`read_positions`), never an error.
 
@@ -35,12 +41,13 @@ Nothing here touches ``log.jsonl``, the :class:`~src.state.Board` or ``render/pl
 
 **The ``log_n`` index** (:func:`last_anchor_index`): one pass over the log bytes, ``json.loads`` only on the lines
 that mention ``section_anchored`` / ``section_unanchored``, cached per log path and extended incrementally (only the
-bytes appended since the last call are read; a log that shrank or whose last read bytes changed is read again from
-the start). Measured on a copy of ``projects/alpes`` (3118 events, 2,3 MB): see ``docs/decisoes.md`` (2026-11-18,
+bytes appended since the last call are read; a log that shrank, or whose first bytes or last read bytes changed, is
+read again from the start). The same pass keeps the sha1 of every event line (``log_sig``). Measured on a copy of ``projects/alpes`` (3118 events, 2,3 MB): see ``docs/decisoes.md`` (2026-11-18,
 F4 B1).
 """
 
 import datetime as _dt
+import hashlib
 import json
 import os
 import threading
@@ -49,18 +56,20 @@ from typing import Optional
 from src.state import read_retry, section_cell
 
 __all__ = [
-	"MESA_FILE", "MOTIVOS_LEITURA", "mesa_path", "last_anchor_index", "is_loose", "footprint", "read_positions",
+	"MESA_FILE", "MOTIVOS_LEITURA", "mesa_path", "last_anchor_index", "log_sig", "is_loose", "footprint", "read_positions",
 	"effective_position", "effective_positions", "check_position", "write_position",
 ]
 
 MESA_FILE = "mesa.jsonl"
 MOTIVOS_LEITURA = ("linha_partida", "linha_incompleta", "grupo_desconhecido", "grupo_fixado", "posicao_invalida",
-				   "anterior_a_fixacao")
+				   "sem_log_sig", "log_reescrito", "anterior_a_fixacao")
 _ANCHOR_ACTIONS = ("section_anchored", "section_unanchored")
 _ANCHOR_MARKS = tuple(f'"{a}"'.encode() for a in _ANCHOR_ACTIONS)
 _TAIL = 64                      # bytes before the cached offset compared to tell an append from a rewritten log
+_HEAD = 256                     # first bytes of the log, compared too (a rewrite of the same size keeps the tail)
+_EMPTY_SIG = hashlib.sha1(b"").hexdigest()
 
-_index_cache: dict = {}         # abs log path -> {"offset", "tail", "n", "last"}
+_index_cache: dict = {}         # abs log path -> {"offset", "tail", "head", "n", "last", "sigs"}
 _index_lock = threading.Lock()
 
 
@@ -69,12 +78,14 @@ def mesa_path(project) -> str:
 
 
 # ---------------------------------------------------------------- the log index (pure scan + cached I/O)
-def _scan_lines(buf: bytes, n: int, last: dict) -> int:
+def _scan_lines(buf: bytes, n: int, last: dict, sigs: list) -> int:
 	"""Count the events of ``buf`` (complete lines; blank lines are not events, as :func:`src.state.read_log`) from
-	index ``n`` on, updating ``last`` {gid: {idx, action, anchor, anchor_idx}} in place; returns the new count."""
+	index ``n`` on, updating ``last`` {gid: {idx, action, anchor, anchor_idx}} in place and appending the sha1 digest
+	of each event line (without a ``\\r``) to ``sigs``; returns the new count."""
 	for line in buf.split(b"\n"):
 		if not line.strip():
 			continue
+		sigs.append(hashlib.sha1(line.rstrip(b"\r")).digest())
 		if any(m in line for m in _ANCHOR_MARKS):
 			try:
 				ev = json.loads(line)
@@ -92,46 +103,60 @@ def _scan_lines(buf: bytes, n: int, last: dict) -> int:
 
 
 def last_anchor_index(project) -> dict:
-	"""``{"n": events in the log, "last": {gid: {idx, action, anchor, anchor_idx}}}``: for each group that was ever
-	anchored, the 0-based index and action of its last ``section_anchored`` / ``section_unanchored`` event, plus the
-	anchor dict (and index) of its last ``section_anchored``. Only complete lines count (an event being appended is
-	not there yet). Cached per log path and extended with the appended bytes only (module docstring); the returned
-	dict is a copy."""
+	"""``{"n": events in the log, "last": {gid: {idx, action, anchor, anchor_idx}}, "sigs": [...]}``: for each group
+	that was ever anchored, the 0-based index and action of its last ``section_anchored`` / ``section_unanchored``
+	event, plus the anchor dict (and index) of its last ``section_anchored``; ``sigs[i]`` = sha1 digest (20 bytes) of
+	the line of event ``i`` (:func:`log_sig`). Only complete lines count (an event being appended is not there yet).
+	Cached per log path and extended with the appended bytes only (module docstring); the returned dict is a copy."""
 	fp = os.path.abspath(project.log_path)
 
 	def read_from(offset):
 		if not os.path.exists(fp):
-			return b"", 0
+			return b"", b"", 0
 		with open(fp, "rb") as f:
+			head = f.read(_HEAD)
 			f.seek(0, os.SEEK_END)
 			size = f.tell()
 			if size < offset:
-				return None, size
+				return None, head, size
 			f.seek(max(0, offset - _TAIL))
-			return f.read(), size
+			return f.read(), head, size
 
 	with _index_lock:
 		c = _index_cache.get(fp)
 		data = None
 		if c is not None:
-			data, _ = read_retry(lambda: read_from(c["offset"]))
+			data, head, _ = read_retry(lambda: read_from(c["offset"]))
 			start = max(0, c["offset"] - _TAIL)
-			if data is None or data[:c["offset"] - start] != c["tail"]:
+			if data is None or data[:c["offset"] - start] != c["tail"] or head[:len(c["head"])] != c["head"]:
 				c, data = None, None
 			else:
 				data = data[c["offset"] - start:]
 		if c is None:
-			data, _ = read_retry(lambda: read_from(0))
-			c = {"offset": 0, "tail": b"", "n": 0, "last": {}}
+			data, _, _ = read_retry(lambda: read_from(0))
+			c = {"offset": 0, "tail": b"", "head": b"", "n": 0, "last": {}, "sigs": []}
 		cut = data.rfind(b"\n") + 1               # complete lines only
 		if cut:
-			c["n"] = _scan_lines(data[:cut], c["n"], c["last"])
+			c["n"] = _scan_lines(data[:cut], c["n"], c["last"], c["sigs"])
 			old = c["tail"]
+			if len(c["head"]) < _HEAD:
+				c["head"] = (c["head"] + data[:cut])[:_HEAD]
 			c["offset"] += cut
 			c["tail"] = (old + data[:cut])[-_TAIL:]
 		_index_cache[fp] = c
 		return {"n": c["n"], "last": {g: dict(r, anchor=dict(r["anchor"]) if r["anchor"] else None)
-									 for g, r in c["last"].items()}}
+									 for g, r in c["last"].items()}, "sigs": list(c["sigs"])}
+
+
+def log_sig(index: dict, log_n: int) -> Optional[str]:
+	"""``log_sig`` of a line written when the log had ``log_n`` events: the sha1 (hex) of the line of event
+	``log_n − 1`` in ``index`` (:func:`last_anchor_index`); the sha1 of nothing for an empty log; None when the log
+	has fewer events now."""
+	if log_n <= 0:
+		return _EMPTY_SIG
+	if log_n > len(index["sigs"]):
+		return None
+	return index["sigs"][log_n - 1].hex()
 
 
 # ---------------------------------------------------------------- pure helpers
@@ -178,11 +203,12 @@ def _read_text(fp: str) -> Optional[str]:
 def read_positions(project, index: Optional[dict] = None) -> tuple:
 	"""``(positions, aviso)``: ``positions`` = {gid: {l0, c0, rot, mirror, t, log_n}} with the last counting line of
 	each group (module docstring); ``aviso`` = {reason: count} of the skipped lines (reasons in
-	:data:`MOTIVOS_LEITURA`; only the reasons seen). ``anterior_a_fixacao`` counts the normal stale lines (written
+	:data:`MOTIVOS_LEITURA`; only the reasons seen); each position carries ``rodado`` (a counting line of the group
+	came from «Rodar»). ``anterior_a_fixacao`` counts the normal stale lines (written
 	before the group's last anchor / unanchor); the other reasons are anomalies. Never raises on the file's content.
 	``index``: :func:`last_anchor_index` already in hand."""
 	text = _read_text(mesa_path(project))
-	pos, aviso = {}, {}
+	pos, aviso, rodado = {}, {}, set()
 	if not text:
 		return pos, aviso
 	idx = index if index is not None else last_anchor_index(project)
@@ -207,11 +233,17 @@ def read_positions(project, index: Optional[dict] = None) -> tuple:
 			why = "grupo_desconhecido"
 		elif not _position_ok(project, project.sections[d["gid"]], d) or d["log_n"] > idx["n"]:
 			why = "posicao_invalida"
+		elif not isinstance(d.get("log_sig"), str):
+			why = "sem_log_sig"
+		elif d["log_sig"] != log_sig(idx, d["log_n"]):
+			why = "log_reescrito"
 		elif d["log_n"] <= (idx["last"].get(d["gid"]) or {"idx": -1})["idx"]:
 			why = "anterior_a_fixacao"
 		else:
+			if d.get("rodado") is True:
+				rodado.add(d["gid"])
 			pos[d["gid"]] = {"l0": d["l0"], "c0": d["c0"], "rot": d["rot"] % 360, "mirror": bool(d.get("mirror")),
-							 "t": d.get("t"), "log_n": d["log_n"]}
+							 "t": d.get("t"), "log_n": d["log_n"], "rodado": d["gid"] in rodado}
 			continue
 		aviso[why] = aviso.get(why, 0) + 1
 	return pos, aviso
@@ -234,7 +266,7 @@ def effective_position(project, gid: str, positions: Optional[dict] = None, inde
 	if last and last["action"] == "section_unanchored" and last.get("anchor") and last["anchor"].get("l0") is not None:
 		a = last["anchor"]
 		return {"l0": int(a["l0"]), "c0": int(a["c0"]), "rot": int(a.get("rot") or 0) % 360,
-				"mirror": bool(a.get("mirror")), "t": None, "log_n": None, "origem": "fixacao"}
+				"mirror": bool(a.get("mirror")), "t": None, "log_n": None, "rodado": False, "origem": "fixacao"}
 	return None
 
 
@@ -326,14 +358,15 @@ def _append_line(fp: str, rec: dict) -> None:
 
 
 def write_position(project, gid: str, l0, c0, rot=0, *, wlock, mirror: bool = False,
-				   shown: Optional[dict] = None) -> dict:
+				   shown: Optional[dict] = None, rodado: bool = False) -> dict:
 	"""«Mostrar no tabuleiro» / «Mover» / «Rodar»: validate (:func:`check_position`) and append one line to
 	``mesa.jsonl``; returns the line, or ``{'error': phrase, 'motivo': code, ...}`` with nothing written.
 
 	**The caller holds the write lock** (``Gui.wlock`` of the server, B2): the validation and the append must not be
 	crossed by a write of the log (a «Encaixa» under the group). ``wlock`` is required: the lock object, checked to be
 	held by this thread (motivo ``sem_bloqueio`` otherwise), or ``None`` for a single-writer caller with no server
-	(tests, a CLI). This module never takes the lock itself. ``shown``: :func:`effective_positions` already in hand."""
+	(tests, a CLI). This module never takes the lock itself. ``shown``: :func:`effective_positions` already in hand.
+	``rodado``: the write is a «Rodar» (the line carries ``rodado: true``, correction C1)."""
 	if wlock is not None and not _holds(wlock):
 		return _refuse("sem_bloqueio", "Erro interno: escrita na mesa sem o bloqueio de escrita.")
 	index = last_anchor_index(project)
@@ -343,8 +376,11 @@ def write_position(project, gid: str, l0, c0, rot=0, *, wlock, mirror: bool = Fa
 	if bad:
 		return bad
 	rec = {"gid": gid, "l0": int(l0), "c0": int(c0), "rot": int(rot) % 360,
-		   "t": _dt.datetime.now().isoformat(timespec="seconds"), "log_n": int(index["n"])}
+		   "t": _dt.datetime.now().isoformat(timespec="seconds"), "log_n": int(index["n"]),
+		   "log_sig": log_sig(index, int(index["n"]))}
 	if mirror:
 		rec["mirror"] = True
+	if rodado:
+		rec["rodado"] = True
 	_append_line(mesa_path(project), rec)
 	return rec

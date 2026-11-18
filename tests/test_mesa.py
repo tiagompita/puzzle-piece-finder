@@ -86,7 +86,7 @@ def test_write_and_read_last_line_wins(groups):
 	assert (eff["l0"], eff["c0"], eff["rot"], eff["origem"]) == (3, 4, 90, "mesa")
 	with open(mesa.mesa_path(pr), encoding="utf-8") as f:
 		lines = [json.loads(s) for s in f]
-	assert len(lines) == 3 and set(lines[0]) == {"gid", "l0", "c0", "rot", "t", "log_n"}
+	assert len(lines) == 3 and set(lines[0]) == {"gid", "l0", "c0", "rot", "t", "log_n", "log_sig"}   # B2: + log_sig
 
 
 def test_footprint_rot_and_mirror(groups):
@@ -327,3 +327,84 @@ def test_writes_never_touch_log_board_or_render_version(groups):
 		assert f.read() == pl0
 	with open(mesa.mesa_path(pr), encoding="utf-8") as f:
 		assert len(f.readlines()) == len(moves)
+
+
+# ---------------------------------------------------------------- B2: log_sig (decision 3 of Tiago) and «Rodar» (C1)
+import hashlib  # noqa: E402
+
+
+def _last_log_line_sha1(pr):
+	with open(pr.log_path, "rb") as f:
+		lines = [s.rstrip(b"\r") for s in f.read().split(b"\n") if s.strip()]
+	return hashlib.sha1(lines[-1]).hexdigest()
+
+
+def _rewrite_log(pr, extra: int = 0):
+	"""A rebuild of the log: every event written again with another ``t`` of the same length (same size), plus
+	``extra`` informative events at the end (a bigger log)."""
+	with open(pr.log_path, encoding="utf-8") as f:
+		evs = [json.loads(s) for s in f if s.strip()]
+	with open(pr.log_path, "w", encoding="utf-8", newline="\n") as f:
+		for ev in evs:
+			ev["t"] = "1999-01-01T00:00:00"[:len(ev["t"])]
+			f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+	for _ in range(extra):
+		pr.log_event("report", report="R9999")
+
+
+def test_log_sig_is_the_sha1_of_the_last_log_line(groups):
+	pr, g1, _, _ = groups
+	r = _w(pr, g1, 2, 2)
+	assert r["log_sig"] == _last_log_line_sha1(pr)
+	with open(mesa.mesa_path(pr), encoding="utf-8") as f:
+		line = json.loads(f.readline())
+	assert line["log_sig"] == r["log_sig"] and line["log_n"] == len(pr.events())
+	assert "rodado" not in line                                   # only a «Rodar» writes it
+
+
+@pytest.mark.parametrize("extra", [0, 3])
+def test_rewritten_log_invalidates_old_lines(groups, extra):
+	pr, g1, g2, _ = groups
+	_w(pr, g1, 2, 2)
+	_w(pr, g2, 5, 7)
+	size0 = os.path.getsize(pr.log_path)
+	assert set(mesa.read_positions(pr)[0]) == {g1, g2}           # the index is warm (cached)
+	_rewrite_log(pr, extra)
+	assert (os.path.getsize(pr.log_path) == size0) == (extra == 0)
+	pr2 = Project.open(pr.path)
+	pos, aviso = mesa.read_positions(pr2)
+	assert pos == {} and aviso == {"log_reescrito": 2}
+	assert mesa.effective_position(pr2, g1) is None
+	# a line written after the rebuild counts again
+	assert _w(pr2, g1, 3, 3).get("error") is None
+	assert set(mesa.read_positions(pr2)[0]) == {g1}
+
+
+def test_line_without_log_sig_is_invalid(groups):
+	pr, g1, _, _ = groups
+	n = len(pr.events())
+	_raw(pr, json.dumps({"gid": g1, "l0": 2, "c0": 2, "rot": 0, "t": "x", "log_n": n}) + "\n")
+	pos, aviso = mesa.read_positions(pr)
+	assert pos == {} and aviso == {"sem_log_sig": 1}
+	assert "log_reescrito" in mesa.MOTIVOS_LEITURA and "sem_log_sig" in mesa.MOTIVOS_LEITURA
+
+
+def test_rodado_is_written_and_read_since_the_last_anchor(groups):
+	pr, g1, g2, _ = groups
+	_w(pr, g1, 2, 2)
+	assert mesa.read_positions(pr)[0][g1]["rodado"] is False
+	r = _w(pr, g1, 2, 2, 90, rodado=True)
+	assert r["rodado"] is True
+	_w(pr, g1, 3, 3, 90)                                           # a later plain move keeps «rodado»
+	pos = mesa.read_positions(pr)[0]
+	assert pos[g1]["rodado"] is True and (pos[g1]["l0"], pos[g1]["rot"]) == (3, 90)
+	assert mesa.effective_position(pr, g1)["rodado"] is True
+	# anchor + unanchor: the «Rodar» before it does not count any more
+	pr.anchor_section(g1, 3, 3, rot=90)
+	pr.unanchor_section(g1)
+	eff = mesa.effective_position(pr, g1)
+	assert eff["origem"] == "fixacao" and eff["rodado"] is False
+	_w(pr, g1, 3, 3, 90)
+	assert mesa.effective_position(pr, g1)["rodado"] is False
+	_w(pr, g2, 5, 7)
+	assert mesa.effective_position(pr, g2)["rodado"] is False

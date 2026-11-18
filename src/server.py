@@ -121,6 +121,8 @@ JPEG_Q = 86
 REGION_LRU = 24
 PIECE_LRU = 600
 SECTION_LRU = 64
+GRUPO_PPC = 96                 # group PNG (F4 B2): px per cell width of /api/grupos/{gid}.png
+GRUPO_PNG_LRU = 48
 EVENTS_KEEP = 500
 WRITE_WAIT_S = 90.0            # a write waits this long for the lock (an import commit / re-query) before 409
 SEQ_TRIES = 3                  # torn attempts of a seqlock read (Gui.seq_read) before giving up (no write lock)
@@ -643,6 +645,7 @@ class Gui:
 		self._detail_locks = {}       # detail client id -> Lock: one composition per client at a time
 		self._pieces = collections.OrderedDict()
 		self._sections = collections.OrderedDict()
+		self._grupo_pngs = collections.OrderedDict()   # F4 B2: (gid, rot, ppc, pieces' signature) -> PNG bytes
 		self._ghosts = None           # (ver, list)
 		self._fetch = None            # (mtime, dict)
 		self._placements = None       # (ver, dict)
@@ -2124,6 +2127,7 @@ class Gui:
 	def montar_json(self, saco_atual: Optional[int] = None) -> dict:
 		"""``GET /api/montar`` (GUI nova, ESPEC §4.1): a fila da «Próxima peça» por saco (:func:`src.montar.fila`), o
 		progresso do topo (P12) e o estado das sugestões pelo encaixe (a calcular / em pausa)."""
+		from src import grupos as GR
 		from src import montar as MT
 		f = self.fetch_json()
 		pr = self.pr
@@ -2137,7 +2141,7 @@ class Gui:
 		guardadas = sum(1 for p in pr.pieces.values() if p.estado == "posicao_conhecida" and p.id not in in_q)
 		return {"versao": self.version(), "puzzle": pr.profile.name or pr.profile.id, "total_celulas": pr.profile.cell_count(),
 				"progresso": MT.progress(pr.board), "ultimo_scan": last_scan, "ultimo_saco": ultimo_saco, **q,
-				"fora_da_fila": MT.resumo(f["entries"], q["itens"], guardadas),
+				"fora_da_fila": MT.resumo(f["entries"], q["itens"], guardadas, grupos_soltos=GR.count_loose(pr)),
 				"a_preparar": {"buracos": bool(alta.get("a_calcular")), "progresso": alta.get("progresso")},
 				"historico": [{"origem": k[0], "zona": k[1], **v}
 							  for k, v in sorted(rec.items(), key=lambda kv: (str(kv[0][0]), str(kv[0][1])))],
@@ -2392,6 +2396,171 @@ class Gui:
 								   "lote": pr.piece(pid).lote} for pid, rc in sorted(s.cells_local.items())],
 						"candidatos": cands, "thumb": f"/api/sections/{s.id}.png"})
 		return out
+
+	# ------------------------------------------------------------ loose groups on the board (F4, B2)
+	def _grupo_row(self, gid: str, shown: dict) -> dict:
+		"""One loose group of ``GET /api/grupos`` (pure over the project; the caller reads under :meth:`read` or the
+		write lock)."""
+		from src import grupos as GR
+		pr = self.pr
+		s = pr.sections[gid]
+		pos = shown.get(gid)
+		pecas = [{"id": pid, "rc": list(rc), "lote": pr.piece(pid).lote, "n_no_lote": pr.piece(pid).n_no_lote}
+				 for pid, rc in sorted(s.cells_local.items())]
+		sob = GR.sobreposto(pr, gid, pos, shown) if pos is not None else None
+		rot = int(pos["rot"]) if pos is not None else 0
+		fr = GR.group_frame(pr.profile, s, rot, GRUPO_PPC)
+		return {"id": gid, "kind": s.kind, "n": len(s.cells_local), "pecas": pecas,
+				"sacos": sorted({p["lote"] for p in pecas if p["lote"] is not None}),
+				"mostrado": pos is not None,
+				"posicao": ({k: pos[k] for k in ("l0", "c0", "rot", "mirror", "origem")} if pos is not None else None),
+				"footprint": [list(c) for c in GR.footprint(s, pos)] if pos is not None else None,
+				"sobreposto": ({"motivo": sob["motivo"], "celula": sob.get("celula"), "texto": sob["error"]}
+							   if sob else None),
+				"rodado": bool(pos.get("rodado")) if pos is not None else False,
+				"lugar_provavel": GR.likely_place(pr, gid),
+				"imagem": {"url": f"/api/grupos/{gid}.png?rot={rot}", "ppc": GRUPO_PPC, "margem": fr["margem"],
+						   "rot": rot, "origem_local": list(fr["origem_local"]), "celulas_n": list(fr["celulas_n"])}}
+
+	def grupos_json(self) -> dict:
+		"""``GET /api/grupos``: the visible loose groups (shown or not), their effective position, footprint, whether
+		they sit over a placed piece now (``sobreposto``, derived), the likely place (only with margin >=
+		``margin_min``, Q4 b), the counts and the ``mesa.jsonl`` lines skipped (``aviso``)."""
+		from src import grupos as GR
+		from src import mesa as ME
+
+		def run():
+			pr = self.pr
+			index = ME.last_anchor_index(pr)
+			aviso = ME.read_positions(pr, index)[1]
+			shown = ME.effective_positions(pr, index)
+			rows = [self._grupo_row(gid, shown) for gid in sorted(pr.sections) if ME.is_loose(pr, gid)]
+			cnt = GR.count_loose(pr)
+			return {"versao": self.version(), "n_grupos": cnt["grupos"], "n_pecas": cnt["pecas"],
+					"n_mostrados": len(shown), "grupos": rows, "aviso": aviso}
+		return self.read(run)
+
+	def _grupo_begin(self) -> None:
+		if not self.wlock.acquire(timeout=WRITE_WAIT_S):
+			raise Busy(self.job or "ocupado")
+		try:
+			if self._exclusive():
+				raise Busy(self.job)
+			self.sync_locked()
+		except BaseException:
+			self.wlock.release()
+			raise
+
+	def _grupo_target(self, gid: str):
+		"""``(shown, None)`` or ``(None, refusal)`` for a write on the loose group ``gid`` (under the write lock)."""
+		from src import mesa as ME
+		pr = self.pr
+		s = pr.sections.get(gid)
+		if s is None:
+			return None, {"error": f"grupo desconhecido {gid}", "motivo": "grupo_desconhecido", "_http": 404}
+		if s.anchor.get("anchored"):
+			return None, {"error": "O grupo já tem lugar: tira-o do lugar primeiro.", "motivo": "grupo_fixado"}
+		if not ME.is_loose(pr, gid):
+			return None, {"error": f"grupo desconhecido {gid}", "motivo": "grupo_desconhecido", "_http": 404}
+		return ME.effective_positions(pr, ME.last_anchor_index(pr)), None
+
+	def _grupo_write(self, gid: str, pos: dict, shown: dict, rodado: bool = False) -> dict:
+		from src import mesa as ME
+		rec = ME.write_position(self.pr, gid, int(pos["l0"]), int(pos["c0"]), int(pos.get("rot") or 0),
+								wlock=self.wlock, mirror=bool(pos.get("mirror")), shown=shown, rodado=rodado)
+		if "error" in rec:
+			return rec
+		shown2 = ME.effective_positions(self.pr)
+		row = self._grupo_row(gid, shown2)
+		self.emit("grupos_changed", {"grupo": gid, "posicao": row["posicao"]})
+		return {"ok": True, "linha": rec, "grupo": row}
+
+	def grupo_mostrar(self, gid: str, body: dict) -> dict:
+		"""``POST /api/grupos/{gid}/mostrar`` {centro: [linha, coluna] of the view, optional}: «Mostrar no tabuleiro»
+		(Q3). Writes the initial position (:func:`src.grupos.initial_position`) to ``mesa.jsonl``; a group already
+		shown answers where it is, nothing written. No re-query, no ``board_changed``: only ``grupos_changed``."""
+		from src import grupos as GR
+		centro = body.get("centro")
+		try:
+			centro = None if centro is None else (float(centro[0]), float(centro[1]))
+		except (TypeError, ValueError, IndexError):
+			return {"error": "centro = [linha, coluna]", "motivo": "pedido_invalido", "_http": 400}
+		self._grupo_begin()
+		try:
+			shown, bad = self._grupo_target(gid)
+			if bad:
+				return bad
+			if gid in shown:
+				return {"ok": True, "linha": None, "grupo": self._grupo_row(gid, shown)}
+			p = GR.initial_position(self.pr, gid, centro, shown)
+			if p is None:
+				return {"error": "Não há lugar livre no tabuleiro para este grupo.", "motivo": "sem_lugar"}
+			return self._grupo_write(gid, p, shown)
+		finally:
+			self.wlock.release()
+
+	def grupo_mover(self, gid: str, body: dict) -> dict:
+		"""``POST /api/grupos/{gid}/mover`` {l0, c0, rot} (Ctrl+arrastar / «Mover») or {rodar: ±90} («Rodar», Q5 b:
+		about the centre of the group, never slid): validated and appended to ``mesa.jsonl`` under the write lock, no
+		re-query, no ``board_changed`` (only ``grupos_changed``). Only a «Rodar» ({rodar}) writes ``rodado: true``
+		(correction C1): a move that carries another ``rot`` (e.g. «Levar para o lugar provável» with the candidate's
+		rotation) is not the user turning the group. Refusals: 409 with the phrase and ``motivo``."""
+		from src import grupos as GR
+		self._grupo_begin()
+		try:
+			shown, bad = self._grupo_target(gid)
+			if bad:
+				return bad
+			cur = shown.get(gid)
+			if cur is None:
+				return {"error": "Mostra o grupo no tabuleiro primeiro.", "motivo": "nao_mostrado"}
+			if "rodar" in body:
+				try:
+					d = int(body["rodar"])
+				except (TypeError, ValueError):
+					return {"error": "rodar = 90 ou -90", "motivo": "pedido_invalido", "_http": 400}
+				new = GR.rotate(self.pr, gid, cur, d, shown)
+				if "error" in new:
+					return new
+			else:
+				try:
+					new = {"l0": int(body["l0"]), "c0": int(body["c0"]), "rot": int(body.get("rot", cur["rot"])),
+						   "mirror": cur["mirror"]}
+				except (KeyError, TypeError, ValueError):
+					return {"error": "mover = {l0, c0, rot}", "motivo": "pedido_invalido", "_http": 400}
+			return self._grupo_write(gid, new, shown, rodado="rodar" in body)
+		finally:
+			self.wlock.release()
+
+	def grupo_png(self, gid: str, rot: int = 0, ppc: Optional[float] = None) -> bytes:
+		"""``GET /api/grupos/{gid}.png?rot=``: the assembled group (:func:`src.grupos.group_rgba`, RGBA, transparent
+		around the pieces) at ``ppc`` px per cell (default :data:`GRUPO_PPC`); LRU per (group, rot, ppc, pieces'
+		signature)."""
+		from src import grupos as GR
+		from src import render
+		pr = self.pr
+		s = pr.sections.get(gid)
+		if s is None or not s.cells_local:
+			raise FileNotFoundError(f"grupo desconhecido {gid}")
+		if int(rot) % 90:
+			raise ValueError("rot tem de ser múltiplo de 90")
+		rot = int(rot) % 360
+		ppc = float(min(max(float(ppc or GRUPO_PPC), 16.0), 240.0))
+		sig = (tuple(sorted((pid, tuple(rc)) for pid, rc in s.cells_local.items())),
+			   tuple((pid, render.piece_asset_sig(pr, pid), tuple(pr.piece(pid).chords_mm or ()))
+					 for pid in sorted(s.cells_local)), render.display_params())
+		key = (gid, rot, ppc, sig)
+		c = self._grupo_pngs.get(key)
+		if c is not None:
+			self._grupo_pngs.move_to_end(key)
+			return c
+		rgba = self.read(lambda: GR.group_rgba(pr, gid, rot, ppc, ready=lambda pid: self.ready.get(pr, pid)))
+		ok, buf = cv2.imencode(".png", np.ascontiguousarray(rgba[..., [2, 1, 0, 3]]))
+		data = buf.tobytes()
+		self._grupo_pngs[key] = data
+		while len(self._grupo_pngs) > GRUPO_PNG_LRU:
+			self._grupo_pngs.popitem(last=False)
+		return data
 
 	def status_json(self) -> dict:
 		try:
@@ -4183,6 +4352,39 @@ def create_app(gui: Gui):
 	def section_png(gid: str, max: int = 360):
 		ready()
 		return img(guard(lambda: gui.read(lambda: gui.section_png(gid, max))), "image/png")
+
+	@app.get("/api/grupos")
+	def grupos_list():
+		ready()
+		return JSON(gui.grupos_json())
+
+	@app.get("/api/grupos/{gid}.png")
+	def grupo_png(gid: str, rot: int = 0, ppc: Optional[float] = None):
+		ready()
+		return img(guard(lambda: gui.grupo_png(gid, rot, ppc)), "image/png")
+
+	async def _grupo_post(request: Request, fn):
+		ready()
+		try:
+			raw = await request.body()
+			body = json.loads(raw) if raw.strip() else {}
+		except ValueError:
+			raise HTTPException(400, detail="corpo JSON inválido")
+		if not isinstance(body, dict):
+			raise HTTPException(400, detail="corpo JSON inválido")
+		r = await asyncio.to_thread(lambda: guard(lambda: fn(body)))
+		if "error" in r:
+			code = r.pop("_http", 409)
+			return JSON(r, status_code=code)
+		return JSON(r)
+
+	@app.post("/api/grupos/{gid}/mostrar")
+	async def post_grupo_mostrar(gid: str, request: Request):
+		return await _grupo_post(request, lambda b: gui.grupo_mostrar(gid, b))
+
+	@app.post("/api/grupos/{gid}/mover")
+	async def post_grupo_mover(gid: str, request: Request):
+		return await _grupo_post(request, lambda b: gui.grupo_mover(gid, b))
 
 	@app.post("/api/confirm")
 	async def post_confirm(request: Request):
