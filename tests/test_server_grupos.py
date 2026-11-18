@@ -149,6 +149,26 @@ def test_likely_place_only_in_calibrated_zones(tmp_path):
 	assert _grupo(cl2, ids2["G1"])["lugar_provavel"] is not None
 
 
+def test_mostrar_uses_the_candidate_only_in_calibrated_zones(tmp_path):
+	"""Decision of Tiago 2026-11-18 (correction 1b of B4): «Mostrar no tabuleiro» applies the same zone filter as the
+	likely place: a candidate in a zone without ``dE_p90`` is not the initial position (the valid position nearest the
+	view is); a candidate in a calibrated zone is."""
+	from src import grupos as GR
+	zones = {"alto": {"rows": [1, 2], "dE_p90": 15.0}, "baixo": {"rows": [3, 4], "dE_p90": None}}
+	gui, cl, ids = _env(tmp_path, cand1=_cand((2, 4)), cand2=_cand((3, 3), margin=2.0), zones=zones)
+	p1 = GR.initial_position(gui.pr, ids["G1"], centro=(1.0, 1.0))
+	assert (p1["l0"], p1["c0"], p1["origem"]) == (2, 4, "candidato")
+	p2 = GR.initial_position(gui.pr, ids["G2"], centro=(1.0, 1.0))
+	assert p2["origem"] == "perto_da_vista" and (p2["l0"], p2["c0"]) == (1, 1)
+	r = cl.post(f"/api/grupos/{ids['G2']}/mostrar", json={"centro": [1.0, 1.0]})
+	assert r.status_code == 200, r.text
+	assert r.json()["grupo"]["posicao"]["l0"] == 1 and r.json()["grupo"]["posicao"]["c0"] == 1
+	# the same candidate with no zone rows: it is the initial position
+	gui2, cl2, ids2 = _env(_mk(tmp_path / "sem"), cand1=_cand((2, 4)), cand2=_cand((3, 3), margin=2.0))
+	p = GR.initial_position(gui2.pr, ids2["G2"], centro=(1.0, 1.0))
+	assert (p["l0"], p["c0"], p["origem"]) == (3, 3, "candidato")
+
+
 # ---------------------------------------------------------------- mostrar / mover: no re-query, no board_changed
 def test_mostrar_and_mover_no_requery_no_board_changed(env, monkeypatch):
 	gui, cl, ids = env

@@ -193,8 +193,9 @@ def _blocked(project, gid: str, shown: dict) -> set:
 
 def initial_position(project, gid: str, centro=None, shown: Optional[dict] = None) -> Optional[dict]:
 	"""Where «Mostrar no tabuleiro» puts ``gid`` (Q3): its effective position if it has one (``origem`` of
-	:func:`src.mesa.effective_position`); else candidate 1 when its margin is >= ``margin_min`` and the position is
-	valid (``origem: "candidato"``); else the valid position (rotation 0, as scanned) whose footprint centre is
+	:func:`src.mesa.effective_position`); else the likely place (:func:`likely_place`) when it is valid and
+	:func:`place_calibrated` (the same zone filter as the served likely place, decision of Tiago 2026-11-18;
+	``origem: "candidato"``); else the valid position (rotation 0, as scanned) whose footprint centre is
 	nearest ``centro`` = (row, column) of the centre of the view, in cells (default the board centre; ties: anchor
 	row, then column; ``origem: "perto_da_vista"``); None when the group fits nowhere."""
 	s = project.sections.get(gid)
@@ -205,7 +206,7 @@ def initial_position(project, gid: str, centro=None, shown: Optional[dict] = Non
 	if gid in shown:
 		return dict(shown[gid])
 	lp = likely_place(project, gid, shown)
-	if lp is not None:
+	if lp is not None and place_calibrated(project.profile, lp["footprint"]):
 		p = {"l0": lp["cell0"][0], "c0": lp["cell0"][1], "rot": lp["rot"], "mirror": lp["mirror"]}
 		if valid(project, gid, p, shown) is None:
 			return dict(p, origem="candidato")
