@@ -629,3 +629,46 @@ Decisões minhas:
 - **Testes existentes alterados: nenhum.** Novos: `tests/test_gui_novo_f2f.py` (7 testes; 5 falhavam antes do código, 2 já passavam: o atual forte/ténues sem rótulo e o toque num ténue com o painel aberto). Suite 723 passed, 1 skipped.
 - Capturas em `docs/gui/screenshots/redesenho/F2f_{antes,depois}_{cartao,painel,inteiro}_{1366,390}.png` (`tools/gui/f2f_capturas.py`); medição `tools/gui/f2f_desempenho.py`.
 - [NT] iPhone/telemóvel real (toque num ténue com a espera de 250 ms), Firefox/Safari, e o aspeto com uma fila real de dezenas de cartões.
+
+## 2026-11-18 — F4 (grupos soltos no tabuleiro): decisões e critérios (B0)
+
+Plano aprovado: [`docs/gui/redesenho/F4_PLANO.md`](gui/redesenho/F4_PLANO.md) (critérios de aceitação 1–15 no §4, blocos e paragens no §5). Âmbito (ESPEC §8.5): desenhar, mover, rodar, fixar e soltar os grupos que já existem. Hoje são 32 grupos visíveis com 73 peças: 14 de 1 peça, 11 de 2, 7 com margem ≥ `margin_min`.
+
+**Verificação da margem [V, leitura do código e de `projects/alpes`]:**
+- `margin` = (menor score de imagem entre as alternativas distintas) ÷ (score de imagem do candidato escolhido pela energia), em `legacy._decide`. O candidato escolhido vem de `solve_pages`: imagem + gémeas + sobreposição + foto + pistas.
+- Uma margem < 1 quer dizer que a energia escolheu um lugar com pior imagem. Não é um bug de ordenação.
+- Só G0049 tem margem < 1 (0,874). Os seus candidatos: (44,37) rot 180 score 17,742 (o escolhido); (45,47) rot 180 score 15,509; (28,13) rot 0 score 15,750.
+- Os candidatos são de 2026-11-02, e (44,37) e (45,47) estão hoje ocupados por peças do legado.
+- Q3 e Q4 não mudam.
+
+**Do orientador, aceites pelo Tiago:**
+- **Posição livre fora do log.** Fica em `projects/<id>/mesa.jsonl`, só acrescentar (como `overrides.jsonl`), com linhas `{gid, l0, c0, rot, t, log_n}`. Vale a última linha válida por grupo; a leitura ignora as linhas partidas, as de grupos desconhecidos ou fixados e as inválidas. Não há ação nova em `ACTIONS`, nem invariantes novas, e `render_version()` não muda.
+  - Porquê: um grupo solto não tem efeito no motor. Guardar a posição no log custava os checkouts antigos e invariantes sem nada a ganhar. O ESPEC §5.3 foi corrigido.
+- **`log_n`.** Cada linha leva o número de eventos do log no momento da escrita. Uma linha só vale se `log_n` for maior do que o índice do último `section_anchored` / `section_unanchored` desse grupo. Sem linha válida:
+  - um grupo nunca fixado segue a Q3: não aparece até «Mostrar no tabuleiro»;
+  - um grupo solto depois de fixado fica na posição da última fixação (Q10 a), sem escrita extra.
+  - Teste em `tests/test_mesa.py`: mover → fixar → soltar deixa o grupo onde foi fixado.
+- **Concorrência.** «Mover» e «Mostrar» validam e escrevem dentro do `wlock` (é curto; o critério do POST continua ≤ 0,3 s). Um «Encaixa» simultâneo não pode deixar um grupo por cima de uma colocada sem `sobreposto`. `sobreposto` é derivado na leitura e nunca gravado, e um grupo nunca salta sozinho. Há um teste com os dois pedidos em fios ao mesmo tempo.
+- **Q3.** Um grupo nunca mostrado não aparece no tabuleiro. Aparece com «Mostrar no tabuleiro» na lista, que grava a posição: o candidato 1 se a margem for ≥ `margin_min` e estiver livre, senão a posição válida mais perto do centro da vista. Uma posição gravada nunca muda sozinha.
+- **`render_version()` (para o futuro).** Quando uma ação tiver de ficar fora da chave, usa-se uma lista de exceções explícita; qualquer ação desconhecida invalida as caches.
+
+**Do Tiago:**
+- **Q1 b:** só o grupo escolhido se desenha com imagem; os outros grupos mostrados ficam com contorno violeta ténue.
+- **Q2 c:** os grupos de 1 peça são grupos, mas «Fixar» só dá confiança «confirmado» com a rotação confirmada: `rot_fonte` tiago (usou «Rodar» ou a confirmação de Q8 a), ou vizinhas montadas que confirmam (verificação de `src/consistency.py` depois de fixar).
+- **Q4 b:** o «lugar provável» a tracejado só aparece com margem ≥ `margin_min`.
+- **Q5 b:** «Rodar» não desliza; se não couber, diz «Não cabe aqui rodado: move primeiro».
+- **Q6 b:** no telemóvel só pelo botão «Mover» (um dedo arrasta até «Feito»). Manter o dedo premido fica para depois do teste no iPhone.
+- **Q7 a:** bloqueiam as colocadas, os lugares marcados cheios pelo Tiago e os outros grupos mostrados; «cheia na foto, por confirmar» não bloqueia (política da dúvida).
+- **Q8 a:** «Fixar o grupo de N peças aqui? Confirma na mesa que está nesta rotação.» · Fixar / Cancelar.
+- **Q9 c:** se as vizinhas discordarem da rotação, o grupo fica fixado, com o aviso «As peças ao lado dizem outra rotação», «Desfazer» e as peças nas Suspeitas. Um grupo de 1 peça fica «a confirmar» em vez de «confirmado».
+- **Q10 a:** depois de «Tirar o grupo inteiro do lugar», o grupo fica no mesmo sítio, como grupo solto.
+- **Q11 a, fora da F4:** mini-fase **F3½** antes do B1. Uma peça com pose manual só sai das suspeitas de orientação se |θ_manual − θ automático| < 45° (ângulo circular), para todas as peças. Tem prompt e commit próprios.
+
+**Critérios-chave** (lista completa no §4 do plano):
+- Um grupo solto tem zero efeito no motor.
+- Depois de 10 «Mover», o log, `render_version()` e as bytes de `board.jpg`, das regiões e de `placements.json` ficam iguais.
+- «Perto» e 1.º salto: o IC 95 % da diferença contra `cc68ad4` (10 pares) exclui +0,25 s.
+- `mover` ≤ 0,3 s; `fixar` ≤ 2,0 s.
+- 0 frames acima de 25 ms a arrastar com os 32 grupos mostrados.
+
+**Backlog (não é da F4):** no painel de um grupo cuja escolha pela energia difere da imagem (margem < 1, hoje G0049), mostrar «a imagem prefere outro lugar».

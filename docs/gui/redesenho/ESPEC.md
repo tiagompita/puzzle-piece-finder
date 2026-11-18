@@ -69,7 +69,18 @@ Barra de topo: nome do puzzle e progresso («672 de 3008 peças», mais «N em g
 ### 4.9 Grupos soltos
 - **No tabuleiro** (`GrupoTabuleiro.dc.html`): o grupo aparece em cima do tabuleiro sem estar no lugar certo, com contorno violeta e sombra. Move-se com **Ctrl + arrastar** ou pelo botão «Mover»; no telemóvel, manter o dedo. Move-se de célula em célula; não sai do tabuleiro nem se sobrepõe a peças colocadas ou a outros grupos. As peças continuam clicáveis. Barra do grupo: Mover, Rodar, Fixar aqui. «+» nos lados livres para acrescentar peça. «Lugar provável» a tracejado quando o programa tem uma zona.
 - A posição livre não significa nada para o motor: as células por baixo continuam vazias e o alvo de uma sugestão desenha-se por cima do grupo. Um grupo solto não conta no progresso.
-- A posição livre tem de ficar guardada (sobrevive a recarregar e a outro dispositivo).
+- A posição livre tem de ficar guardada (sobrevive a recarregar e a outro dispositivo). **Decidido 2026-11-18 (orientador, aceite pelo Tiago):** fica em `projects/<id>/mesa.jsonl` (só acrescentar, linhas `{gid, l0, c0, rot, t, log_n}`), **não no log**: um grupo solto não tem efeito no motor. Detalhes no plano [`F4_PLANO.md`](F4_PLANO.md) e em `docs/decisoes.md` (2026-11-18, F4).
+- **F4, decisões de 2026-11-18** (`docs/decisoes.md`):
+  - Só o grupo escolhido se desenha com imagem; os outros grupos mostrados ficam com contorno violeta ténue.
+  - Um grupo nunca mostrado não aparece no tabuleiro: aparece com «Mostrar no tabuleiro» na lista.
+  - O «lugar provável» a tracejado só aparece com margem ≥ `margin_min`.
+  - «Rodar» não desliza («Não cabe aqui rodado: move primeiro»).
+  - No telemóvel só se move pelo botão «Mover» … «Feito».
+  - Bloqueiam a posição: as colocadas, os lugares marcados cheios pelo Tiago e os outros grupos mostrados; «cheia na foto» não bloqueia.
+  - Os grupos de 1 peça são grupos.
+  - «Fixar aqui» pede «Confirma na mesa que está nesta rotação».
+  - Depois de fixar, as vizinhas montadas verificam a rotação; se discordarem, o grupo fica fixado com um aviso e «Desfazer».
+  - «Tirar o grupo inteiro do lugar» deixa o grupo solto no mesmo sítio.
 - Painel do grupo: Acrescentar uma peça, Levar para o lugar provável, Fixar aqui (o `anchor` de hoje), Tirar uma peça do grupo, Desfazer o grupo.
 - **Lista** (`Grupos.dc.html`), **peça que se junta a um grupo** (`JuntarGrupo.dc.html`) e **o grupo já tem lugar** (`GrupoLigou.dc.html`).
 - **Âmbito:** primeiro os grupos que já existem (secções e blocos sem lugar, a aba Mesa de hoje). Os grupos propostos pelo programa entre peças soltas ficam **fora** até o Tiago fazer o teste físico dos 10 quadrados (medição de 2026-11-10: 7 quadrados com margem ≥ 1,05 em 525 soltas, todos céu, precisão real por medir).
@@ -94,7 +105,7 @@ Barra de topo: nome do puzzle e progresso («672 de 3008 peças», mais «N em g
 
 1. **Desfazer uma rejeição** (`twin_rejected` / `hole_rejected`): hoje não há evento que a anule.
 2. **Motivo da rejeição** (forma / imagem / não sei), campo opcional no evento.
-3. **Posição livre de um grupo solto** guardada no log.
+3. **Posição livre de um grupo solto** guardada. **Corrigido 2026-11-18:** fica em `projects/<id>/mesa.jsonl`, fora do log (sem ação nova em `ACTIONS`, sem mudança em `render_version()`, os checkouts antigos continuam a ler o log); ver §4.9 e [`F4_PLANO.md`](F4_PLANO.md).
 4. **Verificações de uma peça escolhida à mão** para um lugar (forma e imagem com as vizinhas) antes de `place`.
 5. **Ordenação da fila por saco.**
 
@@ -130,7 +141,7 @@ _(Revisto 2026-11-11 depois do inventário da F0: F1 partida em F1a/F1b; desfaze
 - **OK do Tiago à F1b–F2e (2026-11-18):** a GUI nova da F1b à F2e fica aprovada (`docs/decisoes.md`, 2026-11-18).
 - **F2f (2026-11-18, Tiago: «as sugestões aparecem sempre no tabuleiro»):** os alvos de todas as entradas da fila do Montar (também «Colocar aqui») ficam desenhados com outro lugar selecionado ou o painel aberto; o do cartão atual forte e com rótulo, os outros ténues sem rótulo e escondidos com a célula abaixo de 16 px no ecrã (o tabuleiro inteiro a 1366 px dá 14,7); tocar num ténue à vista escolhe o cartão; a seleção de um lugar é branca tracejada com véu, distinta dos alvos âmbar; os alvos acompanham a fila sem recarregar. **Feito** (testes `tests/test_gui_novo_f2f.py`; regras e «decisões minhas» em `docs/decisoes.md`; capturas `F2f_{antes,depois}_*`).
 - **Fase de desempenho («antes da F4») — FECHADA (Tiago, 2026-11-16):** critérios 3, 4 e 5 [V]; 1 e 2 aceites como estão (`docs/diagnostico/gui/DETALHE.md` §11.13, `docs/decisoes.md`).
-- **F4 — Grupos soltos no tabuleiro**, só para os grupos que já existem.
+- **F4 — Grupos soltos no tabuleiro**, só para os grupos que já existem. Plano aprovado em 2026-11-18: [`F4_PLANO.md`](F4_PLANO.md) (B0 documentos; antes do B1 a mini-fase **F3½**: uma pose manual com mais de 45° de diferença não esconde a suspeita de orientação, para todas as peças).
 - **F4b — Grupos propostos pelo programa entre peças soltas (nova, 2026-11-11).** O teste físico dos 10 quadrados de 2026-11-10 deu 10/10 (§8.6). Cada grupo proposto só passa a grupo depois de o Tiago o confirmar fisicamente; a confiança segue a regra do §8.3; há contador de acertos e falhas.
 - **F4c — Verificar as junções de um grupo largado junto ao montado (nova, 2026-11-12).** Ver §4.9 («Verificar as junções ao largar um grupo»). Vem depois da F4b. Só afirma no céu e com ≥ 4 junções; fora do céu responde «não sei» até haver calibração por zona (Tiago, 2026-11-12).
 - **F3 — Peças e Importar.**
