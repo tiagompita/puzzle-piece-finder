@@ -2468,7 +2468,7 @@ class Gui:
 			return None, {"error": f"grupo desconhecido {gid}", "motivo": "grupo_desconhecido", "_http": 404}
 		return ME.effective_positions(pr, ME.last_anchor_index(pr)), None
 
-	def _grupo_write(self, gid: str, pos: dict, shown: dict, rodado: bool = False) -> dict:
+	def _grupo_write(self, gid: str, pos: dict, shown: dict, rodado: Optional[bool] = None) -> dict:
 		from src import mesa as ME
 		rec = ME.write_position(self.pr, gid, int(pos["l0"]), int(pos["c0"]), int(pos.get("rot") or 0),
 								wlock=self.wlock, mirror=bool(pos.get("mirror")), shown=shown, rodado=rodado)
@@ -2506,9 +2506,12 @@ class Gui:
 	def grupo_mover(self, gid: str, body: dict) -> dict:
 		"""``POST /api/grupos/{gid}/mover`` {l0, c0, rot} (Ctrl+arrastar / «Mover») or {rodar: ±90} («Rodar», Q5 b:
 		about the centre of the group, never slid): validated and appended to ``mesa.jsonl`` under the write lock, no
-		re-query, no ``board_changed`` (only ``grupos_changed``). Only a «Rodar» ({rodar}) writes ``rodado: true``
-		(correction C1): a move that carries another ``rot`` (e.g. «Levar para o lugar provável» with the candidate's
-		rotation) is not the user turning the group. Refusals: 409 with the phrase and ``motivo``."""
+		re-query, no ``board_changed`` (only ``grupos_changed``). ``rodado`` is the state of each line (correction C1,
+		F4 B4): a «Rodar» ({rodar}) writes ``rodado: true``; a «Mover» copies the group's current ``rodado`` unless the
+		body carries ``rodado`` (bool) explicitly: the undo of a «Mover» / «Rodar» is a «Mover» back to ``anterior``
+		with its ``rodado``, and «Levar para o lugar provável» sends ``rodado: false`` (the rotation is the solve's).
+		The answer carries ``anterior`` = the effective position before the write ``{l0, c0, rot, mirror, rodado}``
+		(what the GUI's undo sends back). Refusals: 409 with the phrase and ``motivo``."""
 		from src import grupos as GR
 		self._grupo_begin()
 		try:
@@ -2518,7 +2521,11 @@ class Gui:
 			cur = shown.get(gid)
 			if cur is None:
 				return {"error": "Mostra o grupo no tabuleiro primeiro.", "motivo": "nao_mostrado"}
+			rodado = body.get("rodado")
+			if rodado is not None and not isinstance(rodado, bool):
+				return {"error": "rodado = true ou false", "motivo": "pedido_invalido", "_http": 400}
 			if "rodar" in body:
+				rodado = True
 				try:
 					d = int(body["rodar"])
 				except (TypeError, ValueError):
@@ -2532,14 +2539,18 @@ class Gui:
 						   "mirror": cur["mirror"]}
 				except (KeyError, TypeError, ValueError):
 					return {"error": "mover = {l0, c0, rot}", "motivo": "pedido_invalido", "_http": 400}
-			return self._grupo_write(gid, new, shown, rodado="rodar" in body)
+			out = self._grupo_write(gid, new, shown, rodado=rodado)
+			if "error" not in out:
+				out["anterior"] = {"l0": int(cur["l0"]), "c0": int(cur["c0"]), "rot": int(cur["rot"]),
+								   "mirror": bool(cur["mirror"]), "rodado": bool(cur.get("rodado"))}
+			return out
 		finally:
 			self.wlock.release()
 
 	def grupo_fixar(self, gid: str) -> dict:
 		"""``POST /api/grupos/{gid}/fixar``: «Fixar aqui» = the ``anchor`` of today at the group's effective position
 		(:func:`src.mesa.effective_position`), with ``fonte: "manual"`` and, decided here (C1), ``rot_fonte`` =
-		``tiago`` when a valid ``mesa.jsonl`` line of the group since its last anchor / unanchor came from «Rodar»,
+		``tiago`` when the group's LAST counting ``mesa.jsonl`` line has ``rodado: true`` (state of the line, F4 B4),
 		else ``programa``; the neighbours' check of the rotation piece by piece (:func:`src.grupos.rotation_check`,
 		C2, timed apart in ``verificacao_s``) and ``confianca`` (:func:`src.grupos.confidence`). Then the incremental
 		re-query, as the ``anchor`` of ``/api/confirm``. Refused (409, C3) when the group is not shown or is

@@ -389,16 +389,26 @@ def test_line_without_log_sig_is_invalid(groups):
 	assert "log_reescrito" in mesa.MOTIVOS_LEITURA and "sem_log_sig" in mesa.MOTIVOS_LEITURA
 
 
-def test_rodado_is_written_and_read_since_the_last_anchor(groups):
+def test_rodado_is_the_state_of_the_last_line(groups):
+	"""C1 (orientador, F4 B4): ``rodado`` is the state carried by each line; the LAST counting line decides.
+	``rodado=True`` = a «Rodar»; ``None`` (default) = a «Mover»: copies the group's current state; ``False`` = explicit
+	(the undo of a «Rodar», «Levar para o lugar provável»)."""
 	pr, g1, g2, _ = groups
 	_w(pr, g1, 2, 2)
 	assert mesa.read_positions(pr)[0][g1]["rodado"] is False
 	r = _w(pr, g1, 2, 2, 90, rodado=True)
 	assert r["rodado"] is True
-	_w(pr, g1, 3, 3, 90)                                           # a later plain move keeps «rodado»
+	r = _w(pr, g1, 3, 3, 90)                                       # a plain move copies «rodado» into its line
+	assert r["rodado"] is True
 	pos = mesa.read_positions(pr)[0]
 	assert pos[g1]["rodado"] is True and (pos[g1]["l0"], pos[g1]["rot"]) == (3, 90)
 	assert mesa.effective_position(pr, g1)["rodado"] is True
+	r = _w(pr, g1, 3, 3, 0, rodado=False)                          # explicit: the undo of the «Rodar»
+	assert "rodado" not in r
+	assert mesa.effective_position(pr, g1)["rodado"] is False      # an earlier «Rodar» line no longer counts
+	r = _w(pr, g1, 4, 4, 0)                                        # copies False
+	assert "rodado" not in r and mesa.effective_position(pr, g1)["rodado"] is False
+	_w(pr, g1, 4, 4, 90, rodado=True)
 	# anchor + unanchor: the «Rodar» before it does not count any more
 	pr.anchor_section(g1, 3, 3, rot=90)
 	pr.unanchor_section(g1)
@@ -408,3 +418,15 @@ def test_rodado_is_written_and_read_since_the_last_anchor(groups):
 	assert mesa.effective_position(pr, g1)["rodado"] is False
 	_w(pr, g2, 5, 7)
 	assert mesa.effective_position(pr, g2)["rodado"] is False
+
+
+def test_rodado_old_lines_and_bad_values(groups):
+	"""A hand-written line with ``rodado`` not ``true`` counts as not turned; a refused write writes nothing."""
+	pr, g1, _, _ = groups
+	_w(pr, g1, 2, 2, 90, rodado=True)
+	n, sig = len(pr.events()), _last_log_line_sha1(pr)
+	_raw(pr, json.dumps({"gid": g1, "l0": 2, "c0": 2, "rot": 90, "t": "x", "log_n": n, "log_sig": sig,
+						 "rodado": "sim"}) + "\n")
+	assert mesa.effective_position(pr, g1)["rodado"] is False
+	assert "error" in _w(pr, g1, 99, 99, 0, rodado=True)
+	assert mesa.effective_position(pr, g1)["rodado"] is False

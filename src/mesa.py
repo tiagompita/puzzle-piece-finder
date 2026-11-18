@@ -12,15 +12,17 @@ in the progress), so it lives outside the log, in an APPEND-ONLY file like ``ove
 cell ``(l0, c0)``, ``rot`` degrees clockwise, multiple of 90). ``log_n`` = number of events of ``log.jsonl`` when the
 line was written; ``log_sig`` = sha1 (hex) of the log line of event ``log_n − 1``, the last event at that moment
 (F4 B2, decision 3 of Tiago: a log rebuilt from scratch, even of the same size or bigger, no longer has that line
-there, so the old lines stop counting by themselves). ``rodado`` (F4 B2, correction C1): the write came from
-«Rodar»; the server decides ``rot_fonte`` of «Fixar» from it, never the browser.
+there, so the old lines stop counting by themselves). ``rodado`` (F4 B2 correction C1, made the state of each line
+in F4 B4): the group's rotation at that line is the user's («Rodar» writes it, «Mover» copies it from the previous
+counting line, the undo of a «Rodar» writes the value it had before); the server decides ``rot_fonte`` of «Fixar» from
+the LAST counting line, never the browser.
 
 **Which line counts.** A line counts only if its group exists, is visible (not every piece a re-scan, ``same_as``),
 has no place now, its ``log_sig`` is the sha1 of the current log line ``log_n − 1`` (a line without ``log_sig``, or
 written against another log, does not count: reasons ``sem_log_sig`` / ``log_reescrito``), and ``log_n`` is greater
 than the 0-based index of the group's last ``section_anchored`` / ``section_unanchored`` event (a line written before
 the last anchor / unanchor is stale). The last counting line of each group wins (file order); the group is
-``rodado`` when any of its counting lines has ``rodado`` (a «Rodar» since its last anchor / unanchor). Broken lines, an incomplete last line, lines of unknown or anchored groups and invalid
+``rodado`` when that last counting line has ``rodado: true`` (absent or any other value: not turned). Broken lines, an incomplete last line, lines of unknown or anchored groups and invalid
 positions (outside the grid, ``rot`` not ×90, wrong types) are skipped and counted per reason
 (:func:`read_positions`), never an error.
 
@@ -203,12 +205,12 @@ def _read_text(fp: str) -> Optional[str]:
 def read_positions(project, index: Optional[dict] = None) -> tuple:
 	"""``(positions, aviso)``: ``positions`` = {gid: {l0, c0, rot, mirror, t, log_n}} with the last counting line of
 	each group (module docstring); ``aviso`` = {reason: count} of the skipped lines (reasons in
-	:data:`MOTIVOS_LEITURA`; only the reasons seen); each position carries ``rodado`` (a counting line of the group
-	came from «Rodar»). ``anterior_a_fixacao`` counts the normal stale lines (written
+	:data:`MOTIVOS_LEITURA`; only the reasons seen); each position carries ``rodado`` (``rodado: true`` in that last
+	counting line). ``anterior_a_fixacao`` counts the normal stale lines (written
 	before the group's last anchor / unanchor); the other reasons are anomalies. Never raises on the file's content.
 	``index``: :func:`last_anchor_index` already in hand."""
 	text = _read_text(mesa_path(project))
-	pos, aviso, rodado = {}, {}, set()
+	pos, aviso = {}, {}
 	if not text:
 		return pos, aviso
 	idx = index if index is not None else last_anchor_index(project)
@@ -240,10 +242,8 @@ def read_positions(project, index: Optional[dict] = None) -> tuple:
 		elif d["log_n"] <= (idx["last"].get(d["gid"]) or {"idx": -1})["idx"]:
 			why = "anterior_a_fixacao"
 		else:
-			if d.get("rodado") is True:
-				rodado.add(d["gid"])
 			pos[d["gid"]] = {"l0": d["l0"], "c0": d["c0"], "rot": d["rot"] % 360, "mirror": bool(d.get("mirror")),
-							 "t": d.get("t"), "log_n": d["log_n"], "rodado": d["gid"] in rodado}
+							 "t": d.get("t"), "log_n": d["log_n"], "rodado": d.get("rodado") is True}
 			continue
 		aviso[why] = aviso.get(why, 0) + 1
 	return pos, aviso
@@ -358,7 +358,7 @@ def _append_line(fp: str, rec: dict) -> None:
 
 
 def write_position(project, gid: str, l0, c0, rot=0, *, wlock, mirror: bool = False,
-				   shown: Optional[dict] = None, rodado: bool = False) -> dict:
+				   shown: Optional[dict] = None, rodado: Optional[bool] = None) -> dict:
 	"""«Mostrar no tabuleiro» / «Mover» / «Rodar»: validate (:func:`check_position`) and append one line to
 	``mesa.jsonl``; returns the line, or ``{'error': phrase, 'motivo': code, ...}`` with nothing written.
 
@@ -366,7 +366,10 @@ def write_position(project, gid: str, l0, c0, rot=0, *, wlock, mirror: bool = Fa
 	crossed by a write of the log (a «Encaixa» under the group). ``wlock`` is required: the lock object, checked to be
 	held by this thread (motivo ``sem_bloqueio`` otherwise), or ``None`` for a single-writer caller with no server
 	(tests, a CLI). This module never takes the lock itself. ``shown``: :func:`effective_positions` already in hand.
-	``rodado``: the write is a «Rodar» (the line carries ``rodado: true``, correction C1)."""
+	``rodado`` (correction C1, state of the line since F4 B4): True = a «Rodar»; None = a «Mover»: copies the group's
+	current state (its effective position's ``rodado``: the last counting line, False after an anchor / unanchor or
+	never shown); False = explicit (the undo of a «Rodar» back to an unturned state). Only ``true`` is written; the
+	returned line carries the key only when true."""
 	if wlock is not None and not _holds(wlock):
 		return _refuse("sem_bloqueio", "Erro interno: escrita na mesa sem o bloqueio de escrita.")
 	index = last_anchor_index(project)
@@ -380,6 +383,9 @@ def write_position(project, gid: str, l0, c0, rot=0, *, wlock, mirror: bool = Fa
 		   "log_sig": log_sig(index, int(index["n"]))}
 	if mirror:
 		rec["mirror"] = True
+	if rodado is None:
+		cur = shown.get(gid)
+		rodado = bool(cur and cur.get("rodado"))
 	if rodado:
 		rec["rodado"] = True
 	_append_line(mesa_path(project), rec)

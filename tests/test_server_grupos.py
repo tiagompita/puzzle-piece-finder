@@ -480,3 +480,61 @@ def test_only_rodar_marks_rodado(env):
 	assert r.json()["grupo"]["rodado"] is False and "rodado" not in r.json()["linha"]
 	r = cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90})
 	assert r.json()["grupo"]["rodado"] is True and r.json()["linha"]["rodado"] is True
+
+
+# ---------------------------------------------------------------- C1 (orientador, F4 B4): «rodado» is the state of the last line
+def _undo(cl, gid, r):
+	"""The undo of a «Mover» / «Rodar» as the GUI sends it: a «Mover» back to ``anterior`` with its ``rodado``."""
+	a = r.json()["anterior"]
+	return cl.post(f"/api/grupos/{gid}/mover", json={"l0": a["l0"], "c0": a["c0"], "rot": a["rot"], "rodado": a["rodado"]})
+
+
+def test_rodar_then_undo_then_fixar_is_programa(tmp_path):
+	gui, cl, ids = _env(tmp_path, cand1=_cand((2, 4)))
+	g1 = ids["G1"]
+	cl.post(f"/api/grupos/{g1}/mostrar", json={})
+	r = cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90})
+	assert r.status_code == 200 and r.json()["grupo"]["rodado"] is True
+	assert r.json()["anterior"] == {"l0": 2, "c0": 4, "rot": 0, "mirror": False, "rodado": False}
+	u = _undo(cl, g1, r)
+	assert u.status_code == 200, u.text
+	assert u.json()["grupo"]["rodado"] is False and u.json()["grupo"]["posicao"]["rot"] == 0
+	d = cl.post(f"/api/grupos/{g1}/fixar", json={}).json()
+	assert d["rot_fonte"] == "programa"
+
+
+def test_rodar_then_mover_then_fixar_is_tiago(tmp_path):
+	gui, cl, ids = _env(tmp_path, cand1=_cand((2, 4)))
+	g1 = ids["G1"]
+	cl.post(f"/api/grupos/{g1}/mostrar", json={})
+	assert cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90}).status_code == 200
+	r = cl.post(f"/api/grupos/{g1}/mover", json={"l0": 1, "c0": 5, "rot": 90})
+	assert r.status_code == 200, r.text
+	assert r.json()["linha"]["rodado"] is True and r.json()["grupo"]["rodado"] is True     # «Mover» copies it
+	d = cl.post(f"/api/grupos/{g1}/fixar", json={}).json()
+	assert d["rot_fonte"] == "tiago"
+
+
+def test_undo_of_a_second_rodar_keeps_tiago(tmp_path):
+	gui, cl, ids = _env(tmp_path, cand1=_cand((2, 4)))
+	g1 = ids["G1"]
+	cl.post(f"/api/grupos/{g1}/mostrar", json={})
+	assert cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90}).status_code == 200
+	r = cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90})
+	assert r.json()["anterior"]["rodado"] is True and r.json()["anterior"]["rot"] == 90
+	assert _undo(cl, g1, r).json()["grupo"]["rodado"] is True
+	assert cl.post(f"/api/grupos/{g1}/fixar", json={}).json()["rot_fonte"] == "tiago"
+
+
+def test_mover_rodado_explicit_and_invalid(env):
+	"""«Levar para o lugar provável» sends ``rodado: false`` (the rotation is the solve's); a non-bool is a 400."""
+	gui, cl, ids = env
+	g1 = ids["G1"]
+	cl.post(f"/api/grupos/{g1}/mostrar", json={})
+	assert cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90}).status_code == 200
+	r = cl.post(f"/api/grupos/{g1}/mover", json={"l0": 2, "c0": 4, "rot": 0, "rodado": "nao"})
+	assert r.status_code == 400 and r.json()["motivo"] == "pedido_invalido"
+	r = cl.post(f"/api/grupos/{g1}/mover", json={"l0": 2, "c0": 4, "rot": 0, "rodado": False})
+	assert r.status_code == 200 and r.json()["grupo"]["rodado"] is False and "rodado" not in r.json()["linha"]
+	r = cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90, "rodado": False})   # «Rodar» is always rodado
+	assert r.json()["grupo"]["rodado"] is True

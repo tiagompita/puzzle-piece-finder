@@ -721,7 +721,7 @@ Código: `src/grupos.py` (novo), `src/mesa.py` (`log_sig`, `rodado`), `src/serve
 3. **`log_sig` no `mesa.jsonl`:** sha1 da linha do evento `log_n − 1` (o último evento do log no momento da escrita). Na leitura, uma linha cujo `log_sig` não bate com a linha atual do log nessa posição não conta (motivo `log_reescrito`); uma linha sem `log_sig` também não (motivo `sem_log_sig`). Acaba o passo manual «apagar o `mesa.jsonl` depois de reconstruir o log» (o [NT] do B1 foi retirado acima).
 
 **Correções do orientador ao aprovar (orientador, aceite pelo Tiago):**
-- **C1. O `rot_fonte` é decidido pelo servidor, não pelo browser.** Uma escrita do «Rodar» no `mesa.jsonl` leva `rodado: true`; no fixar, `rot_fonte = "tiago"` se houver, para esse grupo, uma linha válida (`log_n`/`log_sig`) com `rodado` depois da última fixação ou soltura, senão `"programa"`. O corpo do pedido de fixar é ignorado. Teste: rodar → um `Gui` novo sobre o mesmo projeto (recarregar) → fixar dá `tiago`.
+- **C1. O `rot_fonte` é decidido pelo servidor, não pelo browser.** Uma escrita do «Rodar» no `mesa.jsonl` leva `rodado: true`; no fixar, `rot_fonte = "tiago"` se houver, para esse grupo, uma linha válida (`log_n`/`log_sig`) com `rodado` depois da última fixação ou soltura, senão `"programa"`. O corpo do pedido de fixar é ignorado. Teste: rodar → um `Gui` novo sobre o mesmo projeto (recarregar) → fixar dá `tiago`. *(Regra «qualquer linha desde a fixação» substituída em 2026-11-18 pela C1 do B4: decide a última linha válida.)*
 - **C2. A verificação da rotação no fixar é feita peça a peça,** só nas peças do grupo com vizinha montada fora dele; nunca `consistency.evaluate()` sobre o tabuleiro. O tempo é medido à parte (`verificacao_s`).
 - **C3. O fixar recusa** com 409 e o motivo em palavras se o grupo não estiver mostrado (`nao_mostrado`) ou estiver `sobreposto`.
 
@@ -731,9 +731,7 @@ Código: `src/grupos.py` (novo), `src/mesa.py` (`log_sig`, `rodado`), `src/serve
 - **Só o pedido `{rodar: ±90}` escreve `rodado`.** Um «Mover» com outra rotação (por exemplo «Levar para o lugar provável» com a rotação do candidato) não é o Tiago a rodar.
 - **«Rodar»** roda em torno do centro da caixa das células do grupo, arredondado para cima a meio; se não couber, «Não cabe aqui rodado: move primeiro.» com o `motivo` da recusa (nunca desliza).
 - **Posição inicial (Q3) sem candidato aceitável:** rotação 0 (a do scan), a posição válida cujo centro das células fica mais perto do centro da vista (em células), empate pela linha e depois pela coluna da âncora. «Mostrar» num grupo já mostrado não escreve e devolve onde está.
-- **`log_sig`:** sha1 dos bytes da linha sem `
-`/`
-`; log vazio = sha1 de nada. O índice incremental guarda o sha1 de cada evento e passa a comparar também os primeiros 256 bytes do log (uma reconstrução do mesmo tamanho muda o princípio).
+- **`log_sig`:** sha1 dos bytes da linha sem `\n`/`\r`; log vazio = sha1 de nada. O índice incremental guarda o sha1 de cada evento e passa a comparar também os primeiros 256 bytes do log (uma reconstrução do mesmo tamanho muda o princípio).
 - **PNG do grupo:** 96 px por largura de célula, margem transparente de meia célula, peças desenhadas por ordem de célula com «over», sem prioridade de profundidade nem sangria (é uma pré-visualização); LRU de 48 por (grupo, rotação, escala, células + `piece_asset_sig` + cordas de cada peça + `display_params`). As peças vêm de `Gui.ready` (a mesma cache do tabuleiro).
 - **Contagem:** `montar.resumo(..., grupos_soltos=)` só acrescenta a chave quando é dada (os testes existentes de `resumo` não mudam); `/api/montar.fora_da_fila.grupos_soltos = {grupos, pecas}`.
 - **SSE:** `grupos_changed` em «Mostrar», «Mover», «Fixar» e também no `anchor` / `unanchor` do `/api/confirm` (soltar).
@@ -816,7 +814,7 @@ Plano aprovado (fora do repositório, na pasta de planos do utilizador): `.claud
 3. **Os candidatos não são recalculados.** Fica no backlog: o solver tem de excluir as células colocadas pelo log.
 
 **Correções ao aprovar:**
-- **C1 (orientador, aceite pelo Tiago): o `rodado` passa a ser estado de cada linha do `mesa.jsonl`.** «Rodar» grava `rodado: true`; «Mover» copia o `rodado` da última linha válida; desfazer um «Rodar» repõe o valor anterior; no «Fixar», `rot_fonte = "tiago"` só se a **última** linha válida tiver `rodado: true`. **A implementar no início da etapa 2 pelo implementer**, em `src/mesa.py` e `src/server.py`, com testes primeiro: «rodar → desfazer → fixar» dá `programa`; «rodar → mover → fixar» dá `tiago`. Hoje (B2) o servidor ainda usa a regra anterior (linha válida com `rodado` desde a última fixação).
+- **C1 (orientador, aceite pelo Tiago): o `rodado` passa a ser estado de cada linha do `mesa.jsonl`.** «Rodar» grava `rodado: true`; «Mover» copia o `rodado` da última linha válida; desfazer um «Rodar» repõe o valor anterior; no «Fixar», `rot_fonte = "tiago"` só se a **última** linha válida tiver `rodado: true`. **Feito pelo implementer no início da etapa 2** (commit «grupos: rodado como estado da linha do mesa.jsonl», decisões abaixo).
 - **C2 (Tiago): «Mostrar no tabuleiro» não entra no desfazer.** Critério 3 de `docs/gui/redesenho/F4_PLANO.md` corrigido. Um «esconder» fica no backlog.
 
 **Decisões minhas (do helper), etapa 1:**
@@ -831,3 +829,16 @@ Plano aprovado (fora do repositório, na pasta de planos do utilizador): `.claud
 - **`/api/grupos` recarrega-se** no arranque, em `grupos_changed` e (sem esperar) depois de cada `board_changed`, uma de cada vez (um pedido a meio repete-se uma vez). [NT] custo no projeto real com 32 grupos não medido nesta etapa (o critério 13 do B5 mede o `mover`, não a recarga).
 
 **Backlog (novo):** o solver dos candidatos tem de excluir as células colocadas pelo log (decisão 3); um «esconder» do grupo (C2).
+
+## 2026-11-18 — F4 B4: revisão da etapa 1 e C1 (`rodado` como estado da linha do `mesa.jsonl`)
+
+**Decisões minhas (do implementer):**
+- **Quem copia o `rodado`: `mesa.write_position`, não o browser.** `rodado=None` (omissão) = «Mover»: copia o `rodado` da posição efetiva do grupo (a última linha válida; `false` depois de fixar/soltar ou num grupo nunca mostrado); `True` = «Rodar»; `False` explícito. A cópia faz-se dentro da mesma validação, debaixo do `wlock` do chamador. Só se escreve `rodado: true`; uma linha sem a chave (ou com outro valor) vale «não rodado». No «Fixar», `rot_fonte = "tiago"` só se a **última** linha válida tiver `rodado: true`.
+- **Como chega o desfazer: um «Mover» inverso com `rodado` explícito, sem campo `desfazer`.** `POST /api/grupos/{gid}/mover` aceita `rodado` (bool; outro tipo = 400 `pedido_invalido`; ignorado num `rodar`, que é sempre `true`) e a resposta de qualquer «Mover»/«Rodar» traz `anterior = {l0, c0, rot, mirror, rodado}` (a posição efetiva antes da escrita, lida debaixo do bloqueio). O desfazer da GUI manda `mover {l0, c0, rot, rodado}` com o `anterior`; se o lugar antigo deixou de ser válido, é recusado com a frase de sempre. É uma linha nova no `mesa.jsonl` (só acrescentar), não se apaga nada.
+- **«Levar para o lugar provável» (revisão da etapa 1, ponto 3):** num grupo já mostrado é um «Mover» com `rodado: false` (a rotação é a do candidato do solve, logo `programa`) e desfaz-se como qualquer «Mover» (pelo `anterior`). Num grupo ainda não mostrado basta o «Mostrar»: a posição inicial (Q3) é o candidato 1 quando tem margem e é válido, e o lugar provável servido é sempre esse mesmo candidato, por isso o «Mover» a seguir é redundante; esse caso não se desfaz (C2). Fica para o helper na etapa 2.
+- **Linhas antigas (B2):** um «Mover» escrito antes desta mudança não levava `rodado`; com a regra nova, «rodar → mover (antigo) → fixar» dá `programa`. Aceite: no projeto real não há `mesa.jsonl`.
+
+**Achados da revisão da etapa 1** (`8f50e28`), para o helper e o Tiago:
+- O filtro da decisão 1 está certo (todas as células do lugar numa zona com `dE_p90`; sem zonas com `rows` não filtra). Numa cópia de `projects/alpes`: os 4 lugares prováveis do B2b (G0071, G0080, G0085, G0088) estão todos na fila 17 (montanha), **0 de 4 sobrevivem**; hoje «Levar para o lugar provável» nunca aparece.
+- **Incoerência por decidir (Tiago):** o «Mostrar» (Q3) continua a pôr o grupo no candidato 1 sem filtro de zona; na cópia G0071, G0080 e G0085 aparecem exatamente no lugar que o painel diz não ser fiável. Proposta: aplicar `place_calibrated` também em `initial_position` (cai para «perto da vista»).
+- `GET /api/grupos` na cópia com os 32 grupos mostrados: 59–75 ms quente (≈ 90 % em `likely_place` → `rotation_check`), 17 kB; recarregar a cada `board_changed` é aceitável (uma leitura por escrita do Tiago, sem bloqueio).
