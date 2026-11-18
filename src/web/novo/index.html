@@ -58,6 +58,7 @@
       <g id="lyr-borda"></g>
       <g id="lyr-conhecida"></g>
       <g id="lyr-fantasma"></g>
+      <g id="lyr-grupos"></g>
       <g id="lyr-seguinte"></g>
       <g id="lyr-alvo"></g>
       <g id="lyr-achado"></g>
@@ -72,6 +73,10 @@
   </main>
 
   <aside id="panel">
+    <div id="vista-sw" class="vista-sw" role="group" aria-label="O que mostrar">
+      <button type="button" id="vista-pecas" aria-pressed="true">Peça a peça</button>
+      <button type="button" id="vista-grupos" aria-pressed="false">Grupos soltos</button>
+    </div>
     <div id="lupa-res" class="lupa-res" hidden aria-live="polite"></div>
     <section class="tab on" id="tab-montar" aria-live="polite"></section>
     <section class="tab" id="tab-pecas"></section>
@@ -98,6 +103,7 @@
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="../core.js"></script>
 <script src="../board.js"></script>
+<script src="grupos.js"></script>
 <script src="novo.js"></script>
 </body>
 </html>

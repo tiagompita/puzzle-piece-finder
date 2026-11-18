@@ -40,7 +40,7 @@ from src.state import section_cell
 
 __all__ = [
 	"footprint", "effective_position", "valid", "initial_position", "likely_place", "rotate", "sobreposto",
-	"count_loose", "margin_min", "rotation_check", "verdict", "confidence", "VIZINHAS", "NAO_CABE_RODADO",
+	"count_loose", "place_calibrated", "margin_min", "rotation_check", "verdict", "confidence", "VIZINHAS", "NAO_CABE_RODADO",
 	"AVISO_DISCORDAM", "aviso_discordam", "MARGIN_ROUND", "group_theta", "group_frame", "group_rgba", "PNG_MARGIN_CELLS",
 ]
 
@@ -161,6 +161,20 @@ def likely_place(project, gid: str, shown: Optional[dict] = None, placements: Op
 	return {"cell0": [p0["l0"], p0["c0"]], "rot": p0["rot"], "mirror": p0["mirror"],
 			"margin": round(m, 3) if math.isfinite(m) else m, "footprint": [list(c) for c in footprint(s, p0)],
 			"candidato": i0 + 1, "vizinhas": chk0["vizinhas"]}
+
+
+def place_calibrated(profile, footprint) -> bool:
+	"""True when the likely place may be served (decision 1 of Tiago, F4 B4): every cell of ``footprint`` lies in an
+	``image_zones`` zone with a calibrated ``dE_p90`` (``profile.zone_of``); a profile with no zone rows has no zones to
+	calibrate, so nothing is filtered. A filter on what is served, not on the shape or the rotation."""
+	if not profile.has_zone_rows():
+		return True
+	zones = profile.zones()
+	for l, c in footprint:
+		z = profile.zone_of(int(l), int(c))
+		if z is None or zones[z].get("dE_p90") is None:
+			return False
+	return True
 
 
 def _blocked(project, gid: str, shown: dict) -> set:

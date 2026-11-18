@@ -43,9 +43,12 @@ from test_shape import MMPP  # noqa: E402
 PSI_A, PSI_W, PSI_G = 23.0, 50.0, 12.0
 
 
-def _board_project(tmp_path, cand1=None, cand2=None):
-	"""``(project, ids)``; ``cand1`` / ``cand2``: candidate dicts of G1 / G2 (None = no candidate)."""
+def _board_project(tmp_path, cand1=None, cand2=None, zones=None):
+	"""``(project, ids)``; ``cand1`` / ``cand2``: candidate dicts of G1 / G2 (None = no candidate); ``zones``: the
+	``image_zones`` of the profile (default none: no zone rows, so no zone filter)."""
 	prof = synth.profile(rows=4, cols=6, p90=None)
+	if zones:
+		prof.image_zones = zones
 	pp = tmp_path / "puzzle.json"
 	prof.save(str(pp))
 	pr = Project.create(str(tmp_path / "proj"), str(pp))
@@ -127,6 +130,23 @@ def test_get_lists_loose_groups_with_likely_place_only_with_margin(env):
 	assert [p["id"] for p in g2["pecas"]] == sorted([ids["Y"], ids["Z"]])
 	assert all(p["lote"] == 4 and p["n_no_lote"] for p in g2["pecas"])
 	assert g2["imagem"]["url"].startswith(f"/api/grupos/{ids['G2']}.png")
+
+
+def _mk(p):
+	p.mkdir()
+	return p
+
+
+def test_likely_place_only_in_calibrated_zones(tmp_path):
+	"""Decision 1 of Tiago (B4): with image zones in the profile, the likely place is served only where every cell of
+	its footprint lies in a zone with a calibrated ``dE_p90``; elsewhere ``lugar_provavel`` is None."""
+	zones = {"alto": {"rows": [1, 2], "dE_p90": 15.0}, "baixo": {"rows": [3, 4], "dE_p90": None}}
+	gui, cl, ids = _env(tmp_path, cand1=_cand((2, 4)), cand2=_cand((3, 3), margin=2.0), zones=zones)
+	assert _grupo(cl, ids["G1"])["lugar_provavel"]["cell0"] == [2, 4]          # row 2: zone «alto», calibrated
+	assert _grupo(cl, ids["G2"])["lugar_provavel"] is None                      # rows 3-4: zone «baixo», no p90
+	# the same candidates in a profile with no zone rows (the other tests): not filtered
+	gui2, cl2, ids2 = _env(_mk(tmp_path / "sem"), cand1=_cand((2, 4)), cand2=_cand((3, 3), margin=2.0))
+	assert _grupo(cl2, ids2["G1"])["lugar_provavel"] is not None
 
 
 # ---------------------------------------------------------------- mostrar / mover: no re-query, no board_changed

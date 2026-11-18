@@ -732,7 +732,8 @@ Código: `src/grupos.py` (novo), `src/mesa.py` (`log_sig`, `rodado`), `src/serve
 - **«Rodar»** roda em torno do centro da caixa das células do grupo, arredondado para cima a meio; se não couber, «Não cabe aqui rodado: move primeiro.» com o `motivo` da recusa (nunca desliza).
 - **Posição inicial (Q3) sem candidato aceitável:** rotação 0 (a do scan), a posição válida cujo centro das células fica mais perto do centro da vista (em células), empate pela linha e depois pela coluna da âncora. «Mostrar» num grupo já mostrado não escreve e devolve onde está.
 - **`log_sig`:** sha1 dos bytes da linha sem `
-`/``; log vazio = sha1 de nada. O índice incremental guarda o sha1 de cada evento e passa a comparar também os primeiros 256 bytes do log (uma reconstrução do mesmo tamanho muda o princípio).
+`/`
+`; log vazio = sha1 de nada. O índice incremental guarda o sha1 de cada evento e passa a comparar também os primeiros 256 bytes do log (uma reconstrução do mesmo tamanho muda o princípio).
 - **PNG do grupo:** 96 px por largura de célula, margem transparente de meia célula, peças desenhadas por ordem de célula com «over», sem prioridade de profundidade nem sangria (é uma pré-visualização); LRU de 48 por (grupo, rotação, escala, células + `piece_asset_sig` + cordas de cada peça + `display_params`). As peças vêm de `Gui.ready` (a mesma cache do tabuleiro).
 - **Contagem:** `montar.resumo(..., grupos_soltos=)` só acrescenta a chave quando é dada (os testes existentes de `resumo` não mudam); `/api/montar.fora_da_fila.grupos_soltos = {grupos, pecas}`.
 - **SSE:** `grupos_changed` em «Mostrar», «Mover», «Fixar» e também no `anchor` / `unanchor` do `/api/confirm` (soltar).
@@ -804,3 +805,29 @@ Origem: o diagnóstico B2½ (`docs/diagnostico/gui/F4_ROTACAO.md`, guião `tools
 - **Lugar provável dos 32 grupos soltos:** 6 → 4 com os candidatos guardados (saem G0095 e G0096, sobre P1064).
 - **Recalculando os candidatos com o tabuleiro de hoje:** 5 (G0071, G0080, G0084, G0088, G0092), todos `sem_vizinhas`. Detalhe em `F4_ROTACAO.md` §5.
 - **Custo:** `GET /api/grupos` 60 ms quente.
+
+## 2026-11-18 — F4 B4: a GUI nova dos grupos, decisões do Tiago, correções e etapa 1 (desenho e lista)
+
+Plano aprovado (fora do repositório, na pasta de planos do utilizador): `.claude/plans/agente-implementer-skills-graphify-logical-summit.md`. O B4 faz-se em 3 etapas, cada uma com um commit e uma paragem para revisão do implementer: (1) desenho e lista, (2) mover e rodar, (3) fixar e soltar. Código da etapa 1: `src/web/novo/grupos.js` (novo), `index.html`, `novo.js`, `novo.css`, ponto 1 em `src/server.py` / `src/grupos.py`; testes `tests/test_gui_novo_f4.py` (13, os 13 falhavam antes do código) e `tests/test_server_grupos.py` (1 novo).
+
+**Do Tiago (2026-11-18):**
+1. **Lugar provável só em zonas calibradas.** O `lugar_provavel` de `GET /api/grupos` só se serve quando todas as células do lugar estão numa zona de `image_zones` com `dE_p90` calibrado (`profile.zone_of`; hoje só o céu). Nas outras zonas o painel diz «Ainda sem lugar provável fiável» e não mostra «Levar para o lugar provável». É um filtro sobre o que se serve, não mexe no critério de rotação nem na margem. Feito na etapa 1 (`grupos.place_calibrated`, chamada por `Gui._grupo_row`).
+2. **O aviso de rotação depois de fixar não nomeia a peça.** Marca na imagem do grupo a(s) peça(s) que discordam com contorno âmbar e diz «Esta peça diz outra rotação». Na GUI nova não aparece nenhum `P####`, `G####` nem «âncora» (ESPEC §6). Os ids das peças que discordam vêm na resposta do «Fixar» e a GUI usa-os só para desenhar, nunca como texto. (Etapa 3; substitui o aviso «Peça P####» da B2b.)
+3. **Os candidatos não são recalculados.** Fica no backlog: o solver tem de excluir as células colocadas pelo log.
+
+**Correções ao aprovar:**
+- **C1 (orientador, aceite pelo Tiago): o `rodado` passa a ser estado de cada linha do `mesa.jsonl`.** «Rodar» grava `rodado: true`; «Mover» copia o `rodado` da última linha válida; desfazer um «Rodar» repõe o valor anterior; no «Fixar», `rot_fonte = "tiago"` só se a **última** linha válida tiver `rodado: true`. **A implementar no início da etapa 2 pelo implementer**, em `src/mesa.py` e `src/server.py`, com testes primeiro: «rodar → desfazer → fixar» dá `programa`; «rodar → mover → fixar» dá `tiago`. Hoje (B2) o servidor ainda usa a regra anterior (linha válida com `rodado` desde a última fixação).
+- **C2 (Tiago): «Mostrar no tabuleiro» não entra no desfazer.** Critério 3 de `docs/gui/redesenho/F4_PLANO.md` corrigido. Um «esconder» fica no backlog.
+
+**Decisões minhas (do helper), etapa 1:**
+- **Onde fica o filtro da decisão 1: em `Gui._grupo_row`, não em `likely_place`.** `initial_position` («Mostrar no tabuleiro», Q3) também chama `likely_place`; filtrar lá mudaria a posição inicial, que o plano não pediu. A condição: se o perfil não tem zonas com `rows` (`has_zone_rows()` falso, como o perfil sintético dos testes), nada se filtra; com zonas, **todas** as células do lugar têm de estar em zonas com `dE_p90` não nulo.
+- **Sem gancho novo em `board.js` nesta etapa.** A camada `#lyr-grupos` desenha-se em `novo.js`/`grupos.js` na `viewBox` do tabuleiro; o toque numa célula de um grupo passa por `S.onBoardTap` (`grupoEm`). O gancho só se discute na etapa 2 (Ctrl+arrastar).
+- **O comutador «Peça a peça · N | Grupos soltos · N»** é um grupo de dois botões em `#vista-sw`, no topo do painel (fora de `#tab-montar`, por isso não se redesenha com ele), só visível no separador Montar; «Grupos soltos» ativo a violeta, «Peça a peça» a âmbar. A vista «grupos» substitui o conteúdo de `#tab-montar` (lista, painel do grupo ou o vazio «Não há grupos soltos.»); tocar num alvo ou num lugar do tabuleiro volta à vista «peça a peça».
+- **O grupo «escolhido» só existe na vista «Grupos soltos»** (Q1 b): voltar à vista «peça a peça» deixa todos os grupos mostrados com o contorno ténue. Tocar numa célula de um grupo mostrado escolhe-o (um alvo de sugestão por cima do grupo ganha o toque, como pede o plano).
+- **A sombra do grupo escolhido são as células deslocadas, não um `filter`.** Um `drop-shadow` em SVG mede-se em unidades da `viewBox` (células), não em píxeis.
+- **Peças do grupo sem saco** (as do legado, todas hoje) escrevem-se «Sem saco · peça N» (N = ordem no grupo); com saco, «Saco 4 · 3». Os chips não são botões (não há para onde ir numa peça solta). [NT] O Tiago diz se prefere outra forma.
+- **«Levar para o lugar provável»** está ligado ao `POST …/mover` existente (mostra primeiro o grupo se ainda não estava) para o botão não ficar morto; **ainda não tem desfazer**, que entra na etapa 2 com o resto dos gestos.
+- **«N em grupos soltos» no topo** lê `n_pecas` de `GET /api/grupos` (não de `/api/montar`) e só aparece com N > 0; a legenda do grupo solto só quando há algum grupo no tabuleiro.
+- **`/api/grupos` recarrega-se** no arranque, em `grupos_changed` e (sem esperar) depois de cada `board_changed`, uma de cada vez (um pedido a meio repete-se uma vez). [NT] custo no projeto real com 32 grupos não medido nesta etapa (o critério 13 do B5 mede o `mover`, não a recarga).
+
+**Backlog (novo):** o solver dos candidatos tem de excluir as células colocadas pelo log (decisão 3); um «esconder» do grupo (C2).

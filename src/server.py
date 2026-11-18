@@ -2409,6 +2409,9 @@ class Gui:
 				 for pid, rc in sorted(s.cells_local.items())]
 		sob = GR.sobreposto(pr, gid, pos, shown) if pos is not None else None
 		rot = int(pos["rot"]) if pos is not None else 0
+		lp = GR.likely_place(pr, gid, shown, self.placements())
+		if lp is not None and not GR.place_calibrated(pr.profile, lp["footprint"]):
+			lp = None                                  # decision 1 of Tiago (B4): only in zones with a calibrated dE_p90
 		fr = GR.group_frame(pr.profile, s, rot, GRUPO_PPC)
 		return {"id": gid, "kind": s.kind, "n": len(s.cells_local), "pecas": pecas,
 				"sacos": sorted({p["lote"] for p in pecas if p["lote"] is not None}),
@@ -2418,7 +2421,7 @@ class Gui:
 				"sobreposto": ({"motivo": sob["motivo"], "celula": sob.get("celula"), "texto": sob["error"]}
 							   if sob else None),
 				"rodado": bool(pos.get("rodado")) if pos is not None else False,
-				"lugar_provavel": GR.likely_place(pr, gid, shown, self.placements()),
+				"lugar_provavel": lp,
 				"imagem": {"url": f"/api/grupos/{gid}.png?rot={rot}", "ppc": GRUPO_PPC, "margem": fr["margem"],
 						   "rot": rot, "origem_local": list(fr["origem_local"]), "celulas_n": list(fr["celulas_n"])}}
 

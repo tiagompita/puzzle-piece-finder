@@ -114,7 +114,7 @@ O Montar já trata peça a peça. Os grupos que já existem (secções e blocos 
 **Funcionais [V por testes]**
 1. Os grupos mostrados desenham-se na posição efetiva: o escolhido com imagem, contorno violeta e sombra; os outros com contorno ténue (Q1 b). As peças continuam clicáveis e o alvo das sugestões desenha-se por cima.
 2. Mover (Ctrl+arrastar; botão «Mover»; no telemóvel só «Mover» … «Feito», Q6 b) anda de célula em célula. Uma posição inválida (fora da grelha, sobre uma colocada, sobre um lugar marcado cheio pelo Tiago, sobre outro grupo) volta para trás com uma frase. A posição sobrevive a recarregar e a outro browser, porque vem do `mesa.jsonl`. Mover → fixar → soltar deixa o grupo onde foi fixado, não na posição de antes.
-3. «Mostrar no tabuleiro» (Q3), Rodar (Q5 b), Fixar aqui (confirmação de um clique, Q8 a) e «Tirar o grupo inteiro do lugar» (Q10 a) desfazem-se num clique (faixa «Desfazer» e Ctrl+Z, com o pedido inverso).
+3. Rodar (Q5 b), Fixar aqui (confirmação de um clique, Q8 a) e «Tirar o grupo inteiro do lugar» (Q10 a) desfazem-se num clique (faixa «Desfazer» e Ctrl+Z, com o pedido inverso). **«Mostrar no tabuleiro» (Q3) não entra no desfazer** (correção C2 do Tiago, 2026-11-18; um «esconder» fica no backlog).
 4. Fixar = peças colocadas: o progresso sobe N, as células passam a molde e a vizinhas, e as gémeas aparecem na reconsulta. Soltar repõe tudo (`Board` igual ao de antes de fixar).
 5. Um grupo solto tem zero efeito no motor: `Board`, `fetch.json`, `/api/montar`, `board.jpg` e regiões ficam iguais antes e depois de N «Mover».
 6. As regras de rotação do §3 têm testes: `rot_fonte`; vizinhas que confirmam, discordam ou não existem; grupo de 1 peça «a confirmar» com vizinhas que discordam.

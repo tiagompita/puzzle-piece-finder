@@ -2,6 +2,10 @@
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
+## Sessão de 2026-11-18 (F4, B4 etapa 1 de 3): desenho e lista dos grupos soltos na GUI nova
+- **Feito:** `src/web/novo/grupos.js` (novo), camada `#lyr-grupos`, comutador «Peça a peça · N | Grupos soltos · N», lista com «Mostrar no tabuleiro», painel do grupo, lugar provável a tracejado, «N em grupos soltos», legenda, vazio, `sobreposto` visível, SSE `grupos_changed`; ponto 1 do Tiago no servidor (lugar provável só em zonas com `dE_p90`); `tests/test_gui_novo_f4.py` (13). Decisões 1–3 do Tiago, C1 e C2 e as minhas em `docs/decisoes.md` («F4 B4»). Ficheiro do prompt do B2b criado (reconstrução) em `docs/prompts/2026-11-18-f4-b2b-rotacao-lugar-provavel.md`.
+- **Falta (etapas 2 e 3):** Ctrl+arrastar, «Mover» … «Feito», «Rodar», «Fixar» com o aviso âmbar, «Tirar o grupo inteiro do lugar», desfazer; a etapa 2 começa pela C1 (implementer, `src/mesa.py` e `src/server.py`).
+
 ## Sessão de 2026-11-18 (F4, B2½ + B2b): correções do diagnóstico da rotação
 - **B2½ (diagnóstico, `docs/diagnostico/gui/F4_ROTACAO.md`, `tools/diagnostico/gui/f4_rotacao.py`):**
   - o «Fixar» e as Suspeitas usavam a mesma nota com entradas diferentes: re-scans (P0615), sem vizinhas do grupo, sem «explicada»;

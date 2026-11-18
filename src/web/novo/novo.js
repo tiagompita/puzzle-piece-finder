@@ -16,6 +16,8 @@ const S = {
   pendente: null,
   // F2: painel do lugar tocado (peça / lugar vazio / marcado por ti) e «Pôr uma peça à mão»
   painel: null, porMao: null,
+  // F4 B4 (grupos.js): os grupos soltos, o comutador «Peça a peça | Grupos soltos» e o grupo escolhido
+  grupos: null, gruposErro: null, vista: "pecas", grupoSel: null,
   // F2e: toque duplo no tabuleiro (board.js), só com ponteiro touch
   toqueDuplo: true,
   // F1d: as peças «por confirmar» (posição conhecida) desenham-se no lugar por omissão; o menu esconde-as
@@ -109,7 +111,7 @@ async function loadMontar() {
   drawProgress();
   renderMontar();
 }
-async function loadAll() { await loadBoard(); await loadMontar(); }
+async function loadAll() { await loadBoard(); await Promise.all([loadMontar(), loadGrupos()]); }
 
 // ------------------------------------------------------------ topo
 function drawProgress() {
@@ -118,9 +120,10 @@ function drawProgress() {
   $("#puzzle-name").textContent = m.puzzle || "Puzzle";
   document.title = `Montar · ${m.puzzle || ""}`;
   const n = m.progresso.n, t = m.total_celulas;
-  $("#progress-txt").textContent = `${n} de ${t} peças`;
+  $("#progress-txt").textContent = `${n} de ${t} peças` + gruposTopo();
   $("#pb-n").style.width = `${(100 * n / Math.max(1, t)).toFixed(2)}%`;
   $("#n-montar").textContent = m.total ? String(m.total) : "";
+  drawVistaSw();
 }
 
 // ------------------------------------------------------------ tabuleiro (camadas da casca nova)
@@ -146,6 +149,7 @@ function drawLayers() {
   if (S.showGuardadas) for (const k of b.posicoes_conhecidas) kn.append(porConfirmarEl(k));
   const g = $("#lyr-fantasma"); g.replaceChildren();
   for (const gh of S.ghosts) g.append(s("path", { d: ghostPath(gh.path, gh.cell[1] - 0.5, (gh.cell[0] - 0.5) * S.hr), class: cls("fantasma") }));
+  drawGrupos();
   drawTarget(false);
 }
 /** Peça «por confirmar»: a imagem rodada como fica (se a rotação é conhecida), ténue, e o contorno tracejado da célula. */
@@ -285,6 +289,7 @@ function drawLegend() {
     else sw.append(s("rect", { x: 0.1, y: 0.1, width: 0.8, height: 0.8, class: "lg-raster" }));
     L.append(h("span", { class: "lg", "data-legend": row.id, title: row.detalhe }, sw, row.rotulo));
   }
+  legendaGrupo(L);
 }
 S.onBoardTap = (l, c) => {
   if (S.achado) setAchado(null);          // o destaque da lupa dura até ao próximo toque no tabuleiro
@@ -295,8 +300,11 @@ S.onBoardTap = (l, c) => {
   const it = queue().find((x) => x.cell && x.cell[0] === l && x.cell[1] === c && (x === current() || fracosVisiveis()));
   if (it) {
     if (S.tab === "montar" && S.modo === "cartao" && current() === it) { centrarAlvo(it); return; }
-    porAcao(() => { S.pick = it.piece; S.modo = "cartao"; S.painel = null; if (S.tab !== "montar") showTab("montar"); renderMontar(); }); return;
+    porAcao(() => { S.pick = it.piece; S.modo = "cartao"; S.painel = null; S.vista = "pecas"; drawVistaSw(); drawGrupos(); if (S.tab !== "montar") showTab("montar"); renderMontar(); }); return;
   }
+  // F4 B4: um grupo solto no tabuleiro (por baixo dos alvos): tocar numa das suas células escolhe-o
+  const gg = grupoEm(l, c);
+  if (gg) { if (S.tab !== "montar") showTab("montar"); escolherGrupo(gg.id); return; }
   openPainel(l, c);
 };
 /** Toque no alvo do cartão atual: centra o lugar (``showCell`` forçado) e faz «localizar» piscar uma vez (``marcarLocalizar``:
@@ -381,6 +389,7 @@ function lancarSaida(el, rect) {
 function renderMontar1() {
   const T = $("#tab-montar");
   T.replaceChildren();
+  if (S.vista === "grupos") { renderGrupos(T); drawTarget(false); return; }      // F4 B4: a lista e o painel dos grupos soltos
   if (S.erro && !S.montar) {
     T.append(h("div", { class: "empty", "data-estado": "erro" }, h("strong", {}, "Não consegui ler as sugestões."), h("p", {}, S.erro),
       h("button", { class: "btn", type: "button", onclick: () => loadMontar() }, "Tentar de novo")));
@@ -639,6 +648,7 @@ function lightboxFolha(src, cap) { lightbox(src, cap); $("#lb-img").classList.re
 async function openPainel(l, c, deCartao = null) {
   if (S.tab !== "montar") showTab("montar");
   closeLupa();
+  if (S.vista !== "pecas") { S.vista = "pecas"; drawVistaSw(); drawGrupos(); }
   S.modo = "painel"; S.porMao = null;
   S.painel = { cell: [l, c], d: null, erro: null, seq: (S.painel ? S.painel.seq : 0) + 1, report: null, deCartao };
   renderMontar();
@@ -1067,6 +1077,7 @@ function openDefinicoes() {
 // ------------------------------------------------------------ separadores
 function showTab(t) {
   S.tab = t;
+  $("#vista-sw").hidden = t !== "montar";
   $$("#tabs button").forEach((b) => { const on = b.dataset.tab === t; b.classList.toggle("on", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
   $$("#panel .tab").forEach((x) => x.classList.toggle("on", x.id === `tab-${t}`));
   if (t === "importar") renderImportar();
@@ -1285,6 +1296,7 @@ function reloadNow(v) {
   reloadV = v === null ? S.ver : v; reloadT = performance.now();
   const p = (async () => {
     await Promise.all([loadBoard(), loadMontar()]);
+    loadGrupos();                                                    // F4 B4: sem esperar (sobreposto, contagens)
     if (S.modo === "painel" && !S.busy) await refreshPainel();       // F2: o painel aberto mostra o lugar de agora
   })().catch(() => { /* o próximo evento tenta de novo */ });
   reloadP = p;
@@ -1317,6 +1329,7 @@ function connectEvents() {
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) boardChanged(d.versao); });
   // o «fetch_changed» de uma escrita chega logo a seguir ao «board_changed»: a recarga dessa escrita já o cobre
   es.addEventListener("fetch_changed", () => { if (!(reloadV === S.ver && performance.now() - reloadT < 400)) scheduleReload(false); });
+  es.addEventListener("grupos_changed", () => { loadGrupos(); });
   es.addEventListener("holes_changed", () => { S.holesProgress = null; scheduleReload(false); });
   es.addEventListener("holes_progress", (e) => {
     S.holesProgress = JSON.parse(e.data);
@@ -1371,6 +1384,7 @@ function onKey(e) {
     if (!$("#lightbox").hidden) { $("#lightbox").hidden = true; return; }
     if ($("#definicoes")) { $("#definicoes").remove(); return; }
     if (S.modo === "por_mao") { cancelPorMao(); return; }            // F2: volta ao painel do lugar
+    if (S.vista === "grupos" && S.grupoSel) { voltarLista(); return; }   // F4 B4: do grupo escolhido para a lista
     if (S.modo !== "cartao") { S.modo = "cartao"; S.painel = null; renderMontar(); }
     return;
   }
@@ -1416,6 +1430,7 @@ async function boot() {
   corApply(corGet());
   initMenu();
   initPointer();
+  initVista();
   // F2c: o rótulo do alvo segue o zoom pelo caminho que board.js já usa (setView escreve a viewBox) e o tamanho do tabuleiro
   new MutationObserver(updateAlvoTag).observe(svg(), { attributes: true, attributeFilter: ["viewBox"] });
   window.addEventListener("resize", updateAlvoTag);
