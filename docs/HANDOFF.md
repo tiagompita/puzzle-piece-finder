@@ -1,12 +1,18 @@
-# HANDOFF — 2026-11-18 (F3½ feita: a pose manual nunca esconde a orientação; a seguir, o B1 da F4)
+# HANDOFF — 2026-11-18 (F4 B1 feito: `mesa.jsonl`; a seguir, o B2 da F4)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
+
+## Sessão de 2026-11-18 (F4, B1): posição livre dos grupos soltos em `mesa.jsonl`
+- **Feito:** `src/mesa.py` (novo) e `tests/test_mesa.py` (16 testes; os 16 falhavam antes do código). Sem servidor, sem GUI, sem `src/state.py` nem `ACTIONS`. Decisões do implementer em `docs/decisoes.md` (2026-11-18, «F4 B1: `mesa.jsonl`»).
+- **API:** `write_position(project, gid, l0, c0, rot, *, wlock, mirror=False, shown=None)` (valida e acrescenta; recusa com `{error, motivo, celula}`; o chamador tem o `wlock`), `read_positions(project) -> (posições, aviso por motivo)`, `effective_position` (linha → última fixação → None), `effective_positions`, `check_position`, `footprint`, `is_loose`, `last_anchor_index` (índice incremental em cache por caminho do log).
+- **Medido numa cópia de `projects/alpes`** [V]: índice a frio 4,9 ms, quente 0,13 ms (contra 20 ms de `read_log`); `read_positions` 0,65 ms com os 32 grupos mostrados; `write_position` 1,4 ms; `check_invariants` limpo.
+- **Próximo passo:** o **B2 da F4** (`src/grupos.py`, endpoints `/api/grupos*`, `fixar` com `rot_fonte` e vizinhas; `docs/gui/redesenho/F4_PLANO.md` §5). O `fixar` do B2 ancora na posição efetiva de `mesa.effective_position`; `mover`/`mostrar` chamam `write_position(..., wlock=self.wlock)` dentro do `with self.wlock`.
 
 ## Sessão de 2026-11-18 (F3½): `docs/prompts/2026-11-18-f3meio-pose-manual.md` (fechado)
 - **Regra nova (decisão do Tiago):** uma pose manual nunca esconde as suspeitas de orientação; a peça é avaliada com o `k` da pose manual. `consistency.evaluate` perdeu `incluir_pose_manual`; só o falso alarme (assinatura com a pose manual) cala uma suspeita. Substitui a regra das 45° (Q11 a da F4, item 2 do backlog de 2026-11-16). `docs/decisoes.md` (2026-11-18, F3½).
 - **Medido numa cópia** (`tools/diagnostico/reports/f3meio_pose_manual.py`) [V]: Suspeitas 18 = 18 (nenhuma nova); P0833 com a âncora antiga (rot 180) + pose +3° fica `melhor_rotacao` −90°; com a âncora certa, +5° nada e +90° sinalizada.
 - **Backlog:** P0147 tem a rotação automática errada (Δθ 90,1°) tapada pela pose manual; se a pose for limpa, a rotação errada volta. Corrigir a origem numa ronda futura.
-- **Próximo passo:** o **B1 da F4** (`docs/gui/redesenho/F4_PLANO.md`).
+- **Próximo passo:** o B1 da F4 (feito, acima).
 
 ## Sessão de 2026-11-18 (F2f): `docs/prompts/2026-11-18-f2f-sugestoes-sempre.md` (fechado)
 - **OK do Tiago da F1b à F2e** (ESPEC §7, `docs/decisoes.md`). Ronda **F2f**: as sugestões aparecem sempre no tabuleiro [V em Chromium headless; telemóvel real [NT]].
