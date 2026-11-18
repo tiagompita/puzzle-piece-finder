@@ -63,7 +63,7 @@ from src.state import SUSPECT_GRAUS
 
 __all__ = ["BETTER_FEWER_FAILS", "BETTER_COST_RATIO", "BETTER_COST_MM", "BETTER_COST_MIN_SIDES", "FAIL_COST_MM", "GRAUS",
 		   "TWIN_LOCAL_MAX_MM", "TWIN_EXCEPTIONS", "SIGNATURE_HEX", "twin_local_residual", "twin_local_residual_cached", "twin_exception", "suspect_signature",
-		   "checked_ids", "evaluate", "suspects", "summary", "suspects_near", "suspects_lines", "rot_text", "format_item",
+		   "checked_ids", "grade_at", "evaluate", "suspects", "summary", "suspects_near", "suspects_lines", "rot_text", "format_item",
 		   "format_falso", "main"]
 
 BETTER_FEWER_FAILS = 1      # an alternative is better with at least this many fewer failing sides ...
@@ -319,8 +319,8 @@ def _k_of(project, pid: str, placements: dict, cache: dict) -> Optional[int]:
 
 def _assignments(project, pid: str, k0: int, kmap: dict, mounted: dict, cell=None) -> dict:
 	"""Per assignment ``k``: ``{f_ok, fails, n_fail, n_kind, cost, n}`` against the mounted neighbours. ``cell``: the
-	cell the piece is tested at (default its own; :func:`src.grupos.rotation_check` passes the cell a loose group's
-	piece is about to get)."""
+	cell the piece is tested at (default its own; :func:`grade_at` passes it, hypothetical or not). ``kmap``: the
+	neighbours' ``k``, a dict or a callable ``k(pid)`` (None: the neighbour is not used)."""
 	from src import render
 	from src.legacy import _STEP, side_compat
 	sh = project.shape(pid)
@@ -330,12 +330,13 @@ def _assignments(project, pid: str, k0: int, kmap: dict, mounted: dict, cell=Non
 	for d in render.DIRS:
 		dl, dc = _STEP[d]
 		q = mounted.get((cell[0] + dl, cell[1] + dc))
-		if q is None or q == pid or kmap.get(q) is None:
+		kq = None if q is None or q == pid else (kmap(q) if callable(kmap) else kmap.get(q))
+		if kq is None:
 			continue
 		sq = project.shape(q)
 		if sq is None or not sq.ok or len(sq.sides) != 4:
 			continue
-		nbs.append((d, q, sq.sides[(render.DIRS.index(_OPP[d]) - kmap[q]) % 4]))
+		nbs.append((d, q, sq.sides[(render.DIRS.index(_OPP[d]) - kq) % 4]))
 	res = {}
 	for k in range(4):
 		fails, cost, n_kind = [], 0.0, 0
@@ -350,6 +351,60 @@ def _assignments(project, pid: str, k0: int, kmap: dict, mounted: dict, cell=Non
 		res[k] = dict(f_ok=bool(render._f_ok(sh, k, flat)), fails=fails, n_fail=len(fails), n_kind=n_kind,
 					  cost=float(cost), n=len(nbs))
 	return res
+
+
+def grade_at(project, pid: str, cell, k0: int, mounted: dict, k_of, memo: Optional[dict] = None) -> dict:
+	"""Orientation grade of ``pid`` at ``cell`` with the cyclic assignment ``k0``: the one criterion of the suspects
+	(:func:`evaluate`) and of «Fixar» of a loose group (:func:`src.grupos.rotation_check`, F4 B2b, decision 1 of
+	Tiago, 2026-11-18). Pure: reads shapes only.
+
+	``mounted``: ``{cell: pid}`` of the board to test against, as it is or as it would be (hypothetical cells are
+	fine; ``pid`` itself may be in it); ``k_of(q)``: the cyclic assignment of any piece of ``mounted`` (None: that
+	piece is not used as a neighbour). The 4 assignments are tested against the orthogonal neighbours of ``cell`` in
+	``mounted`` (:func:`_assignments`) and graded (:func:`_grade`). ``explicada``: the piece is ``impossivel`` with no
+	rotation of its own that fixes it, and each of its T-T / B-B sides faces a neighbour that is itself
+	``impossivel`` (graded the same way, at its cell in ``mounted``) and fixed by its own rotation: the neighbour's
+	rotation removes the conflict (:func:`evaluate` does not report it). ``memo``: a dict shared by the calls of
+	one pass over the same ``mounted`` / ``k_of`` (raw grades by (piece, cell, k)).
+
+	Returns ``{k0, res, grau, k_alt, explicada}`` (``grau`` None, ``impossivel`` or ``melhor_rotacao``).
+	"""
+	from src.legacy import _STEP
+	memo = {} if memo is None else memo
+	kmap = {}
+
+	def k_n(q):
+		if q not in kmap:
+			kmap[q] = k_of(q)
+		return kmap[q]
+
+	def raw(q, c, k):
+		key = (q, tuple(c), int(k))
+		if key not in memo:
+			res = _assignments(project, q, int(k), k_n, mounted, cell=tuple(c))
+			memo[key] = (res,) + _grade(res, int(k))
+		return memo[key]
+
+	cell = tuple(cell)
+	res, grau, ka = raw(pid, cell, k0)
+	out = dict(k0=int(k0), res=res, grau=grau, k_alt=ka, explicada=False)
+	cur = res[int(k0)]
+	kinds = [f for f in cur["fails"] if f["why"] == "kind"]
+	if grau == "impossivel" and ka is None and cur["f_ok"] and kinds:
+		ok = True
+		for f in kinds:
+			q = f["piece"]
+			kq = k_n(q)
+			if kq is None:
+				ok = False
+				break
+			dl, dc = _STEP[f["dir"]]
+			_, gq, kaq = raw(q, (cell[0] + dl, cell[1] + dc), kq)
+			if gq != "impossivel" or kaq is None:
+				ok = False
+				break
+		out["explicada"] = ok
+	return out
 
 
 def _item(project, pid: str, k0: int, res: dict, grau: str, ka: Optional[int]) -> dict:
@@ -415,9 +470,8 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 	if pieces is not None:
 		want = set(pieces)
 		ids = [pid for pid in ids if pid in want]
-	from src.legacy import _STEP
 	mounted = {tuple(p.celula): pid for pid, p in project.pieces.items() if p.estado == "colocada" and p.celula is not None}
-	cache, kmap, graded = {}, {}, {}
+	cache, kmap, memo = {}, {}, {}
 
 	def k_of(pid):
 		if pid not in kmap:
@@ -425,49 +479,23 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 			kmap[pid] = _k_of(project, pid, placements, cache) if sh is not None and sh.ok and len(sh.corners) == 4 else None
 		return kmap[pid]
 
-	def grade(pid):
-		"""``(k0, res, grau, k_alt)`` or None (no corners / no ``k``)."""
-		if pid not in graded:
-			k0 = k_of(pid)
-			if k0 is None:
-				graded[pid] = None
-			else:
-				cell = tuple(project.piece(pid).celula)
-				for dl, dc in _STEP.values():
-					q = mounted.get((cell[0] + dl, cell[1] + dc))
-					if q is not None:
-						k_of(q)
-				res = _assignments(project, pid, k0, kmap, mounted)
-				graded[pid] = (k0, res) + _grade(res, k0)
-		return graded[pid]
-
-	def explained(pid, k0, res):
-		cur = res[k0]
-		kinds = [f for f in cur["fails"] if f["why"] == "kind"]
-		if not cur["f_ok"] or not kinds:
-			return False
-		for f in kinds:
-			g = grade(f["piece"]) if project.piece(f["piece"]).estado in _STATES else None
-			if g is None or g[2] != "impossivel" or g[3] is None:
-				return False
-		return True
-
 	from src.render import manual_pose
 	with_pm = {pid for pid in ids if manual_pose(project, pid) is not None}
 	items, n_ok, n_none, n_nb, n_expl = [], 0, 0, 0, 0
 	for pid in ids:
 		if pause is not None:
 			pause()
-		g = grade(pid)
-		if g is None:
+		k0 = k_of(pid)
+		if k0 is None:
 			n_none += 1
 			continue
+		g = grade_at(project, pid, tuple(project.piece(pid).celula), k0, mounted, k_of, memo)
 		n_ok += 1
-		k0, res, grau, ka = g
+		res, grau, ka = g["res"], g["grau"], g["k_alt"]
 		n_nb += res[k0]["n"] > 0
 		if grau is None:
 			continue
-		if grau == "impossivel" and ka is None and explained(pid, k0, res):
+		if g["explicada"]:
 			n_expl += 1
 			continue
 		items.append(_item(project, pid, k0, res, grau, ka))

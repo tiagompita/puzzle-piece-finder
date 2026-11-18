@@ -14,7 +14,7 @@ The groups' pieces are scanned at the same angle (a legacy page), so their board
 rotation (``render.initial_theta``). Covers: ``GET /api/grupos`` (likely place only with margin >= ``margin_min``),
 «Mostrar» / «Mover» without re-query and without ``board_changed`` (only ``grupos_changed``), criterion 11 byte for
 byte after 10 «Mover», «Fixar» = anchor with ``fonte manual``, ``rot_fonte`` decided by the server from the
-``rodado`` lines of ``mesa.jsonl`` (C1) and the neighbours' check piece by piece (C2), the 2 refusals of C3,
+``rodado`` lines of ``mesa.jsonl`` (C1) and the neighbours' check piece by piece (C2; one criterion with the suspects since B2b), the 2 refusals of C3,
 «Tirar o grupo inteiro do lugar» leaving the group where it was anchored (Q10 a), the PNG of the group, and a
 «Encaixa» racing a «Mover» (20 runs).
 """
@@ -251,6 +251,10 @@ def test_fixar_rot_fonte_and_neighbours(tmp_path, name, monkeypatch):
 	gui, cl, ids = _env(tmp_path, cand1=cand)
 	g1, x = ids["G1"], ids["X"]
 	assert cl.post(f"/api/grupos/{g1}/mostrar", json={}).status_code == 200
+	# to the candidate's position (B2b: a candidate the neighbours contradict is no likely place, so «Mostrar» may
+	# put the group elsewhere; a «Mover» that carries a rotation is not «Rodar»)
+	r = cl.post(f"/api/grupos/{g1}/mover", json={"l0": cand["cell0"][0], "c0": cand["cell0"][1], "rot": cand["rot"]})
+	assert r.status_code == 200, r.text
 	for t in turns:
 		r = cl.post(f"/api/grupos/{g1}/mover", json={"rodar": t})
 		assert r.status_code == 200, r.text
@@ -262,6 +266,8 @@ def test_fixar_rot_fonte_and_neighbours(tmp_path, name, monkeypatch):
 	assert d["ok"] and d["rot_fonte"] == rot_fonte and d["vizinhas"] == vizinhas and d["confianca"] == confianca
 	assert d["verificacao_s"] >= 0
 	assert ("aviso" in d and "outra rotação" in d["aviso"]) == (vizinhas == "discordam")
+	if vizinhas == "discordam":                                   # B2b: the warning names the piece, not the group
+		assert d["aviso"].startswith(f"Saco 4 · nº {Project.open(gui.path).piece(x).n_no_lote}: ")
 	if vizinhas == "sem_vizinhas":
 		assert d["vizinhas_pecas"] == {x: "sem_vizinhas"}
 	else:
@@ -283,6 +289,7 @@ def test_fixar_after_reload_keeps_rot_fonte_tiago(tmp_path):
 	gui, cl, ids = _env(tmp_path, cand1=_cand((2, 4), 90))
 	g1 = ids["G1"]
 	cl.post(f"/api/grupos/{g1}/mostrar", json={})
+	assert cl.post(f"/api/grupos/{g1}/mover", json={"l0": 2, "c0": 4, "rot": 90}).status_code == 200
 	assert cl.post(f"/api/grupos/{g1}/mover", json={"rodar": -90}).status_code == 200
 	gui.stop()
 	gui2 = S.Gui(gui.path, prepare=False, use_image=False, uploads=str(tmp_path / "uploads"), log=None)
@@ -292,22 +299,34 @@ def test_fixar_after_reload_keeps_rot_fonte_tiago(tmp_path):
 	assert d["rot_fonte"] == "tiago" and d["confianca"] == "confirmado"
 
 
-def test_fixar_only_checks_pieces_with_an_outside_neighbour(tmp_path, monkeypatch):
-	"""C2: G2 at (3,3): Y has A above it (outside the group); Z has no neighbour outside the group (Y is inside)."""
+def test_fixar_grades_every_piece_it_places(tmp_path, monkeypatch):
+	"""B2b (decision 1 of Tiago): G2 at (3,3): Y has A above it (outside the group) and Z beside it; Z has only Y
+	(inside). Both are graded by ``consistency.grade_at`` (the group's own pieces are neighbours); Z cannot confirm the
+	place (no neighbour outside the group)."""
 	gui, cl, ids = _env(tmp_path, cand2=_cand((3, 3), 0))
-	checked = []
-	orig = C._assignments
+	cl.post(f"/api/grupos/{ids['G2']}/mostrar", json={})
+	from src import grupos as GR
+	checked, inside = [], threading.local()
+	orig, orig_check = C.grade_at, GR.rotation_check
 
 	def spy(project, pid, *a, **k):
-		if k.get("cell") is not None:                                 # the check of «Fixar» (not the suspects pass)
+		if getattr(inside, "on", False):                             # not the suspects pass that follows the write
 			checked.append(pid)
 		return orig(project, pid, *a, **k)
-	monkeypatch.setattr(C, "_assignments", spy)
-	cl.post(f"/api/grupos/{ids['G2']}/mostrar", json={})
+
+	def check(*a, **k):
+		inside.on = True
+		try:
+			return orig_check(*a, **k)
+		finally:
+			inside.on = False
+	monkeypatch.setattr(C, "grade_at", spy)
+	monkeypatch.setattr(GR, "rotation_check", check)
 	d = cl.post(f"/api/grupos/{ids['G2']}/fixar", json={}).json()
-	assert checked == [ids["Y"]]
+	assert checked == sorted([ids["Y"], ids["Z"]])
 	assert d["vizinhas_pecas"] == {ids["Y"]: "confirmam", ids["Z"]: "sem_vizinhas"}
 	assert d["vizinhas"] == "confirmam" and d["rot_fonte"] == "programa" and d["confianca"] == "confirmado"
+	assert d["nao_avaliadas"] == {}
 
 
 # ---------------------------------------------------------------- C3: refusals

@@ -2418,14 +2418,15 @@ class Gui:
 				"sobreposto": ({"motivo": sob["motivo"], "celula": sob.get("celula"), "texto": sob["error"]}
 							   if sob else None),
 				"rodado": bool(pos.get("rodado")) if pos is not None else False,
-				"lugar_provavel": GR.likely_place(pr, gid),
+				"lugar_provavel": GR.likely_place(pr, gid, shown, self.placements()),
 				"imagem": {"url": f"/api/grupos/{gid}.png?rot={rot}", "ppc": GRUPO_PPC, "margem": fr["margem"],
 						   "rot": rot, "origem_local": list(fr["origem_local"]), "celulas_n": list(fr["celulas_n"])}}
 
 	def grupos_json(self) -> dict:
 		"""``GET /api/grupos``: the visible loose groups (shown or not), their effective position, footprint, whether
-		they sit over a placed piece now (``sobreposto``, derived), the likely place (only with margin >=
-		``margin_min``, Q4 b), the counts and the ``mesa.jsonl`` lines skipped (``aviso``)."""
+		they sit over a placed piece now (``sobreposto``, derived), the likely place (:func:`src.grupos.likely_place`:
+		valid now, not contradicted by the neighbours, margin among those >= ``margin_min``; Q4 b, B2b), the counts and
+		the ``mesa.jsonl`` lines skipped (``aviso``)."""
 		from src import grupos as GR
 		from src import mesa as ME
 
@@ -2554,7 +2555,9 @@ class Gui:
 				return {"error": f"Não dá para fixar aqui: {sob['error'][0].lower()}{sob['error'][1:]} Move o grupo primeiro.",
 						"motivo": "sobreposto", "celula": sob.get("celula"), "causa": sob["motivo"]}
 			rot_fonte = "tiago" if pos.get("rodado") else "programa"
-			chk = GR.rotation_check(self.pr, gid, pos, placements=dict(self.placements()))
+			chk = GR.rotation_check(self.pr, gid, pos, placements=dict(self.placements()), shown=shown)
+			if "error" in chk:                         # the same rule as «sobreposto»: refused before any evaluation
+				return {"error": chk["error"], "motivo": "sobreposto", "celula": chk.get("celula"), "causa": chk["motivo"]}
 			conf = GR.confidence(rot_fonte, chk["vizinhas"])
 			meta = {"confianca": conf, "rot_fonte": rot_fonte, "vizinhas": chk["vizinhas"],
 					"vizinhas_pecas": dict(chk["pecas"])}
@@ -2567,9 +2570,9 @@ class Gui:
 				return dict(r, motivo="estado", _http=400)
 			out = dict(r, grupo=gid, posicao={k: pos[k] for k in ("l0", "c0", "rot", "mirror")}, rot_fonte=rot_fonte,
 					   vizinhas=chk["vizinhas"], vizinhas_pecas=chk["pecas"], rot_alt_deg=chk["rot_alt_deg"],
-					   confianca=conf, verificacao_s=chk["segundos"])
+					   nao_avaliadas=chk["nao_avaliadas"], confianca=conf, verificacao_s=chk["segundos"])
 			if chk["vizinhas"] == "discordam":
-				out["aviso"] = GR.AVISO_DISCORDAM
+				out["aviso"] = GR.aviso_discordam(self.pr, chk["pecas"])
 			return out
 		finally:
 			self.wlock.release()

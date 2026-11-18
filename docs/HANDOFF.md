@@ -1,6 +1,25 @@
-# HANDOFF — 2026-11-18 (F4 B2 feito: grupos no servidor, «Fixar» e rotação; a seguir, o B4 da F4)
+# HANDOFF — 2026-11-18 (F4 B2b feito: um só critério de rotação e lugar provável válido; a seguir, o B4 da F4)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
+
+## Sessão de 2026-11-18 (F4, B2½ + B2b): correções do diagnóstico da rotação
+- **B2½ (diagnóstico, `docs/diagnostico/gui/F4_ROTACAO.md`, `tools/diagnostico/gui/f4_rotacao.py`):**
+  - o «Fixar» e as Suspeitas usavam a mesma nota com entradas diferentes: re-scans (P0615), sem vizinhas do grupo, sem «explicada»;
+  - o `lugar_provavel` era servido sem validade: 8 dos 10 candidatos 1 com vizinhas estão em células ocupadas; G0095 e G0096 estão sobre P1064.
+- **B2b feito (decisões 1–3 do Tiago, `docs/decisoes.md` «F4 B2b»):**
+  - `consistency.grade_at` é o único critério de orientação, chamado pelo `evaluate` e pelo «Fixar»;
+  - o «Fixar» só avalia os membros que põe no tabuleiro, as vizinhas do grupo contam, uma posição inválida é recusada antes, e o aviso nomeia a peça;
+  - `likely_place` só aceita candidatos válidos que a forma não contradiz, com a margem recalculada; nenhum lugar com um membro impossível em todas as rotações.
+  - Testes `tests/test_grupos_criterio.py` (15, os 15 falhavam antes).
+- **Medido numa cópia** [V]:
+  - Suspeitas 18 = 18, item a item;
+  - o `evaluate` antigo e o novo dão o mesmo em 5 tabuleiros perturbados;
+  - lugares prováveis 6 → 4, e 5 com os candidatos recalculados (`tools/diagnostico/gui/f4_lugar.py`; todos `sem_vizinhas`).
+- **Para o Tiago [NT]:**
+  - as peças do legado não têm saco, por isso o aviso diz «Peça P####»;
+  - recalcular de vez os candidatos dos grupos soltos no projeto real é uma escrita no log (`section_candidates_updated`), e não foi feito.
+- **Backlog:** regra «é um re-scan» (n = 1); `anchor_section` põe um re-scan `same_as` numa célula livre (0 casos hoje).
+- **Próximo passo:** o **B4 da F4** (GUI).
 
 ## Sessão de 2026-11-18 (F4, B2): `docs/prompts/2026-11-18-f4-b2-grupos.md` (fechado)
 - **Feito (2 commits, `bf4aa8d` + o seguinte):** `src/grupos.py` (novo, puro), `log_sig` e `rodado` em `src/mesa.py`, `GET /api/grupos`, `POST /api/grupos/{gid}/mostrar|mover|fixar`, `GET /api/grupos/{gid}.png?rot=`, SSE `grupos_changed`, `fora_da_fila.grupos_soltos` em `/api/montar`. Soltar continua a ser o `unanchor` do `/api/confirm` (o grupo fica onde foi fixado, Q10 a). Nada em `src/web/`.

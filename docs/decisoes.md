@@ -742,3 +742,65 @@ Código: `src/grupos.py` (novo), `src/mesa.py` (`log_sig`, `rodado`), `src/serve
 - Critério 15: PNG do grupo de 8 peças (G0080) a frio (processo novo, módulos importados, caches vazias, ficheiros na cache do sistema) 0,36–0,40 s, mediana 0,38 s (5 processos); pico de memória a mais 43,5 MB (`tracemalloc`, 3 processos); quente 0,5–1,2 ms. A 1.ª medição tinha o `tracemalloc` ligado durante o tempo (0,93–1,28 s): descartada para o tempo.
 - Verificação peça a peça: 0,2–0,3 ms sem vizinhas; 0,7–112 ms com vizinhas (3 fixações); sozinha nos candidatos dos 32 grupos soltos, mediana 0,1 ms, máx. 255 ms (G0084, 2 peças verificadas).
 - Nos candidatos 1 dos 32 grupos soltos (de 2026-11-02), 10 têm vizinha montada fora do grupo: 9 `discordam` e 1 `confirmam` (G0049). Não verificado se esses lugares estão errados ou só desatualizados [NT].
+
+## 2026-11-18 — F4 B2b: um só critério de rotação e lugar provável válido
+
+Origem: o diagnóstico B2½ (`docs/diagnostico/gui/F4_ROTACAO.md`, guião `tools/diagnostico/gui/f4_rotacao.py`). Código: `src/consistency.py` (`grade_at`), `src/grupos.py` (`rotation_check`, `likely_place`, `aviso_discordam`), `src/server.py` (`_grupo_row`, `grupo_fixar`). Testes: `tests/test_grupos_criterio.py` (novo, 15 testes, os 15 falhavam antes do código), `tests/test_server_grupos.py` (3 testes adaptados, abaixo). Medição: `tools/diagnostico/gui/f4_lugar.py`.
+
+**Do Tiago (2026-11-18):**
+1. **Um só critério de rotação.**
+   - Uma função pura avalia uma peça numa célula e numa rotação, também hipotéticas: `consistency.grade_at`.
+   - O `evaluate` (as Suspeitas) chama-a e fica igual.
+   - O «Fixar» de um grupo chama-a só com os membros que o «Fixar» põe no tabuleiro: sem re-scans `same_as` e sem peças já colocadas.
+   - As vizinhas de dentro do grupo contam e a regra «explicada» aplica-se.
+   - O B2 fica só com a camada confirmam / inconclusivas / discordam por cima.
+   - Posição inválida → recusa antes de avaliar.
+   - O aviso nomeia a peça que discorda (saco · nº), não o grupo.
+2. **`lugar_provavel` em `GET /api/grupos`:**
+   - só candidatos válidos agora, com a margem recalculada entre os válidos e ≥ `margin_min`;
+   - nenhum lugar se algum membro der `impossivel` em todas as rotações;
+   - a imagem só desempata.
+   - **Backlog (n = 1, não implementado):** a regra «é um re-scan» (membro a ≲ 1 mm do ocupante: P0615–P0041 a 0,81 mm; G0049 P0573–P0501 a 1,27 mm fica no meio; peças diferentes a 1,96–4,95 mm).
+3. **Testes primeiro.** Os testes pedidos: um re-scan num grupo não é avaliado; um lugar ocupado nunca dá «confirmam»; o lugar provável é omitido nos casos equivalentes a G0093, G0094, G0095, G0096 e G0098; o `evaluate` fica inalterado nas Suspeitas.
+
+**Decisões minhas (do implementer):**
+- **`grade_at(project, pid, cell, k0, mounted, k_of, memo=None)`** devolve `{k0, res, grau, k_alt, explicada}`.
+  - `mounted` = `{célula: peça}` do tabuleiro a testar, real ou hipotético.
+  - `k_of(q)` = a atribuição cíclica de cada peça.
+  - A regra «explicada» avalia cada vizinha do conflito T↔T / B↔B na célula dela em `mounted`.
+  - `memo` partilha as notas de uma passagem.
+  - `consistency._assignments` aceita `kmap` como dict ou como função.
+- **«confirmam» precisa de pelo menos uma vizinha de fora do grupo.**
+  - As peças do próprio grupo podem fazer uma peça discordar, mas não confirmam onde o grupo está.
+  - Uma peça só com vizinhas do grupo e nada contra fica `sem_vizinhas`.
+  - Sem isto, um grupo de 2 peças no meio do nada dava `confirmado`.
+- **Membros fora da verificação** vão para `nao_avaliadas` com o motivo `re_scan`, `ja_colocada` ou `celula_ocupada`.
+  - Também não contam como vizinhas.
+  - Uma peça já colocada conta como vizinha, mas na célula onde está.
+- **Recusa antes de avaliar:** `rotation_check` devolve a recusa de `mesa.check_position` (`{error, motivo, celula}`). No «Fixar» fica `motivo: "sobreposto"`, como a recusa C3 que já corria antes.
+- **Aviso:** `«Saco 4 · nº 3: as peças ao lado dizem outra rotação.»`, várias peças separadas por vírgulas.
+  - Uma peça sem saco (as do legado, que hoje são todas as peças dos grupos soltos) aparece como «Peça P0905».
+  - [NT] O Tiago diz se prefere outra forma para essas.
+- **Veto «impossível em todas as rotações»:**
+  - Aplica-se quando o membro impossível aparece num candidato válido antes do lugar, pela ordem do solve. Aí a imagem pôs o grupo onde ele não pode estar, e não há lugar.
+  - Depois do lugar, esse candidato só sai das alternativas.
+  - A leitura literal (veto em qualquer candidato válido) dá os mesmos números na medição: 4 e 5 lugares.
+  - Um candidato válido com `discordam` mas com rotação alternativa (G0098) só é retirado.
+- **Margem recalculada:** só se veem os 3 candidatos guardados, e eles não estão por ordem de score (G0092: 1,88 guardada contra 2,02 entre os guardados).
+  - **Lugar = candidato 1 do solve:** a margem guardada mantém-se, porque foi medida sobre todas as colocações e tirar alternativas só a sobe.
+  - **Exceção:** se a alternativa que a definiu é um candidato guardado agora retirado (razão de scores igual à margem a ±`MARGIN_ROUND` = 0,002), vale a margem entre os guardados que ficam.
+  - **Lugar = candidato posterior:** a margem entre os guardados que ficam.
+  - **Sem alternativa distinta** (`legacy.DISTINCT_CELLS`): não há margem, logo não há lugar.
+- **«A imagem só desempata» (a minha leitura).** A forma decide quais candidatos podem ser: válidos, sem `discordam`, com o veto. A imagem só ordena os que ficam e tem de ter a margem. Nenhum candidato com vizinhas que discordam passa por ter menos ΔE.
+- **Resposta:** `lugar_provavel` acrescenta `candidato` (1–3) e `vizinhas`; o «Fixar» devolve `nao_avaliadas`.
+- **Testes existentes alterados (3, em `tests/test_server_grupos.py`):**
+  - `test_fixar_rot_fonte_and_neighbours` e `test_fixar_after_reload_keeps_rot_fonte_tiago`: um candidato que a vizinha contradiz já não é lugar provável, por isso o «Mostrar» já não o põe lá. Os testes levam o grupo ao candidato com um «Mover» com rotação, que não conta como «Rodar».
+  - `test_fixar_only_checks_pieces_with_an_outside_neighbour` passa a `test_fixar_grades_every_piece_it_places`, pela decisão 1 do Tiago.
+- **Backlog:** `state.anchor_section` põe no tabuleiro um membro `em_seccao` `same_as` cuja célula esteja livre. A verificação já não o avalia. Hoje há 0 casos (73 membros dos 32 grupos soltos, nenhum `same_as`).
+
+**Medido numa cópia de `projects/alpes`** [V]:
+- **Suspeitas 18 = 18:** lista, resumo e falsos alarmes iguais item a item.
+- **Teste de esforço:** em 5 tabuleiros perturbados (80 peças rodadas em cada um), o `evaluate` de `HEAD` e o novo dão itens e resumo iguais (600 itens, 474 `explicadas`).
+- **Lugar provável dos 32 grupos soltos:** 6 → 4 com os candidatos guardados (saem G0095 e G0096, sobre P1064).
+- **Recalculando os candidatos com o tabuleiro de hoje:** 5 (G0071, G0080, G0084, G0088, G0092), todos `sem_vizinhas`. Detalhe em `F4_ROTACAO.md` §5.
+- **Custo:** `GET /api/grupos` 60 ms quente.
