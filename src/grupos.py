@@ -14,6 +14,12 @@ holds what the server needs around it (``docs/gui/redesenho/F4_PLANO.md`` §1 «
 * :func:`sobreposto`: the stored position is no longer valid (a «Encaixa» under the shown group): derived on every
   read, never written; the group never jumps by itself;
 * :func:`count_loose`: groups and pieces of the visible loose groups (the «N em grupos soltos» of the top);
+* :func:`rotation_check` (lesson P0833, correction C2): before «Fixar» writes the anchor, each piece of the group
+  that has a mounted neighbour OUTSIDE the group is checked piece by piece with the orientation test of
+  :mod:`src.consistency` (4 cyclic assignments, :func:`src.legacy.side_compat`) at the cell and pose it is about to
+  get; never :func:`src.consistency.evaluate` over the board;
+* :func:`verdict`, :func:`confidence` (decisions 1 and 2 of Tiago, C1): the global word of the neighbours and the
+  ``confianca`` of the anchor;
 * :func:`group_rgba`: the image of the assembled group in its local frame (fixed scale per cell; poses of
   :func:`src.render.initial_theta` with a hypothetical anchor at (0, 0); crops of :func:`src.render.piece_ready`).
 """
@@ -21,6 +27,7 @@ holds what the server needs around it (``docs/gui/redesenho/F4_PLANO.md`` §1 «
 from __future__ import annotations
 
 import math
+import time
 from typing import Optional
 
 import numpy as np
@@ -30,13 +37,16 @@ from src.state import section_cell
 
 __all__ = [
 	"footprint", "effective_position", "valid", "initial_position", "likely_place", "rotate", "sobreposto",
-	"count_loose", "margin_min", "NAO_CABE_RODADO", "group_theta", "group_frame", "group_rgba", "PNG_MARGIN_CELLS",
+	"count_loose", "margin_min", "rotation_check", "verdict", "confidence", "VIZINHAS", "NAO_CABE_RODADO",
+	"AVISO_DISCORDAM", "group_theta", "group_frame", "group_rgba", "PNG_MARGIN_CELLS",
 ]
 
 footprint = mesa.footprint
 effective_position = mesa.effective_position
 
+VIZINHAS = ("confirmam", "discordam", "inconclusivas", "sem_vizinhas")
 NAO_CABE_RODADO = "Não cabe aqui rodado: move primeiro."
+AVISO_DISCORDAM = "As peças ao lado dizem outra rotação."
 PNG_MARGIN_CELLS = 0.5          # transparent margin of the group image around its cells (the tabs stick out ≈ 0.3)
 
 
@@ -174,7 +184,7 @@ def count_loose(project) -> dict:
 	return {"grupos": n_g, "pecas": n_p}
 
 
-# ---------------------------------------------------------------- pose of a group piece
+# ---------------------------------------------------------------- the rotation before «Fixar» (C2, decisions 1–2)
 def group_theta(project, pid: str, rot: int, cache: Optional[dict] = None) -> Optional[float]:
 	"""Board pose (deg) of the section piece ``pid`` under an anchor of rotation ``rot``: the rule of
 	:func:`src.render.initial_theta` for an anchored section (page rotation + body angle + ``rot``), for a group that
@@ -187,6 +197,94 @@ def group_theta(project, pid: str, rot: int, cache: Optional[dict] = None) -> Op
 		return float(rot)
 	srot = _section_rotation(project, p.seccao_id, cache if cache is not None else {})
 	return float(srot + wrap_deg(body_beta_deg(sh) - srot) + float(rot))
+
+
+def _piece_verdict(res: dict, k0: int) -> str:
+	from src import consistency as C
+	grau, _ = C._grade(res, k0)
+	if grau is not None:
+		return "discordam"
+	cur = res[k0]
+	if cur["n_fail"] == 0 and cur["f_ok"] and all(res[k]["n_fail"] > 0 or not res[k]["f_ok"]
+												  for k in range(4) if k != k0):
+		return "confirmam"
+	return "inconclusivas"
+
+
+def rotation_check(project, gid: str, pos: dict, placements: Optional[dict] = None) -> dict:
+	"""The neighbours' word on the rotation of ``gid`` at ``pos``, before it is anchored (correction C2).
+
+	Only the pieces of the group with a mounted (``colocada``) orthogonal neighbour outside the group are checked, one
+	by one: the piece's cyclic assignment ``k0`` at its future cell and pose (:func:`src.render.corner_register` with
+	:func:`group_theta`), then the 4 assignments against those neighbours (``consistency._assignments``, each neighbour
+	with its own ``k``; ``placements`` = the server's cache, a neighbour missing from it is registered on the fly).
+	Per piece: ``discordam`` (a grade of :mod:`src.consistency`: ``impossivel`` / ``melhor_rotacao``), ``confirmam``
+	(no failing side and every other assignment fails), ``inconclusivas`` (fits, but another assignment fits too, or
+	the piece has no 4 corners), ``sem_vizinhas`` (no mounted neighbour outside the group, not checked).
+
+	Returns ``{vizinhas: verdict, pecas: {pid: word}, rot_alt_deg: {pid: deg}, segundos}``."""
+	from src import consistency as C
+	from src import render
+	from src.legacy import _STEP
+	t0 = time.perf_counter()
+	s = project.sections[gid]
+	p = _pos(pos)
+	placements = {} if placements is None else placements
+	mine = {pid: section_cell(p, rc) for pid, rc in s.cells_local.items()}
+	mounted = {tuple(q.celula): qid for qid, q in project.pieces.items()
+			   if q.estado == "colocada" and q.celula is not None and qid not in mine}
+	cache, kmap, theta_cache = {}, {}, {}
+	pecas, alt = {}, {}
+	for pid in sorted(mine):
+		cell = mine[pid]
+		nbs = [mounted[(cell[0] + dl, cell[1] + dc)] for dl, dc in _STEP.values()
+			   if (cell[0] + dl, cell[1] + dc) in mounted]
+		if not nbs:
+			pecas[pid] = "sem_vizinhas"
+			continue
+		sh = project.shape(pid)
+		if sh is None or not sh.ok or len(sh.corners) != 4:
+			pecas[pid] = "inconclusivas"
+			continue
+		cr = render.corner_register(sh, project.profile, cell, group_theta(project, pid, p["rot"], theta_cache))
+		if not cr.get("ok"):
+			pecas[pid] = "inconclusivas"
+			continue
+		k0 = int(cr["k"])
+		for q in nbs:
+			if q not in kmap:
+				sq = project.shape(q)
+				kmap[q] = (C._k_of(project, q, placements, cache)
+						   if sq is not None and sq.ok and len(sq.corners) == 4 else None)
+		res = C._assignments(project, pid, k0, kmap, mounted, cell=cell)
+		if res[k0]["n"] == 0:
+			pecas[pid] = "inconclusivas"
+			continue
+		pecas[pid] = _piece_verdict(res, k0)
+		if pecas[pid] == "discordam":
+			_, ka = C._grade(res, k0)
+			if ka is not None:
+				alt[pid] = C._rot_deg(ka, k0)
+	return {"vizinhas": verdict(pecas), "pecas": pecas, "rot_alt_deg": alt,
+			"segundos": round(time.perf_counter() - t0, 4)}
+
+
+def verdict(pecas: dict) -> str:
+	"""Global word from the per-piece words: ``discordam`` if any piece disagrees, else ``confirmam`` if any
+	confirms, else ``inconclusivas`` if any was checked, else ``sem_vizinhas``."""
+	v = set(pecas.values())
+	for w in ("discordam", "confirmam", "inconclusivas"):
+		if w in v:
+			return w
+	return "sem_vizinhas"
+
+
+def confidence(rot_fonte: str, vizinhas: str) -> str:
+	"""``confianca`` of the anchor (decision 2 of Tiago): ``confirmado`` needs the rotation confirmed (``rot_fonte``
+	``tiago`` or neighbours that confirm) and no neighbour that disagrees; else ``a_confirmar`` (any group size)."""
+	if vizinhas == "discordam":
+		return "a_confirmar"
+	return "confirmado" if rot_fonte == "tiago" or vizinhas == "confirmam" else "a_confirmar"
 
 
 # ---------------------------------------------------------------- image of the group

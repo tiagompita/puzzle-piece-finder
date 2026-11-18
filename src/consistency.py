@@ -317,12 +317,14 @@ def _k_of(project, pid: str, placements: dict, cache: dict) -> Optional[int]:
 	return None if c.get("k") is None else int(c["k"])
 
 
-def _assignments(project, pid: str, k0: int, kmap: dict, mounted: dict) -> dict:
-	"""Per assignment ``k``: ``{f_ok, fails, n_fail, n_kind, cost, n}`` against the mounted neighbours."""
+def _assignments(project, pid: str, k0: int, kmap: dict, mounted: dict, cell=None) -> dict:
+	"""Per assignment ``k``: ``{f_ok, fails, n_fail, n_kind, cost, n}`` against the mounted neighbours. ``cell``: the
+	cell the piece is tested at (default its own; :func:`src.grupos.rotation_check` passes the cell a loose group's
+	piece is about to get)."""
 	from src import render
 	from src.legacy import _STEP, side_compat
 	sh = project.shape(pid)
-	cell = tuple(project.piece(pid).celula)
+	cell = tuple(project.piece(pid).celula) if cell is None else tuple(cell)
 	flat = project.profile.flat_directions(*cell)
 	nbs = []
 	for d in render.DIRS:

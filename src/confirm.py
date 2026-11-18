@@ -152,7 +152,7 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			use_image: bool = True, unplace: bool = False, theta_deg: Optional[float] = None, pose=None,
 			pose_repor: bool = False, nota: str = "", hole=None, hole_reject=None, gemea: bool = False,
 			desfaz: bool = False, undo_reject=None, clear_position: bool = False, theta_force: bool = False,
-			reposicao: bool = False) -> dict:
+			reposicao: bool = False, anchor_meta: Optional[dict] = None) -> dict:
 	"""Apply one confirmation; returns ``{messages, affected_cells, affected_pieces, entries, invariants}``
 	or ``{'error': str}`` (nothing applied in that case, except steps already logged before the error).
 
@@ -163,6 +163,9 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 	otherwise); with ``theta_force`` it wins over the list (the user's «Rodar» of «Pôr uma peça à mão», GUI nova F2,
 	ESPEC §8.7 P10b). With ``position_known`` it is the pose stored with the kept-aside position (else the list's).
 	``reposicao`` (with ``cell``): the «desfazer» of «Tirar do lugar» (informative mark on ``placed``).
+	``anchor_meta`` (with ``anchor``): ``confianca`` of the anchor (default ``confirmado``) and more keys of the anchor
+	dict (``rot_fonte``, ``vizinhas``, ``vizinhas_pecas``): the «Fixar» of a loose group (F4 B2), decided by the
+	server, never by the request body.
 	``unplace``: undo the placement of a loose piece (not of a section piece); with ``desfaz`` it is the
 	user's «desfazer» right after «Encaixa» (the confirmation stops counting, ESPEC §8.1). A piece of a twin pair also
 	takes back what its placement did to the pair (decision c of 2026-11-14): the other piece's kept-aside position
@@ -355,7 +358,9 @@ def confirm(pr, piece_id: Optional[str] = None, *, cell=None, origin: Optional[s
 			cells |= _around(pr, pc)
 		elif anchor is not None:
 			gid, l0, c0 = anchor[0], int(anchor[1]), int(anchor[2])
-			ev = pr.anchor_section(gid, l0, c0, rot=rot, mirror=mirror, fonte="manual", confianca="confirmado")
+			meta = dict(anchor_meta or {})
+			conf = meta.pop("confianca", "confirmado")
+			ev = pr.anchor_section(gid, l0, c0, rot=rot, mirror=mirror, fonte="manual", confianca=conf, extra=meta or None)
 			msgs.append(f"{gid}: «{AQUI_TXT}» em ({l0},{c0}) rot {rot} mirror {mirror}: {len(ev['placements'])} peças colocadas")
 			for c in ev["conflicts"]:
 				msgs.append(f"CONFLITO: {c['piece']} → {tuple(c['cell'])} já tem {c['occupant']} (não sobrescrito)")

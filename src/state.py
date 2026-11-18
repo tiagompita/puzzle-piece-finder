@@ -1297,11 +1297,13 @@ class Project:
 		return gid
 
 	def anchor_section(self, section_id: str, l0: int, c0: int, rot: int = 0, mirror: bool = False,
-					   fonte: str = "manual", confianca=None, margin=None) -> dict:
+					   fonte: str = "manual", confianca=None, margin=None, extra: Optional[dict] = None) -> dict:
 		"""Give board coordinates to a section; places its pieces (``fonte='legado_scan'``).
 
 		Cells already ``colocada`` by another piece are conflicts: reported in the
 		returned event (``conflicts``), never overwritten (that piece stays ``em_seccao``).
+		``extra``: more keys of the anchor dict (F4 B2: ``rot_fonte``, ``vizinhas``, ``vizinhas_pecas``); the keys
+		above always win.
 		"""
 		if section_id not in self.sections:
 			raise StateError(f"secção desconhecida {section_id}")
@@ -1312,6 +1314,7 @@ class Project:
 			raise StateError("rot tem de ser múltiplo de 90")
 		anchor = {"anchored": True, "l0": int(l0), "c0": int(c0), "rot": int(rot) % 360, "mirror": bool(mirror),
 				  "fonte": fonte, "confianca": confianca, "margin": margin}
+		anchor = dict({k: v for k, v in (extra or {}).items() if k not in anchor}, **anchor)
 		placements, conflicts = [], []
 		for pid, rc in sorted(s.cells_local.items()):
 			cell = section_cell(anchor, rc)

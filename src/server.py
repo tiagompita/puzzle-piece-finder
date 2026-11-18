@@ -2532,6 +2532,48 @@ class Gui:
 		finally:
 			self.wlock.release()
 
+	def grupo_fixar(self, gid: str) -> dict:
+		"""``POST /api/grupos/{gid}/fixar``: «Fixar aqui» = the ``anchor`` of today at the group's effective position
+		(:func:`src.mesa.effective_position`), with ``fonte: "manual"`` and, decided here (C1), ``rot_fonte`` =
+		``tiago`` when a valid ``mesa.jsonl`` line of the group since its last anchor / unanchor came from «Rodar»,
+		else ``programa``; the neighbours' check of the rotation piece by piece (:func:`src.grupos.rotation_check`,
+		C2, timed apart in ``verificacao_s``) and ``confianca`` (:func:`src.grupos.confidence`). Then the incremental
+		re-query, as the ``anchor`` of ``/api/confirm``. Refused (409, C3) when the group is not shown or is
+		``sobreposto``."""
+		from src import grupos as GR
+		self._grupo_begin()
+		try:
+			shown, bad = self._grupo_target(gid)
+			if bad:
+				return bad
+			pos = shown.get(gid)
+			if pos is None:
+				return {"error": "O grupo não está no tabuleiro: mostra-o primeiro.", "motivo": "nao_mostrado"}
+			sob = GR.sobreposto(self.pr, gid, pos, shown)
+			if sob:
+				return {"error": f"Não dá para fixar aqui: {sob['error'][0].lower()}{sob['error'][1:]} Move o grupo primeiro.",
+						"motivo": "sobreposto", "celula": sob.get("celula"), "causa": sob["motivo"]}
+			rot_fonte = "tiago" if pos.get("rodado") else "programa"
+			chk = GR.rotation_check(self.pr, gid, pos, placements=dict(self.placements()))
+			conf = GR.confidence(rot_fonte, chk["vizinhas"])
+			meta = {"confianca": conf, "rot_fonte": rot_fonte, "vizinhas": chk["vizinhas"],
+					"vizinhas_pecas": dict(chk["pecas"])}
+			activity.get("evento").info(
+				f"fixar {gid} em ({pos['l0']},{pos['c0']}) rot {pos['rot']}: rot_fonte {rot_fonte}, vizinhas "
+				f"{chk['vizinhas']}, {conf}; verificação {chk['segundos']:.3f} s")
+			r = self.confirm({"acao": "anchor", "section": gid, "cell": [pos["l0"], pos["c0"]], "rot": pos["rot"],
+							  "mirror": pos["mirror"]}, anchor_meta=meta)
+			if "error" in r:
+				return dict(r, motivo="estado", _http=400)
+			out = dict(r, grupo=gid, posicao={k: pos[k] for k in ("l0", "c0", "rot", "mirror")}, rot_fonte=rot_fonte,
+					   vizinhas=chk["vizinhas"], vizinhas_pecas=chk["pecas"], rot_alt_deg=chk["rot_alt_deg"],
+					   confianca=conf, verificacao_s=chk["segundos"])
+			if chk["vizinhas"] == "discordam":
+				out["aviso"] = GR.AVISO_DISCORDAM
+			return out
+		finally:
+			self.wlock.release()
+
 	def grupo_png(self, gid: str, rot: int = 0, ppc: Optional[float] = None) -> bytes:
 		"""``GET /api/grupos/{gid}.png?rot=``: the assembled group (:func:`src.grupos.group_rgba`, RGBA, transparent
 		around the pieces) at ``ppc`` px per cell (default :data:`GRUPO_PPC`); LRU per (group, rot, ppc, pieces'
@@ -2832,8 +2874,9 @@ class Gui:
 		finally:
 			self.wlock.release()
 
-	def confirm(self, body: dict) -> dict:
-		"""Apply one action of the GUI (see ``POST /api/confirm``)."""
+	def confirm(self, body: dict, anchor_meta: Optional[dict] = None) -> dict:
+		"""Apply one action of the GUI (see ``POST /api/confirm``). ``anchor_meta``: only from :meth:`grupo_fixar`
+		(the anchor's ``confianca`` / ``rot_fonte`` / ``vizinhas``, decided here, never by the request body)."""
 		from src.confirm import _around, confirm
 		acao = str(body.get("acao") or "")
 		pid = body.get("piece")
@@ -2889,7 +2932,7 @@ class Gui:
 				if not sec or not c0:
 					return {"error": "falta o grupo ou a célula do «É aqui»"}
 				r = confirm(pr, anchor=(sec, int(c0[0]), int(c0[1])), rot=int(body.get("rot") or 0),
-							mirror=bool(body.get("mirror")), **kw)
+							mirror=bool(body.get("mirror")), anchor_meta=anchor_meta, **kw)
 			elif acao == "unanchor":
 				if not body.get("section"):
 					return {"error": "falta a secção"}
@@ -2928,6 +2971,8 @@ class Gui:
 					  and before[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]
 					  != now[(p.celula[0] - 1) * pr.profile.cols + p.celula[1] - 1]]
 			extra = self._after_write(before, placed)
+			if acao in ("anchor", "unanchor"):
+				self.emit("grupos_changed", {"grupo": body.get("section"), "acao": acao})
 			if acao in HINT_ACTIONS:
 				# the hatch may stay the same (photo -> user): tell the clients the cell changed anyway
 				if list(hc) not in extra["celulas_mudadas"]:
@@ -4385,6 +4430,10 @@ def create_app(gui: Gui):
 	@app.post("/api/grupos/{gid}/mover")
 	async def post_grupo_mover(gid: str, request: Request):
 		return await _grupo_post(request, lambda b: gui.grupo_mover(gid, b))
+
+	@app.post("/api/grupos/{gid}/fixar")
+	async def post_grupo_fixar(gid: str, request: Request):
+		return await _grupo_post(request, lambda b: gui.grupo_fixar(gid))   # the body has no say (C1)
 
 	@app.post("/api/confirm")
 	async def post_confirm(request: Request):

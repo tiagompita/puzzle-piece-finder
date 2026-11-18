@@ -5,7 +5,7 @@ Synthetic: the 8 x 6 rot180 profile and the groups of ``tests/test_mesa.py`` (G1
 :mod:`src.mesa`), the initial position of «Mostrar no tabuleiro» (Q3: candidate 1 with margin >= ``margin_min``
 and free, else the valid position nearest the centre of the view), the validation, «Rodar» (Q5 b: no sliding,
 «Não cabe aqui rodado: move primeiro»), ``sobreposto`` (derived, never written), the count of the pieces in loose
-groups, the likely place (Q4 b) and determinism.
+groups, the likely place (Q4 b), the confidence rule (decisions 1 and 2 of Tiago) and determinism.
 """
 
 import os
@@ -186,6 +186,30 @@ def test_count_loose(proj):
 	proj.unanchor_section(g2)
 	assert GR.count_loose(proj) == {"grupos": 2, "pecas": 4}
 	assert g3 in proj.sections
+
+
+# ---------------------------------------------------------------- confidence (decisions 1 and 2 of Tiago, C1)
+@pytest.mark.parametrize("rot_fonte,vizinhas,esperado", [
+	("tiago", "confirmam", "confirmado"),
+	("tiago", "sem_vizinhas", "confirmado"),
+	("tiago", "inconclusivas", "confirmado"),
+	("tiago", "discordam", "a_confirmar"),
+	("programa", "confirmam", "confirmado"),
+	("programa", "sem_vizinhas", "a_confirmar"),
+	("programa", "inconclusivas", "a_confirmar"),
+	("programa", "discordam", "a_confirmar"),
+])
+def test_confidence_rule(rot_fonte, vizinhas, esperado):
+	assert GR.confidence(rot_fonte, vizinhas) == esperado
+
+
+def test_global_verdict():
+	assert GR.verdict({}) == "sem_vizinhas"
+	assert GR.verdict({"P1": "sem_vizinhas", "P2": "sem_vizinhas"}) == "sem_vizinhas"
+	assert GR.verdict({"P1": "sem_vizinhas", "P2": "confirmam"}) == "confirmam"
+	assert GR.verdict({"P1": "inconclusivas", "P2": "sem_vizinhas"}) == "inconclusivas"
+	assert GR.verdict({"P1": "confirmam", "P2": "inconclusivas"}) == "confirmam"
+	assert GR.verdict({"P1": "confirmam", "P2": "discordam"}) == "discordam"
 
 
 def test_nothing_is_written_by_the_pure_functions(cgroups):

@@ -1,12 +1,19 @@
-# HANDOFF — 2026-11-18 (F4 B1 feito: `mesa.jsonl`; a seguir, o B2 da F4)
+# HANDOFF — 2026-11-18 (F4 B2 feito: grupos no servidor, «Fixar» e rotação; a seguir, o B4 da F4)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
+
+## Sessão de 2026-11-18 (F4, B2): `docs/prompts/2026-11-18-f4-b2-grupos.md` (fechado)
+- **Feito (2 commits, `bf4aa8d` + o seguinte):** `src/grupos.py` (novo, puro), `log_sig` e `rodado` em `src/mesa.py`, `GET /api/grupos`, `POST /api/grupos/{gid}/mostrar|mover|fixar`, `GET /api/grupos/{gid}.png?rot=`, SSE `grupos_changed`, `fora_da_fila.grupos_soltos` em `/api/montar`. Soltar continua a ser o `unanchor` do `/api/confirm` (o grupo fica onde foi fixado, Q10 a). Nada em `src/web/`.
+- **Regras (Tiago 1–3 + C1–C3 do orientador, `docs/decisoes.md` 2026-11-18 «F4 B2»):** `rot_fonte` decidido pelo servidor (linhas `rodado` do `mesa.jsonl` desde a última fixação/soltura); a verificação da rotação é peça a peça, só peças com vizinha montada fora do grupo, antes de gravar a âncora; vizinhas que discordam dão sempre `a_confirmar`; fixar recusa (409) um grupo não mostrado ou `sobreposto`; `log_sig` acaba com o passo manual de apagar o `mesa.jsonl` depois de reconstruir o log.
+- **Medido numa cópia de `projects/alpes`** [V]: `mover` mediana 5,8 ms; `fixar` mediana 1,30 s (máx. 1,84 s); PNG do grupo de 8 peças a frio mediana 0,38 s, +43,5 MB de pico; verificação peça a peça 0,2 ms–0,26 s. Na própria âncora das 66 secções fixadas a verificação dá 59 confirmam / 5 inconclusivas / 2 discordam (P0343, falso alarme conhecido; P0615 no bloco G0051).
+- **Para o Tiago ver [NT]:** nos candidatos 1 dos grupos soltos, 9 dos 10 com vizinhas montadas «discordam» da rotação (candidatos de 2026-11-02; podem estar desatualizados). Não há GUI ainda: o B4 desenha isto.
+- **Próximo passo:** o **B4 da F4** (GUI nova, helper revisto pelo implementer nos gestos; `F4_PLANO.md` §5).
 
 ## Sessão de 2026-11-18 (F4, B1): posição livre dos grupos soltos em `mesa.jsonl`
 - **Feito:** `src/mesa.py` (novo) e `tests/test_mesa.py` (16 testes; os 16 falhavam antes do código). Sem servidor, sem GUI, sem `src/state.py` nem `ACTIONS`. Decisões do implementer em `docs/decisoes.md` (2026-11-18, «F4 B1: `mesa.jsonl`»).
 - **API:** `write_position(project, gid, l0, c0, rot, *, wlock, mirror=False, shown=None)` (valida e acrescenta; recusa com `{error, motivo, celula}`; o chamador tem o `wlock`), `read_positions(project) -> (posições, aviso por motivo)`, `effective_position` (linha → última fixação → None), `effective_positions`, `check_position`, `footprint`, `is_loose`, `last_anchor_index` (índice incremental em cache por caminho do log).
 - **Medido numa cópia de `projects/alpes`** [V]: índice a frio 4,9 ms, quente 0,13 ms (contra 20 ms de `read_log`); `read_positions` 0,65 ms com os 32 grupos mostrados; `write_position` 1,4 ms; `check_invariants` limpo.
-- **Próximo passo:** o **B2 da F4** (`src/grupos.py`, endpoints `/api/grupos*`, `fixar` com `rot_fonte` e vizinhas; `docs/gui/redesenho/F4_PLANO.md` §5). O `fixar` do B2 ancora na posição efetiva de `mesa.effective_position`; `mover`/`mostrar` chamam `write_position(..., wlock=self.wlock)` dentro do `with self.wlock`.
+- **Próximo passo:** o B2 da F4 (feito, acima).
 
 ## Sessão de 2026-11-18 (F3½): `docs/prompts/2026-11-18-f3meio-pose-manual.md` (fechado)
 - **Regra nova (decisão do Tiago):** uma pose manual nunca esconde as suspeitas de orientação; a peça é avaliada com o `k` da pose manual. `consistency.evaluate` perdeu `incluir_pose_manual`; só o falso alarme (assinatura com a pose manual) cala uma suspeita. Substitui a regra das 45° (Q11 a da F4, item 2 do backlog de 2026-11-16). `docs/decisoes.md` (2026-11-18, F3½).
