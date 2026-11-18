@@ -286,26 +286,89 @@ def test_cli_false_alarm_restore_and_list(tmp_path, capsys):
 
 
 # ---------------------------------------------------------------- pose manual (pose_set)
-def test_manual_pose_out_of_orientation_counts_unless_asked(tmp_path):
+def test_manual_pose_is_graded_with_its_own_k(tmp_path):
+    """F3½ (2026-11-18): a manual pose never hides the orientation grades; the piece is graded with the ``k``
+    of the manual pose (until then it was left out unless ``incluir_pose_manual``)."""
     from src import render as R
     pr, ids = _row_project(tmp_path, rot_b=90.0)
     b = ids["B"]
     e = R.register_piece(pr, b, art=None, image=False)
     pr.set_pose(b, e["theta_deg"], 0.2, 0.0)                     # the user keeps the wrong rotation by hand
     r = C.evaluate(pr)
-    assert r["items"] == [] and r["summary"]["n_impossivel"] == 0 and r["summary"]["n_pose_manual"] == 1
-    r2 = C.evaluate(pr, incluir_pose_manual=True)
-    assert [(x["piece"], x["grau"], x["pose_manual"]) for x in r2["items"]] == [(b, "impossivel", True)]
-    s0 = r2["items"][0]["assinatura"]
-    assert r2["summary"]["n_impossivel"] == 1 and r2["summary"]["n_pose_manual"] == 1
+    assert [(x["piece"], x["grau"], x["pose_manual"]) for x in r["items"]] == [(b, "impossivel", True)]
+    s0 = r["items"][0]["assinatura"]
+    assert r["summary"]["n_impossivel"] == 1 and r["summary"]["n_pose_manual"] == 1
     # the manual pose is in the false-alarm signature (Piece.pose_manual, rounded)
     pr.set_pose(b, e["theta_deg"], 0.4, 0.0)
-    assert C.evaluate(pr, incluir_pose_manual=True)["items"][0]["assinatura"] != s0
-    # a manual pose a quarter turn back: its k fixes B, nothing to report even when asked
+    assert C.evaluate(pr)["items"][0]["assinatura"] != s0
+    # a manual pose a quarter turn back: its k fixes B, nothing to report
     pr.set_pose(b, e["theta_deg"] - 90.0, 0.0, 0.0)
     assert R.register_piece(pr, b, art=None, image=False)["corner"]["k"] == (e["corner"]["k"] - 1) % 4
-    assert C.evaluate(pr, incluir_pose_manual=True)["items"] == []
+    assert C.evaluate(pr)["items"] == []
     pr.clear_pose(b)
     r3 = C.evaluate(pr)
     assert [x["piece"] for x in r3["items"]] == [b] and r3["summary"]["n_pose_manual"] == 0
     assert "pose_manual" not in r3["items"][0]
+
+
+def _manual(pr, pid, dtheta, dx=0.0):
+    """Set a manual pose ``dtheta`` degrees from the automatic one; return the automatic entry."""
+    from src import render as R
+    e = R.register_piece(pr, pid, art=None, image=False)
+    pr.set_pose(pid, e["theta_deg"] + dtheta, dx, 0.0)
+    return e
+
+
+def test_f3meio_small_manual_pose_on_wrong_rotation_is_flagged(tmp_path):
+    """The P0833 error of 2026-11-07: a translation-like manual pose (+3°) on a piece with the wrong rotation
+    hid it from the suspects. Now it is flagged, marked ``pose_manual``."""
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    b = ids["B"]
+    _manual(pr, b, 3.0, 0.27)
+    r = C.evaluate(pr)
+    got = [(x["piece"], x["grau"], x.get("pose_manual")) for x in r["items"]]
+    assert len(got) == 1 and got[0][0] == b and got[0][1] in ("impossivel", "melhor_rotacao") and got[0][2] is True
+    assert r["items"][0]["rot_alt_deg"] == -90 and r["summary"]["n_pose_manual"] == 1
+
+
+def test_f3meio_quarter_turn_manual_pose_on_right_rotation_is_flagged(tmp_path):
+    pr, ids = _row_project(tmp_path)
+    b = ids["B"]
+    _manual(pr, b, 90.0)
+    r = C.evaluate(pr)
+    assert [(x["piece"], x["grau"], x.get("pose_manual")) for x in r["items"]] == [(b, "impossivel", True)]
+    assert r["items"][0]["rot_alt_deg"] == -90
+
+
+def test_f3meio_small_manual_pose_on_right_rotation_is_quiet(tmp_path):
+    pr, ids = _row_project(tmp_path)
+    _manual(pr, ids["B"], 5.0)
+    r = C.evaluate(pr)
+    assert r["items"] == [] and r["summary"]["n_pose_manual"] == 1 and r["summary"]["n_verificadas"] == 3
+
+
+def test_f3meio_manual_pose_that_fixes_the_rotation_is_quiet(tmp_path):
+    from src import render as R
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    b = ids["B"]
+    e = _manual(pr, b, -90.0)
+    assert R.register_piece(pr, b, art=None, image=False)["corner"]["k"] == (e["corner"]["k"] - 1) % 4
+    r = C.evaluate(pr)
+    assert r["items"] == [] and r["summary"]["n_pose_manual"] == 1
+
+
+def test_f3meio_false_alarm_on_manual_pose_follows_the_pose(tmp_path):
+    """A false alarm still silences a suspect of a piece with a manual pose; moving the manual pose by 0.1° makes
+    the mark ``obsoleto`` and the suspect comes back."""
+    pr, ids = _row_project(tmp_path, rot_b=90.0)
+    b = ids["B"]
+    e = _manual(pr, b, 3.0)
+    it = C.evaluate(pr)["items"][0]
+    assert it["piece"] == b and it.get("pose_manual") is True
+    pr.dismiss_suspect(b, it["grau"], it["assinatura"], cell=(2, 4), nota="vi")
+    r = C.evaluate(pr)
+    assert r["items"] == [] and r["summary"]["n_falsos_alarmes"] == 1 and r["falsos_alarmes"][0]["estado"] == "ativo"
+    pr.set_pose(b, e["theta_deg"] + 3.1, 0.0, 0.0)
+    r2 = C.evaluate(pr)
+    assert [(x["piece"], x["grau"]) for x in r2["items"]] == [(b, it["grau"])]
+    assert r2["falsos_alarmes"][0]["estado"] == "obsoleto" and r2["summary"]["n_falsos_alarmes_obsoletos"] == 1

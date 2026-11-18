@@ -74,7 +74,7 @@ Registo das decisões comunicadas pelo Tiago no prompt da ronda 3 (`docs/prompts
 
 ## 2026-11-07 — pose manual: sem encaixe automático; métricas com `manual=False`
 
-**Decisão:** a pose manual (`pose_set` / `pose_cleared`, `Piece.pose_manual`) é desenhada exatamente como foi gravada: não há encaixe automático na borda nem nas vizinhas, e a relaxação não a move. As métricas de pose, de juntas e de arte (`artreg.render_board` e as ferramentas de `tools/diagnostico/{arte,render,reports,segmentacao}`) usam `register_piece(manual=False)` / `register_all(manual=False)` e dizem quantas peças com pose manual mediram com a pose automática. As Suspeitas de orientação deixam essas peças de fora por omissão (`n_pose_manual`). Uma pose dada à mão é uma correção do Tiago, não uma medição: se entrasse nas métricas, os números do registo deixavam de medir o registo.
+**Decisão:** a pose manual (`pose_set` / `pose_cleared`, `Piece.pose_manual`) é desenhada exatamente como foi gravada: não há encaixe automático na borda nem nas vizinhas, e a relaxação não a move. As métricas de pose, de juntas e de arte (`artreg.render_board` e as ferramentas de `tools/diagnostico/{arte,render,reports,segmentacao}`) usam `register_piece(manual=False)` / `register_all(manual=False)` e dizem quantas peças com pose manual mediram com a pose automática. As Suspeitas de orientação deixam essas peças de fora por omissão (`n_pose_manual`). *(Substituído em 2026-11-18, «F3½: a pose manual nunca esconde a orientação»: estas peças passam a ser avaliadas com o `k` da pose manual.)* Uma pose dada à mão é uma correção do Tiago, não uma medição: se entrasse nas métricas, os números do registo deixavam de medir o registo.
 
 **Evidência** (`docs/diagnostico/render/POSE_MANUAL.md`, cópia de `projects/alpes`):
 - **Tempo do «avaliar»:** 13–19 ms no servidor, sem encaixe nem redução de pontos.
@@ -538,7 +538,7 @@ Nenhum limiar novo no código; a proposta de mínimo de junções está no relat
 
 Saídas do diagnóstico de P0833. Uma rotação feita só pela pose manual corrige o desenho e o `consistency` mas não o molde, a gémea nem as verificações, que leem a rotação da âncora ou do log (medido na cópia: (9,2) e (8,3) ficaram `sem` com d1 2,917 / 2,859).
 1. **A pose manual serve só para ajustes finos** (por exemplo até ±15°). Uma rotação maior faz-se pela âncora ou pelo θ do log, com um botão «Rodar a peça 90°».
-2. **Uma pose manual só tira a peça das suspeitas de orientação** se o θ manual diferir do θ da âncora em menos de 45°.
+2. **Uma pose manual só tira a peça das suspeitas de orientação** se o θ manual diferir do θ da âncora em menos de 45°. *(Substituído em 2026-11-18 por «F3½: a pose manual nunca esconde a orientação».)*
 3. **Uma secção de uma só peça só fica com confiança `alta`** se a rotação for confirmada pelas vizinhas montadas (ou se houver margem entre rotações, não só entre lugares). Esta foi a origem do erro de P0833.
 
 ## 2026-11-16 — «Editar posicionamento» na GUI nova: o que se vê por omissão (Tiago; entra na F5)
@@ -672,7 +672,7 @@ Plano aprovado: [`docs/gui/redesenho/F4_PLANO.md`](gui/redesenho/F4_PLANO.md) (c
 - **Q8 a:** «Fixar o grupo de N peças aqui? Confirma na mesa que está nesta rotação.» · Fixar / Cancelar.
 - **Q9 c:** se as vizinhas discordarem da rotação, o grupo fica fixado, com o aviso «As peças ao lado dizem outra rotação», «Desfazer» e as peças nas Suspeitas. Um grupo de 1 peça fica «a confirmar» em vez de «confirmado».
 - **Q10 a:** depois de «Tirar o grupo inteiro do lugar», o grupo fica no mesmo sítio, como grupo solto.
-- **Q11 a, fora da F4:** mini-fase **F3½** antes do B1. Uma peça com pose manual só sai das suspeitas de orientação se |θ_manual − θ automático| < 45° (ângulo circular), para todas as peças. Tem prompt e commit próprios.
+- **Q11 a, fora da F4:** mini-fase **F3½** antes do B1. Uma peça com pose manual só sai das suspeitas de orientação se |θ_manual − θ automático| < 45° (ângulo circular), para todas as peças. Tem prompt e commit próprios. *(Substituído em 2026-11-18 por «F3½: a pose manual nunca esconde a orientação»: a regra das 45° não teria apanhado P0833.)*
 
 **Critérios-chave** (lista completa no §4 do plano):
 - Um grupo solto tem zero efeito no motor.
@@ -682,3 +682,16 @@ Plano aprovado: [`docs/gui/redesenho/F4_PLANO.md`](gui/redesenho/F4_PLANO.md) (c
 - 0 frames acima de 25 ms a arrastar com os 32 grupos mostrados.
 
 **Backlog (não é da F4):** no painel de um grupo cuja escolha pela energia difere da imagem (margem < 1, hoje G0049), mostrar «a imagem prefere outro lugar».
+
+## 2026-11-18 — F3½: a pose manual nunca esconde a orientação (Tiago)
+
+**Decisão do Tiago (depois da medição):** uma pose manual **nunca** esconde as suspeitas de orientação (`impossivel` / `melhor_rotacao`). A peça é avaliada com o `k` da pose manual (`corner.k` mais perto do θ manual, a rotação que se vê no tabuleiro), como qualquer outra. Para calar uma suspeita continua a haver o falso alarme, preso à assinatura, que inclui a pose manual: mudá-la torna a marca `obsoleto`. Substitui a regra de 2026-11-07 (peças com pose manual fora por omissão), o item 2 do backlog de 2026-11-16 e a Q11 a da F4 («< 45°»), que não teria apanhado P0833 (a pose dela diferia 2,9° da automática).
+
+**Código:** `consistency.evaluate` perde `incluir_pose_manual`; ficam `n_pose_manual`, `pose_manual: True` nos itens e a pose manual na assinatura. `POST /api/pieces/{id}/pose/avaliar` já avaliava assim e deixa de passar o parâmetro. Testes: 5 novos em `tests/test_consistency.py` (3 falhavam antes; os 2 que afirmam «nada» passavam já) e o antigo `test_manual_pose_out_of_orientation_counts_unless_asked` passa a `test_manual_pose_is_graded_with_its_own_k`.
+
+**Medição numa cópia de `projects/alpes`** (`tools/diagnostico/reports/f3meio_pose_manual.py`) [V]:
+- **(a) Suspeitas** com o código de `d43493d` e com o novo: 18 = 18, as mesmas (todas `recorte`), nenhuma nova; 6 peças com pose manual.
+- **(b) P0833** com G0068 em rot 180 (o estado de antes de 2026-11-16) e pose manual +3° (θ 175,9 → 178,9°): `melhor_rotacao` −90°, «−90° fica sem falhas (1 → 0)» (antes ficava escondida). Com a âncora certa (rot 90, θ 85,9°): +5° nada; +90° `melhor_rotacao` −90°.
+- **(c) As 6 peças com pose manual** (θ manual / automático / Δθ): P0133 −140,3 / −136,2 / 4,1°; P0135 −51,6 / −51,6 / 0,0°; **P0147 −90,0 / 179,9 / 90,1°**; P0177 −178,9 / −178,9 / 0,0°; P0833 88,8 / 85,9 / 2,9°; P1023 −119,1 / −119,1 / 0,0°. Só P0147 tem Δθ ≥ 45°: rodada à mão, as vizinhas concordam com a pose manual (não é suspeita), mas a rotação automática está errada.
+
+**Backlog:** P0147: rotação automática errada (90°), tapada pela pose manual. Se a pose manual for limpa (re-segmentação, rebuild_stale), a rotação errada volta. Corrigir a origem (θ do log ou da âncora) numa ronda futura.

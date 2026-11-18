@@ -1,6 +1,12 @@
-# HANDOFF — 2026-11-18 (F2f feita; OK do Tiago da F1b à F2e; próximo: o Tiago testa a F2f, depois a F4)
+# HANDOFF — 2026-11-18 (F3½ feita: a pose manual nunca esconde a orientação; a seguir, o B1 da F4)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
+
+## Sessão de 2026-11-18 (F3½): `docs/prompts/2026-11-18-f3meio-pose-manual.md` (fechado)
+- **Regra nova (decisão do Tiago):** uma pose manual nunca esconde as suspeitas de orientação; a peça é avaliada com o `k` da pose manual. `consistency.evaluate` perdeu `incluir_pose_manual`; só o falso alarme (assinatura com a pose manual) cala uma suspeita. Substitui a regra das 45° (Q11 a da F4, item 2 do backlog de 2026-11-16). `docs/decisoes.md` (2026-11-18, F3½).
+- **Medido numa cópia** (`tools/diagnostico/reports/f3meio_pose_manual.py`) [V]: Suspeitas 18 = 18 (nenhuma nova); P0833 com a âncora antiga (rot 180) + pose +3° fica `melhor_rotacao` −90°; com a âncora certa, +5° nada e +90° sinalizada.
+- **Backlog:** P0147 tem a rotação automática errada (Δθ 90,1°) tapada pela pose manual; se a pose for limpa, a rotação errada volta. Corrigir a origem numa ronda futura.
+- **Próximo passo:** o **B1 da F4** (`docs/gui/redesenho/F4_PLANO.md`).
 
 ## Sessão de 2026-11-18 (F2f): `docs/prompts/2026-11-18-f2f-sugestoes-sempre.md` (fechado)
 - **OK do Tiago da F1b à F2e** (ESPEC §7, `docs/decisoes.md`). Ronda **F2f**: as sugestões aparecem sempre no tabuleiro [V em Chromium headless; telemóvel real [NT]].
@@ -38,7 +44,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 - **O que o Tiago tem de ver [NT]:** a F2d no PC e no telemóvel. O rótulo a 390 px, «Ver lugar» e o menu a fechar por «Fechar»/Esc.
 - **Backlog por decidir** (`docs/decisoes.md`, 2026-11-16):
   - a pose manual só para ajustes até ±15°; rotações maiores com «Rodar a peça 90°» pela âncora;
-  - uma pose manual só esconde a suspeita abaixo de 45° face à âncora;
+  - uma pose manual só esconde a suspeita abaixo de 45° face à âncora (substituído pela F3½ de 2026-11-18: nunca esconde);
   - uma secção de uma só peça só `alta` com a rotação confirmada pelas vizinhas;
   - o «Editar posicionamento» na F5: sem contornos por omissão, «Mostrar contornos» desligado (proposta minha, a confirmar na maquete), folgas como números.
 - **Por gravar no git:** as alterações do Tiago em `projects/alpes` (log, overrides, secção G0068, reports).

@@ -3056,7 +3056,7 @@ class Gui:
 		worst = max(vals) if vals else None
 		pl_all = dict(self._susp_placements())
 		pl_all.update(pl)
-		r = consistency.evaluate(pr, pl_all, pieces=[pid], dismissed={}, incluir_pose_manual=True)
+		r = consistency.evaluate(pr, pl_all, pieces=[pid], dismissed={})
 		it = next((x for x in r["items"] if x["piece"] == pid and x["grau"] in ("impossivel", "melhor_rotacao")), None)
 		cons = ({"grau": None, "falhas": [], "texto": "sem falhas de orientação"} if it is None
 				else {"grau": it["grau"], "falhas": it["falhas"], "texto": it["texto"]})

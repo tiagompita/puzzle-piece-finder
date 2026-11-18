@@ -10,7 +10,7 @@ O Montar já trata peça a peça. Os grupos que já existem (secções e blocos 
 
 **Margem [V, 2026-11-18]:** `margin` = (menor score de imagem entre as alternativas distintas) ÷ (score de imagem do candidato escolhido pela energia), calculada em `legacy._decide`. Uma margem abaixo de 1 não é um bug de ordenação: quer dizer que a energia escolheu um lugar com pior imagem. Só G0049 está nesse caso (0,874), e os seus candidatos 1 e 2 já estão ocupados por peças do legado.
 
-**Pré-requisito: a F3½** (a pose manual > 45° não esconde a suspeita, para todas as peças, Q11 a) faz-se e fecha antes do B1. Tem plano e commit próprios e fica fora deste plano.
+**Pré-requisito: a F3½** (uma pose manual nunca esconde a suspeita de orientação, para todas as peças; substitui a regra «> 45°» da Q11 a) faz-se e fecha antes do B1. Tem plano e commit próprios e fica fora deste plano. *(Feita em 2026-11-18, `docs/decisoes.md`.)*
 
 ---
 

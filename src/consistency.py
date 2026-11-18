@@ -37,6 +37,9 @@ itself is a data change (log / section anchor) after a physical check.
 Poses: ``placements`` (``{pid: entry}`` as :func:`src.render.register_piece` returns, e.g. the
 server's cache of ``render/placements.json``); a piece missing from it is registered on the fly
 without the image (``register_piece(image=False)``, about 30 ms each) and added to the dict.
+A piece with a manual pose (:meth:`src.state.Project.set_pose`) is graded with the ``k`` of that pose, the
+rotation seen on the board: a manual pose never hides an orientation suspect (F3½, 2026-11-18); only a false
+alarm does.
 
 False alarms (docs/diagnostico/reports/FALSOS_ALARMES.md): the user can mark a suspect ``(piece, grau)`` as a
 false alarm (:meth:`src.state.Project.dismiss_suspect`, event ``suspect_dismissed``). The mark carries the
@@ -374,7 +377,7 @@ def _item(project, pid: str, k0: int, res: dict, grau: str, ka: Optional[int]) -
 
 
 def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismissed: Optional[dict] = None,
-			 incluir_falsos: bool = False, incluir_pose_manual: bool = False, pause=None) -> dict:
+			 incluir_falsos: bool = False, pause=None) -> dict:
 	"""``{summary, items, falsos_alarmes}``: :func:`summary` and :func:`suspects` of one pass (see the module
 	docstring).
 
@@ -395,12 +398,12 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 	is reported again) or ``sem_suspeita`` (not flagged with that grade now; the mark waits).
 	``summary`` adds ``n_falsos_alarmes`` (active) and ``n_falsos_alarmes_obsoletos``.
 
-	Manual pose (``Piece.pose_manual``, :func:`src.render.manual_pose`): the user placed the piece by hand, so
-	by default its orientation grades (``impossivel`` / ``melhor_rotacao``) are not reported nor counted (as
-	``recorte`` leaves out manual contours); ``n_pose_manual`` counts the checked pieces with one. With
-	``incluir_pose_manual`` they are graded with the ``k`` of the manual pose (``corner.k`` of its entry) and
-	reported. Every item of such a piece carries ``pose_manual: True``. As a neighbour, a piece always counts
-	with its effective pose (the manual one).
+	Manual pose (``Piece.pose_manual``, :func:`src.render.manual_pose`): a manual pose never hides the
+	orientation grades (F3½, 2026-11-18, docs/decisoes.md: a translation-only manual pose had hidden the wrong
+	rotation of P0833). Such a piece is graded with the ``k`` of the manual pose (``corner.k`` of its entry, the
+	rotation seen on the board), like any other; every item of it carries ``pose_manual: True``, the manual
+	pose is in its signature (a false alarm silences it until the pose changes) and ``n_pose_manual`` counts
+	the checked pieces with one. As a neighbour, a piece always counts with its effective pose (the manual one).
 
 	``pause``: a callable run before each piece (it may block: the server's background pass yields to the GUI's
 	detail and «verificar» requests, 2026-11-15 (b)); the result does not change with it.
@@ -460,7 +463,7 @@ def evaluate(project, placements: Optional[dict] = None, *, pieces=None, dismiss
 		n_ok += 1
 		k0, res, grau, ka = g
 		n_nb += res[k0]["n"] > 0
-		if grau is None or (pid in with_pm and not incluir_pose_manual):
+		if grau is None:
 			continue
 		if grau == "impossivel" and ka is None and explained(pid, k0, res):
 			n_expl += 1
