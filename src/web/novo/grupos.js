@@ -240,7 +240,7 @@ function entrarMover(gid) {
 /** Sair do «Mover» sem gravar: o grupo volta à posição gravada. */
 function cancelarMover() {
   if (!S.mover) return;
-  S.mover = null;
+  S.mover = null; arrasto = null;
   drawGrupos(); renderMontar();
 }
 /** «Feito»: grava a posição pendente (uma só escrita); sem deslocamento, só sai do modo. */
@@ -285,7 +285,7 @@ function grupoVisivelEm(l, c) {
   return G.grupos.find(nele) || null;
 }
 
-let arrasto = null;
+let arrasto = null, abandonarArrasto = () => {};
 function initArrasto() {
   const noTabuleiro = (e) => { const sv = svg(); return !!sv && (e.target === sv || sv.contains(e.target)); };
   const aplicar = () => {
@@ -297,7 +297,11 @@ function initArrasto() {
   // captura em janela: corre antes do ``pointerdown`` de board.js e, ao parar a propagação, o pan nem arranca
   window.addEventListener("pointerdown", (e) => {
     if (!noTabuleiro(e)) return;
-    if (arrasto) { e.stopPropagation(); e.preventDefault(); return; }       // um 2.º dedo durante o arrasto não faz pinça
+    // um dedo primário novo com um arrasto por acabar: o ``pointerup`` do anterior perdeu-se; repõe o grupo e segue (M3)
+    if (e.pointerType === "touch" && e.isPrimary && arrasto && arrasto.id !== e.pointerId) abandonarArrasto();
+    if (arrasto) { e.stopPropagation(); e.preventDefault(); return; }       // um 2.º ponteiro durante o arrasto não faz pinça
+    if (e.pointerType === "touch" && !e.isPrimary) return;                 // um 2.º dedo é do board.js (pinça), nunca arrasto (M2)
+    if (S.gesto) return;                                                   // o board.js já tem um gesto em curso
     if (e.pointerType === "mouse" && e.button !== 0) return;
     const ctrl = e.pointerType === "mouse" && (e.ctrlKey || e.metaKey);
     if (!ctrl && !S.mover) return;
@@ -305,6 +309,7 @@ function initArrasto() {
     const g = grupoVisivelEm(Math.floor(p.y / S.hr) + 1, Math.floor(p.x) + 1);
     if (!g || (S.mover && g.id !== S.mover.gid)) return;                    // fora do grupo: o tabuleiro faz o que faz sempre
     e.stopPropagation(); e.preventDefault();
+    if (S.busy) return;                                                    // a gravar: nem arranca (M4)
     try { svg().setPointerCapture(e.pointerId); } catch (err) { /* o ponteiro já acabou */ }
     if (!S.mover && (S.vista !== "grupos" || S.grupoSel !== g.id)) escolherGrupo(g.id);   // o escolhido é o que leva a imagem
     const [dl, dc] = pendente(g.id);
@@ -320,6 +325,13 @@ function initArrasto() {
     a.dl = dl; a.dc = dc;
     aplicar();
   });
+  abandonarArrasto = () => {
+    const a = arrasto;
+    if (!a) return;
+    arrasto = null;
+    const el = a.el && a.el.isConnected ? a.el : $(`#lyr-grupos [data-grupo="${a.gid}"]`);
+    if (el) { el.classList.remove("invalido"); deslocar(el, a.base[0], a.base[1]); }
+  };
   const fim = (e) => {
     const a = arrasto;
     if (!a || e.pointerId !== a.id) return;
@@ -328,19 +340,24 @@ function initArrasto() {
     const el = a.el && a.el.isConnected ? a.el : $(`#lyr-grupos [data-grupo="${a.gid}"]`);
     if (el) el.classList.remove("invalido");
     const g = grupo(a.gid);
-    if (e.type === "pointercancel" || !g || (a.dl === a.base[0] && a.dc === a.base[1])) {       // sem movimento (ou cancelado): fica como estava
+    if (e.type !== "pointerup" || !g || (a.dl === a.base[0] && a.dc === a.base[1])) {       // sem movimento (ou cancelado): fica como estava
       deslocar(el, a.base[0], a.base[1]);
       return;
     }
     const porque = motivoNaoCabe(a.gid, a.dl, a.dc);
     if (porque) { deslocar(el, a.base[0], a.base[1]); S.grupoAviso = porque; toast(porque, true); if (S.vista === "grupos") renderMontar(); return; }
+    if (S.busy) { deslocar(el, a.base[0], a.base[1]); toast("Espera um momento…", true); return; }   // a gravar outra coisa (M4)
     S.grupoAviso = null;
-    if (a.modo) { S.mover.dl = a.dl; S.mover.dc = a.dc; return; }           // «Mover»: fica pendente até ao «Feito»
+    if (a.modo) {                                                           // «Mover»: fica pendente até ao «Feito»
+      if (S.mover && S.mover.gid === a.gid) { S.mover.dl = a.dl; S.mover.dc = a.dc; } else deslocar(el, 0, 0);   // o modo acabou a meio (M1)
+      return;
+    }
     const pos = g.posicao;
     gravarGrupo(a.gid, { l0: pos.l0 + a.dl, c0: pos.c0 + a.dc, rot: pos.rot }, "Grupo movido.");
   };
   window.addEventListener("pointerup", fim);
   window.addEventListener("pointercancel", fim);
+  window.addEventListener("lostpointercapture", fim);                       // tratado como cancelamento (M3)
 }
 function grupoRow(g) {
   const sacos = g.sacos || [];

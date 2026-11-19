@@ -511,8 +511,8 @@ def test_mover_feito_com_toque_cdp(gr, browser):
 		assert pg.evaluate("S.vb") == vb0                                  # um dedo no grupo nao faz pan
 		assert _movers(reqs) == []
 		assert pg.evaluate("JSON.stringify(S.mover)") == '{"gid":"%s","dl":1,"dc":1}' % ids["G1"]
-		# Depois de um arrasto por CDP o Chromium headless deixa de gerar ``click`` nos toques seguintes (medido sem nada deste
-		# codigo: um pan do tabuleiro por CDP seguido de ``tap`` num botao nao da ``click``); «Feito» e por isso um clique.
+		# Do harness, nao do codigo (o revisor reproduziu-o numa pagina em branco): depois de um arrasto por CDP perde-se o 1.o
+		# toque seguinte (o 2.o ``tap()`` ja da ``click``); «Feito» e por isso um clique.
 		pg.locator("#g-feito").click()
 		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 3 && !S.busy", arg=ids["G1"], timeout=10_000)
 		assert _grupo_api(url, ids["G1"])["posicao"]["c0"] == 5
@@ -663,7 +663,7 @@ def test_criterio_14_arrastar_com_32_grupos_sem_frames_lentos(gr, browser):
 		g["id"] = f"G{9000 + i}"
 		l, c = 1 + (i % 4), 1 + (i // 4) % 6
 		g["posicao"] = {"l0": l, "c0": c, "rot": 0, "mirror": False, "origem": "mesa"}
-		g["footprint"] = [[l, c]]
+		g["footprint"] = [[l, c], [l, c + 1]] if i % 2 else [[l, c]]            # metade dos grupos com mais de uma celula
 		g["mostrado"], g["sobreposto"], g["lugar_provavel"] = True, None, None
 		grupos.append(g)
 	grupos[0]["id"] = ids["G1"]
@@ -685,8 +685,8 @@ def test_criterio_14_arrastar_com_32_grupos_sem_frames_lentos(gr, browser):
 		pg.keyboard.down("Control")
 		pg.mouse.move(a["x"], a["y"])
 		pg.mouse.down()
-		for i in range(1, 61):
-			pg.mouse.move(a["x"] + 3 * i, a["y"] + 2 * i)
+		for i in range(1, 61):                                              # passos de ~30 px: atravessa >= 10 celulas
+			pg.mouse.move(a["x"] + 30 * i, a["y"] + 10 * i)
 		assert pg.get_attribute(f"#lyr-grupos [data-grupo='{ids['G1']}']", "transform")          # o arrasto esta mesmo a andar
 		pg.mouse.up()
 		pg.keyboard.up("Control")
@@ -697,3 +697,168 @@ def test_criterio_14_arrastar_com_32_grupos_sem_frames_lentos(gr, browser):
 		assert len(ft) >= 20 and lentos == [], lentos
 	finally:
 		_fechar(pg.context)
+
+
+# ---------------------------------------------------------------- correcoes da revisao do implementer (M1-M4)
+SEL = "#lyr-grupos [data-grupo='%s']"
+
+
+def test_m1_escape_a_meio_do_arrasto_no_mover_nao_da_erro(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").click()
+		pg.click("#g-mover")
+		_arrastar(pg, (2, 4), (3, 5), soltar=False)
+		pg.keyboard.press("Escape")                                         # S.mover passa a null com o arrasto a meio
+		pg.mouse.up()
+		pg.wait_for_timeout(150)
+		assert errs == []
+		assert pg.get_attribute(SEL % ids["G1"], "transform") is None
+		assert _pos_no_cliente(pg, ids["G1"]) == [2, 4, 0] and _movers(reqs) == []
+	finally:
+		pg.close()
+
+
+def test_m1_recarga_a_meio_do_arrasto_no_mover_nao_da_erro(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	pg, errs = _abrir(browser, url)
+	try:
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").click()
+		pg.click("#g-mover")
+		_arrastar(pg, (2, 4), (3, 5), soltar=False)
+		pg.evaluate("S.mover = null; drawGrupos()")                          # o que um loadGrupos faria se o grupo desaparecesse
+		pg.mouse.up()
+		pg.wait_for_timeout(150)
+		assert errs == []
+		assert pg.get_attribute(SEL % ids["G1"], "transform") is None
+	finally:
+		pg.close()
+
+
+def test_m2_segundo_dedo_no_grupo_nao_arrasta_no_mover(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	ctx = browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True)
+	pg = ctx.new_page()
+	try:
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.evaluate("escolherGrupo(%r); entrarMover(%r)" % (ids["G1"], ids["G1"]))
+		pg.wait_for_selector("#g-feito", timeout=5_000)
+		f1, g = _xy(pg, 4, 1), _xy(pg, 2, 4)
+		cdp = ctx.new_cdp_session(pg)
+		send = lambda t, pts: cdp.send("Input.dispatchTouchEvent", {"type": t, "touchPoints": pts})  # noqa: E731
+		send("touchStart", [{"x": f1["x"], "y": f1["y"], "id": 1}])
+		send("touchStart", [{"x": f1["x"], "y": f1["y"], "id": 1}, {"x": g["x"], "y": g["y"], "id": 2}])
+		for i in range(1, 9):
+			send("touchMove", [{"x": f1["x"] - 6 * i, "y": f1["y"] + 6 * i, "id": 1}, {"x": g["x"] + 8 * i, "y": g["y"] + 8 * i, "id": 2}])
+		send("touchEnd", [])
+		pg.wait_for_timeout(200)
+		assert pg.evaluate("JSON.stringify(S.mover)") == '{"gid":"%s","dl":0,"dc":0}' % ids["G1"]   # o 2.o dedo nao agarrou o grupo
+		assert pg.get_attribute(SEL % ids["G1"], "transform") is None
+	finally:
+		_fechar(ctx)
+
+
+def test_m3_pointerup_perdido_nao_mata_o_tabuleiro(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	ctx = browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True)
+	pg = ctx.new_page()
+	try:
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.evaluate("escolherGrupo(%r)" % ids["G1"])
+		pg.wait_for_selector(SEL % ids["G1"], timeout=10_000)
+		_arrastar(pg, (2, 4), (3, 5), ctrl=True, soltar=False)
+		assert pg.evaluate("arrasto !== null")
+		pg.evaluate("arrasto.id = 987654")                                   # o pointerup deste ponteiro ja nao o encontra: «perdido»
+		pg.mouse.up()
+		pg.keyboard.up("Control")
+		assert pg.evaluate("arrasto !== null")
+		vb0 = pg.evaluate("({ ...S.vb })")
+		a, b = _xy(pg, 4, 1), _xy(pg, 4, 2)
+		cdp = ctx.new_cdp_session(pg)
+		send = lambda t, pts: cdp.send("Input.dispatchTouchEvent", {"type": t, "touchPoints": pts})  # noqa: E731
+		send("touchStart", [{"x": a["x"], "y": a["y"], "id": 1}])
+		for i in range(1, 9):
+			send("touchMove", [{"x": a["x"] + (b["x"] - a["x"]) * i / 8, "y": a["y"], "id": 1}])
+		send("touchEnd", [])
+		pg.wait_for_timeout(150)
+		assert pg.evaluate("arrasto") is None                                # o dedo primario novo repoe o estado
+		assert pg.evaluate("S.vb.x") != vb0["x"]                              # e o pan de um dedo funciona
+		assert pg.get_attribute(SEL % ids["G1"], "transform") is None        # o grupo voltou onde estava
+	finally:
+		_fechar(ctx)
+
+
+def test_m4_busy_no_inicio_e_a_meio_do_arrasto(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	pg, errs = _abrir(browser, url, vista=False)
+	reqs = _espiar(pg)
+	try:
+		pg.wait_for_selector(SEL % ids["G1"], timeout=10_000)
+		pg.evaluate("S.busy = true")
+		_arrastar(pg, (2, 4), (3, 5), ctrl=True)                            # a gravar: nem arranca
+		assert pg.get_attribute(SEL % ids["G1"], "transform") is None
+		pg.evaluate("S.busy = false")
+		_arrastar(pg, (2, 4), (3, 5), ctrl=True, soltar=False)
+		pg.evaluate("S.busy = true")                                          # passa a gravar a meio
+		pg.mouse.up()
+		pg.keyboard.up("Control")
+		pg.wait_for_timeout(200)
+		pg.evaluate("S.busy = false")
+		assert pg.get_attribute(SEL % ids["G1"], "transform") is None
+		assert "Espera um momento" in pg.inner_text("#toast")
+		assert _movers(reqs) == [] and _pos_no_cliente(pg, ids["G1"]) == [2, 4, 0]
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_celula_marcada_recusada_e_cheia_na_foto_aceite(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	st, r = _post(url, "/api/confirm", {"acao": "cell_full", "cell": [3, 5]})
+	assert st == 200, r
+	pg, errs = _abrir(browser, url, vista=False)
+	reqs = _espiar(pg)
+	try:
+		pg.wait_for_selector(SEL % ids["G1"], timeout=10_000)
+		_arrastar(pg, (2, 4), (3, 5), ctrl=True)
+		pg.wait_for_timeout(200)
+		assert "marcada como montada" in pg.inner_text("#toast")
+		assert _movers(reqs) == [] and _pos_no_cliente(pg, ids["G1"]) == [2, 4, 0]
+		# «cheia na foto» (duvida) nao bloqueia: o cliente deixa passar e o servidor aceita (a celula esta vazia para ele)
+		pg.evaluate("S.board.cells[2][3] = { estado: 'ocupada_legado', fonte: 'foto', peca_id: null }")      # (3,4): so ``cheia na foto``
+		_arrastar(pg, (2, 4), (3, 4), ctrl=True)
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 3 && !S.busy", arg=ids["G1"], timeout=10_000)
+		assert len(_movers(reqs)) == 1
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_ctrl_clique_sem_movimento_nao_faz_post(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	pg, errs = _abrir(browser, url, vista=False)
+	reqs = _espiar(pg)
+	try:
+		pg.wait_for_selector(SEL % ids["G1"], timeout=10_000)
+		a = _xy(pg, 2, 4)
+		pg.keyboard.down("Control")
+		pg.mouse.click(a["x"], a["y"])
+		pg.keyboard.up("Control")
+		pg.wait_for_timeout(200)
+		assert _movers(reqs) == [] and pg.get_attribute(SEL % ids["G1"], "transform") is None
+		assert not errs, errs
+	finally:
+		pg.close()
