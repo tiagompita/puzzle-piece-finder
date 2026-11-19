@@ -1152,7 +1152,12 @@ def test_superseded_detail_request_is_dropped_before_composing(env, monkeypatch)
     for seq, reg in ((1, "1,1,2,2"), (2, "2,2,3,3"), (3, "3,3,4,4")):
         ths.append(threading.Thread(target=get, args=(seq, reg)))
         ths[-1].start()
-        time.sleep(0.1)
+        # order by arrival, not by ``sleep(0.1)``: with the machine loaded the thread of seq 1 could reach the server
+        # after seq 2 had registered, and was then dropped as superseded (409 where 200 was expected)
+        t0 = time.time()
+        while gui._detail_seq.get("a", -1) < seq and time.time() - t0 < 10:
+            time.sleep(0.005)
+        assert gui._detail_seq.get("a", -1) >= seq
     ths.append(threading.Thread(target=get, args=(1, "1,4,2,6", "b")))
     ths[-1].start()
     for t in ths:

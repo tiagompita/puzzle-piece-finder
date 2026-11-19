@@ -13,6 +13,7 @@ pytestmark = pytest.mark.slow
 sync_api = pytest.importorskip("playwright.sync_api")
 
 from test_gui_novo import DETAIL_TIMES, base, browser  # noqa: E402,F401 - fixtures
+from test_gui_novo_f2f import _fechar  # noqa: E402
 
 SHOWN = "S.detailKey && document.body.dataset.detail === S.detailKey"
 # o centro da célula dentro da vista (sem a margem de 12 % de ``cellInView``: um salto para um canto do tabuleiro
@@ -83,7 +84,7 @@ def test_server_reload_without_action_keeps_view_and_asks_nothing(base, browser,
 		assert pg.locator("#b-localizar[data-mudou]").count() == 0  # o mesmo cartão: nada a avisar
 		assert errs == []
 	finally:
-		pg.close()
+		_fechar(pg.context)
 
 
 def test_reload_during_drag_asks_detail_only_after_the_drag(base, browser):
@@ -109,7 +110,7 @@ def test_reload_during_drag_asks_detail_only_after_the_drag(base, browser):
 		assert d >= 250, d
 		assert errs == []
 	finally:
-		pg.close()
+		_fechar(pg.context)
 
 
 def test_jump_during_a_gesture_waits_for_the_pointer_up(base, browser):
@@ -132,7 +133,7 @@ def test_jump_during_a_gesture_waits_for_the_pointer_up(base, browser):
 		assert pg.evaluate("S.vb") != vb                                  # o salto fez-se no fim do gesto
 		assert errs == []
 	finally:
-		pg.close()
+		_fechar(pg.context)
 
 
 def test_saltar_and_encaixa_move_the_view(base, browser):
@@ -160,7 +161,7 @@ def test_saltar_and_encaixa_move_the_view(base, browser):
 		assert gui.pr.piece(tw).estado == "colocada"
 		assert errs == []
 	finally:
-		pg.close()
+		_fechar(pg.context)
 
 
 @pytest.mark.parametrize("onde", ["fora", "dentro"])
@@ -197,7 +198,7 @@ def test_card_changes_by_itself_localizar_blinks_only_when_target_out_of_view(ba
 			assert "pisca" not in (loc.get_attribute("class") or "")
 		assert errs == []
 	finally:
-		pg.close()
+		_fechar(pg.context)
 
 
 def test_card_changes_by_itself_reduced_motion_static_mark(base, browser):
@@ -225,7 +226,7 @@ def test_card_changes_by_itself_reduced_motion_static_mark(base, browser):
 		assert pg.locator("#b-localizar").get_attribute("data-mudou") is None
 		assert errs == []
 	finally:
-		pg.close()
+		_fechar(pg.context)
 
 
 # ---------------------------------------------------------------- P1a: salto da lupa a 390 px com o teclado aberto
@@ -262,7 +263,7 @@ def test_lupa_jump_at_390_with_keyboard_ends_around_the_place(base, browser):
 		assert pg.evaluate("document.activeElement.tagName") != "INPUT"
 		assert errs == []
 	finally:
-		ctx.close()
+		_fechar(ctx)
 
 
 # ---------------------------------------------------------------- P1b: a caixa da lupa não abre sozinha
@@ -287,4 +288,4 @@ def test_lupa_box_never_opens_by_itself(base, browser, vw, vh, guardado):
 		if guardado:
 			assert pg.locator(f"#lupa-b-{guardado}.lupa-ult").count() == 1      # o último modo só fica marcado
 	finally:
-		ctx.close()
+		_fechar(ctx)
