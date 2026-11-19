@@ -851,3 +851,25 @@ Plano aprovado (fora do repositório, na pasta de planos do utilizador): `.claud
 
 **Causa:** em `tests/test_gui_novo_f2f.py` o `handle` de `/api/montar` faz `route.fetch()`. A recarga que o SSE `holes_changed` pede (≈ 1,3 s depois de abrir, mais tarde com a suite carregada) pode estar a meio desse `fetch` quando o teste fecha o contexto; o Playwright levanta então «Route.fetch: Request context disposed» no handler e entrega o erro na chamada seguinte, ou seja no `_abrir` do teste SEGUINTE (`Browser.new_context` / `BrowserContext.new_page`). Por isso falhavam testes diferentes (os que vêm depois de um teste curto), e nunca a asserção do próprio teste. Reprodução: `/api/montar` atrasado 0,3–0,6 s → 6 de 6 corridas do ficheiro com 1–3 falhas (13 em 72, entre elas `limiar…[vp0]` e `toque_num_alvo_tenue…`).
 **Correção (só no teste):** `_fechar(ctx)` faz `page.unroute_all(behavior="ignoreErrors")` antes de `ctx.close()`. Depois: 0 falhas em 6 corridas iguais (72/72). O código da GUI não muda. `tests/test_gui_novo_p0.py` tem o mesmo padrão (`route.fetch` no handler), sem falhas registadas; não mexido.
+
+## 2026-11-19 — F4 B4, etapas 2 e 3 (mover, rodar, fixar, soltar) e correções M1–M4 e B1–B2 da revisão
+
+Código: `src/web/novo/grupos.js` (+ linhas em `novo.js` e `novo.css`); `board.js`, servidor e GUI antiga sem alterações. Commits: `5a8c598` (etapa 2), `99d6c9c` (correções M1–M4) e o desta etapa. Testes: `tests/test_gui_novo_f4.py` (40 em Chromium) e 1 novo em `tests/test_server_grupos.py` («rodar → desfazer → fixar» dá `programa`).
+
+**Etapa 2 (decisões do helper, revistas pelo implementer):**
+- **O arrasto não precisa de gancho no `board.js`:** um `pointerdown` em captura na janela (`initArrasto`) para a propagação quando o ponteiro cai num grupo mostrado (Ctrl+rato; ou qualquer ponteiro no «Mover»); como o ponteiro nunca entra no mapa do `board.js`, o pan não arranca. Um 2.º dedo (não primário) e um gesto do `board.js` em curso (`S.gesto`) nunca são intercetados (M2).
+- **Validação no cliente antes de escrever** (fora da grelha, `colocada`, marcada pelo Tiago, outro grupo; «cheia na foto» passa): uma posição inválida volta atrás sem POST, com a frase do servidor. O servidor valida de novo.
+- **«Mover» … «Feito»:** o deslocamento fica pendente (`S.mover`) e só o «Feito» grava (um POST). Cancelar, Escape, voltar à lista ou trocar de grupo repõem a posição sem POST.
+- **Desfazer de mover/rodar:** `mover` inverso com a `anterior` da resposta e o `rodado` explícito dela (C1); «Mostrar» continua fora (C2). «Levar para o lugar provável» manda `rodado: false` e desfaz-se igual. «Ver no tabuleiro» num grupo já mostrado só faz `showCell`.
+- **M1–M4 (revisão):** Escape ou recarga a meio de um arrasto no «Mover» não dão erro; um `pointerup` perdido já não mata o tabuleiro (`lostpointercapture` = cancelamento; um dedo primário novo repõe o estado); com `S.busy` o arrasto não arranca e, se começar a gravar a meio, repõe e avisa.
+
+**Etapa 3 (decisões do helper):**
+- **«Fixar aqui»** na linha do painel, desligado com `sobreposto` (a razão é a frase já mostrada); a confirmação de um clique (Q8 a) é um bloco no painel («Fixar o grupo de N peças aqui? Confirma na mesa que está nesta rotação.» · Fixar / Cancelar; Escape cancela). O corpo do `POST …/fixar` é vazio.
+- **Aviso depois de fixar (Q9 c, decisão 2 do Tiago):** cartão no topo da lista com «Grupo de N peças fixado.», «As peças ao lado dizem outra rotação.» e «Esta peça diz outra rotação: está marcada a âmbar no tabuleiro.» (plural se forem várias), a rotação «confirmada» ou «ainda por confirmar» em palavras simples, «Desfazer» (= `unanchor` do `/api/confirm`) e «Está bem». As células a contornar a âmbar saem de `vizinhas_pecas` da resposta + a ordem de `g.pecas` = `g.footprint` (ids nunca vão para o texto). O cartão substitui a faixa de desfazer (não há dois «Desfazer»); sem cartão (ou «Está bem») o desfazer fica na faixa e no Ctrl+Z.
+- **Soltar (Q10 a):** é o «Tirar o grupo inteiro do lugar» do painel da peça (F2, já existia); o servidor deixa o grupo onde estava fixado e `grupos_changed` desenha-o como solto. Corrigi o plural «1 peças» nesse painel («1 peça»).
+- **B1:** um `loadGrupos` a meio de um Ctrl+arrastar mantém o deslocamento (`pendente` lê o `arrasto` em curso).
+- **B2:** o encaixe é pela célula debaixo do ponteiro (a de agora menos a do `pointerdown`), não um arredondamento em píxeis; sair e voltar à célula de origem não faz POST.
+- **Alvo das sugestões por cima do grupo:** já era assim (`#lyr-grupos` antes de `#lyr-seguinte` e `#lyr-alvo`); coberto por teste.
+- **Capturas:** `docs/gui/screenshots/redesenho/F4_depois_{lista,grupo_mostrado,mover_ativo,confirmacao_fixar,fixado_cartao,aviso_ambar,fixado_tirar_grupo}_{1366,390}.png`, numa cópia de `projects/alpes` (32 grupos; aviso âmbar com G0033, a única peça que discorda entre as que tentei).
+
+**Para o Tiago / B5:** o painel da peça (F2) mostra o `P####` (`#p-pid`), o que a ESPEC §6 não deixa; não é do B4. Medição de desempenho (critérios 11–15) e igualdade byte a byte ficam para o B5. [NT] iPhone real, Firefox/Safari e fixar fisicamente ≥ 3 grupos.

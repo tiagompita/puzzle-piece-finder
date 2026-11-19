@@ -727,7 +727,7 @@ function painelPeca(box, d, kind) {
     h("div", { class: "where", id: "p-lugar" }, lugarLongo(cell)));
   let est, key;
   if (kind === "por_confirmar") { est = "Por confirmar · ainda sem peças ao lado"; key = "por_confirmar"; }
-  else if (sec) { est = `Veio do grupo (${sec.n} peças)`; key = "grupo"; }
+  else if (sec) { est = `Veio do grupo (${plural(sec.n, "peça", "peças")})`; key = "grupo"; }
   else { const dt = dataCurta(d.posta_em); est = dt ? `No lugar · posta por ti a ${dt}` : "No lugar"; key = "no_lugar"; }
   box.append(h("div", { class: "estado", id: "p-estado", "data-estado": key }, est));
   const folha = pc.scan_id ? h("button", { type: "button", class: "folha-btn", id: "p-folha", "aria-label": "Ampliar a folha que digitalizaste",
@@ -743,10 +743,10 @@ function painelPeca(box, d, kind) {
   const col = h("div", { class: "btn-col" });
   if (sec) {
     col.append(h("button", { class: "btn", type: "button", id: "p-tirar", onclick: () => actPainel(
-      confirmReq({ acao: "unanchor", section: sec.id }), `A tirar o grupo de ${sec.n} peças…`,
-      () => ({ tipo: "tirar_grupo", msg: `Grupo de ${sec.n} peças tirado do lugar.`, inversa: confirmReq({ acao: "anchor", section: sec.id,
+      confirmReq({ acao: "unanchor", section: sec.id }), `A tirar o grupo de ${plural(sec.n, "peça", "peças")}…`,
+      () => ({ tipo: "tirar_grupo", msg: `Grupo de ${plural(sec.n, "peça", "peças")} tirado do lugar.`, inversa: confirmReq({ acao: "anchor", section: sec.id,
         cell: [sec.anchor.l0, sec.anchor.c0], rot: sec.anchor.rot || 0, mirror: !!sec.anchor.mirror }) })) },
-    ico("arrow-up-from-line"), `Tirar o grupo inteiro do lugar (${sec.n} peças)`));
+    ico("arrow-up-from-line"), `Tirar o grupo inteiro do lugar (${plural(sec.n, "peça", "peças")})`));
   } else if (kind === "por_confirmar") {
     // sem «desfaz»: tirar é neutro (P7b); o desfazer põe-na outra vez «por confirmar» no mesmo lugar e rotação
     col.append(h("button", { class: "btn", type: "button", id: "p-tirar", onclick: () => actPainel(
@@ -1386,6 +1386,7 @@ function onKey(e) {
     if (!$("#lightbox").hidden) { $("#lightbox").hidden = true; return; }
     if ($("#definicoes")) { $("#definicoes").remove(); return; }
     if (S.modo === "por_mao") { cancelPorMao(); return; }            // F2: volta ao painel do lugar
+    if (S.fixarConf) { cancelarFixar(); return; }                      // F4 B4: a confirmação de «Fixar aqui»
     if (S.mover) { cancelarMover(); return; }                          // F4 B4: «Mover» repõe a posição e fica no grupo
     if (S.vista === "grupos" && S.grupoSel) { voltarLista(); return; }   // F4 B4: do grupo escolhido para a lista
     if (S.modo !== "cartao") { S.modo = "cartao"; S.painel = null; renderMontar(); }

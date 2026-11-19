@@ -17,7 +17,11 @@
  *   copia o ``rodado`` da linha atual; «Rodar» manda ``{rodar}``). O desfazer (faixa e Ctrl+Z, um nível) é o ``mover``
  *   inverso com a ``anterior`` da resposta e o ``rodado`` explícito dela; «Mostrar» continua fora dele (C2).
  *   Estado: ``S.mover`` = ``{gid, dl, dc}`` (o «Mover» ativo e o deslocamento pendente, em células) ou null.
- * Fixar e soltar são da etapa 3. */
+ * - Etapa 3: «Fixar aqui» (confirmação de um clique, Q8 a; ``POST …/fixar`` sem corpo), o aviso depois de fixar (Q9 c: contorno
+ *   âmbar nas células das peças que discordam, «Esta peça diz outra rotação», «Desfazer» = ``unanchor``) em ``S.fixado``, e o
+ *   encaixe do arrasto pela célula debaixo do ponteiro (B2). «Tirar o grupo inteiro do lugar» é o do painel da peça (F2):
+ *   o servidor deixa o grupo onde estava fixado (Q10 a) e ``grupos_changed`` traz-o de volta à camada.
+ *   Estado novo: ``S.fixarConf`` (o grupo à espera da confirmação) e ``S.fixado`` ({n, confianca, discordam: [[l, c]]}). */
 "use strict";
 
 const GRP_VIOLETA = "#b9a3ff";
@@ -94,7 +98,7 @@ function celulasEl(fp, klass, dx = 0, dy = 0) {
   return g;
 }
 /** O deslocamento pendente do «Mover» (em células) para o grupo ``id``: [dl, dc]. */
-const pendente = (id) => (S.mover && S.mover.gid === id ? [S.mover.dl, S.mover.dc] : [0, 0]);
+const pendente = (id) => (arrasto && arrasto.gid === id ? [arrasto.dl, arrasto.dc] : (S.mover && S.mover.gid === id ? [S.mover.dl, S.mover.dc] : [0, 0]));
 /** Põe (ou tira, se for 0 0) o ``transform`` que mostra o grupo deslocado ``dl`` linhas e ``dc`` colunas. */
 function deslocar(el, dl, dc) {
   if (!el) return;
@@ -139,6 +143,7 @@ function drawGrupos() {
   if (!L) return;
   // o «Mover» só vive no painel do próprio grupo: sair de lá (outra vista, outro grupo, a lista) repõe a posição
   if (S.mover && (S.vista !== "grupos" || S.grupoSel !== S.mover.gid || !grupo(S.mover.gid))) S.mover = null;
+  if (S.fixarConf && S.grupoSel !== S.fixarConf) S.fixarConf = null;
   svg().classList.toggle("modo-mover", !!S.mover);
   L.replaceChildren();
   const G = S.grupos;
@@ -147,6 +152,7 @@ function drawGrupos() {
   for (const g of G.grupos) if (g.mostrado && g.footprint) L.append(grupoEl(g, !!esc && esc.id === g.id));
   const pv = esc ? provavelEl(esc) : null;
   if (pv) L.append(pv);
+  if (S.fixado && S.fixado.discordam.length) L.append(celulasEl(S.fixado.discordam, "grupo-aviso"));     // Q9 c: a peça que discorda, a âmbar
 }
 /** O grupo mostrado que contém a célula (para o toque no tabuleiro), ou null. */
 function grupoEm(l, c) {
@@ -169,12 +175,12 @@ function estadoGrupo(g) {
   return g.mostrado ? "ainda sem lugar certo no puzzle" : "ainda fora do tabuleiro";
 }
 function escolherGrupo(gid) {
-  if (S.grupoSel !== gid) S.grupoAviso = null;
+  if (S.grupoSel !== gid) { S.grupoAviso = null; S.fixarConf = null; }
   S.grupoSel = gid; S.vista = "grupos";
   drawVistaSw(); drawGrupos(); renderMontar();
   const t = $("#tab-montar"); if (t) t.scrollTop = 0;
 }
-function voltarLista() { S.grupoSel = null; S.grupoAviso = null; drawGrupos(); renderMontar(); }
+function voltarLista() { S.grupoSel = null; S.grupoAviso = null; S.fixarConf = null; drawGrupos(); renderMontar(); }
 /** «Mostrar no tabuleiro» (Q3): grava a posição inicial (o servidor escolhe perto do centro da vista); não se desfaz (C2).
  * Num grupo que já está mostrado («Ver no tabuleiro») não escreve nada: só leva a vista até lá. */
 async function mostrarGrupo(gid) {
@@ -232,9 +238,64 @@ async function levarGrupo(gid) {
   if (ok && g2 && g2.footprint && g2.footprint.length) showCell(g2.footprint[0][0], g2.footprint[0][1]);
 }
 
+// ------------------------------------------------------------ fixar (Q8 a, Q9 c) e o aviso
+const pecasTxt = (n) => plural(n, "peça", "peças");
+function pedirFixar(gid) {
+  const g = grupo(gid);
+  if (!g || g.sobreposto || S.busy) return;
+  S.fixarConf = gid; S.grupoAviso = null;
+  renderMontar();
+  const c = $("#g-confirma"); if (c) c.scrollIntoView({ block: "nearest" });      // a pergunta inteira à vista (telemóvel)
+}
+function cancelarFixar() { S.fixarConf = null; renderMontar(); }
+/** Fixar o grupo na posição em que está (o corpo do pedido é ignorado pelo servidor). A resposta diz que peças discordam; os ids
+ * só servem para achar as células (a ordem de ``g.pecas`` é a de ``g.footprint``) e nunca vão para o texto. */
+async function fixarGrupo(gid) {
+  const g = grupo(gid);
+  if (!g || S.busy) return;
+  const celula = {};
+  (g.pecas || []).forEach((p, i) => { celula[p.id] = g.footprint[i]; });
+  const n = g.n;
+  lockButtons(true);
+  S.pendente = "A fixar o grupo…"; S.fixarConf = null; S.fixado = null;
+  renderMontar();
+  try {
+    const r = await post(`/api/grupos/${gid}/fixar`, {});
+    writeFailed(r);
+    const dis = Object.entries(r.vizinhas_pecas || {}).filter(([, w]) => w === "discordam").map(([pid]) => celula[pid]).filter(Boolean);
+    S.fixado = { n, confianca: r.confianca, vizinhas: r.vizinhas, discordam: dis };
+    const msg = `Grupo de ${pecasTxt(n)} fixado.`;
+    S.undo = { tipo: "fixar", painel: true, msg, inversa: confirmReq({ acao: "unanchor", section: gid }),
+      depois: async () => { S.fixado = null; S.grupoSel = gid; S.vista = "grupos"; await loadGrupos(); drawVistaSw(); } };
+    S.pendente = null; S.grupoSel = null;
+    toastUndo(msg);
+    await afterWrite();
+  } catch (e) { S.pendente = null; S.grupoAviso = e.message; toast(e.message, true); }
+  finally { lockButtons(false); }
+  await loadGrupos();
+  const t = $("#tab-montar"); if (t) t.scrollTop = 0;                  // o cartão do que aconteceu fica à vista
+}
+function fecharFixado() { S.fixado = null; drawGrupos(); renderMontar(); }
+/** O cartão que fica depois de fixar: o que aconteceu, em palavras simples, e «Desfazer». */
+function fixadoCartao() {
+  const f = S.fixado;
+  if (!f) return null;
+  const nd = f.discordam.length;
+  const box = h("div", { class: "card grp-fixado", id: "g-fixado", "data-confianca": f.confianca }, h("strong", {}, `Grupo de ${pecasTxt(f.n)} fixado.`));
+  if (f.vizinhas === "discordam") {
+    box.append(h("p", { class: "small aviso", id: "g-fixado-aviso", role: "alert" }, "As peças ao lado dizem outra rotação."),
+      h("p", { class: "small", id: "g-fixado-esta" }, nd > 1 ? "Estas peças dizem outra rotação: estão marcadas a âmbar no tabuleiro." : "Esta peça diz outra rotação: está marcada a âmbar no tabuleiro."));
+  }
+  box.append(h("p", { class: "small muted", id: "g-fixado-rot" }, f.confianca === "confirmado" ? "A rotação está confirmada." : "A rotação ainda está por confirmar: vê na mesa se as peças estão nesta rotação."));
+  box.append(h("div", { class: "actions" },
+    h("button", { type: "button", class: "btn", id: "g-fixado-desfazer", onclick: () => doUndo() }, ico("undo-2"), "Desfazer"),
+    h("button", { type: "button", class: "btn", id: "g-fixado-ok", onclick: fecharFixado }, "Está bem")));
+  return box;
+}
+
 // ------------------------------------------------------------ mover (Ctrl+arrastar; «Mover» … «Feito») e rodar
 function entrarMover(gid) {
-  S.mover = { gid, dl: 0, dc: 0 }; S.grupoAviso = null;
+  S.mover = { gid, dl: 0, dc: 0 }; S.grupoAviso = null; S.fixarConf = null;
   drawGrupos(); renderMontar();
 }
 /** Sair do «Mover» sem gravar: o grupo volta à posição gravada. */
@@ -313,14 +374,15 @@ function initArrasto() {
     try { svg().setPointerCapture(e.pointerId); } catch (err) { /* o ponteiro já acabou */ }
     if (!S.mover && (S.vista !== "grupos" || S.grupoSel !== g.id)) escolherGrupo(g.id);   // o escolhido é o que leva a imagem
     const [dl, dc] = pendente(g.id);
-    arrasto = { id: e.pointerId, gid: g.id, p0: p, base: [dl, dc], dl, dc, el: null, modo: !!S.mover };
+    arrasto = { id: e.pointerId, gid: g.id, c0: [Math.floor(p.y / S.hr), Math.floor(p.x)], base: [dl, dc], dl, dc, el: null, modo: !!S.mover };
     aplicar();
   }, true);
   window.addEventListener("pointermove", (e) => {
     const a = arrasto;
     if (!a || e.pointerId !== a.id) return;
     const p = clientToBoard(e.clientX, e.clientY);
-    const dl = a.base[0] + Math.round((p.y - a.p0.y) / S.hr), dc = a.base[1] + Math.round(p.x - a.p0.x);
+    // B2: o encaixe é pela célula debaixo do ponteiro (a de agora menos a do ``pointerdown``), não um arredondamento em px
+    const dl = a.base[0] + Math.floor(p.y / S.hr) - a.c0[0], dc = a.base[1] + Math.floor(p.x) - a.c0[1];
     if (dl === a.dl && dc === a.dc) return;
     a.dl = dl; a.dc = dc;
     aplicar();
@@ -383,7 +445,15 @@ function grupoPainel(T, g) {
   if (g.mostrado) {
     const mod = !!S.mover && S.mover.gid === g.id;
     const flip = ico("rotate-cw"); flip.classList.add("flip");
-    box.append(mod
+    const conf = S.fixarConf === g.id && !mod;
+    if (conf) {
+      box.append(h("div", { class: "card grp-confirma", id: "g-confirma" },
+        h("p", { id: "g-confirma-txt" }, `Fixar o grupo de ${pecasTxt(g.n)} aqui? Confirma na mesa que está nesta rotação.`),
+        h("div", { class: "actions" },
+          h("button", { type: "button", class: "btn big primary", id: "g-fixar-sim", onclick: () => fixarGrupo(g.id) }, ico("check"), "Fixar"),
+          h("button", { type: "button", class: "btn big", id: "g-fixar-nao", onclick: cancelarFixar }, ico("x"), "Cancelar"))));
+    }
+    if (!conf) box.append(mod
       ? h("div", { class: "actions grp-barra", id: "g-barra" },
           h("button", { type: "button", class: "btn big primary", id: "g-feito", onclick: feitoMover }, ico("check"), "Feito"),
           h("button", { type: "button", class: "btn big", id: "g-cancelar", onclick: cancelarMover }, ico("x"), "Cancelar"))
@@ -391,6 +461,11 @@ function grupoPainel(T, g) {
           h("button", { type: "button", class: "btn big", id: "g-mover", onclick: () => entrarMover(g.id) }, "Mover"),
           h("button", { type: "button", class: "btn big", id: "g-rodar-esq", "aria-label": "Rodar para a esquerda", onclick: () => rodarGrupo(g.id, -90) }, flip, "Rodar"),
           h("button", { type: "button", class: "btn big", id: "g-rodar-dir", "aria-label": "Rodar para a direita", onclick: () => rodarGrupo(g.id, 90) }, ico("rotate-cw"), "Rodar")));
+    if (!conf && !mod) {
+      const fx = h("button", { type: "button", class: "btn big primary", id: "g-fixar", onclick: () => pedirFixar(g.id) }, ico("check"), "Fixar aqui");
+      if (g.sobreposto) { fx.disabled = true; fx.setAttribute("aria-describedby", "g-sobreposto"); }
+      box.append(h("div", { class: "actions" }, fx));
+    }
     box.append(h("p", { class: "small muted", id: "g-dica" }, mod ? "Arrasta o grupo no tabuleiro e toca em «Feito»." : "No computador: Ctrl + arrastar move o grupo."));
   }
   if (S.grupoAviso) box.append(h("p", { class: "small aviso", id: "g-aviso", role: "alert" }, S.grupoAviso));
@@ -405,7 +480,10 @@ function grupoPainel(T, g) {
 }
 /** O conteúdo de #tab-montar na vista «Grupos soltos»: a lista, o painel do grupo escolhido ou o vazio. */
 function renderGrupos(T) {
-  const ult = typeof undoStrip === "function" ? undoStrip() : null;
+  const fx = fixadoCartao();
+  if (fx) T.append(fx);
+  const repete = !!fx && S.undo && S.undo.tipo === "fixar" && !S.pendente;          // o cartão já traz o «Desfazer»
+  const ult = typeof undoStrip === "function" && !repete ? undoStrip() : null;
   if (ult) T.append(ult);
   const G = S.grupos;
   if (!G) {

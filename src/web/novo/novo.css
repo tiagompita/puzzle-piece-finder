@@ -402,6 +402,9 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
 .grp-est.aviso, .aviso { color: var(--red); }
 .grp-mostrar { flex: 0 1 auto; }
 #board.modo-mover { cursor: move; }
+.grupo-aviso .grupo-cel { fill: rgba(255, 176, 32, .20); stroke: var(--amber); stroke-width: 3px; vector-effect: non-scaling-stroke; }
+.grp-fixado, .grp-confirma { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; border-color: var(--amber); }
+.grp-fixado p, .grp-confirma p { margin: 0; }
 .grupo.invalido .grupo-contorno { stroke: var(--red); stroke-dasharray: 6 4; }
 .grupo.invalido .grupo-fundo .grupo-cel { fill: rgba(255, 107, 95, .18); }
 .ico.flip { transform: scaleX(-1); }
