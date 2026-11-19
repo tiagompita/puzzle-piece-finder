@@ -10,7 +10,14 @@
  *   o toque numa célula de um grupo passa por ``grupoEm`` em ``S.onBoardTap``.
  * - «Mostrar no tabuleiro» (Q3) grava a posição inicial com o centro da vista; NÃO entra no desfazer (C2, do Tiago).
  * - Os textos não mostram P####, G#### nem «âncora» (ESPEC §6): os ids só vão para atributos ``data-*`` e URLs.
- * Mover, rodar, fixar e soltar são das etapas 2 e 3. */
+ * - Etapa 2: «Mover» (Ctrl+arrastar com o rato; botão «Mover» … «Feito», que é o único caminho no telemóvel) e «Rodar» (±90).
+ *   O arrasto intercepta o ``pointerdown`` em captura, antes de board.js (que não muda: sem o ponteiro no seu mapa, o
+ *   pan não arranca), encaixa às células com um ``transform`` no grupo e valida no cliente com o que já tem (tabuleiro,
+ *   outros grupos): uma posição inválida volta atrás sem POST. Só uma posição válida escreve (``POST …/mover``, que
+ *   copia o ``rodado`` da linha atual; «Rodar» manda ``{rodar}``). O desfazer (faixa e Ctrl+Z, um nível) é o ``mover``
+ *   inverso com a ``anterior`` da resposta e o ``rodado`` explícito dela; «Mostrar» continua fora dele (C2).
+ *   Estado: ``S.mover`` = ``{gid, dl, dc}`` (o «Mover» ativo e o deslocamento pendente, em células) ou null.
+ * Fixar e soltar são da etapa 3. */
 "use strict";
 
 const GRP_VIOLETA = "#b9a3ff";
@@ -33,6 +40,7 @@ function loadGrupos() {
         gruposDeNovo = false;
         try { S.grupos = await api("/api/grupos"); S.gruposErro = null; } catch (e) { S.gruposErro = e.message; }
         if (S.grupoSel && !grupo(S.grupoSel)) S.grupoSel = null;
+        if (S.mover && (!grupo(S.mover.gid) || !grupo(S.mover.gid).mostrado)) S.mover = null;
         drawGrupos(); drawVistaSw(); drawProgress(); drawLegend();
         if (S.vista === "grupos" && S.tab === "montar") renderMontar();
       } while (gruposDeNovo);
@@ -85,6 +93,14 @@ function celulasEl(fp, klass, dx = 0, dy = 0) {
   }
   return g;
 }
+/** O deslocamento pendente do «Mover» (em células) para o grupo ``id``: [dl, dc]. */
+const pendente = (id) => (S.mover && S.mover.gid === id ? [S.mover.dl, S.mover.dc] : [0, 0]);
+/** Põe (ou tira, se for 0 0) o ``transform`` que mostra o grupo deslocado ``dl`` linhas e ``dc`` colunas. */
+function deslocar(el, dl, dc) {
+  if (!el) return;
+  if (!dl && !dc) el.removeAttribute("transform");
+  else el.setAttribute("transform", `translate(${dc} ${(dl * S.hr).toFixed(4)})`);
+}
 function grupoEl(g, esc) {
   const klass = ["grupo", esc ? "escolhido" : "tenue", g.sobreposto ? "sobreposto" : ""].filter(Boolean).join(" ");
   const el = s("g", { class: klass, "data-grupo": g.id, "data-n": g.n });
@@ -100,6 +116,8 @@ function grupoEl(g, esc) {
     }
   } else el.append(celulasEl(fp, "grupo-fundo"));
   el.append(s("path", { class: "grupo-contorno", d: contornoD(fp) }));
+  const [dl, dc] = pendente(g.id);
+  deslocar(el, dl, dc);
   return el;
 }
 /** O lugar provável do grupo escolhido (Q4 b): contorno tracejado, véu violeta e o rótulo; some quando o grupo já lá está. */
@@ -119,6 +137,9 @@ function provavelEl(g) {
 function drawGrupos() {
   const L = $("#lyr-grupos");
   if (!L) return;
+  // o «Mover» só vive no painel do próprio grupo: sair de lá (outra vista, outro grupo, a lista) repõe a posição
+  if (S.mover && (S.vista !== "grupos" || S.grupoSel !== S.mover.gid || !grupo(S.mover.gid))) S.mover = null;
+  svg().classList.toggle("modo-mover", !!S.mover);
   L.replaceChildren();
   const G = S.grupos;
   if (!G || !S.board) return;
@@ -148,13 +169,22 @@ function estadoGrupo(g) {
   return g.mostrado ? "ainda sem lugar certo no puzzle" : "ainda fora do tabuleiro";
 }
 function escolherGrupo(gid) {
+  if (S.grupoSel !== gid) S.grupoAviso = null;
   S.grupoSel = gid; S.vista = "grupos";
   drawVistaSw(); drawGrupos(); renderMontar();
   const t = $("#tab-montar"); if (t) t.scrollTop = 0;
 }
-function voltarLista() { S.grupoSel = null; drawGrupos(); renderMontar(); }
-/** «Mostrar no tabuleiro» (Q3): grava a posição inicial (o servidor escolhe perto do centro da vista); não se desfaz (C2). */
+function voltarLista() { S.grupoSel = null; S.grupoAviso = null; drawGrupos(); renderMontar(); }
+/** «Mostrar no tabuleiro» (Q3): grava a posição inicial (o servidor escolhe perto do centro da vista); não se desfaz (C2).
+ * Num grupo que já está mostrado («Ver no tabuleiro») não escreve nada: só leva a vista até lá. */
 async function mostrarGrupo(gid) {
+  const g0 = grupo(gid);
+  if (g0 && g0.mostrado && g0.footprint && g0.footprint.length) {
+    S.grupoSel = gid; S.vista = "grupos";
+    drawVistaSw(); drawGrupos(); renderMontar();
+    showCell(g0.footprint[0][0], g0.footprint[0][1]);
+    return;
+  }
   const v = S.vb, centro = [(v.y + v.h / 2) / S.hr + 0.5, v.x + v.w / 2 + 0.5];
   try {
     await post(`/api/grupos/${gid}/mostrar`, { centro });
@@ -165,18 +195,152 @@ async function mostrarGrupo(gid) {
   if (g && g.footprint && g.footprint.length) showCell(g.footprint[0][0], g.footprint[0][1]);
   drawVistaSw();
 }
-/** «Levar para o lugar provável»: leva o grupo (mostrando-o primeiro, se ainda não estava) à posição do candidato. */
+/** O pedido inverso de uma escrita de posição: um ``mover`` de volta à ``anterior`` da resposta, com o ``rodado`` dela
+ * explícito (o desfazer de um «Rodar» repõe o valor antigo, C1). */
+function undoGrupo(gid, msg, ant) {
+  return { tipo: "grupo", painel: true, msg, depois: loadGrupos,
+    inversa: [{ url: `/api/grupos/${gid}/mover`, body: { l0: ant.l0, c0: ant.c0, rot: ant.rot, rodado: !!ant.rodado } }] };
+}
+/** Uma escrita de posição desfazível (``POST …/mover``): trava os botões, grava, deixa a faixa «Desfazer» e recarrega os
+ * grupos. ``antes``: um passo a fazer primeiro (mostrar o grupo). Devolve true se gravou. Uma recusa do servidor fica no
+ * painel (``S.grupoAviso``) e num aviso; a posição não muda. */
+async function gravarGrupo(gid, body, msg, antes = null) {
+  if (S.busy) return false;
+  lockButtons(true);
+  let ok = false;
+  try {
+    if (antes) await antes();
+    const r = await post(`/api/grupos/${gid}/mover`, body);
+    S.undo = undoGrupo(gid, msg, r.anterior);
+    S.grupoAviso = null;
+    toastUndo(msg);
+    ok = true;
+  } catch (e) { S.grupoAviso = e.message; toast(e.message, true); }
+  finally { lockButtons(false); }
+  await loadGrupos();
+  return ok;
+}
+/** «Levar para o lugar provável»: leva o grupo (mostrando-o primeiro, se ainda não estava) à posição do candidato. A rotação é
+ * a do solver, por isso manda ``rodado: false``; desfaz-se pela ``anterior``. */
 async function levarGrupo(gid) {
   const g = grupo(gid), lp = g && g.lugar_provavel;
   if (!lp) return;
   const v = S.vb, centro = [(v.y + v.h / 2) / S.hr + 0.5, v.x + v.w / 2 + 0.5];
-  try {
-    if (!g.mostrado) await post(`/api/grupos/${gid}/mostrar`, { centro });
-    await post(`/api/grupos/${gid}/mover`, { l0: lp.cell0[0], c0: lp.cell0[1], rot: lp.rot });
-  } catch (e) { toast(e.message, true); }
-  await loadGrupos();
+  const ok = await gravarGrupo(gid, { l0: lp.cell0[0], c0: lp.cell0[1], rot: lp.rot, rodado: false }, "Grupo levado para o lugar provável.",
+    g.mostrado ? null : () => post(`/api/grupos/${gid}/mostrar`, { centro }));
   const g2 = grupo(gid);
-  if (g2 && g2.footprint && g2.footprint.length) showCell(g2.footprint[0][0], g2.footprint[0][1]);
+  if (ok && g2 && g2.footprint && g2.footprint.length) showCell(g2.footprint[0][0], g2.footprint[0][1]);
+}
+
+// ------------------------------------------------------------ mover (Ctrl+arrastar; «Mover» … «Feito») e rodar
+function entrarMover(gid) {
+  S.mover = { gid, dl: 0, dc: 0 }; S.grupoAviso = null;
+  drawGrupos(); renderMontar();
+}
+/** Sair do «Mover» sem gravar: o grupo volta à posição gravada. */
+function cancelarMover() {
+  if (!S.mover) return;
+  S.mover = null;
+  drawGrupos(); renderMontar();
+}
+/** «Feito»: grava a posição pendente (uma só escrita); sem deslocamento, só sai do modo. */
+async function feitoMover() {
+  const m = S.mover, g = m && grupo(m.gid);
+  if (!m || !g || (!m.dl && !m.dc)) { cancelarMover(); return; }
+  const p = g.posicao;
+  S.mover = null;                                  // o transform fica no desenho até a recarga trazer a posição gravada
+  await gravarGrupo(g.id, { l0: p.l0 + m.dl, c0: p.c0 + m.dc, rot: p.rot }, "Grupo movido.");
+}
+async function rodarGrupo(gid, d) {
+  S.grupoAviso = null;
+  await gravarGrupo(gid, { rodar: d }, "Grupo rodado.");
+}
+
+/** Porque é que o grupo ``gid`` deslocado ``dl`` linhas e ``dc`` colunas não cabe (as frases do servidor, na mesma ordem:
+ * fora da grelha, peça colocada, lugar marcado, outro grupo), ou null se cabe. É só um pré-teste: o servidor valida de novo. */
+function motivoNaoCabe(gid, dl, dc) {
+  const g = grupo(gid), B = S.board;
+  if (!g || !g.footprint || !B) return null;
+  const cel = g.footprint.map(([l, c]) => [l + dl, c + dc]);
+  for (const [l, c] of cel) if (l < 1 || c < 1 || l > S.rows || c > S.cols) return "Não cabe aqui: sai do tabuleiro.";
+  for (const [l, c] of cel) {
+    const x = B.cells[l - 1][c - 1];
+    if (x.estado === "colocada") return `Não cabe aqui: a linha ${l}, coluna ${c} já tem uma peça.`;
+    if (x.estado === "ocupada_legado" && x.fonte !== "foto") return `Não cabe aqui: a linha ${l}, coluna ${c} está marcada como montada.`;
+  }
+  const meus = new Set(cel.map(([l, c]) => `${l},${c}`));
+  for (const o of ((S.grupos && S.grupos.grupos) || [])) {
+    if (o.id === gid || !o.mostrado || !o.footprint) continue;
+    for (const [l, c] of o.footprint) if (meus.has(`${l},${c}`)) return `Não cabe aqui: fica por cima de outro grupo (linha ${l}, coluna ${c}).`;
+  }
+  return null;
+}
+/** O grupo mostrado que está na célula (l, c) tal como se vê (com o deslocamento pendente do «Mover»), ou null. */
+function grupoVisivelEm(l, c) {
+  const G = S.grupos;
+  if (!G) return null;
+  const esc = grupoEscolhido();
+  const nele = (g) => { const [dl, dc] = pendente(g.id); return g.mostrado && g.footprint && g.footprint.some((x) => x[0] + dl === l && x[1] + dc === c); };
+  if (esc && nele(esc)) return esc;
+  return G.grupos.find(nele) || null;
+}
+
+let arrasto = null;
+function initArrasto() {
+  const noTabuleiro = (e) => { const sv = svg(); return !!sv && (e.target === sv || sv.contains(e.target)); };
+  const aplicar = () => {
+    const a = arrasto;
+    if (!a.el || !a.el.isConnected) a.el = $(`#lyr-grupos [data-grupo="${a.gid}"]`);
+    deslocar(a.el, a.dl, a.dc);
+    if (a.el) a.el.classList.toggle("invalido", !!(a.dl || a.dc) && !!motivoNaoCabe(a.gid, a.dl, a.dc));
+  };
+  // captura em janela: corre antes do ``pointerdown`` de board.js e, ao parar a propagação, o pan nem arranca
+  window.addEventListener("pointerdown", (e) => {
+    if (!noTabuleiro(e)) return;
+    if (arrasto) { e.stopPropagation(); e.preventDefault(); return; }       // um 2.º dedo durante o arrasto não faz pinça
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const ctrl = e.pointerType === "mouse" && (e.ctrlKey || e.metaKey);
+    if (!ctrl && !S.mover) return;
+    const p = clientToBoard(e.clientX, e.clientY);
+    const g = grupoVisivelEm(Math.floor(p.y / S.hr) + 1, Math.floor(p.x) + 1);
+    if (!g || (S.mover && g.id !== S.mover.gid)) return;                    // fora do grupo: o tabuleiro faz o que faz sempre
+    e.stopPropagation(); e.preventDefault();
+    try { svg().setPointerCapture(e.pointerId); } catch (err) { /* o ponteiro já acabou */ }
+    if (!S.mover && (S.vista !== "grupos" || S.grupoSel !== g.id)) escolherGrupo(g.id);   // o escolhido é o que leva a imagem
+    const [dl, dc] = pendente(g.id);
+    arrasto = { id: e.pointerId, gid: g.id, p0: p, base: [dl, dc], dl, dc, el: null, modo: !!S.mover };
+    aplicar();
+  }, true);
+  window.addEventListener("pointermove", (e) => {
+    const a = arrasto;
+    if (!a || e.pointerId !== a.id) return;
+    const p = clientToBoard(e.clientX, e.clientY);
+    const dl = a.base[0] + Math.round((p.y - a.p0.y) / S.hr), dc = a.base[1] + Math.round(p.x - a.p0.x);
+    if (dl === a.dl && dc === a.dc) return;
+    a.dl = dl; a.dc = dc;
+    aplicar();
+  });
+  const fim = (e) => {
+    const a = arrasto;
+    if (!a || e.pointerId !== a.id) return;
+    arrasto = null;
+    try { svg().releasePointerCapture(a.id); } catch (err) { /* já solto */ }
+    const el = a.el && a.el.isConnected ? a.el : $(`#lyr-grupos [data-grupo="${a.gid}"]`);
+    if (el) el.classList.remove("invalido");
+    const g = grupo(a.gid);
+    if (e.type === "pointercancel" || !g || (a.dl === a.base[0] && a.dc === a.base[1])) {       // sem movimento (ou cancelado): fica como estava
+      deslocar(el, a.base[0], a.base[1]);
+      return;
+    }
+    const porque = motivoNaoCabe(a.gid, a.dl, a.dc);
+    if (porque) { deslocar(el, a.base[0], a.base[1]); S.grupoAviso = porque; toast(porque, true); if (S.vista === "grupos") renderMontar(); return; }
+    S.grupoAviso = null;
+    if (a.modo) { S.mover.dl = a.dl; S.mover.dc = a.dc; return; }           // «Mover»: fica pendente até ao «Feito»
+    const pos = g.posicao;
+    gravarGrupo(a.gid, { l0: pos.l0 + a.dl, c0: pos.c0 + a.dc, rot: pos.rot }, "Grupo movido.");
+  };
+  window.addEventListener("pointerup", fim);
+  window.addEventListener("pointercancel", fim);
 }
 function grupoRow(g) {
   const sacos = g.sacos || [];
@@ -199,6 +363,20 @@ function grupoPainel(T, g) {
   const acts = h("div", { class: "actions" });
   acts.append(h("button", { type: "button", class: "btn big", id: "g-mostrar", onclick: () => mostrarGrupo(g.id) }, ico("map-pin"), g.mostrado ? "Ver no tabuleiro" : "Mostrar no tabuleiro"));
   box.append(acts);
+  if (g.mostrado) {
+    const mod = !!S.mover && S.mover.gid === g.id;
+    const flip = ico("rotate-cw"); flip.classList.add("flip");
+    box.append(mod
+      ? h("div", { class: "actions grp-barra", id: "g-barra" },
+          h("button", { type: "button", class: "btn big primary", id: "g-feito", onclick: feitoMover }, ico("check"), "Feito"),
+          h("button", { type: "button", class: "btn big", id: "g-cancelar", onclick: cancelarMover }, ico("x"), "Cancelar"))
+      : h("div", { class: "actions grp-barra", id: "g-barra" },
+          h("button", { type: "button", class: "btn big", id: "g-mover", onclick: () => entrarMover(g.id) }, "Mover"),
+          h("button", { type: "button", class: "btn big", id: "g-rodar-esq", "aria-label": "Rodar para a esquerda", onclick: () => rodarGrupo(g.id, -90) }, flip, "Rodar"),
+          h("button", { type: "button", class: "btn big", id: "g-rodar-dir", "aria-label": "Rodar para a direita", onclick: () => rodarGrupo(g.id, 90) }, ico("rotate-cw"), "Rodar")));
+    box.append(h("p", { class: "small muted", id: "g-dica" }, mod ? "Arrasta o grupo no tabuleiro e toca em «Feito»." : "No computador: Ctrl + arrastar move o grupo."));
+  }
+  if (S.grupoAviso) box.append(h("p", { class: "small aviso", id: "g-aviso", role: "alert" }, S.grupoAviso));
   const lp = g.lugar_provavel;
   if (lp && !(g.mostrado && mesmaPos(g, lp))) box.append(h("div", { class: "actions" }, h("button", { type: "button", class: "btn big primary", id: "g-levar", onclick: () => levarGrupo(g.id) }, ico("locate-fixed"), "Levar para o lugar provável")));
   else if (lp) box.append(h("p", { class: "small muted", id: "g-no-lugar" }, "Está no lugar provável."));

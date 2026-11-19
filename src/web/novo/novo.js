@@ -292,6 +292,7 @@ function drawLegend() {
   legendaGrupo(L);
 }
 S.onBoardTap = (l, c) => {
+  if (S.mover) return;                    // F4 B4: durante o «Mover» um toque fora do grupo não sai do modo nem abre painéis
   if (S.achado) setAchado(null);          // o destaque da lupa dura até ao próximo toque no tabuleiro
   // F1b: tocar no alvo de uma peça da fila torna-a a peça atual. F2c (decisão do Tiago, 2026-11-16): tocar no alvo do
   // cartão ATUAL mantém o cartão e não abre o painel: centra o lugar e «localizar» pisca (o painel do lugar abre-se pelo
@@ -606,6 +607,7 @@ async function doUndo() {
     else if (u.tipo === "encaixa") await post("/api/confirm", { acao: "unplace", piece: u.item.piece, desfaz: true });
     else if (u.tipo === "guardar") await post("/api/confirm", { acao: "position_clear", piece: u.item.piece, desfaz: true });
     else if (u.tipo === "nao" && u.rejeicoes.length) await post("/api/confirm", { acao: "undo_reject", rejeicoes: u.rejeicoes });
+    if (u.depois) await u.depois();                  // F4 B4: os grupos recarregam (não há ``board_changed`` para os trazer)
     S.undo = null; S.pendente = null;
     if (!u.painel) { S.modo = "cartao"; S.pick = u.item ? u.item.piece : null; }
     $$("#toast .undo-toast").forEach((x) => x.remove());
@@ -1384,6 +1386,7 @@ function onKey(e) {
     if (!$("#lightbox").hidden) { $("#lightbox").hidden = true; return; }
     if ($("#definicoes")) { $("#definicoes").remove(); return; }
     if (S.modo === "por_mao") { cancelPorMao(); return; }            // F2: volta ao painel do lugar
+    if (S.mover) { cancelarMover(); return; }                          // F4 B4: «Mover» repõe a posição e fica no grupo
     if (S.vista === "grupos" && S.grupoSel) { voltarLista(); return; }   // F4 B4: do grupo escolhido para a lista
     if (S.modo !== "cartao") { S.modo = "cartao"; S.painel = null; renderMontar(); }
     return;
@@ -1431,6 +1434,7 @@ async function boot() {
   initMenu();
   initPointer();
   initVista();
+  initArrasto();
   // F2c: o rótulo do alvo segue o zoom pelo caminho que board.js já usa (setView escreve a viewBox) e o tamanho do tabuleiro
   new MutationObserver(updateAlvoTag).observe(svg(), { attributes: true, attributeFilter: ["viewBox"] });
   window.addEventListener("resize", updateAlvoTag);

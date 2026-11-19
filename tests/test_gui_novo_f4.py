@@ -29,6 +29,7 @@ sync_api = pytest.importorskip("playwright.sync_api")
 from src import server as SV  # noqa: E402
 from test_gui_novo import browser, _serve  # noqa: E402,F401
 from test_server_grupos import _board_project, _cand, PSI_W  # noqa: E402
+from test_gui_novo_f2f import _fechar  # noqa: E402
 
 PROIBIDO = [r"\bP\d{4}\b", r"\bG\d{4}\b", r"[Âa]ncora", r"\(\s*\d+\s*,\s*\d+\s*\)"]
 
@@ -311,3 +312,388 @@ def test_sem_scroll_horizontal_alvos_e_texto(gr, browser, vp):
 		assert not errs, errs
 	finally:
 		pg.close()
+
+
+# ============================================================================ etapa 2: mover e rodar (escrito ANTES do codigo)
+#
+# Contrato do servidor (src/server.py grupo_mover): POST mover {l0, c0, rot} copia o ``rodado`` da linha atual (o corpo
+# pode trazer ``rodado`` explicito); {rodar: +-90} grava ``rodado: true``; a resposta traz ``anterior`` (posicao efectiva
+# antes da escrita, com ``rodado``). O desfazer e um ``mover`` com a ``anterior`` e o ``rodado`` explicito de ``anterior``.
+
+
+def _grupo_api(url, gid):
+	d = json.loads(urllib.request.urlopen(url + "/api/grupos").read())
+	return next(g for g in d["grupos"] if g["id"] == gid)
+
+
+def _xy(pg, l, c):
+	"""Coordenadas de ecra do centro da celula (l, c); aceita fracoes (l = 2.3 e 30 % abaixo do centro da linha 2)."""
+	return pg.evaluate("""([l, c]) => { const r = svgRect(), v = S.vb;
+		return { x: r.left + ((c - 0.5) - v.x) / v.w * r.width, y: r.top + (((l - 0.5) * S.hr) - v.y) / v.h * r.height }; }""", [l, c])
+
+
+def _arrastar(pg, de, para, ctrl=False, passos=8, soltar=True):
+	a, b = _xy(pg, *de), _xy(pg, *para)
+	if ctrl:
+		pg.keyboard.down("Control")
+	pg.mouse.move(a["x"], a["y"])
+	pg.mouse.down()
+	for i in range(1, passos + 1):
+		pg.mouse.move(a["x"] + (b["x"] - a["x"]) * i / passos, a["y"] + (b["y"] - a["y"]) * i / passos)
+	if soltar:
+		pg.mouse.up()
+		if ctrl:
+			pg.keyboard.up("Control")
+
+
+def _espiar(pg):
+	reqs = []
+	pg.on("request", lambda r: reqs.append((r.method, r.url.split("?")[0], r.post_data)) if r.method == "POST" else None)
+	return reqs
+
+
+def _movers(reqs):
+	return [json.loads(b) for m, u, b in reqs if u.endswith("/mover")]
+
+
+def _pos_no_cliente(pg, gid):
+	return pg.evaluate("(gid) => { const p = grupo(gid).posicao; return [p.l0, p.c0, p.rot]; }", gid)
+
+
+def _mostrar(url, ids, k, centro=None):
+	st, r = _post(url, f"/api/grupos/{ids[k]}/mostrar", {"centro": centro} if centro else {})
+	assert st == 200, r
+
+
+def test_ctrl_arrastar_encaixa_e_grava(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")                                            # (2,4)
+	pg, errs = _abrir(browser, url, vista=False)
+	reqs = _espiar(pg)
+	try:
+		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{ids['G1']}']", timeout=10_000)
+		vb0 = pg.evaluate("({ ...S.vb })")
+		seq0 = gui.seq
+		_arrastar(pg, (2, 4), (3.2, 5.3), ctrl=True, soltar=False)
+		assert pg.evaluate("S.vb") == vb0                                 # sem pan
+		tr = pg.get_attribute(f"#lyr-grupos [data-grupo='{ids['G1']}']", "transform")
+		assert tr and "translate" in tr                                   # a meio, o grupo anda encaixado as celulas
+		pg.mouse.up()
+		pg.keyboard.up("Control")
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 3 && !S.busy", arg=ids["G1"], timeout=10_000)
+		assert _pos_no_cliente(pg, ids["G1"]) == [3, 5, 0]                # arredondado: 1 linha e 1 coluna
+		g = _grupo_api(url, ids["G1"])
+		assert (g["posicao"]["l0"], g["posicao"]["c0"], g["rodado"]) == (3, 5, False)
+		mv = _movers(reqs)
+		assert len(mv) == 1 and (mv[0]["l0"], mv[0]["c0"], mv[0]["rot"]) == (3, 5, 0)
+		assert mv[0].get("rodado") in (None, False)
+		assert pg.get_attribute(f"#lyr-grupos [data-grupo='{ids['G1']}']", "transform") is None     # o desenho vem da posicao gravada
+		assert "board_changed" not in [n for _, n, _ in gui.events_after(seq0)]
+		assert pg.locator("#m-ultimo").count() == 1                      # faixa «Desfazer»
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_ctrl_arrastar_invalido_volta_sem_post(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")                                            # (2,4); A (colocada) em (2,3)
+	_mostrar(url, ids, "G2", [3.0, 2.0])
+	g2 = _grupo_api(url, ids["G2"])
+	cel2 = g2["footprint"][0]
+	pg, errs = _abrir(browser, url, vista=False)
+	reqs = _espiar(pg)
+	try:
+		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{ids['G2']}']", timeout=10_000)
+		casos = [((2, 3), "já tem uma peça"),                              # sobre a colocada A
+				 ((2, 7), "sai do tabuleiro"),                              # fora da grelha (3 colunas para a direita)
+				 ((cel2[0], cel2[1]), "outro grupo")]                       # sobre o outro grupo
+		for alvo, frase in casos:
+			_arrastar(pg, (2, 4), alvo, ctrl=True)
+			pg.wait_for_timeout(150)
+			assert _pos_no_cliente(pg, ids["G1"]) == [2, 4, 0], (alvo, frase)
+			assert pg.get_attribute(f"#lyr-grupos [data-grupo='{ids['G1']}']", "transform") is None, alvo
+			assert frase in pg.inner_text("#toast"), (alvo, frase, pg.inner_text("#toast"))
+		assert _movers(reqs) == []                                         # nenhum POST
+		assert _grupo_api(url, ids["G1"])["posicao"]["l0"] == 2
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_mover_feito_com_rato(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").click()
+		pg.wait_for_selector("#g-mover", timeout=10_000)
+		assert pg.locator("#g-mover").bounding_box()["height"] >= 44
+		pg.click("#g-mover")
+		pg.wait_for_selector("#g-feito", timeout=5_000)
+		assert pg.locator("#g-feito").bounding_box()["height"] >= 44
+		assert pg.locator("#g-cancelar").count() == 1
+		vb0 = pg.evaluate("({ ...S.vb })")
+		_arrastar(pg, (2, 4), (3, 5))                                      # SEM Ctrl: durante o «Mover» arrasta o grupo
+		assert pg.evaluate("S.vb") == vb0                                  # e nao faz pan
+		assert _movers(reqs) == []                                         # so grava no «Feito»
+		assert _grupo_api(url, ids["G1"])["posicao"]["l0"] == 2
+		pg.click("#g-feito")
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 3 && !S.busy", arg=ids["G1"], timeout=10_000)
+		assert len(_movers(reqs)) == 1 and (_movers(reqs)[0]["l0"], _movers(reqs)[0]["c0"]) == (3, 5)
+		assert pg.locator("#g-feito").count() == 0 and pg.locator("#g-mover").count() == 1
+		assert pg.locator("#m-ultimo").count() == 1
+		# fora do «Mover», arrastar sem Ctrl faz pan (comportamento de sempre)
+		_arrastar(pg, (1, 1), (1, 1.6))
+		assert pg.evaluate("S.vb.x") != vb0["x"]
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_mover_cancelar_e_sair_repoe(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").click()
+		sel = f"#lyr-grupos [data-grupo='{ids['G1']}']"
+		for sair in ("#g-cancelar", "#grp-voltar", "Escape"):
+			if not pg.locator("#g-mover").count():
+				pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").click()
+			pg.click("#g-mover")
+			_arrastar(pg, (2, 4), (3, 5))
+			assert pg.get_attribute(sel, "transform")                       # a posicao pendente
+			if sair == "Escape":
+				pg.keyboard.press("Escape")
+			else:
+				pg.click(sair)
+			pg.wait_for_timeout(150)
+			assert pg.get_attribute(sel, "transform") is None, sair
+			assert pg.evaluate("S.mover") is None, sair
+			assert _pos_no_cliente(pg, ids["G1"]) == [2, 4, 0], sair
+		assert _movers(reqs) == []
+		assert _grupo_api(url, ids["G1"])["posicao"]["l0"] == 2
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_mover_feito_com_toque_cdp(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	ctx = browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True)
+	pg = ctx.new_page()
+	errs = []
+	pg.on("pageerror", lambda e: errs.append(str(e)))
+	reqs = _espiar(pg)
+	try:
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.locator("#vista-grupos").tap()
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").tap()
+		pg.wait_for_selector("#g-mover", timeout=10_000)
+		pg.locator("#g-mover").tap()
+		pg.wait_for_selector("#g-feito", timeout=5_000)
+		vb0 = pg.evaluate("({ ...S.vb })")
+		a, b = _xy(pg, 2, 4), _xy(pg, 3, 5)
+		assert pg.evaluate("([x, y]) => { const e = document.elementFromPoint(x, y); return !!e && (e.id === 'board' || !!e.closest('#board')); }", [a["x"], a["y"]])
+		cdp = ctx.new_cdp_session(pg)                                       # um dedo REAL: touchStart, touchMove ..., touchEnd sem pontos
+		pt = lambda x, y: [{"x": x, "y": y, "id": 1}]  # noqa: E731
+		cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": pt(a["x"], a["y"])})
+		for i in range(1, 9):
+			cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": pt(a["x"] + (b["x"] - a["x"]) * i / 8, a["y"] + (b["y"] - a["y"]) * i / 8)})
+		cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+		pg.wait_for_timeout(100)
+		assert pg.evaluate("S.vb") == vb0                                  # um dedo no grupo nao faz pan
+		assert _movers(reqs) == []
+		assert pg.evaluate("JSON.stringify(S.mover)") == '{"gid":"%s","dl":1,"dc":1}' % ids["G1"]
+		# Depois de um arrasto por CDP o Chromium headless deixa de gerar ``click`` nos toques seguintes (medido sem nada deste
+		# codigo: um pan do tabuleiro por CDP seguido de ``tap`` num botao nao da ``click``); «Feito» e por isso um clique.
+		pg.locator("#g-feito").click()
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 3 && !S.busy", arg=ids["G1"], timeout=10_000)
+		assert _grupo_api(url, ids["G1"])["posicao"]["c0"] == 5
+		assert not errs, errs
+	finally:
+		_fechar(ctx)
+
+
+def _rodar_falha(gui, gid):
+	"""A direcao (+90 / -90) em que o grupo, na posicao atual, nao cabe rodado (None se couber nas duas)."""
+	from src import grupos as GR
+	from src import mesa as ME
+	shown = ME.effective_positions(gui.pr)
+	for d in (90, -90):
+		if "error" in GR.rotate(gui.pr, gid, shown[gid], d, shown):
+			return d
+	return None
+
+
+def test_rodar_sem_deslizar_e_nao_cabe(gr, browser):
+	url, gui, ids = gr
+	g2 = ids["G2"]
+	_mostrar(url, ids, "G2", [3.0, 4.0])
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		pg.locator("#tab-montar .grp-row").nth(1).locator(".grp-open").click()
+		pg.wait_for_selector("#g-rodar-dir", timeout=10_000)
+		for b in ("#g-rodar-dir", "#g-rodar-esq", "#g-mover"):
+			assert pg.locator(b).bounding_box()["height"] >= 44, b
+		from src import grupos as GR
+		from src import mesa as ME
+		shown = ME.effective_positions(gui.pr)
+		esperado = GR.rotate(gui.pr, g2, shown[g2], 90, shown)
+		if "error" in esperado:
+			pytest.skip("o grupo nao cabe rodado +90 nesta posicao")
+		pg.click("#g-rodar-dir")
+		pg.wait_for_function("(gid) => grupo(gid).posicao.rot === 90 && !S.busy", arg=g2, timeout=10_000)
+		assert _pos_no_cliente(pg, g2) == [esperado["l0"], esperado["c0"], 90]      # em torno do centro, sem deslizar
+		g = _grupo_api(url, g2)
+		assert g["rodado"] is True
+		assert json.loads(next(b for m, u, b in reqs if u.endswith("/mover"))) == {"rodar": 90}
+		pg.click("#g-rodar-esq")                                                        # volta a rot 0
+		pg.wait_for_function("(gid) => grupo(gid).posicao.rot === 0 && !S.busy", arg=g2, timeout=10_000)
+		# nao cabe: encostado ao fundo da grelha
+		assert _post(url, f"/api/grupos/{g2}/mover", {"l0": 4, "c0": 1, "rot": 0})[0] == 200
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 4 && !S.busy", arg=g2, timeout=10_000)
+		d = _rodar_falha(gui, g2)
+		assert d is not None
+		antes = _pos_no_cliente(pg, g2)
+		pg.click("#g-rodar-dir" if d == 90 else "#g-rodar-esq")
+		pg.wait_for_function("document.body.innerText.includes('Não cabe aqui rodado: move primeiro.')", timeout=10_000)
+		assert _pos_no_cliente(pg, g2) == antes                                         # nada mudou
+		assert _grupo_api(url, g2)["posicao"]["rot"] == 0
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_desfazer_mover_e_rodar(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")                                            # (2,4), rodado false
+	_mostrar(url, ids, "G2", [3.0, 4.0])
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		# mover pelo Ctrl+arrastar e desfazer pela faixa
+		_arrastar(pg, (2, 4), (3, 5), ctrl=True)
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 3 && !S.busy", arg=ids["G1"], timeout=10_000)
+		pg.click("#b-desfazer-ultimo")
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 2 && !S.busy", arg=ids["G1"], timeout=10_000)
+		mv = _movers(reqs)
+		assert len(mv) == 2 and (mv[1]["l0"], mv[1]["c0"], mv[1]["rot"], mv[1]["rodado"]) == (2, 4, 0, False)   # `anterior`, rodado explicito
+		assert _grupo_api(url, ids["G1"])["rodado"] is False
+		assert pg.locator("#m-ultimo").count() == 0                        # um nivel: gasto
+		# rodar e desfazer por Ctrl+Z
+		if _rodar_falha(gui, ids["G2"]) == 90:
+			pytest.skip("G2 nao cabe rodado +90 aqui")
+		pg.click("#grp-voltar")
+		pg.locator("#tab-montar .grp-row").nth(1).locator(".grp-open").click()
+		pg.click("#g-rodar-dir")
+		pg.wait_for_function("(gid) => grupo(gid).posicao.rot === 90 && !S.busy", arg=ids["G2"], timeout=10_000)
+		assert _grupo_api(url, ids["G2"])["rodado"] is True
+		pg.keyboard.press("Control+z")
+		pg.wait_for_function("(gid) => grupo(gid).posicao.rot === 0 && !S.busy", arg=ids["G2"], timeout=10_000)
+		g = _grupo_api(url, ids["G2"])
+		assert g["rodado"] is False and g["posicao"]["rot"] == 0           # repoe o valor anterior do `rodado` (C1)
+		assert _movers(reqs)[-1]["rodado"] is False
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_ver_no_tabuleiro_de_grupo_mostrado_nao_faz_post(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").click()
+		pg.wait_for_selector("#g-mostrar", timeout=10_000)
+		assert pg.inner_text("#g-mostrar").strip() == "Ver no tabuleiro"
+		pg.click("#g-mostrar")                                              # grupo ja mostrado: so showCell
+		pg.click("#grp-voltar")
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-mostrar").click()   # tambem o botao da lista
+		pg.wait_for_timeout(300)
+		assert [r for r in reqs if "/api/grupos/" in r[1]] == []            # nenhum POST
+		assert pg.locator("#m-ultimo").count() == 0                         # e «Mostrar» continua fora do desfazer (C2)
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_levar_manda_rodado_false_e_desfaz(gr, browser):
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	assert _post(url, f"/api/grupos/{ids['G1']}/mover", {"l0": 4, "c0": 1, "rot": 0, "rodado": True})[0] == 200
+	assert _grupo_api(url, ids["G1"])["rodado"] is True
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").click()
+		pg.click("#g-levar")
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 2 && !S.busy", arg=ids["G1"], timeout=10_000)
+		mv = _movers(reqs)
+		assert len(mv) == 1 and (mv[0]["l0"], mv[0]["c0"], mv[0]["rot"]) == (2, 4, 0) and mv[0]["rodado"] is False
+		assert _grupo_api(url, ids["G1"])["rodado"] is False
+		pg.wait_for_selector("#b-desfazer-ultimo", timeout=5_000)           # desfazivel pela `anterior`
+		pg.click("#b-desfazer-ultimo")
+		pg.wait_for_function("(gid) => grupo(gid).posicao.l0 === 4 && !S.busy", arg=ids["G1"], timeout=10_000)
+		mv = _movers(reqs)
+		assert (mv[1]["l0"], mv[1]["c0"], mv[1]["rodado"]) == (4, 1, True)
+		assert _grupo_api(url, ids["G1"])["rodado"] is True
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_criterio_14_arrastar_com_32_grupos_sem_frames_lentos(gr, browser):
+	"""Criterio 14: 60 passos de arrasto com 32 grupos mostrados, 0 frames acima de 25 ms (Chromium headless). Os 32 grupos
+	vem de uma resposta de /api/grupos fabricada (o desenho e o arrasto sao do cliente); o POST do fim nao chega ao servidor."""
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	base = _grupo_api(url, ids["G1"])
+	grupos = []
+	for i in range(32):
+		g = json.loads(json.dumps(base))
+		g["id"] = f"G{9000 + i}"
+		l, c = 1 + (i % 4), 1 + (i // 4) % 6
+		g["posicao"] = {"l0": l, "c0": c, "rot": 0, "mirror": False, "origem": "mesa"}
+		g["footprint"] = [[l, c]]
+		g["mostrado"], g["sobreposto"], g["lugar_provavel"] = True, None, None
+		grupos.append(g)
+	grupos[0]["id"] = ids["G1"]
+	fake = {"versao": 1, "n_grupos": 32, "n_pecas": 32, "n_mostrados": 32, "grupos": grupos, "aviso": []}
+	pg = browser.new_page(viewport={"width": 1366, "height": 768})
+	pg.route("**/api/grupos", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(fake)))
+	pg.route("**/api/grupos/*/mover", lambda r: r.fulfill(status=409, content_type="application/json", body=json.dumps({"error": "teste"})))
+	try:
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.click("#vista-grupos")
+		pg.wait_for_selector("#lyr-grupos .grupo", timeout=10_000)
+		assert pg.locator("#lyr-grupos > .grupo").count() == 32
+		pg.evaluate("""() => { window.__ft = []; window.__stop = false; let last = 0;
+			const loop = (t) => { if (last) window.__ft.push(t - last); last = t; if (!window.__stop) requestAnimationFrame(loop); };
+			requestAnimationFrame(loop); }""")
+		a = _xy(pg, 1, 1)
+		pg.keyboard.down("Control")
+		pg.mouse.move(a["x"], a["y"])
+		pg.mouse.down()
+		for i in range(1, 61):
+			pg.mouse.move(a["x"] + 3 * i, a["y"] + 2 * i)
+		assert pg.get_attribute(f"#lyr-grupos [data-grupo='{ids['G1']}']", "transform")          # o arrasto esta mesmo a andar
+		pg.mouse.up()
+		pg.keyboard.up("Control")
+		pg.wait_for_timeout(100)
+		ft = pg.evaluate("(() => { window.__stop = true; return window.__ft; })()")
+		lentos = [round(x, 1) for x in ft if x > 25]
+		print(f"criterio 14: {len(ft)} frames, max {max(ft):.1f} ms, mediana {sorted(ft)[len(ft) // 2]:.1f} ms, acima de 25 ms: {lentos}")
+		assert len(ft) >= 20 and lentos == [], lentos
+	finally:
+		_fechar(pg.context)

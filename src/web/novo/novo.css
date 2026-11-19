@@ -401,6 +401,11 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
 .grp-n { font-size: 17px; font-weight: 700; }
 .grp-est.aviso, .aviso { color: var(--red); }
 .grp-mostrar { flex: 0 1 auto; }
+#board.modo-mover { cursor: move; }
+.grupo.invalido .grupo-contorno { stroke: var(--red); stroke-dasharray: 6 4; }
+.grupo.invalido .grupo-fundo .grupo-cel { fill: rgba(255, 107, 95, .18); }
+.ico.flip { transform: scaleX(-1); }
+.grp-barra .btn.big { flex: 1 1 96px; }
 .grp-painel { display: flex; flex-direction: column; gap: 12px; }
 .grp-titulo { font-size: 22px; font-weight: 700; margin: 0; }
 .grp-estado { display: flex; align-items: center; gap: 8px; }
