@@ -1425,7 +1425,31 @@ function renderPrep() {
   $("#progress-txt").textContent = p.texto + (p.N ? ` ${p.n} de ${p.N}` : "");
   $("#pb-n").style.width = frac === null ? "0" : `${Math.round(frac * 100)}%`;       // a barra do topo acompanha a preparação
 }
+/** O aviso do fundo nunca cobre a legenda do tabuleiro (F4): se os retângulos se cruzarem, o aviso sobe até ficar logo
+ * acima da legenda. Corre quando um aviso entra ou sai, quando a legenda muda de tamanho e quando a janela muda. */
+function posToast() {
+  const t = $("#toast"), lg = $("#legend");
+  if (!t || !lg) return;
+  t.style.bottom = "";
+  const L = lg.getBoundingClientRect();
+  if (!L.width || !L.height || !t.children.length) return;
+  for (const el of t.children) {
+    const T = el.getBoundingClientRect();
+    if (T.width && T.height && T.left < L.right && L.left < T.right && T.top < L.bottom && L.top < T.bottom) {
+      t.style.bottom = `${Math.ceil(window.innerHeight - L.top + 8)}px`;
+      return;
+    }
+  }
+}
+function vigiarToast() {
+  const f = () => requestAnimationFrame(posToast);
+  new MutationObserver(f).observe($("#toast"), { childList: true });
+  new MutationObserver(f).observe($("#legend"), { childList: true, subtree: true });
+  if (typeof ResizeObserver === "function") new ResizeObserver(f).observe($("#legend"));
+  window.addEventListener("resize", f);
+}
 async function boot() {
+  vigiarToast();
   $$("#tabs button").forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
   initSearch();
   $("#lb-close").onclick = () => { $("#lightbox").hidden = true; };

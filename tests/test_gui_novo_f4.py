@@ -1387,3 +1387,32 @@ def test_b3_ambar_so_na_celula_da_peca_que_discorda_num_grupo_rodado(gr, browser
 		assert not errs, errs
 	finally:
 		pg.close()
+
+
+@pytest.mark.parametrize("vp", [(1366, 768), (390, 844)])
+def test_aviso_do_fundo_nao_tapa_a_legenda(gr90, browser, vp):
+	"""O aviso do fundo («Grupo de N peça fixado · Desfazer», e os outros) nunca cobre a legenda do tabuleiro, com a
+	legenda no estado mais comprido («Peça que diz outra rotação» visível)."""
+	url, gui, ids = gr90
+	_mostrar(url, ids, "G1")
+	assert _post(url, f"/api/grupos/{ids['G1']}/mover", {"l0": 2, "c0": 4, "rot": 90, "rodado": False})[0] == 200
+	pg, errs = _abrir(browser, url, vp)
+	try:
+		_escolher(pg)
+		pg.click("#g-fixar")
+		pg.click("#g-fixar-sim")
+		pg.wait_for_selector("#g-fixado", timeout=15_000)
+		pg.wait_for_selector("#legend [data-legend='grupo_aviso']", timeout=10_000)
+		pg.evaluate("toast('Um aviso de teste com texto comprido para ocupar largura no fundo do ecrã', true)")
+		pg.wait_for_timeout(300)
+		cx = pg.evaluate("""(() => { const r = (e) => { const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; };
+			return { leg: r(document.querySelector('#legend')), toasts: [...document.querySelectorAll('#toast > div')].map(r).filter((b) => b.w > 0 && b.h > 0) }; })()""")
+		assert cx["toasts"], "sem aviso visível"
+		L = cx["leg"]
+		assert L["w"] > 0 and L["h"] > 0
+		for T in cx["toasts"]:
+			livre = T["x"] + T["w"] <= L["x"] or L["x"] + L["w"] <= T["x"] or T["y"] + T["h"] <= L["y"] or L["y"] + L["h"] <= T["y"]
+			assert livre, (vp, T, L)
+		assert not errs, errs
+	finally:
+		_fechar(pg.context)
