@@ -1,6 +1,21 @@
-# HANDOFF — 2026-11-19 (F4 B4 feito: GUI nova dos grupos soltos; a seguir, o B5 (medição e fecho))
+# HANDOFF — 2026-11-19 (F4 fechada do lado do código: B5 medido; a seguir, o teste do Tiago)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
+
+
+## Sessão de 2026-11-19 (F4, B5): medição e fecho — `docs/prompts/2026-11-19-f4-b5-medicao.md` (fechado)
+- **Critérios [V]** (cópia de `projects/alpes`, contra `cc68ad4`; números em `docs/decisoes.md` «F4 B5»):
+  - 11: 10 «Mover» com 32 grupos mostrados, iguais byte a byte (log, `placements.json`, `render_version()`, `board.jpg`, regiões), e iguais ao `cc68ad4` sem grupos (`tools/diagnostico/gui/f4_iguais.py`);
+  - 12: «perto» −0,011 s (IC t [−0,034, +0,012], bootstrap [−0,030, +0,008]); «1.º salto» −0,82 s (IC t [−1,11, −0,52]) (`pa_pares.py` + `f4_ic.py`);
+  - 13: mover 23 ms, fixar 1,25 s (medianas; máx. 2,28 s); 14: máx. 16,8 ms, 0 frames > 25 ms; 15: PNG 0,477 s, +47,6 MB (alvos 0,5 s / 50 MB: pouca folga).
+- **Para o Tiago decidir:** abrir `/novo/` ficou +1,43 s mais lento (0,72 → 2,26 s; o `loadAll` espera pelo `/api/grupos`); abrir + 1.º salto +0,61 s (IC [+0,45, +0,77]). Fora dos critérios; não otimizado. Proposta: não esperar pelos grupos para o `data-ready`.
+- **Achados:** o Montar ainda diz «N grupos sem lugar: ver na interface completa» (`novo.js` 476, 488, 1265; para o helper); cada arranque do servidor re-codifica `render/gui/board_60.jpg` (anterior à F4, backlog).
+- **Lista do teste do Tiago (PARAGEM 3, antes da F4b):**
+  1. no PC, em `/novo/`: «Grupos soltos» → «Mostrar no tabuleiro» → Ctrl+arrastar e «Mover» … «Feito» → «Rodar» → recarregar (a posição fica);
+  2. fixar fisicamente ≥ 3 grupos, um deles de 1 peça: «Fixar aqui» → confirmar na mesa; ver o progresso subir e as gémeas aparecerem; num grupo com aviso âmbar, ver se a rotação está mesmo errada;
+  3. «Tirar o grupo inteiro do lugar» (fica onde estava) e o desfazer (faixa e Ctrl+Z) de mover, rodar, fixar e soltar;
+  4. no iPhone: «Mover» com um dedo até «Feito», a lista e o painel do grupo a 390 px; [NT] Firefox/Safari, pinça com um dedo sobre o grupo;
+  5. dizer se a abertura mais lenta da página incomoda.
 
 ## Sessão de 2026-11-19 (F4, B4 etapas 2 e 3 de 3): mover, rodar, fixar e soltar na GUI nova
 - **Feito:** Ctrl+arrastar e «Mover» … «Feito» (rato e toque), «Rodar» ±90, desfazer (faixa e Ctrl+Z), «Fixar aqui» com confirmação de um clique e o aviso âmbar («Esta peça diz outra rotação», «Desfazer» = `unanchor`), soltar = «Tirar o grupo inteiro do lugar» (Q10 a), correções M1–M4 e B1–B2 da revisão. `src/web/novo/grupos.js`, `tests/test_gui_novo_f4.py` (40). Commits `5a8c598`, `99d6c9c` e o da etapa 3. Decisões em `docs/decisoes.md` (2026-11-19). Capturas `docs/gui/screenshots/redesenho/F4_depois_*`. Ficheiro do prompt: `docs/prompts/2026-11-18-f4-b4-gui-grupos.md` (fechado).
