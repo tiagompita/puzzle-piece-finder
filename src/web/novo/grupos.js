@@ -265,7 +265,13 @@ async function fixarGrupo(gid) {
     const dis = Object.entries(r.vizinhas_pecas || {}).filter(([, w]) => w === "discordam").map(([pid]) => celula[pid]).filter(Boolean);
     S.fixado = { n, confianca: r.confianca, vizinhas: r.vizinhas, discordam: dis };
     const msg = `Grupo de ${pecasTxt(n)} fixado.`;
-    S.undo = { tipo: "fixar", painel: true, msg, inversa: confirmReq({ acao: "unanchor", section: gid }),
+    // o desfazer é a inversa completa: ``unanchor`` e, se a rotação era a do Tiago (``rot_fonte`` tiago), um «Mover» para o
+    // mesmo sítio com ``rodado: true``, para voltar a fixar dar tiago outra vez (M4, decisão do Tiago 2026-11-19; exceção à C1)
+    const inversa = [confirmReq({ acao: "unanchor", section: gid })];
+    if (r.rot_fonte === "tiago" && r.posicao) {
+      inversa.push({ url: `/api/grupos/${gid}/mover`, body: { l0: r.posicao.l0, c0: r.posicao.c0, rot: r.posicao.rot, rodado: true } });
+    }
+    S.undo = { tipo: "fixar", painel: true, msg, inversa,
       depois: async () => { S.fixado = null; S.grupoSel = gid; S.vista = "grupos"; await loadGrupos(); drawVistaSw(); } };
     S.pendente = null; S.grupoSel = null;
     toastUndo(msg);

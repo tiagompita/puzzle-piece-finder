@@ -105,7 +105,7 @@ from src.state import Project, StateError
 
 __all__ = [
 	"LEGEND", "legend_for", "BOARD_PPC", "DEFAULT_PORT", "SPAN_CELLS", "missing_assets", "changed_cells", "patch_regions",
-	"plain_reasons", "cell_text", "Gui", "create_app", "main",
+	"plain_reasons", "cell_text", "undo_anchor_meta", "UNDO_ANCHOR_KEYS", "Gui", "create_app", "main",
 ]
 
 DEFAULT_PORT = 8765
@@ -284,6 +284,35 @@ def _fill_mask(poly, shape: tuple) -> np.ndarray:
 	m = np.zeros(shape[:2], np.uint8)
 	cv2.fillPoly(m, [np.round(np.asarray(poly, float)).astype(np.int32).reshape(-1, 1, 2)], 1)
 	return m > 0
+
+
+UNDO_ANCHOR_KEYS = ("confianca", "rot_fonte", "vizinhas", "vizinhas_pecas")
+
+
+def undo_anchor_meta(events: list, gid: str, l0: int, c0: int, rot: int, mirror: bool) -> Optional[dict]:
+	"""The ``anchor_meta`` that the undo of «Tirar o grupo inteiro do lugar» gives back (M3, decision of Tiago
+	2026-11-19): the :data:`UNDO_ANCHOR_KEYS` of the anchor that the group's LAST ``section_unanchored`` removed, when
+	the group's last anchor / unanchor event is that unanchor and its cell, rot and mirror are the ones asked for;
+	else None (the default of a manual anchor). Pure over the log's events."""
+	seen_unanchor = False
+	for ev in reversed(events):
+		if ev.get("section") != gid:
+			continue
+		a = ev.get("action")
+		if a == "section_unanchored":
+			if seen_unanchor:
+				return None
+			seen_unanchor = True
+		elif a == "section_anchored":
+			if not seen_unanchor:
+				return None                            # anchored now: nothing undone
+			an = ev.get("anchor") or {}
+			same = (int(an.get("l0", -1)) == int(l0) and int(an.get("c0", -1)) == int(c0)
+					and int(an.get("rot") or 0) % 360 == int(rot) % 360 and bool(an.get("mirror")) == bool(mirror))
+			if not same:
+				return None
+			return {k: an[k] for k in UNDO_ANCHOR_KEYS if k in an}
+	return None
 
 
 def changed_cells(old: list, new: list, cols: int) -> list:
@@ -2948,8 +2977,11 @@ class Gui:
 				sec, c0 = body.get("section"), cell or body.get("cell0")
 				if not sec or not c0:
 					return {"error": "falta o grupo ou a célula do «É aqui»"}
-				r = confirm(pr, anchor=(sec, int(c0[0]), int(c0[1])), rot=int(body.get("rot") or 0),
-							mirror=bool(body.get("mirror")), anchor_meta=anchor_meta, **kw)
+				rot, mir = int(body.get("rot") or 0), bool(body.get("mirror"))
+				if anchor_meta is None and body.get("desfaz") is True:
+					# the undo of «Tirar o grupo inteiro do lugar» (M3, decision of Tiago 2026-11-19)
+					anchor_meta = undo_anchor_meta(pr.events(), sec, int(c0[0]), int(c0[1]), rot, mir)
+				r = confirm(pr, anchor=(sec, int(c0[0]), int(c0[1])), rot=rot, mirror=mir, anchor_meta=anchor_meta, **kw)
 			elif acao == "unanchor":
 				if not body.get("section"):
 					return {"error": "falta a secção"}

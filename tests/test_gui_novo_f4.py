@@ -1114,3 +1114,95 @@ def test_o_alvo_das_sugestoes_fica_por_cima_do_grupo(gr, browser):
 		assert ordem.index("lyr-grupos") < ordem.index("lyr-seguinte") < ordem.index("lyr-alvo")
 	finally:
 		pg.close()
+
+
+# ============================================================================ M3 e M4 (decisões do Tiago, 2026-11-19)
+def _ancora(gui, gid):
+	from src.state import Project
+	return dict(Project.open(gui.path).sections[gid].anchor)
+
+
+def test_m4_desfazer_fixar_depois_de_rodar_volta_a_dar_tiago(gr, browser):
+	"""Rodar → Fixar (tiago, confirmado) → «Desfazer» do cartão = ``unanchor`` + «Mover» para o mesmo sítio com
+	``rodado: true``: o grupo fica solto, no mesmo sítio e rotação, e voltar a fixar dá tiago / confirmado."""
+	url, gui, ids = gr
+	g1 = ids["G1"]
+	_mostrar(url, ids, "G1")
+	assert _post(url, f"/api/grupos/{g1}/mover", {"l0": 4, "c0": 6, "rot": 0})[0] == 200    # sem vizinhas
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		_escolher(pg)
+		pg.click("#g-rodar-dir")
+		pg.wait_for_function("(gid) => grupo(gid).rodado && !S.busy", arg=g1, timeout=10_000)
+		pg.click("#g-fixar"); pg.click("#g-fixar-sim")
+		pg.wait_for_selector("#g-fixado", timeout=15_000)
+		assert pg.get_attribute("#g-fixado", "data-confianca") == "confirmado"
+		a = _ancora(gui, g1)
+		assert a["rot_fonte"] == "tiago"
+		pg.wait_for_function("!S.busy", timeout=15_000)                    # um clique com S.busy perde-se (ver A1/M1)
+		n0 = len(reqs)
+		pg.click("#g-fixado-desfazer")
+		pg.wait_for_function("(gid) => !!grupo(gid) && !S.busy && document.querySelector('#g-fixado') === null", arg=g1, timeout=15_000)
+		feitos = [(u.split("/api/")[1], json.loads(b)) for m, u, b in reqs[n0:]]
+		assert feitos == [("confirm", {"acao": "unanchor", "section": g1}),
+						  (f"grupos/{g1}/mover", {"l0": a["l0"], "c0": a["c0"], "rot": a["rot"], "rodado": True})], feitos
+		g = _grupo_api(url, g1)
+		assert g["rodado"] is True and (g["posicao"]["l0"], g["posicao"]["c0"], g["posicao"]["rot"]) == (a["l0"], a["c0"], a["rot"])
+		st, d = _post(url, f"/api/grupos/{g1}/fixar", {})
+		assert st == 200 and d["rot_fonte"] == "tiago" and d["confianca"] == "confirmado", d
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_m4_desfazer_fixar_sem_rodar_so_faz_unanchor(gr, browser):
+	"""Sem «Rodar» (rot_fonte programa) a inversa continua a ser só o ``unanchor``."""
+	url, gui, ids = gr
+	_mostrar(url, ids, "G1")
+	pg, errs = _abrir(browser, url)
+	reqs = _espiar(pg)
+	try:
+		_escolher(pg)
+		pg.click("#g-fixar"); pg.click("#g-fixar-sim")
+		pg.wait_for_selector("#g-fixado", timeout=15_000)
+		pg.wait_for_function("!S.busy", timeout=15_000)                    # um clique com S.busy perde-se (ver A1/M1)
+		n0 = len(reqs)
+		pg.click("#g-fixado-desfazer")
+		pg.wait_for_function("(gid) => !!grupo(gid) && !S.busy", arg=ids["G1"], timeout=15_000)
+		assert [u.split("/api/")[1] for m, u, b in reqs[n0:]] == ["confirm"]
+		assert _grupo_api(url, ids["G1"])["rodado"] is False
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_m3_desfazer_tirar_o_grupo_repoe_a_confianca(gr90, browser):
+	"""«Tirar o grupo inteiro do lugar» → «Desfazer» manda ``desfaz: true`` e a âncora volta com a mesma meta
+	(a_confirmar / programa / discordam), não com o ``confirmado`` por omissão."""
+	url, gui, ids = gr90
+	g1 = ids["G1"]
+	_mostrar(url, ids, "G1")
+	assert _post(url, f"/api/grupos/{g1}/mover", {"l0": 2, "c0": 4, "rot": 90, "rodado": False})[0] == 200
+	st, d = _post(url, f"/api/grupos/{g1}/fixar", {})
+	assert st == 200 and d["confianca"] == "a_confirmar", d
+	antes = _ancora(gui, g1)
+	pg, errs = _abrir(browser, url, vista=False)
+	reqs = _espiar(pg)
+	try:
+		a = _xy(pg, 2, 4)
+		pg.mouse.click(a["x"], a["y"])
+		pg.wait_for_selector("#p-tirar", timeout=10_000)
+		pg.click("#p-tirar")
+		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{g1}']", timeout=15_000)
+		pg.wait_for_selector("#b-desfazer-ultimo", timeout=10_000)
+		pg.click("#b-desfazer-ultimo")
+		pg.wait_for_function("(gid) => !grupo(gid) && !S.busy", arg=g1, timeout=15_000)
+		ult = [json.loads(b) for m, u, b in reqs if u.endswith("/api/confirm")][-1]
+		assert ult["acao"] == "anchor" and ult["desfaz"] is True
+		depois = _ancora(gui, g1)
+		for k in ("confianca", "rot_fonte", "vizinhas", "vizinhas_pecas"):
+			assert depois.get(k) == antes[k], k
+		assert not errs, errs
+	finally:
+		pg.close()

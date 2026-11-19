@@ -745,7 +745,7 @@ function painelPeca(box, d, kind) {
     col.append(h("button", { class: "btn", type: "button", id: "p-tirar", onclick: () => actPainel(
       confirmReq({ acao: "unanchor", section: sec.id }), `A tirar o grupo de ${plural(sec.n, "peça", "peças")}…`,
       () => ({ tipo: "tirar_grupo", msg: `Grupo de ${plural(sec.n, "peça", "peças")} tirado do lugar.`, inversa: confirmReq({ acao: "anchor", section: sec.id,
-        cell: [sec.anchor.l0, sec.anchor.c0], rot: sec.anchor.rot || 0, mirror: !!sec.anchor.mirror }) })) },
+        cell: [sec.anchor.l0, sec.anchor.c0], rot: sec.anchor.rot || 0, mirror: !!sec.anchor.mirror, desfaz: true }) })) },   // M3: repõe a meta da âncora
     ico("arrow-up-from-line"), `Tirar o grupo inteiro do lugar (${plural(sec.n, "peça", "peças")})`));
   } else if (kind === "por_confirmar") {
     // sem «desfaz»: tirar é neutro (P7b); o desfazer põe-na outra vez «por confirmar» no mesmo lugar e rotação

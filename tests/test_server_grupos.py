@@ -572,3 +572,81 @@ def test_mover_rodado_explicit_and_invalid(env):
 	assert r.status_code == 200 and r.json()["grupo"]["rodado"] is False and "rodado" not in r.json()["linha"]
 	r = cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90, "rodado": False})   # «Rodar» is always rodado
 	assert r.json()["grupo"]["rodado"] is True
+
+
+# ---------------------------------------------------------------- desfazer o soltar e o fixar (M3, M4; decisões do Tiago 2026-11-19)
+META_KEYS = ("confianca", "rot_fonte", "vizinhas", "vizinhas_pecas")
+
+
+def _fixar_discordante(cl, g1):
+	"""G1 at (2,4) rot 90 without «Rodar»: the neighbour disagrees → programa / discordam / a_confirmar."""
+	cl.post(f"/api/grupos/{g1}/mostrar", json={})
+	assert cl.post(f"/api/grupos/{g1}/mover", json={"l0": 2, "c0": 4, "rot": 90}).status_code == 200
+	d = cl.post(f"/api/grupos/{g1}/fixar", json={}).json()
+	assert (d["rot_fonte"], d["vizinhas"], d["confianca"]) == ("programa", "discordam", "a_confirmar"), d
+	return d
+
+
+def _anchor(gui, gid):
+	return dict(Project.open(gui.path).sections[gid].anchor)
+
+
+def test_desfazer_soltar_repoe_a_meta_da_ancora(env):
+	"""M3: «Tirar o grupo inteiro do lugar» → «Desfazer» (``anchor`` + ``desfaz: true``, same cell / rot / mirror)
+	gives back the anchor's confianca / rot_fonte / vizinhas / vizinhas_pecas, never the ``confirmado`` default."""
+	gui, cl, ids = env
+	g1 = ids["G1"]
+	_fixar_discordante(cl, g1)
+	antes = _anchor(gui, g1)
+	assert cl.post("/api/confirm", json={"acao": "unanchor", "section": g1}).status_code == 200
+	r = cl.post("/api/confirm", json={"acao": "anchor", "section": g1, "cell": [antes["l0"], antes["c0"]],
+									  "rot": antes["rot"], "mirror": antes["mirror"], "desfaz": True})
+	assert r.status_code == 200, r.text
+	depois = _anchor(gui, g1)
+	assert depois["anchored"] and {k: depois.get(k) for k in META_KEYS} == {k: antes[k] for k in META_KEYS}
+	assert depois["confianca"] == "a_confirmar" and depois["rot_fonte"] == "programa" and depois["vizinhas"] == "discordam"
+	_ok_on_disk(gui.path)
+
+
+@pytest.mark.parametrize("muda", ["celula", "rot", "sem_desfaz"])
+def test_anchor_desfaz_noutro_lugar_nao_repoe_a_meta(env, muda):
+	"""M3: the meta comes back only for the same cell, rot and mirror, and only with ``desfaz: true``."""
+	gui, cl, ids = env
+	g1 = ids["G1"]
+	_fixar_discordante(cl, g1)
+	antes = _anchor(gui, g1)
+	assert cl.post("/api/confirm", json={"acao": "unanchor", "section": g1}).status_code == 200
+	body = {"acao": "anchor", "section": g1, "cell": [antes["l0"], antes["c0"]], "rot": antes["rot"],
+			"mirror": antes["mirror"], "desfaz": True}
+	if muda == "celula":
+		body["cell"] = [antes["l0"] + 1, antes["c0"]]
+	elif muda == "rot":
+		body["rot"] = (antes["rot"] + 90) % 360
+	else:
+		del body["desfaz"]
+	r = cl.post("/api/confirm", json=body)
+	assert r.status_code == 200, r.text
+	depois = _anchor(gui, g1)
+	assert depois["anchored"] and depois["confianca"] == "confirmado"
+	assert all(k not in depois for k in ("rot_fonte", "vizinhas", "vizinhas_pecas")), depois
+
+
+def test_desfazer_fixar_com_rodar_volta_a_dar_tiago(env):
+	"""M4 (exception to C1): Rodar → Fixar (tiago) → the GUI's undo (``unanchor`` + a «Mover» to the same place with
+	``rodado: true``) → Fixar gives ``tiago`` / ``confirmado`` again; the group is loose in between, same place and rot."""
+	gui, cl, ids = env
+	g1 = ids["G1"]
+	cl.post(f"/api/grupos/{g1}/mostrar", json={})
+	assert cl.post(f"/api/grupos/{g1}/mover", json={"l0": 4, "c0": 6, "rot": 0}).status_code == 200   # no neighbour
+	assert cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90}).status_code == 200
+	d = cl.post(f"/api/grupos/{g1}/fixar", json={}).json()
+	assert d["rot_fonte"] == "tiago" and d["confianca"] == "confirmado" and d["vizinhas"] == "sem_vizinhas"
+	p = d["posicao"]
+	assert cl.post("/api/confirm", json={"acao": "unanchor", "section": g1}).status_code == 200
+	r = cl.post(f"/api/grupos/{g1}/mover", json={"l0": p["l0"], "c0": p["c0"], "rot": p["rot"], "rodado": True})
+	assert r.status_code == 200, r.text
+	g = _grupo(cl, g1)
+	assert g["rodado"] is True and (g["posicao"]["l0"], g["posicao"]["c0"], g["posicao"]["rot"]) == (p["l0"], p["c0"], p["rot"])
+	d2 = cl.post(f"/api/grupos/{g1}/fixar", json={}).json()
+	assert d2["rot_fonte"] == "tiago" and d2["confianca"] == "confirmado"
+	_ok_on_disk(gui.path)
