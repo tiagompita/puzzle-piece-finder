@@ -21,6 +21,7 @@ sync_api = pytest.importorskip("playwright.sync_api")
 from src import server as SV  # noqa: E402
 from test_query import _project  # noqa: E402
 from test_gui_novo import FORBIDDEN, browser  # noqa: E402,F401  (fixture do Chromium)
+from test_gui_novo_f2f import _fechar  # noqa: E402
 
 
 def _serve(gui):
@@ -76,7 +77,6 @@ def test_piece_panel_sheet_and_tirar_with_undo(f2, browser):
 		p = gui.pr.piece(placed)
 		t = _panel_text(pg)
 		assert f"Saco {p.lote}" in t and f"nº {p.n_no_lote}" in t and "Linha 2 · coluna 3" in t and "No lugar" in t
-		assert pg.locator("#p-pid").inner_text() == placed
 		assert f"highlight={placed}" in pg.locator("#p-folha img").get_attribute("src")
 		assert pg.locator("#lyr-alvo rect.painel-sel").count() == 1
 		for pat in FORBIDDEN:
@@ -102,6 +102,62 @@ def test_piece_panel_sheet_and_tirar_with_undo(f2, browser):
 		assert not errs, errs
 	finally:
 		pg.close()
+
+
+def test_panels_show_no_internal_code(f2, browser):
+	"""ESPEC §6: nenhum P#### no texto visível do painel da peça (com saco e do legado, sem saco), do lugar vazio e de
+	«Pôr uma peça à mão»."""
+	import json as _json
+	url, gui, placed, tw, dec = f2
+	ctx = browser.new_context(viewport={"width": 1366, "height": 768})
+	pg = ctx.new_page()
+	legado = {"on": False}
+
+	def handler(route):
+		r = route.fetch()
+		d = r.json()
+		if legado["on"] and d.get("peca"):
+			d["peca"]["lote"] = None
+			d["peca"]["n_no_lote"] = None
+		route.fulfill(response=r, body=_json.dumps(d), content_type="application/json")
+	try:
+		pg.route(re.compile(r"/api/cell/2/3$"), handler)
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		p = gui.pr.piece(placed)
+		_tap(pg, 2, 3)
+		pg.wait_for_selector("#painel[data-kind='peca']", timeout=20_000)
+		t = pg.locator("#painel").inner_text()
+		assert f"Saco {p.lote}" in t and f"nº {p.n_no_lote}" in t
+		assert not re.search(r"P\d{4}", t), t
+		assert pg.locator("#p-pid").count() == 0
+		# peça do legado: sem saco nem número
+		legado["on"] = True
+		_tap(pg, 4, 1)
+		pg.wait_for_selector("#painel[data-kind='vazio']", timeout=20_000)
+		t = pg.locator("#painel").inner_text()
+		assert not re.search(r"P\d{4}", t), t
+		_tap(pg, 2, 3)
+		pg.wait_for_selector("#painel[data-kind='peca']", timeout=20_000)
+		t = pg.locator("#painel").inner_text()
+		assert "peça do legado" in t.lower() and "nº" not in t and "Saco" not in t
+		assert not re.search(r"P\d{4}", t), t
+		# «Pôr uma peça à mão»: passo 1 e passo 2
+		_tap(pg, 2, 4)
+		pg.wait_for_selector("#painel[data-kind='vazio']", timeout=20_000)
+		pg.click("#p-por")
+		q = gui.pr.piece(tw)
+		pg.fill("#pm-saco", str(q.lote))
+		pg.fill("#pm-n", str(q.n_no_lote))
+		pg.wait_for_selector("#pm-frase[data-estado='ok']", timeout=10_000)
+		t = pg.locator("#por-mao").inner_text()
+		assert not re.search(r"P\d{4}", t), t
+		pg.click("#pm-continuar")
+		pg.wait_for_selector("#por-mao[data-passo='2']", timeout=10_000)
+		t = pg.locator("#por-mao").inner_text()
+		assert not re.search(r"P\d{4}", t), t
+	finally:
+		_fechar(ctx)
 
 
 def test_por_confirmar_survives_reload_and_is_taken_off(f2, browser):

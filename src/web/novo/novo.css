@@ -227,7 +227,7 @@ h3 { margin: 0 0 4px; font-size: 18px; }
 .painel .num { font-size: 22px; font-weight: 650; line-height: 1.2; }
 .painel .estado { margin: 8px 0 4px; font-weight: 600; }
 .painel .estado[data-estado="por_confirmar"] { color: var(--amber); }
-.painel .pid { color: #6d727b; font-size: 11px; margin-top: 4px; }
+
 .painel-imgs { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: start; margin: 12px 0; }
 .painel-imgs .pimg { width: 120px; height: 120px; }
 .folha-btn { padding: 0; border: 1px solid var(--line); border-radius: 10px; background: #0f1114; cursor: zoom-in; display: block;

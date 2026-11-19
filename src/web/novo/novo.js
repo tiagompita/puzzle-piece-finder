@@ -722,8 +722,9 @@ function painelPeca(box, d, kind) {
   const cell = d.cell, nome = nomePeca(pc);
   const sec = kind === "peca" && pc.seccao_id ? d.secao : null;
   box.append(h("span", { class: "kicker" }, kind === "peca" ? "Peça no lugar" : "Peça por confirmar"),
-    h("div", { class: "bag" }, pc.lote !== null && pc.lote !== undefined ? `Saco ${pc.lote}` : "Peça sem saco"),
-    h("div", { class: "num" }, `nº ${pc.n_no_lote ?? "?"}`),
+    ...(pc.lote !== null && pc.lote !== undefined
+      ? [h("div", { class: "bag" }, `Saco ${pc.lote}`), h("div", { class: "num" }, `nº ${pc.n_no_lote ?? "?"}`)]
+      : [h("div", { class: "bag" }, "Peça do legado")]),   // ESPEC §6: nunca o código interno P####
     h("div", { class: "where", id: "p-lugar" }, lugarLongo(cell)));
   let est, key;
   if (kind === "por_confirmar") { est = "Por confirmar · ainda sem peças ao lado"; key = "por_confirmar"; }
@@ -739,7 +740,6 @@ function painelPeca(box, d, kind) {
     h("button", { type: "button", class: "pimg", id: "p-peca", "aria-label": "Ampliar a peça",
       onclick: () => lightboxPeca(`/api/pieces/${pc.id}.png?pose=board&size=700&v=${S.ver}`, nome) },
     h("img", { src: `/api/pieces/${pc.id}.png?pose=board&size=240&v=${S.ver}`, alt: nome })), folha));
-  box.append(h("div", { class: "pid", id: "p-pid" }, pc.id));
   const col = h("div", { class: "btn-col" });
   if (sec) {
     col.append(h("button", { class: "btn", type: "button", id: "p-tirar", onclick: () => actPainel(
