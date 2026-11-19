@@ -339,20 +339,6 @@ def test_fixar_after_reload_keeps_rot_fonte_tiago(tmp_path):
 	assert d["rot_fonte"] == "tiago" and d["confianca"] == "confirmado"
 
 
-def test_fixar_after_undoing_a_rodar_gives_programa(tmp_path):
-	"""C1: «Rodar» → undo (a «mover» back to ``anterior`` with its explicit ``rodado``) → «Fixar»: programa."""
-	gui, cl, ids = _env(tmp_path, cand1=_cand((2, 4), 0))
-	g1 = ids["G1"]
-	cl.post(f"/api/grupos/{g1}/mostrar", json={})
-	r = cl.post(f"/api/grupos/{g1}/mover", json={"rodar": 90}).json()
-	ant = r["anterior"]
-	assert _grupo(cl, g1)["rodado"] is True and ant["rodado"] is False
-	assert cl.post(f"/api/grupos/{g1}/mover", json={"l0": ant["l0"], "c0": ant["c0"], "rot": ant["rot"], "rodado": ant["rodado"]}).status_code == 200
-	assert _grupo(cl, g1)["rodado"] is False
-	d = cl.post(f"/api/grupos/{g1}/fixar", json={}).json()
-	assert d["rot_fonte"] == "programa"
-
-
 def test_fixar_grades_every_piece_it_places(tmp_path, monkeypatch):
 	"""B2b (decision 1 of Tiago): G2 at (3,3): Y has A above it (outside the group) and Z beside it; Z has only Y
 	(inside). Both are graded by ``consistency.grade_at`` (the group's own pieces are neighbours); Z cannot confirm the

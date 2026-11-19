@@ -227,7 +227,7 @@ function updateAlvoTag() {
   const nx = $("#lyr-seguinte"), cpx = celulaPx();           // F2f: a camada dos ténues liga/desliga por zoom (uma classe, não por frame)
   nx.dataset.celulaPx = cpx.toFixed(1);
   nx.classList.toggle("longe", !fracosVisiveis());
-  for (const g of $$("#lyr-alvo .alvo-tag")) {
+  for (const g of $$("#lyr-alvo .alvo-tag, #lyr-grupos .aviso-tag")) {
     const t = g.querySelector("text");
     const px = parseFloat(getComputedStyle(t).fontSize) * r.width / S.vb.w;
     g.dataset.px = px.toFixed(1);
@@ -550,7 +550,7 @@ async function act(it, req, pend, undo, after) {
   try {
     const r = await post(req.url, req.body);
     writeFailed(r);
-    S.undo = { item: it, ...undo(r) };
+    S.undo = { item: it, ...undo(r) }; S.fixado = null;
     S.pick = null; S.modo = after || "cartao";
     S.pendente = null;
     renderMontar();
@@ -708,7 +708,7 @@ async function actPainel(req, pend, undo) {
   try {
     const r = await post(req.url, req.body);
     writeFailed(r);
-    S.undo = { painel: true, ...undo(r) };
+    S.undo = { painel: true, ...undo(r) }; S.fixado = null;
     S.pendente = null; renderMontar();
     $("#tab-montar").scrollTop = 0;
     toastUndo(S.undo.msg);
@@ -1023,7 +1023,7 @@ async function doPorMao() {
     const r = await post("/api/confirm", { acao: "por_mao", piece: pid, cell, theta_deg: M.theta });
     writeFailed(r);
     const conf = r.modo === "por_confirmar";
-    S.undo = { tipo: "por_mao", painel: true, msg: conf ? `${nome} no lugar, por confirmar.` : `${nome} no lugar.`,
+    S.fixado = null; S.undo = { tipo: "por_mao", painel: true, msg: conf ? `${nome} no lugar, por confirmar.` : `${nome} no lugar.`,
       inversa: confirmReq(conf ? { acao: "position_clear", piece: pid, desfaz: true } : { acao: "unplace", piece: pid, desfaz: true }) };
     S.pendente = null; S.porMao = null; S.modo = "painel";
     S.painel = { cell, d: null, erro: null, seq: (S.painel ? S.painel.seq : 0) + 1, report: null };

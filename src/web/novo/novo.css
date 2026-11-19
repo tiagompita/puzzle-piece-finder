@@ -402,7 +402,13 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
 .grp-est.aviso, .aviso { color: var(--red); }
 .grp-mostrar { flex: 0 1 auto; }
 #board.modo-mover { cursor: move; }
-.grupo-aviso .grupo-cel { fill: rgba(255, 176, 32, .20); stroke: var(--amber); stroke-width: 3px; vector-effect: non-scaling-stroke; }
+.grupo-aviso .grupo-cel { fill: rgba(255, 176, 32, .20); stroke: var(--amber); stroke-width: 4px; stroke-dasharray: 10 3 2 3; vector-effect: non-scaling-stroke; }   /* âmbar, traço-ponto: não é o alvo (cheio) nem o lugar provável (tracejado violeta) */
+.aviso-tag.longe { display: none; }
+.aviso-tag rect { fill: var(--amber); }
+.aviso-tag text { fill: var(--amber-ink); font-size: .16px; font-weight: 700; text-anchor: middle; font-family: var(--font); }
+.lg-aviso { fill: rgba(255, 176, 32, .25); stroke: var(--amber); stroke-width: .12; stroke-dasharray: .3 .1 .06 .1; }
+.grp-barra .btn.big.grp-mover { flex: 1 1 100%; }
+.grp-barra .btn.big.grp-rodar { flex: 1 1 0; min-width: 0; padding: 0 8px; font-size: 15px; gap: 6px; }
 .grp-fixado, .grp-confirma { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; border-color: var(--amber); }
 .grp-fixado p, .grp-confirma p { margin: 0; }
 .grupo.invalido .grupo-contorno { stroke: var(--red); stroke-dasharray: 6 4; }

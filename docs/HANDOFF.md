@@ -5,6 +5,7 @@ Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do pr
 ## Sessão de 2026-11-19 (F4, B4 etapas 2 e 3 de 3): mover, rodar, fixar e soltar na GUI nova
 - **Feito:** Ctrl+arrastar e «Mover» … «Feito» (rato e toque), «Rodar» ±90, desfazer (faixa e Ctrl+Z), «Fixar aqui» com confirmação de um clique e o aviso âmbar («Esta peça diz outra rotação», «Desfazer» = `unanchor`), soltar = «Tirar o grupo inteiro do lugar» (Q10 a), correções M1–M4 e B1–B2 da revisão. `src/web/novo/grupos.js`, `tests/test_gui_novo_f4.py` (40). Commits `5a8c598`, `99d6c9c` e o da etapa 3. Decisões em `docs/decisoes.md` (2026-11-19). Capturas `docs/gui/screenshots/redesenho/F4_depois_*`. Ficheiro do prompt: `docs/prompts/2026-11-18-f4-b4-gui-grupos.md` (fechado).
 - **Medido [V]:** critério 14 (60 passos, 32 grupos mostrados, cópia de `projects/alpes`, Chromium headless): máx. 16,8 ms, p95 16,7–16,8 ms, 0 frames > 25 ms.
+- **B4 fechado** (2026-11-19): etapas 1–3 e as correções das revisões (M1–M5, A1, A1b, B1–B3, M3/M4 do implementer em `689c75a`); testes `tests/test_gui_novo_f4.py` (53). Decisão do Tiago M2 (âmbar com outro traço) em `docs/decisoes.md`.
 - **Falta (B5):** critérios 11–13 e 15 com o guião de desempenho e o de igualdade byte a byte, o fecho dos documentos (ESPEC §7 se for preciso) e o OK do Tiago (PC e iPhone, fixar fisicamente ≥ 3 grupos, incluindo um de 1 peça). [NT] Firefox/Safari, pinça com um dedo sobre o grupo.
 - **Para decidir/anotar:** o painel da peça (F2) mostra o `P####` (`#p-pid`), contra a ESPEC §6.
 
