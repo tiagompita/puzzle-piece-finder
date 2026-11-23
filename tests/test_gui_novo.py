@@ -363,6 +363,9 @@ def test_empty_screen_counts_groups_only(guarda, browser):
 		assert NADA not in txt
 		assert "2 grupos sem lugar" in pg.locator("#m-resumo [data-k=grupos]").inner_text()
 		assert pg.locator("#m-completa").get_attribute("href") == "/"
+		assert "interface completa" not in pg.locator("#m-resumo [data-k=grupos]").inner_text()
+		pg.click("#m-ver-grupos")                                   # aponta para os grupos soltos, não para a interface completa
+		pg.wait_for_selector("#tab-montar [data-vista='grupos']", timeout=10_000)
 		_no_forbidden(txt)
 		assert not errs, errs
 	finally:

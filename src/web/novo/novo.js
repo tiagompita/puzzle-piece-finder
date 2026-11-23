@@ -473,7 +473,7 @@ function emptyScreen(m) {
   }
   const ul = h("ul", { class: "resumo", id: "m-resumo" });
   if (f.guardadas) ul.append(h("li", { "data-k": "guardadas" }, `${plural(f.guardadas, "peça guardada", "peças guardadas")} à parte, no tabuleiro «por confirmar» até uma vizinha encaixar.`));
-  if (f.grupos_sem_lugar) ul.append(h("li", { "data-k": "grupos" }, `${plural(f.grupos_sem_lugar, "grupo", "grupos")} sem lugar: por agora só na interface completa.`));
+  if (f.grupos_sem_lugar) ul.append(h("li", { "data-k": "grupos" }, `${plural(f.grupos_sem_lugar, "grupo", "grupos")} sem lugar: `, h("button", { class: "linkish", type: "button", id: "m-ver-grupos", onclick: () => verGruposSoltos() }, "ver em «Grupos soltos»")));
   return h("div", { class: "empty", "data-estado": "vazio_com_propostas" },
     h("strong", {}, "Nenhuma peça para pôr agora."),
     h("p", {}, "Nenhuma sugestão tem ainda uma peça montada ao lado para confirmar o encaixe."),
@@ -482,10 +482,12 @@ function emptyScreen(m) {
       h("a", { class: "btn", href: "/", id: "m-completa" }, ico("layout-dashboard"), "Abrir a interface completa"),
       h("button", { class: "btn primary", type: "button", onclick: () => showTab("importar") }, ico("scan-line"), "Importar scan")));
 }
+/** Os grupos soltos vivem no comutador «Peça a peça | Grupos soltos» do Montar. */
+function verGruposSoltos() { showTab("montar"); setVista("grupos"); }
 function groupsLine(m) {
   const n = (m.fora_da_fila || {}).grupos_sem_lugar || 0;
   if (!n) return null;
-  return h("p", { class: "small muted", id: "m-grupos" }, `${plural(n, "grupo", "grupos")} sem lugar: `, h("a", { href: "/" }, "ver na interface completa"));
+  return h("p", { class: "small muted", id: "m-grupos" }, `${plural(n, "grupo", "grupos")} sem lugar: `, h("button", { class: "linkish", type: "button", id: "m-ver-grupos", onclick: () => verGruposSoltos() }, "ver em «Grupos soltos»"));
 }
 function pauseLine() {
   return h("p", { class: "small muted", id: "m-pausa" }, "Algumas sugestões estão em pausa. ", h("a", { href: "/" }, "Ver no Diagnóstico"));
