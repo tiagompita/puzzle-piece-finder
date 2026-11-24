@@ -935,3 +935,8 @@ Base `a57aa41` contra `cc68ad4` (`git worktree` no scratchpad, removido no fim),
   Corrigida − `cc68ad4`: abertura −0,052 s [−0,147, +0,042]; 1.º salto −0,008 s [−0,038, +0,022]; **abrir + 1.º salto −0,061 s, IC t [−0,171, +0,050]** (bootstrap [−0,153, +0,030]): passa (≤ +0,10). `ecc9444` − `cc68ad4` nesta série: abertura +0,578 s [+0,335, +0,820], abrir + 1.º salto +0,599 s [+0,334, +0,864].
 
 - **Nota:** comparar só diferenças dentro da mesma série; os absolutos variam entre séries (cc68ad4 abertura 1,44 vs 1,26 s).
+
+## 2026-11-24 — pieces/ e overlays/ apagadas; guarda nos guiões de medição
+- `projects/alpes/pieces` e `overlays` (no `.gitignore`) apareceram vazias ao servidor das 10:08; causa **não provada [NT]**: nenhum `rmtree`/`remove` em `src/`, `tools/` ou `tests/` apaga essas duas pastas por nome, e todos os guiões de medição apagam só `<--work>/proj*` ou um `mkdtemp`.
+- Guarda (`tools/diagnostico/gui/guarda.py`, teste `tests/test_guarda.py`): `rmtree`/`copytree` resolvem o caminho (`realpath`: `..`, ligações, junções) e recusam o que seja, esteja dentro ou contenha um projeto real (`projects/*` do checkout, do repositório principal de um worktree e de `PPF_REPO`; `PPF_PROTEGIDOS` acrescenta); por omissão só actuam debaixo do temporário do sistema ou de `PPF_SCRATCH`; `rmtree` recusa pastas com ligações para o projeto real.
+- Regra no `CLAUDE.md`: a vigilância de apagados conta também `pieces/` e `overlays/`.
