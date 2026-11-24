@@ -1525,3 +1525,21 @@ def test_f4b_b_imagem_em_todos_os_mostrados_so_depois_do_detalhe(gr, browser):
 		assert not errs, errs
 	finally:
 		pg.close()
+
+
+def test_lupa_peca_num_grupo_abre_o_grupo(gr, browser):
+	"""A lupa numa peça de um grupo solto leva ao painel desse grupo, não à interface completa."""
+	url, gui, ids = gr
+	p = next(p for p in gui.pr.model.pieces.values() if p.estado == "em_seccao")
+	pg, errs = _abrir(browser, url, vista=False)
+	try:
+		pg.evaluate(f"findPiece({p.id!r})")
+		pg.wait_for_selector("#lupa-res[data-kind=peca]:not([hidden])", timeout=30_000)
+		assert "interface completa" not in pg.inner_text("#lupa-res")
+		pg.click("#lupa-ver-grupo")
+		assert pg.locator("#lupa-res").is_hidden()
+		assert pg.get_attribute("#vista-grupos", "aria-pressed") == "true"
+		assert pg.evaluate("S.grupoSel") == p.seccao_id
+		assert not errs, errs
+	finally:
+		pg.close()

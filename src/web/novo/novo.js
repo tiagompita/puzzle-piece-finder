@@ -1283,7 +1283,11 @@ async function findPiece(pid) {
   let alvo = null;
   if (pc.estado === "colocada" && pc.celula) { alvo = pc.celula; saltoLupa(pc.celula[0], pc.celula[1]); linhas.push(`Está no lugar: ${lugarTxt(pc.celula).toLowerCase()}.`); }
   else if (pc.estado === "posicao_conhecida" && pc.celula) { alvo = pc.celula; saltoLupa(pc.celula[0], pc.celula[1]); linhas.push(`No lugar por confirmar: ${lugarTxt(pc.celula).toLowerCase()}, à espera de uma vizinha montada.`); }
-  else if (pc.estado === "em_seccao") linhas.push("Está num grupo sem lugar (por agora só na interface completa).");
+  else if (pc.estado === "em_seccao") linhas.push(["Está num grupo solto, ainda sem lugar: ",
+    h("button", { class: "linkish", type: "button", id: "lupa-ver-grupo", onclick: () => {
+      closeLupa(); verGruposSoltos();                  // carrega os grupos se ainda não chegaram
+      if (pc.seccao_id) escolherGrupo(pc.seccao_id);
+    } }, "ver o grupo")]);
   else if (pc.estado === "descartada") linhas.push("Foi posta de lado.");
   else linhas.push("Ainda não tem lugar.");
   const withCell = (p.propostas || []).filter((e) => e.cell);
