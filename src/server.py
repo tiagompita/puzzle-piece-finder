@@ -3829,6 +3829,8 @@ class Gui:
 			self._known_stat = self._log_stat()
 			if r.get("error") or r.get("errors"):
 				msg = r.get("error") or "; ".join(r["errors"])
+				# 2026-11-24: on 2026-11-09 this answer reached only the browser and P0407 stayed unapplied for 15 days
+				activity.get("erro").error(f"contorno de {pid} gravado em {OV.OVERRIDES_FILE} mas não aplicado: {msg}")
 				return {"error": f"contorno gravado em {OV.OVERRIDES_FILE} mas não aplicado: {msg}"}
 			bad = pr.check_invariants(disk=True)
 			# caches that hold this piece's crop / contour (the version-keyed ones follow the log by themselves)

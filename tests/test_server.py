@@ -585,6 +585,33 @@ def test_contorno_busy_is_409(env):
         gui.job = None
 
 
+def test_contorno_not_applied_is_logged(env, tmp_path):
+    """A contour saved but not applied (scan sha256 changed: P0407, 2026-11-09) is an ``erro`` in the activity log."""
+    import logging
+    gui, cl, placed, tw, dec = env
+    d = cl.get(f"/api/pieces/{tw}/contorno").json()
+    with open(tmp_path / "scan.png", "ab") as f:       # same pixels, different sha256
+        f.write(b"\0")
+    got = []
+
+    class _H(logging.Handler):
+        def emit(self, rec):
+            got.append((rec.levelno, rec.getMessage()))
+
+    lg = logging.getLogger("ppf.erro")
+    h = _H()
+    lg.addHandler(h)
+    old = lg.level
+    lg.setLevel(logging.INFO)
+    try:
+        r = cl.post(f"/api/pieces/{tw}/contorno", json={"contour": _editor_contour(d), "origem": d["origem"]})
+    finally:
+        lg.removeHandler(h)
+        lg.setLevel(old)
+    assert "não aplicado" in r.text
+    assert any(lv == logging.ERROR and tw in m and "não aplicado" in m and "sha256" in m for lv, m in got), got
+
+
 # ---------------------------------------------------------------- stroke editor (POST …/contorno/resolver, TRACOS.md)
 def _bump_lasso(d, w=14):
     """A ``peca`` lasso (crop px) sticking ``w`` px out of the right side of the current outline."""
