@@ -4,12 +4,13 @@ Uso: python leitores.py <base> <cópia> <saída.json> [--completar]
 --completar: antes de medir, grava para cada peça colocada sem entrada válida register_piece(image=False) (regra cantos)
 e refaz as válidas com a mesma regra (o que o servidor novo fará)."""
 import sys, os, json, re, glob, hashlib, shutil, time, random
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 REPO = r"D:\DEKSTOP\puzzle_piece_finder"
 sys.path.insert(0, REPO)
 base, work, out = sys.argv[1:4]
 completar = "--completar" in sys.argv
-shutil.rmtree(work, ignore_errors=True)
-shutil.copytree(base, work)
+guarda.rmtree(work, ignore_errors=True)
+guarda.copytree(base, work)
 from src.state import Project
 from src import render, consistency, fit as F
 from src import server as S

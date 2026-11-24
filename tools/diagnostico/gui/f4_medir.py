@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import statistics as st
 import subprocess
 import sys
@@ -58,8 +59,8 @@ def med(xs):
 
 def run_m(a, res):
 	proj = os.path.join(a.work, "proj_m")
-	shutil.rmtree(proj, ignore_errors=True)
-	shutil.copytree(a.base, proj)
+	guarda.rmtree(proj, ignore_errors=True)
+	guarda.copytree(a.base, proj)
 	p, f = F.start(ROOT, proj, os.path.join(a.work, "up"), os.path.join(a.work, "srv_m.log"))
 	try:
 		body, s1 = G._get("/api/grupos")
@@ -108,13 +109,13 @@ def run_m(a, res):
 						"alvo_s": 2.0, "linhas": fx}
 	finally:
 		G._stop(p, f)
-		shutil.rmtree(proj, ignore_errors=True)
+		guarda.rmtree(proj, ignore_errors=True)
 
 
 def run_p(a, res):
 	proj = os.path.join(a.work, "proj_p")
-	shutil.rmtree(proj, ignore_errors=True)
-	shutil.copytree(a.base, proj)
+	guarda.rmtree(proj, ignore_errors=True)
+	guarda.copytree(a.base, proj)
 	up = os.path.join(a.work, "up")
 
 	def child(mem):
@@ -130,7 +131,7 @@ def run_p(a, res):
 	res["png"] = {"grupo": t[0]["gid"], "n_pecas": t[0]["n"], "frio_s": [round(x["frio_s"], 3) for x in t],
 				  "frio_mediana_s": med([x["frio_s"] for x in t]), "quente_ms": [round(1000 * x["quente_s"], 2) for x in t],
 				  "pico_mb": [round(x["pico_mb"], 1) for x in m], "alvo_s": 0.5, "alvo_mb": 50}
-	shutil.rmtree(proj, ignore_errors=True)
+	guarda.rmtree(proj, ignore_errors=True)
 
 
 def main():

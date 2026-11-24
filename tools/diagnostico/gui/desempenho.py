@@ -24,6 +24,7 @@ import ctypes.wintypes as wt
 import json
 import os
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import subprocess
 import sys
 import threading
@@ -186,8 +187,8 @@ class Run:
 		self.out = {"tag": tag, "repo": a.repo or ROOT}
 
 	def __enter__(self):
-		shutil.rmtree(self.proj, ignore_errors=True)
-		shutil.copytree(self.a.base, self.proj)
+		guarda.rmtree(self.proj, ignore_errors=True)
+		guarda.copytree(self.a.base, self.proj)
 		if self.a.sem_acoes:
 			self.out["linhas_tiradas"] = strip_actions(self.proj, self.a.sem_acoes.split(","))
 		os.makedirs(self.up, exist_ok=True)
@@ -222,8 +223,8 @@ class Run:
 	def __exit__(self, *exc):
 		self.out["mem_fim"] = mem(self.p.pid)
 		G._stop(self.p, self.f)
-		shutil.rmtree(self.proj, ignore_errors=True)
-		shutil.rmtree(self.up, ignore_errors=True)
+		guarda.rmtree(self.proj, ignore_errors=True)
+		guarda.rmtree(self.up, ignore_errors=True)
 		print(json.dumps(self.out), flush=True)
 
 

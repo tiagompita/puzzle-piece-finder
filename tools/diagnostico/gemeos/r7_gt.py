@@ -15,6 +15,9 @@ import collections
 import json
 import os
 import shutil
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'gui'))
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import sys
 import time
 
@@ -49,13 +52,13 @@ def zone_group(cell):
 def make_tmp(src, tmp):
 	"""Cópia leve do projeto: metadados + pieces/ + crops/ + photos/ + scans/ (sem render/, sem log)."""
 	if os.path.isdir(tmp):
-		shutil.rmtree(tmp)
+		guarda.rmtree(tmp, temporario=False)
 	os.makedirs(tmp)
 	for f in ("project.json", "puzzle.json"):
 		shutil.copy2(os.path.join(src, f), os.path.join(tmp, f))
 	for d in ("pieces", "crops", "photos", "scans"):
 		if os.path.isdir(os.path.join(src, d)):
-			shutil.copytree(os.path.join(src, d), os.path.join(tmp, d))
+			guarda.copytree(os.path.join(src, d), os.path.join(tmp, d), temporario=False)
 	return tmp
 
 

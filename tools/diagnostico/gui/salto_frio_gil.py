@@ -22,6 +22,7 @@ import argparse
 import json
 import os
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import subprocess
 import sys
 import time
@@ -97,9 +98,9 @@ def _browser(out_json):
 def run_once(base, work, switch_ms, tag, *, r2=False):
 	proj = os.path.join(work, f"proj_{tag}")
 	if os.path.exists(proj):
-		shutil.rmtree(proj)
+		guarda.rmtree(proj)
 	t0 = time.time()
-	shutil.copytree(base, proj)
+	guarda.copytree(base, proj)
 	r = {"tag": tag, "intervalo_ms": switch_ms, "copia_s": round(time.time() - t0, 1), "protocolo": "r2" if r2 else "parado"}
 	sw = 0 if abs(switch_ms - 5) < 1e-9 else switch_ms / 1000.0
 	p, f = _start(proj, sw, os.path.join(work, f"srv_{tag}.log"))
@@ -126,7 +127,7 @@ def run_once(base, work, switch_ms, tag, *, r2=False):
 			r["linha_gil"] = next((ln.strip()[-80:] for ln in fh if "intervalo do GIL" in ln), None)
 	finally:
 		_stop(p, f)
-		shutil.rmtree(proj, ignore_errors=True)
+		guarda.rmtree(proj, ignore_errors=True)
 	print(json.dumps(r), flush=True)
 	return r
 

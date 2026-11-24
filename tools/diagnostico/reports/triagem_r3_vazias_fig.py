@@ -1,5 +1,8 @@
 """Uso: python <este> <cópia> <destino descartável fora do repo> <vazias_fit.json> <figura.jpg>. Só na cópia descartável alpes_r3c: ancora as secções da hipótese e desenha as células vs arte."""
 import sys, json, shutil, os, numpy as np, cv2
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'gui'))
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import os; sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from src.state import Project
 from src import render as R
@@ -9,8 +12,8 @@ _repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.
 if os.path.normcase(os.path.abspath(dst)).startswith(os.path.normcase(_repo)):
     sys.exit("destino tem de ser uma cópia descartável fora do repositório (é apagado e recriado)")
 if os.path.exists(dst):
-    shutil.rmtree(dst)
-shutil.copytree(src, dst)
+    guarda.rmtree(dst, temporario=False)
+guarda.copytree(src, dst, temporario=False)
 pr = Project.open(dst)
 fits = json.load(open(fitp))
 def fit_theta(pid, cell):

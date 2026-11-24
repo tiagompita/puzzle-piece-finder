@@ -23,6 +23,7 @@ import hashlib
 import json
 import os
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import subprocess
 import sys
 import threading
@@ -138,8 +139,8 @@ def main():
 	up = os.path.join(a.work, "up")
 	pn, po = os.path.join(a.work, "proj_novo"), os.path.join(a.work, "proj_antigo")
 	for p in (pn, po):
-		shutil.rmtree(p, ignore_errors=True)
-		shutil.copytree(a.base, p)
+		guarda.rmtree(p, ignore_errors=True)
+		guarda.copytree(a.base, p)
 	res = {"base": a.base, "repo_antigo": a.repo, "repo_novo": ROOT}
 
 	# 1–2: código novo
@@ -215,7 +216,7 @@ def main():
 		json.dump(res, fh, indent=1, ensure_ascii=False)
 	print(json.dumps({"iguais": res["iguais"], "diferencas": res["diferencas"], "moves": len(moves),
 					  "mostrados": mostrados, "board_changed": res["board_changed_durante"]}, ensure_ascii=False))
-	shutil.rmtree(po, ignore_errors=True)
+	guarda.rmtree(po, ignore_errors=True)
 
 
 if __name__ == "__main__":

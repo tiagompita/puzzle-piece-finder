@@ -12,6 +12,7 @@ import json
 import os
 import random
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import sys
 import time
 
@@ -33,8 +34,8 @@ def main():
 	from fastapi.testclient import TestClient
 	from src import server as S
 	proj = os.path.join(a.work, "proj")
-	shutil.rmtree(proj, ignore_errors=True)
-	shutil.copytree(a.base, proj)
+	guarda.rmtree(proj, ignore_errors=True)
+	guarda.copytree(a.base, proj)
 	gui = S.Gui(proj, prepare=False, use_image=False, uploads=os.path.join(a.work, "up"), log=None, queue=False)
 	gui.holes_json = lambda **k: {}
 	gui._suspeitas_bg = lambda: None
@@ -134,7 +135,7 @@ def main():
 		json.dump(res, f, indent=1, ensure_ascii=False)
 	print(json.dumps({k: res[k] for k in ("n_escritas", "n_diferentes", "por_modo", "remendo")}, ensure_ascii=False))
 	gui.stop()
-	shutil.rmtree(proj, ignore_errors=True)
+	guarda.rmtree(proj, ignore_errors=True)
 
 
 if __name__ == "__main__":

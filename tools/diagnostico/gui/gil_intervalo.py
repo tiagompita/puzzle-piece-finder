@@ -28,6 +28,7 @@ import json
 import os
 import re
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import subprocess
 import sys
 import threading
@@ -150,9 +151,9 @@ def _consultas(log_dir):
 def run_once(base, work, switch, tag, folha_bytes):
 	proj = os.path.join(work, f"proj_{tag}")
 	if os.path.exists(proj):
-		shutil.rmtree(proj)
+		guarda.rmtree(proj)
 	t0 = time.time()
-	shutil.copytree(base, proj)
+	guarda.copytree(base, proj)
 	copy_s = time.time() - t0
 	uploads = os.path.join(work, f"uploads_{tag}")
 	os.makedirs(uploads, exist_ok=True)
@@ -215,8 +216,8 @@ def run_once(base, work, switch, tag, folha_bytes):
 		r["consultas_importacao_s"] = [x for k, x in cons if k == "completa"]
 	finally:
 		_stop(p, f)
-		shutil.rmtree(proj, ignore_errors=True)
-		shutil.rmtree(uploads, ignore_errors=True)
+		guarda.rmtree(proj, ignore_errors=True)
+		guarda.rmtree(uploads, ignore_errors=True)
 	return r
 
 

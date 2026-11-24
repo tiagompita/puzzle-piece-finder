@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import sys
 import time
 import urllib.request
@@ -40,8 +41,8 @@ def _one(cell, piece, theta):
 
 def run(base, work, tag, cell, piece, ranking):
 	proj = os.path.join(work, f"proj_{tag}")
-	shutil.rmtree(proj, ignore_errors=True)
-	shutil.copytree(base, proj)
+	guarda.rmtree(proj, ignore_errors=True)
+	guarda.copytree(base, proj)
 	p, f = G._start(proj, 0.0005, os.path.join(work, f"srv_{tag}.log"))
 	out = {"cenario": tag, "ranking_a_correr": ranking, "pedidos": []}
 	try:
@@ -58,7 +59,7 @@ def run(base, work, tag, cell, piece, ranking):
 			out["pedidos"].append(_one(cell, piece, ((th + 90 * (k + 1)) + 180) % 360 - 180))
 	finally:
 		G._stop(p, f)
-		shutil.rmtree(proj, ignore_errors=True)
+		guarda.rmtree(proj, ignore_errors=True)
 	print(json.dumps(out), flush=True)
 	return out
 

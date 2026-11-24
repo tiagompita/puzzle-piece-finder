@@ -42,6 +42,9 @@ import argparse
 import json
 import os
 import shutil
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'gui'))
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import sys
 import time
 
@@ -609,8 +612,8 @@ def main():
 		# determinism: reopen a copy (the query registers pairs and logs) and run again
 		cp = os.path.join(out_dir, "copia_projeto")
 		if os.path.exists(cp):
-			shutil.rmtree(cp)
-		shutil.copytree(args.project, cp)
+			guarda.rmtree(cp, temporario=False)
+		guarda.copytree(args.project, cp, temporario=False)
 		t2 = time.time()
 		pr2 = Project.open(cp)
 		run_query(pr2)

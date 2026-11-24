@@ -24,6 +24,7 @@ import time
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(REPO), str(REPO / "tools" / "diagnostico" / "gui")]
+import guarda  # noqa: E402
 OUT = REPO / "docs" / "gui" / "screenshots" / "redesenho"
 VPS = {"1366": (1366, 768), "390": (390, 844)}
 
@@ -41,7 +42,7 @@ def main():
 	G.BASE_URL = f"http://127.0.0.1:{G.PORT}"
 	tmp = pathlib.Path(tempfile.mkdtemp())
 	proj = tmp / "proj"
-	shutil.copytree(a.base, proj)
+	guarda.copytree(a.base, proj)
 	pr = Project.open(str(proj))
 	fixadas = [s for s in pr.sections.values() if s.anchor.get("anchored")]
 	sec = max(sorted(fixadas, key=lambda s: s.id), key=lambda s: len(s.cells_local))
@@ -71,7 +72,7 @@ def main():
 	finally:
 		G._stop(p, f)
 		time.sleep(1)
-		shutil.rmtree(tmp, ignore_errors=True)
+		guarda.rmtree(tmp, ignore_errors=True)
 
 
 if __name__ == "__main__":

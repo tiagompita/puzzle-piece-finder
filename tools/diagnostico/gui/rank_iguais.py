@@ -7,14 +7,15 @@ noutro objeto ``Project`` e com as caches de lados em memória esvaziadas (a lei
 ``--sem-tiras`` apaga ``render/fit/strips.npz`` da cópia (todas as tiras medidas de novo). Grava o resultado sem o campo ``tiras`` (tempos e contagens de cache) e os segundos. ``--comparar a.json b.json``."""
 import json
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import sys
 import time
 
 
 def run(repo, base, work, out, duas=False, sem_tiras=False):
 	sys.path.insert(0, repo)
-	shutil.rmtree(work, ignore_errors=True)
-	shutil.copytree(base, work)
+	guarda.rmtree(work, ignore_errors=True)
+	guarda.copytree(base, work)
 	if sem_tiras:                  # every strip measured anew (the old strips.npz may hold stale ones: §11.7)
 		import os
 		os.remove(os.path.join(work, "render", "fit", "strips.npz"))

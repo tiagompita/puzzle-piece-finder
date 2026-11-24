@@ -12,6 +12,7 @@ import json
 import math
 import os
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import sys
 import urllib.request
 
@@ -39,8 +40,8 @@ def main():
 	from src import server as SV
 	from test_gui_novo import _serve
 	proj = os.path.join(a.work, "proj_arrasto")
-	shutil.rmtree(proj, ignore_errors=True)
-	shutil.copytree(a.base, proj)
+	guarda.rmtree(proj, ignore_errors=True)
+	guarda.copytree(a.base, proj)
 	gui = SV.Gui(proj, prepare=False, use_image=False, uploads=os.path.join(a.work, "up"), log=None)
 	url, server, th = _serve(gui)
 
@@ -98,7 +99,7 @@ def main():
 	finally:
 		server.should_exit = True
 		th.join(10)
-		shutil.rmtree(proj, ignore_errors=True)
+		guarda.rmtree(proj, ignore_errors=True)
 	res["max_ms"] = max(r["max_ms"] for r in res["corridas"])
 	res["n_acima_25ms"] = sum(len(r["acima_25ms"]) for r in res["corridas"])
 	with open(a.out, "w", encoding="utf-8") as fh:

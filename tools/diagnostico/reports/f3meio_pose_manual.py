@@ -21,6 +21,9 @@ import argparse
 import json
 import os
 import shutil
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'gui'))
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import sys
 import tempfile
 import time
@@ -30,8 +33,8 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")
 
 def _copy(src: str, dst: str) -> str:
 	if os.path.exists(dst):
-		shutil.rmtree(dst)
-	shutil.copytree(src, dst, ignore=shutil.ignore_patterns("logs", "*.bak-*"))
+		guarda.rmtree(dst, temporario=False)
+	guarda.copytree(src, dst, ignore=shutil.ignore_patterns("logs", "*.bak-*"), temporario=False)
 	return dst
 
 

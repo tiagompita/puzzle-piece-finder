@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import subprocess
 import sys
 import time
@@ -82,9 +83,9 @@ def run(tag):
 	return res
 
 
-shutil.rmtree(work, ignore_errors=True)
+guarda.rmtree(work, ignore_errors=True)
 os.makedirs(up, exist_ok=True)
-shutil.copytree(base, proj)
+guarda.copytree(base, proj)
 fp = os.path.join(proj, "render", "placements.json")
 r = {"mtime0": os.stat(fp).st_mtime_ns}
 r["arranque1"] = run("1")

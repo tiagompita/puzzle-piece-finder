@@ -12,6 +12,7 @@ import json
 import os
 import re
 import shutil
+import guarda  # noqa: E402 (tools/diagnostico/gui/guarda.py)
 import sys
 
 
@@ -37,8 +38,8 @@ def snapshot(pr, consistency, render, r):
 
 def run(repo, base, work, out):
 	sys.path.insert(0, repo)
-	shutil.rmtree(work, ignore_errors=True)
-	shutil.copytree(base, work)
+	guarda.rmtree(work, ignore_errors=True)
+	guarda.copytree(base, work)
 	from src.state import Project
 	from src.confirm import confirm
 	from src import consistency, render
