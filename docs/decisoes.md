@@ -915,3 +915,21 @@ Base `a57aa41` contra `cc68ad4` (`git worktree` no scratchpad, removido no fim),
 - **15 [V], com pouca folga.** PNG do G0080 (8 peças) a frio 0,474–0,488 s, mediana 0,477 s (5 processos; alvo 0,5); quente 0,5 ms; pico de memória a mais 47,6 MB (`tracemalloc`, 3 processos; alvo 50). No B2 tinham dado 0,38 s e 43,5 MB com outro guião (não guardado); não investigado.
 - **Achado de texto [V nas capturas]:** o Montar da GUI nova ainda diz «32 grupos sem lugar: ver na interface completa» (texto da F1c), apesar de os grupos já estarem no separador «Grupos soltos». Para o helper.
 - **Capturas:** `docs/gui/screenshots/redesenho/F4_{antes,depois}_{montar,tirar_grupo}_{1366,390}.png` (o «antes» é do `cc68ad4`); as do B4 ficam.
+
+## 2026-11-24 — Abertura da GUI nova: todas as fases medem a abertura; pronto = detalhe inicial utilizável
+
+**Regra (decisão minha, a seguir à F4 B5):** daqui em diante todas as fases que mexem na GUI nova medem também a abertura de `/novo/`, e o «pronto» é o **detalhe inicial utilizável**: `data-ready`, raster da versão carregado, sem ecrã de preparação nem erro, tratadores ligados e, se o tabuleiro pediu um detalhe, esse detalhe decodificado e visível (`PRONTO_JS` em `tools/diagnostico/gui/desempenho.py`, medido dentro do browser desde o navigationStart, sem marcas na página, igual em qualquer commit; `abrir_prova.py` prova que não dispara cedo). Métrica do critério: **abrir + 1.º salto** (céu 5,30), porque mudar tempo da abertura para o 1.º salto não pode contar como ganho.
+
+- **A regressão existia [V].** Com este instrumento, `cc68ad4` → `ecc9444` (o `loadAll` esperava pelo `/api/grupos`): abertura +0,861 s, IC 95 % t [+0,559, +1,162] (10 voltas, `tres.json`).
+- **1.ª correção «abrir sem esperar pelos grupos» [F no critério].** O `/api/grupos` sai do `loadAll` e carrega em fundo depois do «pronto» (`loadGruposFundo`; a contagem do topo e do comutador vem do `/api/montar` até lá; «Grupos soltos» pede-os logo). A abertura voltou (1,508 ± 0,105 s contra 1,438 ± 0,120), mas o 1.º salto passou de 0,916 para 1,258 s: abrir + 1.º salto +0,412 s, IC t [+0,253, +0,571], acima do limite +0,10 s.
+- **Causa do salto lento [V].** O `loadGruposFundo` dispara logo que o detalhe inicial aparece, ou seja ≈ 65 ms depois de o salto pedir a sua região; o `/api/grupos` (0,23–0,84 s no servidor) corre em Python ao mesmo tempo que a composição da região e tira-lhe o GIL: região do salto 0,83–0,87 s no servidor sem ele, 0,89–1,48 s com ele. Prova: 4 voltas alternadas na árvore nova com o `/api/grupos` retido pelo Playwright até depois do salto: salto 0,863–0,912 s; sem reter: 0,930–1,513 s (resource timing do browser; guião no scratchpad, não promovido). O desenho dos grupos no cliente não entra (na vista «Peça a peça» não se pedem PNG).
+- **Correção [V].** `/api/grupos` e `/api/grupos/{gid}.png` chamam `Gui.after_detail()` no início, como `/api/board`, `/api/ghosts` e `/api/montar` (P-a): uma região de detalhe em composição passa à frente, espera máxima `DETALHE_ESPERA_S` 1,0 s; são leituras, nenhuma escrita espera; os grupos continuam a aparecer sozinhos.
+- **Medido [V]** (`abrir_pares.py`, 10 voltas, 3 commits em rotação, cópia e servidor por corrida; IC com `f4_ic.py`), média ± dp em s:
+
+| Commit | abertura | 1.º salto | abrir + 1.º salto |
+|---|---|---|---|
+| `cc68ad4` | 1,262 ± 0,175 | 0,894 ± 0,026 | 2,156 ± 0,193 |
+| `ecc9444` | 1,839 ± 0,319 | 0,916 ± 0,039 | 2,755 ± 0,343 |
+| corrigida | 1,210 ± 0,155 | 0,886 ± 0,038 | 2,096 ± 0,184 |
+
+  Corrigida − `cc68ad4`: abertura −0,052 s [−0,147, +0,042]; 1.º salto −0,008 s [−0,038, +0,022]; **abrir + 1.º salto −0,061 s, IC t [−0,171, +0,050]** (bootstrap [−0,153, +0,030]): passa (≤ +0,10). `ecc9444` − `cc68ad4` nesta série: abertura +0,578 s [+0,335, +0,820], abrir + 1.º salto +0,599 s [+0,334, +0,864].
