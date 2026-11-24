@@ -111,7 +111,25 @@ async function loadMontar() {
   drawProgress();
   renderMontar();
 }
-async function loadAll() { await loadBoard(); await Promise.all([loadMontar(), loadGrupos()]); }
+async function loadAll() { await loadBoard(); await loadMontar(); }   // os grupos soltos não atrasam a abertura: chegam em fundo (loadGruposFundo)
+/** Depois de «pronto»: os grupos soltos (e as suas imagens) só se pedem quando não atrasam o 1.º salto: no fim do 1.º
+ *  detalhe do tabuleiro (``body.dataset.detail`` escrito por ``loadDetail``) ou depois de 2 s sem interação. «Grupos
+ *  soltos» pede-os logo (``setVista``). */
+function loadGruposFundo() {
+  let feito = false, idle = null, mo = null;
+  const ir = () => {
+    if (feito) return;
+    feito = true; clearTimeout(idle); if (mo) mo.disconnect();
+    for (const ev of ["pointerdown", "wheel", "keydown"]) window.removeEventListener(ev, rearma, true);
+    if (!S.grupos) loadGrupos().catch(() => {});
+  };
+  const rearma = () => { clearTimeout(idle); idle = setTimeout(ir, 2000); };
+  if (document.body.dataset.detail) { setTimeout(ir, 0); return; }
+  mo = new MutationObserver(() => { if (document.body.dataset.detail) setTimeout(ir, 100); });   // o detalhe já está no ecrã
+  mo.observe(document.body, { attributes: true, attributeFilter: ["data-detail"] });
+  for (const ev of ["pointerdown", "wheel", "keydown"]) window.addEventListener(ev, rearma, true);
+  rearma();
+}
 
 // ------------------------------------------------------------ topo
 function drawProgress() {
@@ -1329,7 +1347,7 @@ function scheduleReload(board) {
 function connectEvents() {
   const es = new EventSource("/api/events");
   // F2b: ligação perdida → faixa; ao voltar (o servidor pode ter reiniciado) recarrega o tabuleiro e as sugestões
-  if (typeof watchConnection === "function") watchConnection(es, () => { S.lots = null; S.holesProgress = null; if (document.body.dataset.ready === "1") loadAll().catch(() => {}); });
+  if (typeof watchConnection === "function") watchConnection(es, () => { S.lots = null; S.holesProgress = null; if (document.body.dataset.ready === "1") { loadAll().catch(() => {}); loadGrupos().catch(() => {}); } });
   es.addEventListener("board_changed", (e) => { const d = JSON.parse(e.data); if (d.versao !== S.ver) boardChanged(d.versao); });
   // o «fetch_changed» de uma escrita chega logo a seguir ao «board_changed»: a recarga dessa escrita já o cobre
   es.addEventListener("fetch_changed", () => { if (!(reloadV === S.ver && performance.now() - reloadT < 400)) scheduleReload(false); });
@@ -1411,6 +1429,7 @@ async function boot2() {
   try {
     await loadAll();
     document.body.dataset.ready = "1";
+    loadGruposFundo();
   } catch (e) { S.erro = e.message; renderMontar(); }
 }
 /** O ecrã de arranque (F2c): o que o servidor está a fazer e o progresso, em vez de só «a carregar». */

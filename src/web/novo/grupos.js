@@ -59,7 +59,7 @@ function drawVistaSw() {
   const sw = $("#vista-sw");
   if (!sw) return;
   const nP = typeof queue === "function" ? queue().length : 0;
-  const nG = S.grupos ? S.grupos.n_grupos : 0;
+  const nG = S.grupos ? S.grupos.n_grupos : gruposSoltosMontar().grupos;
   const bp = $("#vista-pecas"), bg = $("#vista-grupos");
   bp.textContent = `Peça a peça · ${nP}`;
   bg.textContent = `Grupos soltos · ${nG}`;
@@ -69,6 +69,7 @@ function drawVistaSw() {
 function setVista(v) {
   if (S.vista === v) return;
   S.vista = v;
+  if (v === "grupos" && !S.grupos) loadGrupos().catch(() => {});      // ainda não chegaram (carregam em fundo depois do «pronto»)
   drawVistaSw(); drawGrupos(); renderMontar();
 }
 function initVista() {
@@ -185,7 +186,9 @@ function legendaGrupo(L) {
   sw.append(s("rect", { x: 0.1, y: 0.1, width: 0.8, height: 0.8, class: "lg-grupo" }));
   L.append(h("span", { class: "lg", "data-legend": "grupo_solto" }, sw, "Grupo solto: ainda não conta como montado"));
 }
-const gruposTopo = () => (S.grupos && S.grupos.n_pecas ? ` · ${S.grupos.n_pecas} em grupos soltos` : "");
+/** Contagem vinda do /api/montar enquanto o /api/grupos não chegou. */
+const gruposSoltosMontar = () => ((S.montar && S.montar.fora_da_fila && S.montar.fora_da_fila.grupos_soltos) || { grupos: 0, pecas: 0 });
+const gruposTopo = () => { const n = S.grupos ? S.grupos.n_pecas : gruposSoltosMontar().pecas; return n ? ` · ${n} em grupos soltos` : ""; };
 
 // ------------------------------------------------------------ painel (lista e grupo escolhido)
 function estadoGrupo(g) {

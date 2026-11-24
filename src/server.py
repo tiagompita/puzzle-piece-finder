@@ -609,7 +609,8 @@ class DetailFirst:
 	request (``/api/board.jpg`` with ``region=``) from the moment the event loop reads it until its answer is sent.
 	Taken here, not in the worker thread, because the browser asks for the detail and for ``/api/board``,
 	``/api/ghosts``, ``/api/montar`` in the same instant: inside the thread the three often checked before the detail
-	had registered (a synthetic test saw it in 1 of 2 runs)."""
+	had registered (a synthetic test saw it in 1 of 2 runs). Since 2026-11-24 ``/api/grupos`` and the group PNG wait
+	too (the groups load in the background right after «pronto» and slowed the 1st jump)."""
 
 	def __init__(self, app, gui):
 		self.app, self.gui = app, gui
@@ -1159,9 +1160,9 @@ class Gui:
 					self._det_cond.notify_all()
 
 	def after_detail(self) -> float:
-		"""Called at the start of ``/api/board``, ``/api/ghosts`` and ``/api/montar`` (no lock held): returns at once
-		when no detail region is in progress, else waits until none is, at most :data:`DETALHE_ESPERA_S` (a detail that
-		never ends cannot hold them longer). Returns the seconds waited."""
+		"""Called at the start of ``/api/board``, ``/api/ghosts``, ``/api/montar``, ``/api/grupos`` and the group PNG
+		(no lock held): returns at once when no detail region is in progress, else waits until none is, at most
+		:data:`DETALHE_ESPERA_S` (a detail that never ends cannot hold them longer). Returns the seconds waited."""
 		if not self._det_n or self.closing:
 			return 0.0
 		t0 = time.perf_counter()
@@ -4156,7 +4157,7 @@ def create_app(gui: Gui):
 
 	app = FastAPI(title="Puzzle Piece Finder — mesa de montagem", docs_url="/api/docs", openapi_url="/api/openapi.json")
 	app.add_middleware(GZipMiddleware, minimum_size=2000)
-	app.add_middleware(DetailFirst, gui=gui)      # P-a: the detail goes before /api/board, /api/ghosts, /api/montar
+	app.add_middleware(DetailFirst, gui=gui)      # P-a: the detail goes before /api/board, /api/ghosts, /api/montar, /api/grupos
 	app.state.gui = gui
 
 	@app.middleware("http")
@@ -4450,11 +4451,13 @@ def create_app(gui: Gui):
 	@app.get("/api/grupos")
 	def grupos_list():
 		ready()
+		gui.after_detail()             # 2026-11-24: loaded in the background right after «pronto», it slowed the 1st jump
 		return JSON(gui.grupos_json())
 
 	@app.get("/api/grupos/{gid}.png")
 	def grupo_png(gid: str, rot: int = 0, ppc: Optional[float] = None):
 		ready()
+		gui.after_detail()             # 2026-11-24: same rule as /api/grupos (reads only; the writes never wait)
 		return img(guard(lambda: gui.grupo_png(gid, rot, ppc)), "image/png")
 
 	async def _grupo_post(request: Request, fn):

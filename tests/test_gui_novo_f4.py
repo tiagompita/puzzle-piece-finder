@@ -63,6 +63,7 @@ def _abrir(browser, url, vp=(1366, 768), vista=True):
 	pg.goto(url + "/novo/")
 	pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
 	pg.wait_for_selector("#vista-sw button", timeout=10_000)
+	pg.wait_for_function("!!S.grupos", timeout=30_000)                  # os grupos chegam em fundo, depois do «pronto»
 	if vista:
 		pg.click("#vista-grupos")
 		pg.wait_for_selector("#tab-montar [data-vista='grupos']", timeout=10_000)
@@ -229,6 +230,7 @@ def test_vazio(gr, browser):
 		pg.goto(url + "/novo/")
 		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
 		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.wait_for_function("!!S.grupos", timeout=30_000)
 		assert pg.inner_text("#vista-grupos").replace("\xa0", " ") == "Grupos soltos · 0"
 		pg.click("#vista-grupos")
 		assert "Não há grupos soltos." in pg.inner_text("#tab-montar")
@@ -493,6 +495,7 @@ def test_mover_feito_com_toque_cdp(gr, browser):
 		pg.goto(url + "/novo/")
 		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
 		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.wait_for_function("!!S.grupos", timeout=30_000)
 		pg.locator("#vista-grupos").tap()
 		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").tap()
 		pg.wait_for_selector("#g-mover", timeout=10_000)
@@ -675,6 +678,7 @@ def test_criterio_14_arrastar_com_32_grupos_sem_frames_lentos(gr, browser):
 		pg.goto(url + "/novo/")
 		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
 		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.wait_for_function("!!S.grupos", timeout=30_000)
 		pg.click("#vista-grupos")
 		pg.wait_for_selector("#lyr-grupos .grupo", timeout=10_000)
 		assert pg.locator("#lyr-grupos > .grupo").count() == 32
@@ -748,6 +752,7 @@ def test_m2_segundo_dedo_no_grupo_nao_arrasta_no_mover(gr, browser):
 		pg.goto(url + "/novo/")
 		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
 		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.wait_for_function("!!S.grupos", timeout=30_000)
 		pg.evaluate("escolherGrupo(%r); entrarMover(%r)" % (ids["G1"], ids["G1"]))
 		pg.wait_for_selector("#g-feito", timeout=5_000)
 		f1, g = _xy(pg, 4, 1), _xy(pg, 2, 4)
@@ -774,6 +779,7 @@ def test_m3_pointerup_perdido_nao_mata_o_tabuleiro(gr, browser):
 		pg.goto(url + "/novo/")
 		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
 		pg.wait_for_selector("#vista-sw button", timeout=10_000)
+		pg.wait_for_function("!!S.grupos", timeout=30_000)
 		pg.evaluate("escolherGrupo(%r)" % ids["G1"])
 		pg.wait_for_selector(SEL % ids["G1"], timeout=10_000)
 		_arrastar(pg, (2, 4), (3, 5), ctrl=True, soltar=False)
