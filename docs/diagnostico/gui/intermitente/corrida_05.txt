@@ -1,0 +1,30 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-9.2.0, pluggy-1.7.0
+rootdir: D:\DEKSTOP\puzzle_piece_finder
+configfile: pytest.ini
+plugins: anyio-4.16.0
+collected 218 items
+
+tests\test_gui_novo.py ...................                               [  8%]
+tests\test_gui_novo_f2.py ..........                                     [ 13%]
+tests\test_gui_novo_f2b.py .............                                 [ 19%]
+tests\test_gui_novo_f2c.py .......................                       [ 29%]
+tests\test_gui_novo_f2e.py .....................                         [ 39%]
+tests\test_gui_novo_f2f.py ............                                  [ 44%]
+tests\test_gui_novo_f4.py .............................................. [ 66%]
+...............                                                          [ 72%]
+tests\test_gui_novo_p0.py ...............                                [ 79%]
+tests\test_gui_novo_toque.py ............                                [ 85%]
+tests\test_gui_layout.py ................................                [100%]
+
+============================== warnings summary ===============================
+tests\test_gui_novo.py:587
+  D:\DEKSTOP\puzzle_piece_finder\tests\test_gui_novo.py:587: SyntaxWarning: invalid escape sequence '\/'
+    bad = pg.evaluate("""[...document.querySelectorAll('.ico')].filter((e) => e.offsetParent !== null)
+
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\DEKSTOP\puzzle_piece_finder\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 218 passed, 2 warnings in 378.23s (0:06:18) =================

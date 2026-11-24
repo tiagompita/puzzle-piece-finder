@@ -1,0 +1,10 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-9.2.0, pluggy-1.7.0
+rootdir: D:\DEKSTOP\puzzle_piece_finder
+configfile: pytest.ini
+plugins: anyio-4.16.0
+collected 32 items
+
+tests\test_gui_layout.py ................................                [100%]
+
+============================= 32 passed in 35.29s =============================
