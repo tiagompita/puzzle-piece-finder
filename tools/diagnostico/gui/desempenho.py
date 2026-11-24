@@ -113,13 +113,30 @@ WAIT_SHOWN = """(k0) => new Promise((res) => { const t0 = performance.now();
     requestAnimationFrame(f); }; f(); })"""
 
 
+JUMP_JS = r"""([l, c]) => new Promise((res) => {
+  const t0 = performance.now();
+  showCell(l, c, true);
+  const k = S.detailKey;
+  // o detalhe da vista nova no ecrã: chave que cobre a célula, imagem decodificada (data-detail só se escreve depois do
+  // decode), visível; mais um frame para o desenho. Tudo dentro do browser: nenhum viagem Python no tempo.
+  const cobre = (key) => { const m = /^(\d+),(\d+),(\d+),(\d+)@/.exec(key || ""); return !!m && +m[1] <= l && l <= +m[3] && +m[2] <= c && c <= +m[4]; };
+  const f = () => {
+    const key = S.detailKey, det = document.querySelector("#detail");
+    if (key && document.body.dataset.detail === key && cobre(key) && det.getAttribute("visibility") === "visible")
+      return requestAnimationFrame(() => res({ s: (performance.now() - t0) / 1000, key_at_jump: k, key_shown: key, yanked: key !== k }));
+    if (performance.now() - t0 > 300000) return res({ s: null, key_at_jump: k, key_shown: key, yanked: null });
+    requestAnimationFrame(f);
+  };
+  f();
+})"""
+
+
 def jump(pg, l, c):
-	"""``showCell`` and the time until the detail of the new view is on screen."""
-	t0 = time.perf_counter()
-	pg.evaluate(f"showCell({l}, {c}, true)")
-	k = pg.evaluate("S.detailKey")
-	r = pg.evaluate(WAIT_SHOWN, None)
-	return {"s": round(time.perf_counter() - t0, 2), "key_at_jump": k, "key_shown": r["key"], "yanked": r["key"] != k}
+	"""``showCell`` and the time until the detail of the new view is on screen, measured inside the browser
+	(``performance.now()``, no Python round trips; the detail key must cover the target cell)."""
+	r = pg.evaluate(JUMP_JS, [l, c])
+	r["s"] = None if r["s"] is None else round(r["s"], 3)
+	return r
 
 
 class Events(threading.Thread):
@@ -229,13 +246,60 @@ def strip_actions(proj, actions):
 	return n
 
 
-def open_novo(browser):
-	pg = browser.new_page(viewport={"width": 1920, "height": 1080})
-	t0 = time.perf_counter()
+PRONTO_JS = r"""
+(() => {
+  // Sinal de «pronto» da abertura, só por observação (nenhuma marca na página: igual em qualquer commit). Tempo =
+  // performance.now() desde o navigationStart. Pronto = (1) ``data-ready`` = 1 (boot2 acabou), (2) o raster do
+  // tabuleiro carregado para esta versão (``data-raster`` = S.ver, href posto), (3) sem ecrã de preparação nem erro,
+  // (4) tratadores ligados (separadores com onclick, botões de zoom), (5) se o tabuleiro pediu um detalhe (S.detailKey),
+  // ele está decodificado e visível (``data-detail`` = chave, href posto, visibility visible); mais 2 frames (pintado).
+  // A decodificação do raster e a prova de interação só se verificam DEPOIS de guardado o tempo (``verif``).
+  window.__pronto = new Promise((res) => {
+    const estado = () => {
+      const b = document.body;
+      if (!b || typeof S === "undefined" || typeof S.ver === "undefined") return null;
+      const r = document.querySelector("#raster"), det = document.querySelector("#detail"), tab = document.querySelector("#tabs button");
+      const e = {
+        ready: b.dataset.ready === "1",
+        raster: !!r && !!r.getAttribute("href") && b.dataset.raster === String(S.ver),
+        sem_prep: !document.querySelector("#tab-montar .prep") && !S.preparando && !S.erro,
+        tratadores: !!tab && typeof tab.onclick === "function" && !!document.querySelector("#z-in"),
+        detalhe_pedido: !!S.detailKey,
+        detalhe: !S.detailKey || (b.dataset.detail === S.detailKey && !!det && !!det.getAttribute("href") && det.getAttribute("visibility") === "visible"),
+      };
+      e.ok = e.ready && e.raster && e.sem_prep && e.tratadores && e.detalhe;
+      return e;
+    };
+    const f = () => {
+      const e = estado();
+      if (!e || !e.ok) return requestAnimationFrame(f);
+      requestAnimationFrame(() => requestAnimationFrame(async () => {
+        const t = performance.now(), e2 = estado();
+        const verif = { estado_no_sinal: e2, estado_na_condicao: e, raster_decodificado: null };
+        try {
+          const im = new Image(); im.src = document.querySelector("#raster").getAttribute("href"); await im.decode();
+          verif.raster_decodificado = im.naturalWidth > 0;
+        } catch (err) { verif.raster_decodificado = false; }
+        res({ t_ms: t, verif });
+      }));
+    };
+    f();
+  });
+})();
+"""
+
+
+def open_novo(browser, init=(), viewport=None, dsf=1):
+	"""Open ``/novo/`` and wait for the in-page «pronto» signal (``PRONTO_JS``); returns ``(page, seconds since
+	navigationStart)``. ``init`` = more init scripts (installed before the page's own)."""
+	pg = browser.new_page(viewport=viewport or {"width": 1920, "height": 1080}, device_scale_factor=dsf)
+	pg.add_init_script(PRONTO_JS)
+	for sc in init:
+		pg.add_init_script(sc)
 	pg.goto(G.BASE_URL + "/novo/")
-	pg.wait_for_selector("body[data-ready='1']", timeout=300_000)
-	pg.wait_for_function("!!document.body.dataset.raster", timeout=300_000)
-	return pg, round(time.perf_counter() - t0, 2)
+	r = pg.evaluate("window.__pronto")
+	pg.pronto = r
+	return pg, round(r["t_ms"] / 1000, 3)
 
 
 def run_a(a, k, browser):
@@ -357,6 +421,7 @@ def resumo(rows):
 	b = [r for r in rows if r["tag"].startswith("b")]
 	out = {}
 	if a:
+		out["0_abrir_s"] = rng([r.get("abrir_s") for r in a])          # a abertura de /novo/ até ao «pronto» e ao raster (todas as fases a medem)
 		out["1_salto1_s"] = rng([r["salto1_ceu"]["s"] for r in a])
 		out["2_frio_browser_s"] = rng([r["salto_frio_relva"]["s"] for r in a])
 		out["2_frio_http_s"] = rng([r["srv_frio_ceu_s"] for r in a] + [r["srv_frio_relva_s"] for r in a])

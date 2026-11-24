@@ -96,14 +96,7 @@ def run(a, k, browser, cond):
 	try:
 		with D.Run(a, f"{a.tag}_{k}", fases=None) as r:
 			out = r.out
-			pg = browser.new_page(viewport={"width": 1920, "height": 1080})
-			pg.add_init_script(P.INIT_JS)
-			pg.add_init_script(GATE_JS)
-			t = time.perf_counter()
-			pg.goto(G.BASE_URL + "/novo/")
-			pg.wait_for_selector("body[data-ready='1']", timeout=300_000)
-			pg.wait_for_function("!!document.body.dataset.raster", timeout=300_000)
-			out["abrir_s"] = round(time.perf_counter() - t, 2)
+			pg, out["abrir_s"] = D.open_novo(browser, init=(P.INIT_JS, GATE_JS))      # «pronto» medido dentro do browser
 			out["salto1_ceu"] = D.jump(pg, 5, 30)
 			G._wait_holes()
 			G._wait_ready()

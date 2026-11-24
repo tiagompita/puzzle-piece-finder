@@ -7,7 +7,9 @@ como contexto, as outras medidas de ``pa_ic.py``. Dois IC por medida, sobre as d
   da diferença das medianas.
 Passa se o limite superior dos IC (t e bootstrap da média) ficar abaixo de +0,25 s.
 
-Uso: ``python tools/diagnostico/gui/f4_ic.py <pares.json>``."""
+Uso: ``python tools/diagnostico/gui/f4_ic.py <pares.json> [<lado_base> <lado_novo>]`` (por omissão ``old`` e ``new``; os
+lados de ``abrir_pares.py`` são os nomes dados na linha de comandos). Além do IC, escreve média ± desvio padrão de cada
+lado (``medias``) para as medidas de abertura."""
 import json
 import math
 import random
@@ -25,18 +27,32 @@ M = {
 	"salto_frio_relva_browser": lambda r: r["salto_frio_relva"]["s"],
 	"srv_frio_relva_s": lambda r: r["srv_frio_relva_s"],
 	"abrir_s": lambda r: r["abrir_s"],
+	"abrir_mais_salto": lambda r: r["abrir_s"] + r["salto1_ceu"]["s"],
 	"pico_ws_mb": lambda r: (r.get("mem") or {}).get("peak_ws_mb"),
 }
 CRIT = ("perto", "salto1_ceu")
+# Critério da correção «abrir sem esperar pelos grupos» (2026-11-23): abrir + 1.º salto da árvore nova não pior do que
+# a base: limite superior do IC 95 % t da diferença (nova − base) <= +0,10 s. abrir e 1.º salto só se reportam.
+LIM_ABRIR_SALTO = 0.10
 
 
 def main():
 	rows = json.load(open(sys.argv[1], encoding="utf-8"))["corridas"]
+	lb, ln = (sys.argv[2], sys.argv[3]) if len(sys.argv) >= 4 else ("old", "new")
 	by = {}
 	for r in rows:
 		by.setdefault(r["par"], {})[r["lado"]] = r
-	pares = [(v["old"], v["new"]) for k, v in sorted(by.items()) if "old" in v and "new" in v]
-	out = {"n_pares": len(pares)}
+	pares = [(v[lb], v[ln]) for k, v in sorted(by.items()) if lb in v and ln in v]
+	out = {"n_pares": len(pares), "lados": [lb, ln]}
+	medias = {}
+	for lado in sorted({r["lado"] for r in rows}):
+		medias[lado] = {}
+		for nm in ("abrir_s", "salto1_ceu", "abrir_mais_salto"):
+			v = [M[nm](r) for r in rows if r["lado"] == lado and r.get("salto1_ceu")]
+			v = [x for x in v if x is not None]
+			if len(v) >= 2:
+				medias[lado][nm] = {"n": len(v), "media": round(st.mean(v), 3), "dp": round(st.stdev(v), 3)}
+	out["medias"] = medias
 	for nm, f in M.items():
 		o, n = [], []
 		for a, b in pares:
@@ -73,6 +89,8 @@ def main():
 		if nm in CRIT:
 			out[nm]["exclui_+0.25"] = ic_t[1] < 0.25 and ic_b[1] < 0.25
 	out["criterio_12"] = all(out[nm].get("exclui_+0.25") for nm in CRIT)
+	if "ic95_t" in out.get("abrir_mais_salto", {}):
+		out["criterio_abrir_mais_salto"] = out["abrir_mais_salto"]["ic95_t"][1] <= LIM_ABRIR_SALTO
 	print(json.dumps(out, indent=1, ensure_ascii=False))
 
 
