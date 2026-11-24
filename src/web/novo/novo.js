@@ -121,7 +121,8 @@ function loadGruposFundo() {
     if (feito) return;
     feito = true; clearTimeout(idle); if (mo) mo.disconnect();
     for (const ev of ["pointerdown", "wheel", "keydown"]) window.removeEventListener(ev, rearma, true);
-    if (!S.grupos) loadGrupos().catch(() => {});
+    S.pngsLivre = true;                                    // F4b (b): a partir daqui as imagens dos grupos podem descarregar-se em fundo
+    if (!S.grupos) loadGrupos().catch(() => {}); else carregarPngs();
   };
   const rearma = () => { clearTimeout(idle); idle = setTimeout(ir, 2000); };
   if (document.body.dataset.detail) { setTimeout(ir, 0); return; }

@@ -2428,9 +2428,20 @@ class Gui:
 		return out
 
 	# ------------------------------------------------------------ loose groups on the board (F4, B2)
-	def _grupo_row(self, gid: str, shown: dict) -> dict:
+	def _shown_all(self, index: Optional[dict] = None) -> tuple:
+		"""``(shown, lps)``: the effective positions of the loose groups (``mesa.jsonl`` and fixation ones, plus the ones
+		F4b (a) shows by themselves at their served likely place, ``origem`` ``provavel``: derived, never written) and the
+		likely places already computed for the derived pass (:func:`src.grupos.auto_positions`)."""
+		from src import grupos as GR
+		from src import mesa as ME
+		pr = self.pr
+		own = ME.effective_positions(pr, index)
+		auto, lps = GR.auto_positions(pr, own, self.placements())
+		return dict(own, **auto), lps
+
+	def _grupo_row(self, gid: str, shown: dict, lps: Optional[dict] = None) -> dict:
 		"""One loose group of ``GET /api/grupos`` (pure over the project; the caller reads under :meth:`read` or the
-		write lock)."""
+		write lock). ``lps``: the likely places of :meth:`_shown_all` (groups without a position of their own)."""
 		from src import grupos as GR
 		pr = self.pr
 		s = pr.sections[gid]
@@ -2439,13 +2450,17 @@ class Gui:
 				 for pid, rc in sorted(s.cells_local.items())]
 		sob = GR.sobreposto(pr, gid, pos, shown) if pos is not None else None
 		rot = int(pos["rot"]) if pos is not None else 0
-		lp = GR.likely_place(pr, gid, shown, self.placements())
-		if lp is not None and not GR.place_calibrated(pr.profile, lp["footprint"]):
-			lp = None                                  # decision 1 of Tiago (B4): only in zones with a calibrated dE_p90
+		if lps is not None and gid in lps:
+			lp = lps[gid]
+		else:
+			lp = GR.likely_place(pr, gid, shown, self.placements())
+			if lp is not None and not GR.place_calibrated(pr.profile, lp["footprint"]):
+				lp = None                              # decision 1 of Tiago (B4): only in zones with a calibrated dE_p90
 		fr = GR.group_frame(pr.profile, s, rot, GRUPO_PPC)
 		return {"id": gid, "kind": s.kind, "n": len(s.cells_local), "pecas": pecas,
 				"sacos": sorted({p["lote"] for p in pecas if p["lote"] is not None}),
 				"mostrado": pos is not None,
+				"automatico": bool(pos is not None and pos.get("origem") == GR.AUTO_ORIGEM),
 				"posicao": ({k: pos[k] for k in ("l0", "c0", "rot", "mirror", "origem")} if pos is not None else None),
 				"footprint": [list(c) for c in GR.footprint(s, pos)] if pos is not None else None,
 				"sobreposto": ({"motivo": sob["motivo"], "celula": sob.get("celula"), "texto": sob["error"]}
@@ -2467,8 +2482,8 @@ class Gui:
 			pr = self.pr
 			index = ME.last_anchor_index(pr)
 			aviso = ME.read_positions(pr, index)[1]
-			shown = ME.effective_positions(pr, index)
-			rows = [self._grupo_row(gid, shown) for gid in sorted(pr.sections) if ME.is_loose(pr, gid)]
+			shown, lps = self._shown_all(index)
+			rows = [self._grupo_row(gid, shown, lps) for gid in sorted(pr.sections) if ME.is_loose(pr, gid)]
 			cnt = GR.count_loose(pr)
 			return {"versao": self.version(), "n_grupos": cnt["grupos"], "n_pecas": cnt["pecas"],
 					"n_mostrados": len(shown), "grupos": rows, "aviso": aviso}
@@ -2496,7 +2511,7 @@ class Gui:
 			return None, {"error": "O grupo já tem lugar: tira-o do lugar primeiro.", "motivo": "grupo_fixado"}
 		if not ME.is_loose(pr, gid):
 			return None, {"error": f"grupo desconhecido {gid}", "motivo": "grupo_desconhecido", "_http": 404}
-		return ME.effective_positions(pr, ME.last_anchor_index(pr)), None
+		return self._shown_all(ME.last_anchor_index(pr))[0], None
 
 	def _grupo_write(self, gid: str, pos: dict, shown: dict, rodado: Optional[bool] = None) -> dict:
 		from src import mesa as ME
@@ -2504,8 +2519,8 @@ class Gui:
 								wlock=self.wlock, mirror=bool(pos.get("mirror")), shown=shown, rodado=rodado)
 		if "error" in rec:
 			return rec
-		shown2 = ME.effective_positions(self.pr)
-		row = self._grupo_row(gid, shown2)
+		shown2, lps2 = self._shown_all()
+		row = self._grupo_row(gid, shown2, lps2)
 		self.emit("grupos_changed", {"grupo": gid, "posicao": row["posicao"]})
 		return {"ok": True, "linha": rec, "grupo": row}
 

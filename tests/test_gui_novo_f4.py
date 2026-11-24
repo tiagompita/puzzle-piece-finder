@@ -16,6 +16,7 @@ Playwright (Chromium headless, ``slow``) sobre o projeto sintetico de ``tests/te
 peca com candidato (2,4) de margem 2,0, G2 = 2 pecas com candidato de margem 1,0, ou seja sem lugar provavel)."""
 
 import json
+import os
 import re
 import urllib.request
 
@@ -26,6 +27,7 @@ pytest.importorskip("fastapi")
 pytest.importorskip("uvicorn")
 sync_api = pytest.importorskip("playwright.sync_api")
 
+from src import mesa  # noqa: E402
 from src import server as SV  # noqa: E402
 from test_gui_novo import browser, _serve  # noqa: E402,F401
 from test_server_grupos import _board_project, _cand, PSI_W  # noqa: E402
@@ -104,17 +106,21 @@ def test_mostrar_no_tabuleiro_grava_e_desenha(gr, browser):
 	url, gui, ids = gr
 	pg, errs = _abrir(browser, url)
 	try:
-		assert pg.locator("#lyr-grupos [data-grupo]").count() == 0          # nunca mostrado: fora do tabuleiro
+		# F4b (a): G1 (lugar provavel fiavel) ja esta no tabuleiro sozinho; G2 (sem lugar provavel) continua so na lista
+		assert pg.locator("#lyr-grupos [data-grupo]").count() == 1
+		assert pg.locator(f"#lyr-grupos [data-grupo='{ids['G1']}']").count() == 1
+		assert not os.path.exists(mesa.mesa_path(gui.pr))
 		seq0 = gui.seq
-		with pg.expect_request(lambda r: r.url.endswith(f"/api/grupos/{ids['G1']}/mostrar") and r.method == "POST") as rq:
-			pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-mostrar").click()
+		with pg.expect_request(lambda r: r.url.endswith(f"/api/grupos/{ids['G2']}/mostrar") and r.method == "POST") as rq:
+			pg.locator("#tab-montar .grp-row").nth(1).locator(".grp-mostrar").click()
 		body = json.loads(rq.value.post_data)
 		assert len(body["centro"]) == 2 and all(isinstance(v, (int, float)) for v in body["centro"])
-		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{ids['G1']}']", timeout=10_000)
-		assert pg.locator("#lyr-grupos [data-grupo]").count() == 1
+		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{ids['G2']}']", timeout=10_000)
+		assert pg.locator("#lyr-grupos [data-grupo]").count() == 2
 		d = json.loads(urllib.request.urlopen(url + "/api/grupos").read())
-		g1 = next(g for g in d["grupos"] if g["id"] == ids["G1"])
-		assert g1["mostrado"] and g1["posicao"]["l0"] == 2 and g1["posicao"]["c0"] == 4      # o candidato 1 (margem 2,0)
+		g2 = next(g for g in d["grupos"] if g["id"] == ids["G2"])
+		assert g2["mostrado"] and g2["posicao"]["origem"] == "mesa" and not g2["automatico"]
+		assert sum(1 for _ in open(mesa.mesa_path(gui.pr), encoding="utf-8")) == 1       # so o «Mostrar» do Tiago escreve
 		names = [n for _, n, _ in gui.events_after(seq0)]
 		assert "board_changed" not in names                                  # C2: nao toca no tabuleiro nem no desfazer
 		assert pg.locator("#m-ultimo").count() == 0                          # nao ha faixa «Desfazer»
@@ -129,30 +135,29 @@ def _mostrar_todos(url, ids):
 		assert st == 200, r
 
 
-def test_so_o_grupo_escolhido_tem_imagem(gr, browser):
+def test_todos_os_grupos_mostrados_tem_imagem(gr, browser):
+	"""F4b (b), decisao do Tiago 2026-11-24: a imagem aparece em todos os grupos mostrados, nao so no escolhido (a
+	sombra e o fundo violeta continuam so no escolhido); chega em fundo, depois do «pronto»."""
 	url, gui, ids = gr
 	_mostrar_todos(url, ids)
 	pg, errs = _abrir(browser, url)
 	try:
 		g1, g2 = ids["G1"], ids["G2"]
 		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{g2}']", timeout=10_000)
-		assert pg.locator("#lyr-grupos image").count() == 0                  # nenhum escolhido: so contornos tenues
-		assert pg.locator("#lyr-grupos .grupo.tenue").count() == 2
+		pg.wait_for_function("document.querySelectorAll('#lyr-grupos image.grupo-img[href]').length === 2", timeout=15_000)
+		assert pg.locator("#lyr-grupos .grupo.tenue").count() == 2                  # nenhum escolhido: contornos tenues, mas com imagem
+		for g in (g1, g2):
+			href = pg.get_attribute(f"#lyr-grupos [data-grupo='{g}'] image.grupo-img", "href")
+			assert href.startswith(f"/api/grupos/{g}.png?rot=0")
 		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-open").click()
-		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{g1}'] image.grupo-img", timeout=10_000)
-		assert pg.locator("#lyr-grupos image").count() == 1
-		href = pg.get_attribute(f"#lyr-grupos [data-grupo='{g1}'] image.grupo-img", "href")
-		assert href.startswith(f"/api/grupos/{g1}.png?rot=0")
-		assert pg.locator(f"#lyr-grupos [data-grupo='{g1}']").get_attribute("class").split().count("escolhido") == 1
-		assert pg.locator(f"#lyr-grupos [data-grupo='{g1}'] .grupo-contorno").count() >= 1
+		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{g1}'].escolhido", timeout=10_000)
+		assert pg.locator("#lyr-grupos image.grupo-img[href]").count() == 2         # o escolhido nao tira a imagem aos outros
+		assert pg.locator(f"#lyr-grupos [data-grupo='{g1}'] .grupo-sombra").count() == 1
+		assert pg.locator(f"#lyr-grupos [data-grupo='{g2}'] .grupo-sombra").count() == 0
 		assert pg.locator(f"#lyr-grupos [data-grupo='{g2}']").get_attribute("class").split().count("tenue") == 1
 		pg.click("#grp-voltar")                                                          # a lista; o escolhido deixa de o ser
 		pg.wait_for_selector("#tab-montar .grp-row", timeout=10_000)
-		assert pg.locator("#lyr-grupos image").count() == 0
-		pg.locator("#tab-montar .grp-row").nth(1).locator(".grp-open").click()          # trocar de escolha
-		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{g2}'] image.grupo-img", timeout=10_000)
-		assert pg.locator("#lyr-grupos image").count() == 1
-		assert pg.locator(f"#lyr-grupos [data-grupo='{g1}'] image").count() == 0
+		assert pg.locator("#lyr-grupos image.grupo-img[href]").count() == 2
 		assert not errs, errs
 	finally:
 		pg.close()
@@ -173,6 +178,7 @@ def test_camada_por_baixo_dos_alvos(gr, browser):
 
 def test_painel_do_grupo(gr, browser):
 	url, gui, ids = gr
+	assert _post(url, f"/api/grupos/{ids['G1']}/mover", {"l0": 4, "c0": 6, "rot": 0})[0] == 200    # fora do lugar provavel (senao e ele)
 	pg, errs = _abrir(browser, url)
 	try:
 		pg.locator("#tab-montar .grp-row").nth(1).locator(".grp-open").click()                 # G2: sem lugar provavel
@@ -213,9 +219,7 @@ def test_legenda_do_grupo_solto(gr, browser):
 	url, gui, ids = gr
 	pg, errs = _abrir(browser, url)
 	try:
-		assert "Grupo solto: ainda não conta como montado" not in pg.inner_text("#legend")      # nenhum mostrado ainda
-		_mostrar_todos(url, ids)
-		pg.wait_for_selector("#lyr-grupos [data-grupo]", timeout=10_000)
+		pg.wait_for_selector("#lyr-grupos [data-grupo]", timeout=10_000)                         # G1 mostrado sozinho (F4b a)
 		assert "Grupo solto: ainda não conta como montado" in pg.inner_text("#legend")
 	finally:
 		pg.close()
@@ -241,7 +245,7 @@ def test_vazio(gr, browser):
 
 def test_sobreposto_visivel(gr, browser):
 	url, gui, ids = gr
-	st, r = _post(url, f"/api/grupos/{ids['G1']}/mostrar", {})
+	st, r = _post(url, f"/api/grupos/{ids['G1']}/mover", {"l0": 2, "c0": 4, "rot": 0})     # posicao propria (um grupo so derivado desaparece)
 	assert st == 200, r
 	st, r = _post(url, "/api/confirm", {"acao": "place", "piece": ids["W"], "cell": [2, 4], "theta_deg": -PSI_W, "origin": "manual"})
 	assert st == 200, r
@@ -262,7 +266,7 @@ def test_atualiza_por_sse_grupos_changed(gr, browser):
 	url, gui, ids = gr
 	pg, errs = _abrir(browser, url)
 	try:
-		assert pg.locator("#lyr-grupos [data-grupo]").count() == 0
+		assert pg.locator("#lyr-grupos [data-grupo]").count() == 1                          # G1, sozinho (F4b a)
 		st, r = _post(url, f"/api/grupos/{ids['G2']}/mostrar", {"centro": [3.0, 3.0]})      # outro cliente
 		assert st == 200, r
 		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{ids['G2']}']", timeout=10_000)
@@ -933,7 +937,7 @@ def test_fixar_com_confirmacao_de_um_clique(gr, browser):
 
 def test_sobreposto_desliga_fixar_aqui_com_a_razao(gr, browser):
 	url, gui, ids = gr
-	_mostrar(url, ids, "G1")
+	assert _post(url, f"/api/grupos/{ids['G1']}/mover", {"l0": 2, "c0": 4, "rot": 0})[0] == 200
 	assert _post(url, "/api/confirm", {"acao": "place", "piece": ids["W"], "cell": [2, 4], "theta_deg": -PSI_W, "origin": "manual"})[0] == 200
 	pg, errs = _abrir(browser, url)
 	reqs = _espiar(pg)
@@ -1422,3 +1426,102 @@ def test_aviso_do_fundo_nao_tapa_a_legenda(gr90, browser, vp):
 		assert not errs, errs
 	finally:
 		_fechar(pg.context)
+
+
+# ---------------------------------------------------------------- F4b (2026-11-24): (a) lugar provavel sozinho, (b) imagem em todos
+def _mesa_bytes(gui):
+	p = mesa.mesa_path(gui.pr)
+	return open(p, "rb").read() if os.path.exists(p) else None
+
+
+def test_f4b_a_grupo_com_lugar_provavel_aparece_sozinho_sem_escrever(gr, browser):
+	"""(a): G1 (candidato (2,4), margem 2,0 >= margin_min) aparece no tabuleiro sem «Mostrar», na posicao e rotacao do
+	candidato; G2 (margem 1,0) so na lista. Abrir a pagina nao escreve no mesa.jsonl (bytes iguais)."""
+	url, gui, ids = gr
+	antes = _mesa_bytes(gui)
+	log0 = open(gui.pr.log_path, "rb").read()
+	pg, errs = _abrir(browser, url)
+	try:
+		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{ids['G1']}']", timeout=10_000)
+		assert pg.locator("#lyr-grupos [data-grupo]").count() == 1
+		assert pg.locator(f"#lyr-grupos [data-grupo='{ids['G2']}']").count() == 0
+		p = pg.evaluate("(g) => { const x = grupo(g); return [x.posicao.l0, x.posicao.c0, x.posicao.rot, x.posicao.origem, x.automatico]; }", ids["G1"])
+		assert p == [2, 4, 0, "provavel", True]
+		assert pg.evaluate("(g) => grupo(g).mostrado", ids["G2"]) is False
+		# «Ver no tabuleiro» de um grupo que ja la esta nao escreve
+		pg.locator("#tab-montar .grp-row").nth(0).locator(".grp-mostrar").click()
+		pg.wait_for_timeout(300)
+		assert not errs, errs
+	finally:
+		pg.close()
+	assert _mesa_bytes(gui) == antes == None                                   # nunca escrito
+	assert open(gui.pr.log_path, "rb").read() == log0
+
+
+def test_f4b_a_mesa_existente_fica_igual_e_a_posicao_propria_manda(gr, browser):
+	url, gui, ids = gr
+	assert _post(url, f"/api/grupos/{ids['G1']}/mover", {"l0": 4, "c0": 6, "rot": 0})[0] == 200
+	antes = _mesa_bytes(gui)
+	assert antes
+	pg, errs = _abrir(browser, url)
+	try:
+		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{ids['G1']}']", timeout=10_000)
+		p = pg.evaluate("(g) => { const x = grupo(g); return [x.posicao.l0, x.posicao.c0, x.posicao.origem, x.automatico]; }", ids["G1"])
+		assert p == [4, 6, "mesa", False]                                       # a posicao gravada manda sobre o lugar provavel
+		assert not errs, errs
+	finally:
+		pg.close()
+	assert _mesa_bytes(gui) == antes
+
+
+def test_f4b_a_candidato_invalido_nao_aparece(gr, browser):
+	"""Candidato (2,4) com a celula ocupada: o grupo nao aparece sozinho (so na lista)."""
+	url, gui, ids = gr
+	assert _post(url, "/api/confirm", {"acao": "place", "piece": ids["W"], "cell": [2, 4], "theta_deg": -PSI_W, "origin": "manual"})[0] == 200
+	pg, errs = _abrir(browser, url)
+	try:
+		pg.wait_for_function("!!S.grupos", timeout=10_000)
+		assert pg.locator("#lyr-grupos [data-grupo]").count() == 0
+		assert pg.evaluate("(g) => grupo(g).mostrado", ids["G1"]) is False
+		assert _mesa_bytes(gui) is None
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_f4b_a_mover_e_rodar_escrevem_o_fixar_tambem(gr, browser):
+	"""So «Mover», «Rodar» ou «Fixar» escrevem: um «Rodar» de um grupo derivado grava a posicao (rodado) no mesa.jsonl."""
+	url, gui, ids = gr
+	assert _mesa_bytes(gui) is None
+	st, r = _post(url, f"/api/grupos/{ids['G1']}/mover", {"rodar": 90})
+	assert st == 200, r
+	assert r["grupo"]["posicao"]["origem"] == "mesa" and r["grupo"]["posicao"]["rot"] == 90 and r["grupo"]["rodado"] is True
+	assert _mesa_bytes(gui)
+
+
+def test_f4b_b_imagem_em_todos_os_mostrados_so_depois_do_detalhe(gr, browser):
+	"""(b): todos os grupos mostrados levam a imagem; nenhum PNG de grupo e pedido antes de o detalhe inicial chegar;
+	cada PNG pede-se uma vez."""
+	url, gui, ids = gr
+	_mostrar(url, ids, "G2")
+	pg = browser.new_page(viewport={"width": 1366, "height": 768})
+	ev = []
+	pg.on("request", lambda r: ev.append(("png", r.url)) if "/api/grupos/" in r.url and ".png" in r.url else None)
+	pg.on("requestfinished", lambda r: ev.append(("detalhe", r.url)) if "/api/board.jpg" in r.url and "region=" in r.url else None)
+	errs = []
+	pg.on("pageerror", lambda e: errs.append(str(e)))
+	try:
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		pg.wait_for_function("document.querySelectorAll('#lyr-grupos image.grupo-img[href]').length === 2", timeout=20_000)
+		g1, g2 = ids["G1"], ids["G2"]
+		for g in (g1, g2):                                                         # os dois: o derivado e o da mesa
+			assert pg.locator(f"#lyr-grupos [data-grupo='{g}'] image.grupo-img[href]").count() == 1
+		kinds = [k for k, _ in ev]
+		assert "detalhe" in kinds and "png" in kinds
+		assert kinds.index("png") > kinds.index("detalhe"), ev                    # nenhum PNG antes do 1.o detalhe
+		pngs = [u for k, u in ev if k == "png"]
+		assert len(pngs) == len(set(pngs)) == 2, pngs                              # um pedido por grupo
+		assert not errs, errs
+	finally:
+		pg.close()

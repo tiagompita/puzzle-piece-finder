@@ -47,6 +47,7 @@ function loadGrupos() {
         if (S.fixado && S.fixado.gid && grupo(S.fixado.gid)) S.fixado = null;      // M1: solto por outro caminho: o cartão e o contorno acabam
         if (S.mover && (!grupo(S.mover.gid) || !grupo(S.mover.gid).mostrado)) S.mover = null;
         drawGrupos(); drawVistaSw(); drawProgress(); drawLegend();
+        carregarPngs();
         if (S.vista === "grupos" && S.tab === "montar") renderMontar();
       } while (gruposDeNovo);
     } finally { gruposP = null; }
@@ -107,20 +108,51 @@ function deslocar(el, dl, dc) {
   if (!dl && !dc) el.removeAttribute("transform");
   else el.setAttribute("transform", `translate(${dc} ${(dl * S.hr).toFixed(4)})`);
 }
+/** O endereço da imagem de um grupo (F4b b): com a versão do tabuleiro, como sempre. */
+const pngUrl = (g) => `${g.imagem.url}&v=${S.ver}`;
+const pngsOk = () => S.pngs || (S.pngs = new Set());               // endereços já descarregados (cache do browser)
+let pngsP = null, pngsDeNovo = false;
+/** F4b (b): descarrega em fundo, uma de cada vez, as imagens dos grupos mostrados; só depois do «pronto» e do 1.º detalhe
+ *  (o servidor ainda lhes dá a vez ao detalhe, ``after_detail``). Cada uma que chega liga-se ao seu ``<image>`` no sítio,
+ *  sem redesenhar a camada (um arrasto em curso não perde o elemento). */
+function carregarPngs() {
+  if (document.body.dataset.ready !== "1" || !(S.pngsLivre || document.body.dataset.detail)) return;
+  if (pngsP) { pngsDeNovo = true; return pngsP; }
+  pngsP = (async () => {
+    try {
+      do {
+        pngsDeNovo = false;
+        for (const g of ((S.grupos && S.grupos.grupos) || [])) {
+          if (!g.mostrado || !g.imagem || !g.footprint) continue;
+          const u = pngUrl(g);
+          if (pngsOk().has(u)) continue;
+          try {
+            const im = new Image();
+            im.src = u;
+            await im.decode();
+            pngsOk().add(u);
+            for (const el of document.querySelectorAll("#lyr-grupos image.grupo-img")) if (el.getAttribute("data-url") === u) el.setAttribute("href", u);
+          } catch (e) { /* fica sem imagem até à próxima recarga dos grupos */ }
+        }
+      } while (pngsDeNovo);
+    } finally { pngsP = null; }
+  })();
+  return pngsP;
+}
 function grupoEl(g, esc) {
   const klass = ["grupo", esc ? "escolhido" : "tenue", g.sobreposto ? "sobreposto" : ""].filter(Boolean).join(" ");
   const el = s("g", { class: klass, "data-grupo": g.id, "data-n": g.n });
   const fp = g.footprint;
-  if (esc) {
-    el.append(celulasEl(fp, "grupo-sombra", 0.05, 0.08));            // a sombra: as células deslocadas (em unidades do tabuleiro, não px)
-    el.append(celulasEl(fp, "grupo-fundo"));
-    const im = g.imagem, p = g.posicao;
-    if (im && p) {
-      const [r0, q0] = im.origem_local, [rn, cn] = im.celulas_n, m = im.margem;
-      el.append(s("image", { class: "grupo-img", href: `${im.url}&v=${S.ver}`, preserveAspectRatio: "none",
-        x: (p.c0 + q0 - 1 - m).toFixed(3), y: ((p.l0 + r0 - 1 - m) * S.hr).toFixed(3), width: (cn + 2 * m).toFixed(3), height: ((rn + 2 * m) * S.hr).toFixed(3) }));
-    }
-  } else el.append(celulasEl(fp, "grupo-fundo"));
+  if (esc) el.append(celulasEl(fp, "grupo-sombra", 0.05, 0.08));  // a sombra: as células deslocadas (em unidades do tabuleiro, não px)
+  el.append(celulasEl(fp, "grupo-fundo"));
+  const im = g.imagem, p = g.posicao;                                  // F4b (b): a imagem em todos os grupos mostrados, não só no escolhido
+  if (im && p) {
+    const [r0, q0] = im.origem_local, [rn, cn] = im.celulas_n, m = im.margem, u = pngUrl(g);
+    const at = { class: "grupo-img", "data-url": u, preserveAspectRatio: "none",
+      x: (p.c0 + q0 - 1 - m).toFixed(3), y: ((p.l0 + r0 - 1 - m) * S.hr).toFixed(3), width: (cn + 2 * m).toFixed(3), height: ((rn + 2 * m) * S.hr).toFixed(3) };
+    if (pngsOk().has(u)) at.href = u;                                    // só com a imagem já descarregada em fundo (carregarPngs)
+    el.append(s("image", at));
+  }
   el.append(s("path", { class: "grupo-contorno", d: contornoD(fp) }));
   const [dl, dc] = pendente(g.id);
   deslocar(el, dl, dc);

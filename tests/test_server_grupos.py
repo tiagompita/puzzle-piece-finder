@@ -124,7 +124,11 @@ def test_get_lists_loose_groups_with_likely_place_only_with_margin(env):
 	assert d["n_grupos"] == 2 and d["n_pecas"] == 3
 	g1, g2 = d["grupos"]
 	assert g1["n"] == 1 and g2["n"] == 2
-	assert g1["mostrado"] is False and g1["posicao"] is None and g1["footprint"] is None and g1["sobreposto"] is None
+	# F4b (a): G1 has a served likely place, so it is shown by itself there (derived, origem «provavel»)
+	assert g1["mostrado"] is True and g1["automatico"] is True and g1["posicao"]["origem"] == "provavel"
+	assert g1["footprint"] == [[2, 4]] and g1["sobreposto"] is None
+	assert g2["mostrado"] is False and g2["automatico"] is False and g2["posicao"] is None and g2["footprint"] is None
+	assert not os.path.exists(mesa.mesa_path(gui.pr))                     # nothing written by showing it
 	assert g1["lugar_provavel"]["cell0"] == [2, 4] and g1["lugar_provavel"]["footprint"] == [[2, 4]]
 	assert g2["lugar_provavel"] is None                            # margin 1.0 < margin_min 1.5
 	assert [p["id"] for p in g2["pecas"]] == sorted([ids["Y"], ids["Z"]])
@@ -179,12 +183,13 @@ def test_mostrar_and_mover_no_requery_no_board_changed(env, monkeypatch):
 	r = cl.post(f"/api/grupos/{ids['G1']}/mostrar", json={"centro": [3.0, 3.0]})
 	assert r.status_code == 200, r.text
 	g = r.json()["grupo"]
-	assert g["mostrado"] and g["posicao"]["l0"] == 2 and g["posicao"]["c0"] == 4 and g["posicao"]["origem"] == "mesa"
+	assert g["mostrado"] and g["posicao"]["l0"] == 2 and g["posicao"]["c0"] == 4 and g["posicao"]["origem"] == "provavel"
+	assert not os.path.exists(mesa.mesa_path(gui.pr)) and "grupos_changed" not in _names(gui, seq0)    # F4b (a): already shown, nothing written
 	r = cl.post(f"/api/grupos/{ids['G1']}/mover", json={"l0": 4, "c0": 6, "rot": 0})
 	assert r.status_code == 200, r.text
-	assert r.json()["grupo"]["footprint"] == [[4, 6]]
+	assert r.json()["grupo"]["footprint"] == [[4, 6]] and r.json()["grupo"]["posicao"]["origem"] == "mesa"
 	names = _names(gui, seq0)
-	assert names.count("grupos_changed") == 2
+	assert names.count("grupos_changed") == 1
 	assert "board_changed" not in names and "fetch_changed" not in names
 	assert calls == []
 	# an invalid move goes back with a phrase; nothing written
@@ -219,7 +224,7 @@ def test_mover_rodar_and_refusal_rotated(env):
 
 def test_mover_requires_a_shown_group(env):
 	gui, cl, ids = env
-	r = cl.post(f"/api/grupos/{ids['G1']}/mover", json={"l0": 4, "c0": 6, "rot": 0})
+	r = cl.post(f"/api/grupos/{ids['G2']}/mover", json={"l0": 4, "c0": 6, "rot": 0})
 	assert r.status_code == 409 and r.json()["motivo"] == "nao_mostrado"
 	assert cl.post("/api/grupos/G9999/mover", json={"l0": 1, "c0": 1, "rot": 0}).status_code == 404
 
@@ -363,7 +368,7 @@ def test_fixar_grades_every_piece_it_places(tmp_path, monkeypatch):
 	monkeypatch.setattr(C, "grade_at", spy)
 	monkeypatch.setattr(GR, "rotation_check", check)
 	d = cl.post(f"/api/grupos/{ids['G2']}/fixar", json={}).json()
-	assert checked == sorted([ids["Y"], ids["Z"]])
+	assert sorted(set(checked)) == sorted([ids["Y"], ids["Z"]])        # F4b: G2 is shown by itself, so its likely place is graded once more (the derived pass)
 	assert d["vizinhas_pecas"] == {ids["Y"]: "confirmam", ids["Z"]: "sem_vizinhas"}
 	assert d["vizinhas"] == "confirmam" and d["rot_fonte"] == "programa" and d["confianca"] == "confirmado"
 	assert d["nao_avaliadas"] == {}
@@ -373,7 +378,7 @@ def test_fixar_grades_every_piece_it_places(tmp_path, monkeypatch):
 def test_fixar_refuses_a_group_not_shown(env):
 	gui, cl, ids = env
 	n0 = len(gui.pr.events())
-	r = cl.post(f"/api/grupos/{ids['G1']}/fixar", json={})
+	r = cl.post(f"/api/grupos/{ids['G2']}/fixar", json={})
 	assert r.status_code == 409 and r.json()["motivo"] == "nao_mostrado" and r.json()["error"]
 	assert len(Project.open(gui.path).events()) == n0
 
@@ -381,7 +386,8 @@ def test_fixar_refuses_a_group_not_shown(env):
 def test_fixar_refuses_a_group_sobreposto(env):
 	gui, cl, ids = env
 	g1 = ids["G1"]
-	cl.post(f"/api/grupos/{g1}/mostrar", json={})                     # candidate (2,4)
+	cl.post(f"/api/grupos/{g1}/mostrar", json={})                     # candidate (2,4): shown by itself (derived)
+	assert cl.post(f"/api/grupos/{g1}/mover", json={"l0": 2, "c0": 4, "rot": 0}).status_code == 200   # its own position now
 	r = cl.post("/api/confirm", json={"acao": "place", "piece": ids["W"], "cell": [2, 4], "theta_deg": -PSI_W,
 									  "origin": "manual"})
 	assert r.status_code == 200, r.text

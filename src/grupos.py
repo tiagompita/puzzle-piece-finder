@@ -40,7 +40,7 @@ from src.state import section_cell
 
 __all__ = [
 	"footprint", "effective_position", "valid", "initial_position", "likely_place", "rotate", "sobreposto",
-	"count_loose", "place_calibrated", "margin_min", "rotation_check", "verdict", "confidence", "VIZINHAS", "NAO_CABE_RODADO",
+	"count_loose", "place_calibrated", "auto_positions", "AUTO_ORIGEM", "margin_min", "rotation_check", "verdict", "confidence", "VIZINHAS", "NAO_CABE_RODADO",
 	"AVISO_DISCORDAM", "aviso_discordam", "MARGIN_ROUND", "group_theta", "group_frame", "group_rgba", "PNG_MARGIN_CELLS",
 ]
 
@@ -161,6 +161,37 @@ def likely_place(project, gid: str, shown: Optional[dict] = None, placements: Op
 	return {"cell0": [p0["l0"], p0["c0"]], "rot": p0["rot"], "mirror": p0["mirror"],
 			"margin": round(m, 3) if math.isfinite(m) else m, "footprint": [list(c) for c in footprint(s, p0)],
 			"candidato": i0 + 1, "vizinhas": chk0["vizinhas"]}
+
+
+AUTO_ORIGEM = "provavel"
+
+
+def auto_positions(project, shown: dict, placements: Optional[dict] = None) -> tuple:
+	"""F4b (a), decision of Tiago 2026-11-24: the loose groups that have no position of their own (``shown``: the
+	``mesa.jsonl`` / fixation ones, :func:`src.mesa.effective_positions`) but have a served likely place
+	(:func:`likely_place` valid now, margin >= ``margin_min``, :func:`place_calibrated`) are shown at that place, with
+	its rotation. Derived on every call, NEVER written (only «Mover», «Rodar» and «Fixar» write). Groups are taken in
+	id order and each one is validated against ``shown`` plus the ones already taken, so two never overlap.
+	Returns ``(auto, lps)``: ``auto`` = {gid: {l0, c0, rot, mirror, rodado: False, origem: "provavel"}} and ``lps`` =
+	{gid: the served likely place or None} for every loose group evaluated (those not in ``shown``)."""
+	acc = dict(shown)
+	auto, lps = {}, {}
+	for gid in sorted(project.sections):
+		if gid in shown or not mesa.is_loose(project, gid):
+			continue
+		lp = likely_place(project, gid, acc, placements)
+		if lp is not None and not place_calibrated(project.profile, lp["footprint"]):
+			lp = None
+		lps[gid] = lp
+		if lp is None:
+			continue
+		p = {"l0": lp["cell0"][0], "c0": lp["cell0"][1], "rot": lp["rot"], "mirror": lp["mirror"]}
+		if valid(project, gid, p, acc) is not None:
+			continue
+		pos = dict(p, rodado=False, origem=AUTO_ORIGEM)
+		acc[gid] = pos
+		auto[gid] = pos
+	return auto, lps
 
 
 def place_calibrated(profile, footprint) -> bool:
