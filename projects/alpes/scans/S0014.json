@@ -516,25 +516,16 @@
     "touches_strip": false,
     "is_cluster": false,
     "objeto_duplo": false,
-    "contacto": {
-     "com": [
-      5,
-      6,
-      12
-     ],
-     "confianca": "alta",
-     "metodo": "conectividade",
-     "alterado": false
-    }
+    "manual_override": true
    },
-   "area_mm2": 422.21,
+   "area_mm2": 422.01,
    "cls": "BTBT",
    "n_flat": 0,
    "chords_mm": [
-    19.578,
-    17.963,
-    19.344,
-    18.172
+    19.545,
+    17.985,
+    19.34,
+    18.176
    ],
    "shape_ok": true,
    "bbox": [
@@ -546,8 +537,8 @@
    "crop_path": "crops/P0407.png",
    "mean_lab": [
     41.89,
-    -18.12,
-    20.96
+    -18.11,
+    20.95
    ]
   },
   {
