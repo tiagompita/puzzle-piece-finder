@@ -10,3 +10,5 @@ Formato:
 4. **Resultado** — o que foi feito, com commits, e o que ficou por fazer.
 
 No fim de cada ronda: preencher «Resultado» e dizer em `docs/HANDOFF.md` que o ficheiro está fechado.
+
+No fim de cada prompt, o relatório final vai palavra por palavra para o «Resultado» do ficheiro da ronda antes de responder.

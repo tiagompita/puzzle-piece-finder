@@ -1,0 +1,578 @@
+[
+ {
+  "tag": "A_0",
+  "repo": "D:/DEKSTOP/puzzle_piece_finder",
+  "piece": "P0096",
+  "near": [
+   5,
+   33
+  ],
+  "far": [
+   20,
+   60
+  ],
+  "pronto_s": 19.0,
+  "abrir_s": 1.095,
+  "salto": {
+   "s": 1.045,
+   "key_at_jump": "1,20,14,40@100#2340398",
+   "key_shown": "1,20,14,40@100#2340398",
+   "yanked": false
+  },
+  "t_jump": 1.098,
+  "res": [
+   {
+    "n": "/api/board?ui=novo",
+    "ini": 0.188,
+    "fim": 0.254,
+    "dur": 0.066
+   },
+   {
+    "n": "/api/ghosts",
+    "ini": 0.188,
+    "fim": 0.276,
+    "dur": 0.088
+   },
+   {
+    "n": "/api/board.jpg?ppc=60&v=2340398",
+    "ini": 0.284,
+    "fim": 0.299,
+    "dur": 0.014
+   },
+   {
+    "n": "/api/montar",
+    "ini": 0.285,
+    "fim": 0.346,
+    "dur": 0.062
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,38,14,58&v=2340398",
+    "ini": 0.37,
+    "fim": 1.046,
+    "dur": 0.676
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,20,14,40&v=2340398",
+    "ini": 1.1,
+    "fim": 2.108,
+    "dur": 1.008
+   },
+   {
+    "n": "/api/grupos",
+    "ini": 1.162,
+    "fim": 1.51,
+    "dur": 0.348
+   }
+  ],
+  "held": 0,
+  "grupos_depois": true,
+  "mem_fim": {
+   "peak_ws_mb": 1155,
+   "ws_mb": 820,
+   "peak_private_mb": 1652
+  },
+  "hold": false,
+  "volta": 0
+ },
+ {
+  "tag": "B_0",
+  "repo": "D:/DEKSTOP/puzzle_piece_finder",
+  "piece": "P0096",
+  "near": [
+   5,
+   33
+  ],
+  "far": [
+   20,
+   60
+  ],
+  "pronto_s": 19.0,
+  "abrir_s": 1.287,
+  "salto": {
+   "s": 0.912,
+   "key_at_jump": "1,20,14,40@100#2340398",
+   "key_shown": "1,20,14,40@100#2340398",
+   "yanked": false
+  },
+  "t_jump": 1.292,
+  "res": [
+   {
+    "n": "/api/board?ui=novo",
+    "ini": 0.228,
+    "fim": 0.408,
+    "dur": 0.179
+   },
+   {
+    "n": "/api/ghosts",
+    "ini": 0.228,
+    "fim": 0.385,
+    "dur": 0.157
+   },
+   {
+    "n": "/api/board.jpg?ppc=60&v=2340398",
+    "ini": 0.416,
+    "fim": 0.436,
+    "dur": 0.019
+   },
+   {
+    "n": "/api/montar",
+    "ini": 0.416,
+    "fim": 0.532,
+    "dur": 0.116
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,38,14,58&v=2340398",
+    "ini": 0.555,
+    "fim": 1.239,
+    "dur": 0.683
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,20,14,40&v=2340398",
+    "ini": 1.293,
+    "fim": 2.162,
+    "dur": 0.869
+   }
+  ],
+  "held": 1,
+  "grupos_depois": true,
+  "mem_fim": {
+   "peak_ws_mb": 1156,
+   "ws_mb": 827,
+   "peak_private_mb": 1652
+  },
+  "hold": true,
+  "volta": 0
+ },
+ {
+  "tag": "B_1",
+  "repo": "D:/DEKSTOP/puzzle_piece_finder",
+  "piece": "P0096",
+  "near": [
+   5,
+   33
+  ],
+  "far": [
+   20,
+   60
+  ],
+  "pronto_s": 18.9,
+  "abrir_s": 1.131,
+  "salto": {
+   "s": 0.863,
+   "key_at_jump": "1,20,14,40@100#2340398",
+   "key_shown": "1,20,14,40@100#2340398",
+   "yanked": false
+  },
+  "t_jump": 1.133,
+  "res": [
+   {
+    "n": "/api/board?ui=novo",
+    "ini": 0.177,
+    "fim": 0.314,
+    "dur": 0.137
+   },
+   {
+    "n": "/api/ghosts",
+    "ini": 0.177,
+    "fim": 0.295,
+    "dur": 0.117
+   },
+   {
+    "n": "/api/board.jpg?ppc=60&v=2340398",
+    "ini": 0.322,
+    "fim": 0.339,
+    "dur": 0.016
+   },
+   {
+    "n": "/api/montar",
+    "ini": 0.323,
+    "fim": 0.41,
+    "dur": 0.088
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,38,14,58&v=2340398",
+    "ini": 0.434,
+    "fim": 1.087,
+    "dur": 0.653
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,20,14,40&v=2340398",
+    "ini": 1.134,
+    "fim": 1.963,
+    "dur": 0.829
+   }
+  ],
+  "held": 1,
+  "grupos_depois": true,
+  "mem_fim": {
+   "peak_ws_mb": 1155,
+   "ws_mb": 827,
+   "peak_private_mb": 1651
+  },
+  "hold": true,
+  "volta": 1
+ },
+ {
+  "tag": "A_1",
+  "repo": "D:/DEKSTOP/puzzle_piece_finder",
+  "piece": "P0096",
+  "near": [
+   5,
+   33
+  ],
+  "far": [
+   20,
+   60
+  ],
+  "pronto_s": 19.0,
+  "abrir_s": 1.003,
+  "salto": {
+   "s": 0.93,
+   "key_at_jump": "1,20,14,40@100#2340398",
+   "key_shown": "1,20,14,40@100#2340398",
+   "yanked": false
+  },
+  "t_jump": 1.004,
+  "res": [
+   {
+    "n": "/api/board?ui=novo",
+    "ini": 0.164,
+    "fim": 0.212,
+    "dur": 0.049
+   },
+   {
+    "n": "/api/ghosts",
+    "ini": 0.164,
+    "fim": 0.235,
+    "dur": 0.071
+   },
+   {
+    "n": "/api/board.jpg?ppc=60&v=2340398",
+    "ini": 0.243,
+    "fim": 0.257,
+    "dur": 0.014
+   },
+   {
+    "n": "/api/montar",
+    "ini": 0.244,
+    "fim": 0.319,
+    "dur": 0.075
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,38,14,58&v=2340398",
+    "ini": 0.341,
+    "fim": 0.959,
+    "dur": 0.618
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,20,14,40&v=2340398",
+    "ini": 1.006,
+    "fim": 1.895,
+    "dur": 0.889
+   },
+   {
+    "n": "/api/grupos",
+    "ini": 1.072,
+    "fim": 1.297,
+    "dur": 0.225
+   }
+  ],
+  "held": 0,
+  "grupos_depois": true,
+  "mem_fim": {
+   "peak_ws_mb": 1157,
+   "ws_mb": 836,
+   "peak_private_mb": 1653
+  },
+  "hold": false,
+  "volta": 1
+ },
+ {
+  "tag": "A_2",
+  "repo": "D:/DEKSTOP/puzzle_piece_finder",
+  "piece": "P0096",
+  "near": [
+   5,
+   33
+  ],
+  "far": [
+   20,
+   60
+  ],
+  "pronto_s": 18.9,
+  "abrir_s": 1.481,
+  "salto": {
+   "s": 1.513,
+   "key_at_jump": "1,20,14,40@100#2340398",
+   "key_shown": "1,20,14,40@100#2340398",
+   "yanked": false
+  },
+  "t_jump": 1.483,
+  "res": [
+   {
+    "n": "/api/board?ui=novo",
+    "ini": 0.252,
+    "fim": 0.512,
+    "dur": 0.261
+   },
+   {
+    "n": "/api/ghosts",
+    "ini": 0.252,
+    "fim": 0.45,
+    "dur": 0.198
+   },
+   {
+    "n": "/api/board.jpg?ppc=60&v=2340398",
+    "ini": 0.521,
+    "fim": 0.545,
+    "dur": 0.024
+   },
+   {
+    "n": "/api/montar",
+    "ini": 0.522,
+    "fim": 0.649,
+    "dur": 0.128
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,38,14,58&v=2340398",
+    "ini": 0.677,
+    "fim": 1.429,
+    "dur": 0.752
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,20,14,40&v=2340398",
+    "ini": 1.485,
+    "fim": 2.959,
+    "dur": 1.475
+   },
+   {
+    "n": "/api/grupos",
+    "ini": 1.548,
+    "fim": 2.391,
+    "dur": 0.843
+   }
+  ],
+  "held": 0,
+  "grupos_depois": true,
+  "mem_fim": {
+   "peak_ws_mb": 1155,
+   "ws_mb": 814,
+   "peak_private_mb": 1652
+  },
+  "hold": false,
+  "volta": 2
+ },
+ {
+  "tag": "B_2",
+  "repo": "D:/DEKSTOP/puzzle_piece_finder",
+  "piece": "P0096",
+  "near": [
+   5,
+   33
+  ],
+  "far": [
+   20,
+   60
+  ],
+  "pronto_s": 18.8,
+  "abrir_s": 1.463,
+  "salto": {
+   "s": 0.896,
+   "key_at_jump": "1,20,14,40@100#2340398",
+   "key_shown": "1,20,14,40@100#2340398",
+   "yanked": false
+  },
+  "t_jump": 1.465,
+  "res": [
+   {
+    "n": "/api/board?ui=novo",
+    "ini": 0.196,
+    "fim": 0.419,
+    "dur": 0.223
+   },
+   {
+    "n": "/api/ghosts",
+    "ini": 0.196,
+    "fim": 0.36,
+    "dur": 0.164
+   },
+   {
+    "n": "/api/board.jpg?ppc=60&v=2340398",
+    "ini": 0.427,
+    "fim": 0.45,
+    "dur": 0.023
+   },
+   {
+    "n": "/api/montar",
+    "ini": 0.427,
+    "fim": 0.558,
+    "dur": 0.131
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,38,14,58&v=2340398",
+    "ini": 0.583,
+    "fim": 1.416,
+    "dur": 0.833
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,20,14,40&v=2340398",
+    "ini": 1.466,
+    "fim": 2.329,
+    "dur": 0.863
+   }
+  ],
+  "held": 1,
+  "grupos_depois": true,
+  "mem_fim": {
+   "peak_ws_mb": 1152,
+   "ws_mb": 803,
+   "peak_private_mb": 1648
+  },
+  "hold": true,
+  "volta": 2
+ },
+ {
+  "tag": "B_3",
+  "repo": "D:/DEKSTOP/puzzle_piece_finder",
+  "piece": "P0096",
+  "near": [
+   5,
+   33
+  ],
+  "far": [
+   20,
+   60
+  ],
+  "pronto_s": 18.9,
+  "abrir_s": 1.379,
+  "salto": {
+   "s": 0.898,
+   "key_at_jump": "1,20,14,40@100#2340398",
+   "key_shown": "1,20,14,40@100#2340398",
+   "yanked": false
+  },
+  "t_jump": 1.381,
+  "res": [
+   {
+    "n": "/api/board?ui=novo",
+    "ini": 0.221,
+    "fim": 0.452,
+    "dur": 0.231
+   },
+   {
+    "n": "/api/ghosts",
+    "ini": 0.221,
+    "fim": 0.389,
+    "dur": 0.168
+   },
+   {
+    "n": "/api/board.jpg?ppc=60&v=2340398",
+    "ini": 0.46,
+    "fim": 0.482,
+    "dur": 0.022
+   },
+   {
+    "n": "/api/montar",
+    "ini": 0.46,
+    "fim": 0.595,
+    "dur": 0.135
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,38,14,58&v=2340398",
+    "ini": 0.619,
+    "fim": 1.332,
+    "dur": 0.714
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,20,14,40&v=2340398",
+    "ini": 1.382,
+    "fim": 2.25,
+    "dur": 0.868
+   }
+  ],
+  "held": 1,
+  "grupos_depois": true,
+  "mem_fim": {
+   "peak_ws_mb": 1156,
+   "ws_mb": 799,
+   "peak_private_mb": 1653
+  },
+  "hold": true,
+  "volta": 3
+ },
+ {
+  "tag": "A_3",
+  "repo": "D:/DEKSTOP/puzzle_piece_finder",
+  "piece": "P0096",
+  "near": [
+   5,
+   33
+  ],
+  "far": [
+   20,
+   60
+  ],
+  "pronto_s": 18.9,
+  "abrir_s": 1.462,
+  "salto": {
+   "s": 1.264,
+   "key_at_jump": "1,20,14,40@100#2340398",
+   "key_shown": "1,20,14,40@100#2340398",
+   "yanked": false
+  },
+  "t_jump": 1.464,
+  "res": [
+   {
+    "n": "/api/board?ui=novo",
+    "ini": 0.208,
+    "fim": 0.404,
+    "dur": 0.195
+   },
+   {
+    "n": "/api/ghosts",
+    "ini": 0.209,
+    "fim": 0.354,
+    "dur": 0.145
+   },
+   {
+    "n": "/api/board.jpg?ppc=60&v=2340398",
+    "ini": 0.411,
+    "fim": 0.431,
+    "dur": 0.02
+   },
+   {
+    "n": "/api/montar",
+    "ini": 0.412,
+    "fim": 0.541,
+    "dur": 0.129
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,38,14,58&v=2340398",
+    "ini": 0.565,
+    "fim": 1.417,
+    "dur": 0.852
+   },
+   {
+    "n": "/api/board.jpg?ppc=100&region=1,20,14,40&v=2340398",
+    "ini": 1.466,
+    "fim": 2.696,
+    "dur": 1.23
+   },
+   {
+    "n": "/api/grupos",
+    "ini": 1.53,
+    "fim": 2.097,
+    "dur": 0.568
+   }
+  ],
+  "held": 0,
+  "grupos_depois": true,
+  "mem_fim": {
+   "peak_ws_mb": 1155,
+   "ws_mb": 826,
+   "peak_private_mb": 1651
+  },
+  "hold": false,
+  "volta": 3
+ }
+]

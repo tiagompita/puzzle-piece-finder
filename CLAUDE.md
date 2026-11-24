@@ -132,6 +132,8 @@ O estado corrente e as decisões que esperam pelo Tiago vivem em `docs/HANDOFF.m
 
 **No início ler `docs/HANDOFF.md`; no fim atualizá-lo e fechar o ficheiro do prompt em `docs/prompts/`** (formato em `docs/prompts/README.md`: Porquê / Decisões / Prompt verbatim / Resultado).
 
+No fim de cada prompt, o relatório final vai palavra por palavra para o «Resultado» do ficheiro da ronda antes de responder.
+
 ## Reports
 
 At the start of every session run `python -m src.reports --project projects/alpes --list` and `python -m src.consistency --project projects/alpes`, treat the open reports and the suspects as the work list, and close each report only with Tiago's say-so (`--close R#### --nota`; also `--reopen`, `--delete` (soft, reversible), `--restore`; `--list --all --eliminados`). Reports come from the GUI button «Reportar» (types `mal_lida`, `mal_colocada`, `nao_encaixa`, `outro` + free text) and live in `projects/alpes/reports.jsonl` (append-only: the report line, `evento: "edicao"` lines and `evento: "estado"` lines, folded by `reports.read_reports`) with a server-made capture in `projects/alpes/reports/R####.jpg`; every action is also an informative event in `log.jsonl` (`report`, `report_edited`, `report_closed`, `report_reopened`, `report_deleted`, `report_restored`). One code path for GUI and CLI: `reports.set_state`.
