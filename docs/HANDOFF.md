@@ -1,17 +1,22 @@
-# HANDOFF — 2026-11-24 (F4 fechada do lado do código e do desempenho; a seguir, o teste físico do Tiago)
+# HANDOFF — 2026-11-24 (F4b feita; a seguir, o teste físico do Tiago aos grupos)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
 
-## Sessão de 2026-11-23/24 (F4, abertura): `docs/prompts/2026-11-23-f4-abertura.md` (fechado)
-- **Estado da F4:** fechada do lado do código e do desempenho (`001ca99`..`bec3bb5`): Montar aponta para os grupos soltos, abrir sem esperar pelos grupos, `/api/grupos` (e os PNG) sob `after_detail`. «Abrir + 1.º salto» −0,061 s [−0,171, +0,050] contra `cc68ad4` (limite +0,10) [V]; dados em `docs/diagnostico/gui/abertura-f4/`; regra «todas as fases medem a abertura» em `docs/decisoes.md` (2026-11-24).
-- **Falta:** o teste físico do Tiago aos grupos fixados (lista abaixo). A suite correu uma só vez sobre a árvore final (880 passed, 1 skipped); os commits intermédios não foram testados sozinhos [NT].
+## Sessão de 2026-11-24 (F4b): `docs/prompts/2026-11-24-f4b-grupos.md` (fechado)
+- **Estado da F4:** fechada do lado do código e do desempenho (`001ca99`..`bec3bb5`, mais a F4b `5bd56e5`). Montar aponta para os grupos soltos, abrir sem esperar pelos grupos, `/api/grupos` e os PNG sob `after_detail`.
+- **F4b feita [V] (`5bd56e5`, `docs/decisoes.md` 2026-11-24 «F4b»):** (a) grupos com lugar provável (margem ≥ `margin_min`, zona calibrada, válidos) aparecem sozinhos no tabuleiro, derivados no servidor e nunca gravados; só «Mover»/«Rodar»/«Fixar» escrevem no `mesa.jsonl`; (b) a imagem aparece em todos os grupos mostrados, descarregada em fundo, um PNG de cada vez, depois do «pronto» e do 1.º detalhe. «Abrir + 1.º salto» 0,000 s, IC t [−0,077, +0,076] contra `bec3bb5` (limite +0,10) [V]; dados em `docs/diagnostico/gui/abertura-f4b/`.
+- **Para saber:** no projeto real de hoje há 0 grupos derivados (4 com posição própria, 28 sem lugar provável servido): (a) só está exercida pelos testes sintéticos; o stress com 32 PNG saiu ruidoso e inconclusivo [NT]. Um grupo derivado cujo candidato fica ocupado desaparece (não fica «sobreposto»).
+- **Falta:** o teste físico do Tiago aos grupos fixados (lista abaixo); texto do Montar «N grupos sem lugar: ver na interface completa» (`novo.js`) por corrigir. A suite da F4b correu uma vez sobre a árvore do código (900 passed, 1 skipped).
 - **Achado antigo ainda aberto:** cada arranque do servidor re-codifica `render/gui/board_60.jpg` (anterior à F4, backlog).
 - **Lista do teste do Tiago:**
-  1. no PC, em `/novo/`: «Grupos soltos» → «Mostrar no tabuleiro» → Ctrl+arrastar e «Mover» … «Feito» → «Rodar» → recarregar (a posição fica);
+  1. no PC, em `/novo/`: grupos com lugar provável já no tabuleiro; «Grupos soltos» → «Mostrar no tabuleiro» → Ctrl+arrastar e «Mover» … «Feito» → «Rodar» → recarregar (a posição fica);
   2. fixar fisicamente ≥ 3 grupos, um deles de 1 peça: «Fixar aqui» → confirmar na mesa; ver o progresso subir e as gémeas aparecerem; num grupo com aviso âmbar, ver se a rotação está mesmo errada;
   3. «Tirar o grupo inteiro do lugar» (fica onde estava) e o desfazer (faixa e Ctrl+Z) de mover, rodar, fixar e soltar;
   4. no iPhone: «Mover» com um dedo até «Feito», a lista e o painel do grupo a 390 px; [NT] Firefox/Safari, pinça com um dedo sobre o grupo.
+
+## Sessão de 2026-11-23/24 (F4, abertura): `docs/prompts/2026-11-23-f4-abertura.md` (fechado)
+- Resumo: `/api/grupos` e os PNG sob `after_detail`; «abrir + 1.º salto» −0,061 s [−0,171, +0,050] contra `cc68ad4` [V] (`docs/diagnostico/gui/abertura-f4/`); regra «todas as fases medem a abertura» em `docs/decisoes.md` (2026-11-24).
 
 ## Sessão de 2026-11-19 (F4, B5): medição e fecho (critérios 11–15) — `docs/prompts/2026-11-19-f4-b5-medicao.md` (fechado)
 - **Critérios [V]** (cópia de `projects/alpes`, contra `cc68ad4`; números em `docs/decisoes.md` «F4 B5»):
