@@ -1,0 +1,35 @@
+{
+ "corridas": [
+  {
+   "frames": 70,
+   "max_ms": 16.8,
+   "mediana_ms": 16.7,
+   "p95_ms": 16.7,
+   "acima_25ms": [],
+   "grupo_deslocado": true
+  },
+  {
+   "frames": 69,
+   "max_ms": 16.8,
+   "mediana_ms": 16.7,
+   "p95_ms": 16.7,
+   "acima_25ms": [],
+   "grupo_deslocado": true
+  },
+  {
+   "frames": 70,
+   "max_ms": 16.8,
+   "mediana_ms": 16.7,
+   "p95_ms": 16.7,
+   "acima_25ms": [],
+   "grupo_deslocado": true
+  }
+ ],
+ "n_grupos": 32,
+ "n_mostrados": 32,
+ "grupo": "G0080",
+ "desenhados": 32,
+ "px_por_celula": 53.7037037037037,
+ "max_ms": 16.8,
+ "n_acima_25ms": 0
+}

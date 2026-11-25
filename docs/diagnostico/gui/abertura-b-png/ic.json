@@ -1,0 +1,196 @@
+{
+ "n_pares": 10,
+ "lados": [
+  "d72b194",
+  "novo"
+ ],
+ "medias": {
+  "d72b194": {
+   "abrir_s": {
+    "n": 10,
+    "media": 4.23,
+    "dp": 0.213
+   },
+   "salto1_ceu": {
+    "n": 10,
+    "media": 4.345,
+    "dp": 0.2
+   },
+   "abrir_mais_salto": {
+    "n": 10,
+    "media": 8.575,
+    "dp": 0.369
+   }
+  },
+  "novo": {
+   "abrir_s": {
+    "n": 10,
+    "media": 4.106,
+    "dp": 0.359
+   },
+   "salto1_ceu": {
+    "n": 10,
+    "media": 4.33,
+    "dp": 0.209
+   },
+   "abrir_mais_salto": {
+    "n": 10,
+    "media": 8.436,
+    "dp": 0.544
+   }
+  }
+ },
+ "perto": {
+  "n": 0
+ },
+ "salto1_ceu": {
+  "n": 10,
+  "antigo_mediana": 4.421,
+  "novo_mediana": 4.297,
+  "dif_media": -0.015,
+  "ic95_t": [
+   -0.179,
+   0.15
+  ],
+  "ic95_bootstrap_media": [
+   -0.16,
+   0.11
+  ],
+  "dif_medianas": -0.123,
+  "ic95_bootstrap_medianas": [
+   -0.283,
+   0.133
+  ],
+  "antigo": [
+   4.43,
+   4.25,
+   4.26,
+   4.05,
+   4.01,
+   4.65,
+   4.41,
+   4.46,
+   4.46,
+   4.46
+  ],
+  "novo": [
+   4.1,
+   4.38,
+   4.13,
+   4.11,
+   4.21,
+   4.18,
+   4.61,
+   4.5,
+   4.63,
+   4.45
+  ],
+  "exclui_+0.25": true
+ },
+ "longe": {
+  "n": 0
+ },
+ "cartao": {
+  "n": 0
+ },
+ "post_perto": {
+  "n": 0
+ },
+ "salto_frio_relva_browser": {
+  "n": 0
+ },
+ "srv_frio_relva_s": {
+  "n": 0
+ },
+ "abrir_s": {
+  "n": 10,
+  "antigo_mediana": 4.283,
+  "novo_mediana": 4.014,
+  "dif_media": -0.124,
+  "ic95_t": [
+   -0.322,
+   0.074
+  ],
+  "ic95_bootstrap_media": [
+   -0.297,
+   0.025
+  ],
+  "dif_medianas": -0.269,
+  "ic95_bootstrap_medianas": [
+   -0.498,
+   0.127
+  ],
+  "antigo": [
+   4.21,
+   3.99,
+   3.93,
+   3.94,
+   4.25,
+   4.31,
+   4.41,
+   4.42,
+   4.53,
+   4.32
+  ],
+  "novo": [
+   3.96,
+   3.82,
+   4.07,
+   3.81,
+   3.78,
+   3.63,
+   4.5,
+   4.44,
+   4.61,
+   4.45
+  ]
+ },
+ "abrir_mais_salto": {
+  "n": 10,
+  "antigo_mediana": 8.706,
+  "novo_mediana": 8.197,
+  "dif_media": -0.139,
+  "ic95_t": [
+   -0.45,
+   0.172
+  ],
+  "ic95_bootstrap_media": [
+   -0.417,
+   0.083
+  ],
+  "dif_medianas": -0.509,
+  "ic95_bootstrap_medianas": [
+   -0.787,
+   0.117
+  ],
+  "antigo": [
+   8.63,
+   8.24,
+   8.19,
+   7.99,
+   8.27,
+   8.96,
+   8.82,
+   8.89,
+   8.99,
+   8.78
+  ],
+  "novo": [
+   8.06,
+   8.2,
+   8.2,
+   7.93,
+   7.99,
+   7.81,
+   9.11,
+   8.93,
+   9.24,
+   8.9
+  ]
+ },
+ "pico_ws_mb": {
+  "n": 0
+ },
+ "criterio_12": false,
+ "criterio_abrir_mais_salto": false
+}
