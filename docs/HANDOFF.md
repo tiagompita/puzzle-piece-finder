@@ -2,6 +2,11 @@
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
+## Sessão de 2026-11-25 (3): `docs/prompts/2026-11-25-registo-rede-gui.md` (fechado)
+- **Feito [V]** (`13a1d95`): `tests/conftest.py` regista por página `requestfailed`, HTTP >= 400, `pageerror` e `console.error` (Playwright, `Browser.new_page`/`BrowserContext.new_page`) e junta-os ao relatório só de testes que falham (setup, call, teardown); `pytest.ini` com `addopts = -p pytester`; `tests/test_net_log.py` (2 testes, `slow`). Suite 909 passed, 1 skipped.
+- **10 corridas de `tests/test_gui*.py` [V]:** 10/10 verdes (316 passed). Nenhuma falha para o registo apanhar; antes eram 7/20. A hipótese do loopback fica [NT]. Na suite completa houve 1 erro de teardown (`test_gui_suspeitas.py::test_suspeitas_block_filter_and_locate`: `net::ERR_NO_BUFFER_SPACE` num recurso carregado, via a lista `errs` da própria fixture; o registo ainda não cobria teardown, corrigido depois) [V que o erro existe, causa [NT]].
+- **Para decidir:** ver o ficheiro da ronda (repetir `goto`/reduzir servidores e páginas; não implementado).
+
 ## Sessão de 2026-11-25 (2): `docs/prompts/2026-11-25-miniaturas-intermitencias.md` (fechado)
 - **Feito [V]** (`831ba65` + docs): miniaturas dos grupos só quando a linha entra na área visível (`IntersectionObserver`); cache do tabuleiro fica em JPEG (perda entre arranques aceite); `Claude outputs/` no `.gitignore`; `CLAUDE.md` com a cache e as miniaturas. Suite 907 passed, 1 skipped.
 - **Intermitências [V]:** 20 corridas de `tests/test_gui*.py`: 7 com 1 falha, sempre num teste diferente (`initPointer/initVista is not defined`, `data-ready` a 60 s, `ERR_NO_BUFFER_SPACE`, 1 asserção de layout); `test_phone_layout_panels` não reproduziu [NT]. Causa [NT]; proposta no ficheiro da ronda e em `docs/decisoes.md`.
