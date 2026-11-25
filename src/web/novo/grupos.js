@@ -118,10 +118,35 @@ let pngsP = null, pngsDeNovo = false;
  *  no tabuleiro não pede nada. Cada uma que chega liga-se ao seu ``<image>``/``<img>`` no sítio, sem redesenhar a camada
  *  (um arrasto em curso não perde o elemento). */
 const thumbsVis = () => S.thumbsVis || (S.thumbsVis = new Set());   // ids dos grupos cuja miniatura está na área visível
+const pngsFalhou = () => S.pngsFalhou || (S.pngsFalhou = new Set()); // endereços que falharam 3 vezes (não se repetem; outro v = outro endereço)
+const PNG_RECUO_MS = [500, 1500];                                      // B3: 2 novas tentativas com recuo, depois erro para o registo
+/** Uma imagem: descarrega e descodifica, com 2 novas tentativas; a falha final vai para o registo (``console.error`` →
+ *  ``erro_cliente``) e o endereço fica em ``pngsFalhou``. Devolve true se chegou. */
+async function descarregarPng(u) {
+  for (let i = 0; ; i++) {
+    try {
+      const im = new Image();
+      im.src = u;
+      await im.decode();
+      if (!im.naturalWidth) throw new Error("imagem vazia");
+      return true;
+    } catch (e) {
+      if (i >= PNG_RECUO_MS.length) {
+        pngsFalhou().add(u);
+        console.error(`imagem do grupo falhou 3 vezes: ${u} (${e && e.message ? e.message : e})`);
+        return false;
+      }
+      await new Promise((r) => setTimeout(r, PNG_RECUO_MS[i]));
+    }
+  }
+}
 function carregarPngs() {
   if (document.body.dataset.ready !== "1" || !(S.pngsLivre || document.body.dataset.detail)) return;
   if (pngsP) { pngsDeNovo = true; return pngsP; }
   pngsP = (async () => {
+    // B (2026-11-25): sem esta espera, com tudo já em cache o corpo acabava antes de ``pngsP`` ser atribuído: o ``finally``
+    // corria primeiro e ``pngsP`` ficava para sempre com uma promessa já resolvida; daí em diante nenhuma imagem nova se pedia
+    await null;
     try {
       do {
         pngsDeNovo = false;
@@ -130,15 +155,11 @@ function carregarPngs() {
         const pedir = todos.filter((x) => x.mostrado && x.footprint).concat(todos.filter((x) => !(x.mostrado && x.footprint) && thumbsVis().has(x.id)));
         for (const g of pedir) {
           const u = pngUrl(g);
-          if (pngsOk().has(u)) continue;
-          try {
-            const im = new Image();
-            im.src = u;
-            await im.decode();
-            pngsOk().add(u);
-            for (const el of document.querySelectorAll("#lyr-grupos image.grupo-img")) if (el.getAttribute("data-url") === u) el.setAttribute("href", u);
-            for (const el of document.querySelectorAll("img.grp-thumb")) if (el.getAttribute("data-url") === u) el.setAttribute("src", u);
-          } catch (e) { /* fica sem imagem até à próxima recarga dos grupos */ }
+          if (pngsOk().has(u) || pngsFalhou().has(u)) continue;
+          if (!(await descarregarPng(u))) continue;
+          pngsOk().add(u);
+          for (const el of document.querySelectorAll("#lyr-grupos image.grupo-img")) if (el.getAttribute("data-url") === u) el.setAttribute("href", u);
+          for (const el of document.querySelectorAll("img.grp-thumb")) if (el.getAttribute("data-url") === u) el.setAttribute("src", u);
         }
       } while (pngsDeNovo);
     } finally { pngsP = null; }
@@ -218,7 +239,12 @@ function drawGrupos() {
     }
     L.append(av);
   }
-  if (typeof updateAlvoTag === "function") updateAlvoTag();                    // a etiqueta esconde-se abaixo do limiar de texto
+  // B3: um redesenho com um endereço novo (outra versão, outra rotação) pede-o já, sem esperar pela recarga dos grupos
+  for (const el of L.querySelectorAll("image.grupo-img:not([href])")) {
+    const u = el.getAttribute("data-url");
+    if (u && !pngsFalhou().has(u)) { carregarPngs(); break; }
+  }
+  if (typeof updateAlvoTag === "function") updateAlvoTag();                   // a etiqueta esconde-se abaixo do limiar de texto
   if (typeof drawLegend === "function") drawLegend();                          // a entrada da legenda só com o aviso à vista
 }
 /** O aviso do fixar (contorno, etiqueta, legenda) só se vê na vista «Grupos soltos» e com peças que discordam. */
