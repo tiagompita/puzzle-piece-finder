@@ -1,7 +1,13 @@
-# HANDOFF — 2026-11-24 (F4b feita; a seguir, o teste físico do Tiago aos grupos)
+# HANDOFF — 2026-11-25 (cache do tabuleiro corrigida; a seguir, o teste físico do Tiago aos grupos)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
+
+## Sessão de 2026-11-25 (cache do tabuleiro, P0395, grupos): `docs/prompts/2026-11-25-cache-tabuleiro-grupos.md` (fechado)
+- **Cache do tabuleiro corrigida [V]:** o snapshot de `board_60` inclui agora a entrada de `placements.json` (`placement_digest`, `Gui._raster_snapshot`); a relva em falta (57 peças registadas depois de o tabuleiro se compor) volta a desenhar-se. 1.º arranque depois de atualizar recompõe o tabuleiro uma vez (≈ 20 s). `board_60.*` do projeto real apagado e refeito.
+- **P0395:** peça inteira no scan [V com imagem], dados não mexidos (`docs/diagnostico/reports/P0395-2026-11-25.png`).
+- **Grupos soltos na GUI nova:** «Corrigir recorte» e «Algo está errado» por peça no painel do grupo; miniatura de cada grupo na lista (PNG em fundo, todos os grupos).
+- **Para decidir:** miniaturas de todos os grupos ou só dos da lista visível; cache em disco sem recodificar JPEG entre arranques; duas intermitências de GUI (`test_phone_layout_panels`, carregamento do `board.js`).
 
 ## Sessão de 2026-11-24 (F4b): `docs/prompts/2026-11-24-f4b-grupos.md` (fechado)
 - **Estado da F4:** fechada do lado do código e do desempenho (`001ca99`..`bec3bb5`, mais a F4b `5bd56e5`). Montar aponta para os grupos soltos, abrir sem esperar pelos grupos, `/api/grupos` e os PNG sob `after_detail`.
