@@ -421,3 +421,10 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
 .dot-violeta { width: 10px; height: 10px; border-radius: 5px; background: var(--violet); flex: 0 0 auto; }
 .grp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .grp-peca { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg2); font-size: 14px; }
+.grp-thumb { flex: 0 0 56px; width: 56px; height: 56px; align-self: center; object-fit: contain; border-radius: 8px; background: var(--bg2); }
+.grp-thumb:not([src]) { visibility: hidden; }
+.grp-lista-pecas { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.grp-peca-linha { display: flex; flex-direction: column; gap: 6px; }
+.grp-peca-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.grp-peca-topo .grp-peca { flex: 1 1 auto; }
+.grp-recorte, .grp-errado { min-height: 44px; padding: 0 10px; font-size: 14px; gap: 6px; }

@@ -297,3 +297,93 @@ def test_entrada_feita_com_a_outra_regra_e_refeita(tmp_path):
 		assert R.missing_placements(Project.open(pr.path)) == []
 	finally:
 		g.stop()
+
+
+# ---------------------------------------------------------------- 8. cache do tabuleiro e entradas novas (2026-11-25)
+def _cache_board(g):
+	"""The full-board raster the server serves (the cached one), decoded."""
+	import cv2
+	return cv2.imdecode(np.frombuffer(g.board_jpg(), np.uint8), cv2.IMREAD_COLOR)
+
+
+def _full_board(g):
+	"""A whole ``compose_board`` of the project with the entries the server accepts, as JPEG (the cache's own format)."""
+	import cv2
+	pr = g.pr
+	pl = R.load_placements(pr)["placements"]
+	fresh = {p: e for p, e in pl.items() if p in pr.pieces and e.get("key") == R._entry_key(pr, p)}
+	img = R.compose_board(pr, S.BOARD_PPC, layers=("art", "pieces"), placements=fresh)
+	return cv2.imdecode(np.frombuffer(S._jpeg(img), np.uint8), cv2.IMREAD_COLOR)
+
+
+def test_snapshot_com_entradas_distingue_entrada_nova_e_pose(tmp_path):
+	pr, _ = _placed_ingested(tmp_path)
+	pid = sorted(pr.pieces)[0]
+	e = R.register_piece(pr, pid, art=None, image=False)
+	snap0 = S.board_snapshot(pr.board, pr.pieces, None)
+	assert all(len(x) == 4 for x in snap0)                                  # without entries: the old shape
+	sem = S.board_snapshot(pr.board, pr.pieces, None, placements={})
+	assert sem == snap0
+	com = S.board_snapshot(pr.board, pr.pieces, None, placements={pid: e})
+	assert com != snap0 and sum(1 for a, b in zip(com, snap0) if a != b) == 1       # one cell: the piece's
+	assert com == S.board_snapshot(pr.board, pr.pieces, None, placements={pid: dict(e)})
+	e2 = dict(e, theta_deg=float(e["theta_deg"]) + 1.0)
+	assert S.board_snapshot(pr.board, pr.pieces, None, placements={pid: e2}) != com        # a moved pose
+	assert S.placement_digest(None) is None
+
+
+def test_cache_do_tabuleiro_em_disco_sem_uma_peca_e_refeita_quando_a_entrada_aparece(tmp_path):
+	"""The real failure (24/11): at the first start the raster was composed without 57 pieces that had no entry yet
+	(«sem registo»); the next start registered them (the log, hence the snapshot of the time, did not change) and the
+	cached raster kept the holes. Here the disk cache is written the way that start left it: image without piece X,
+	snapshot with every entry but X's. The server must draw X, and nothing else may move (JPEG loss only)."""
+	import cv2
+	pr, _ = _placed_ingested(tmp_path)
+	g = _start(pr.path)                                    # entries filled, board cached
+	try:
+		want = _full_board(g)
+		pl = R.load_placements(g.pr)["placements"]
+		pids = sorted(R.placed_ids(g.pr))
+		x = pids[0]
+		cache_pl = {p: e for p, e in pl.items() if p != x}
+		img = R.compose_board(g.pr, S.BOARD_PPC, layers=("art", "pieces"), placements=cache_pl,
+							  piece_ids=[p for p in pids if p != x])
+		snap = S.board_snapshot(g.pr.board, g.pr.pieces, OV.latest_arestas(g.pr), placements=cache_pl)
+		ver, plm = g.version(), g._pl_mtime()
+	finally:
+		g.stop()
+	jp = os.path.join(pr.path, "render", "gui", f"board_{S.BOARD_PPC}.jpg")
+	mp = os.path.join(pr.path, "render", "gui", f"board_{S.BOARD_PPC}.json")
+	with open(jp, "wb") as f:
+		f.write(S._jpeg(img))
+	with open(mp, "w", encoding="utf-8") as f:
+		json.dump({"ver": ver, "ppc": S.BOARD_PPC, "pl_mtime": plm, "snap": snap}, f)
+	cell = Project.open(pr.path).piece(x).celula
+	h, w = want.shape[0] / pr.profile.rows, want.shape[1] / pr.profile.cols
+	ys, xs = slice(int((cell[0] - 1) * h), int(cell[0] * h)), slice(int((cell[1] - 1) * w), int(cell[1] * w))
+	stale = cv2.imdecode(np.fromfile(jp, np.uint8), cv2.IMREAD_COLOR)
+	assert np.abs(stale[ys, xs].astype(int) - want[ys, xs]).mean() > 5          # the precondition: the cell is wrong
+	g = S.Gui(pr.path, prepare=True, use_image=False, log=None, queue=False)
+	try:
+		t0 = time.time()
+		while not any(n == "ready" for _, n, _ in g.events_after(0)) and time.time() - t0 < 60:
+			time.sleep(0.1)
+		g.wait_placements(60)
+		got = _cache_board(g)
+		d = np.abs(got.astype(int) - want.astype(int))
+		assert d[ys, xs].mean() < 2.0                                   # X is drawn again
+		assert d.max() < 60                                             # and the rest is the same up to JPEG loss
+	finally:
+		g.stop()
+
+
+def test_cache_do_tabuleiro_na_mesma_sessao_igual_byte_a_byte(tmp_path):
+	"""Without the disk cache the first raster is a whole ``compose_board``: the JPEG equals the whole composition's."""
+	pr, _ = _placed_ingested(tmp_path)
+	g = _start(pr.path)
+	try:
+		assert S._jpeg(R.compose_board(g.pr, S.BOARD_PPC, layers=("art", "pieces"),
+									   placements={p: e for p, e in R.load_placements(g.pr)["placements"].items()
+												   if e.get("key") == R._entry_key(g.pr, p)})) == g.board_jpg()
+	finally:
+		g.stop()

@@ -1543,3 +1543,64 @@ def test_lupa_peca_num_grupo_abre_o_grupo(gr, browser):
 		assert not errs, errs
 	finally:
 		pg.close()
+
+
+# ------------------------------------------------------------ 2026-11-25: peças do grupo e miniaturas da lista
+def test_painel_do_grupo_corrigir_recorte_e_algo_esta_errado_em_cada_peca(gr, browser):
+	from src import reports
+	url, gui, ids = gr
+	pg, errs = _abrir(browser, url)
+	try:
+		pg.locator("#tab-montar .grp-row").nth(1).locator(".grp-open").click()                 # G2: 2 peças
+		pg.wait_for_selector("#tab-montar .grp-painel", timeout=10_000)
+		linhas = pg.locator("#tab-montar .grp-peca-linha")
+		assert linhas.count() == 2
+		pids = [linhas.nth(i).get_attribute("data-peca") for i in range(2)]
+		assert len(set(pids)) == 2 and all(re.fullmatch(r"P\d{4}", p) for p in pids)
+		for i, pid in enumerate(pids):
+			a = linhas.nth(i).locator("a.grp-recorte")
+			assert a.get_attribute("href") == f"/?peca={pid}&contorno=1"
+			assert a.get_attribute("target") == "_blank"
+			assert "Corrigir recorte" in a.inner_text()
+			assert linhas.nth(i).locator("button.grp-errado").inner_text().strip() == "Algo está errado"
+		for pat in PROIBIDO[:3]:                                                                # nenhum P#### visível
+			assert not re.search(pat, pg.inner_text("#tab-montar"))
+		# o report da 2.ª peça: abre o formulário só nela, exige o tipo, grava com a peça e sem célula
+		linhas.nth(1).locator("button.grp-errado").click()
+		assert pg.locator("#tab-montar [data-report]").count() == 1
+		assert pg.locator(f"#tab-montar [data-report='{pids[1]}']").count() == 1
+		pg.locator("#tab-montar .grp-report-enviar").click()                                    # sem tipo: não grava
+		assert not reports.read_reports(gui.pr)
+		pg.locator(f"#tab-montar [data-report='{pids[1]}'] [data-tipo='mal_lida']").click()
+		pg.fill(".grp-report-txt", "recorte comido")
+		pg.locator("#tab-montar .grp-report-enviar").click()
+		pg.wait_for_selector("#tab-montar [data-report]", state="detached", timeout=10_000)
+		rs = reports.read_reports(gui.pr)
+		assert len(rs) == 1 and rs[0]["piece"] == pids[1] and rs[0]["tipo"] == "mal_lida"
+		assert rs[0]["texto"] == "recorte comido" and rs[0].get("cell") is None and rs[0]["vista"] == "novo/grupo"
+		assert not errs, errs
+	finally:
+		pg.close()
+
+
+def test_lista_de_grupos_com_miniaturas_carregadas_em_fundo(gr, browser):
+	url, gui, ids = gr
+	pg, errs = _abrir(browser, url, vista=False)
+	reqs = []
+	pg.on("request", lambda r: reqs.append(r.url) if "/api/grupos/" in r.url and ".png" in r.url else None)
+	try:
+		pg.click("#vista-grupos")
+		pg.wait_for_selector("#tab-montar .grp-row", timeout=10_000)
+		assert pg.locator("#tab-montar img.grp-thumb").count() == 2                           # uma por grupo
+		# em fundo, depois do «pronto»: ambas ganham o endereço do PNG, também a do grupo que não está no tabuleiro
+		pg.wait_for_function("document.querySelectorAll('#tab-montar img.grp-thumb[src]').length === 2", timeout=30_000)
+		for i in range(2):
+			src = pg.locator("#tab-montar img.grp-thumb").nth(i).get_attribute("src")
+			assert re.fullmatch(r"/api/grupos/G\d{4}\.png\?rot=\d+&v=\d+", src), src
+			assert pg.evaluate("(i) => document.querySelectorAll('#tab-montar img.grp-thumb')[i].naturalWidth", i) > 0
+			bb = pg.locator("#tab-montar img.grp-thumb").nth(i).bounding_box()
+			assert bb["width"] <= 64 and bb["height"] <= 64                                     # pequena
+		assert not any(not r.endswith(tuple("0123456789")) for r in reqs)
+		assert not errs, errs
+	finally:
+		pg.close()

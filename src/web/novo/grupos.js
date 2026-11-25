@@ -122,8 +122,9 @@ function carregarPngs() {
     try {
       do {
         pngsDeNovo = false;
-        for (const g of ((S.grupos && S.grupos.grupos) || [])) {
-          if (!g.mostrado || !g.imagem || !g.footprint) continue;
+        // os mostrados primeiro (a camada do tabuleiro), depois os outros (só a miniatura da lista)
+        const todos = ((S.grupos && S.grupos.grupos) || []).filter((g) => g.imagem && g.imagem.url);
+        for (const g of todos.filter((x) => x.mostrado && x.footprint).concat(todos.filter((x) => !(x.mostrado && x.footprint)))) {
           const u = pngUrl(g);
           if (pngsOk().has(u)) continue;
           try {
@@ -132,6 +133,7 @@ function carregarPngs() {
             await im.decode();
             pngsOk().add(u);
             for (const el of document.querySelectorAll("#lyr-grupos image.grupo-img")) if (el.getAttribute("data-url") === u) el.setAttribute("href", u);
+            for (const el of document.querySelectorAll("img.grp-thumb")) if (el.getAttribute("data-url") === u) el.setAttribute("src", u);
           } catch (e) { /* fica sem imagem até à próxima recarga dos grupos */ }
         }
       } while (pngsDeNovo);
@@ -228,12 +230,12 @@ function estadoGrupo(g) {
   return g.mostrado ? "ainda sem lugar certo no puzzle" : "ainda fora do tabuleiro";
 }
 function escolherGrupo(gid) {
-  if (S.grupoSel !== gid) { S.grupoAviso = null; S.fixarConf = null; }
+  if (S.grupoSel !== gid) { S.grupoAviso = null; S.fixarConf = null; S.grupoReport = null; }
   S.grupoSel = gid; S.vista = "grupos";
   drawVistaSw(); drawGrupos(); renderMontar();
   const t = $("#tab-montar"); if (t) t.scrollTop = 0;
 }
-function voltarLista() { S.grupoSel = null; S.grupoAviso = null; S.fixarConf = null; drawGrupos(); renderMontar(); }
+function voltarLista() { S.grupoSel = null; S.grupoReport = null; S.grupoAviso = null; S.fixarConf = null; drawGrupos(); renderMontar(); }
 /** «Mostrar no tabuleiro» (Q3): grava a posição inicial (o servidor escolhe perto do centro da vista); não se desfaz (C2).
  * Num grupo que já está mostrado («Ver no tabuleiro») não escreve nada: só leva a vista até lá. */
 async function mostrarGrupo(gid) {
@@ -488,10 +490,19 @@ function initArrasto() {
   window.addEventListener("pointercancel", fim);
   window.addEventListener("lostpointercapture", fim);                       // tratado como cancelamento (M3)
 }
+/** A miniatura de um grupo na lista: a mesma imagem do tabuleiro (``/api/grupos/{gid}.png``), pequena por CSS; só leva
+ *  ``src`` depois de descarregada em fundo (:func:`carregarPngs`), nunca pede nada por si. */
+function grupoThumb(g) {
+  const u = g.imagem ? pngUrl(g) : null;
+  const at = { class: "grp-thumb", "data-grupo-thumb": g.id, "data-url": u || "", alt: "", width: 56, height: 56, "aria-hidden": "true" };
+  if (u && pngsOk().has(u)) at.src = u;
+  return h("img", at);
+}
 function grupoRow(g) {
   const sacos = g.sacos || [];
   const sub = sacos.length ? `${sacos.length === 1 ? "saco" : "sacos"} ${listaE(sacos)}` : "sem saco";
   return h("div", { class: "grp-row" + (S.grupoSel === g.id ? " on" : "") + (g.sobreposto ? " sobreposto" : ""), "data-grupo": g.id, role: "listitem" },
+    grupoThumb(g),
     h("button", { type: "button", class: "grp-open", onclick: () => escolherGrupo(g.id) },
       h("span", { class: "grp-n" }, plural(g.n, "peça", "peças")),
       h("span", { class: "grp-sub small muted" }, sub),
@@ -500,6 +511,37 @@ function grupoRow(g) {
 }
 function nomePecaGrupo(p, i) {
   return p.lote !== null && p.lote !== undefined ? `Saco ${p.lote} · ${p.n_no_lote ?? "?"}` : `Sem saco · peça ${i + 1}`;
+}
+/** Uma peça do painel do grupo (2026-11-25): o nome, «Corrigir recorte» (o editor da interface completa, como no painel
+ *  da peça) e «Algo está errado» (report da peça, sem célula: a captura é a da peça no scan). */
+function pecaGrupoEl(p, i) {
+  const aberto = !!S.grupoReport && S.grupoReport.pid === p.id;
+  const el = h("div", { class: "grp-peca-linha", "data-peca": p.id },
+    h("div", { class: "grp-peca-topo" },
+      h("span", { class: "grp-peca" }, nomePecaGrupo(p, i)),
+      h("a", { class: "btn grp-recorte", href: `/?peca=${p.id}&contorno=1`, target: "_blank", rel: "noopener",
+        title: "Abre o editor do recorte na interface completa (o editor novo chega mais tarde)" }, ico("scissors"), "Corrigir recorte"),
+      aberto ? null : h("button", { type: "button", class: "btn grp-errado", onclick: () => { S.grupoReport = { pid: p.id, tipo: null }; renderMontar(); } },
+        ico("flag"), "Algo está errado")));
+  if (aberto) {
+    const R = S.grupoReport;
+    const rb = h("div", { class: "report-box", "data-report": p.id }, h("strong", {}, "O que está errado?"));
+    const tipos = h("div", { class: "tipos" });
+    for (const [k, t] of REPORT_TIPOS) tipos.append(h("button", { class: "btn" + (R.tipo === k ? " on" : ""), type: "button", "data-tipo": k,
+      onclick: (ev) => { R.tipo = k; for (const b of ev.currentTarget.parentElement.children) b.classList.toggle("on", b.dataset.tipo === k); } }, t));
+    const txt = h("textarea", { class: "grp-report-txt", placeholder: "O que viste (opcional)", "aria-label": "O que viste (opcional)" });
+    rb.append(tipos, txt, h("div", { class: "actions" },
+      h("button", { class: "btn primary grp-report-enviar", type: "button", onclick: async () => {
+        if (!R.tipo) { toast("Escolhe o que está errado."); return; }
+        try {
+          await post("/api/report", { piece: p.id, cell: null, tipo: R.tipo, texto: txt.value || "", vista: "novo/grupo" });
+          S.grupoReport = null; toast("Obrigado. Fica registado."); renderMontar();
+        } catch (e) { toast(e.message, true); }
+      } }, "Enviar"),
+      h("button", { class: "btn", type: "button", onclick: () => { S.grupoReport = null; renderMontar(); } }, "Cancelar")));
+    el.append(rb);
+  }
+  return el;
 }
 function grupoPainel(T, g) {
   const box = h("div", { class: "card grp-painel", "data-vista": "grupos", "data-grupo": g.id });
@@ -541,7 +583,7 @@ function grupoPainel(T, g) {
   else if (lp) box.append(h("p", { class: "small muted", id: "g-no-lugar" }, "Está no lugar provável."));
   else box.append(h("p", { class: "small muted", id: "g-sem-lugar" }, "Ainda sem lugar provável fiável"));
   box.append(h("div", { class: "grp-pecas" }, h("div", { class: "small muted" }, "Peças do grupo"),
-    h("div", { class: "grp-chips" }, (g.pecas || []).map((p, i) => h("span", { class: "grp-peca" }, nomePecaGrupo(p, i))))));
+    h("div", { class: "grp-lista-pecas" }, (g.pecas || []).map((p, i) => pecaGrupoEl(p, i)))));
   box.append(h("div", { class: "links" }, h("button", { class: "linkish", type: "button", id: "grp-voltar", onclick: voltarLista }, ico("arrow-left"), "Voltar à lista")));
   T.append(box);
 }

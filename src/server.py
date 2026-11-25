@@ -257,7 +257,8 @@ def missing_assets(project) -> list:
 	return out
 
 
-def board_snapshot(board, pieces: Optional[dict] = None, arestas: Optional[dict] = None) -> list:
+def board_snapshot(board, pieces: Optional[dict] = None, arestas: Optional[dict] = None,
+				   placements: Optional[dict] = None) -> list:
 	"""``[(estado, peca_id[, theta_deg, pose_manual_t[, aresta_t]]), ...]`` row-major: what the raster depends on
 	per cell.
 
@@ -266,7 +267,11 @@ def board_snapshot(board, pieces: Optional[dict] = None, arestas: Optional[dict]
 	(same piece, same cell) is a changed cell too (re-composed with its neighbours, :func:`patch_regions`).
 	With ``arestas`` (:func:`src.overrides.latest_arestas`) a piece with a painted edge adds the ``t`` of that
 	line (only those entries grow: a stored snapshot of the other cells stays equal), so an edge-only save,
-	which writes nothing to the log, still re-composes its cell."""
+	which writes nothing to the log, still re-composes its cell.
+	With ``placements`` (:meth:`Gui.placements`: the valid entries of ``render/placements.json``) a piece with an
+	entry adds a last element, :func:`placement_digest` (the 5th is then the edge ``t`` or None): a new entry or a
+	changed pose of a piece that the log did not touch re-composes its cell too (2026-11-25: the 57 pieces
+	registered after the board had been composed without them stayed missing from ``render/gui/board_60.jpg``)."""
 	if pieces is None:
 		return [(cell["estado"], cell["peca_id"]) for _, cell in board.iter_cells()]
 	out = []
@@ -275,8 +280,24 @@ def board_snapshot(board, pieces: Optional[dict] = None, arestas: Optional[dict]
 		pm = getattr(p, "pose_manual", None) if p is not None else None
 		e = (cell["estado"], cell["peca_id"], None if p is None else p.theta_deg, None if pm is None else pm.get("t"))
 		a = (arestas or {}).get(cell["peca_id"]) if cell["peca_id"] else None
-		out.append(e if a is None else e + (a.get("t"),))
+		if a is not None:
+			e = e + (a.get("t"),)
+		d = placement_digest(placements.get(cell["peca_id"])) if placements and cell["peca_id"] else None
+		if d is not None:
+			e = e + (None,) * (5 - len(e)) + (d,)
+		out.append(e)
 	return out
+
+
+def placement_digest(entry: Optional[dict]) -> Optional[str]:
+	"""Short string of what an entry of ``render/placements.json`` draws (cell, theta, pivot, dx, dy: the pose of
+	:meth:`Gui._region_parts`); None without an entry."""
+	if not entry:
+		return None
+	import hashlib
+	pose = (tuple(entry.get("cell") or ()), entry.get("theta_deg"), tuple(entry.get("pivot_mm") or ()),
+			entry.get("dx_mm"), entry.get("dy_mm"))
+	return hashlib.sha1(repr(pose).encode("utf-8")).hexdigest()[:10]
 
 
 def _fill_mask(poly, shape: tuple) -> np.ndarray:
@@ -1696,11 +1717,17 @@ class Gui:
 		d = self.pr.p("render", "gui")
 		return os.path.join(d, f"board_{ppc}.jpg"), os.path.join(d, f"board_{ppc}.json")
 
+	def _raster_snapshot(self) -> list:
+		"""Snapshot of what the full-board raster depends on: the log (:func:`board_snapshot`) plus the placement entries
+		(:func:`placement_digest`), so the cache re-composes a cell whose entry appeared or moved without a log event."""
+		return self.read(lambda: board_snapshot(self.pr.board, self.pr.pieces, OV.latest_arestas(self.pr),
+												placements=self.placements()))
+
 	def _base(self) -> dict:
 		"""The full-board raster at ``BOARD_PPC`` for the current log (composed / patched / from disk)."""
 		ver = self.version()
 		plm = self._pl_mtime()
-		snap = self.read(lambda: board_snapshot(self.pr.board, self.pr.pieces, OV.latest_arestas(self.pr)))
+		snap = self._raster_snapshot()
 		b = self._board
 		if b is not None and b["ver"] == ver:
 			return b
@@ -2859,24 +2886,20 @@ class Gui:
 		return info
 
 	def _board_after_fill(self, moved: list) -> None:
-		"""After a commit of :meth:`_fill_placements` (caller holds the write lock): the cells of ``moved`` pieces are
-		re-patched on the next full-board request; with none, the disk cache of the full board gets the new
-		``pl_mtime`` (its image is still right: the poses it was drawn with did not change)."""
+		"""After a commit of :meth:`_fill_placements` (caller holds the write lock): the in-memory raster is compared with
+		the snapshot that now includes the placement entries (:meth:`_raster_snapshot`). If a cell differs (a pose that
+		changed, ``moved``, or an entry that did not exist: a piece the raster had not drawn, 2026-11-25) the next
+		full-board request re-patches it; if none does, the disk cache of the full board only gets the new ``pl_mtime``
+		(its image is still right: the poses it was drawn with did not change)."""
 		with self.rlock:
 			b = self._board
 			if b is None:
 				return
-			if moved:
-				cols = self.pr.profile.cols
-				b["ver"] = None
-				if b.get("snap") is not None:
-					b["snap"] = list(b["snap"])
-					for pid in moved:
-						cel = self.pr.piece(pid).celula
-						if cel is not None:
-							b["snap"][(cel[0] - 1) * cols + cel[1] - 1] = None
+			snap = self._raster_snapshot()
+			if b.get("snap") is None or len(b["snap"]) != len(snap) or any(x != y for x, y in zip(b["snap"], snap)):
+				b["ver"] = None                    # _base compares the snapshots cell by cell and patches / recomposes
 				return
-			if b.get("ver") != self.version() or b.get("snap") is None:
+			if b.get("ver") != self.version():
 				return
 			jp, mp = self._disk_cache(BOARD_PPC)
 			try:
