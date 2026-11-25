@@ -50,3 +50,91 @@ def _stop_test_guis(monkeypatch):
                 g.stop(timeout=5)
             except Exception:  # noqa: BLE001 - a half-built Gui (its __init__ raised)
                 pass
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Registo de rede das páginas Playwright (2026-11-25, intermitências de GUI)
+#
+# Cada ``Browser.new_page`` / ``BrowserContext.new_page`` ligado durante um teste regista, por página, os pedidos
+# falhados (``requestfailed``: url, método, ``failure``), as respostas HTTP >= 400 e os ``pageerror`` / ``console``
+# de erro. Só quando o teste falha (setup, call ou teardown) o registo vai para o relatório do pytest, numa secção
+# própria; um teste verde não imprime nada. Não muda o comportamento dos testes (sem repetições nem esperas).
+# ---------------------------------------------------------------------------------------------------------------
+
+_NET_LOG_KEY = "_ppf_net_log"
+
+
+def _attach_net_log(page, log):
+    """Liga os ouvintes de rede/erros de ``page`` à lista ``log`` (de strings). Nunca levanta."""
+    def stamp():
+        try:
+            return page.url
+        except Exception:  # noqa: BLE001
+            return "?"
+
+    def on_failed(req):
+        try:
+            fail = req.failure
+        except Exception:  # noqa: BLE001
+            fail = "?"
+        log.append(f"requestfailed {req.method} {req.url} -> {fail} (pagina {stamp()})")
+
+    def on_response(resp):
+        try:
+            if resp.status >= 400:
+                log.append(f"HTTP {resp.status} {resp.request.method} {resp.url} (pagina {stamp()})")
+        except Exception:  # noqa: BLE001
+            pass
+
+    def on_pageerror(err):
+        log.append(f"pageerror {err} (pagina {stamp()})")
+
+    def on_console(msg):
+        try:
+            if msg.type == "error":
+                log.append(f"console.error {msg.text} (pagina {stamp()})")
+        except Exception:  # noqa: BLE001
+            pass
+
+    try:
+        page.on("requestfailed", on_failed)
+        page.on("response", on_response)
+        page.on("pageerror", on_pageerror)
+        page.on("console", on_console)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@pytest.fixture(autouse=True)
+def _net_log(request, monkeypatch):
+    """Instala o registo de rede nas páginas criadas durante o teste e guarda-o em ``item``."""
+    log = []
+    setattr(request.node, _NET_LOG_KEY, log)
+    try:
+        from playwright import sync_api
+    except Exception:  # noqa: BLE001 - sem playwright: nada a registar
+        yield log
+        return
+
+    def wrap(cls, name):
+        orig = getattr(cls, name)
+
+        def new_page(self, *a, **k):
+            page = orig(self, *a, **k)
+            _attach_net_log(page, log)
+            return page
+        monkeypatch.setattr(cls, name, new_page)
+
+    wrap(sync_api.Browser, "new_page")
+    wrap(sync_api.BrowserContext, "new_page")
+    yield log
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    rep = outcome.get_result()
+    if rep.failed and rep.when in ("setup", "call", "teardown"):
+        log = getattr(item, _NET_LOG_KEY, None)
+        if log:
+            rep.sections.append(("Registo de rede das paginas (pedidos falhados, HTTP >= 400, erros)", "\n".join(log)))
