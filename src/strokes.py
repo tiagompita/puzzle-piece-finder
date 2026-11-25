@@ -66,6 +66,7 @@ __all__ = [
 	"SOMBRA_TRACO_MIN_MM2", "S0_INCERTO", "GANHO_MIN_MM2", "GEMEA_RUIDO_MM",
 	"desvio_assinado", "nucleo_sombra", "delta_peca", "tracos_de_sombra", "influencia", "normalizar",
 	"raio_influencia", "indice_de_aresta",
+	"INDICE_HALO_MAX_MM", "INDICE_FORA_MIN_MM2", "PAPEL_LIMIAR", "indice_fora_mm2", "limitar_indice",
 	"rle_encode", "rle_decode",
 ]
 
@@ -89,6 +90,11 @@ GEMEA_RUIDO_MM = 0.25       # indice_de_aresta from the twin's edge: thinner dif
 GANHO_MIN_MM2 = 2.0         # a component gained beyond the automatic smaller than this is edge noise: dropped, not grown by δ
 							# (set after P0045, 2026-11-09: a 0.75 mm² solver sliver grown by δ 0.59 became 4.2 mm² of paper;
 							# real bites are 30+ mm², COMIDO.md; the synthetic meadow corner ~20 mm²)
+INDICE_HALO_MAX_MM = SOMBRA_BANDA_MM   # the index never lies farther than this from the painted edge (the halo band):
+							# on the 34 other edited pieces of 2026-11-25 the index stays within 1.94 mm of its edge; P0395 (R0036)
+							# went 13.9 mm out (the scanner strip at the sheet edge and the paper bridge to it)
+INDICE_FORA_MIN_MM2 = 1.0   # index area beyond that band (mm²) above which the index is limited (:func:`limitar_indice`)
+PAPEL_LIMIAR = 28.0         # paper vs not-paper, the segmenter's ``sqrt(0.5 dL^2 + da^2 + db^2)`` (as ``solve_limiar``)
 _NAO_MARCADO = -1
 
 # Default parameters of each solver (the caller's ``params`` override them; unknown keys are an error).
@@ -699,6 +705,35 @@ def normalizar(raw_mask: np.ndarray, auto_mask: np.ndarray, halo: np.ndarray, in
 	if tri is not None:
 		out |= tri == PECA_CERTA
 	return out
+
+def indice_fora_mm2(indice: np.ndarray, aresta: np.ndarray, mm_per_px: float,
+					halo_max_mm: float = INDICE_HALO_MAX_MM) -> float:
+	"""Area (mm²) of the index mask ``indice`` farther than ``halo_max_mm`` from the edge mask ``aresta``."""
+	a = np.asarray(aresta, bool)
+	i = np.asarray(indice, bool)
+	if not a.any():
+		return float(i.sum()) * mm_per_px * mm_per_px
+	d = cv2.distanceTransform((~a).astype(np.uint8), cv2.DIST_L2, 5)
+	return float((i & (d > halo_max_mm / mm_per_px)).sum()) * mm_per_px * mm_per_px
+
+
+def limitar_indice(indice: np.ndarray, aresta: np.ndarray, rgb_crop: np.ndarray, mm_per_px: float,
+				   halo_max_mm: float = INDICE_HALO_MAX_MM, limiar: float = PAPEL_LIMIAR) -> np.ndarray:
+	"""The index mask read against the painted edge ``aresta`` (exact, never changed: D5, 2026-11-25): the edge
+	plus the pixels of ``indice`` within ``halo_max_mm`` of it that are not paper (the segmenter's threshold
+	against the median of the crop outside the index and the band; all pixels count as not paper when there is
+	no such background), largest component, holes filled. The halo of the index convention (cast shadow and
+	penumbra, dark, within ~1.9 mm) survives; what the automatic contour dragged in from farther away (R0036:
+	the scanner strip at the sheet edge, 13.9 mm out, and the paper bridge to it) does not."""
+	a = np.asarray(aresta, bool)
+	i = np.asarray(indice, bool)
+	d = cv2.distanceTransform((~a).astype(np.uint8), cv2.DIST_L2, 5)
+	band = d <= halo_max_mm / mm_per_px
+	tri = np.where(i | band, INCERTO, FUNDO_PROV).astype(np.uint8)
+	not_paper = _threshold_fg(rgb_crop, tri, mm_per_px, None, limiar, 0.42, 0.5)
+	out = a | (i & band & not_paper)
+	return _fill_holes(_largest(out)) | a
+
 
 # ---------------------------------------------------------------- RLE
 def rle_encode(mask: np.ndarray) -> dict:

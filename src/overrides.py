@@ -60,6 +60,7 @@ __all__ = [
 	"EXTRA_KEYS", "pair_metrics", "manual_pairs", "pose_pairs", "pose_summary", "mean_ci", "direction_of", "main",
 	"SUGESTAO_RMS_MAX", "twin_of", "twin_suggestion",
 	"CONVENCAO_ARESTA", "INDICE_AUTOMATICO", "index_inactive", "latest_arestas", "aresta_px",
+	"index_contour_from", "index_contour",
 ]
 
 OVERRIDES_FILE = "overrides.jsonl"
@@ -403,6 +404,72 @@ def aresta_px(project, piece: str) -> Optional[np.ndarray]:
 	if o is None:
 		return None
 	return np.asarray(o["aresta_px"], float).reshape(-1, 2)
+
+
+def index_contour_from(ov: dict, rgb: Optional[np.ndarray], mm_per_px: float) -> tuple:
+	"""``(polygon, info)``: the index silhouette the program reads from the override line ``ov`` (pure).
+
+	``ov["contour_px"]`` itself (the same object, so everything stays bit for bit) unless the line carries the
+	painted edge ``aresta_px`` and its index lies more than :data:`src.strokes.INDICE_HALO_MAX_MM` from that edge
+	over more than :data:`src.strokes.INDICE_FORA_MIN_MM2`: then the index is read against the edge
+	(:func:`src.strokes.limitar_indice` on ``rgb``, the scan) and the polygon is its outer pixel chain (scan px).
+	The edge is the user's and is exact (D5, 2026-11-25); the stored index is the editor's derivation and, for
+	P0395 (R0036), kept the automatic contour's scanner strip and paper. Nothing is written: the line stays as
+	saved. ``info`` = ``{limitado, fora_mm2}`` (``fora_mm2`` = stored index area beyond the band, 0 without an edge)."""
+	import cv2
+	from src import strokes as ST
+	idx = ov["contour_px"]
+	ar = ov.get("aresta_px")
+	if not ar:
+		return idx, {"limitado": False, "fora_mm2": 0.0}
+	ci = np.asarray(idx, float).reshape(-1, 2)
+	ca = np.asarray(ar, float).reshape(-1, 2)
+	pad = int(math.ceil(ST.INDICE_HALO_MAX_MM / mm_per_px)) + 8
+	lo = np.floor(np.minimum(ci.min(0), ca.min(0))).astype(int) - pad
+	hi = np.ceil(np.maximum(ci.max(0), ca.max(0))).astype(int) + pad
+	if rgb is not None:
+		H, W = rgb.shape[:2]
+		lo = np.maximum(lo, 0)
+		hi = np.minimum(hi, [W - 1, H - 1])
+	org = lo.astype(float)
+	shp = (int(hi[1] - lo[1] + 1), int(hi[0] - lo[0] + 1))
+
+	def fill(c):
+		m = np.zeros(shp, np.uint8)
+		cv2.fillPoly(m, [np.round(c - org).astype(np.int32).reshape(-1, 1, 2)], 1)
+		return m > 0
+
+	mi, ma = fill(ci), fill(ca)
+	fora = ST.indice_fora_mm2(mi, ma, mm_per_px)
+	if fora <= ST.INDICE_FORA_MIN_MM2 or rgb is None:
+		return idx, {"limitado": False, "fora_mm2": round(fora, 3)}
+	crop = np.ascontiguousarray(rgb[lo[1]:hi[1] + 1, lo[0]:hi[0] + 1, :3])
+	out = ST.limitar_indice(mi, ma, crop, mm_per_px)
+	poly = ST.mascara_poligono(out)
+	return poly + org, {"limitado": True, "fora_mm2": round(fora, 3)}
+
+
+_INDEX_CACHE = {}
+
+
+def index_contour(project, ov: dict, rgb: Optional[np.ndarray] = None) -> np.ndarray:
+	""":func:`index_contour_from` of the line ``ov`` on its scan (read only when the index has to be limited;
+	``rgb`` saves the read). Cached per (project, piece, line time, scan file)."""
+	from src import strokes as ST
+	ar = ov.get("aresta_px")
+	if not ar:
+		return ov["contour_px"]
+	sid = ov.get("scan_id")
+	mmpp = _mmpp(project, sid)
+	key = (os.path.abspath(project.path), ov.get("piece"), ov.get("t"), scan_file(project, sid), len(ov["contour_px"]))
+	hit = _INDEX_CACHE.get(key)
+	if hit is not None:
+		return hit if hit is not True else ov["contour_px"]
+	idx, info = index_contour_from(ov, None, mmpp)            # the geometric test needs no scan
+	if info["fora_mm2"] > ST.INDICE_FORA_MIN_MM2:
+		idx, info = index_contour_from(ov, rgb if rgb is not None else load_scan_rgb(project, sid), mmpp)
+	_INDEX_CACHE[key] = idx if info["limitado"] else True
+	return idx
 
 
 def has_override(project, piece: str) -> bool:

@@ -2052,7 +2052,7 @@ def _manual_pending(project, sid: str, pcs: list, manual: dict, old: dict) -> bo
 		if ov is None:
 			continue
 		oc = old.get(f"{q.id}__contour_px")
-		_, _, cnt = OV.rasterize_polygon(ov["contour_px"], W, H)
+		_, _, cnt = OV.rasterize_polygon(OV.index_contour(project, ov), W, H)
 		if oc is None or oc.shape != cnt.shape or not np.array_equal(oc, cnt):
 			return True
 		fl = q.flags or {}
@@ -2212,7 +2212,8 @@ def rebuild_assets(project, *, progress=print, scans=None, clean: bool = True, r
 			ov = manual.get(q.id)
 			seg_r = raw.get(int(q.index_in_scan)) if raw is not None else None
 			if ov is not None:
-				r = OV.polygon_record(rgb, ov["contour_px"])     # the manual contour replaces the segmented one
+				# the manual contour replaces the segmented one (its index read against the painted edge, R0036)
+				r = OV.polygon_record(rgb, OV.index_contour(project, ov, rgb))
 			elif seg_r is None:
 				continue                                          # no segmentation this time: piece untouched
 			else:

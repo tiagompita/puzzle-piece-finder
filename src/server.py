@@ -3577,7 +3577,7 @@ class Gui:
 		pr = self.pr
 		ov = OV.latest_overrides(pr).get(pid)
 		if ov is not None:
-			return OV.clean_polygon(ov["contour_px"]), "manual"
+			return OV.clean_polygon(OV.index_contour(pr, ov)), "manual"
 		c = pr.contour_px(pid)
 		if c is None:
 			raise FileNotFoundError(f"{pid}: contorno em falta (pieces/{pr.piece(pid).scan_id}.npz)")
@@ -3712,6 +3712,13 @@ class Gui:
 				am = cli
 			out = {"identidade": bool(r["identidade"]) and cli is None, "tracos_ignorados": r["tracos_ignorados"]}
 		apoly = ST.mascara_poligono(am)
+		limitado = False
+		if apoly is not None and len(apoly) >= 3:
+			am_mask = _fill_mask(apoly, (h, w))
+			if ST.indice_fora_mm2(idx, am_mask, mmpp) > ST.INDICE_FORA_MIN_MM2:
+				# R0036: the index never goes beyond the halo band of the edge (the automatic contour's strip / paper)
+				idx = ST.limitar_indice(idx, am_mask, rgb, mmpp)
+				limitado = True
 		ipoly = ST.mascara_poligono(idx)
 		if apoly is None or len(apoly) < 3 or ipoly is None or len(ipoly) < 3:
 			return {"error": "não sobrou nenhuma peça (marca alguma zona como peça)", "delta_mm": delta["delta_mm"]}
@@ -3724,7 +3731,7 @@ class Gui:
 				   indice_automatico=igual and own_lbl == "segmentacao", dense_atual=own, aresta0=delta["aresta0"],
 				   aresta0_poly=ST.mascara_poligono(delta["aresta0"]), delta_mm=delta["delta_mm"],
 				   aresta_gravada=None if ar is None else _fill_mask(ar - org, (h, w)), base=base_lbl,
-				   base_gemea=base_gemea, mmpp=mmpp, ms=(time.perf_counter() - t0) * 1000.0)
+				   base_gemea=base_gemea, mmpp=mmpp, ms=(time.perf_counter() - t0) * 1000.0, indice_limitado=limitado)
 		return out
 
 	def _delta(self, pid: str, win: tuple, name: str, params: dict, rgb, auto, mmpp: float, bg, base: str = "atual") -> dict:
