@@ -121,3 +121,5 @@ projects/*/logs/
 
 
 graphify-out/
+# Pasta de saídas do Claude na raiz (não é do projeto)
+Claude outputs/

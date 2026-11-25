@@ -112,9 +112,12 @@ function deslocar(el, dl, dc) {
 const pngUrl = (g) => `${g.imagem.url}&v=${S.ver}`;
 const pngsOk = () => S.pngs || (S.pngs = new Set());               // endereços já descarregados (cache do browser)
 let pngsP = null, pngsDeNovo = false;
-/** F4b (b): descarrega em fundo, uma de cada vez, as imagens dos grupos mostrados; só depois do «pronto» e do 1.º detalhe
- *  (o servidor ainda lhes dá a vez ao detalhe, ``after_detail``). Cada uma que chega liga-se ao seu ``<image>`` no sítio,
- *  sem redesenhar a camada (um arrasto em curso não perde o elemento). */
+/** F4b (b): descarrega em fundo, uma de cada vez, as imagens dos grupos mostrados no tabuleiro e as miniaturas das linhas da
+ *  lista que estão na área visível (``IntersectionObserver``, :func:`observarThumbs`); só depois do «pronto» e do 1.º detalhe
+ *  (o servidor ainda lhes dá a vez ao detalhe, ``after_detail``). Com a lista fechada ou fora da vista, um grupo que não está
+ *  no tabuleiro não pede nada. Cada uma que chega liga-se ao seu ``<image>``/``<img>`` no sítio, sem redesenhar a camada
+ *  (um arrasto em curso não perde o elemento). */
+const thumbsVis = () => S.thumbsVis || (S.thumbsVis = new Set());   // ids dos grupos cuja miniatura está na área visível
 function carregarPngs() {
   if (document.body.dataset.ready !== "1" || !(S.pngsLivre || document.body.dataset.detail)) return;
   if (pngsP) { pngsDeNovo = true; return pngsP; }
@@ -122,9 +125,10 @@ function carregarPngs() {
     try {
       do {
         pngsDeNovo = false;
-        // os mostrados primeiro (a camada do tabuleiro), depois os outros (só a miniatura da lista)
+        // os mostrados primeiro (a camada do tabuleiro), depois só as miniaturas visíveis na lista
         const todos = ((S.grupos && S.grupos.grupos) || []).filter((g) => g.imagem && g.imagem.url);
-        for (const g of todos.filter((x) => x.mostrado && x.footprint).concat(todos.filter((x) => !(x.mostrado && x.footprint)))) {
+        const pedir = todos.filter((x) => x.mostrado && x.footprint).concat(todos.filter((x) => !(x.mostrado && x.footprint) && thumbsVis().has(x.id)));
+        for (const g of pedir) {
           const u = pngUrl(g);
           if (pngsOk().has(u)) continue;
           try {
@@ -140,6 +144,23 @@ function carregarPngs() {
     } finally { pngsP = null; }
   })();
   return pngsP;
+}
+let thumbObs = null;
+/** Liga o ``IntersectionObserver`` às miniaturas da lista (chamado depois de cada desenho da lista): uma que entra na área
+ *  visível junta-se a ``thumbsVis`` e pede-se em fundo; uma que sai deixa de contar (o que já veio fica na cache). */
+function observarThumbs(raiz) {
+  if (thumbObs) thumbObs.disconnect();
+  thumbsVis().clear();
+  if (typeof IntersectionObserver === "undefined") return;
+  thumbObs = new IntersectionObserver((es) => {
+    let novo = false;
+    for (const e of es) {
+      const id = e.target.getAttribute("data-grupo-thumb");
+      if (e.isIntersecting) { if (!thumbsVis().has(id)) { thumbsVis().add(id); novo = true; } } else thumbsVis().delete(id);
+    }
+    if (novo) carregarPngs();
+  });
+  for (const el of raiz.querySelectorAll("img.grp-thumb")) thumbObs.observe(el);
 }
 function grupoEl(g, esc) {
   const klass = ["grupo", esc ? "escolhido" : "tenue", g.sobreposto ? "sobreposto" : ""].filter(Boolean).join(" ");
@@ -491,7 +512,7 @@ function initArrasto() {
   window.addEventListener("lostpointercapture", fim);                       // tratado como cancelamento (M3)
 }
 /** A miniatura de um grupo na lista: a mesma imagem do tabuleiro (``/api/grupos/{gid}.png``), pequena por CSS; só leva
- *  ``src`` depois de descarregada em fundo (:func:`carregarPngs`), nunca pede nada por si. */
+ *  ``src`` depois de descarregada em fundo (:func:`carregarPngs`, quando a linha entra na área visível), nunca pede nada por si. */
 function grupoThumb(g) {
   const u = g.imagem ? pngUrl(g) : null;
   const at = { class: "grp-thumb", "data-grupo-thumb": g.id, "data-url": u || "", alt: "", width: 56, height: 56, "aria-hidden": "true" };
@@ -611,4 +632,5 @@ function renderGrupos(T) {
   const ul = h("div", { class: "grp-lista", "data-vista": "grupos", role: "list" });
   for (const x of G.grupos) ul.append(grupoRow(x));
   T.append(ul);
+  observarThumbs(ul);
 }

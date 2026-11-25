@@ -1604,3 +1604,34 @@ def test_lista_de_grupos_com_miniaturas_carregadas_em_fundo(gr, browser):
 		assert not errs, errs
 	finally:
 		pg.close()
+
+
+def test_miniaturas_so_quando_a_linha_entra_na_area_visivel(gr, browser):
+	"""2026-11-25 (decisão do Tiago): com a lista fechada, um grupo que não está no tabuleiro não pede o PNG; só o pede
+	quando a sua linha entra na área visível da lista (IntersectionObserver). Os PNG dos grupos mostrados no tabuleiro
+	continuam a vir (a camada precisa deles)."""
+	url, gui, ids = gr
+	pg = browser.new_page(viewport={"width": 1366, "height": 768})
+	reqs = []
+	pg.on("request", lambda r: reqs.append(r.url) if "/api/grupos/" in r.url and ".png" in r.url else None)
+	errs = []
+	pg.on("pageerror", lambda e: errs.append(str(e)))
+	try:
+		pg.goto(url + "/novo/")
+		pg.wait_for_selector("body[data-ready='1']", timeout=60_000)
+		pg.wait_for_function("!!S.grupos", timeout=30_000)
+		g1, g2 = ids["G1"], ids["G2"]
+		pg.wait_for_function(f"document.querySelectorAll('#lyr-grupos [data-grupo=\"{g1}\"] image.grupo-img[href]').length === 1", timeout=30_000)
+		pg.wait_for_timeout(1500)                                                              # dá tempo a um pedido que não devia sair
+		assert pg.evaluate("S.vista") == "pecas" and pg.locator("img.grp-thumb").count() == 0   # lista fechada: nem há miniaturas
+		assert [u for u in reqs if f"/{g2}.png" in u] == [], reqs                              # o grupo fora do tabuleiro: 0 pedidos
+		assert [u for u in reqs if f"/{g1}.png" in u], reqs                                    # o do tabuleiro vem na mesma
+		pg.click("#vista-grupos")                                                              # a lista abre: as linhas entram na vista
+		pg.wait_for_function("document.querySelectorAll('#tab-montar img.grp-thumb[src]').length === 2", timeout=30_000)
+		assert [u for u in reqs if f"/{g2}.png" in u], reqs
+		pg.click("#vista-pecas")                                                               # fechar de novo: nenhum pedido novo
+		n = len(reqs)
+		pg.wait_for_timeout(500)
+		assert len(reqs) == n and not errs, (reqs, errs)
+	finally:
+		pg.close()
