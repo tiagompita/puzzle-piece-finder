@@ -62,3 +62,4 @@
 {"evento": "estado", "id": "R0035", "t": "2026-11-16T15:55:44", "acao": "close", "nota": "", "estado": "fechado"}
 {"evento": "estado", "id": "R0035", "t": "2026-11-16T15:58:18", "acao": "reopen", "nota": "reaberto só para gravar a nota de fecho", "estado": "aberto"}
 {"evento": "estado", "id": "R0035", "t": "2026-11-16T15:58:19", "acao": "close", "nota": "P0833 rodada 90° anti-horário pela âncora (G0068 --rot 90); confirmado fisicamente pelo Tiago 2026-11-16", "estado": "fechado"}
+{"id": "R0036", "t": "2026-11-25T22:19:17", "tipo": "outro", "texto": "Peça percentente à borda, já está colocada, está mal lida.", "piece": "P0395", "cell": null, "scan_id": "S0013", "n_no_lote": 51, "lote": null, "crop_path": "crops/P0395.png", "captura": "reports/R0036.png", "vista": "novo/grupo", "estado": "aberto"}
