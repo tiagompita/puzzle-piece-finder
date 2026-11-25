@@ -2,6 +2,10 @@
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
 
+## Sessão de 2026-11-25 (2): `docs/prompts/2026-11-25-miniaturas-intermitencias.md` (fechado)
+- **Feito [V]** (`831ba65` + docs): miniaturas dos grupos só quando a linha entra na área visível (`IntersectionObserver`); cache do tabuleiro fica em JPEG (perda entre arranques aceite); `Claude outputs/` no `.gitignore`; `CLAUDE.md` com a cache e as miniaturas. Suite 907 passed, 1 skipped.
+- **Intermitências [V]:** 20 corridas de `tests/test_gui*.py`: 7 com 1 falha, sempre num teste diferente (`initPointer/initVista is not defined`, `data-ready` a 60 s, `ERR_NO_BUFFER_SPACE`, 1 asserção de layout); `test_phone_layout_panels` não reproduziu [NT]. Causa [NT]; proposta no ficheiro da ronda e em `docs/decisoes.md`.
+- **Para decidir:** registar `requestfailed` no `conftest` antes de mexer nos testes?
 
 ## Sessão de 2026-11-25 (cache do tabuleiro, P0395, grupos): `docs/prompts/2026-11-25-cache-tabuleiro-grupos.md` (fechado)
 - **Cache do tabuleiro corrigida [V]:** o snapshot de `board_60` inclui agora a entrada de `placements.json` (`placement_digest`, `Gui._raster_snapshot`); a relva em falta (57 peças registadas depois de o tabuleiro se compor) volta a desenhar-se. 1.º arranque depois de atualizar recompõe o tabuleiro uma vez (≈ 20 s). `board_60.*` do projeto real apagado e refeito.
