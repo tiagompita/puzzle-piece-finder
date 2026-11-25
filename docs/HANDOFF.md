@@ -1,6 +1,13 @@
-# HANDOFF — 2026-11-25 (cache do tabuleiro corrigida; a seguir, o teste físico do Tiago aos grupos)
+# HANDOFF — 2026-11-25 (reports nos grupos, imagem dos grupos e R0036 feitos; a seguir, o teste físico do Tiago aos grupos)
 
 Lê isto primeiro numa sessão nova; no fim, atualiza-o e fecha o ficheiro do prompt em `docs/prompts/`.
+
+## Sessão de 2026-11-25 (4): `docs/prompts/2026-11-25-reports-grupos-png.md`
+- **Feito [V]:** flag vermelha nos reports abertos (peça, grupo, lista; `/api/grupos` com `reports_abertos`/`tem_report`) e seta de voltar no painel do grupo (`503103b`); imagem dos grupos mostrados/movidos: causa `pngsP` preso em `carregarPngs`, corrigida com 2 novas tentativas e erro para o registo (`c66faf6`); Montar aponta para «Grupos soltos» (`001ca99`, capturas `docs/gui/screenshots/2026-11-25/D_*.png`).
+- **R0036 / P0395:** o índice do contorno manual lia a faixa do scanner (13,85 mm fora); agora limitado a 2 mm da aresta (`d2e49e9`, `c8272bc`; BBFT 22,0/20,2/21,4/18,2 → BFBT 18,31/18,53/18,23/18,38); `overrides.jsonl` igual byte a byte. P0395 = segundo scan de P0021 em (47,56); `same_as` não aplicado (sem desfazer).
+- **Medido:** «abrir + 1.º salto» −0,139 s, IC t [−0,450, +0,172] [F], limite +0,10 s, máquina a abrandar a meio, não repetido; arrasto com 32 grupos: 0 frames > 25 ms [V].
+- **Regras novas (CLAUDE.md):** contorno manual do Tiago = verdade de terreno (D5); borda completa 218/218 (D6); Claude pode fechar um report corrigido e verificado (D2).
+- **Para decidir:** R0036 fica aberto até o Tiago confirmar na mesa que P0395 é P0021 (47,56); decidir se `same_as` ganha desfazer; repetir o critério «abrir + 1.º salto» com a máquina parada.
 
 ## Sessão de 2026-11-25 (3): `docs/prompts/2026-11-25-registo-rede-gui.md` (fechado)
 - **Feito [V]** (`13a1d95`): `tests/conftest.py` regista por página `requestfailed`, HTTP >= 400, `pageerror` e `console.error` (Playwright, `Browser.new_page`/`BrowserContext.new_page`) e junta-os ao relatório só de testes que falham (setup, call, teardown); `pytest.ini` com `addopts = -p pytester`; `tests/test_net_log.py` (2 testes, `slow`). Suite 909 passed, 1 skipped.
