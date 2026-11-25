@@ -795,7 +795,9 @@ function reportBlock(box, d, pc) {
     box.append(h("p", { class: "small muted p-reportado" }, `Já reportaste: ${t.toLowerCase()}${r.texto ? ` («${r.texto}»)` : ""}.`));
   }
   if (!P.report) {
-    box.append(h("div", { class: "btn-col" }, h("button", { class: "btn", type: "button", id: "p-errado",
+    const tem = (d.reports_abertos || []).length > 0;
+    box.append(h("div", { class: "btn-col" }, h("button", { class: "btn" + (tem ? " tem-report" : ""), type: "button", id: "p-errado",
+      title: tem ? "Tem um report aberto" : null, "aria-label": tem ? "Algo está errado (tem um report aberto)" : null,
       onclick: () => { P.report = { tipo: null }; renderMontar(); } }, ico("flag"), "Algo está errado")));
     return;
   }
@@ -1357,6 +1359,8 @@ function connectEvents() {
   // o «fetch_changed» de uma escrita chega logo a seguir ao «board_changed»: a recarga dessa escrita já o cobre
   es.addEventListener("fetch_changed", () => { if (!(reloadV === S.ver && performance.now() - reloadT < 400)) scheduleReload(false); });
   es.addEventListener("grupos_changed", () => { loadGrupos(); });
+  // 2026-11-25 (A2): um report novo, fechado ou reaberto muda a flag vermelha da peça e do grupo
+  es.addEventListener("suspeitas_changed", () => { loadGrupos(); if (S.modo === "painel" && !S.busy && !(S.painel && S.painel.report)) refreshPainel().catch(() => {}); });
   es.addEventListener("holes_changed", () => { S.holesProgress = null; scheduleReload(false); });
   es.addEventListener("holes_progress", (e) => {
     S.holesProgress = JSON.parse(e.data);

@@ -525,25 +525,39 @@ function grupoRow(g) {
   return h("div", { class: "grp-row" + (S.grupoSel === g.id ? " on" : "") + (g.sobreposto ? " sobreposto" : ""), "data-grupo": g.id, role: "listitem" },
     grupoThumb(g),
     h("button", { type: "button", class: "grp-open", onclick: () => escolherGrupo(g.id) },
-      h("span", { class: "grp-n" }, plural(g.n, "peça", "peças")),
+      h("span", { class: "grp-n" }, plural(g.n, "peça", "peças"), g.tem_report ? flagReport() : null),
       h("span", { class: "grp-sub small muted" }, sub),
       h("span", { class: "grp-est small" + (g.sobreposto ? " aviso" : " muted") }, g.sobreposto ? "por cima de peças já montadas" : (g.mostrado ? "no tabuleiro" : "ainda fora do tabuleiro"))),
     h("button", { type: "button", class: "btn grp-mostrar", onclick: () => mostrarGrupo(g.id) }, ico("map-pin"), "Mostrar no tabuleiro"));
+}
+/** A flag vermelha de «tem um report aberto» (2026-11-25, D1): ícone com texto alternativo; o texto «Já reportaste…» diz o quê. */
+function flagReport() {
+  const f = ico("flag");
+  f.classList.add("flag-report");
+  f.setAttribute("role", "img"); f.setAttribute("aria-label", "Tem um report aberto"); f.setAttribute("title", "Tem um report aberto");
+  return f;
 }
 function nomePecaGrupo(p, i) {
   return p.lote !== null && p.lote !== undefined ? `Saco ${p.lote} · ${p.n_no_lote ?? "?"}` : `Sem saco · peça ${i + 1}`;
 }
 /** Uma peça do painel do grupo (2026-11-25): o nome, «Corrigir recorte» (o editor da interface completa, como no painel
  *  da peça) e «Algo está errado» (report da peça, sem célula: a captura é a da peça no scan). */
-function pecaGrupoEl(p, i) {
+function pecaGrupoEl(p, i, g) {
   const aberto = !!S.grupoReport && S.grupoReport.pid === p.id;
+  const rep = ((g && g.reports_abertos) || []).filter((r) => r.piece === p.id);
   const el = h("div", { class: "grp-peca-linha", "data-peca": p.id },
     h("div", { class: "grp-peca-topo" },
       h("span", { class: "grp-peca" }, nomePecaGrupo(p, i)),
       h("a", { class: "btn grp-recorte", href: `/?peca=${p.id}&contorno=1`, target: "_blank", rel: "noopener",
         title: "Abre o editor do recorte na interface completa (o editor novo chega mais tarde)" }, ico("scissors"), "Corrigir recorte"),
-      aberto ? null : h("button", { type: "button", class: "btn grp-errado", onclick: () => { S.grupoReport = { pid: p.id, tipo: null }; renderMontar(); } },
+      aberto ? null : h("button", { type: "button", class: "btn grp-errado" + (rep.length ? " tem-report" : ""),
+        title: rep.length ? "Tem um report aberto" : null, "aria-label": rep.length ? "Algo está errado (tem um report aberto)" : null,
+        onclick: () => { S.grupoReport = { pid: p.id, tipo: null }; renderMontar(); } },
         ico("flag"), "Algo está errado")));
+  for (const r of rep) {
+    const t = (REPORT_TIPOS.find((x) => x[0] === r.tipo) || [null, "algo"])[1];
+    el.append(h("p", { class: "small muted p-reportado" }, `Já reportaste: ${t.toLowerCase()}${r.texto ? ` («${r.texto}»)` : ""}.`));
+  }
   if (aberto) {
     const R = S.grupoReport;
     const rb = h("div", { class: "report-box", "data-report": p.id }, h("strong", {}, "O que está errado?"));
@@ -556,7 +570,7 @@ function pecaGrupoEl(p, i) {
         if (!R.tipo) { toast("Escolhe o que está errado."); return; }
         try {
           await post("/api/report", { piece: p.id, cell: null, tipo: R.tipo, texto: txt.value || "", vista: "novo/grupo" });
-          S.grupoReport = null; toast("Obrigado. Fica registado."); renderMontar();
+          S.grupoReport = null; toast("Obrigado. Fica registado."); renderMontar(); loadGrupos();
         } catch (e) { toast(e.message, true); }
       } }, "Enviar"),
       h("button", { class: "btn", type: "button", onclick: () => { S.grupoReport = null; renderMontar(); } }, "Cancelar")));
@@ -566,7 +580,9 @@ function pecaGrupoEl(p, i) {
 }
 function grupoPainel(T, g) {
   const box = h("div", { class: "card grp-painel", "data-vista": "grupos", "data-grupo": g.id });
-  box.append(h("h3", { class: "grp-titulo" }, `Grupo de ${plural(g.n, "peça", "peças")}`),
+  box.append(h("div", { class: "grp-cab" },
+      h("button", { type: "button", class: "icon-btn", id: "grp-voltar", title: "Voltar à lista", "aria-label": "Voltar à lista", onclick: voltarLista }, ico("arrow-left")),
+      h("h3", { class: "grp-titulo" }, `Grupo de ${plural(g.n, "peça", "peças")}`, g.tem_report ? flagReport() : null)),
     h("div", { class: "grp-estado small muted" }, h("span", { class: "dot-violeta", "aria-hidden": "true" }), `Solto · ${estadoGrupo(g)}`));
   if (g.sobreposto) box.append(h("p", { class: "small aviso", id: "g-sobreposto" }, g.sobreposto.texto || "O grupo está por cima de peças já montadas."));
   const acts = h("div", { class: "actions" });
@@ -604,8 +620,7 @@ function grupoPainel(T, g) {
   else if (lp) box.append(h("p", { class: "small muted", id: "g-no-lugar" }, "Está no lugar provável."));
   else box.append(h("p", { class: "small muted", id: "g-sem-lugar" }, "Ainda sem lugar provável fiável"));
   box.append(h("div", { class: "grp-pecas" }, h("div", { class: "small muted" }, "Peças do grupo"),
-    h("div", { class: "grp-lista-pecas" }, (g.pecas || []).map((p, i) => pecaGrupoEl(p, i)))));
-  box.append(h("div", { class: "links" }, h("button", { class: "linkish", type: "button", id: "grp-voltar", onclick: voltarLista }, ico("arrow-left"), "Voltar à lista")));
+    h("div", { class: "grp-lista-pecas" }, (g.pecas || []).map((p, i) => pecaGrupoEl(p, i, g)))));
   T.append(box);
 }
 /** O conteúdo de #tab-montar na vista «Grupos soltos»: a lista, o painel do grupo escolhido ou o vazio. */

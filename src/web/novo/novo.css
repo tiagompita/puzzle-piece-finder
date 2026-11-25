@@ -417,6 +417,14 @@ body.cor-tabuleiro #raster, body.cor-tabuleiro #detail { filter: brightness(var(
 .grp-barra .btn.big { flex: 1 1 96px; }
 .grp-painel { display: flex; flex-direction: column; gap: 12px; }
 .grp-titulo { font-size: 22px; font-weight: 700; margin: 0; }
+/* 2026-11-25 (D1): report aberto = flag vermelha (--red, contraste >= 3:1 sobre --bg, --bg2 e --bg3; o texto «Já reportaste…» continua) */
+.btn.tem-report .ico, .flag-report { color: var(--red); }
+.flag-report { width: 20px; height: 20px; margin-left: 6px; vertical-align: -3px; }
+.grp-n .flag-report { width: 16px; height: 16px; }
+.p-reportado { margin: 4px 0; }
+.grp-cab { display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 2; background: var(--bg3); padding: 4px 0; }
+.grp-cab .icon-btn { flex: 0 0 auto; }
+.grp-cab .grp-titulo { flex: 1 1 auto; min-width: 0; }
 .grp-estado { display: flex; align-items: center; gap: 8px; }
 .dot-violeta { width: 10px; height: 10px; border-radius: 5px; background: var(--violet); flex: 0 0 auto; }
 .grp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }

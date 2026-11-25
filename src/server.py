@@ -2466,9 +2466,24 @@ class Gui:
 		auto, lps = GR.auto_positions(pr, own, self.placements())
 		return dict(own, **auto), lps
 
-	def _grupo_row(self, gid: str, shown: dict, lps: Optional[dict] = None) -> dict:
+	def _open_reports_by_piece(self) -> dict:
+		"""``{piece id: [{id, tipo, texto, piece}]}`` of the OPEN reports (one read of ``reports.jsonl``; A1, 2026-11-25)."""
+		from src import reports
+		try:
+			rs = reports.read_reports(self.pr)
+		except (OSError, ValueError):
+			return {}
+		out: dict = {}
+		for r in rs:
+			if r.get("estado") == "aberto" and r.get("piece"):
+				out.setdefault(r["piece"], []).append({"id": r.get("id"), "tipo": r.get("tipo"),
+													   "texto": r.get("texto") or "", "piece": r["piece"]})
+		return out
+
+	def _grupo_row(self, gid: str, shown: dict, lps: Optional[dict] = None, reps: Optional[dict] = None) -> dict:
 		"""One loose group of ``GET /api/grupos`` (pure over the project; the caller reads under :meth:`read` or the
-		write lock). ``lps``: the likely places of :meth:`_shown_all` (groups without a position of their own)."""
+		write lock). ``lps``: the likely places of :meth:`_shown_all` (groups without a position of their own);
+		``reps``: :meth:`_open_reports_by_piece` (read here when not given)."""
 		from src import grupos as GR
 		pr = self.pr
 		s = pr.sections[gid]
@@ -2484,7 +2499,11 @@ class Gui:
 			if lp is not None and not GR.place_calibrated(pr.profile, lp["footprint"]):
 				lp = None                              # decision 1 of Tiago (B4): only in zones with a calibrated dE_p90
 		fr = GR.group_frame(pr.profile, s, rot, GRUPO_PPC)
+		if reps is None:
+			reps = self._open_reports_by_piece()
+		rab = [r for p in pecas for r in reps.get(p["id"], [])]
 		return {"id": gid, "kind": s.kind, "n": len(s.cells_local), "pecas": pecas,
+				"reports_abertos": rab, "tem_report": bool(rab),
 				"sacos": sorted({p["lote"] for p in pecas if p["lote"] is not None}),
 				"mostrado": pos is not None,
 				"automatico": bool(pos is not None and pos.get("origem") == GR.AUTO_ORIGEM),
@@ -2510,7 +2529,8 @@ class Gui:
 			index = ME.last_anchor_index(pr)
 			aviso = ME.read_positions(pr, index)[1]
 			shown, lps = self._shown_all(index)
-			rows = [self._grupo_row(gid, shown, lps) for gid in sorted(pr.sections) if ME.is_loose(pr, gid)]
+			reps = self._open_reports_by_piece()                   # one read of reports.jsonl per request (A1)
+			rows = [self._grupo_row(gid, shown, lps, reps) for gid in sorted(pr.sections) if ME.is_loose(pr, gid)]
 			cnt = GR.count_loose(pr)
 			return {"versao": self.version(), "n_grupos": cnt["grupos"], "n_pecas": cnt["pecas"],
 					"n_mostrados": len(shown), "grupos": rows, "aviso": aviso}
