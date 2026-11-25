@@ -95,3 +95,10 @@ Fica aberto: a leitura está corrigida e verificada, mas a identidade só fica r
 
 Nenhuma: as outras 34 linhas com aresta (9 ativas para o índice, 25 só de ecrã) têm o índice a ≤ 1,94 mm da
 aresta; `index_contour` devolve-lhes `contour_px` sem alteração.
+
+## Projeto real
+
+Depois do commit `d2e49e9`: `render.rebuild_piece(P0395)` (o mesmo caminho que aplica um contorno manual pendente)
+escreveu **1 evento** `piece_resegmented` (2026-11-25T23:38:59, P0395, motivo `manual`): BFBT, cordas 18,31 /
+18,534 / 18,227 / 18,375 mm, bbox [2036, 3229, 321, 267], 359,43 mm² (igual à cópia). `overrides.jsonl` byte a
+byte igual ao de antes; invariantes OK; `pieces`/`overlays` 39/39. Identidade (`same_as`) não aplicada.
