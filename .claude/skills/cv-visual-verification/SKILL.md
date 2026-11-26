@@ -31,6 +31,21 @@ O script não dar erro não prova nada. Uma mudança de CV só está feita quand
 - Tabs, `__all__`, docstrings; helpers puros separados de I/O; em erro, `{'error': str, ...}`.
 - `pytest tests/` verde em OpenCV 4.11 e 5.0. Um bug novo ganha um teste sintético que falhe antes da correção.
 
+## Verificação (o que é automático e o que continua a ser juízo)
+Antes de cada commit que toque `src/`, `tools/verify/`, `tests/golden/` ou `projects/`: `python -m tools.verify` (exit ≠ 0 = parar e reportar; nunca `--congelar-baseline` nem `--refresh-golden` para passar; regra do `CLAUDE.md`, «Conventions»). Cobre, sobre uma cópia do projeto:
+- **ambiente** (passo 0, exit 2): Python do `.venv`, OpenCV fixado em `requirements.txt` (só a 4.11; a 5.0 continua manual), `core.hooksPath`;
+- **golden** (exit 3): scans e linhas do manifesto `tests/golden/manifesto.json` inalterados (`tests/test_verify.py::test_golden_*`);
+- **vigilância** (exit 6): `pieces`/`overlays` contra `scans/` no início e no fim (`tests/test_verify.py::test_vigilancia_conta_contra_scans`);
+- **regras absolutas** (exit 4, 0 violações): `estado`, `mesma_celula`, `borda_completa`, `f_por_celula`, `grupos_sobrepostos`, `manual_indice_da_linha`, `manual_aresta_no_indice`, `manual_indice_na_banda` (`tests/test_invariantes_projeto.py`, um teste por regra e um caso que a viola);
+- **métricas das peças do golden** contra `tests/golden/baseline.json` (exit 5): classe F/T/B igual, cordas |Δ| ≤ 0,3 mm, célula das peças de borda, nenhum par gémeo novo acima de `TWIN_LOCAL_MAX_MM`, nenhuma suspeita nova (`tests/test_verify.py::test_comparar_*`).
+
+Testes que cobrem as regras desta skill (correr com `.venv/Scripts/python.exe -m pytest tests/`):
+- E-sym com o contorno de `segment_scan` (gémeo ≤ 0,5 mm, top-1 20/20): `tests/test_segment_scan_esym.py::test_twins_by_free_shape` e `::test_counts_and_grid` (`slow`); E-sym e E-real-2 na cadeia `find_twin`: `tests/test_twin_real.py::test_esym_find_twin`, `::test_ereal2_find_twin`;
+- peça junto ao bordo do scan e à tira branca mantida (S1, S3): `tests/test_segmentation.py::test_piece_near_frame_is_kept`, `::test_piece_touching_white_scan_strip_is_kept`;
+- simetria dos pares gémeos colocados: `tests/test_simetria.py::test_simetria_dos_pares_colocados`.
+
+Continua a ser **juízo visual** (nenhum teste o substitui): abrir e olhar as imagens de debug (sombra, mordidelas, peças fundidas, fragmentos, orla verde); decidir se uma diferença de contorno é melhor ou pior quando a métrica não a vê (um RMS global esconde uma mordida local); E-fundo/E-real fora dos testes; mudar uma constante afinada (números antes/depois no relatório); a OpenCV 5.0; o teste sintético que um bug novo tem de ganhar.
+
 ## Relatório final de uma mudança de CV
 1. O que mudou e porquê.
 2. Imagens vistas (quais, e o que se observou).

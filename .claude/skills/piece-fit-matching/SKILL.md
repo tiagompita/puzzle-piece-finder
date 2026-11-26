@@ -33,3 +33,15 @@ A célula gémea é `perfil.simetria(l, c)` (perfil do puzzle, M13, §11 do plan
 - Módulo puro (sem Tkinter/I/O), testável com contornos sintéticos (par tab/blank gerado = melhor custo; F rejeitado) e com GT (E-sym, E-real, E-buraco).
 - A simetria e a rotação do fantasma vêm do perfil (`profile.twin`, `profile.twin_rotation_deg`).
 - Módulos críticos: desenho ou revisão do `implementer` (`CLAUDE.md`). Verificação: skill `cv-visual-verification`.
+
+## Verificação (o que é automático e o que continua a ser juízo)
+Antes de cada commit que toque `src/`, `tools/verify/`, `tests/golden/` ou `projects/`: `python -m tools.verify` (exit ≠ 0 = parar e reportar; nunca congelar a baseline para passar; regras e códigos de saída na skill `cv-visual-verification`, «Verificação»). Aqui pesa em especial: `f_por_celula` (lados F = lados da célula fora da grelha), `borda_completa`, `mesma_celula` e, nas peças do golden, classe, cordas (±0,3 mm), célula de borda e pares gémeos novos acima de `TWIN_LOCAL_MAX_MM`.
+
+Testes que cobrem as regras desta skill:
+- simetria só do perfil: `tests/test_profile.py::test_rot180_twin`, `::test_translate_and_none`, `tests/test_twin.py::test_profile_translate_drives_twin_cell`; exceção da simetria só no perfil e «alpes» fora de `src/`: `tests/test_simetria.py`;
+- imagem obrigatória e nunca promove: `tests/test_twin.py::test_image_demotes_wrong_colour_and_never_promotes`; zona sem `dE_p90` nunca dá `aceite`: `tests/test_twin_pctl_zone.py::test_zone_without_p90_never_accepts`;
+- candidato único não é proposto: `tests/test_twin.py::test_single_candidate_not_proposed`; lado alterado não aceite: `::test_altered_side_not_accepted`;
+- molde do buraco: uma vizinha nunca dá `alta` (`tests/test_fit.py::test_single_neighbour_is_never_alta`), F obrigatório onde a célula é de borda (`::test_f_rule_requires_flat_sides_where_the_cell_is_border`), filtro de cordas suave (`::test_soft_chord_filter_recovers_a_side_that_the_hard_filter_kills`), afetação um-para-um (`::test_assign_gives_each_piece_one_hole`), pausa a ≥ 3 rejeições nas últimas 20 (`tests/test_fit_alta.py`);
+- GT real: `tests/test_twin_real.py::test_esym_find_twin`, `::test_ereal2_find_twin`; pares gémeos colocados: `tests/test_simetria.py::test_simetria_dos_pares_colocados`.
+
+Continua a ser **juízo** (nenhum teste o substitui): que uma consulta fique O(N) e sem solver global; a escolha de pesos e limiares novos (com números antes/depois contra GT); se uma proposta faz sentido olhando a peça, a arte da célula e as vizinhas montadas; as confirmações físicas do Tiago, que são a única GT de relva/vale.
