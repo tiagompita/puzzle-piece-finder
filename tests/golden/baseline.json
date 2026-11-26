@@ -1,7 +1,7 @@
 {
  "versao": 1,
- "congelada_em": "2026-11-26T01:34:40",
- "head": "c896a5adb8b55183c5fd4c4226d756e34995b30b",
+ "congelada_em": "2026-11-26T10:23:20",
+ "head": "27528768d88f98943d5ea911a8ce08ee6f96af91",
  "manifesto_sha256": "db5b7f7d4b3c4263ef953353d5edd79eb1f1acbd367332685237842e56ffbfdc",
  "metricas": {
   "pecas": {
@@ -614,10 +614,10 @@
     ],
     "cls": "TTTT",
     "cordas_mm": [
-     18.648,
-     18.237,
-     17.242,
-     17.082
+     18.755,
+     18.183,
+     17.297,
+     17.002
     ]
    },
    "P0071": {
@@ -629,10 +629,10 @@
     ],
     "cls": "BTTT",
     "cordas_mm": [
-     19.342,
-     18.864,
-     19.942,
-     18.174
+     19.319,
+     18.872,
+     19.882,
+     18.402
     ]
    },
    "P0114": {
@@ -761,10 +761,10 @@
     ],
     "cls": "FTTT",
     "cordas_mm": [
-     15.994,
-     18.731,
-     17.016,
-     18.043
+     15.889,
+     18.738,
+     17.069,
+     18.189
     ]
    },
    "P0199": {
@@ -2078,10 +2078,10 @@
     ],
     "cls": "BTBT",
     "cordas_mm": [
-     19.545,
-     17.985,
-     19.34,
-     18.176
+     19.547,
+     17.972,
+     19.203,
+     18.295
     ]
    },
    "P0444": {
@@ -2648,10 +2648,10 @@
     ],
     "cls": "BBBT",
     "cordas_mm": [
-     18.282,
-     19.442,
-     18.68,
-     20.399
+     18.225,
+     19.482,
+     18.657,
+     20.452
     ]
    },
    "P0622": {
@@ -3398,10 +3398,10 @@
     ],
     "cls": "BBBT",
     "cordas_mm": [
-     18.212,
-     19.161,
-     18.66,
-     18.077
+     18.247,
+     19.159,
+     19.688,
+     17.172
     ]
    },
    "P0814": {
@@ -3578,10 +3578,10 @@
     ],
     "cls": "BBTT",
     "cordas_mm": [
-     18.749,
-     19.333,
-     19.129,
-     18.579
+     18.735,
+     19.301,
+     19.67,
+     17.992
     ]
    },
    "P1128": {
@@ -3890,19 +3890,19 @@
   },
   "manual": {
    "P0045": {
-    "aresta_fora_do_indice_mm2": 0.609,
+    "aresta_fora_do_indice_mm2": 0.0,
     "papel_coroa_pct": 3.99
    },
    "P0071": {
-    "aresta_fora_do_indice_mm2": 1.505,
+    "aresta_fora_do_indice_mm2": 0.0,
     "papel_coroa_pct": 5.7
    },
    "P0139": {
-    "aresta_fora_do_indice_mm2": 0.502,
+    "aresta_fora_do_indice_mm2": 0.0,
     "papel_coroa_pct": 1.35
    },
    "P0198": {
-    "aresta_fora_do_indice_mm2": 1.591,
+    "aresta_fora_do_indice_mm2": 0.0,
     "papel_coroa_pct": 6.44
    },
    "P0315": {
@@ -3914,19 +3914,19 @@
     "papel_coroa_pct": 10.64
    },
    "P0407": {
-    "aresta_fora_do_indice_mm2": 1.434,
+    "aresta_fora_do_indice_mm2": 0.0,
     "papel_coroa_pct": 2.3
    },
    "P0620": {
-    "aresta_fora_do_indice_mm2": 1.039,
+    "aresta_fora_do_indice_mm2": 0.0,
     "papel_coroa_pct": 4.58
    },
    "P0754": {
-    "aresta_fora_do_indice_mm2": 0.215,
+    "aresta_fora_do_indice_mm2": 0.0,
     "papel_coroa_pct": 0.78
    },
    "P1064": {
-    "aresta_fora_do_indice_mm2": 0.889,
+    "aresta_fora_do_indice_mm2": 0.0,
     "papel_coroa_pct": 2.12
    }
   },
@@ -4333,8 +4333,8 @@
      "nn_max_mm": 1.201
     },
     "P0630|P0198": {
-     "rms_mm": 0.396,
-     "nn_max_mm": 0.548
+     "rms_mm": 0.369,
+     "nn_max_mm": 0.552
     },
     "P0226|P0637": {
      "rms_mm": 0.433,
