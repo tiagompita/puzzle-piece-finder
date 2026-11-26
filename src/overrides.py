@@ -409,19 +409,27 @@ def aresta_px(project, piece: str) -> Optional[np.ndarray]:
 def index_contour_from(ov: dict, rgb: Optional[np.ndarray], mm_per_px: float) -> tuple:
 	"""``(polygon, info)``: the index silhouette the program reads from the override line ``ov`` (pure).
 
-	``ov["contour_px"]`` itself (the same object, so everything stays bit for bit) unless the line carries the
-	painted edge ``aresta_px`` and its index lies more than :data:`src.strokes.INDICE_HALO_MAX_MM` from that edge
-	over more than :data:`src.strokes.INDICE_FORA_MIN_MM2`: then the index is read against the edge
-	(:func:`src.strokes.limitar_indice` on ``rgb``, the scan) and the polygon is its outer pixel chain (scan px).
-	The edge is the user's and is exact (D5, 2026-11-25); the stored index is the editor's derivation and, for
-	P0395 (R0036), kept the automatic contour's scanner strip and paper. Nothing is written: the line stays as
-	saved. ``info`` = ``{limitado, fora_mm2}`` (``fora_mm2`` = stored index area beyond the band, 0 without an edge)."""
+	The painted edge ``aresta_px`` is the user's and is exact (D5, 2026-11-25); the stored index ``contour_px`` is the
+	editor's derivation from it. Read against the edge:
+
+	* index more than :data:`src.strokes.INDICE_HALO_MAX_MM` from the edge over more than
+	  :data:`src.strokes.INDICE_FORA_MIN_MM2` (P0395, R0036: the automatic contour's scanner strip and paper): read with
+	  :func:`src.strokes.limitar_indice` on ``rgb`` (the scan), which keeps the edge whole;
+	* otherwise, edge pixels outside the stored index (4.1 (c), option A, 2026-11-26; D2: the derivation keeps the
+	  automatic outside the strokes' influence and drops small gains): the index is ``contour_px`` ∪ edge
+	  (:func:`src.strokes.indice_com_aresta`; geometric, no scan needed);
+	* otherwise ``ov["contour_px"]`` itself (the same object, so everything stays bit for bit).
+
+	The polygon is the outer pixel chain of the result (scan px). Nothing is written: the line stays as saved.
+	``info`` = ``{limitado, unido, fora_mm2, aresta_fora_px}`` (``fora_mm2`` = stored index area beyond the band,
+	``aresta_fora_px`` = edge pixels outside the stored index; both 0 without an edge). With ``rgb`` None and an index
+	to limit, the stored index comes back unchanged (``limitado`` False): the caller reads the scan and asks again."""
 	import cv2
 	from src import strokes as ST
 	idx = ov["contour_px"]
 	ar = ov.get("aresta_px")
 	if not ar:
-		return idx, {"limitado": False, "fora_mm2": 0.0}
+		return idx, {"limitado": False, "unido": False, "fora_mm2": 0.0, "aresta_fora_px": 0}
 	ci = np.asarray(idx, float).reshape(-1, 2)
 	ca = np.asarray(ar, float).reshape(-1, 2)
 	pad = int(math.ceil(ST.INDICE_HALO_MAX_MM / mm_per_px)) + 8
@@ -441,12 +449,20 @@ def index_contour_from(ov: dict, rgb: Optional[np.ndarray], mm_per_px: float) ->
 
 	mi, ma = fill(ci), fill(ca)
 	fora = ST.indice_fora_mm2(mi, ma, mm_per_px)
-	if fora <= ST.INDICE_FORA_MIN_MM2 or rgb is None:
-		return idx, {"limitado": False, "fora_mm2": round(fora, 3)}
-	crop = np.ascontiguousarray(rgb[lo[1]:hi[1] + 1, lo[0]:hi[0] + 1, :3])
-	out = ST.limitar_indice(mi, ma, crop, mm_per_px)
-	poly = ST.mascara_poligono(out)
-	return poly + org, {"limitado": True, "fora_mm2": round(fora, 3)}
+	n_fora = int((ma & ~mi).sum())
+	info = {"limitado": False, "unido": False, "fora_mm2": round(fora, 3), "aresta_fora_px": n_fora}
+	if fora > ST.INDICE_FORA_MIN_MM2:
+		if rgb is None:
+			return idx, info
+		crop = np.ascontiguousarray(rgb[lo[1]:hi[1] + 1, lo[0]:hi[0] + 1, :3])
+		out = ST.limitar_indice(mi, ma, crop, mm_per_px)        # the edge stays whole
+		info["limitado"] = True
+	elif n_fora:
+		out = ST.indice_com_aresta(mi, ma)
+		info["unido"] = True
+	else:
+		return idx, info
+	return ST.mascara_poligono(out) + org, info
 
 
 _INDEX_CACHE = {}
@@ -465,10 +481,10 @@ def index_contour(project, ov: dict, rgb: Optional[np.ndarray] = None) -> np.nda
 	hit = _INDEX_CACHE.get(key)
 	if hit is not None:
 		return hit if hit is not True else ov["contour_px"]
-	idx, info = index_contour_from(ov, None, mmpp)            # the geometric test needs no scan
+	idx, info = index_contour_from(ov, None, mmpp)            # the geometric test (and the union) needs no scan
 	if info["fora_mm2"] > ST.INDICE_FORA_MIN_MM2:
 		idx, info = index_contour_from(ov, rgb if rgb is not None else load_scan_rgb(project, sid), mmpp)
-	_INDEX_CACHE[key] = idx if info["limitado"] else True
+	_INDEX_CACHE[key] = idx if (info["limitado"] or info["unido"]) else True
 	return idx
 
 

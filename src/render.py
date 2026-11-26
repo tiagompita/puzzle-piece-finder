@@ -2047,18 +2047,20 @@ def _manual_pending(project, sid: str, pcs: list, manual: dict, old: dict) -> bo
 		W, H = OV.scan_size(project, sid)
 	except FileNotFoundError:
 		return True                         # the caller reports the missing scan
-	for q in pcs:
-		ov = manual.get(q.id)
-		if ov is None:
-			continue
-		oc = old.get(f"{q.id}__contour_px")
-		_, _, cnt = OV.rasterize_polygon(OV.index_contour(project, ov), W, H)
-		if oc is None or oc.shape != cnt.shape or not np.array_equal(oc, cnt):
-			return True
-		fl = q.flags or {}
-		if not fl.get(OV.MANUAL_FLAG) or (fl.get(OV.MANUAL_NOTE_FLAG) or "") != (ov.get("nota") or ""):
-			return True
-	return False
+	return any(_manual_stale(project, q, manual[q.id], old.get(f"{q.id}__contour_px"), W, H)
+			   for q in pcs if q.id in manual)
+
+
+def _manual_stale(project, q, ov: dict, oc, W: int, H: int) -> bool:
+	"""True if the manual override ``ov`` of piece ``q`` is not applied as the program reads it now: the stored npz
+	contour ``oc`` differs from the rasterised index (:func:`src.overrides.index_contour`; it changes with the code
+	that reads the line, e.g. the edge ∪ index of 4.1 (c), 2026-11-26), or the piece lacks ``flags.manual_override``
+	or carries another note."""
+	_, _, cnt = OV.rasterize_polygon(OV.index_contour(project, ov), W, H)
+	if oc is None or oc.shape != cnt.shape or not np.array_equal(oc, cnt):
+		return True
+	fl = q.flags or {}
+	return not fl.get(OV.MANUAL_FLAG) or (fl.get(OV.MANUAL_NOTE_FLAG) or "") != (ov.get("nota") or "")
 
 
 def rebuild_piece(project, piece: str, *, progress=None) -> dict:
@@ -2347,7 +2349,9 @@ def stale_assets(project) -> dict:
 	contour x mmpp^2 vs ``area_mm2`` beyond :data:`STALE_AREA_FRAC`); ``bbox`` (contour bbox padded like the
 	segmentation vs ``bbox``); ``recorte em falta`` / ``recorte`` (crop size != bbox w, h); ``forma`` (npz
 	``cls`` or ``side_chord_mm`` vs ``cls`` / ``chords_mm`` beyond :data:`STALE_CHORD_MM`). Manual overrides
-	are compared the same way (their npz contour is the rasterised polygon). Reads the disk only.
+	are compared the same way (their npz contour is the rasterised polygon) and also against their line
+	(``manual``: :func:`_manual_stale`, the npz contour is not the index the program reads from the line now; a change
+	of how a line is read leaves npz and log in agreement, so only this catches it). Reads the disk only.
 
 	Also (P-b, DETALHE.md §13.9; a permanent check, not a reason to re-segment): ``placements_em_falta``, the placed
 	pieces without a valid ``render/placements.json`` entry (:func:`missing_placements`), and its count.
@@ -2357,6 +2361,7 @@ def stale_assets(project) -> dict:
 	"""
 	from PIL import Image
 	out = {"sheets": {}, "pecas": {}}
+	manual = OV.latest_overrides(project)
 	by_sheet = {}
 	for p in project.pieces.values():
 		by_sheet.setdefault(p.scan_id, []).append(p)
@@ -2395,6 +2400,8 @@ def stale_assets(project) -> dict:
 							if (cls_npz != (q.cls or "") or len(ch) != len(lc)
 									or (len(ch) and float(np.abs(ch - lc).max()) > STALE_CHORD_MM)):
 								why.append("forma")
+						if q.id in manual and W is not None and _manual_stale(project, q, manual[q.id], c, W, H):
+							why.append("manual")
 					if q.crop_path:
 						fp = project.p(q.crop_path)
 						if not os.path.exists(fp):
@@ -2419,7 +2426,9 @@ def rebuild_stale(project, *, progress=print, dry_run: bool = False, segment=Non
 	"""Re-segment only the sheets listed by :func:`stale_assets` (:func:`rebuild_assets` with ``force_scans``,
 	``refresh_crops`` = the pieces with a stale crop, no ``clean`` / ``register``) and check again.
 
-	With the code that wrote the log the new silhouettes are the log's: ``eventos`` = 0. Events
+	A sheet stale only by ``manual`` (a manual line not applied as it is read now) is not re-segmented: the
+	line is applied (``piece_resegmented`` motivo ``manual``, expected after a change of how lines are read).
+	With the code that wrote the log the new silhouettes are the log's: ``eventos`` = 0. Other events
 	(``piece_resegmented``, motivo ``stale``) mean this checkout segments differently from the one that
 	wrote the log; they are named in ``aviso``. Returns ``{antes, folhas, pecas, eventos, changed, errors,
 	depois, aviso}`` (``depois`` = :func:`stale_assets` after the rebuild; None with ``dry_run``)."""
@@ -2433,12 +2442,19 @@ def rebuild_stale(project, *, progress=print, dry_run: bool = False, segment=Non
 	if progress:
 		progress(f"{st['n_pecas']} peças desatualizadas em {st['n_folhas']} folhas: {', '.join(out['folhas'])}")
 	refresh = [pid for pid, why in st["pecas"].items() if any(w.startswith("recorte") for w in why)]
-	r = rebuild_assets(project, progress=progress, scans=out["folhas"], force_scans=out["folhas"], clean=False,
+	# a sheet stale only by a manual line is not re-segmented: rebuild_assets applies the line (motivo "manual")
+	force = [sid for sid in out["folhas"] if set(st["sheets"][sid]["motivos"]) - {"manual"}]
+	r = rebuild_assets(project, progress=progress, scans=out["folhas"], force_scans=force, clean=False,
 					   register=False, motivo="stale", segment=segment, dry_run=dry_run, refresh_crops=refresh)
 	out["changed"], out["errors"] = list(r.get("changed") or []), list(r.get("errors") or [])
 	out["eventos"] = 0 if dry_run else len(out["changed"])
-	if out["changed"]:
-		out["aviso"] = (f"{len(r['changed'])} silhuetas diferentes do log ({', '.join(c['piece'] for c in r['changed'])}): "
+	seg = [c for c in out["changed"] if c.get("motivo") != "manual"]
+	man = [c["piece"] for c in out["changed"] if c.get("motivo") == "manual"]
+	if man and progress:
+		progress(f"{len(man)} contornos manuais aplicados como o código os lê agora ({', '.join(man)})"
+				 + ("" if dry_run else ": piece_resegmented (motivo manual)"))
+	if seg:
+		out["aviso"] = (f"{len(seg)} silhuetas diferentes do log ({', '.join(c['piece'] for c in seg)}): "
 						"este código segmenta de outro modo do que o que escreveu o log"
 						+ ("" if dry_run else "; registadas como piece_resegmented (motivo stale)"))
 		if progress:

@@ -10,9 +10,11 @@ __all__ = ["REPO", "HOOKS_PATH", "guarda", "python_venv", "opencv_fixado", "ambi
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 HOOKS_PATH = "tools/githooks"     # D4 (2026-11-26): core.hooksPath versionado
-# A cópia leva o que as regras e as métricas leem (log, perfil, scans, pieces/*.npz, secções, mesa, overrides,
-# render/placements.json); ficam de fora os ativos regeneráveis e pesados (≈ 260 de 309 MB).
-IGNORAR_NA_COPIA = ("crops", "overlays", "logs", "reports", "gui", "clean", "fit", "sheets")
+# A cópia leva o que as regras e as métricas leem (log, perfil, scans, pieces/*.npz, crops/, secções, mesa, overrides,
+# render/placements.json); ficam de fora os ativos regeneráveis e pesados. Os recortes vão (≈ 180 MB, ≈ 4 s) desde
+# 2026-11-26: o arranque simulado na cópia (``invariantes.arranque``, ``render.rebuild_stale``) daria todas as peças
+# como «recorte em falta» e re-segmentaria as 39 folhas.
+IGNORAR_NA_COPIA = ("overlays", "logs", "reports", "gui", "clean", "fit", "sheets")
 
 if REPO not in sys.path:
 	sys.path.insert(0, REPO)        # ``src`` importável também fora da raiz do repositório
@@ -95,12 +97,12 @@ def copiar_projeto(project_dir: str) -> tuple:
 
 
 def _ignorar(d, nomes):
-	"""``shutil.copytree(ignore=)``: :data:`IGNORAR_NA_COPIA` (na raiz: crops, overlays, logs, reports; em ``render``:
+	"""``shutil.copytree(ignore=)``: :data:`IGNORAR_NA_COPIA` (na raiz: overlays, logs, reports; em ``render``:
 	gui, clean, fit, sheets)."""
 	b = os.path.basename(os.path.normpath(d))
 	if b == "render":
 		return [n for n in nomes if n in ("gui", "clean", "fit", "sheets")]
-	return [n for n in nomes if n in ("crops", "overlays", "logs", "reports") and os.path.isdir(os.path.join(d, n))]
+	return [n for n in nomes if n in ("overlays", "logs", "reports") and os.path.isdir(os.path.join(d, n))]
 
 
 def apagar_copia(raiz: str) -> None:

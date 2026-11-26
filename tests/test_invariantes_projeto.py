@@ -1,7 +1,8 @@
 """Regras absolutas sobre o projeto vivo (4.1 b/d e 4.3 do levantamento de 2026-11-26; decisão 2 do planeamento).
 
 Correm sobre uma CÓPIA leve de ``projects/alpes`` (``tools.verify.ambiente.copiar_projeto``, feita e apagada com
-``tools/diagnostico/gui/guarda.py``); nada é escrito no projeto real. Sem ``projects/alpes/pieces`` (checkout sem os
+``tools/diagnostico/gui/guarda.py``), depois do arranque simulado (``invariantes.arranque``: o ``rebuild_stale`` que o
+servidor corre ao arrancar); nada é escrito no projeto real. Sem ``projects/alpes/pieces`` (checkout sem os
 ativos, que estão no ``.gitignore``) são saltados. Cada regra tem também um teste que a faz falhar numa perturbação
 em memória (o teste tem de conseguir falhar)."""
 import os
@@ -20,8 +21,11 @@ pytestmark = pytest.mark.skipif(not os.path.isdir(os.path.join(PROJ, "pieces")),
 
 @pytest.fixture(scope="module")
 def copia():
+	from src.state import Project
 	raiz, dst = AMB.copiar_projeto(PROJ)
 	try:
+		arr = INV.arranque(Project.open(dst))        # o projeto como o programa o vê depois de arrancar (como o verify)
+		assert not arr["erros"] and arr["restantes"] == 0, arr
 		yield dst
 	finally:
 		AMB.apagar_copia(raiz)
@@ -68,11 +72,20 @@ def test_grupos_sem_sobreposicao(pr):
 	assert r["n"] == 0, r["violacoes"][:5]
 
 
-# ------------------------------------------------------------------ 4.1 contornos manuais (b) e (d) (passam hoje)
+# ------------------------------------------------------------------ 4.1 contornos manuais (b), (c) e (d)
 def test_manual_indice_igual_ao_da_linha(manuais):
 	p, man = manuais
 	r = INV.manual_indice_da_linha(p, man)
 	assert r["manuais"] > 0
+	assert r["n"] == 0, r["violacoes"]
+
+
+def test_manual_aresta_dentro_do_indice(manuais):
+	"""4.1 (c), opção A (Tiago, 2026-11-26; regra D5): a aresta pintada fica inteira dentro do índice, 0 px fora.
+	Substitui o «não piora» contra a baseline (C) que estava em ``tools.verify.metricas``."""
+	p, man = manuais
+	r = INV.manual_aresta_no_indice(p, man)
+	assert r["com_aresta"] > 0
 	assert r["n"] == 0, r["violacoes"]
 
 
@@ -141,3 +154,17 @@ def test_manual_na_banda_apanha_indice_longe_da_aresta(manuais):
 	mexido[i] = (pid, o, rgb, mm, g, tudo, ma)
 	r = INV.manual_indice_na_banda(p, mexido)
 	assert [v["peca"] for v in r["violacoes"]] == [pid]
+
+
+def test_manual_aresta_apanha_um_pixel_fora_do_indice(manuais):
+	p, man = manuais
+	i = next(k for k, m in enumerate(man) if m[6] is not None)
+	pid, o, rgb, mm, g, mi, ma = man[i]
+	ys, xs = np.nonzero(ma)
+	k = int(np.argmin(xs))
+	mexido = list(man)
+	mi2 = mi.copy()
+	mi2[ys[k], xs[k]] = False                                            # um píxel da aresta fora do índice
+	mexido[i] = (pid, o, rgb, mm, g, mi2, ma)
+	r = INV.manual_aresta_no_indice(p, mexido)
+	assert [v["peca"] for v in r["violacoes"]] == [pid] and r["violacoes"][0]["aresta_fora_px"] >= 1

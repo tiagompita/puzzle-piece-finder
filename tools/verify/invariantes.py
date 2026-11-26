@@ -12,14 +12,33 @@ nada é escrito). Usadas por ``python -m tools.verify`` e pelos testes ``tests/t
   dois grupos, nenhum grupo sobre uma peça colocada (contado de forma independente de ``mesa.check_position``);
 * :func:`manual_indice_da_linha` — 4.1 (b): o ``contour_px`` guardado de um contorno manual é, bit a bit, o que o
   programa lê da linha do Tiago (``rasterize_polygon(index_contour(...))``);
+* :func:`manual_aresta_no_indice` — 4.1 (c), opção A (Tiago, 2026-11-26): a aresta pintada de um contorno manual fica
+  inteira dentro do índice guardado (0 px fora; regra D5);
 * :func:`manual_indice_na_banda` — 4.1 (d): índice a ≤ ``INDICE_HALO_MAX_MM`` da aresta (área fora da banda ≤
   ``INDICE_FORA_MIN_MM2``; R0036)."""
 import collections
 
 import numpy as np
 
-__all__ = ["estado", "mesma_celula", "borda_completa", "f_por_celula", "grupos_sobrepostos", "manual_indice_da_linha",
-		   "manual_indice_na_banda", "f_esperados", "REGRAS", "todas", "pares_gemeos", "simetria"]
+
+def arranque(pr) -> dict:
+	"""O que o arranque do servidor faz (``Gui._check_stale``: :func:`src.render.rebuild_stale`) na CÓPIA ``pr``,
+	antes das regras: as regras e as métricas leem o projeto como o programa o verá depois de arrancar. Devolve
+	``{desatualizados, folhas, pecas, motivos, eventos: [(acao, peca, motivo)], erros, aviso, restantes}``; um
+	projeto real com contornos manuais por aplicar (p. ex. depois de mudar a leitura de uma linha) não é uma falha,
+	fica registado aqui. Escreve só na cópia."""
+	from src import render
+	n0 = len(pr.events())
+	r = render.rebuild_stale(pr, progress=None)
+	ev = [(e.get("action"), e.get("piece"), e.get("motivo")) for e in pr.events()[n0:]]
+	st = r["antes"]
+	return {"desatualizados": st["n_pecas"], "folhas": r["folhas"], "pecas": r["pecas"],
+			"motivos": {pid: why for pid, why in sorted(st["pecas"].items())}, "eventos": ev,
+			"erros": list(r["errors"]), "aviso": r["aviso"],
+			"restantes": (r["depois"] or {}).get("n_pecas", st["n_pecas"])}
+
+__all__ = ["arranque", "estado", "mesma_celula", "borda_completa", "f_por_celula", "grupos_sobrepostos", "manual_indice_da_linha",
+		   "manual_aresta_no_indice", "manual_indice_na_banda", "f_esperados", "REGRAS", "todas", "pares_gemeos", "simetria"]
 
 
 def _res(viol: list, **kw) -> dict:
@@ -126,6 +145,20 @@ def manual_indice_da_linha(pr, manuais=None) -> dict:
 	return _res(viol, manuais=n)
 
 
+def manual_aresta_no_indice(pr, manuais=None) -> dict:
+	"""4.1 (c): píxeis da aresta pintada fora do índice guardado (npz), por contorno manual com aresta; 0 exigido."""
+	viol, n, vals = [], 0, {}
+	for pid, _o, _rgb, _mm, _g, mi, ma in (manuais if manuais is not None else _manuais(pr)):
+		if ma is None:
+			continue
+		n += 1
+		px = int((ma & ~mi).sum())
+		vals[pid] = px
+		if px > 0:
+			viol.append({"peca": pid, "aresta_fora_px": px})
+	return _res(viol, com_aresta=n, valores_px=vals)
+
+
 def manual_indice_na_banda(pr, manuais=None) -> dict:
 	from src import strokes as ST
 	viol, n, vals = [], 0, {}
@@ -141,7 +174,7 @@ def manual_indice_na_banda(pr, manuais=None) -> dict:
 
 
 REGRAS = ("estado", "mesma_celula", "borda_completa", "f_por_celula", "grupos_sobrepostos", "manual_indice_da_linha",
-		  "manual_indice_na_banda")
+		  "manual_aresta_no_indice", "manual_indice_na_banda")
 
 
 def todas(pr) -> dict:
@@ -149,7 +182,8 @@ def todas(pr) -> dict:
 	man = _manuais(pr)
 	return {"estado": estado(pr), "mesma_celula": mesma_celula(pr), "borda_completa": borda_completa(pr),
 			"f_por_celula": f_por_celula(pr), "grupos_sobrepostos": grupos_sobrepostos(pr),
-			"manual_indice_da_linha": manual_indice_da_linha(pr, man), "manual_indice_na_banda": manual_indice_na_banda(pr, man)}
+			"manual_indice_da_linha": manual_indice_da_linha(pr, man), "manual_aresta_no_indice": manual_aresta_no_indice(pr, man),
+			"manual_indice_na_banda": manual_indice_na_banda(pr, man)}
 
 
 def pares_gemeos(pr) -> list:

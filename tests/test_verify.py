@@ -10,6 +10,7 @@ import pytest
 from tools.verify import __main__ as VM
 from tools.verify import ambiente as AMB
 from tools.verify import golden as GD
+from tools.verify import invariantes as INV
 from tools.verify import metricas as MT
 
 
@@ -100,7 +101,7 @@ def test_comparar_igual():
 	(lambda a: a["pecas"]["P1"].update(cls="FFTT"), "cls"),
 	(lambda a: a["pecas"]["P1"].update(celula=[1, 2]), "fora da célula"),
 	(lambda a: a["pecas"].pop("P1"), "desapareceu"),
-	(lambda a: a["manual"]["P1"].update(aresta_fora_do_indice_mm2=0.6), "aresta fora"),
+	(lambda a: a["manual"].pop("P1"), "deixou de ser medido"),
 	(lambda a: a["simetria"]["acima_do_limiar"].append("P1|P2"), "simetria"),
 	(lambda a: a["suspeitas"].append("P1|melhor_rotacao"), "suspeitas novas"),
 ])
@@ -117,6 +118,15 @@ def test_comparar_tolera_dentro_do_limiar():
 	a["manual"]["P1"]["aresta_fora_do_indice_mm2"] = 0.54
 	a["suspeitas"] = []                               # uma suspeita que desaparece não falha
 	assert MT.comparar(a, _base(), MT.LIMIARES_INICIAIS, MAN) == []
+
+
+def test_comparar_aresta_fora_ja_nao_e_baseline():
+	"""4.1 (c) = A (Tiago, 2026-11-26): a aresta fora do índice deixou de ser «não piora» contra a baseline (C); é a
+	regra absoluta ``invariantes.manual_aresta_no_indice`` (0 px). O valor por peça fica nas métricas, informativo."""
+	a = _base()
+	a["manual"]["P1"]["aresta_fora_do_indice_mm2"] = 0.6
+	assert MT.comparar(a, _base(), MT.LIMIARES_INICIAIS, MAN) == []
+	assert "manual_aresta_no_indice" in INV.REGRAS
 
 
 def test_codigo_saida_ordem():

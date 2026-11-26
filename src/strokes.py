@@ -66,7 +66,7 @@ __all__ = [
 	"SOMBRA_TRACO_MIN_MM2", "S0_INCERTO", "GANHO_MIN_MM2", "GEMEA_RUIDO_MM",
 	"desvio_assinado", "nucleo_sombra", "delta_peca", "tracos_de_sombra", "influencia", "normalizar",
 	"raio_influencia", "indice_de_aresta",
-	"INDICE_HALO_MAX_MM", "INDICE_FORA_MIN_MM2", "PAPEL_LIMIAR", "indice_fora_mm2", "limitar_indice",
+	"INDICE_HALO_MAX_MM", "INDICE_FORA_MIN_MM2", "PAPEL_LIMIAR", "indice_fora_mm2", "limitar_indice", "indice_com_aresta",
 	"rle_encode", "rle_decode",
 ]
 
@@ -733,6 +733,15 @@ def limitar_indice(indice: np.ndarray, aresta: np.ndarray, rgb_crop: np.ndarray,
 	not_paper = _threshold_fg(rgb_crop, tri, mm_per_px, None, limiar, 0.42, 0.5)
 	out = a | (i & band & not_paper)
 	return _fill_holes(_largest(out)) | a
+
+
+def indice_com_aresta(indice: np.ndarray, aresta: np.ndarray) -> np.ndarray:
+	"""The index mask that holds the painted edge ``aresta`` whole: ``indice | aresta``, largest component, holes
+	filled (4.1 (c), option A, Tiago 2026-11-26; D5: the edge is exact, so no pixel of it may lie outside the index).
+	The derivation (:func:`normalizar`) keeps the automatic outside the strokes' influence and drops gains below
+	:data:`GANHO_MIN_MM2`; there the edge can lie 1-3 px beyond it (D2: 1086 px on 8 of 10 stroke lines)."""
+	a = np.asarray(aresta, bool)
+	return _fill_holes(_largest(np.asarray(indice, bool) | a)) | a
 
 
 # ---------------------------------------------------------------- RLE

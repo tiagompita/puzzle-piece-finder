@@ -118,3 +118,130 @@ def test_rebuild_reads_the_index_within_the_edge_band(tmp_path):
     # applied once: nothing pending, a second rebuild changes nothing
     n = len(q.events())
     assert R.rebuild_piece(q, tw)["changed"] == [] and len(q.events()) == n
+
+
+# ---------------------------------------------------------------- 4.1 (c) = A (2026-11-26): aresta ⊆ índice, exata
+def _square_poly(x0, y0, x1, y1):
+    m = np.zeros((400, 400), bool)
+    m[y0:y1, x0:x1] = True
+    return m
+
+
+def _poly(m):
+    return ST.mascara_poligono(m) + 0.0
+
+
+def _filled(pts, shape=(400, 400)):
+    m = np.zeros(shape, np.uint8)
+    cv2.fillPoly(m, [np.round(np.asarray(pts, float)).astype(np.int32).reshape(-1, 1, 2)], 1)
+    return m > 0
+
+
+def _casos_d2():
+    """As 3 origens medidas no D2 (verificacao-implementacao-1 §7), em máscaras: o índice derivado e a aresta pintada.
+    (1) fora da influência dos traços o índice é o automático e a aresta fica 1–3 px fora dele ao longo de um lado;
+    (2) um ganho da aresta < ``GANHO_MIN_MM2`` descartado do índice; (3) um píxel de canto perdido na limpeza."""
+    idx = _square_poly(100, 100, 300, 300)
+    rim = idx.copy()
+    rim[100:300, 300:302] = True                                         # 2 px fora ao longo do lado E
+    gain = idx.copy()
+    gain[180:190, 300:310] = True                                        # 100 px ≈ 0,72 mm² < GANHO_MIN_MM2
+    corner = idx.copy()
+    corner[99, 99] = True                                                # 1 px no canto NO
+    return idx, {"fora_da_influencia": rim, "ganho_pequeno": gain, "limpeza": corner}
+
+
+def test_indice_lido_contem_a_aresta_nos_3_casos_do_d2():
+    """O índice que o programa lê de uma linha ``aresta+indice`` contém a aresta inteira (0 px fora) e não muda
+    mais nada: é ``contour_px`` ∪ aresta. A linha guardada não é tocada."""
+    idx, casos = _casos_d2()
+    rgb = np.full((400, 400, 3), 200, np.uint8)
+    for nome, ar in casos.items():
+        ov = {"contour_px": _poly(idx).tolist(), "aresta_px": _poly(ar).tolist(), "convencao": OV.CONVENCAO_ARESTA}
+        guardado = json.dumps(ov)
+        for img in (None, rgb):                                          # a união é geométrica: não precisa do scan
+            out, info = OV.index_contour_from(ov, img, MMPP)
+            mo = _filled(out)
+            assert int((ar & ~mo).sum()) == 0, nome
+            assert np.array_equal(mo, idx | ar), nome
+            assert info["aresta_fora_px"] == int((ar & ~idx).sum()) > 0 and info["unido"] is True, nome
+        assert json.dumps(ov) == guardado
+
+
+def test_indice_ja_com_a_aresta_continua_verbatim():
+    idx, casos = _casos_d2()
+    ov = {"contour_px": _poly(casos["fora_da_influencia"]).tolist(), "aresta_px": _poly(idx).tolist()}
+    out, info = OV.index_contour_from(ov, None, MMPP)
+    assert out is ov["contour_px"] and info["unido"] is False and info["aresta_fora_px"] == 0
+
+
+def test_indice_do_editor_lido_contem_a_aresta_fora_da_influencia():
+    """Ponta a ponta no prado sintético: o caminho do servidor (``resolver(..., normalizar_indice=True)``) deixa
+    píxeis da aresta fora do índice derivado fora da região de influência dos traços (a origem de 86 % no D2);
+    o índice lido da linha gravada contém-na inteira."""
+    from synth import meadow_scan
+    from src import maskcmp as M
+    from src.segmentation import segment_scan
+    img, gts, patch = meadow_scan()
+    rgb = np.asarray(img)
+    off = segment_scan(img, dpi=300, normalize_rotation=False, recover_bays=False)
+    best = max((M.fill_contour(np.asarray(p["contour"]).reshape(-1, 2), gts[0].shape) for p in off["pieces"]),
+               key=lambda m: (m & gts[0]).sum() / (m | gts[0]).sum())
+    ys, xs = np.nonzero(gts[0] | best)
+    y0, x0 = ys.min() - 36, xs.min() - 36
+    sl = (slice(y0, ys.max() + 36), slice(x0, xs.max() + 36))
+    crop, auto, pt = np.ascontiguousarray(rgb[sl]), best[sl], patch[sl]
+    inner = cv2.erode(pt.astype(np.uint8), np.ones((9, 9), np.uint8)) > 0
+    cs, _ = cv2.findContours(inner.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    tr, err = ST.validar_tracos([{"ferramenta": "laco", "marca": "peca", "pontos": c.reshape(-1, 2).tolist()} for c in cs])
+    assert err is None
+    r = ST.resolver(crop, auto, tr, MMPP, normalizar_indice=True)
+    fora = r["mask_aresta"] & ~r["mask"]
+    assert (fora & ~r["influencia"]).sum() > 0                          # o defeito, à entrada
+    org = np.array([x0, y0], float)
+    ov = {"contour_px": (r["contour"] + org).tolist(), "aresta_px": (r["aresta"] + org).tolist(),
+          "convencao": OV.CONVENCAO_ARESTA}
+    out, info = OV.index_contour_from(ov, rgb, MMPP)
+    H, W = rgb.shape[:2]
+    ma, mo, mi = _filled(ov["aresta_px"], (H, W)), _filled(out, (H, W)), _filled(ov["contour_px"], (H, W))
+    assert int((ma & ~mo).sum()) == 0
+    assert np.array_equal(mo, mi | ma)
+
+
+def test_arranque_aplica_a_leitura_nova_de_uma_linha_ja_gravada(tmp_path, monkeypatch):
+    """Uma linha gravada antes da opção A (npz e log com o índice tal como estava, aresta 2 px fora num lado):
+    ``stale_assets`` lista a peça com o motivo ``manual`` e ``rebuild_stale`` (o arranque do servidor) aplica a leitura
+    nova com um ``piece_resegmented`` motivo ``manual``, sem re-segmentar a folha; depois nada fica pendente."""
+    pr, placed, tw, dec = _project(tmp_path)
+    R.rebuild_stale(pr, progress=None)                                    # o projeto sintético nasce desatualizado
+    pr = Project.open(pr.path)
+    assert R.stale_assets(pr)["n_pecas"] == 0
+    sid = pr.piece(tw).scan_id
+    c = np.asarray(pr.contour_px(tw), float)
+    m = np.zeros((800, 2000), np.uint8)
+    cv2.fillPoly(m, [np.round(c).astype(np.int32).reshape(-1, 1, 2)], 1)
+    ar = (m > 0) | np.roll(m > 0, 2, axis=1)                             # a aresta 2 px fora ao longo dos lados E
+    rec = OV.append_override(pr, tw, c, extra={"metodo": "tracos", "aresta_px": ST.mascara_poligono(ar).astype(float),
+                                               "convencao": OV.CONVENCAO_ARESTA})
+    assert "error" not in rec
+    with monkeypatch.context() as mp:                                     # o código antigo: índice = contour_px, tal e qual
+        mp.setattr(OV, "index_contour", lambda project, ov, rgb=None: ov["contour_px"])
+        assert R.rebuild_piece(pr, tw)["errors"] == []
+    q = Project.open(pr.path)
+    st = R.stale_assets(q)
+    assert st["pecas"].get(tw) == ["manual"] and list(st["sheets"]) == [sid]
+    n0 = len(q.events())
+    calls = []
+    real_seg = R.rebuild_assets
+    monkeypatch.setattr(R, "rebuild_assets", lambda *a, **k: calls.append(k) or real_seg(*a, **k))
+    r = R.rebuild_stale(q, progress=None)
+    assert r["errors"] == [] and [x["piece"] for x in r["changed"]] == [tw]
+    assert calls and not calls[0].get("force_scans")                     # só a linha manual: a folha não é re-segmentada
+    ev = q.events()[n0:]
+    assert [(e["action"], e.get("piece"), e.get("motivo")) for e in ev] == [("piece_resegmented", tw, "manual")]
+    assert r["depois"]["n_pecas"] == 0
+    with np.load(q.p("pieces", f"{sid}.npz")) as z:
+        cnt = z[f"{tw}__contour_px"]
+    mi = np.zeros((800, 2000), np.uint8)
+    cv2.fillPoly(mi, [cnt.reshape(-1, 1, 2)], 1)
+    assert int((ar & (mi == 0)).sum()) == 0

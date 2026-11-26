@@ -60,6 +60,12 @@ def _md(res: dict) -> str:
 	if res.get("regras"):
 		L += ["## Regras absolutas (0 violações exigidas)", "", "| regra | violações |", "|---|---|"]
 		L += [f"| {k} | {r['n']} |" for k, r in res["regras"].items()] + [""]
+	if res.get("arranque"):
+		a = res["arranque"]
+		L += ["## Arranque simulado na cópia (`render.rebuild_stale`)", "",
+			  f"- desatualizadas no projeto real: {a['desatualizados']} ({', '.join(a['pecas']) or 'nenhuma'}); "
+			  f"eventos na cópia: {len(a['eventos'])}; restantes: {a['restantes']}", ""]
+		L += [f"  - {pid}: {', '.join(why)}" for pid, why in a["motivos"].items()] + ([""] if a["motivos"] else [])
 	for k in ("ambiente", "golden", "vigilancia_inicio", "vigilancia_fim"):
 		L += [f"## {k}", "", "```json", json.dumps(res.get(k), ensure_ascii=False, indent=1), "```", ""]
 	return "\n".join(L)
@@ -132,6 +138,11 @@ def main(argv=None) -> int:
 		raiz, copia = AMB.copiar_projeto(project)
 		res["copia"] = copia
 		from src.state import Project
+		pr = Project.open(copia)
+		res["arranque"] = arr = INV.arranque(pr)          # o que o arranque do servidor faria (só na cópia)
+		if arr["erros"] or arr["restantes"]:
+			falhas.append(("erro", f"arranque simulado na cópia: {arr['restantes']} peças ainda desatualizadas, "
+								   f"erros {arr['erros'][:3]}"))
 		pr = Project.open(copia)
 		if args.refresh_golden:
 			ant = GD.ler()

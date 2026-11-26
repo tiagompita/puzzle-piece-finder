@@ -5,8 +5,8 @@ inteiro (que muda a cada scan e colocação). Os limiares (``tests/golden/limiar
 (``LIMIARES_INICIAIS``); nenhuma opção do comando os ajusta a partir de um resultado.
 
 Por peça: existência e estado (não descartada), célula (peças de borda: tem de ser a do manifesto), ``cls``, cordas dos
-4 lados. Contornos manuais: área da aresta fora do índice (4.1 c, regra por decidir em D2: aqui só «não piora») e o
-proxy de papel na coroa interior (informativo). Simetria: pares gémeos com as duas peças no golden e colocadas, e
+4 lados. Contornos manuais: área da aresta fora do índice e o proxy de papel na coroa interior (informativos; a
+4.1 (c) é desde 2026-11-26 uma regra absoluta, 0 px, em ``invariantes.manual_aresta_no_indice``: opção A do Tiago). Simetria: pares gémeos com as duas peças no golden e colocadas, e
 o conjunto dos que passam ``TWIN_LOCAL_MAX_MM``. Suspeitas: o conjunto ``(peça, grau)`` de ``consistency.evaluate``
 restrito às peças do golden; falha só uma suspeita NOVA (decisão 2)."""
 import numpy as np
@@ -105,13 +105,10 @@ def comparar(atual: dict, base: dict, lim: dict, man: dict) -> list:
 			d = max((abs(x - y) for x, y in zip(ca, cb)), default=0.0)
 			if d > dc + 1e-9:
 				out.append(f"{pid}: corda muda {d:.3f} mm (> {dc})")
-	da = float(lim["aresta_fora_do_indice_delta_mm2"]["valor"])
-	for pid, b in sorted(base["manual"].items()):
-		a = atual["manual"].get(pid)
-		if a is None:
+	for pid in sorted(base["manual"]):
+		if pid not in atual["manual"]:
 			out.append(f"{pid}: contorno manual com aresta deixou de ser medido")
-		elif a["aresta_fora_do_indice_mm2"] > b["aresta_fora_do_indice_mm2"] + da + 1e-9:
-			out.append(f"{pid}: aresta fora do índice {b['aresta_fora_do_indice_mm2']} -> {a['aresta_fora_do_indice_mm2']} mm²")
+	# 4.1 (c): sem «não piora» contra a baseline; é a regra absoluta invariantes.manual_aresta_no_indice (2026-11-26)
 	novos = sorted(set(atual["simetria"]["acima_do_limiar"]) - set(base["simetria"]["acima_do_limiar"]))
 	if novos:
 		out.append(f"simetria: pares novos acima de {atual['simetria']['limiar_mm']} mm: {novos}")
