@@ -3701,11 +3701,13 @@ class Gui:
 				am = cli
 			idx = ST.indice_de_aresta(am, delta["aresta0"], auto, delta, mmpp, raio, ruido_mm=ST.GEMEA_RUIDO_MM)
 			out = {"identidade": False, "tracos_ignorados": []}
+			editado = True
 		else:
 			r = ST.resolver(rgb, auto, tr, mmpp, solver=name, params=params, bg_lab=bg, normalizar_indice=True, delta=delta)
 			if "error" in r:
 				return {"error": r["error"], "delta_mm": delta["delta_mm"]}
 			am, idx = r["mask_aresta"], r["mask"]
+			editado = not r["identidade"] or (cli is not None and not np.array_equal(cli, am))
 			if cli is not None and not np.array_equal(cli, am):        # a vertex retouch of the edge
 				idx = ST.indice_de_aresta(cli, am, auto, delta, mmpp, raio, raw=r["mask_bruta"], infl=r["influencia"],
 										  tri=r["trimap_indice"])
@@ -3719,6 +3721,9 @@ class Gui:
 				# R0036: the index never goes beyond the halo band of the edge (the automatic contour's strip / paper)
 				idx = ST.limitar_indice(idx, am_mask, rgb, mmpp)
 				limitado = True
+			elif editado and (am_mask & ~idx).any():
+				# 4.1 (c) = A (2026-11-26): the saved edge whole inside the index (retouch / twin base paths too)
+				idx = ST.indice_com_aresta(idx, am_mask)
 		ipoly = ST.mascara_poligono(idx)
 		if apoly is None or len(apoly) < 3 or ipoly is None or len(ipoly) < 3:
 			return {"error": "não sobrou nenhuma peça (marca alguma zona como peça)", "delta_mm": delta["delta_mm"]}

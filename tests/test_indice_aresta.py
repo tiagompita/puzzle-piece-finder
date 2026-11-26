@@ -176,9 +176,10 @@ def test_indice_ja_com_a_aresta_continua_verbatim():
 
 
 def test_indice_do_editor_lido_contem_a_aresta_fora_da_influencia():
-    """Ponta a ponta no prado sintético: o caminho do servidor (``resolver(..., normalizar_indice=True)``) deixa
-    píxeis da aresta fora do índice derivado fora da região de influência dos traços (a origem de 86 % no D2);
-    o índice lido da linha gravada contém-na inteira."""
+    """Ponta a ponta no prado sintético. Uma linha gravada antes da união na gravação (o índice = só a derivação
+    ``normalizar``, que deixa píxeis da aresta fora dele fora da região de influência dos traços: a origem de 86 % no
+    D2): o índice lido contém a aresta inteira. O caminho do servidor (``resolver(..., normalizar_indice=True)``)
+    já grava um índice que a contém (ronda 2, 2026-11-26)."""
     from synth import meadow_scan
     from src import maskcmp as M
     from src.segmentation import segment_scan
@@ -196,10 +197,13 @@ def test_indice_do_editor_lido_contem_a_aresta_fora_da_influencia():
     tr, err = ST.validar_tracos([{"ferramenta": "laco", "marca": "peca", "pontos": c.reshape(-1, 2).tolist()} for c in cs])
     assert err is None
     r = ST.resolver(crop, auto, tr, MMPP, normalizar_indice=True)
-    fora = r["mask_aresta"] & ~r["mask"]
-    assert (fora & ~r["influencia"]).sum() > 0                          # o defeito, à entrada
+    assert not (r["mask_aresta"] & ~r["mask"]).any()                    # gravação nova: a aresta já está dentro
+    d = ST.delta_peca(crop, auto, MMPP)
+    antigo = ST.normalizar(r["mask_bruta"], auto, d["halo"], r["influencia"], r["delta_mm"], MMPP, r["trimap_indice"])
+    fora = r["mask_aresta"] & ~antigo
+    assert (fora & ~r["influencia"]).sum() > 0                          # o defeito da linha antiga, à entrada
     org = np.array([x0, y0], float)
-    ov = {"contour_px": (r["contour"] + org).tolist(), "aresta_px": (r["aresta"] + org).tolist(),
+    ov = {"contour_px": (ST.mascara_poligono(antigo) + org).tolist(), "aresta_px": (r["aresta"] + org).tolist(),
           "convencao": OV.CONVENCAO_ARESTA}
     out, info = OV.index_contour_from(ov, rgb, MMPP)
     H, W = rgb.shape[:2]

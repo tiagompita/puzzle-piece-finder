@@ -44,7 +44,10 @@ summary δ (minus the median signed offset of ``S0`` to the automatic boundary, 
 strokes may change (their footprint grown by band + reach + δ; a lasso whole). :func:`normalizar` builds
 the saved mask: the automatic outside ``I`` (a save without strokes is the identity), ``raw | H`` inside
 ``I`` (a ``fundo`` stroke on the shadow line is a no-op by convention; a deeper cut survives), and regions
-gained beyond the automatic (a recovered bite) grown by δ so they carry the same halo as the rest.
+gained beyond the automatic (a recovered bite) grown by δ so they carry the same halo as the rest. With an
+effective stroke :func:`resolver` then adds the painted edge (:func:`indice_com_aresta`; 4.1 (c) = A, Tiago
+2026-11-26: the edge is exact, D5, so the index holds it whole; the derivation alone left 1-3 px of it outside,
+D2).
 
 The RLE (:func:`rle_encode` / :func:`rle_decode`) is row-major, runs alternating background /
 piece and starting with background (a first run of 0 when the first pixel is piece).
@@ -477,7 +480,8 @@ def resolver(rgb_crop: np.ndarray, auto_mask: np.ndarray, tracos, mm_per_px: flo
 	``contour_px`` stores and shape / twin / fit read) is derived from it in the convention of the index
 	(:func:`normalizar`; ``delta`` = a cached :func:`delta_peca` of the same crop / solver, else computed
 	here): the ``fundo`` strokes that only mark the shadow (:func:`tracos_de_sombra`) are dropped for it
-	(listed in ``tracos_ignorados``, a diagnostic of the index only). Also ``mask_bruta`` (the raw mask the
+	(listed in ``tracos_ignorados``, a diagnostic of the index only); with an effective stroke the index also holds
+	the edge whole (:func:`indice_com_aresta`, 4.1 (c) = A, 2026-11-26; identity stays the automatic mask). Also ``mask_bruta`` (the raw mask the
 	index is derived from), ``trimap_indice``, ``influencia``, ``delta_mm``, ``identidade`` (no stroke
 	effective for the index: the index IS the automatic mask, bit for bit) and ``indice_automatico`` (the
 	index mask equals ``auto_mask`` bit for bit, with or without effective strokes). The raw path (default)
@@ -512,6 +516,8 @@ def resolver(rgb_crop: np.ndarray, auto_mask: np.ndarray, tracos, mm_per_px: flo
 		m_i = limpar(SOLVERS[solver](rgb_crop, tri_i, mm_per_px, bg_lab=bg_lab, **pr), mm_per_px, tri_i, limpeza_mm)
 	infl = influencia(tracos, auto.shape, raio_influencia(pr, delta["delta_mm"], mm_per_px, banda_mm))
 	idx = normalizar(m_i, auto, delta["halo"], infl, delta["delta_mm"], mm_per_px, tri_i, limpeza_mm)
+	if infl.any():
+		idx = indice_com_aresta(idx, mask_aresta)       # 4.1 (c) = A: the edge whole inside the index (not on identity)
 	ipoly = mascara_poligono(idx)
 	if ipoly is None or len(ipoly) < 3:
 		return {"error": "não sobrou nenhuma peça (marca alguma zona como peça)"}
