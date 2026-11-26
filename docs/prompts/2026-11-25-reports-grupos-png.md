@@ -75,5 +75,42 @@ Relatório final (palavra por palavra no «Resultado»): commits; ficheiros; por
 
 ## Resultado
 
-(por preencher)
+**Commits:** `d6672aa` (dados do Tiago 25/11), `9dfb6f5` (prompt), `503103b` (A), `c66faf6` + `c2f9c90` (B), `d2e49e9` + `c8272bc` (C), `e729ea5` (D), e o commit que fecha este ficheiro com os registos das falhas do E.
+
+**Bloco A [V]:** `/api/grupos` com `reports_abertos` e `tem_report`. Custo na cópia, 5 pedidos quentes, mediana 55,2 → 54,1 ms. Não há cache no servidor a invalidar. A GUI nova passa a ouvir `suspeitas_changed` e recarrega os grupos. A flag fica vermelha na peça, em cada linha do painel do grupo, no título e na linha da lista, com `aria-label`/`title` «Tem um report aberto» e o texto «Já reportaste…». Contraste de #ff6b5f: 4,27–6,55:1 em todos os fundos do tema escuro. A GUI nova só tem tema escuro; sobre branco daria 2,79:1. Seta `#grp-voltar` no cabeçalho (sticky, 44 px); o link de baixo saiu. Testes: `tests/test_server_grupos_reports.py` (4) e `tests/test_gui_novo_reports_grupos.py` (4); falhavam antes, menos 1 de servidor que já passava. Nenhum teste existente alterado. Capturas: `docs/gui/screenshots/2026-11-25/A_*.png`. O fecho pela CLI está testado com o SSE emitido à mão [NT pelo caminho da mudança externa do log].
+
+**Bloco B: causa provada [V].** `carregarPngs` fazia `pngsP = (async () => {try…finally{pngsP = null}})()`. Sem nada a pedir, o corpo corria todo de forma síncrona e o `finally` corria antes da atribuição. `pngsP` ficava para sempre com uma promessa resolvida, e cada chamada seguinte só marcava `pngsDeNovo` e saía. Depois de uma escrita (`S.ver` novo), a imagem nunca era pedida. Evidência: 0 pedidos de PNG depois da escrita, `pngsP` verdadeiro, nenhum `decode` pendente. H1, H3 e H4 eliminadas: o PNG de G0080 tem conteúdo e o rot está certo. Correção em `c66faf6`: `await null` antes do `try`, `descarregarPng` com 2 novas tentativas (recuo de 500 e 1500 ms) e erro para o registo, e um `<image>` sem `href` chama `carregarPngs` no redesenho. A regra F4b mantém-se e `board.js` não foi tocado. Testes `tests/test_gui_novo_b_grupos_png.py` (8): 4 falhavam antes, 8 passam depois. Capturas: `B_grupo_{mostrado,movido}_{1366,390}.png`, com a imagem visível.
+- **B4:** arrasto com 32 grupos [V]: máx. 16,8 ms, 0 frames > 25 ms. «Abrir + 1.º salto» **[F pelo critério]**: −0,139 s, IC t [−0,450, +0,172] contra `d72b194` (limite +0,10). A máquina abrandou a meio da série. Não foi repetido nem ajustado. Dados em `docs/diagnostico/gui/abertura-b-png/`.
+- **[NT] na máquina do Tiago:** `git pull`, recarregar e «Mostrar» → mover → ver a imagem.
+
+**Bloco C, R0036.**
+- **Onde se estragava [V]:** o override em uso é o de 22:16:40 (`latest_overrides`). A aresta pintada pelo Tiago está exata (BFBT; 17,90 / 17,71 / 17,12 / 18,22 mm). O índice (`contour_px`) que `strokes.normalizar` deriva ao gravar ficou igual ao automático: o halo da convenção do índice não tinha limite de distância e apanhou a faixa escura do scanner, até 13,85 mm fora da aresta. Daí vinham um canto na faixa, BBFT 22,00 / 20,21 / 21,36 / 18,18, θ +8,19° e o centro deslocado 5,9 mm (peça «torta» e cortada à esquerda).
+- **Correção `d2e49e9`:** `strokes.limitar_indice` (`INDICE_HALO_MAX_MM` 2,0: aresta + índice a ≤ 2 mm que não seja papel; a aresta fica sempre inteira) e `overrides.index_contour[_from]`, usados em `render.rebuild_assets`, `render._manual_pending`, `server._dense` e `server._solve_a2`. Resultado: BFBT 18,31 / 18,53 / 18,23 / 18,38 mm, 359,4 mm², θ −8,40°, PNG do grupo inteiro e direito. O contorno do Tiago ficou intacto: `overrides.jsonl` igual byte a byte, nada acrescentado.
+- **Testes e comparações:** `tests/test_indice_aresta.py` (3) falhava antes. E-sym sem código de segmentação tocado; os testes slow do E-sym e das gémeas reais passam. As outras 9 linhas manuais ativas e as 25 só de ecrã estão dentro da banda (iguais). Em S0013 só mudou P0395.
+- **Dados reais (`c8272bc`):** 1 evento `piece_resegmented` (2026-11-25T23:38:59, P0395, motivo `manual`), pelo caminho normal `rebuild_piece`. Invariantes OK.
+- **Identidade:** P0395 é um segundo scan de **P0021 em (47,56)** (relva, fila de baixo). Forma: 0,470 mm. Imagem: NCC 0,965 na tabela do `RELATORIO.md`, contra ≤ 0,585 para as outras. As outras do top-5 por forma são céu, com imagem incompatível: P0782 0,390, P0005 0,482 (gémea), P0755, P0820. Nota crítica: os rótulos da figura `07_identidade_top5.png` dizem NCC 0,355 para P0021 e não 0,965. Parece outra variante da métrica (sem registo); a ordem é a mesma e as imagens são visivelmente a mesma peça, mas a incoerência fica por explicar [NT]. A troca e a hipótese de não ser borda foram rejeitadas. Sem arte na fila 47.
+- **Estado:** **R0036 aberto.** O `same_as` P0395 → P0021 não tem evento de desfazer, por isso não foi aplicado. Ancorar G0033 poria uma 2.ª peça em (47,56). Imagens e relatório em `docs/diagnostico/reports/P0395-R0036/`.
+- **C6:** nenhuma outra peça com contorno manual mudou.
+
+**Bloco D [V]:** o texto do Montar já tinha sido corrigido em `001ca99` («ver em «Grupos soltos»», `#m-ver-grupos`), coberto por `test_empty_screen_counts_groups_only`, por isso não houve teste novo. Capturas `D_*.png`. Atualizados CLAUDE.md (D5, D6, D2, linhas de strokes/overrides e web/novo), ARCHITECTURE.md, `docs/decisoes.md` (2026-11-25) e HANDOFF. `graphify update .` corrido.
+
+**Bloco E:**
+- **Suite completa (com slow):** 927 passed, 1 skipped, **1 failed**: `test_gui_novo_f2b.py::test_lupa_box_slides_in_at_most_200ms_and_not_with_reduced_motion`.
+- **3 corridas de `tests/test_gui*.py`:** cada uma com 327 passed e **1 failed**, sempre num teste diferente:
+  - (1) `test_b3_falha_da_descarga_tenta_de_novo_e_vai_para_o_registo`: `EncodingError` no `decode` do próprio teste, 500 no registo de rede;
+  - (2) `test_b2_carregar_sem_nada_a_pedir_nao_fica_em_voo`: `pngsP === null` falso no instante da asserção;
+  - (3) `test_gui_fila.py::test_queue_tab_and_live_job[390-844]`: 2 botões de atividade em vez de 1.
+- Não repeti nenhuma corrida. As secções de falha com o registo de rede estão em `docs/diagnostico/gui/E-2026-11-25/falha_*.txt`. **Dois dos testes intermitentes são novos desta ronda (b2, b3).** O b2 afirma um estado momentâneo, e pode haver um PNG legítimo em voo (miniaturas). São fragilidade do teste ou um defeito real [NT].
+- **Vigilância:** 39/39 no início, a meio e no fim; `git status` limpo; co-author em `origin/main..main` = 0.
+
+**Push:** `git push origin main`; o hash remoto vai no relatório do chat (`git ls-remote origin main`), porque é o do commit que fecha este ficheiro.
+
+**Decisões pendentes para o Tiago:**
+1. Confirmar na mesa que a peça em (47,56) é a da folha `montado_p05` (`07_identidade_top5.png`). Depois, autorizar o `same_as` P0395 → P0021 (sem desfazer) ou pedir primeiro um evento que o desfaça; só então se fecha o R0036.
+2. «Abrir + 1.º salto» [F] (+0,172 no limite do IC, máquina a abrandar): repetir 10 pares com a máquina parada ou aceitar.
+3. Os testes novos b2/b3 intermitentes (2 em 3 corridas): pôr o implementer a torná-los robustos (esperar pelo estado em vez de o ler num instante) ou investigar se há defeito real.
+4. Reparos das capturas do B: o painel do grupo abre descido depois do «Mostrar» (1366), e um tracejado «lugar provável» aparece junto a um grupo cujo painel diz «Ainda sem lugar provável fiável».
+5. P0395 continua com `touches_frame: true` herdado (informativo); `overrides --pares` ainda mede o `contour_px` gravado e não o índice efetivo.
+6. Tema claro: se vier a existir, a flag precisa de um vermelho mais escuro (#ff6b5f sobre branco dá 2,79:1).
+7. A incoerência NCC 0,965 (tabela) / 0,355 (figura) no diagnóstico de P0395.
 

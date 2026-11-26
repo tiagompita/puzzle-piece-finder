@@ -1,0 +1,66 @@
+================================== FAILURES ===================================
+______ test_lupa_box_slides_in_at_most_200ms_and_not_with_reduced_motion ______
+
+base = ('http://127.0.0.1:52246', <src.server.Gui object at 0x00000248EF2D49E0>, 'P0002')
+browser = <Browser type=<BrowserType name=chromium executable_path=C:\Users\tiago\AppData\Local\ms-playwright\chromium-1248\chrome-win64\chrome.exe> version=156.0.8078.4>
+
+    def test_lupa_box_slides_in_at_most_200ms_and_not_with_reduced_motion(base, browser):
+    	url, gui, tw = base
+    	pg, errs = _open(browser, url)
+    	try:
+    		pg.click("#lupa-b-peca")
+    		a = pg.evaluate("""(() => { const el = document.querySelector('#lupa-c-peca'); const an = el.getAnimations();
+    			return an.map((x) => ({ n: x.animationName, d: x.effect.getComputedTiming().duration })); })()""")
+>   		assert a and a[0]["n"] == "lupa-abre" and 0 < a[0]["d"] <= 200, a
+E     AssertionError: []
+E     assert ([])
+
+tests\test_gui_novo_f2b.py:202: AssertionError
+----------------------------- Captured log setup ------------------------------
+INFO     ppf.evento:state.py:198 scan_added S0001\nINFO     ppf.evento:state.py:198 piece_added P0001\nINFO     ppf.evento:state.py:198 piece_added P0002\nINFO     ppf.evento:state.py:198 piece_added P0003\nINFO     ppf.evento:state.py:198 placed P0001 (2,3) origem manual fonte log\nINFO     ppf.progresso:server.py:1450 tiras e lados das pe\xe7as montadas e soltas: 6/6 (1 s)\nINFO     ppf.buracos:server.py:1508 buracos: 3 buracos \xd7 2 soltas em 0.8 s; alta 0 (0 com \u2265 2 viz.), m\xe9dia 2, sem 1; tiras calculadas 3, em cache 0\nINFO     ppf.evento:state.py:198 fetch_listed\nINFO     ppf.consulta:query.py:926 consulta completa: 3 pe\xe7as, 2 soltas \u2192 1 propostas (0 suprimidas) em 0.1 s; passos: escrever 0.1\nINFO     ppf.evento:state.py:198 cell_occupied_by_user (2,4)
+------------------------------ Captured log call ------------------------------
+INFO     ppf.buracos:server.py:1483 buracos: a recalcular o ranking (vers\xe3o 2295)\nINFO     ppf.cache:server.py:1288 tiras das pe\xe7as: 0 em cache (render/fit/strips.npz); a primeira lista de buracos calcula-as (\u2248 0,3 s por pe\xe7a)\nINFO     ppf.progresso:server.py:1450 tiras e lados das pe\xe7as montadas e soltas: 0/6 (0 s)\nINFO     ppf.cache:server.py:1783 tabuleiro completo em 0.1 s (vers\xe3o do log None \u2192 2295, gatilho: pedido)
+----- Registo de rede das paginas (pedidos falhados, HTTP >= 400, erros) ------
+requestfailed GET http://127.0.0.1:52246/novo/novo.css -> net::ERR_NO_BUFFER_SPACE (pagina http://127.0.0.1:52246/novo/)
+console.error Failed to load resource: net::ERR_NO_BUFFER_SPACE (pagina http://127.0.0.1:52246/novo/)
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\DEKSTOP\puzzle_piece_finder\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests\test_gui_novo.py:587
+  D:\DEKSTOP\puzzle_piece_finder\tests\test_gui_novo.py:587: SyntaxWarning: invalid escape sequence '\/'
+    bad = pg.evaluate("""[...document.querySelectorAll('.ico')].filter((e) => e.offsetParent !== null)
+
+tests/test_gui_fila.py: 12 warnings
+tests/test_ingest_multi.py: 44 warnings
+tests/test_overrides.py: 42 warnings
+tests/test_placements_completo.py: 60 warnings
+tests/test_render.py: 80 warnings
+tests/test_segment_scan_esym.py: 120 warnings
+tests/test_segmentation.py: 249 warnings
+tests/test_server.py: 16 warnings
+tests/test_server_queue.py: 30 warnings
+tests/test_state.py: 22 warnings
+tests/test_strokes.py: 16 warnings
+tests/test_twin_real.py: 120 warnings
+  D:\DEKSTOP\puzzle_piece_finder\src\segmentation.py:1737: DeprecationWarning: 'mode' parameter is deprecated and will be removed in Pillow 13 (2026-10-15)
+    "image": Image.fromarray(img, "RGB"),
+
+tests/test_gui_fila.py: 12 warnings
+tests/test_ingest_multi.py: 44 warnings
+tests/test_overrides.py: 42 warnings
+tests/test_placements_completo.py: 60 warnings
+tests/test_render.py: 80 warnings
+tests/test_segment_scan_esym.py: 120 warnings
+tests/test_segmentation.py: 249 warnings
+tests/test_server.py: 16 warnings
+tests/test_server_queue.py: 30 warnings
+tests/test_state.py: 22 warnings
+tests/test_strokes.py: 16 warnings
+tests/test_twin_real.py: 120 warnings
+  D:\DEKSTOP\puzzle_piece_finder\src\segmentation.py:1738: DeprecationWarning: 'mode' parameter is deprecated and will be removed in Pillow 13 (2026-10-15)
+    "mask": Image.fromarray(mask_full, "L"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
