@@ -59,10 +59,11 @@ def git_estado() -> dict:
 
 
 def hooks_path() -> dict:
-	"""``git config core.hooksPath`` tem de ser :data:`HOOKS_PATH` (decisão 3 do planeamento, 2026-11-26)."""
+	"""``git config core.hooksPath`` tem de ser :data:`HOOKS_PATH` (decisão 3 do planeamento, 2026-11-26) e o hook
+	``commit-msg`` tem de existir lá (D4)."""
 	v = _git("config", "core.hooksPath")
 	hook = os.path.join(REPO, *HOOKS_PATH.split("/"), "commit-msg")
-	ok = v.replace("\\", "/").rstrip("/") == HOOKS_PATH
+	ok = v.replace("\\", "/").rstrip("/") == HOOKS_PATH and os.path.isfile(hook)
 	return {"ok": bool(ok), "valor": v, "esperado": HOOKS_PATH, "hook_existe": os.path.isfile(hook),
 			"ativar": f"git config core.hooksPath {HOOKS_PATH}"}
 

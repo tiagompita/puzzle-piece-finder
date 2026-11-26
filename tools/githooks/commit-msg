@@ -1,0 +1,30 @@
+#!/bin/sh
+# commit-msg (D4 de 2026-11-26): recusa Claude como autor ou co-autor da mensagem.
+# Ativar uma vez por clone: git config core.hooksPath tools/githooks
+#
+# Recusa:
+#   - qualquer trailer Co-Authored-By (CLAUDE.md: «Nunca te adiciones como co-author»);
+#   - «Generated with/by ... Claude», «Gerado com/por ... Claude»;
+#   - trailers de autoria com Claude (Signed-off-by, Author, Autor, Assinado, Reviewed-by, Helped-by, ...: Claude);
+#   - uma linha de assinatura só com Claude («-- Claude», «— Claude», «Claude Code»);
+#   - o endereço noreply@anthropic.com.
+# Aceita caminhos e nomes de ficheiros como .claude/, CLAUDE.md ou claude.md (retirados antes de procurar «claude»)
+# e qualquer menção a Claude na prosa que não seja autoria.
+msg_file="$1"
+# sem o que fica abaixo da linha de tesoura (as linhas «#» ficam: com -m/-F o git guarda-as na mensagem)
+corpo=$(sed -e '/^# -* >8 -*$/,$d' "$msg_file")
+# caminhos/nomes que contêm «claude» e não são autoria
+limpo=$(printf '%s\n' "$corpo" | sed -E -e 's#[[:alnum:]_./-]*\.claude/[[:alnum:]_./-]*##gI' -e 's#[[:alnum:]_./-]*claude\.md##gI')
+
+recusa() {
+	echo "commit-msg: mensagem recusada ($1)." >&2
+	echo "  Regra do projeto: sem Co-Authored-By e sem Claude como autor ou co-autor (docs/decisoes.md, 2026-11-26, D4)." >&2
+	exit 1
+}
+
+printf '%s\n' "$corpo" | grep -Eiq '^[[:space:]]*co-authored-by[[:space:]]*:' && recusa "trailer Co-Authored-By"
+printf '%s\n' "$corpo" | grep -Eiq 'noreply@anthropic\.com' && recusa "endereço noreply@anthropic.com"
+printf '%s\n' "$limpo" | grep -Eiq '(generated|gerad[oa]|escrit[oa]|feit[oa])[[:space:]]+(with|by|com|por|pelo|pela)[^[:alnum:]]*([[:alnum:]]+[[:space:]]+){0,2}\[?claude' && recusa "«gerado com Claude»"
+printf '%s\n' "$limpo" | grep -Eiq '^[[:space:]]*(signed-off-by|author|autor|autora|assinado|assinatura|reviewed-by|helped-by|co-autor|coautor|co-author|written-by)[[:space:]]*:.*claude' && recusa "Claude num trailer de autoria"
+printf '%s\n' "$limpo" | grep -Eiq '^[[:space:]]*([-—–]+|🤖)?[[:space:]]*\[?claude( code)?\]?[[:space:]]*(\(.*\))?[[:space:]]*$' && recusa "linha de assinatura Claude"
+exit 0
