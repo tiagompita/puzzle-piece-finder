@@ -23,7 +23,7 @@ Cada lado: tipo F/T/B, corda em mm, perfil normalizado (64 pontos). Compatível:
 - Pesos como constantes nomeadas; shortlist + confiança por gap diferencial (aceitar se d₁ ≤ 0,5 mm e d₂/d₁ ≥ 1,5 no gémeo).
 
 ## Simetria: vem do perfil, nunca fixa no código
-A célula gémea é `perfil.simetria(l, c)` (perfil do puzzle, M13, §11 do plano). **Nunca escrever `(48 − l, 65 − c)` no código**; só o perfil deste puzzle a define.
+A célula gémea é `profile.twin(l, c)` (perfil do puzzle, M13, §11 do plano). **Nunca escrever `(48 − l, 65 − c)` no código**; só o perfil deste puzzle a define (verificado por `tests/test_lint.py::test_regra_gemea_so_no_perfil`, também em `tools/`).
 
 ## Arquitetura
 - A **secção montada** continua a ser a referência local de alta resolução (frente a 300 dpi): localizar por canto e escala conhecidos, casar as soltas contra a fronteira.
@@ -38,7 +38,7 @@ A célula gémea é `perfil.simetria(l, c)` (perfil do puzzle, M13, §11 do plan
 Antes de cada commit que toque `src/`, `tools/verify/`, `tests/golden/` ou `projects/`: `python -m tools.verify` (exit ≠ 0 = parar e reportar; nunca congelar a baseline para passar; regras e códigos de saída na skill `cv-visual-verification`, «Verificação»). Aqui pesa em especial: `f_por_celula` (lados F = lados da célula fora da grelha), `borda_completa`, `mesma_celula` e, nas peças do golden, classe, cordas (±0,3 mm), célula de borda e pares gémeos novos acima de `TWIN_LOCAL_MAX_MM`.
 
 Testes que cobrem as regras desta skill:
-- simetria só do perfil: `tests/test_profile.py::test_rot180_twin`, `::test_translate_and_none`, `tests/test_twin.py::test_profile_translate_drives_twin_cell`; exceção da simetria só no perfil e «alpes» fora de `src/`: `tests/test_simetria.py`;
+- simetria só do perfil: `tests/test_lint.py::test_regra_gemea_so_no_perfil` (nenhuma fórmula à mão fora de `src/profile.py`), `tests/test_profile.py::test_rot180_twin`, `::test_translate_and_none`, `tests/test_twin.py::test_profile_translate_drives_twin_cell`; exceção da simetria só no perfil e «alpes» fora de `src/`: `tests/test_simetria.py`;
 - imagem obrigatória e nunca promove: `tests/test_twin.py::test_image_demotes_wrong_colour_and_never_promotes`; zona sem `dE_p90` nunca dá `aceite`: `tests/test_twin_pctl_zone.py::test_zone_without_p90_never_accepts`;
 - candidato único não é proposto: `tests/test_twin.py::test_single_candidate_not_proposed`; lado alterado não aceite: `::test_altered_side_not_accepted`;
 - molde do buraco: uma vizinha nunca dá `alta` (`tests/test_fit.py::test_single_neighbour_is_never_alta`), F obrigatório onde a célula é de borda (`::test_f_rule_requires_flat_sides_where_the_cell_is_border`), filtro de cordas suave (`::test_soft_chord_filter_recovers_a_side_that_the_hard_filter_kills`), afetação um-para-um (`::test_assign_gives_each_piece_one_hole`), pausa a ≥ 3 rejeições nas últimas 20 (`tests/test_fit_alta.py`);

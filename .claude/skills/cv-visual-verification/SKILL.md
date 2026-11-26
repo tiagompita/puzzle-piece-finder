@@ -28,7 +28,7 @@ O script não dar erro não prova nada. Uma mudança de CV só está feita quand
 
 ## 4. Regras do projeto que se aplicam aqui
 - `src/matching.py`, `src/segmentation.py`, o scoring de `src/features.py` e os futuros `src/shape.py`, `src/fit.py`, `src/twin.py` são **módulos críticos**: mudança algorítmica é desenhada ou revista pelo `implementer` (ver `CLAUDE.md`).
-- Tabs, `__all__`, docstrings; helpers puros separados de I/O; em erro, `{'error': str, ...}`.
+- Tabs, `__all__` (`tests/test_lint.py::test_modulos_src_com_tabs_e_all`), docstrings; helpers puros separados de I/O; em erro, `{'error': str, ...}`.
 - `pytest tests/` verde em OpenCV 4.11 e 5.0. Um bug novo ganha um teste sintético que falhe antes da correção.
 
 ## Verificação (o que é automático e o que continua a ser juízo)
@@ -42,7 +42,8 @@ Antes de cada commit que toque `src/`, `tools/verify/`, `tests/golden/` ou `proj
 Testes que cobrem as regras desta skill (correr com `.venv/Scripts/python.exe -m pytest tests/`):
 - E-sym com o contorno de `segment_scan` (gémeo ≤ 0,5 mm, top-1 20/20): `tests/test_segment_scan_esym.py::test_twins_by_free_shape` e `::test_counts_and_grid` (`slow`); E-sym e E-real-2 na cadeia `find_twin`: `tests/test_twin_real.py::test_esym_find_twin`, `::test_ereal2_find_twin`;
 - peça junto ao bordo do scan e à tira branca mantida (S1, S3): `tests/test_segmentation.py::test_piece_near_frame_is_kept`, `::test_piece_touching_white_scan_strip_is_kept`;
-- simetria dos pares gémeos colocados: `tests/test_simetria.py::test_simetria_dos_pares_colocados`.
+- simetria dos pares gémeos colocados: `tests/test_simetria.py::test_simetria_dos_pares_colocados`;
+- lint (`tests/test_lint.py`): módulos de `src/` com tabs e `__all__`, regra da gémea só no perfil, nenhuma espera fixa nova nos testes.
 
 Continua a ser **juízo visual** (nenhum teste o substitui): abrir e olhar as imagens de debug (sombra, mordidelas, peças fundidas, fragmentos, orla verde); decidir se uma diferença de contorno é melhor ou pior quando a métrica não a vê (um RMS global esconde uma mordida local); E-fundo/E-real fora dos testes; mudar uma constante afinada (números antes/depois no relatório); a OpenCV 5.0; o teste sintético que um bug novo tem de ganhar.
 

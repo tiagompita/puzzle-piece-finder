@@ -19,7 +19,7 @@ Memória de 188 soltas, todas por src.segmentation.segment_scan:
   BD    ereal.loose_pieces()                                        28 interiores do canto BD (gémeas = células UL, fora)
   E-sym ereal.esym_pool()                                           40 peças de borda A1 / B2, 20 pares gémeos no pool
 Coordenadas BE (images/pieces/gt_canto_BE.md): k = linha a contar de baixo, j = coluna a contar da esquerda;
-(l, c) = (48 - k, j); gémea de BE(k, j) = célula global (k, 65 - j). A simetria está isolada em twin_cell().
+(l, c) = (48 - k, j); gémea de BE(k, j) = célula global (k, 65 - j). A simetria vem do perfil (twin_cell() -> PuzzleProfile.twin).
 
 Consulta (regras 1-4 = forma; 5 = imagem):
   1 classe topológica (analyse_v2 cls) igual; 2 cordas dos lados homólogos (best_k de shape_dist) |ΔL| <= 1 mm
@@ -46,6 +46,7 @@ import esym as es  # noqa: E402
 import ereal as er  # noqa: E402  (main() só corre como script)
 from shapelib import MM, shape_dist  # noqa: E402
 from dist import free_dist, aligned_b  # noqa: E402
+from src.profile import PuzzleProfile  # noqa: E402
 
 sx = er.sx
 REPO, OUT = sc.REPO, sc.OUT
@@ -66,7 +67,8 @@ CONF_MM = 3.0               # confirmação: a proposta atual é a mesma peça s
 F_CONF = os.path.join(OUT, "ereal2_confirmacoes.json")
 MARGIN_MIN = 1.5            # regra 4: margem d2/d1
 L_SHIFT = 4.8               # L*scan ≈ L*arte + 4,8 (SECCAO.md §C): subtrai-se ao scan
-NROW, NCOL = 47, 64         # grelha do puzzle (perfil do puzzle, M13)
+PROFILE = PuzzleProfile.load(os.path.join(REPO, "projects", "alpes", "puzzle.json"))   # grelha e simetria (M13)
+NROW, NCOL = PROFILE.rows, PROFILE.cols
 ART_Y0, ART_W, ART_H = 42, 1600, 1115   # a arte ocupa as linhas 42-1156 do ficheiro (SECCAO.md)
 CELL_W, CELL_H = ART_W / NCOL, ART_H / NROW
 CANVAS = (43, 41)           # (W, H) do recorte à escala da arte: célula + ≈ 0,35 célula de orla (abas)
@@ -92,9 +94,14 @@ def fin(v):
 
 
 def twin_cell(l, c):
-	"""Célula gémea por rotação de 180° da peça (l, c) (1-based). Perfil do puzzle (M13): aqui fixa para o
-	Clementoni 3000 64 x 47, (48 - l, 65 - c). Aceita escalares ou arrays."""
-	return NROW + 1 - l, NCOL + 1 - c
+	"""Célula gémea da peça (l, c) (1-based) pela regra do perfil do puzzle (``PuzzleProfile.twin``, a única
+	implementação da simetria; M13). Aceita escalares (devolve um tuplo) ou arrays (devolve dois arrays)."""
+	if np.ndim(l) == 0 and np.ndim(c) == 0:
+		return PROFILE.twin(int(l), int(c))
+	Lb, Cb = np.broadcast_arrays(np.asarray(l), np.asarray(c))
+	T = [PROFILE.twin(int(a), int(b)) for a, b in zip(Lb.ravel(), Cb.ravel())]
+	return (np.array([t[0] for t in T], dtype=Lb.dtype).reshape(Lb.shape),
+			np.array([t[1] for t in T], dtype=Cb.dtype).reshape(Cb.shape))
 
 
 def thresholds():
@@ -332,7 +339,7 @@ def build_memory(force):
 		name, i = p["key"]
 		cA = es.col_A(i) if name == "A1" else es.col_A(es.twin(i))
 		p.update(src="ES", lab=f"{name}({i // 5},{i % 5})", img=os.path.join(REPO, sc.SCANS[name]),
-				 cell=(1, cA) if name == "A1" else (NROW, NCOL + 1 - cA), esym_i=i, esym_name=name)
+				 cell=(1, cA) if name == "A1" else twin_cell(1, cA), esym_i=i, esym_name=name)
 	D = dict(BE=sorted(BE, key=lambda p: (p["k"], p["j"])), CEU=CEU, BD=sorted(L, key=lambda p: (p["k"], p["j"])), ES=E,
 			 chk=dict(BE=chk_be, ceu=chk_ceu, BD=chk_bd), excl_ceu=excl_ceu, log=LOG[n0:])
 	os.makedirs(WORK, exist_ok=True)

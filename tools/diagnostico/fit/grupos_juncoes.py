@@ -32,6 +32,13 @@ SHAPES = [(2, 2), (2, 3), (3, 2), (3, 3)]
 MAX_SUBSETS = 60
 
 
+def twin_tl_of(prof, l0, c0, h, w):
+    """Canto superior esquerdo da imagem do retângulo h x w com canto em (l0, c0) pela simetria do perfil
+    (``prof.twin``, a única implementação; tests/test_lint.py). Os 4 cantos têm de estar na grelha."""
+    cs = [prof.twin(l0 + i, c0 + j) for i in (0, h - 1) for j in (0, w - 1)]
+    return (min(t[0] for t in cs), min(t[1] for t in cs))
+
+
 def main(argv):
     proj_dir, out_raw = argv[1], argv[2]
     out_sum = argv[3] if len(argv) > 3 else None
@@ -209,7 +216,7 @@ def main(argv):
                 f = (y[0] + STEP[d][0], y[1] + STEP[d][1])
                 if prof.in_grid(*f) and free_cell(f, gone):
                     frontier.add(f)
-        twin_tl = (L + 1 - l0 - (h - 1), C + 1 - c0 - (w - 1))
+        twin_tl = twin_tl_of(prof, l0, c0, h, w)
         for r in range(4):
             cand = set()
             for i in range(h):
@@ -246,7 +253,7 @@ def main(argv):
             for c0 in range(1, C - w + 2):
                 if not all_usable(l0, c0, h, w):
                     continue
-                tl = (L + 1 - l0 - (h - 1), C + 1 - c0 - (w - 1))
+                tl = twin_tl_of(prof, l0, c0, h, w)
                 if not prof.in_grid(*tl) or tl[0] + h - 1 > L or tl[1] + w - 1 > C or not all_usable(tl[0], tl[1], h, w):
                     continue
                 own = {(l0 + i, c0 + j) for i in range(h) for j in range(w)}

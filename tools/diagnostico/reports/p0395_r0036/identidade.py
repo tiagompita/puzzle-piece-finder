@@ -8,7 +8,7 @@ cp=sys.argv[1]; pr=Project.open(cp); prof=pr.profile
 A='P0395'; sa=pr.shape(A)
 rows,cols=prof.rows,prof.cols
 def border(cell): return cell is not None and (cell[0] in (1,rows) or cell[1] in (1,cols))
-def twin(cell): return (rows+1-cell[0], cols+1-cell[1])
+def twin(cell): return prof.twin(*cell)   # regra da gémea só do perfil (tests/test_lint.py)
 cands=[]
 for p in pr.pieces.values():
     if p.id==A or p.estado=='descartada': continue
