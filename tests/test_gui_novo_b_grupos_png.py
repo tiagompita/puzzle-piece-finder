@@ -7,6 +7,7 @@ Assercao comum: o ``<image class="grupo-img">`` do grupo acaba com ``href`` igua
 (``naturalWidth`` > 0) em <= 5 s. Projeto sintetico de ``tests/test_server_grupos.py`` (G2 sem lugar provavel)."""
 
 import json
+import urllib.parse
 import urllib.request
 
 import pytest
@@ -179,19 +180,31 @@ def test_b2_carregar_sem_nada_a_pedir_nao_fica_em_voo(gr, browser):
 		_pronto(pg)
 		pg.wait_for_function("document.querySelectorAll('#lyr-grupos image.grupo-img[href]').length === 1", timeout=10_000)
 		pg.evaluate("async () => { await (pngsP || null); await carregarPngs(); }")
-		assert pg.evaluate("pngsP === null")
+		# 2026-11-26: espera pela condicao em vez de a ler num instante; a miniatura de G2 na lista (IntersectionObserver)
+		# pode estar legitimamente em voo (~0,1 s). No defeito H2 o pngsP fica preso para sempre e isto esgota o prazo.
+		pg.wait_for_function("pngsP === null", timeout=5_000)
 		assert not errs, errs
 	finally:
 		pg.close()
 
 
 def test_b3_falha_da_descarga_tenta_de_novo_e_vai_para_o_registo(gr, browser):
-	"""Uma falha nao e silenciosa: 2 novas tentativas com recuo; a 3.a falha vai para ``/api/cliente/erro``."""
+	"""Uma falha nao e silenciosa: 2 novas tentativas com recuo; a 3.a falha vai para ``/api/cliente/erro``.
+
+	2026-11-26: o route so apanha a imagem de G2 de uma versao do tabuleiro ainda nunca descarregada (``v`` != a de
+	abertura). Antes apanhava tambem a de abertura, que a miniatura da lista (IntersectionObserver) por vezes ja tinha
+	descarregado: as 2 falhas iam entao para os carregamentos dos proprios elementos (com route ativo o Playwright nao usa
+	a cache HTTP) e o ``decode`` do teste partilhava um desses pedidos com 500 (``EncodingError``)."""
 	url, gui, ids = gr
 	pg, errs = _abrir(browser, url)
 	try:
 		_pronto(pg)
 		g2 = ids["G2"]
+		pg.wait_for_function("pngsP === null", timeout=10_000)              # as miniaturas de abertura ja chegaram
+		v0 = pg.evaluate("S.ver")
+		def nova_versao(u):
+			pr = urllib.parse.urlparse(u)
+			return pr.path.endswith(f"/api/grupos/{g2}.png") and urllib.parse.parse_qs(pr.query).get("v") != [str(v0)]
 		falhas = {"n": 0, "todas": False}
 		def rota(route):
 			if falhas["todas"] or falhas["n"] < 2:
@@ -199,22 +212,28 @@ def test_b3_falha_da_descarga_tenta_de_novo_e_vai_para_o_registo(gr, browser):
 				route.fulfill(status=500, body="erro")
 			else:
 				route.continue_()
-		pg.route(f"**/api/grupos/{g2}.png*", rota)
+		pg.route(nova_versao, rota)
 		erros = []
 		pg.on("request", lambda r: erros.append(r.post_data) if r.url.endswith("/api/cliente/erro") else None)
+		st, r = _post(url, "/api/confirm", {"acao": "cell_full", "cell": [4, 1]})   # outra versao: endereco nunca pedido
+		assert st == 200, r
+		pg.wait_for_function("(v) => S.ver !== v", arg=v0, timeout=10_000)
 		pg.locator("#tab-montar .grp-row").nth(1).locator(".grp-mostrar").click()
 		pg.wait_for_selector(f"#lyr-grupos [data-grupo='{g2}']", timeout=10_000)
 		_imagem_ok(pg, g2)                                                   # 2 falhas, a 3.a tentativa chega
 		assert falhas["n"] == 2 and not erros
 		falhas["todas"] = True                                               # agora falha sempre: outra versao, 3 tentativas, 1 erro
-		v0 = pg.evaluate("S.ver")
+		v1 = pg.evaluate("S.ver")
 		n0 = falhas["n"]
-		st, r = _post(url, "/api/confirm", {"acao": "cell_full", "cell": [4, 1]})
+		st, r = _post(url, "/api/confirm", {"acao": "cell_empty", "cell": [4, 1]})
 		assert st == 200, r
-		pg.wait_for_function("(v) => S.ver !== v", arg=v0, timeout=10_000)
+		pg.wait_for_function("(v) => S.ver !== v", arg=v1, timeout=10_000)
 		pg.wait_for_function("() => [...(S.pngsFalhou || [])].some((u) => u.includes('%s'))" % g2, timeout=10_000)
 		assert falhas["n"] - n0 == 3
-		pg.wait_for_timeout(300)
+		for _ in range(50):                                                  # o POST do erro sai logo a seguir; espera por ele
+			if any(g2 in (e or "") for e in erros):
+				break
+			pg.wait_for_timeout(100)
 		assert any(g2 in (e or "") for e in erros), erros
 		assert not errs, errs
 	finally:
