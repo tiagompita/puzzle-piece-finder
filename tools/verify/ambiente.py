@@ -51,7 +51,7 @@ def opencv_fixado() -> dict:
 
 def _git(*args) -> str:
 	r = subprocess.run(["git", "-C", REPO, *args], capture_output=True, text=True, encoding="utf-8")
-	return r.stdout.strip() if r.returncode == 0 else ""
+	return r.stdout.rstrip() if r.returncode == 0 else ""      # rstrip: « M f» do porcelain começa por espaço
 
 
 def git_estado() -> dict:

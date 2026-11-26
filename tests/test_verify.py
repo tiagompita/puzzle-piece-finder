@@ -159,3 +159,18 @@ def test_hooks_path_lido_do_git(monkeypatch):
 def test_copia_recusa_o_projeto_real():
 	with pytest.raises(AMB.guarda.Recusado):
 		AMB.apagar_copia(os.path.join(AMB.REPO, "projects", "alpes"))
+
+
+def test_git_status_mantem_o_espaco_inicial_da_primeira_linha(monkeypatch):
+	"""``git status --porcelain`` começa por « M ficheiro» numa modificação não preparada: um ``strip()`` da saída
+	inteira comia o espaço da 1.ª linha e o filtro dos ficheiros escritos por ``--congelar-baseline`` deixava de a
+	reconhecer (falha «arvore» na congelação de 2026-11-26)."""
+	import subprocess
+
+	class R:
+		returncode = 0
+		stdout = " M docs/decisoes.md\n M tests/golden/baseline.json\n"
+	monkeypatch.setattr(subprocess, "run", lambda *a, **k: R())
+	st = AMB.git_estado()["status"]
+	assert st == [" M docs/decisoes.md", " M tests/golden/baseline.json"]
+	assert all(l[3:].endswith(("docs/decisoes.md", "tests/golden/baseline.json")) for l in st)
