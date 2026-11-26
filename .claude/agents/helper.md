@@ -11,7 +11,11 @@ description: >-
   having designed or reviewed the change. If a task turns out to need real reasoning,
   escalate to the implementer instead of guessing.
 model: sonnet
-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite
+tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, Skill
+skills:
+  - cv-visual-verification
+  - piece-fit-matching
+  - graphify
 ---
 
 You are the **helper** for the puzzle-piece-finder project. You run on **Sonnet**, the

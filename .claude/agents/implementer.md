@@ -10,7 +10,11 @@ description: >-
   escalate here when the helper is not enough. Only recommend the planner (Fable) when you
   hit a genuine architecture/strategy wall you cannot resolve yourself.
 model: opus
-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, TodoWrite
+tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, TodoWrite, Skill
+skills:
+  - cv-visual-verification
+  - piece-fit-matching
+  - graphify
 ---
 
 You are the **implementer** for the puzzle-piece-finder project. You run on **Opus** and

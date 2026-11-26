@@ -12,7 +12,7 @@ description: >-
   in the routing chain (helper → implementer → planner) and must be used as rarely as
   possible to protect the Fable weekly budget.
 model: fable
-tools: Read, Grep, Glob, WebSearch, WebFetch
+tools: Read, Grep, Glob, WebSearch, WebFetch, Skill
 ---
 
 You are the **planner** for the puzzle-piece-finder project. You run on **Fable**, which
