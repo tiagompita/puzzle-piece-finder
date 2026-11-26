@@ -12,10 +12,6 @@
   "valor": "igual ao manifesto",
   "fonte": "célula física confirmada, 218/218 (D6, 2026-11-25)"
  },
- "aresta_fora_do_indice_delta_mm2": {
-  "valor": 0.05,
-  "fonte": "tolerância de 4.1 (c) no levantamento; regra final por decidir (D2): até lá, só não piorar"
- },
  "simetria": {
   "valor": "nenhum par novo acima de TWIN_LOCAL_MAX_MM",
   "fonte": "consistency.TWIN_LOCAL_MAX_MM (COMIDO.md §5)"
