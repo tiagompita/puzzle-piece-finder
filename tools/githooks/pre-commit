@@ -1,0 +1,39 @@
+#!/bin/sh
+# pre-commit (2026-11-26, docs/prompts/2026-11-26-verificacao-integracao.md): corre `python -m tools.verify` só quando
+# o commit toca src/, tools/verify/, tests/golden/ ou projects/ (regra do CLAUDE.md, «Conventions»).
+# Ativar uma vez por clone (o mesmo que o commit-msg): git config core.hooksPath tools/githooks
+#
+# - Caminhos lidos de `git diff --cached --name-only --no-renames` (um rename conta pela origem e pelo destino;
+#   uma remoção também conta). Sem caminho relevante: sai logo, sem pagar o verify (~25 s).
+# - Python: .venv/Scripts/python.exe (Windows), senão .venv/bin/python, senão python, senão python3.
+# - Exit != 0 do verify = commit parado. Não contornar com --no-verify: parar e reportar; nunca congelar a
+#   baseline nem refazer o golden para passar.
+# - O verify lê a árvore de trabalho, não o índice: com um stage parcial verifica o que está no disco.
+
+caminhos=$(git -c core.quotePath=false diff --cached --name-only --no-renames)
+relevantes=$(printf '%s\n' "$caminhos" | grep -E '^(src/|tools/verify/|tests/golden/|projects/)')
+[ -z "$relevantes" ] && exit 0
+
+top=$(git rev-parse --show-toplevel) || exit 1
+cd "$top" || exit 1
+
+if [ -x ".venv/Scripts/python.exe" ]; then
+	py=".venv/Scripts/python.exe"
+elif [ -x ".venv/bin/python" ]; then
+	py=".venv/bin/python"
+elif command -v python >/dev/null 2>&1; then
+	py="python"
+else
+	py="python3"
+fi
+
+n=$(printf '%s\n' "$relevantes" | wc -l | tr -d ' ')
+echo "pre-commit: $n caminho(s) em src/, tools/verify/, tests/golden/ ou projects/: a correr $py -m tools.verify" >&2
+"$py" -m tools.verify
+rc=$?
+if [ "$rc" -ne 0 ]; then
+	echo "pre-commit: tools.verify saiu com código $rc: commit parado." >&2
+	echo "  Parar e reportar (CLAUDE.md, «Conventions»); não usar --no-verify nem congelar a baseline para passar." >&2
+	exit "$rc"
+fi
+exit 0
