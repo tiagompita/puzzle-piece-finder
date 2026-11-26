@@ -1289,14 +1289,14 @@
     "objeto_duplo": false,
     "manual_override": true
    },
-   "area_mm2": 399.25,
+   "area_mm2": 400.14,
    "cls": "BBTT",
    "n_flat": 0,
    "chords_mm": [
-    18.749,
-    19.333,
-    19.129,
-    18.579
+    18.735,
+    19.301,
+    19.67,
+    17.992
    ],
    "shape_ok": true,
    "bbox": [
@@ -1307,8 +1307,8 @@
    ],
    "crop_path": "crops/P1064.png",
    "mean_lab": [
-    60.74,
-    -9.59,
+    60.78,
+    -9.62,
     26.8
    ]
   },

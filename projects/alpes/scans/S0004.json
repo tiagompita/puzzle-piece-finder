@@ -249,27 +249,27 @@
     "objeto_duplo": false,
     "manual_override": true
    },
-   "area_mm2": 456.24,
+   "area_mm2": 457.75,
    "cls": "BTTT",
    "n_flat": 0,
    "chords_mm": [
-    19.342,
-    18.864,
-    19.942,
-    18.174
+    19.319,
+    18.872,
+    19.882,
+    18.402
    ],
    "shape_ok": true,
    "bbox": [
     131,
     1032,
-    310,
+    312,
     400
    ],
    "crop_path": "crops/P0071.png",
    "mean_lab": [
-    45.64,
-    -10.88,
-    26.72
+    45.76,
+    -10.92,
+    26.77
    ]
   },
   {

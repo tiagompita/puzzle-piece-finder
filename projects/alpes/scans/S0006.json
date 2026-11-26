@@ -481,7 +481,7 @@
     "objeto_duplo": false,
     "manual_override": true
    },
-   "area_mm2": 335.01,
+   "area_mm2": 335.51,
    "cls": "BBBT",
    "n_flat": 0,
    "chords_mm": [
@@ -499,9 +499,9 @@
    ],
    "crop_path": "crops/P0139.png",
    "mean_lab": [
-    61.7,
-    -10.61,
-    8.15
+    61.74,
+    -10.63,
+    8.19
    ]
   },
   {

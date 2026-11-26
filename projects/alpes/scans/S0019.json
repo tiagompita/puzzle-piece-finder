@@ -1280,14 +1280,14 @@
     "objeto_duplo": false,
     "manual_override": true
    },
-   "area_mm2": 371.2,
+   "area_mm2": 372.24,
    "cls": "BBBT",
    "n_flat": 0,
    "chords_mm": [
-    18.282,
-    19.442,
-    18.68,
-    20.399
+    18.225,
+    19.482,
+    18.657,
+    20.452
    ],
    "shape_ok": true,
    "bbox": [
@@ -1298,9 +1298,9 @@
    ],
    "crop_path": "crops/P0620.png",
    "mean_lab": [
-    46.21,
-    -15.08,
-    29.95
+    46.3,
+    -15.11,
+    29.97
    ]
   },
   {
