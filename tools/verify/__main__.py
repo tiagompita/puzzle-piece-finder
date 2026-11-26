@@ -16,6 +16,7 @@ import time
 import traceback
 
 from tools.verify import ambiente as AMB
+from tools.verify import golden as GD
 
 __all__ = ["CODIGOS", "main"]
 
@@ -49,7 +50,7 @@ def _md(res: dict) -> str:
 		L += ["## Falhas", ""] + [f"- **{g}**: {t}" for g, t in res["falhas"]] + [""]
 	else:
 		L += ["Sem falhas.", ""]
-	for k in ("ambiente", "vigilancia_inicio", "vigilancia_fim"):
+	for k in ("ambiente", "golden", "vigilancia_inicio", "vigilancia_fim"):
 		L += [f"## {k}", "", "```json", json.dumps(res.get(k), ensure_ascii=False, indent=1), "```", ""]
 	return "\n".join(L)
 
@@ -58,7 +59,12 @@ def main(argv=None) -> int:
 	ap = argparse.ArgumentParser(prog="python -m tools.verify", description=__doc__.splitlines()[0])
 	ap.add_argument("--project", default=os.path.join("projects", "alpes"))
 	ap.add_argument("--out", default=None, help="pasta das saídas (métricas, comparação)")
+	ap.add_argument("--refresh-golden", action="store_true",
+					help="reescreve tests/golden/manifesto.json a partir de uma cópia do projeto (exige --porque)")
+	ap.add_argument("--porque", default=None, help="motivo, escrito em docs/decisoes.md")
 	args = ap.parse_args(argv)
+	if args.refresh_golden and not (args.porque or "").strip():
+		ap.error("--refresh-golden exige --porque \"...\" (fica em docs/decisoes.md)")
 	t0 = time.time()
 	project = os.path.abspath(os.path.join(AMB.REPO, args.project) if not os.path.isabs(args.project) else args.project)
 	out = _out_dir(args.out)
@@ -78,16 +84,41 @@ def main(argv=None) -> int:
 	if not v0["ok"]:
 		falhas.append(("vigilancia", f"início: pieces {v0['pieces']}, overlays {v0['overlays']}, scans {v0['scans']}"))
 
+	raiz = None
 	try:
-		pass  # passos seguintes (golden, regras, métricas) entram nos blocos 2-4
+		raiz, copia = AMB.copiar_projeto(project)
+		res["copia"] = copia
+		from src.state import Project
+		pr = Project.open(copia)
+		if args.refresh_golden:
+			ant = GD.ler()
+			novo = GD.construir(pr)
+			GD.escrever(novo)
+			dif = GD.diferenca(ant, novo)
+			GD.registar_decisao("golden atualizado (`tools.verify --refresh-golden`)", args.porque.strip(),
+								[f"HEAD `{res['git_inicio']['head'][:7]}`; contagens {json.dumps(novo['contagens'])}",
+								 f"overrides.jsonl: {len(novo['overrides']['linhas'])} linhas"] + dif)
+			res["refresh_golden"] = {"contagens": novo["contagens"], "diferencas": dif}
+			print(f"manifesto escrito: {GD.MANIFESTO} ({novo['contagens']})")
+		man = GD.ler()
+		res["golden"] = g = GD.verificar(man, project)
+		if not g["ok"]:
+			falhas += [("golden", d) for d in g["diferencas"]]
 	except Exception:  # noqa: BLE001 - o relatório tem de sair mesmo com um erro a meio
 		falhas.append(("erro", traceback.format_exc(limit=5)))
+	finally:
+		if raiz:
+			AMB.apagar_copia(raiz)
+			res["copia_apagada"] = not os.path.exists(raiz)
 
 	res["git_fim"] = AMB.git_estado()
 	res["vigilancia_fim"] = v1 = AMB.vigilancia(project)
 	if not v1["ok"]:
 		falhas.append(("vigilancia", f"fim: pieces {v1['pieces']}, overlays {v1['overlays']}, scans {v1['scans']}"))
-	if res["git_fim"] != res["git_inicio"]:
+	escritos = ("tests/golden/manifesto.json", "docs/decisoes.md") if args.refresh_golden else ()
+	def _sem_escritos(g):
+		return {"head": g["head"], "status": [l for l in g["status"] if not (escritos and l[3:].strip('"').endswith(escritos))]}
+	if _sem_escritos(res["git_fim"]) != _sem_escritos(res["git_inicio"]):
 		falhas.append(("arvore", "HEAD ou git status mudou durante a corrida (outro agente/processo a escrever?)"))
 	res["falhas"] = falhas
 	res["codigo_saida"] = codigo_saida(falhas)

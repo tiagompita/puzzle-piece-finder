@@ -1006,3 +1006,10 @@ Código `5bd56e5` (`src/grupos.py` `auto_positions`, `src/server.py` `_shown_all
 - **b2 (`pngsP === null` falso):** a miniatura de G2 na lista (IntersectionObserver) estava legitimamente a descarregar no instante da leitura (registado: pedido em voo, 200 ao fim de 0,08 s, `pngsP` volta a null). Passa a `wait_for_function("pngsP === null", 5 s)`; com o `grupos.js` de `c66faf6^` (H2) continua a falhar por prazo esgotado [V].
 - **b3 (`EncodingError`):** quando a miniatura já tinha descarregado a imagem de G2 antes do `page.route`, as 2 falhas iam para os carregamentos dos próprios `<image>`/`<img>` (com route ativo o Playwright não usa a cache HTTP) e o `decode` do teste partilhava um pedido com 500; o `descarregarPng` nem corria. Forçado (miniatura descarregada antes do route): 5/5 com a assinatura do `falha_gui1.txt` [V]. O route passa a apanhar só a imagem de G2 de uma versão nunca pedida (escrita `cell_full` depois de `pngsP` livre); a 2.ª parte usa `cell_empty`. Falha no código antigo (H2) e sem as tentativas (`PNG_RECUO_MS = []`: «sem imagem») [V].
 - `src/web/novo/grupos.js` não mudou. Ficheiro B 10/10 corridas verdes (8 testes).
+
+## 2026-11-26 — golden atualizado (`tools.verify --refresh-golden`)
+
+- **Porquê (`--porque`):** manifesto inicial do golden (D1 = A, ronda 2026-11-26-verificacao-implementacao-1, bloco 2)
+- HEAD `2316750`; contagens {"pecas": 267, "borda": 218, "quadrado": 40, "manual": 10, "scans": 31}
+- overrides.jsonl: 80 linhas
+- manifesto novo

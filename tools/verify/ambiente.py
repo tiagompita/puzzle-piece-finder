@@ -14,6 +14,8 @@ HOOKS_PATH = "tools/githooks"     # D4 (2026-11-26): core.hooksPath versionado
 # render/placements.json); ficam de fora os ativos regeneráveis e pesados (≈ 260 de 309 MB).
 IGNORAR_NA_COPIA = ("crops", "overlays", "logs", "reports", "gui", "clean", "fit", "sheets")
 
+if REPO not in sys.path:
+	sys.path.insert(0, REPO)        # ``src`` importável também fora da raiz do repositório
 sys.path.insert(0, os.path.join(REPO, "tools", "diagnostico", "gui"))
 import guarda  # noqa: E402  (único caminho permitido para copiar/apagar cópias do projeto)
 
