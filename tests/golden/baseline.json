@@ -1,7 +1,7 @@
 {
  "versao": 1,
- "congelada_em": "2026-11-26T10:23:20",
- "head": "27528768d88f98943d5ea911a8ce08ee6f96af91",
+ "congelada_em": "2026-11-26T16:02:20",
+ "head": "b3e4b10e15db911c8b0fb2f3ca464e4e77ccb93b",
  "manifesto_sha256": "db5b7f7d4b3c4263ef953353d5edd79eb1f1acbd367332685237842e56ffbfdc",
  "metricas": {
   "pecas": {
@@ -4382,5 +4382,4291 @@
    "P0496|recorte"
   ],
   "suspeitas_total_informativo": 18
+ },
+ "regressao": {
+  "modo": "completo",
+  "folhas": {
+   "S0001": {
+    "n_pecas": 20,
+    "n_guardadas": 20,
+    "segundos": 2.6
+   },
+   "S0002": {
+    "n_pecas": 20,
+    "n_guardadas": 20,
+    "segundos": 2.5
+   },
+   "S0003": {
+    "n_pecas": 25,
+    "n_guardadas": 25,
+    "segundos": 9.4
+   },
+   "S0004": {
+    "n_pecas": 28,
+    "n_guardadas": 28,
+    "segundos": 4.2
+   },
+   "S0005": {
+    "n_pecas": 35,
+    "n_guardadas": 35,
+    "segundos": 4.8
+   },
+   "S0006": {
+    "n_pecas": 15,
+    "n_guardadas": 15,
+    "segundos": 2.9
+   },
+   "S0007": {
+    "n_pecas": 42,
+    "n_guardadas": 42,
+    "segundos": 5.4
+   },
+   "S0009": {
+    "n_pecas": 43,
+    "n_guardadas": 43,
+    "segundos": 4.5
+   },
+   "S0010": {
+    "n_pecas": 46,
+    "n_guardadas": 46,
+    "segundos": 5.2
+   },
+   "S0011": {
+    "n_pecas": 18,
+    "n_guardadas": 18,
+    "segundos": 2.9
+   },
+   "S0012": {
+    "n_pecas": 44,
+    "n_guardadas": 44,
+    "segundos": 5.9
+   },
+   "S0013": {
+    "n_pecas": 51,
+    "n_guardadas": 51,
+    "segundos": 6.2
+   },
+   "S0014": {
+    "n_pecas": 48,
+    "n_guardadas": 48,
+    "segundos": 6.3
+   },
+   "S0015": {
+    "n_pecas": 36,
+    "n_guardadas": 36,
+    "segundos": 4.9
+   },
+   "S0016": {
+    "n_pecas": 37,
+    "n_guardadas": 37,
+    "segundos": 4.8
+   },
+   "S0017": {
+    "n_pecas": 34,
+    "n_guardadas": 34,
+    "segundos": 4.5
+   },
+   "S0018": {
+    "n_pecas": 39,
+    "n_guardadas": 39,
+    "segundos": 5.0
+   },
+   "S0019": {
+    "n_pecas": 38,
+    "n_guardadas": 38,
+    "segundos": 5.0
+   },
+   "S0020": {
+    "n_pecas": 48,
+    "n_guardadas": 48,
+    "segundos": 5.4
+   },
+   "S0022": {
+    "n_pecas": 55,
+    "n_guardadas": 55,
+    "segundos": 6.7
+   },
+   "S0023": {
+    "n_pecas": 59,
+    "n_guardadas": 59,
+    "segundos": 8.2
+   },
+   "S0027": {
+    "n_pecas": 50,
+    "n_guardadas": 50,
+    "segundos": 7.1
+   },
+   "S0028": {
+    "n_pecas": 62,
+    "n_guardadas": 62,
+    "segundos": 8.1
+   },
+   "S0029": {
+    "n_pecas": 13,
+    "n_guardadas": 13,
+    "segundos": 2.6
+   },
+   "S0030": {
+    "n_pecas": 63,
+    "n_guardadas": 63,
+    "segundos": 10.1
+   },
+   "S0032": {
+    "n_pecas": 64,
+    "n_guardadas": 64,
+    "segundos": 9.0
+   },
+   "S0034": {
+    "n_pecas": 65,
+    "n_guardadas": 65,
+    "segundos": 10.0
+   },
+   "S0035": {
+    "n_pecas": 10,
+    "n_guardadas": 10,
+    "segundos": 2.2
+   },
+   "S0036": {
+    "n_pecas": 57,
+    "n_guardadas": 57,
+    "segundos": 8.7
+   },
+   "S0038": {
+    "n_pecas": 65,
+    "n_guardadas": 65,
+    "segundos": 9.6
+   },
+   "S0039": {
+    "n_pecas": 35,
+    "n_guardadas": 35,
+    "segundos": 6.4
+   }
+  },
+  "pecas": {
+   "P0001": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.465,
+     18.818,
+     19.499,
+     18.053
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0002": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     19.128,
+     18.147,
+     18.958,
+     19.311
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0003": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.7,
+     21.677,
+     18.888,
+     19.993
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0004": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.782,
+     18.437,
+     18.303,
+     17.855
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0005": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.498,
+     19.072,
+     18.233,
+     19.605
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0006": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.94,
+     20.324,
+     18.757,
+     18.829
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0007": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.338,
+     19.399,
+     18.373,
+     18.763
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0008": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.723,
+     18.782,
+     18.486,
+     19.043
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0009": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.125,
+     19.768,
+     17.778,
+     19.893
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0010": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.362,
+     19.026,
+     19.152,
+     18.724
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0011": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.027,
+     18.44,
+     18.686,
+     17.83
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0012": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.868,
+     20.063,
+     18.18,
+     19.059
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0013": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.575,
+     20.1,
+     18.244,
+     19.24
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0014": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.31,
+     19.723,
+     16.492,
+     18.993
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0015": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.072,
+     20.438,
+     17.684,
+     19.051
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0016": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.894,
+     17.864,
+     17.73,
+     18.309
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0017": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.091,
+     19.898,
+     18.269,
+     19.309
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0018": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.666,
+     19.429,
+     18.095,
+     18.615
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0019": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.069,
+     19.419,
+     18.206,
+     19.25
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0020": {
+    "sid": "S0001",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     16.697,
+     19.244,
+     16.952,
+     19.4
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0021": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.843,
+     18.727,
+     18.209,
+     19.306
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0022": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.816,
+     18.354,
+     17.606,
+     18.777
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0023": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.802,
+     21.722,
+     18.15,
+     20.722
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0024": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.482,
+     18.474,
+     18.817,
+     19.702
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0025": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.474,
+     19.0,
+     19.538,
+     18.076
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0026": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.894,
+     18.85,
+     18.754,
+     18.933
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0027": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.16,
+     19.552,
+     19.347,
+     18.631
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0028": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.838,
+     19.141,
+     18.515,
+     19.185
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0029": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.016,
+     19.533,
+     17.608,
+     19.722
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0030": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.014,
+     20.531,
+     19.125,
+     18.688
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0031": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.669,
+     20.391,
+     16.953,
+     18.897
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0032": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.326,
+     19.419,
+     18.332,
+     17.947
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0033": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.734,
+     20.511,
+     18.196,
+     18.99
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0034": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.722,
+     20.087,
+     18.272,
+     19.101
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0035": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.918,
+     18.797,
+     18.47,
+     18.054
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0036": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.185,
+     19.095,
+     17.981,
+     18.496
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0037": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.007,
+     19.896,
+     18.562,
+     19.112
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0038": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.127,
+     19.243,
+     18.472,
+     18.423
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0039": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.047,
+     20.253,
+     17.735,
+     20.014
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0040": {
+    "sid": "S0002",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.927,
+     18.076,
+     17.686,
+     18.4
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0114": {
+    "sid": "S0005",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.535,
+     18.929,
+     18.663,
+     19.319
+    ],
+    "n_f": 0
+   },
+   "P0160": {
+    "sid": "S0007",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBBT",
+    "cordas_mm": [
+     19.666,
+     17.669,
+     18.895,
+     18.562
+    ],
+    "n_f": 0
+   },
+   "P0161": {
+    "sid": "S0007",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBBT",
+    "cordas_mm": [
+     20.426,
+     18.226,
+     18.156,
+     18.057
+    ],
+    "n_f": 0
+   },
+   "P0170": {
+    "sid": "S0007",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBBB",
+    "cordas_mm": [
+     20.135,
+     17.407,
+     18.22,
+     19.701
+    ],
+    "n_f": 0
+   },
+   "P0174": {
+    "sid": "S0007",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     19.301,
+     18.538,
+     18.264,
+     16.488
+    ],
+    "n_f": 0
+   },
+   "P0182": {
+    "sid": "S0007",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.695,
+     18.749,
+     17.996,
+     18.914
+    ],
+    "n_f": 0
+   },
+   "P0196": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.64,
+     19.508,
+     17.508,
+     19.87
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0197": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.382,
+     18.515,
+     20.604,
+     17.852
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0199": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.052,
+     17.95,
+     18.216,
+     18.531
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0200": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.938,
+     18.318,
+     18.482,
+     18.026
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0201": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     19.046,
+     18.745,
+     18.335,
+     19.159
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0202": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     19.386,
+     18.544,
+     17.47,
+     18.067
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0203": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.529,
+     18.994,
+     18.663,
+     18.52
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0204": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     16.821,
+     18.038,
+     17.705,
+     17.544
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0205": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     19.314,
+     19.179,
+     18.017,
+     18.587
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0206": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.258,
+     19.8,
+     18.485,
+     18.09
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0207": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     19.472,
+     17.937,
+     18.159,
+     18.742
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0208": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     16.767,
+     18.472,
+     17.626,
+     18.918
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0209": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.036,
+     17.363,
+     17.965,
+     17.936
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0210": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.584,
+     20.268,
+     17.702,
+     18.825
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0211": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.381,
+     18.646,
+     16.757,
+     20.382
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0212": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.442,
+     17.955,
+     16.814,
+     18.086
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0213": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.835,
+     17.778,
+     17.389,
+     19.043
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0214": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     19.481,
+     17.586,
+     17.767,
+     16.961
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0215": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     20.206,
+     19.274,
+     17.576,
+     20.185
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0216": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     16.41,
+     18.28,
+     18.299,
+     18.304
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0217": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.749,
+     17.826,
+     17.975,
+     17.148
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0218": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.444,
+     18.272,
+     19.947,
+     17.383
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0219": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.716,
+     17.01,
+     19.327,
+     17.943
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0220": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.344,
+     17.447,
+     19.105,
+     18.88
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0221": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     19.961,
+     19.141,
+     18.419,
+     17.366
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0222": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     19.346,
+     17.681,
+     18.051,
+     17.136
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0223": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     19.672,
+     18.689,
+     16.671,
+     18.878
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0224": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.498,
+     17.377,
+     18.842,
+     16.149
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0225": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.463,
+     17.104,
+     18.097,
+     17.642
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0226": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     16.583,
+     18.23,
+     17.38,
+     19.582
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0227": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.49,
+     18.115,
+     19.238,
+     17.295
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0228": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     16.449,
+     18.213,
+     17.439,
+     18.872
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0229": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     17.859,
+     18.107,
+     16.899,
+     17.569
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0230": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.942,
+     20.02,
+     17.411,
+     17.15
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0231": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.389,
+     17.246,
+     18.524,
+     16.88
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0232": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.851,
+     18.193,
+     18.225,
+     20.216
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0233": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     18.671,
+     19.045,
+     18.493,
+     18.312
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0234": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.736,
+     16.883,
+     18.671,
+     16.528
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0235": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.932,
+     18.571,
+     18.833,
+     18.668
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0236": {
+    "sid": "S0009",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FFTT",
+    "cordas_mm": [
+     19.987,
+     16.566,
+     17.87,
+     16.448
+    ],
+    "n_f": 2,
+    "f_esperado": 2
+   },
+   "P0237": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.607,
+     18.271,
+     19.415,
+     17.476
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0239": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.863,
+     17.824,
+     19.325,
+     16.834
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0240": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.205,
+     17.625,
+     18.464,
+     16.687
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0241": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     19.431,
+     18.481,
+     19.251,
+     17.723
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0243": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     20.06,
+     17.51,
+     19.936,
+     17.043
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0245": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     21.523,
+     15.994,
+     19.346,
+     16.565
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0247": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.705,
+     17.944,
+     18.248,
+     18.87
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0249": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.1,
+     17.254,
+     18.304,
+     17.147
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0251": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.516,
+     16.953,
+     17.475,
+     16.553
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0252": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.371,
+     18.006,
+     19.139,
+     17.012
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0255": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.581,
+     17.472,
+     18.42,
+     17.717
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0257": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.259,
+     17.976,
+     17.912,
+     16.943
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0258": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.801,
+     17.994,
+     18.786,
+     17.845
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0261": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.244,
+     17.723,
+     18.738,
+     16.659
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0262": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.488,
+     17.146,
+     19.191,
+     17.573
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0263": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.491,
+     19.951,
+     17.245,
+     18.533
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0264": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.718,
+     18.003,
+     18.887,
+     17.698
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0265": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     18.57,
+     17.411,
+     19.513,
+     15.943
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0266": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.905,
+     18.189,
+     19.28,
+     19.697
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0269": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.468,
+     17.846,
+     18.224,
+     18.186
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0270": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.839,
+     18.112,
+     17.653,
+     17.681
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0272": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.425,
+     18.319,
+     19.533,
+     17.315
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0275": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.461,
+     17.467,
+     18.687,
+     16.965
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0276": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.604,
+     18.396,
+     17.787,
+     18.301
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0277": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     19.109,
+     18.499,
+     18.695,
+     17.967
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0280": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.693,
+     18.088,
+     18.559,
+     17.836
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0282": {
+    "sid": "S0010",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.469,
+     17.281,
+     19.245,
+     17.087
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0283": {
+    "sid": "S0011",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.97,
+     18.401,
+     17.811,
+     17.92
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0284": {
+    "sid": "S0011",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.5,
+     19.245,
+     20.195,
+     17.616
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0286": {
+    "sid": "S0011",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.613,
+     19.134,
+     17.769,
+     19.458
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0289": {
+    "sid": "S0011",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.744,
+     18.81,
+     19.478,
+     18.202
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0292": {
+    "sid": "S0011",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     20.985,
+     17.768,
+     21.594,
+     18.718
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0295": {
+    "sid": "S0011",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     20.297,
+     16.581,
+     18.463,
+     17.424
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0298": {
+    "sid": "S0011",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.748,
+     16.676,
+     19.705,
+     16.197
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0301": {
+    "sid": "S0012",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     19.867,
+     18.25,
+     18.416,
+     16.846
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0302": {
+    "sid": "S0012",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.749,
+     17.533,
+     18.873,
+     17.907
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0307": {
+    "sid": "S0012",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     21.483,
+     16.883,
+     20.626,
+     16.229
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0311": {
+    "sid": "S0012",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     16.898,
+     17.263,
+     18.025,
+     16.626
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0345": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     16.699,
+     18.645,
+     17.951,
+     17.366
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0346": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.175,
+     16.11,
+     16.327,
+     17.873
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0347": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     16.891,
+     20.925,
+     17.943,
+     19.092
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0348": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.731,
+     17.846,
+     17.025,
+     17.482
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0349": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.437,
+     17.814,
+     16.849,
+     18.618
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0350": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FFTT",
+    "cordas_mm": [
+     17.572,
+     20.559,
+     17.104,
+     19.395
+    ],
+    "n_f": 2,
+    "f_esperado": 2
+   },
+   "P0356": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.142,
+     18.885,
+     19.096,
+     20.33
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0362": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.634,
+     19.219,
+     18.682,
+     18.365
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0368": {
+    "sid": "S0013",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     18.088,
+     19.233,
+     19.303,
+     18.939
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0444": {
+    "sid": "S0015",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.844,
+     17.366,
+     19.729,
+     17.377
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0448": {
+    "sid": "S0015",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     21.234,
+     17.348,
+     20.509,
+     16.6
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0452": {
+    "sid": "S0015",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.339,
+     17.354,
+     18.025,
+     16.622
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0480": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.757,
+     18.309,
+     17.943,
+     17.726
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0484": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.528,
+     18.984,
+     18.727,
+     18.29
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0488": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.721,
+     18.643,
+     18.762,
+     18.775
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0492": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     18.625,
+     18.952,
+     19.217,
+     18.458
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0496": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     20.287,
+     17.767,
+     21.476,
+     18.36
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0502": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.944,
+     16.753,
+     18.636,
+     17.256
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0507": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.807,
+     16.675,
+     19.222,
+     16.855
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0512": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.153,
+     17.5,
+     18.974,
+     16.086
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0516": {
+    "sid": "S0016",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.958,
+     18.328,
+     17.988,
+     19.005
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0517": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.542,
+     18.485,
+     19.31,
+     17.522
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0520": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     19.24,
+     18.542,
+     19.304,
+     17.666
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0524": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.851,
+     17.726,
+     19.346,
+     17.696
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0528": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.205,
+     18.149,
+     18.807,
+     17.508
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0532": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.624,
+     17.971,
+     18.695,
+     17.786
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0536": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.282,
+     19.779,
+     18.403,
+     17.335
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0540": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.739,
+     17.85,
+     19.988,
+     18.851
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0543": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.354,
+     18.261,
+     19.174,
+     17.489
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0547": {
+    "sid": "S0017",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     19.094,
+     18.081,
+     18.023,
+     18.445
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0551": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.173,
+     17.638,
+     19.551,
+     16.425
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0555": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.895,
+     17.653,
+     19.516,
+     17.236
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0559": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.826,
+     17.446,
+     17.875,
+     17.617
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0564": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.537,
+     17.522,
+     18.532,
+     17.413
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0568": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.407,
+     17.539,
+     18.702,
+     16.79
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0574": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.534,
+     18.167,
+     19.07,
+     17.342
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0578": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.622,
+     17.66,
+     19.133,
+     17.347
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0584": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.213,
+     17.721,
+     18.278,
+     17.298
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0589": {
+    "sid": "S0018",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.896,
+     19.215,
+     16.721,
+     19.346
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0590": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.686,
+     16.866,
+     18.508,
+     16.196
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0595": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     21.562,
+     15.863,
+     19.57,
+     16.182
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0600": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.399,
+     16.664,
+     18.305,
+     15.145
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0605": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.552,
+     17.658,
+     18.612,
+     15.913
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0610": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     19.029,
+     16.778,
+     19.308,
+     17.137
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0613": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     18.774,
+     16.749,
+     18.573,
+     16.91
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0617": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.757,
+     17.871,
+     18.904,
+     16.068
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0622": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.705,
+     17.858,
+     18.884,
+     17.14
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0627": {
+    "sid": "S0019",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.202,
+     19.203,
+     17.83,
+     19.356
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0628": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     19.031,
+     18.142,
+     18.128,
+     16.07
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0629": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.616,
+     18.102,
+     18.3,
+     18.058
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0630": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.172,
+     18.568,
+     15.445,
+     18.954
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0631": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     20.564,
+     17.766,
+     18.363,
+     17.894
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0632": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.636,
+     19.968,
+     16.694,
+     19.562
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0633": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.173,
+     18.721,
+     17.364,
+     19.169
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0634": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     17.282,
+     17.752,
+     17.206,
+     18.326
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0635": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.411,
+     19.497,
+     15.902,
+     18.321
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0636": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.574,
+     18.022,
+     18.443,
+     18.326
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0637": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.647,
+     19.549,
+     15.055,
+     18.952
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0638": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.562,
+     18.097,
+     18.205,
+     19.541
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0639": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.146,
+     18.851,
+     16.18,
+     18.655
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0640": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.79,
+     16.58,
+     19.682,
+     16.976
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0641": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     17.254,
+     18.423,
+     18.727,
+     18.917
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0642": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.878,
+     17.996,
+     18.678,
+     18.022
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0643": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     17.692,
+     18.127,
+     17.711,
+     19.578
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0644": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.143,
+     18.372,
+     16.348,
+     17.827
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0645": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     19.574,
+     18.964,
+     18.635,
+     18.131
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0646": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     20.272,
+     17.853,
+     17.871,
+     16.574
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0647": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.983,
+     18.027,
+     18.432,
+     18.281
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0648": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.507,
+     18.343,
+     19.221,
+     17.039
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0649": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     18.298,
+     17.442,
+     16.724,
+     16.943
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0650": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     19.0,
+     19.421,
+     17.903,
+     17.988
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0651": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     18.284,
+     19.157,
+     18.878,
+     18.275
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0652": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.604,
+     17.052,
+     19.956,
+     17.101
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0653": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.541,
+     18.514,
+     18.921,
+     17.137
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0654": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.156,
+     18.236,
+     16.913,
+     17.866
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0655": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTF",
+    "cordas_mm": [
+     17.605,
+     20.185,
+     18.048,
+     18.541
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0656": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.325,
+     20.949,
+     19.628,
+     19.568
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0657": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     16.688,
+     19.338,
+     16.388,
+     18.695
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0658": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.966,
+     17.947,
+     18.606,
+     16.661
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0659": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.562,
+     18.054,
+     17.055,
+     17.386
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0661": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.771,
+     18.776,
+     19.917,
+     18.139
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0662": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.758,
+     19.243,
+     17.32,
+     17.83
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0663": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.201,
+     19.373,
+     19.021,
+     17.931
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0664": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     17.272,
+     18.524,
+     18.967,
+     17.912
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0665": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.956,
+     19.72,
+     19.005,
+     18.29
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0666": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.353,
+     18.349,
+     18.016,
+     19.914
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0667": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.009,
+     19.399,
+     16.823,
+     21.075
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0668": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.257,
+     19.031,
+     18.152,
+     19.845
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0669": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.658,
+     19.211,
+     18.053,
+     18.128
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0670": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FFTT",
+    "cordas_mm": [
+     16.167,
+     20.067,
+     17.02,
+     17.703
+    ],
+    "n_f": 2,
+    "f_esperado": 2
+   },
+   "P0671": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FFTT",
+    "cordas_mm": [
+     17.358,
+     19.3,
+     18.895,
+     19.453
+    ],
+    "n_f": 2,
+    "f_esperado": 2
+   },
+   "P0672": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.544,
+     18.188,
+     17.993,
+     16.708
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0673": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.094,
+     16.808,
+     18.397,
+     17.417
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0674": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.078,
+     20.642,
+     17.238,
+     20.433
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0675": {
+    "sid": "S0020",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "FTTT",
+    "cordas_mm": [
+     16.762,
+     17.785,
+     16.387,
+     16.339
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0814": {
+    "sid": "S0023",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTF",
+    "cordas_mm": [
+     19.614,
+     19.027,
+     18.296,
+     18.616
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0820": {
+    "sid": "S0023",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.044,
+     18.556,
+     19.877,
+     18.789
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0827": {
+    "sid": "S0023",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBFT",
+    "cordas_mm": [
+     19.943,
+     19.752,
+     19.122,
+     18.104
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P0927": {
+    "sid": "S0027",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBBB",
+    "cordas_mm": [
+     18.154,
+     18.162,
+     19.895,
+     18.74
+    ],
+    "n_f": 0
+   },
+   "P0970": {
+    "sid": "S0028",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.713,
+     18.62,
+     18.482,
+     18.218
+    ],
+    "n_f": 0
+   },
+   "P0981": {
+    "sid": "S0028",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.828,
+     18.758,
+     17.633,
+     18.033
+    ],
+    "n_f": 0
+   },
+   "P0982": {
+    "sid": "S0028",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.796,
+     17.716,
+     20.519,
+     17.206
+    ],
+    "n_f": 0
+   },
+   "P0985": {
+    "sid": "S0028",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.23,
+     19.33,
+     17.628,
+     18.564
+    ],
+    "n_f": 0
+   },
+   "P0997": {
+    "sid": "S0028",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.316,
+     18.623,
+     17.993,
+     18.95
+    ],
+    "n_f": 0
+   },
+   "P1005": {
+    "sid": "S0028",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.156,
+     18.079,
+     18.451,
+     16.904
+    ],
+    "n_f": 0
+   },
+   "P1024": {
+    "sid": "S0029",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.308,
+     18.403,
+     18.261,
+     18.369
+    ],
+    "n_f": 0
+   },
+   "P1057": {
+    "sid": "S0030",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.95,
+     17.243,
+     18.157,
+     17.014
+    ],
+    "n_f": 0
+   },
+   "P1063": {
+    "sid": "S0030",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "TTTT",
+    "cordas_mm": [
+     18.708,
+     17.309,
+     17.028,
+     18.194
+    ],
+    "n_f": 0
+   },
+   "P1128": {
+    "sid": "S0032",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     18.789,
+     17.999,
+     18.134,
+     19.158
+    ],
+    "n_f": 0
+   },
+   "P1129": {
+    "sid": "S0032",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.788,
+     19.346,
+     18.441,
+     17.975
+    ],
+    "n_f": 0
+   },
+   "P1133": {
+    "sid": "S0032",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     18.17,
+     17.783,
+     17.848,
+     18.78
+    ],
+    "n_f": 0
+   },
+   "P1136": {
+    "sid": "S0032",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.057,
+     19.321,
+     18.577,
+     18.136
+    ],
+    "n_f": 0
+   },
+   "P1156": {
+    "sid": "S0032",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBBB",
+    "cordas_mm": [
+     20.386,
+     18.657,
+     17.338,
+     19.545
+    ],
+    "n_f": 0
+   },
+   "P1167": {
+    "sid": "S0032",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.764,
+     17.327,
+     16.767,
+     19.188
+    ],
+    "n_f": 0
+   },
+   "P1172": {
+    "sid": "S0032",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     17.696,
+     18.187,
+     18.267,
+     17.597
+    ],
+    "n_f": 0
+   },
+   "P1193": {
+    "sid": "S0034",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.049,
+     18.337,
+     16.512,
+     18.564
+    ],
+    "n_f": 0
+   },
+   "P1210": {
+    "sid": "S0034",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.782,
+     18.181,
+     16.685,
+     18.58
+    ],
+    "n_f": 0
+   },
+   "P1216": {
+    "sid": "S0034",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.632,
+     19.774,
+     19.588,
+     18.191
+    ],
+    "n_f": 0
+   },
+   "P1219": {
+    "sid": "S0034",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.117,
+     17.528,
+     17.354,
+     17.353
+    ],
+    "n_f": 0
+   },
+   "P1255": {
+    "sid": "S0035",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.459,
+     20.24,
+     16.512,
+     20.181
+    ],
+    "n_f": 0
+   },
+   "P1262": {
+    "sid": "S0036",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.554,
+     18.013,
+     17.037,
+     16.958
+    ],
+    "n_f": 0
+   },
+   "P1278": {
+    "sid": "S0036",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     20.455,
+     17.306,
+     19.933,
+     17.676
+    ],
+    "n_f": 0
+   },
+   "P1280": {
+    "sid": "S0036",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBBT",
+    "cordas_mm": [
+     18.752,
+     17.247,
+     17.225,
+     18.118
+    ],
+    "n_f": 0
+   },
+   "P1295": {
+    "sid": "S0036",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     19.137,
+     17.192,
+     19.067,
+     18.571
+    ],
+    "n_f": 0
+   },
+   "P1306": {
+    "sid": "S0036",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.989,
+     17.779,
+     17.07,
+     19.175
+    ],
+    "n_f": 0
+   },
+   "P1308": {
+    "sid": "S0036",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.072,
+     17.364,
+     18.531,
+     18.138
+    ],
+    "n_f": 0
+   },
+   "P1348": {
+    "sid": "S0038",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBBT",
+    "cordas_mm": [
+     17.584,
+     17.761,
+     18.348,
+     17.395
+    ],
+    "n_f": 0
+   },
+   "P1360": {
+    "sid": "S0038",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BBBT",
+    "cordas_mm": [
+     20.824,
+     19.384,
+     17.356,
+     19.219
+    ],
+    "n_f": 0
+   },
+   "P1365": {
+    "sid": "S0038",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     18.746,
+     19.096,
+     18.667,
+     19.46
+    ],
+    "n_f": 0
+   },
+   "P1377": {
+    "sid": "S0038",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.139,
+     19.418,
+     17.826,
+     19.248
+    ],
+    "n_f": 0
+   },
+   "P1418": {
+    "sid": "S0039",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     18.037,
+     17.448,
+     18.693,
+     18.485
+    ],
+    "n_f": 0
+   },
+   "P1422": {
+    "sid": "S0039",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.482,
+     18.718,
+     16.024,
+     18.742
+    ],
+    "n_f": 1,
+    "f_esperado": 1
+   },
+   "P1430": {
+    "sid": "S0039",
+    "existe": true,
+    "iou": 1.0,
+    "d_max_mm": 0.0,
+    "cls": "BTBT",
+    "cordas_mm": [
+     17.409,
+     18.245,
+     17.768,
+     17.235
+    ],
+    "n_f": 0
+   }
+  },
+  "excluidas_manual": [
+   "P0045",
+   "P0071",
+   "P0139",
+   "P0198",
+   "P0315",
+   "P0395",
+   "P0407",
+   "P0620",
+   "P0754",
+   "P1064"
+  ],
+  "esym": {
+   "contagens": {
+    "A1": {
+     "n": 20,
+     "clusters": 0
+    },
+    "A2": {
+     "n": 20,
+     "clusters": 0
+    },
+    "B2": {
+     "n": 20,
+     "clusters": 0
+    }
+   },
+   "twin_mediana_mm": 0.383,
+   "top1": {
+    "A1->B2": 20,
+    "A2->B2": 20,
+    "B2->A2": 20
+   },
+   "segundos": 7.8
+  },
+  "ereal2": {
+   "n": 188,
+   "propostas": {
+    "BExceu": {
+     "aceite": 1
+    },
+    "pos": {
+     "aceite": 15
+    }
+   },
+   "aceite_negativos": [],
+   "segundos": 11.4
+  },
+  "quadrados": {
+   "n_pecas": 40,
+   "n_pecas_com_forma": 40,
+   "ligacoes_ok": 40,
+   "ligacoes": 40,
+   "quadrados_ok": 10,
+   "quadrados": 10,
+   "falhas": [],
+   "segundos": 10.8
+  },
+  "molde": {
+   "n": 226,
+   "top1": 214,
+   "alta": 131,
+   "alta_errada": 0,
+   "sigma": 1,
+   "n_pool": 267,
+   "certas": [
+    "P0001",
+    "P0002",
+    "P0003",
+    "P0004",
+    "P0005",
+    "P0006",
+    "P0008",
+    "P0009",
+    "P0010",
+    "P0011",
+    "P0012",
+    "P0013",
+    "P0014",
+    "P0015",
+    "P0016",
+    "P0017",
+    "P0018",
+    "P0019",
+    "P0020",
+    "P0023",
+    "P0024",
+    "P0025",
+    "P0026",
+    "P0027",
+    "P0028",
+    "P0029",
+    "P0030",
+    "P0032",
+    "P0033",
+    "P0034",
+    "P0035",
+    "P0036",
+    "P0037",
+    "P0038",
+    "P0039",
+    "P0040",
+    "P0045",
+    "P0071",
+    "P0139",
+    "P0196",
+    "P0197",
+    "P0198",
+    "P0199",
+    "P0200",
+    "P0201",
+    "P0202",
+    "P0203",
+    "P0204",
+    "P0205",
+    "P0206",
+    "P0207",
+    "P0208",
+    "P0209",
+    "P0210",
+    "P0211",
+    "P0212",
+    "P0213",
+    "P0214",
+    "P0215",
+    "P0216",
+    "P0217",
+    "P0218",
+    "P0219",
+    "P0220",
+    "P0222",
+    "P0223",
+    "P0224",
+    "P0225",
+    "P0226",
+    "P0227",
+    "P0228",
+    "P0229",
+    "P0230",
+    "P0231",
+    "P0232",
+    "P0233",
+    "P0234",
+    "P0235",
+    "P0236",
+    "P0237",
+    "P0239",
+    "P0240",
+    "P0241",
+    "P0243",
+    "P0245",
+    "P0247",
+    "P0249",
+    "P0251",
+    "P0252",
+    "P0255",
+    "P0257",
+    "P0258",
+    "P0261",
+    "P0262",
+    "P0263",
+    "P0264",
+    "P0265",
+    "P0266",
+    "P0269",
+    "P0270",
+    "P0272",
+    "P0275",
+    "P0276",
+    "P0277",
+    "P0280",
+    "P0282",
+    "P0283",
+    "P0284",
+    "P0286",
+    "P0292",
+    "P0295",
+    "P0298",
+    "P0301",
+    "P0302",
+    "P0307",
+    "P0311",
+    "P0315",
+    "P0345",
+    "P0346",
+    "P0347",
+    "P0348",
+    "P0349",
+    "P0350",
+    "P0356",
+    "P0362",
+    "P0368",
+    "P0407",
+    "P0444",
+    "P0448",
+    "P0452",
+    "P0480",
+    "P0484",
+    "P0488",
+    "P0492",
+    "P0496",
+    "P0502",
+    "P0507",
+    "P0520",
+    "P0524",
+    "P0528",
+    "P0532",
+    "P0536",
+    "P0540",
+    "P0543",
+    "P0547",
+    "P0551",
+    "P0555",
+    "P0559",
+    "P0564",
+    "P0568",
+    "P0574",
+    "P0578",
+    "P0584",
+    "P0589",
+    "P0590",
+    "P0595",
+    "P0600",
+    "P0605",
+    "P0610",
+    "P0613",
+    "P0617",
+    "P0620",
+    "P0622",
+    "P0627",
+    "P0628",
+    "P0629",
+    "P0631",
+    "P0632",
+    "P0633",
+    "P0634",
+    "P0635",
+    "P0636",
+    "P0637",
+    "P0638",
+    "P0639",
+    "P0640",
+    "P0641",
+    "P0642",
+    "P0644",
+    "P0645",
+    "P0646",
+    "P0647",
+    "P0648",
+    "P0650",
+    "P0651",
+    "P0652",
+    "P0653",
+    "P0654",
+    "P0655",
+    "P0656",
+    "P0657",
+    "P0658",
+    "P0659",
+    "P0661",
+    "P0662",
+    "P0663",
+    "P0664",
+    "P0665",
+    "P0666",
+    "P0667",
+    "P0668",
+    "P0669",
+    "P0670",
+    "P0671",
+    "P0672",
+    "P0673",
+    "P0674",
+    "P0675",
+    "P0754",
+    "P0814",
+    "P0820",
+    "P0827",
+    "P1064",
+    "P1422"
+   ],
+   "alta_errada_ids": [],
+   "falhas": [
+    "P0007 (1, 11): top-1 P0009 (media)",
+    "P0021 (47, 56): top-1 P0644 (media)",
+    "P0022 (47, 57): top-1 P0568 (media)",
+    "P0031 (47, 46): top-1 P0484 (sem)",
+    "P0221 (19, 64): top-1 P0202 (media)",
+    "P0289 (1, 33): top-1 None (sem)",
+    "P0512 (47, 36): top-1 P0395 (sem)",
+    "P0516 (47, 37): top-1 P0492 (media)",
+    "P0517 (47, 20): top-1 P0524 (media)",
+    "P0630 (20, 1): top-1 P0208 (media)",
+    "P0643 (29, 1): top-1 P0641 (sem)",
+    "P0649 (30, 1): top-1 P0202 (sem)"
+   ],
+   "segundos": 95.9
+  },
+  "ficheiros": {
+   "images/pieces/coluna5-24_300dpi_folhaA.jpg": "f9349e5d7320128352ad965b0cd142f497a0a08e755a1d8d4b04a17a93608a8e",
+   "images/pieces/colunas5-24_300dpi_rot180_folhaA.jpg": "f25abba1f21cd2c3b2d2371c0cdfbb8a36979d9ba2cd822a42d7596726bf86af",
+   "images/pieces/coluna5-24_folhaB_300dpi_rot180.jpg": "5c1f878ff3635b8b852bc1278bfbf169009f1180c15eabb960eea8d1bd4c3c5f",
+   "tests/data/ereal2_memoria.npz": "1b8b68f6840d9ecd1ba68c4f084d4461c8e1d97ddb16ff81790398476e6989c9"
+  },
+  "segundos": {
+   "segmentacao": 181.8,
+   "matching": 125.9,
+   "total": 307.7
+  }
  }
 }
