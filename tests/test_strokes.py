@@ -281,15 +281,18 @@ def test_fundo_on_the_shadow_line_is_a_no_op(meadow_sombra):
 
 
 def test_normalizar_keeps_auto_outside_influence_and_the_peca_gain(meadow):
-    """A ``peca`` lasso in the eaten corner: the saved mask equals the automatic one outside the lasso's
-    influence region and recovers the corner inside it (IoU vs GT as good as the raw path, ±0.01)."""
+    """A ``peca`` lasso in the eaten corner: outside the lasso's influence region the saved mask is the automatic
+    one ∪ the painted edge (4.1 (c) = A, Tiago 2026-11-26: the edge lies whole inside the index; it was ``== auto``
+    there before, which left edge pixels outside the index) and it recovers the corner inside it (IoU vs GT as good
+    as the raw path, ±0.01)."""
     inner = cv2.erode(meadow["patch"].astype(np.uint8), np.ones((9, 9), np.uint8)) > 0
     tr = _norm([{"ferramenta": "laco", "marca": "peca", "pontos": c} for c in _outer(inner)])
     n = ST.resolver(meadow["rgb"], meadow["auto"], tr, MMPP, normalizar_indice=True)
     raw = ST.resolver(meadow["rgb"], meadow["auto"], tr, MMPP)
     assert n["identidade"] is False and n["tracos_ignorados"] == []
     outside = ~n["influencia"]
-    assert np.array_equal(n["mask"][outside], meadow["auto"][outside])
+    assert np.array_equal(n["mask"][outside], (meadow["auto"] | n["mask_aresta"])[outside])
+    assert not (n["mask_aresta"] & ~n["mask"]).any()                    # the edge whole inside the index
     assert _iou(meadow["gt"], n["mask"]) >= _iou(meadow["gt"], raw["mask"]) - 0.01
     assert (n["mask"] & meadow["patch"]).sum() >= 0.95 * meadow["patch"].sum()
     assert len(n["aresta"]) >= 20 and n["delta_mm"] == 0.0
@@ -307,7 +310,9 @@ def test_deep_fundo_cut_survives_normalisation(meadow):
     assert n["tracos_ignorados"] == [] and n["identidade"] is False
     cut = meadow["auto"] & ~n["mask"]
     assert cut.sum() * MMPP * MMPP > 3.0
-    assert np.array_equal(n["mask"][~n["influencia"]], meadow["auto"][~n["influencia"]])
+    outside = ~n["influencia"]                                          # 4.1 (c) = A: automatic ∪ edge there
+    assert np.array_equal(n["mask"][outside], (meadow["auto"] | n["mask_aresta"])[outside])
+    assert not (n["mask_aresta"] & ~n["mask"]).any()
 
 
 def test_normalizar_drops_small_gains_instead_of_growing_them():
