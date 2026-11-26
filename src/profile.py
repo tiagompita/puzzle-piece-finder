@@ -45,8 +45,10 @@ class PuzzleProfile:
 	"""Puzzle profile (schema version 1). See the module docstring for the cell convention.
 
 	Fields mirror ``puzzle.json``: ``grid`` = ``{'cols', 'rows'}``, ``cell_mm`` =
-	``{'w', 'h'}``, ``symmetry`` = ``{'type': 'rot180'|'none'|'translate', 'cols': N}``
-	(``cols`` only for ``translate``), ``background_lab`` = ``[L, a, b]`` (CIE Lab,
+	``{'w', 'h'}``, ``symmetry`` = ``{'type': 'rot180'|'none'|'translate', 'cols': N, 'excecoes': [...]}``
+	(``cols`` only for ``translate``; optional ``excecoes`` = known cells where the die is not symmetric,
+	``[{'cols': [c, ...], 'rows': [[a, b], ...], 'texto': str}]``, read by
+	:func:`src.consistency.twin_exception`), ``background_lab`` = ``[L, a, b]`` (CIE Lab,
 	L in 0..100), ``dpi`` (scan resolution), ``art`` = ``{'file', 'bbox': [x, y, w, h]}``
 	(file relative to the repository root, bbox in art-file pixels; optional
 	``registration`` = ``{'matrix': [[a, b, tx], [c, d, ty]], 'units': 'board_mm->art_px', ...}``
@@ -76,6 +78,7 @@ class PuzzleProfile:
 			raise ValueError(f"unknown symmetry type {t!r} (expected one of {SYMMETRY_TYPES})")
 		if t == "translate" and int(self.symmetry.get("cols", 0)) <= 0:
 			raise ValueError("symmetry 'translate' needs a positive 'cols'")
+		self._check_symmetry_exceptions()
 		if int(self.grid["cols"]) <= 0 or int(self.grid["rows"]) <= 0:
 			raise ValueError("grid cols/rows must be positive")
 		if int(self.schema_version) != SCHEMA_VERSION:
@@ -83,6 +86,24 @@ class PuzzleProfile:
 		if float(self.dpi) <= 0:
 			raise ValueError("dpi must be positive")
 		self._check_zones()
+
+	def _check_symmetry_exceptions(self) -> None:
+		"""``symmetry.excecoes`` (optional): a list of ``{'cols': [int, ...], 'rows': [[a, b], ...], 'texto': str}``."""
+		exc = self.symmetry.get("excecoes")
+		if exc is None:
+			return
+		if not isinstance(exc, list):
+			raise ValueError(f"symmetry.excecoes must be a list, got {type(exc).__name__}")
+		for i, e in enumerate(exc):
+			if not isinstance(e, dict):
+				raise ValueError(f"symmetry.excecoes[{i}] must be an object")
+			cols, rows = e.get("cols"), e.get("rows")
+			if not isinstance(cols, list) or not cols or any(int(c) != c for c in cols):
+				raise ValueError(f"symmetry.excecoes[{i}].cols must be a non-empty list of integers, got {cols!r}")
+			if (not isinstance(rows, list) or not rows
+					or any(not isinstance(r, list) or len(r) != 2 or int(r[0]) != r[0] or int(r[1]) != r[1] or r[0] > r[1]
+						   for r in rows)):
+				raise ValueError(f"symmetry.excecoes[{i}].rows must be a list of [first, last], got {rows!r}")
 
 	# ------------------------------------------------------------ image zones (row bands)
 	def zones(self) -> dict:

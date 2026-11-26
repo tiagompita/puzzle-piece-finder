@@ -1,0 +1,4 @@
+{
+ "descricao": "Pares gémeos colocados acima de consistency.TWIN_LOCAL_MAX_MM fora de symmetry.excecoes, conhecidos e por rever (D3 = C de 2026-11-26): o teste 4.2 aceita-os até o Tiago decidir (alargar a exceção c32|c33 às filas 4-5/43-44, ou tratar as 6 peças como recortes maus). Imagens de prova: docs/diagnostico/verify/simetria/.",
+ "pares": ["P0140|P0499", "P0495|P0938", "P0500|P1178"]
+}

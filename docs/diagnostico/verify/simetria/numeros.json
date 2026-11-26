@@ -1,0 +1,122 @@
+[
+ {
+  "a": "P0140",
+  "ca": [
+   4,
+   32
+  ],
+  "b": "P0499",
+  "cb": [
+   44,
+   33
+  ],
+  "rms_mm": 2.096,
+  "nn_p95_mm": 2.469,
+  "nn_max_mm": 4.735,
+  "pontos_acima_limiar": 35,
+  "limiar_mm": 1.75,
+  "phi_deg": 17.2,
+  "cls": [
+   "BBBT",
+   "BBTT"
+  ],
+  "excecao": null,
+  "imagem": "docs/diagnostico/verify/simetria/P0140_P0499.jpg"
+ },
+ {
+  "a": "P0495",
+  "ca": [
+   44,
+   32
+  ],
+  "b": "P0938",
+  "cb": [
+   4,
+   33
+  ],
+  "rms_mm": 2.138,
+  "nn_p95_mm": 2.287,
+  "nn_max_mm": 4.367,
+  "pontos_acima_limiar": 37,
+  "limiar_mm": 1.75,
+  "phi_deg": -4.8,
+  "cls": [
+   "BBBT",
+   "BBTT"
+  ],
+  "excecao": null,
+  "imagem": "docs/diagnostico/verify/simetria/P0495_P0938.jpg"
+ },
+ {
+  "a": "P0500",
+  "ca": [
+   43,
+   33
+  ],
+  "b": "P1178",
+  "cb": [
+   5,
+   32
+  ],
+  "rms_mm": 2.14,
+  "nn_p95_mm": 2.732,
+  "nn_max_mm": 4.556,
+  "pontos_acima_limiar": 39,
+  "limiar_mm": 1.75,
+  "phi_deg": 143.0,
+  "cls": [
+   "BBBT",
+   "BTBT"
+  ],
+  "excecao": null,
+  "imagem": "docs/diagnostico/verify/simetria/P0500_P1178.jpg"
+ },
+ {
+  "a": "P0292",
+  "ca": [
+   1,
+   32
+  ],
+  "b": "P0496",
+  "cb": [
+   47,
+   33
+  ],
+  "rms_mm": 3.08,
+  "nn_p95_mm": 4.361,
+  "nn_max_mm": 5.647,
+  "pontos_acima_limiar": 55,
+  "limiar_mm": 1.75,
+  "phi_deg": 5.3,
+  "cls": [
+   "FTTT",
+   "BTTF"
+  ],
+  "excecao": "corte c32|c33 não simétrico (exceção por confirmar)",
+  "imagem": "docs/diagnostico/verify/simetria/P0292_P0496.jpg"
+ },
+ {
+  "a": "P0119",
+  "ca": [
+   2,
+   48
+  ],
+  "b": "P0579",
+  "cb": [
+   46,
+   17
+  ],
+  "rms_mm": 0.174,
+  "nn_p95_mm": 0.174,
+  "nn_max_mm": 0.238,
+  "pontos_acima_limiar": 0,
+  "limiar_mm": 1.75,
+  "phi_deg": 0.2,
+  "cls": [
+   "BTTT",
+   "BTTT"
+  ],
+  "excecao": null,
+  "imagem": "docs/diagnostico/verify/simetria/P0119_P0579.jpg"
+ }
+]

@@ -19,7 +19,7 @@ import collections
 import numpy as np
 
 __all__ = ["estado", "mesma_celula", "borda_completa", "f_por_celula", "grupos_sobrepostos", "manual_indice_da_linha",
-		   "manual_indice_na_banda", "f_esperados", "REGRAS", "todas"]
+		   "manual_indice_na_banda", "f_esperados", "REGRAS", "todas", "pares_gemeos", "simetria"]
 
 
 def _res(viol: list, **kw) -> dict:
@@ -150,3 +150,49 @@ def todas(pr) -> dict:
 	return {"estado": estado(pr), "mesma_celula": mesma_celula(pr), "borda_completa": borda_completa(pr),
 			"f_por_celula": f_por_celula(pr), "grupos_sobrepostos": grupos_sobrepostos(pr),
 			"manual_indice_da_linha": manual_indice_da_linha(pr, man), "manual_indice_na_banda": manual_indice_na_banda(pr, man)}
+
+
+def pares_gemeos(pr) -> list:
+	"""Pares de células gémeas (``profile.twin``) com as duas peças ``colocada``: ``[{a, ca, b, cb, r, excecao}]``
+	com ``r`` = :func:`src.consistency.twin_local_residual` (None sem forma) e ``excecao`` o texto de
+	:func:`src.consistency.twin_exception` (de ``symmetry.excecoes`` do perfil) para qualquer das duas células."""
+	from src import consistency as CS
+	prof = pr.profile
+	by_cell = {(int(p.celula[0]), int(p.celula[1])): pid for pid, p in pr.pieces.items()
+			   if p.estado == "colocada" and p.celula is not None}
+	out = []
+	for lc, pid in sorted(by_cell.items()):
+		tc = prof.twin(*lc)
+		if tc is None:
+			continue
+		tc = (int(tc[0]), int(tc[1]))
+		if tc not in by_cell or tc < lc:
+			continue
+		qid = by_cell[tc]
+		r = CS.twin_local_residual(pr.shape(pid), pr.shape(qid))
+		exc = CS.twin_exception(prof, lc) or CS.twin_exception(prof, tc)
+		out.append({"a": pid, "ca": list(lc), "b": qid, "cb": list(tc), "r": r, "excecao": exc})
+	return out
+
+
+def simetria(pr, por_rever=()) -> dict:
+	"""4.2: pares gémeos colocados com ``nn_max`` acima de :data:`src.consistency.TWIN_LOCAL_MAX_MM` que não estão numa
+	exceção do perfil nem na lista «por rever» (D3 de 2026-11-26: pares ``"Pxxxx|Pyyyy"``, qualquer ordem).
+	Sem simetria declarada no perfil (``type == 'none'``) não há pares: ``{n: 0, aplicavel: False}``."""
+	from src import consistency as CS
+	if (pr.profile.symmetry or {}).get("type", "none") == "none":
+		return _res([], aplicavel=False, pares=0)
+	rev = {frozenset(x.split("|")) for x in por_rever}
+	pares = pares_gemeos(pr)
+	acima = [x for x in pares if x["r"] is not None and x["r"]["nn_max_mm"] > CS.TWIN_LOCAL_MAX_MM]
+	viol, conhecidos, excecao = [], [], []
+	for x in acima:
+		d = {"a": x["a"], "ca": x["ca"], "b": x["b"], "cb": x["cb"], "nn_max_mm": round(x["r"]["nn_max_mm"], 3)}
+		if x["excecao"]:
+			excecao.append(d)
+		elif frozenset((x["a"], x["b"])) in rev:
+			conhecidos.append(d)
+		else:
+			viol.append(d)
+	return _res(viol, aplicavel=True, pares=len(pares), medidos=sum(x["r"] is not None for x in pares),
+				na_excecao=excecao, por_rever=conhecidos, limiar_mm=CS.TWIN_LOCAL_MAX_MM)

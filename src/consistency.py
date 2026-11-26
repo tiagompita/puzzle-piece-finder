@@ -26,8 +26,8 @@ A piece is also a suspect, grade ``recorte`` (its silhouette, not its pose), whe
 * the segmentation flagged it with ``flags.suspeita_recorte.razoes`` containing ``baia`` (a tab / bay
   outside the contour).
 
-Cells of a known exception of the die symmetry (:data:`TWIN_EXCEPTIONS`, or ``symmetry.excecoes`` of the
-profile) are still listed, with the exception as text. Pieces with a manual contour (``manual_override``)
+Cells of a known exception of the die symmetry (``symmetry.excecoes`` of the profile, :func:`twin_exception`)
+are still listed, with the exception as text. Pieces with a manual contour (``manual_override``)
 are left out of ``recorte``.
 
 Nothing is corrected: the output says which rotation would fit (``rot_alt_deg``, clockwise on the
@@ -62,7 +62,7 @@ from typing import Optional
 from src.state import SUSPECT_GRAUS
 
 __all__ = ["BETTER_FEWER_FAILS", "BETTER_COST_RATIO", "BETTER_COST_MM", "BETTER_COST_MIN_SIDES", "FAIL_COST_MM", "GRAUS",
-		   "TWIN_LOCAL_MAX_MM", "TWIN_EXCEPTIONS", "SIGNATURE_HEX", "twin_local_residual", "twin_local_residual_cached", "twin_exception", "suspect_signature",
+		   "TWIN_LOCAL_MAX_MM", "SIGNATURE_HEX", "twin_local_residual", "twin_local_residual_cached", "twin_exception", "suspect_signature",
 		   "checked_ids", "grade_at", "evaluate", "suspects", "summary", "suspects_near", "suspects_lines", "rot_text", "format_item",
 		   "format_falso", "main"]
 
@@ -76,10 +76,8 @@ FAIL_COST_MM = 5.0          # cost (mm) of a side that cannot fit at all (F faci
 							# above any T-B cost seen (RMS + 0.5 dL, failing T-B sides of the 607 placed: <= 3.2)
 TWIN_LOCAL_MAX_MM = 1.75   # recorte: max distance of a contour point to the aligned twin (COMIDO.md §5: 63 controls
 							# <= 1.31, 5 eaten silhouettes >= 2.17; midpoint)
-# Known exceptions of the die symmetry, by profile id, until they move to ``symmetry.excecoes`` of puzzle.json:
-# the c32|c33 cut of rows 1-3 / 45-47 of the Alpes is not symmetric (ORIENTACOES-2026-11-07 §D; pending 6).
-TWIN_EXCEPTIONS = {"alpes": [{"cols": [32, 33], "rows": [[1, 3], [45, 47]],
-							  "texto": "corte c32|c33 não simétrico (exceção por confirmar)"}]}
+# Known exceptions of the die symmetry live in the puzzle profile (``symmetry.excecoes`` of puzzle.json, read by
+# :func:`twin_exception`), never in the code (moved there 2026-11-26, docs/decisoes.md).
 GRAUS = SUSPECT_GRAUS               # ("impossivel", "melhor_rotacao", "recorte"), also validated by the state
 SIGNATURE_HEX = 12                 # suspect_signature: leading hex digits of the sha1
 _OPP = {"N": "S", "S": "N", "E": "W", "W": "E"}
@@ -156,11 +154,8 @@ def twin_local_residual_cached(a, b) -> Optional[dict]:
 
 
 def twin_exception(profile, cell) -> Optional[str]:
-	"""Text of the known symmetry exception covering ``cell`` (profile ``symmetry.excecoes``, else
-	:data:`TWIN_EXCEPTIONS` by profile id), or None."""
+	"""Text of the known symmetry exception covering ``cell`` (profile ``symmetry.excecoes``), or None."""
 	exc = (getattr(profile, "symmetry", None) or {}).get("excecoes")
-	if exc is None:
-		exc = TWIN_EXCEPTIONS.get(getattr(profile, "id", None), [])
 	l, c = int(cell[0]), int(cell[1])
 	for e in exc or []:
 		if c in [int(v) for v in e.get("cols", [])] and any(int(a) <= l <= int(b) for a, b in e.get("rows", [])):
