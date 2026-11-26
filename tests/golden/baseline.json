@@ -1,0 +1,4386 @@
+{
+ "versao": 1,
+ "congelada_em": "2026-11-26T01:34:40",
+ "head": "c896a5adb8b55183c5fd4c4226d756e34995b30b",
+ "manifesto_sha256": "db5b7f7d4b3c4263ef953353d5edd79eb1f1acbd367332685237842e56ffbfdc",
+ "metricas": {
+  "pecas": {
+   "P0001": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     5
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.465,
+     18.818,
+     19.499,
+     18.053
+    ]
+   },
+   "P0002": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     6
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     19.128,
+     18.147,
+     18.958,
+     19.311
+    ]
+   },
+   "P0003": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     7
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.7,
+     21.677,
+     18.888,
+     19.993
+    ]
+   },
+   "P0004": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     8
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.782,
+     18.437,
+     18.303,
+     17.855
+    ]
+   },
+   "P0005": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     9
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.498,
+     19.072,
+     18.233,
+     19.605
+    ]
+   },
+   "P0006": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     10
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.94,
+     20.324,
+     18.757,
+     18.829
+    ]
+   },
+   "P0007": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     11
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.338,
+     19.399,
+     18.373,
+     18.763
+    ]
+   },
+   "P0008": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     12
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.723,
+     18.782,
+     18.486,
+     19.043
+    ]
+   },
+   "P0009": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     13
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.125,
+     19.768,
+     17.778,
+     19.893
+    ]
+   },
+   "P0010": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     14
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.362,
+     19.026,
+     19.152,
+     18.724
+    ]
+   },
+   "P0011": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     15
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.027,
+     18.44,
+     18.686,
+     17.83
+    ]
+   },
+   "P0012": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     16
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.868,
+     20.063,
+     18.18,
+     19.059
+    ]
+   },
+   "P0013": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     17
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.575,
+     20.1,
+     18.244,
+     19.24
+    ]
+   },
+   "P0014": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     18
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.31,
+     19.723,
+     16.492,
+     18.993
+    ]
+   },
+   "P0015": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     19
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.072,
+     20.438,
+     17.684,
+     19.051
+    ]
+   },
+   "P0016": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     20
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.894,
+     17.864,
+     17.73,
+     18.309
+    ]
+   },
+   "P0017": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     21
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.091,
+     19.898,
+     18.269,
+     19.309
+    ]
+   },
+   "P0018": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     22
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.666,
+     19.429,
+     18.095,
+     18.615
+    ]
+   },
+   "P0019": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     23
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.069,
+     19.419,
+     18.206,
+     19.25
+    ]
+   },
+   "P0020": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     24
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     16.697,
+     19.244,
+     16.952,
+     19.4
+    ]
+   },
+   "P0021": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     56
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.843,
+     18.727,
+     18.209,
+     19.306
+    ]
+   },
+   "P0022": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     57
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.816,
+     18.354,
+     17.606,
+     18.777
+    ]
+   },
+   "P0023": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     58
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.802,
+     21.722,
+     18.15,
+     20.722
+    ]
+   },
+   "P0024": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     59
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.482,
+     18.474,
+     18.817,
+     19.702
+    ]
+   },
+   "P0025": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     60
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.474,
+     19.0,
+     19.538,
+     18.076
+    ]
+   },
+   "P0026": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     51
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.894,
+     18.85,
+     18.754,
+     18.933
+    ]
+   },
+   "P0027": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     52
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.16,
+     19.552,
+     19.347,
+     18.631
+    ]
+   },
+   "P0028": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     53
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.838,
+     19.141,
+     18.515,
+     19.185
+    ]
+   },
+   "P0029": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     54
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.016,
+     19.533,
+     17.608,
+     19.722
+    ]
+   },
+   "P0030": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     55
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.014,
+     20.531,
+     19.125,
+     18.688
+    ]
+   },
+   "P0031": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     46
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.669,
+     20.391,
+     16.953,
+     18.897
+    ]
+   },
+   "P0032": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     47
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.326,
+     19.419,
+     18.332,
+     17.947
+    ]
+   },
+   "P0033": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     48
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.734,
+     20.511,
+     18.196,
+     18.99
+    ]
+   },
+   "P0034": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     49
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.722,
+     20.087,
+     18.272,
+     19.101
+    ]
+   },
+   "P0035": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     50
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.918,
+     18.797,
+     18.47,
+     18.054
+    ]
+   },
+   "P0036": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     41
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.185,
+     19.095,
+     17.981,
+     18.496
+    ]
+   },
+   "P0037": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     42
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.007,
+     19.896,
+     18.562,
+     19.112
+    ]
+   },
+   "P0038": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     43
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.127,
+     19.243,
+     18.472,
+     18.423
+    ]
+   },
+   "P0039": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     44
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.047,
+     20.253,
+     17.735,
+     20.014
+    ]
+   },
+   "P0040": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     45
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.927,
+     18.076,
+     17.686,
+     18.4
+    ]
+   },
+   "P0045": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     43,
+     5
+    ],
+    "cls": "TTTT",
+    "cordas_mm": [
+     18.648,
+     18.237,
+     17.242,
+     17.082
+    ]
+   },
+   "P0071": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     42,
+     62
+    ],
+    "cls": "BTTT",
+    "cordas_mm": [
+     19.342,
+     18.864,
+     19.942,
+     18.174
+    ]
+   },
+   "P0114": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.535,
+     18.929,
+     18.663,
+     19.319
+    ]
+   },
+   "P0139": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     7,
+     7
+    ],
+    "cls": "BBBT",
+    "cordas_mm": [
+     17.527,
+     20.637,
+     17.882,
+     19.408
+    ]
+   },
+   "P0160": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBBT",
+    "cordas_mm": [
+     19.666,
+     17.669,
+     18.895,
+     18.562
+    ]
+   },
+   "P0161": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBBT",
+    "cordas_mm": [
+     20.426,
+     18.226,
+     18.156,
+     18.057
+    ]
+   },
+   "P0170": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBBB",
+    "cordas_mm": [
+     20.135,
+     17.407,
+     18.22,
+     19.701
+    ]
+   },
+   "P0174": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     19.301,
+     18.538,
+     18.264,
+     16.488
+    ]
+   },
+   "P0182": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.695,
+     18.749,
+     17.996,
+     18.914
+    ]
+   },
+   "P0196": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     14,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.64,
+     19.508,
+     17.508,
+     19.87
+    ]
+   },
+   "P0197": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     21,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.382,
+     18.515,
+     20.604,
+     17.852
+    ]
+   },
+   "P0198": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     28,
+     64
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     15.994,
+     18.731,
+     17.016,
+     18.043
+    ]
+   },
+   "P0199": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     35,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.052,
+     17.95,
+     18.216,
+     18.531
+    ]
+   },
+   "P0200": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     7,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.938,
+     18.318,
+     18.482,
+     18.026
+    ]
+   },
+   "P0201": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     15,
+     64
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     19.046,
+     18.745,
+     18.335,
+     19.159
+    ]
+   },
+   "P0202": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     22,
+     64
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     19.386,
+     18.544,
+     17.47,
+     18.067
+    ]
+   },
+   "P0203": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     29,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.529,
+     18.994,
+     18.663,
+     18.52
+    ]
+   },
+   "P0204": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     36,
+     64
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     16.821,
+     18.038,
+     17.705,
+     17.544
+    ]
+   },
+   "P0205": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     8,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     19.314,
+     19.179,
+     18.017,
+     18.587
+    ]
+   },
+   "P0206": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     16,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.258,
+     19.8,
+     18.485,
+     18.09
+    ]
+   },
+   "P0207": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     23,
+     64
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     19.472,
+     17.937,
+     18.159,
+     18.742
+    ]
+   },
+   "P0208": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     30,
+     64
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     16.767,
+     18.472,
+     17.626,
+     18.918
+    ]
+   },
+   "P0209": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     37,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.036,
+     17.363,
+     17.965,
+     17.936
+    ]
+   },
+   "P0210": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     9,
+     64
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.584,
+     20.268,
+     17.702,
+     18.825
+    ]
+   },
+   "P0211": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     17,
+     64
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.381,
+     18.646,
+     16.757,
+     20.382
+    ]
+   },
+   "P0212": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     24,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.442,
+     17.955,
+     16.814,
+     18.086
+    ]
+   },
+   "P0213": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     31,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.835,
+     17.778,
+     17.389,
+     19.043
+    ]
+   },
+   "P0214": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     38,
+     64
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     19.481,
+     17.586,
+     17.767,
+     16.961
+    ]
+   },
+   "P0215": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     10,
+     64
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     20.206,
+     19.274,
+     17.576,
+     20.185
+    ]
+   },
+   "P0216": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     18,
+     64
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     16.41,
+     18.28,
+     18.299,
+     18.304
+    ]
+   },
+   "P0217": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     25,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.749,
+     17.826,
+     17.975,
+     17.148
+    ]
+   },
+   "P0218": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     32,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.444,
+     18.272,
+     19.947,
+     17.383
+    ]
+   },
+   "P0219": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     39,
+     64
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.716,
+     17.01,
+     19.327,
+     17.943
+    ]
+   },
+   "P0220": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     11,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.344,
+     17.447,
+     19.105,
+     18.88
+    ]
+   },
+   "P0221": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     19,
+     64
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     19.961,
+     19.141,
+     18.419,
+     17.366
+    ]
+   },
+   "P0222": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     26,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     19.346,
+     17.681,
+     18.051,
+     17.136
+    ]
+   },
+   "P0223": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     33,
+     64
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     19.672,
+     18.689,
+     16.671,
+     18.878
+    ]
+   },
+   "P0224": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     40,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.498,
+     17.377,
+     18.842,
+     16.149
+    ]
+   },
+   "P0225": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     12,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.463,
+     17.104,
+     18.097,
+     17.642
+    ]
+   },
+   "P0226": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     20,
+     64
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     16.583,
+     18.23,
+     17.38,
+     19.582
+    ]
+   },
+   "P0227": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     27,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.49,
+     18.115,
+     19.238,
+     17.295
+    ]
+   },
+   "P0228": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     34,
+     64
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     16.449,
+     18.213,
+     17.439,
+     18.872
+    ]
+   },
+   "P0229": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     41,
+     64
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     17.859,
+     18.107,
+     16.899,
+     17.569
+    ]
+   },
+   "P0230": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     13,
+     64
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.942,
+     20.02,
+     17.411,
+     17.15
+    ]
+   },
+   "P0231": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     6,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.389,
+     17.246,
+     18.524,
+     16.88
+    ]
+   },
+   "P0232": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     5,
+     64
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.851,
+     18.193,
+     18.225,
+     20.216
+    ]
+   },
+   "P0233": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     4,
+     64
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     18.671,
+     19.045,
+     18.493,
+     18.312
+    ]
+   },
+   "P0234": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     3,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.736,
+     16.883,
+     18.671,
+     16.528
+    ]
+   },
+   "P0235": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     2,
+     64
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.932,
+     18.571,
+     18.833,
+     18.668
+    ]
+   },
+   "P0236": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     64
+    ],
+    "cls": "FFTT",
+    "cordas_mm": [
+     19.987,
+     16.566,
+     17.87,
+     16.448
+    ]
+   },
+   "P0237": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     45
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.607,
+     18.271,
+     19.415,
+     17.476
+    ]
+   },
+   "P0239": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     54
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.863,
+     17.824,
+     19.325,
+     16.834
+    ]
+   },
+   "P0240": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     63
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.205,
+     17.625,
+     18.464,
+     16.687
+    ]
+   },
+   "P0241": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     44
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     19.431,
+     18.481,
+     19.251,
+     17.723
+    ]
+   },
+   "P0243": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     53
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     20.06,
+     17.51,
+     19.936,
+     17.043
+    ]
+   },
+   "P0245": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     62
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     21.523,
+     15.994,
+     19.346,
+     16.565
+    ]
+   },
+   "P0247": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     43
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.705,
+     17.944,
+     18.248,
+     18.87
+    ]
+   },
+   "P0249": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     52
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.1,
+     17.254,
+     18.304,
+     17.147
+    ]
+   },
+   "P0251": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     61
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.516,
+     16.953,
+     17.475,
+     16.553
+    ]
+   },
+   "P0252": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     42
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.371,
+     18.006,
+     19.139,
+     17.012
+    ]
+   },
+   "P0255": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     51
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.581,
+     17.472,
+     18.42,
+     17.717
+    ]
+   },
+   "P0257": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     60
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.259,
+     17.976,
+     17.912,
+     16.943
+    ]
+   },
+   "P0258": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     41
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.801,
+     17.994,
+     18.786,
+     17.845
+    ]
+   },
+   "P0261": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     50
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.244,
+     17.723,
+     18.738,
+     16.659
+    ]
+   },
+   "P0262": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     59
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.488,
+     17.146,
+     19.191,
+     17.573
+    ]
+   },
+   "P0263": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     40
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.491,
+     19.951,
+     17.245,
+     18.533
+    ]
+   },
+   "P0264": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     49
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.718,
+     18.003,
+     18.887,
+     17.698
+    ]
+   },
+   "P0265": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     58
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     18.57,
+     17.411,
+     19.513,
+     15.943
+    ]
+   },
+   "P0266": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     39
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.905,
+     18.189,
+     19.28,
+     19.697
+    ]
+   },
+   "P0269": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     48
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.468,
+     17.846,
+     18.224,
+     18.186
+    ]
+   },
+   "P0270": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     57
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.839,
+     18.112,
+     17.653,
+     17.681
+    ]
+   },
+   "P0272": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     38
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.425,
+     18.319,
+     19.533,
+     17.315
+    ]
+   },
+   "P0275": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     47
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.461,
+     17.467,
+     18.687,
+     16.965
+    ]
+   },
+   "P0276": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     56
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.604,
+     18.396,
+     17.787,
+     18.301
+    ]
+   },
+   "P0277": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     37
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     19.109,
+     18.499,
+     18.695,
+     17.967
+    ]
+   },
+   "P0280": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     46
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.693,
+     18.088,
+     18.559,
+     17.836
+    ]
+   },
+   "P0282": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     55
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.469,
+     17.281,
+     19.245,
+     17.087
+    ]
+   },
+   "P0283": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     36
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.97,
+     18.401,
+     17.811,
+     17.92
+    ]
+   },
+   "P0284": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     35
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.5,
+     19.245,
+     20.195,
+     17.616
+    ]
+   },
+   "P0286": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     34
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.613,
+     19.134,
+     17.769,
+     19.458
+    ]
+   },
+   "P0289": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     33
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.744,
+     18.81,
+     19.478,
+     18.202
+    ]
+   },
+   "P0292": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     32
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     20.985,
+     17.768,
+     21.594,
+     18.718
+    ]
+   },
+   "P0295": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     31
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     20.297,
+     16.581,
+     18.463,
+     17.424
+    ]
+   },
+   "P0298": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     30
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.748,
+     16.676,
+     19.705,
+     16.197
+    ]
+   },
+   "P0301": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     28
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     19.867,
+     18.25,
+     18.416,
+     16.846
+    ]
+   },
+   "P0302": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     27
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.749,
+     17.533,
+     18.873,
+     17.907
+    ]
+   },
+   "P0307": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     26
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     21.483,
+     16.883,
+     20.626,
+     16.229
+    ]
+   },
+   "P0311": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     25
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     16.898,
+     17.263,
+     18.025,
+     16.626
+    ]
+   },
+   "P0315": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     5,
+     25
+    ],
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.311,
+     20.005,
+     17.22,
+     18.265
+    ]
+   },
+   "P0345": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     42,
+     64
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     16.699,
+     18.645,
+     17.951,
+     17.366
+    ]
+   },
+   "P0346": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     43,
+     64
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.175,
+     16.11,
+     16.327,
+     17.873
+    ]
+   },
+   "P0347": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     44,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     16.891,
+     20.925,
+     17.943,
+     19.092
+    ]
+   },
+   "P0348": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     45,
+     64
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.731,
+     17.846,
+     17.025,
+     17.482
+    ]
+   },
+   "P0349": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     46,
+     64
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.437,
+     17.814,
+     16.849,
+     18.618
+    ]
+   },
+   "P0350": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     64
+    ],
+    "cls": "FFTT",
+    "cordas_mm": [
+     17.572,
+     20.559,
+     17.104,
+     19.395
+    ]
+   },
+   "P0356": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     63
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.142,
+     18.885,
+     19.096,
+     20.33
+    ]
+   },
+   "P0362": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     62
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.634,
+     19.219,
+     18.682,
+     18.365
+    ]
+   },
+   "P0368": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     61
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     18.088,
+     19.233,
+     19.303,
+     18.939
+    ]
+   },
+   "P0395": {
+    "existe": true,
+    "estado": "em_seccao",
+    "celula": null,
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.31,
+     18.534,
+     18.227,
+     18.375
+    ]
+   },
+   "P0407": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     43,
+     48
+    ],
+    "cls": "BTBT",
+    "cordas_mm": [
+     19.545,
+     17.985,
+     19.34,
+     18.176
+    ]
+   },
+   "P0444": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     38
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.844,
+     17.366,
+     19.729,
+     17.377
+    ]
+   },
+   "P0448": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     39
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     21.234,
+     17.348,
+     20.509,
+     16.6
+    ]
+   },
+   "P0452": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     40
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.339,
+     17.354,
+     18.025,
+     16.622
+    ]
+   },
+   "P0480": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     29
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.757,
+     18.309,
+     17.943,
+     17.726
+    ]
+   },
+   "P0484": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     30
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.528,
+     18.984,
+     18.727,
+     18.29
+    ]
+   },
+   "P0488": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     31
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.721,
+     18.643,
+     18.762,
+     18.775
+    ]
+   },
+   "P0492": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     32
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     18.625,
+     18.952,
+     19.217,
+     18.458
+    ]
+   },
+   "P0496": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     33
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     20.287,
+     17.767,
+     21.476,
+     18.36
+    ]
+   },
+   "P0502": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     34
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.944,
+     16.753,
+     18.636,
+     17.256
+    ]
+   },
+   "P0507": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     35
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.807,
+     16.675,
+     19.222,
+     16.855
+    ]
+   },
+   "P0512": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     36
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.153,
+     17.5,
+     18.974,
+     16.086
+    ]
+   },
+   "P0516": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     37
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.958,
+     18.328,
+     17.988,
+     19.005
+    ]
+   },
+   "P0517": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     20
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.542,
+     18.485,
+     19.31,
+     17.522
+    ]
+   },
+   "P0520": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     21
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     19.24,
+     18.542,
+     19.304,
+     17.666
+    ]
+   },
+   "P0524": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     22
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.851,
+     17.726,
+     19.346,
+     17.696
+    ]
+   },
+   "P0528": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     23
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.205,
+     18.149,
+     18.807,
+     17.508
+    ]
+   },
+   "P0532": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     24
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.624,
+     17.971,
+     18.695,
+     17.786
+    ]
+   },
+   "P0536": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     25
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.282,
+     19.779,
+     18.403,
+     17.335
+    ]
+   },
+   "P0540": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     26
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.739,
+     17.85,
+     19.988,
+     18.851
+    ]
+   },
+   "P0543": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     27
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.354,
+     18.261,
+     19.174,
+     17.489
+    ]
+   },
+   "P0547": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     28
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     19.094,
+     18.081,
+     18.023,
+     18.445
+    ]
+   },
+   "P0551": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     11
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.173,
+     17.638,
+     19.551,
+     16.425
+    ]
+   },
+   "P0555": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     12
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.895,
+     17.653,
+     19.516,
+     17.236
+    ]
+   },
+   "P0559": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     13
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.826,
+     17.446,
+     17.875,
+     17.617
+    ]
+   },
+   "P0564": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     14
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.537,
+     17.522,
+     18.532,
+     17.413
+    ]
+   },
+   "P0568": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     15
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.407,
+     17.539,
+     18.702,
+     16.79
+    ]
+   },
+   "P0574": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     16
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.534,
+     18.167,
+     19.07,
+     17.342
+    ]
+   },
+   "P0578": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     17
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.622,
+     17.66,
+     19.133,
+     17.347
+    ]
+   },
+   "P0584": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     18
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.213,
+     17.721,
+     18.278,
+     17.298
+    ]
+   },
+   "P0589": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     19
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.896,
+     19.215,
+     16.721,
+     19.346
+    ]
+   },
+   "P0590": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     2
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     18.686,
+     16.866,
+     18.508,
+     16.196
+    ]
+   },
+   "P0595": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     3
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     21.562,
+     15.863,
+     19.57,
+     16.182
+    ]
+   },
+   "P0600": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     4
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.399,
+     16.664,
+     18.305,
+     15.145
+    ]
+   },
+   "P0605": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     5
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.552,
+     17.658,
+     18.612,
+     15.913
+    ]
+   },
+   "P0610": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     6
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     19.029,
+     16.778,
+     19.308,
+     17.137
+    ]
+   },
+   "P0613": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     7
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     18.774,
+     16.749,
+     18.573,
+     16.91
+    ]
+   },
+   "P0617": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     8
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.757,
+     17.871,
+     18.904,
+     16.068
+    ]
+   },
+   "P0620": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     44,
+     8
+    ],
+    "cls": "BBBT",
+    "cordas_mm": [
+     18.282,
+     19.442,
+     18.68,
+     20.399
+    ]
+   },
+   "P0622": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     9
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.705,
+     17.858,
+     18.884,
+     17.14
+    ]
+   },
+   "P0627": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     10
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.202,
+     19.203,
+     17.83,
+     19.356
+    ]
+   },
+   "P0628": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     6,
+     1
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     19.031,
+     18.142,
+     18.128,
+     16.07
+    ]
+   },
+   "P0629": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     13,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.616,
+     18.102,
+     18.3,
+     18.058
+    ]
+   },
+   "P0630": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     20,
+     1
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.172,
+     18.568,
+     15.445,
+     18.954
+    ]
+   },
+   "P0631": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     27,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     20.564,
+     17.766,
+     18.363,
+     17.894
+    ]
+   },
+   "P0632": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     34,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.636,
+     19.968,
+     16.694,
+     19.562
+    ]
+   },
+   "P0633": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     41,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.173,
+     18.721,
+     17.364,
+     19.169
+    ]
+   },
+   "P0634": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     7,
+     1
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     17.282,
+     17.752,
+     17.206,
+     18.326
+    ]
+   },
+   "P0635": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     14,
+     1
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.411,
+     19.497,
+     15.902,
+     18.321
+    ]
+   },
+   "P0636": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     21,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.574,
+     18.022,
+     18.443,
+     18.326
+    ]
+   },
+   "P0637": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     28,
+     1
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.647,
+     19.549,
+     15.055,
+     18.952
+    ]
+   },
+   "P0638": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     35,
+     1
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.562,
+     18.097,
+     18.205,
+     19.541
+    ]
+   },
+   "P0639": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     42,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.146,
+     18.851,
+     16.18,
+     18.655
+    ]
+   },
+   "P0640": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     8,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.79,
+     16.58,
+     19.682,
+     16.976
+    ]
+   },
+   "P0641": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     15,
+     1
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     17.254,
+     18.423,
+     18.727,
+     18.917
+    ]
+   },
+   "P0642": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     22,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.878,
+     17.996,
+     18.678,
+     18.022
+    ]
+   },
+   "P0643": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     29,
+     1
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     17.692,
+     18.127,
+     17.711,
+     19.578
+    ]
+   },
+   "P0644": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     36,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.143,
+     18.372,
+     16.348,
+     17.827
+    ]
+   },
+   "P0645": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     43,
+     1
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     19.574,
+     18.964,
+     18.635,
+     18.131
+    ]
+   },
+   "P0646": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     9,
+     1
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     20.272,
+     17.853,
+     17.871,
+     16.574
+    ]
+   },
+   "P0647": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     16,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.983,
+     18.027,
+     18.432,
+     18.281
+    ]
+   },
+   "P0648": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     23,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.507,
+     18.343,
+     19.221,
+     17.039
+    ]
+   },
+   "P0649": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     30,
+     1
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     18.298,
+     17.442,
+     16.724,
+     16.943
+    ]
+   },
+   "P0650": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     37,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     19.0,
+     19.421,
+     17.903,
+     17.988
+    ]
+   },
+   "P0651": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     44,
+     1
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     18.284,
+     19.157,
+     18.878,
+     18.275
+    ]
+   },
+   "P0652": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     10,
+     1
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     17.604,
+     17.052,
+     19.956,
+     17.101
+    ]
+   },
+   "P0653": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     17,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.541,
+     18.514,
+     18.921,
+     17.137
+    ]
+   },
+   "P0654": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     24,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     17.156,
+     18.236,
+     16.913,
+     17.866
+    ]
+   },
+   "P0655": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     31,
+     1
+    ],
+    "cls": "BBTF",
+    "cordas_mm": [
+     17.605,
+     20.185,
+     18.048,
+     18.541
+    ]
+   },
+   "P0656": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     38,
+     1
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     17.325,
+     20.949,
+     19.628,
+     19.568
+    ]
+   },
+   "P0657": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     45,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     16.688,
+     19.338,
+     16.388,
+     18.695
+    ]
+   },
+   "P0658": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     11,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.966,
+     17.947,
+     18.606,
+     16.661
+    ]
+   },
+   "P0659": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     12,
+     1
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.562,
+     18.054,
+     17.055,
+     17.386
+    ]
+   },
+   "P0661": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     19,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.771,
+     18.776,
+     19.917,
+     18.139
+    ]
+   },
+   "P0662": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     18,
+     1
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.758,
+     19.243,
+     17.32,
+     17.83
+    ]
+   },
+   "P0663": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     25,
+     1
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     18.201,
+     19.373,
+     19.021,
+     17.931
+    ]
+   },
+   "P0664": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     26,
+     1
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     17.272,
+     18.524,
+     18.967,
+     17.912
+    ]
+   },
+   "P0665": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     33,
+     1
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.956,
+     19.72,
+     19.005,
+     18.29
+    ]
+   },
+   "P0666": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     32,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     18.353,
+     18.349,
+     18.016,
+     19.914
+    ]
+   },
+   "P0667": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     39,
+     1
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     18.009,
+     19.399,
+     16.823,
+     21.075
+    ]
+   },
+   "P0668": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     40,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.257,
+     19.031,
+     18.152,
+     19.845
+    ]
+   },
+   "P0669": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     46,
+     1
+    ],
+    "cls": "BFTT",
+    "cordas_mm": [
+     18.658,
+     19.211,
+     18.053,
+     18.128
+    ]
+   },
+   "P0670": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     47,
+     1
+    ],
+    "cls": "FFTT",
+    "cordas_mm": [
+     16.167,
+     20.067,
+     17.02,
+     17.703
+    ]
+   },
+   "P0671": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     1
+    ],
+    "cls": "FFTT",
+    "cordas_mm": [
+     17.358,
+     19.3,
+     18.895,
+     19.453
+    ]
+   },
+   "P0672": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     2,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.544,
+     18.188,
+     17.993,
+     16.708
+    ]
+   },
+   "P0673": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     3,
+     1
+    ],
+    "cls": "BTFT",
+    "cordas_mm": [
+     17.094,
+     16.808,
+     18.397,
+     17.417
+    ]
+   },
+   "P0674": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     4,
+     1
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.078,
+     20.642,
+     17.238,
+     20.433
+    ]
+   },
+   "P0675": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     5,
+     1
+    ],
+    "cls": "FTTT",
+    "cordas_mm": [
+     16.762,
+     17.785,
+     16.387,
+     16.339
+    ]
+   },
+   "P0754": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     6,
+     14
+    ],
+    "cls": "BBBT",
+    "cordas_mm": [
+     18.212,
+     19.161,
+     18.66,
+     18.077
+    ]
+   },
+   "P0814": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     4
+    ],
+    "cls": "BTTF",
+    "cordas_mm": [
+     19.614,
+     19.027,
+     18.296,
+     18.616
+    ]
+   },
+   "P0820": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     3
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     19.044,
+     18.556,
+     19.877,
+     18.789
+    ]
+   },
+   "P0827": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     2
+    ],
+    "cls": "BBFT",
+    "cordas_mm": [
+     19.943,
+     19.752,
+     19.122,
+     18.104
+    ]
+   },
+   "P0927": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBBB",
+    "cordas_mm": [
+     18.154,
+     18.162,
+     19.895,
+     18.74
+    ]
+   },
+   "P0970": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.713,
+     18.62,
+     18.482,
+     18.218
+    ]
+   },
+   "P0981": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.828,
+     18.758,
+     17.633,
+     18.033
+    ]
+   },
+   "P0982": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.796,
+     17.716,
+     20.519,
+     17.206
+    ]
+   },
+   "P0985": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.23,
+     19.33,
+     17.628,
+     18.564
+    ]
+   },
+   "P0997": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.316,
+     18.623,
+     17.993,
+     18.95
+    ]
+   },
+   "P1005": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.156,
+     18.079,
+     18.451,
+     16.904
+    ]
+   },
+   "P1024": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.308,
+     18.403,
+     18.261,
+     18.369
+    ]
+   },
+   "P1057": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.95,
+     17.243,
+     18.157,
+     17.014
+    ]
+   },
+   "P1063": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "TTTT",
+    "cordas_mm": [
+     18.708,
+     17.309,
+     17.028,
+     18.194
+    ]
+   },
+   "P1064": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     2,
+     63
+    ],
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.749,
+     19.333,
+     19.129,
+     18.579
+    ]
+   },
+   "P1128": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     18.789,
+     17.999,
+     18.134,
+     19.158
+    ]
+   },
+   "P1129": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.788,
+     19.346,
+     18.441,
+     17.975
+    ]
+   },
+   "P1133": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     18.17,
+     17.783,
+     17.848,
+     18.78
+    ]
+   },
+   "P1136": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     18.057,
+     19.321,
+     18.577,
+     18.136
+    ]
+   },
+   "P1156": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBBB",
+    "cordas_mm": [
+     20.386,
+     18.657,
+     17.338,
+     19.545
+    ]
+   },
+   "P1167": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.764,
+     17.327,
+     16.767,
+     19.188
+    ]
+   },
+   "P1172": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     17.696,
+     18.187,
+     18.267,
+     17.597
+    ]
+   },
+   "P1193": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.049,
+     18.337,
+     16.512,
+     18.564
+    ]
+   },
+   "P1210": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     17.782,
+     18.181,
+     16.685,
+     18.58
+    ]
+   },
+   "P1216": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.632,
+     19.774,
+     19.588,
+     18.191
+    ]
+   },
+   "P1219": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.117,
+     17.528,
+     17.354,
+     17.353
+    ]
+   },
+   "P1255": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBTT",
+    "cordas_mm": [
+     17.459,
+     20.24,
+     16.512,
+     20.181
+    ]
+   },
+   "P1262": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.554,
+     18.013,
+     17.037,
+     16.958
+    ]
+   },
+   "P1278": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     20.455,
+     17.306,
+     19.933,
+     17.676
+    ]
+   },
+   "P1280": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBBT",
+    "cordas_mm": [
+     18.752,
+     17.247,
+     17.225,
+     18.118
+    ]
+   },
+   "P1295": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     19.137,
+     17.192,
+     19.067,
+     18.571
+    ]
+   },
+   "P1306": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.989,
+     17.779,
+     17.07,
+     19.175
+    ]
+   },
+   "P1308": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.072,
+     17.364,
+     18.531,
+     18.138
+    ]
+   },
+   "P1348": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBBT",
+    "cordas_mm": [
+     17.584,
+     17.761,
+     18.348,
+     17.395
+    ]
+   },
+   "P1360": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BBBT",
+    "cordas_mm": [
+     20.824,
+     19.384,
+     17.356,
+     19.219
+    ]
+   },
+   "P1365": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     18.746,
+     19.096,
+     18.667,
+     19.46
+    ]
+   },
+   "P1377": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTTT",
+    "cordas_mm": [
+     18.139,
+     19.418,
+     17.826,
+     19.248
+    ]
+   },
+   "P1418": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     18.037,
+     17.448,
+     18.693,
+     18.485
+    ]
+   },
+   "P1422": {
+    "existe": true,
+    "estado": "colocada",
+    "celula": [
+     1,
+     29
+    ],
+    "cls": "BFBT",
+    "cordas_mm": [
+     17.482,
+     18.718,
+     16.024,
+     18.742
+    ]
+   },
+   "P1430": {
+    "existe": true,
+    "estado": "solta",
+    "celula": null,
+    "cls": "BTBT",
+    "cordas_mm": [
+     17.409,
+     18.245,
+     17.768,
+     17.235
+    ]
+   }
+  },
+  "manual": {
+   "P0045": {
+    "aresta_fora_do_indice_mm2": 0.609,
+    "papel_coroa_pct": 3.99
+   },
+   "P0071": {
+    "aresta_fora_do_indice_mm2": 1.505,
+    "papel_coroa_pct": 5.7
+   },
+   "P0139": {
+    "aresta_fora_do_indice_mm2": 0.502,
+    "papel_coroa_pct": 1.35
+   },
+   "P0198": {
+    "aresta_fora_do_indice_mm2": 1.591,
+    "papel_coroa_pct": 6.44
+   },
+   "P0315": {
+    "aresta_fora_do_indice_mm2": 0.0,
+    "papel_coroa_pct": 0.0
+   },
+   "P0395": {
+    "aresta_fora_do_indice_mm2": 0.0,
+    "papel_coroa_pct": 10.64
+   },
+   "P0407": {
+    "aresta_fora_do_indice_mm2": 1.434,
+    "papel_coroa_pct": 2.3
+   },
+   "P0620": {
+    "aresta_fora_do_indice_mm2": 1.039,
+    "papel_coroa_pct": 4.58
+   },
+   "P0754": {
+    "aresta_fora_do_indice_mm2": 0.215,
+    "papel_coroa_pct": 0.78
+   },
+   "P1064": {
+    "aresta_fora_do_indice_mm2": 0.889,
+    "papel_coroa_pct": 2.12
+   }
+  },
+  "simetria": {
+   "pares": {
+    "P0671|P0350": {
+     "rms_mm": 0.568,
+     "nn_max_mm": 0.9
+    },
+    "P0827|P0356": {
+     "rms_mm": 0.268,
+     "nn_max_mm": 0.48
+    },
+    "P0820|P0362": {
+     "rms_mm": 0.605,
+     "nn_max_mm": 0.634
+    },
+    "P0814|P0368": {
+     "rms_mm": 0.483,
+     "nn_max_mm": 0.841
+    },
+    "P0001|P0025": {
+     "rms_mm": 0.329,
+     "nn_max_mm": 0.665
+    },
+    "P0002|P0024": {
+     "rms_mm": 0.252,
+     "nn_max_mm": 0.559
+    },
+    "P0003|P0023": {
+     "rms_mm": 0.158,
+     "nn_max_mm": 0.474
+    },
+    "P0004|P0022": {
+     "rms_mm": 0.266,
+     "nn_max_mm": 0.563
+    },
+    "P0005|P0021": {
+     "rms_mm": 0.279,
+     "nn_max_mm": 0.511
+    },
+    "P0006|P0030": {
+     "rms_mm": 0.423,
+     "nn_max_mm": 0.647
+    },
+    "P0007|P0029": {
+     "rms_mm": 0.321,
+     "nn_max_mm": 0.63
+    },
+    "P0008|P0028": {
+     "rms_mm": 0.348,
+     "nn_max_mm": 0.577
+    },
+    "P0009|P0027": {
+     "rms_mm": 0.235,
+     "nn_max_mm": 0.593
+    },
+    "P0010|P0026": {
+     "rms_mm": 0.401,
+     "nn_max_mm": 0.559
+    },
+    "P0011|P0035": {
+     "rms_mm": 0.242,
+     "nn_max_mm": 0.481
+    },
+    "P0012|P0034": {
+     "rms_mm": 0.371,
+     "nn_max_mm": 0.643
+    },
+    "P0013|P0033": {
+     "rms_mm": 0.465,
+     "nn_max_mm": 0.851
+    },
+    "P0014|P0032": {
+     "rms_mm": 0.377,
+     "nn_max_mm": 0.657
+    },
+    "P0015|P0031": {
+     "rms_mm": 0.369,
+     "nn_max_mm": 0.78
+    },
+    "P0016|P0040": {
+     "rms_mm": 0.26,
+     "nn_max_mm": 0.566
+    },
+    "P0017|P0039": {
+     "rms_mm": 0.309,
+     "nn_max_mm": 0.566
+    },
+    "P0018|P0038": {
+     "rms_mm": 0.263,
+     "nn_max_mm": 0.435
+    },
+    "P0019|P0037": {
+     "rms_mm": 0.298,
+     "nn_max_mm": 1.052
+    },
+    "P0020|P0036": {
+     "rms_mm": 0.223,
+     "nn_max_mm": 0.565
+    },
+    "P0311|P0452": {
+     "rms_mm": 0.155,
+     "nn_max_mm": 0.397
+    },
+    "P0307|P0448": {
+     "rms_mm": 0.309,
+     "nn_max_mm": 0.54
+    },
+    "P0302|P0444": {
+     "rms_mm": 0.244,
+     "nn_max_mm": 0.497
+    },
+    "P0301|P0516": {
+     "rms_mm": 0.572,
+     "nn_max_mm": 0.649
+    },
+    "P1422|P0512": {
+     "rms_mm": 0.368,
+     "nn_max_mm": 0.722
+    },
+    "P0298|P0507": {
+     "rms_mm": 0.212,
+     "nn_max_mm": 0.393
+    },
+    "P0295|P0502": {
+     "rms_mm": 0.182,
+     "nn_max_mm": 0.342
+    },
+    "P0292|P0496": {
+     "rms_mm": 3.08,
+     "nn_max_mm": 5.647
+    },
+    "P0289|P0492": {
+     "rms_mm": 2.83,
+     "nn_max_mm": 5.191
+    },
+    "P0286|P0488": {
+     "rms_mm": 0.175,
+     "nn_max_mm": 0.468
+    },
+    "P0284|P0484": {
+     "rms_mm": 0.362,
+     "nn_max_mm": 0.684
+    },
+    "P0283|P0480": {
+     "rms_mm": 0.228,
+     "nn_max_mm": 0.4
+    },
+    "P0277|P0547": {
+     "rms_mm": 0.226,
+     "nn_max_mm": 0.327
+    },
+    "P0272|P0543": {
+     "rms_mm": 0.273,
+     "nn_max_mm": 0.564
+    },
+    "P0266|P0540": {
+     "rms_mm": 0.374,
+     "nn_max_mm": 0.378
+    },
+    "P0263|P0536": {
+     "rms_mm": 0.189,
+     "nn_max_mm": 0.577
+    },
+    "P0258|P0532": {
+     "rms_mm": 0.247,
+     "nn_max_mm": 0.458
+    },
+    "P0252|P0528": {
+     "rms_mm": 0.259,
+     "nn_max_mm": 0.69
+    },
+    "P0247|P0524": {
+     "rms_mm": 0.187,
+     "nn_max_mm": 0.42
+    },
+    "P0241|P0520": {
+     "rms_mm": 0.174,
+     "nn_max_mm": 0.314
+    },
+    "P0237|P0517": {
+     "rms_mm": 0.219,
+     "nn_max_mm": 0.683
+    },
+    "P0280|P0589": {
+     "rms_mm": 0.477,
+     "nn_max_mm": 0.698
+    },
+    "P0275|P0584": {
+     "rms_mm": 0.262,
+     "nn_max_mm": 0.429
+    },
+    "P0269|P0578": {
+     "rms_mm": 0.216,
+     "nn_max_mm": 0.623
+    },
+    "P0264|P0574": {
+     "rms_mm": 0.246,
+     "nn_max_mm": 0.477
+    },
+    "P0261|P0568": {
+     "rms_mm": 0.163,
+     "nn_max_mm": 0.335
+    },
+    "P0255|P0564": {
+     "rms_mm": 0.265,
+     "nn_max_mm": 0.42
+    },
+    "P0249|P0559": {
+     "rms_mm": 0.258,
+     "nn_max_mm": 0.36
+    },
+    "P0243|P0555": {
+     "rms_mm": 0.232,
+     "nn_max_mm": 0.494
+    },
+    "P0239|P0551": {
+     "rms_mm": 0.192,
+     "nn_max_mm": 0.319
+    },
+    "P0282|P0627": {
+     "rms_mm": 0.413,
+     "nn_max_mm": 0.672
+    },
+    "P0276|P0622": {
+     "rms_mm": 0.337,
+     "nn_max_mm": 0.536
+    },
+    "P0270|P0617": {
+     "rms_mm": 0.317,
+     "nn_max_mm": 0.611
+    },
+    "P0265|P0613": {
+     "rms_mm": 0.185,
+     "nn_max_mm": 0.365
+    },
+    "P0262|P0610": {
+     "rms_mm": 0.179,
+     "nn_max_mm": 0.514
+    },
+    "P0257|P0605": {
+     "rms_mm": 0.255,
+     "nn_max_mm": 0.575
+    },
+    "P0251|P0600": {
+     "rms_mm": 0.257,
+     "nn_max_mm": 0.528
+    },
+    "P0245|P0595": {
+     "rms_mm": 0.231,
+     "nn_max_mm": 0.451
+    },
+    "P0240|P0590": {
+     "rms_mm": 0.28,
+     "nn_max_mm": 0.591
+    },
+    "P0236|P0670": {
+     "rms_mm": 0.496,
+     "nn_max_mm": 0.992
+    },
+    "P0672|P0349": {
+     "rms_mm": 0.234,
+     "nn_max_mm": 0.536
+    },
+    "P0235|P0669": {
+     "rms_mm": 0.551,
+     "nn_max_mm": 0.805
+    },
+    "P0673|P0348": {
+     "rms_mm": 0.537,
+     "nn_max_mm": 0.767
+    },
+    "P0234|P0657": {
+     "rms_mm": 0.366,
+     "nn_max_mm": 0.614
+    },
+    "P0674|P0347": {
+     "rms_mm": 0.449,
+     "nn_max_mm": 0.856
+    },
+    "P0233|P0651": {
+     "rms_mm": 0.554,
+     "nn_max_mm": 1.211
+    },
+    "P0675|P0346": {
+     "rms_mm": 0.438,
+     "nn_max_mm": 0.768
+    },
+    "P0232|P0645": {
+     "rms_mm": 0.495,
+     "nn_max_mm": 0.794
+    },
+    "P0628|P0345": {
+     "rms_mm": 0.401,
+     "nn_max_mm": 0.635
+    },
+    "P0231|P0639": {
+     "rms_mm": 0.356,
+     "nn_max_mm": 0.677
+    },
+    "P0634|P0229": {
+     "rms_mm": 0.267,
+     "nn_max_mm": 0.418
+    },
+    "P0200|P0633": {
+     "rms_mm": 0.585,
+     "nn_max_mm": 0.629
+    },
+    "P0640|P0224": {
+     "rms_mm": 0.44,
+     "nn_max_mm": 0.553
+    },
+    "P0205|P0668": {
+     "rms_mm": 0.385,
+     "nn_max_mm": 0.591
+    },
+    "P0646|P0219": {
+     "rms_mm": 0.316,
+     "nn_max_mm": 0.546
+    },
+    "P0210|P0667": {
+     "rms_mm": 0.318,
+     "nn_max_mm": 0.467
+    },
+    "P0652|P0214": {
+     "rms_mm": 0.443,
+     "nn_max_mm": 0.569
+    },
+    "P0215|P0656": {
+     "rms_mm": 0.368,
+     "nn_max_mm": 0.455
+    },
+    "P0658|P0209": {
+     "rms_mm": 0.485,
+     "nn_max_mm": 0.628
+    },
+    "P0220|P0650": {
+     "rms_mm": 0.314,
+     "nn_max_mm": 0.409
+    },
+    "P0659|P0204": {
+     "rms_mm": 0.318,
+     "nn_max_mm": 0.633
+    },
+    "P0225|P0644": {
+     "rms_mm": 0.332,
+     "nn_max_mm": 0.555
+    },
+    "P0629|P0199": {
+     "rms_mm": 0.56,
+     "nn_max_mm": 0.816
+    },
+    "P0230|P0638": {
+     "rms_mm": 0.285,
+     "nn_max_mm": 0.701
+    },
+    "P0635|P0228": {
+     "rms_mm": 0.483,
+     "nn_max_mm": 1.111
+    },
+    "P0196|P0632": {
+     "rms_mm": 0.362,
+     "nn_max_mm": 0.583
+    },
+    "P0641|P0223": {
+     "rms_mm": 0.593,
+     "nn_max_mm": 1.125
+    },
+    "P0201|P0665": {
+     "rms_mm": 0.347,
+     "nn_max_mm": 0.671
+    },
+    "P0647|P0218": {
+     "rms_mm": 0.5,
+     "nn_max_mm": 0.85
+    },
+    "P0206|P0666": {
+     "rms_mm": 0.349,
+     "nn_max_mm": 0.744
+    },
+    "P0653|P0213": {
+     "rms_mm": 0.524,
+     "nn_max_mm": 0.646
+    },
+    "P0211|P0655": {
+     "rms_mm": 0.525,
+     "nn_max_mm": 1.225
+    },
+    "P0662|P0208": {
+     "rms_mm": 0.269,
+     "nn_max_mm": 0.482
+    },
+    "P0216|P0649": {
+     "rms_mm": 0.584,
+     "nn_max_mm": 1.196
+    },
+    "P0661|P0203": {
+     "rms_mm": 0.438,
+     "nn_max_mm": 0.659
+    },
+    "P0221|P0643": {
+     "rms_mm": 0.575,
+     "nn_max_mm": 1.201
+    },
+    "P0630|P0198": {
+     "rms_mm": 0.396,
+     "nn_max_mm": 0.548
+    },
+    "P0226|P0637": {
+     "rms_mm": 0.433,
+     "nn_max_mm": 1.146
+    },
+    "P0636|P0227": {
+     "rms_mm": 0.393,
+     "nn_max_mm": 0.55
+    },
+    "P0197|P0631": {
+     "rms_mm": 0.33,
+     "nn_max_mm": 0.588
+    },
+    "P0642|P0222": {
+     "rms_mm": 0.363,
+     "nn_max_mm": 0.644
+    },
+    "P0202|P0664": {
+     "rms_mm": 0.411,
+     "nn_max_mm": 0.682
+    },
+    "P0648|P0217": {
+     "rms_mm": 0.472,
+     "nn_max_mm": 1.546
+    },
+    "P0207|P0663": {
+     "rms_mm": 0.359,
+     "nn_max_mm": 0.612
+    },
+    "P0654|P0212": {
+     "rms_mm": 0.361,
+     "nn_max_mm": 0.656
+    }
+   },
+   "acima_do_limiar": [
+    "P0289|P0492",
+    "P0292|P0496"
+   ],
+   "limiar_mm": 1.75
+  },
+  "suspeitas": [
+   "P0289|recorte",
+   "P0292|recorte",
+   "P0492|recorte",
+   "P0496|recorte"
+  ],
+  "suspeitas_total_informativo": 18
+ }
+}
