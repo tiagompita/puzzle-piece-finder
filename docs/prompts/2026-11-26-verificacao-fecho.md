@@ -275,3 +275,9 @@ A entrada automática em `docs/decisoes.md` diz «limiares inalterados». Acresc
 2. **Molde em leave-one-out só no modo completo.** Custa ≈ 100 s por causa das tiras de imagem, porque a cópia vai sem `render/fit`. No `--rapido`, o matching de `fit.py` fica coberto só pelos quadrados. Com o pre-commit, uma mudança em `fit.py` corre sempre o completo.
 3. **O pre-commit lê a árvore de trabalho:** um commit de código cuja baseline só entra no commit seguinte passa (o caso de `fe0dcd5`). Fica como estava; é a ressalva 4 da ronda anterior.
 4. **Exit 5 para todas as regressões dos passos 1–3**, incluindo o E-sym (critério absoluto). Querem um código próprio, por exemplo 7 para «regressão de CV»?
+
+### Verificação do gestor (depois do relatório)
+
+- Prova da Parte 0 [V]: numa sessão nova, lançada depois de as definições mudarem, um subagente `helper` arrancou com cv-visual-verification, piece-fit-matching e graphify pré-carregadas (campo `skills:`). O primeiro cabeçalho que leu foi «# Gémeo, molde do buraco e encaixe (M10 → M11 → M6)», o mesmo do `.claude/skills/piece-fit-matching/SKILL.md` do projeto e não o do plugin com o mesmo nome. A ferramenta Skill existia, mas a chamada explícita ficou por provar [NT]: o conteúdo já vinha carregado e o helper não a chamou.
+- `python -m tools.verify --rapido`: código 0 em 61,9 s [V]. Vigilância de pieces/overlays/scans: 39/39/39 [V]. Os 7 commits não têm Co-Authored-By, e os da baseline e do D3 trazem só os ficheiros respetivos [V].
+- `emp-qa` e `emp-revisor` têm `Skill`. Dos outros, `emp-dev`, `emp-mec` e `emp-opus` já o tinham, e `emp-critico`, `emp-ideias`, `emp-scout` e `emp-triagem` continuam sem ele [V].
