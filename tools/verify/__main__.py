@@ -17,8 +17,13 @@ import traceback
 
 from tools.verify import ambiente as AMB
 from tools.verify import golden as GD
+from tools.verify import invariantes as INV
+from tools.verify import metricas as MT
 
-__all__ = ["CODIGOS", "main"]
+__all__ = ["CODIGOS", "BASELINE", "LIMIARES", "codigo_saida", "main"]
+
+BASELINE = os.path.join(AMB.REPO, "tests", "golden", "baseline.json")
+LIMIARES = os.path.join(AMB.REPO, "tests", "golden", "limiares.json")
 
 CODIGOS = {"ambiente": 2, "golden": 3, "vigilancia": 6, "arvore": 6, "regras": 4, "baseline": 5, "erro": 1}
 _ORDEM = ("ambiente", "golden", "vigilancia", "arvore", "regras", "baseline", "erro")
@@ -50,9 +55,42 @@ def _md(res: dict) -> str:
 		L += ["## Falhas", ""] + [f"- **{g}**: {t}" for g, t in res["falhas"]] + [""]
 	else:
 		L += ["Sem falhas.", ""]
+	if res.get("regressoes") is not None:
+		L += ["## Regressões contra a baseline", ""] + ([f"- {t}" for t in res["regressoes"]] or ["Nenhuma."]) + [""]
+	if res.get("regras"):
+		L += ["## Regras absolutas (0 violações exigidas)", "", "| regra | violações |", "|---|---|"]
+		L += [f"| {k} | {r['n']} |" for k, r in res["regras"].items()] + [""]
 	for k in ("ambiente", "golden", "vigilancia_inicio", "vigilancia_fim"):
 		L += [f"## {k}", "", "```json", json.dumps(res.get(k), ensure_ascii=False, indent=1), "```", ""]
 	return "\n".join(L)
+
+
+def _ler(fp):
+	if not os.path.exists(fp):
+		return None
+	with open(fp, encoding="utf-8") as f:
+		return json.load(f)
+
+
+def _escrever(fp, obj) -> None:
+	os.makedirs(os.path.dirname(fp), exist_ok=True)
+	with open(fp, "w", encoding="utf-8", newline="\n") as f:
+		json.dump(obj, f, ensure_ascii=False, indent=1)
+		f.write("\n")
+
+
+def _congelar(atual: dict, man_sha: str, res: dict, porque) -> None:
+	"""Grava a baseline (e os limiares fixos, só se ainda não existirem: nunca a partir de um resultado)."""
+	ja = os.path.exists(BASELINE)
+	_escrever(BASELINE, {"versao": 1, "congelada_em": res["quando"], "head": res["git_inicio"]["head"],
+						 "manifesto_sha256": man_sha, "metricas": atual})
+	if not os.path.exists(LIMIARES):
+		_escrever(LIMIARES, MT.LIMIARES_INICIAIS)
+	if ja:
+		GD.registar_decisao("baseline do golden congelada de novo (`tools.verify --congelar-baseline`)", porque.strip(),
+							[f"HEAD `{res['git_inicio']['head'][:7]}`; limiares inalterados"])
+	res["baseline_congelada"] = BASELINE
+	print(f"baseline congelada: {BASELINE}")
 
 
 def main(argv=None) -> int:
@@ -61,10 +99,15 @@ def main(argv=None) -> int:
 	ap.add_argument("--out", default=None, help="pasta das saídas (métricas, comparação)")
 	ap.add_argument("--refresh-golden", action="store_true",
 					help="reescreve tests/golden/manifesto.json a partir de uma cópia do projeto (exige --porque)")
+	ap.add_argument("--congelar-baseline", action="store_true",
+					help="grava tests/golden/baseline.json (e limiares.json se não existir, com os valores fixos do "
+						 "código); só com tudo o resto verde; se a baseline já existir, exige --porque")
 	ap.add_argument("--porque", default=None, help="motivo, escrito em docs/decisoes.md")
 	args = ap.parse_args(argv)
 	if args.refresh_golden and not (args.porque or "").strip():
 		ap.error("--refresh-golden exige --porque \"...\" (fica em docs/decisoes.md)")
+	if args.congelar_baseline and os.path.exists(BASELINE) and not (args.porque or "").strip():
+		ap.error("a baseline já existe: voltar a congelá-la exige --porque \"...\" (fica em docs/decisoes.md)")
 	t0 = time.time()
 	project = os.path.abspath(os.path.join(AMB.REPO, args.project) if not os.path.isabs(args.project) else args.project)
 	out = _out_dir(args.out)
@@ -104,6 +147,30 @@ def main(argv=None) -> int:
 		res["golden"] = g = GD.verificar(man, project)
 		if not g["ok"]:
 			falhas += [("golden", d) for d in g["diferencas"]]
+		# regras absolutas (projeto vivo, sem baseline)
+		res["regras"] = regras = INV.todas(pr)
+		for k, r in regras.items():
+			if r["n"]:
+				falhas.append(("regras", f"{k}: {r['n']} violações, p. ex. {json.dumps(r['violacoes'][:3], ensure_ascii=False)}"))
+		# métricas das peças do golden contra a baseline
+		if man is not None:
+			res["metricas_golden"] = atual = MT.medir(pr, man)
+			man_sha = GD.sha256_ficheiro(GD.MANIFESTO)
+			if args.congelar_baseline:
+				if falhas:
+					falhas.append(("baseline", "baseline NÃO congelada: há falhas antes da comparação"))
+				else:
+					_congelar(atual, man_sha, res, args.porque)
+			else:
+				base = _ler(BASELINE)
+				lim = _ler(LIMIARES)
+				if base is None or lim is None:
+					falhas.append(("baseline", "sem tests/golden/baseline.json ou limiares.json: --congelar-baseline"))
+				elif base.get("manifesto_sha256") != man_sha:
+					falhas.append(("baseline", "a baseline foi congelada com outro manifesto: voltar a congelar (--porque)"))
+				else:
+					res["regressoes"] = reg = MT.comparar(atual, base["metricas"], lim, man)
+					falhas += [("baseline", t) for t in reg]
 	except Exception:  # noqa: BLE001 - o relatório tem de sair mesmo com um erro a meio
 		falhas.append(("erro", traceback.format_exc(limit=5)))
 	finally:
@@ -115,7 +182,11 @@ def main(argv=None) -> int:
 	res["vigilancia_fim"] = v1 = AMB.vigilancia(project)
 	if not v1["ok"]:
 		falhas.append(("vigilancia", f"fim: pieces {v1['pieces']}, overlays {v1['overlays']}, scans {v1['scans']}"))
-	escritos = ("tests/golden/manifesto.json", "docs/decisoes.md") if args.refresh_golden else ()
+	escritos = ()
+	if args.refresh_golden:
+		escritos += ("tests/golden/manifesto.json", "docs/decisoes.md")
+	if args.congelar_baseline:
+		escritos += ("tests/golden/baseline.json", "tests/golden/limiares.json", "docs/decisoes.md")
 	def _sem_escritos(g):
 		return {"head": g["head"], "status": [l for l in g["status"] if not (escritos and l[3:].strip('"').endswith(escritos))]}
 	if _sem_escritos(res["git_fim"]) != _sem_escritos(res["git_inicio"]):
