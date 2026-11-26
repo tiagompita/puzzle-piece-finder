@@ -4,7 +4,11 @@ Códigos de saída (o primeiro desta ordem que falhar): 2 ambiente (``.venv``, O
 3 golden alterado ou sem manifesto; 6 vigilância ou árvore de trabalho mudou durante a corrida; 4 regra absoluta
 violada; 5 métrica de uma peça do golden pior do que a baseline (ou sem baseline); 1 erro inesperado; 0 tudo certo.
 
-Saídas: ``<out>/metricas.json`` e ``<out>/comparacao.md`` (por omissão ``$PPF_SCRATCH/verify/<data>`` ou
+Passos 1–3 (``tools/verify/regressao.py``, 2026-11-26): segmentação, classificação e matching corridos de novo sobre o
+golden e comparados com o bloco ``regressao`` da baseline (código 5; um ficheiro do passo 3 alterado dá 3). ``--rapido``:
+E-sym + 3 folhas + E-real-2 + quadrados (o pre-commit usa-o, salvo quando o stage toca os módulos críticos).
+
+Saídas: ``<out>/metricas.json``, ``<out>/comparacao.md`` e ``<out>/prova/*.png`` (por omissão ``$PPF_SCRATCH/verify/<data>`` ou
 ``<temp>/ppf_verify_out/<data>``). Nunca escreve no projeto: as regras correm sobre uma cópia temporária."""
 import argparse
 import datetime
@@ -19,6 +23,7 @@ from tools.verify import ambiente as AMB
 from tools.verify import golden as GD
 from tools.verify import invariantes as INV
 from tools.verify import metricas as MT
+from tools.verify import regressao as RG
 
 __all__ = ["CODIGOS", "BASELINE", "LIMIARES", "codigo_saida", "main"]
 
@@ -57,6 +62,27 @@ def _md(res: dict) -> str:
 		L += ["Sem falhas.", ""]
 	if res.get("regressoes") is not None:
 		L += ["## Regressões contra a baseline", ""] + ([f"- {t}" for t in res["regressoes"]] or ["Nenhuma."]) + [""]
+	if res.get("regressoes_passos_1_3") is not None:
+		L += ["## Regressões dos passos 1–3 (segmentação, classificação, matching)", ""]
+		L += [f"- {t}" for t in res["regressoes_passos_1_3"]] or ["Nenhuma."]
+		L += [""]
+	r = res.get("regressao")
+	if r:
+		ok = [v for v in r["pecas"].values() if v.get("existe") and "iou" in v]
+		L += [f"## Passos 1–3 ({r['modo']}, {r['segundos']['total']} s)", "",
+			  f"- folhas: {len(r['folhas'])}; peças do golden medidas: {len(ok)} (fora, contorno manual: "
+			  f"{len(r['excluidas_manual'])}); IoU mín. {min((v['iou'] for v in ok), default=None)}; d_max máx. "
+			  f"{max((v['d_max_mm'] for v in ok), default=None)} mm; F certo "
+			  f"{sum(v['n_f'] == v['f_esperado'] for v in ok if 'f_esperado' in v)}/{sum('f_esperado' in v for v in ok)}",
+			  f"- E-sym: {json.dumps({k: r['esym'].get(k) for k in ('twin_mediana_mm', 'top1', 'erro') if k in r['esym']}, ensure_ascii=False)}",
+			  f"- E-real-2: propostas {json.dumps(r['ereal2'].get('propostas'), ensure_ascii=False)}, aceite em negativos "
+			  f"{r['ereal2'].get('aceite_negativos')}",
+			  f"- quadrados: ligações {r['quadrados']['ligacoes_ok']}/{r['quadrados']['ligacoes']}, quadrados "
+			  f"{r['quadrados']['quadrados_ok']}/{r['quadrados']['quadrados']}"]
+		if r.get("molde"):
+			m = r["molde"]
+			L += [f"- molde (leave-one-out): top-1 {m['top1']}/{m['n']}, «alta» {m['alta']} (erradas {m['alta_errada']})"]
+		L += [f"- imagens de prova: {', '.join(os.path.basename(x) for x in res.get('provas') or [])}", ""]
 	if res.get("regras"):
 		L += ["## Regras absolutas (0 violações exigidas)", "", "| regra | violações |", "|---|---|"]
 		L += [f"| {k} | {r['n']} |" for k, r in res["regras"].items()] + [""]
@@ -85,11 +111,14 @@ def _escrever(fp, obj) -> None:
 		f.write("\n")
 
 
-def _congelar(atual: dict, man_sha: str, res: dict, porque) -> None:
+def _congelar(atual: dict, man_sha: str, res: dict, porque, regressao=None) -> None:
 	"""Grava a baseline (e os limiares fixos, só se ainda não existirem: nunca a partir de um resultado)."""
 	ja = os.path.exists(BASELINE)
-	_escrever(BASELINE, {"versao": 1, "congelada_em": res["quando"], "head": res["git_inicio"]["head"],
-						 "manifesto_sha256": man_sha, "metricas": atual})
+	obj = {"versao": 1, "congelada_em": res["quando"], "head": res["git_inicio"]["head"],
+		   "manifesto_sha256": man_sha, "metricas": atual}
+	if regressao is not None:
+		obj["regressao"] = regressao
+	_escrever(BASELINE, obj)
 	if not os.path.exists(LIMIARES):
 		_escrever(LIMIARES, MT.LIMIARES_INICIAIS)
 	if ja:
@@ -109,7 +138,11 @@ def main(argv=None) -> int:
 					help="grava tests/golden/baseline.json (e limiares.json se não existir, com os valores fixos do "
 						 "código); só com tudo o resto verde; se a baseline já existir, exige --porque")
 	ap.add_argument("--porque", default=None, help="motivo, escrito em docs/decisoes.md")
+	ap.add_argument("--rapido", action="store_true",
+					help="passos 1–3 só com E-sym + 3 folhas + E-real-2 + quadrados (sem o leave-one-out do molde)")
 	args = ap.parse_args(argv)
+	if args.rapido and args.congelar_baseline:
+		ap.error("--congelar-baseline só no modo completo (sem --rapido)")
 	if args.refresh_golden and not (args.porque or "").strip():
 		ap.error("--refresh-golden exige --porque \"...\" (fica em docs/decisoes.md)")
 	if args.congelar_baseline and os.path.exists(BASELINE) and not (args.porque or "").strip():
@@ -167,11 +200,16 @@ def main(argv=None) -> int:
 		if man is not None:
 			res["metricas_golden"] = atual = MT.medir(pr, man)
 			man_sha = GD.sha256_ficheiro(GD.MANIFESTO)
+			# passos 1–3: segmentação, classificação e matching corridos de novo
+			reg_atual = RG.medir(pr, man, rapido=args.rapido)
+			contornos = reg_atual.pop("_contornos")
+			res["regressao"] = reg_atual
+			res["provas"] = RG.provas(pr, dict(reg_atual, _contornos=contornos), out)
 			if args.congelar_baseline:
 				if falhas:
 					falhas.append(("baseline", "baseline NÃO congelada: há falhas antes da comparação"))
 				else:
-					_congelar(atual, man_sha, res, args.porque)
+					_congelar(atual, man_sha, res, args.porque, regressao=reg_atual)
 			else:
 				base = _ler(BASELINE)
 				lim = _ler(LIMIARES)
@@ -182,6 +220,12 @@ def main(argv=None) -> int:
 				else:
 					res["regressoes"] = reg = MT.comparar(atual, base["metricas"], lim, man)
 					falhas += [("baseline", t) for t in reg]
+					if base.get("regressao") is None or "regressao" not in lim:
+						falhas.append(("baseline", "sem o bloco regressao na baseline ou nos limiares: --congelar-baseline"))
+					else:
+						rg = RG.comparar(reg_atual, base["regressao"], lim["regressao"])
+						res["regressoes_passos_1_3"] = [t for _, t in rg]
+						falhas += rg
 	except Exception:  # noqa: BLE001 - o relatório tem de sair mesmo com um erro a meio
 		falhas.append(("erro", traceback.format_exc(limit=5)))
 	finally:

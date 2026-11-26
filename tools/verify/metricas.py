@@ -22,6 +22,7 @@ LIMIARES_INICIAIS = {
 	"suspeitas": {"valor": "nenhuma (peça, grau) nova em peças do golden", "fonte": "decisão 2 do planeamento, 2026-11-26"},
 	"informativas": ["papel_coroa_pct", "simetria.rms_mm", "simetria.nn_max_mm", "aresta_fora_do_indice_mm2 (absoluto)"],
 }
+LIMIARES_INICIAIS["regressao"] = __import__("tools.verify.regressao", fromlist=["x"]).LIMIARES_REGRESSAO   # passos 1–3
 
 
 def _papel_coroa(rgb, ma, mm, bg) -> float:

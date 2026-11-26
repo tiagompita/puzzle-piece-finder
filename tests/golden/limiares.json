@@ -25,5 +25,59 @@
   "simetria.rms_mm",
   "simetria.nn_max_mm",
   "aresta_fora_do_indice_mm2 (absoluto)"
- ]
+ ],
+ "regressao": {
+  "n_pecas_folha": {
+   "valor": "igual ao guardado e à baseline",
+   "fonte": "a contagem exata foi o 1.º sinal de fusão e de perda (S1, S3; levantamento §3)"
+  },
+  "contorno_d_max_delta_mm": {
+   "valor": 0.3,
+   "fonte": "repetibilidade do comprimento de lado ≤ 0,3 mm (M3, CLAUDE.md; E-sym)"
+  },
+  "contorno_iou": {
+   "valor": "não desce (arredondamento a 3 casas)",
+   "fonte": "levantamento §3: IoU < baseline falha"
+  },
+  "cls": {
+   "valor": "igual à baseline",
+   "fonte": "a classe F/T/B é o que o encaixe e a borda leem"
+  },
+  "corda_delta_mm": {
+   "valor": 0.3,
+   "fonte": "repetibilidade do comprimento de lado ≤ 0,3 mm (M3, CLAUDE.md; E-sym)"
+  },
+  "f_por_celula": {
+   "valor": "n.º de lados F = n.º de lados da célula fora da grelha; não desce",
+   "fonte": "borda completa 218/218 confirmada (D6, 2026-11-25)"
+  },
+  "esym_twin_mediana_mm": {
+   "valor": 0.5,
+   "fonte": "E-sym, RESULTADOS.md 2026-10-31 (tests/test_segment_scan_esym.py)"
+  },
+  "esym_top1": {
+   "valor": 20,
+   "fonte": "E-sym 20/20 nas 3 direções (tests/test_segment_scan_esym.py)"
+  },
+  "ereal2_aceite_negativos": {
+   "valor": 0,
+   "fonte": "E-real-2: 0 falsos positivos em 10 608 pares (EREAL2.md §8)"
+  },
+  "ereal2_pos_aceite": {
+   "valor": "não desce",
+   "fonte": "E-real-2: 15 aceite + 0 ambígua nos 20 pares E-sym (2026-11-01)"
+  },
+  "quadrados_ligacoes": {
+   "valor": "não desce; 10/10 quadrados com as 4 ligações",
+   "fonte": "17/17 quadrados encaixam fisicamente (2026-11-11, quadrados_17.json)"
+  },
+  "molde_top1": {
+   "valor": "não desce",
+   "fonte": "M11: top-1 do molde do buraco (levantamento §3)"
+  },
+  "molde_alta_errada": {
+   "valor": "não sobe",
+   "fonte": "M11_CRITERIOS §8: «alta» errada é o custo para o Tiago"
+  }
+ }
 }

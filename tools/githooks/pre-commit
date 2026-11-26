@@ -9,6 +9,9 @@
 # - Exit != 0 do verify = commit parado. Não contornar com --no-verify: parar e reportar; nunca congelar a
 #   baseline nem refazer o golden para passar.
 # - O verify lê a árvore de trabalho, não o índice: com um stage parcial verifica o que está no disco.
+# - Modo (2026-11-26, «fecho»): `--rapido` por omissão (E-sym + 3 folhas + E-real-2 + quadrados); o completo (passos
+#   1-3 inteiros, com o leave-one-out do molde) quando o stage toca src/segmentation.py, src/shape.py, src/fit.py ou
+#   src/twin.py (tests/test_githook_precommit_modo.py).
 
 caminhos=$(git -c core.quotePath=false diff --cached --name-only --no-renames)
 relevantes=$(printf '%s\n' "$caminhos" | grep -E '^(src/|tools/verify/|tests/golden/|projects/)')
@@ -27,9 +30,18 @@ else
 	py="python3"
 fi
 
+criticos=$(printf '%s\n' "$relevantes" | grep -E '^src/(segmentation|shape|fit|twin)\.py$')
+if [ -n "$criticos" ]; then
+	modo=""
+	desc="completo: módulo crítico no stage"
+else
+	modo="--rapido"
+	desc="rápido"
+fi
+
 n=$(printf '%s\n' "$relevantes" | wc -l | tr -d ' ')
-echo "pre-commit: $n caminho(s) em src/, tools/verify/, tests/golden/ ou projects/: a correr $py -m tools.verify" >&2
-"$py" -m tools.verify
+echo "pre-commit: $n caminho(s) em src/, tools/verify/, tests/golden/ ou projects/: a correr $py -m tools.verify $modo ($desc)" >&2
+"$py" -m tools.verify $modo
 rc=$?
 if [ "$rc" -ne 0 ]; then
 	echo "pre-commit: tools.verify saiu com código $rc: commit parado." >&2
