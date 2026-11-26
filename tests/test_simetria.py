@@ -162,8 +162,8 @@ def test_perfil_recusa_excecoes_mal_formadas(exc):
 def test_perfil_alpes_declara_a_excecao_c32_c33():
 	p = PuzzleProfile.load(os.path.join(PROJ, "puzzle.json"))
 	assert p.symmetry["type"] == "rot180"
-	assert p.symmetry["excecoes"] == [{"cols": [32, 33], "rows": [[1, 3], [45, 47]],
-									   "texto": "corte c32|c33 não simétrico (exceção por confirmar)"}]
+	assert p.symmetry["excecoes"] == [{"cols": [32, 33], "rows": [[1, 5], [43, 47]],
+									   "texto": "corte c32|c33 não simétrico (confirmado pelas imagens, D3 = A)"}]
 
 
 # ------------------------------------------------------------------ 4.2 pares gémeos colocados (cópia do projeto)
@@ -197,6 +197,17 @@ def test_simetria_sem_a_lista_por_rever_falha_nos_3_pares(pr_copia):
 	r = INV.simetria(pr_copia, ())
 	got = sorted("|".join(sorted((v["a"], v["b"]))) for v in r["violacoes"])
 	assert got == sorted("|".join(sorted(x.split("|"))) for x in _por_rever())
+
+
+def test_simetria_com_a_excecao_antiga_falha_nos_3_pares_da_d3(pr_copia, monkeypatch):
+	"""Teste novo (D3 = A, 2026-11-26): com a exceção antiga (filas 1-3/45-47) e sem lista «por rever», o teste
+	falha exatamente nos 3 pares que a D3 = A pôs na exceção (o teste continua a conseguir falhar)."""
+	exc = [dict(e) for e in pr_copia.profile.symmetry["excecoes"]]
+	exc[0]["rows"] = [[1, 3], [45, 47]]
+	monkeypatch.setitem(pr_copia.profile.symmetry, "excecoes", exc)
+	r = INV.simetria(pr_copia, ())
+	got = sorted("|".join(sorted((v["a"], v["b"]))) for v in r["violacoes"])
+	assert got == sorted("|".join(sorted(x.split("|"))) for x in ["P0140|P0499", "P0495|P0938", "P0500|P1178"])
 
 
 def test_simetria_nao_se_aplica_sem_simetria_declarada(pr_copia, monkeypatch):
