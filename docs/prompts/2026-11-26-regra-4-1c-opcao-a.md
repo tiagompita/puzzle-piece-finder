@@ -142,3 +142,62 @@ Efeito prático: o `contour_px` gravado continua a ser o derivado, e é a leitur
 2. **P0754/P1064:** olhar para a procura de cantos em cantos chanfrados de sombra? Hoje o canto NO salta e as cordas mudam 1,03 e 0,59 mm.
 3. **`tools.verify`:** aceitar que simule o arranque na cópia antes das regras (a cópia leva os recortes, +4 s)? Assim, um projeto real com linhas por aplicar aparece em «Arranque simulado» e não como falha da 4.1 (b).
 4. **`limiares.json`:** retirar a entrada `aresta_fora_do_indice_delta_mm2`, que já não é usada?
+
+### Ronda 2: união na gravação
+
+O Tiago autorizou a decisão pendente 1 («Sim, muda-os»).
+
+Resultado: com traços efetivos, o índice que se grava passa a conter a aresta inteira [V]. Sem traços efetivos, o índice continua exatamente igual ao automático [V]. A união na leitura fica como estava, para as linhas já gravadas.
+
+**Commits (sem push)**
+
+| hash | assunto |
+|---|---|
+| `618e6be` | testes: fora da influência o índice gravado é automático ∪ aresta (4.1 c = A; falham sem a união na gravação) |
+| `c7045d2` | 4.1 (c) = A na gravação: com traços efetivos o índice gravado contém a aresta inteira |
+| `43220cf` | D2: CONVENCAO §3 (17 registos) medido de novo com a união na gravação |
+| `88203d4` | limiares: retira aresta_fora_do_indice_delta_mm2 (sem uso desde a 4.1 c absoluta) |
+
+**Testes [V]**
+- `test_normalizar_keeps_auto_outside_influence_and_the_peca_gain` e `test_deep_fundo_cut_survives_normalisation` mudaram numa só regra: fora da influência, `mask == auto | mask_aresta` (antes, `== auto`).
+- Cada um ganhou também a asserção «aresta ⊆ índice».
+- O resto mantém-se: o ganho da peça (IoU, 95 % do remendo) e o corte «fundo» com mais de 3 mm².
+- No commit `618e6be`, só com estes testes, os dois falhavam sem a união: 2 failed, 21 passed.
+- `test_indice_do_editor_lido_contem_a_aresta_fora_da_influencia` (de `tests/test_indice_aresta.py`, ronda 1) mudou de entrada. A linha antiga passou a ser reconstruída com `normalizar` sem união, e o teste verifica também que o `resolver` já grava a aresta dentro do índice.
+
+**Código**
+- `src/strokes.py`, `resolver(..., normalizar_indice=True)`: com influência não vazia (traços efetivos), `idx = indice_com_aresta(idx, mask_aresta)`. Na identidade (influência vazia) o índice continua a ser o automático.
+- `src/server.py`, `_solve_a2`: nos caminhos de retoque de vértices e de base gémea, a aresta gravada (`am`) é unida ao índice quando há edição. A edição conta assim:
+  - traços efetivos, um retoque que muda a aresta, ou base gémea;
+  - um pedido sem traços em que o cliente reenvia a mesma aresta continua a ser identidade.
+- Em consequência, a linha fina do índice no editor e o `mascara_rle` mostram a união.
+- Testes do servidor e do editor: `tests/test_server.py` e `tests/test_gui_contorno.py` passam, 52 de 52 [V].
+
+**CONVENCAO §3 (17 registos)**
+Medido com `tools/diagnostico/verify/d2_17.py` sobre uma cópia; resultado em `docs/diagnostico/verify/D2/convencao17.json` [V]. Os 17 registos originais são as linhas de traços sem `convencao`, gravadas antes de 2026-11-09. Corri-os pelo `resolver` atual com e sem a união:
+
+| | automático bit a bit | reposição pelo critério de `renormalizar.py` (profundidade ≤ 0,5 mm) |
+|---|---|---|
+| sem união | 14/17 | 17/17 |
+| com união | 14/17 | 17/17 |
+
+- **Os 14:** identidade (só traços de sombra, ignorados), por isso iguais nos dois casos.
+- **P0045, P0071 e P1064:** já ficavam a 1 px (0,085 mm) do automático sem a união. Com a união passam a ter +0,67, +1,51 e +0,91 mm² a mais, com profundidade 0,169, 0,271 e 0,169 mm, e a aresta fica a 0 px fora do índice. Continuam abaixo de 0,5 mm, por isso continuam a dar «reposição».
+- **O «17/17 no automático exato» do CONVENCAO** é o contorno guardado depois da reposição. Continua a valer, 17/17.
+- **O bit a bit do `resolver`** nunca foi 17/17. Hoje dá 14/17, com e sem união [V].
+- **Ponto a notar:** nos 14 casos de identidade a aresta fica fora do automático (4–523 px), porque a identidade mantém o índice igual ao automático, como pedido. Hoje essas linhas são só desenho (`indice: "automatico"`) ou reposições, e nenhuma tem `aresta_px` ativo no índice, por isso a regra 4.1 (c) não as apanha.
+
+**Limiares (`88203d4`)**
+- Sai `aresta_fora_do_indice_delta_mm2` de `tests/golden/limiares.json` e também da constante `LIMIARES_INICIAIS` em `tools/verify/metricas.py`, que só servia para escrever esse ficheiro.
+- Nenhum limiar usado mudou. `tests/test_verify.py` passa, 22 de 22 [V].
+
+**Fecho**
+- **Suite completa** (`.venv/Scripts/python.exe -m pytest tests/`, uma corrida em `88203d4`): **999 passed, 1 skipped, 0 failed**, em 17 min 08 s [V].
+- **`python -m tools.verify`:** exit 0, em 22,6 s [V]. As métricas do golden são iguais à baseline chave a chave, por isso a baseline não foi congelada outra vez [V]. É o esperado: as linhas gravadas não mudam e a leitura já fazia a união.
+- **`graphify update .`:** corrido.
+- **Vigilância:** `projects/alpes` com 39/39/39 (pieces/overlays/scans) no início e no fim. Nada foi escrito em `projects/alpes` [V].
+- **`docs/decisoes.md`:** uma linha acrescentada à entrada «4.1 (c) = A».
+
+**Decisões que continuam pendentes (não mexi)**
+- **2:** a procura de cantos em cantos chanfrados de sombra (P0754, P1064).
+- **3:** o `tools.verify` simular o arranque do servidor na cópia.
