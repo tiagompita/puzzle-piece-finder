@@ -8,7 +8,10 @@
 # - Python: .venv/Scripts/python.exe (Windows), senão .venv/bin/python, senão python, senão python3.
 # - Exit != 0 do verify = commit parado. Não contornar com --no-verify: parar e reportar; nunca congelar a
 #   baseline nem refazer o golden para passar.
-# - O verify lê a árvore de trabalho, não o índice: com um stage parcial verifica o que está no disco.
+# - O verify lê a árvore de trabalho, não o índice. Por isso (2026-11-28, tests/test_githook_precommit_stage.py), antes
+#   de o correr o hook recusa o commit se um caminho vigiado tiver alterações fora do stage (`git diff`) ou ficheiros
+#   não rastreados que o .gitignore não ignora (`git ls-files --others --exclude-standard`). Só conta quando o commit
+#   corre o verify: um stage sem caminhos vigiados não o corre e o disco sujo não o afeta (não se recusa). Sem git stash.
 # - Modo (2026-11-26, «fecho»): `--rapido` por omissão (E-sym + 3 folhas + E-real-2 + quadrados); o completo (passos
 #   1-3 inteiros, com o leave-one-out do molde) quando o stage toca src/segmentation.py, src/shape.py, src/fit.py ou
 #   src/twin.py (tests/test_githook_precommit_modo.py).
@@ -19,6 +22,25 @@ relevantes=$(printf '%s\n' "$caminhos" | grep -E '^(src/|tools/verify/|tests/gol
 
 top=$(git rev-parse --show-toplevel) || exit 1
 cd "$top" || exit 1
+
+vigiados="src/ tools/verify/ tests/golden/ projects/"
+# shellcheck disable=SC2086
+fora=$(git -c core.quotePath=false diff --name-only --no-renames -- $vigiados)
+novos=$(git -c core.quotePath=false ls-files --others --exclude-standard -- $vigiados)
+if [ -n "$fora" ] || [ -n "$novos" ]; then
+	echo "pre-commit: commit recusado: o verify lê o disco e o stage não é tudo o que está no disco." >&2
+	if [ -n "$fora" ]; then
+		echo "  Alterados e fora do stage (git add ou git restore):" >&2
+		printf '%s
+' "$fora" | sed 's/^/    /' >&2
+	fi
+	if [ -n "$novos" ]; then
+		echo "  Não rastreados (git add, apagar ou pôr no .gitignore):" >&2
+		printf '%s
+' "$novos" | sed 's/^/    /' >&2
+	fi
+	exit 1
+fi
 
 if [ -x ".venv/Scripts/python.exe" ]; then
 	py=".venv/Scripts/python.exe"
