@@ -2,10 +2,11 @@
 
 Códigos de saída (o primeiro desta ordem que falhar): 2 ambiente (``.venv``, OpenCV, ``core.hooksPath``);
 3 golden alterado ou sem manifesto; 6 vigilância ou árvore de trabalho mudou durante a corrida; 4 regra absoluta
-violada; 5 métrica de uma peça do golden pior do que a baseline (ou sem baseline); 1 erro inesperado; 0 tudo certo.
+violada; 7 regressão de CV nos passos 1–3 (segmentação, classificação, matching); 5 outra métrica de uma peça do golden
+pior do que a baseline (ou sem baseline); 1 erro inesperado; 0 tudo certo.
 
 Passos 1–3 (``tools/verify/regressao.py``, 2026-11-26): segmentação, classificação e matching corridos de novo sobre o
-golden e comparados com o bloco ``regressao`` da baseline (código 5; um ficheiro do passo 3 alterado dá 3). ``--rapido``:
+golden e comparados com o bloco ``regressao`` da baseline (código 7 desde 2026-11-28; um ficheiro do passo 3 alterado dá 3). ``--rapido``:
 E-sym + 3 folhas + E-real-2 + quadrados (o pre-commit usa-o, salvo quando o stage toca os módulos críticos).
 
 Saídas: ``<out>/metricas.json``, ``<out>/comparacao.md`` e ``<out>/prova/*.png`` (por omissão ``$PPF_SCRATCH/verify/<data>`` ou
@@ -25,13 +26,13 @@ from tools.verify import invariantes as INV
 from tools.verify import metricas as MT
 from tools.verify import regressao as RG
 
-__all__ = ["CODIGOS", "BASELINE", "LIMIARES", "codigo_saida", "main"]
+__all__ = ["CODIGOS", "BASELINE", "LIMIARES", "codigo_saida", "regressoes_cv", "main"]
 
 BASELINE = os.path.join(AMB.REPO, "tests", "golden", "baseline.json")
 LIMIARES = os.path.join(AMB.REPO, "tests", "golden", "limiares.json")
 
-CODIGOS = {"ambiente": 2, "golden": 3, "vigilancia": 6, "arvore": 6, "regras": 4, "baseline": 5, "erro": 1}
-_ORDEM = ("ambiente", "golden", "vigilancia", "arvore", "regras", "baseline", "erro")
+CODIGOS = {"ambiente": 2, "golden": 3, "vigilancia": 6, "arvore": 6, "regras": 4, "regressao": 7, "baseline": 5, "erro": 1}
+_ORDEM = ("ambiente", "golden", "vigilancia", "arvore", "regras", "regressao", "baseline", "erro")
 
 
 def _out_dir(arg) -> str:
@@ -42,6 +43,12 @@ def _out_dir(arg) -> str:
 		d = os.path.join(base, "verify", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 	os.makedirs(d, exist_ok=True)
 	return d
+
+
+def regressoes_cv(falhas: list) -> list:
+	"""``RG.comparar`` devolve as regressões de CV com o grupo ``baseline``; aqui passam a ``regressao`` (código 7).
+	O grupo ``golden`` (ficheiro do passo 3 alterado) fica como está."""
+	return [("regressao" if g == "baseline" else g, t) for g, t in falhas]
 
 
 def codigo_saida(falhas: list) -> int:
@@ -225,7 +232,7 @@ def main(argv=None) -> int:
 					else:
 						rg = RG.comparar(reg_atual, base["regressao"], lim["regressao"])
 						res["regressoes_passos_1_3"] = [t for _, t in rg]
-						falhas += rg
+						falhas += regressoes_cv(rg)
 	except Exception:  # noqa: BLE001 - o relatório tem de sair mesmo com um erro a meio
 		falhas.append(("erro", traceback.format_exc(limit=5)))
 	finally:

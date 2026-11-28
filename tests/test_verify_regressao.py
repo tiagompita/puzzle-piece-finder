@@ -98,9 +98,14 @@ def test_molde_peca_que_deixou_de_ser_medida_nao_conta():
 	assert _cmp(a) == []
 
 
-def test_codigo_de_saida_das_metricas_e_5():
+def test_codigo_de_saida_regressao_cv_e_7_e_metricas_e_5():
 	assert VM.codigo_saida([("baseline", "x")]) == 5
+	assert VM.codigo_saida([("regressao", "x")]) == 7
+	assert VM.codigo_saida([("regressao", "x"), ("baseline", "y")]) == 7
 	assert VM.codigo_saida([("golden", "x"), ("baseline", "y")]) == 3
+	reg = VM.regressoes_cv([("baseline", "E-sym: x"), ("golden", "ficheiro do passo 3 alterado: y")])
+	assert reg == [("regressao", "E-sym: x"), ("golden", "ficheiro do passo 3 alterado: y")]
+	assert VM.codigo_saida(reg) == 3
 
 
 def test_contorno_igual_e_exato_e_mordida_local_aparece():

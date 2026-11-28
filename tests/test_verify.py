@@ -134,6 +134,8 @@ def test_codigo_saida_ordem():
 	assert VM.codigo_saida([("baseline", "x"), ("regras", "y")]) == 4
 	assert VM.codigo_saida([("baseline", "x"), ("ambiente", "y"), ("golden", "z")]) == 2
 	assert VM.codigo_saida([("arvore", "x"), ("baseline", "y")]) == 6
+	assert VM.codigo_saida([("regressao", "x"), ("regras", "y")]) == 4
+	assert VM.codigo_saida([("regressao", "x"), ("vigilancia", "y")]) == 6
 
 
 def test_vigilancia_conta_contra_scans(tmp_path):
