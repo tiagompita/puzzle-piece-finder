@@ -192,13 +192,6 @@ def test_simetria_dos_pares_colocados(pr_copia):
 	assert r["n"] == 0, f"pares gémeos acima de {r['limiar_mm']} mm fora da exceção e da lista por rever: {r['violacoes']}"
 
 
-def test_simetria_sem_a_lista_por_rever_falha_nos_3_pares(pr_copia):
-	"""Sem a lista D3 o teste falha exatamente nos 3 pares conhecidos (o teste consegue falhar)."""
-	r = INV.simetria(pr_copia, ())
-	got = sorted("|".join(sorted((v["a"], v["b"]))) for v in r["violacoes"])
-	assert got == sorted("|".join(sorted(x.split("|"))) for x in _por_rever())
-
-
 def test_simetria_com_a_excecao_antiga_falha_nos_3_pares_da_d3(pr_copia, monkeypatch):
 	"""Teste novo (D3 = A, 2026-11-26): com a exceção antiga (filas 1-3/45-47) e sem lista «por rever», o teste
 	falha exatamente nos 3 pares que a D3 = A pôs na exceção (o teste continua a conseguir falhar)."""
